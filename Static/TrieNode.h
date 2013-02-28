@@ -29,6 +29,7 @@ public:
 
 	~TrieNode() {}
 	inline uint16_t childCount() const { return priv()->childCount();}
+	///char width in bits
 	inline uint8_t charWidth() const { return priv()->charWidth(); }
 	inline uint32_t childCharAt(const uint16_t pos) const { return priv()->childCharAt(pos);}
 	inline uint8_t strLen() const { return priv()->strLen(); }
