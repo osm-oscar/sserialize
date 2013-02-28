@@ -1,0 +1,98 @@
+#ifndef SSERIALIZE_ITEM_SET_H
+#define SSERIALIZE_ITEM_SET_H
+#include <sserialize/containers/SetOpTree.h>
+#include <sserialize/completers/StringCompleter.h>
+
+
+//TODO:Sortierfunktion
+
+namespace sserialize {
+
+template<class DataBaseItemType, class DataBaseType>
+class ItemSet {
+private:
+	std::string m_queryString;
+	StringCompleter m_completer;
+	DataBaseType m_dataBase;
+	SetOpTree m_setOpTree;
+	ItemIndex m_index;
+public:
+	ItemSet() {};
+	ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type);
+	ItemSet(const std::string& queryString, const StringCompleter & completer, const DataBaseType & dataBase, SetOpTree::SotType type);
+	~ItemSet() {};
+	
+	///Tries to set an upper limit to the result set size to speed-up set operations (soft constraint)
+	void setMaxResultSetSize(uint32_t size) { m_setOpTree.setMaxResultSetSize(size); }
+	
+	/** increases the refcount by one */
+	bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter* functoid);
+	void execute();
+	void update(const std::string & queryString);
+	std::set<uint16_t> getCharHints(uint32_t posInQuery);
+	inline uint32_t size() const { return m_index.size(); }
+	DataBaseItemType at(uint32_t pos) const;
+	inline ItemIndex & getIndex() { return m_index; }
+	void printTreeStructure(std::ostream & out) const { m_setOpTree.printStructure(out); }
+};
+
+template<class DataBaseItemType, class DataBaseType>
+ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::string& queryString, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
+m_queryString(queryString),
+m_completer(completer),
+m_dataBase(dataBase),
+m_setOpTree(type, completer)
+{}
+
+template<class DataBaseItemType, class DataBaseType>
+ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
+m_completer(completer),
+m_dataBase(dataBase),
+m_setOpTree(type, completer)
+{
+	m_queryString = "";
+	for(size_t i = 0; i < intersectStrings.size(); i++) {
+		m_queryString += intersectStrings.at(i) + " ";
+	}
+}
+
+template<class DataBaseItemType, class DataBaseType>
+DataBaseItemType
+ItemSet<DataBaseItemType, DataBaseType>::at(uint32_t pos) const {
+	if (pos >= m_index.size())
+		return DataBaseItemType();
+	uint32_t itemId = m_index.at(pos);
+// 	std::cout << "ItemSet::at("<< pos << ")=" << itemId << std::endl;
+	return m_dataBase.at(itemId);
+}
+
+template<class DataBaseItemType, class DataBaseType>
+void
+ItemSet<DataBaseItemType, DataBaseType>::execute() {
+	m_setOpTree.buildTree(m_queryString);
+	m_setOpTree.doCompletions();
+	m_index = m_setOpTree.doSetOperations(true);
+}
+
+template<class DataBaseItemType, class DataBaseType>
+void
+ItemSet<DataBaseItemType, DataBaseType>::update(const std::string & queryString) {
+	m_queryString = queryString;
+	m_index = m_setOpTree.update(queryString);
+}
+
+template<class DataBaseItemType, class DataBaseType>
+bool
+ItemSet<DataBaseItemType, DataBaseType>::registerSelectableOpFilter(SetOpTree::SelectableOpFilter * functoid) {
+	return m_setOpTree.registerSelectableOpFilter(functoid);
+}
+
+template<class DataBaseItemType, class DataBaseType>
+std::set< uint16_t >
+ItemSet<DataBaseItemType, DataBaseType>::getCharHints(uint32_t posInQueryString) {
+	return m_setOpTree.getCharacterHint(posInQueryString);
+}
+
+}//end namespace
+
+#endif

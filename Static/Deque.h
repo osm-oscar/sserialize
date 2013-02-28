@@ -1,0 +1,316 @@
+#ifndef SSERIALIZE_STATIC_DEQUE_H
+#define SSERIALIZE_STATIC_DEQUE_H
+#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/containers/SortedOffsetIndexPrivate.h>
+#include <sserialize/containers/SortedOffsetIndex.h>
+#include <sserialize/utility/exceptions.h>
+#define SSERIALIZE_STATIC_DEQUE_VERSION 3
+
+
+/** FileFormat: v3
+ *
+ *-------------------------------
+ *Version|DataLen|Data|DataIndex|
+ *-------------------------------
+ *  1    |  5    |  * |   *     |
+ * SIZE = Size of Data
+ */
+
+namespace sserialize {
+namespace Static {
+
+template<typename TValue>
+class Deque: public RefCountObject {
+private:
+	SortedOffsetIndex m_index;
+	UByteArrayAdapter m_data;
+public:
+	Deque();
+	/** Creates a new deque at data.putPtr */
+	Deque(const UByteArrayAdapter & data);
+	/** This does not copy the ref count, but inits it */
+	Deque(const Deque & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
+	virtual ~Deque() {
+	
+	}
+	
+	/** This does not copy the ref count, it leaves it intact */
+	Deque & operator=(const Deque & other) {
+		m_data = other.m_data;
+		m_index = other.m_index;
+		return *this;
+	}
+	
+	uint32_t size() const { return m_index.size();}
+	UByteArrayAdapter::OffsetType getSizeInBytes() const {return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
+	TValue at(uint32_t pos) const;
+	UByteArrayAdapter dataAt(uint32_t pos) const;
+	int32_t find(const TValue & value) const;
+	TValue front() const;
+	TValue back() const;
+
+	UByteArrayAdapter & data() { return m_data;}
+	const UByteArrayAdapter & data() const { return m_data; }
+
+};
+
+template<typename TValue>
+class DequeCreator {
+	UByteArrayAdapter & m_dest;
+	std::set<OffsetType> m_offsets;
+	OffsetType m_dataLenPtr;
+	OffsetType m_beginOffSet;
+public:
+	DequeCreator(UByteArrayAdapter & destination) : m_dest(destination) {
+		m_dest.putUint8(SSERIALIZE_STATIC_DEQUE_VERSION);
+		m_dataLenPtr = m_dest.tellPutPtr();
+		m_dest.putOffset(0);
+		
+		m_beginOffSet = m_dest.tellPutPtr();
+	}
+	virtual ~DequeCreator() {}
+	void put(const TValue & value) {
+		m_offsets.insert(m_dest.tellPutPtr() - m_beginOffSet);
+		m_dest << value;
+	}
+	void beginRawPut() {
+		m_offsets.insert(m_dest.tellPutPtr() - m_beginOffSet);
+	}
+	UByteArrayAdapter & rawPut() { return m_dest;}
+	void endRawPut() {}
+	
+	void flush() {
+		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
+		sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest);
+	}
+};
+
+template<typename TValue>
+Deque<TValue>::Deque() : RefCountObject() {}
+
+template<typename TValue>
+Deque<TValue>::Deque(const UByteArrayAdapter & data) :
+RefCountObject(),
+m_index(data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength() + data.getOffset(1))),
+m_data(UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1)))
+{
+SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_DEQUE_VERSION, data.at(0), "Static::Deque");
+SSERIALIZE_LENGTH_CHECK(m_index.size(), m_data.size(), "Static::Deque::Deque::Insufficient data");
+}
+
+template<typename TValue>
+TValue
+Deque<TValue>::at(uint32_t pos) const {
+	if (pos >= size() || size() == 0) {
+		return TValue();
+	}
+	return TValue(m_data + m_index.at(pos));
+}
+
+template<typename TValue>
+TValue
+Deque<TValue>::front() const {
+	return at(0);
+}
+
+template<typename TValue>
+TValue
+Deque<TValue>::back() const {
+	return at(size()-1);
+}
+
+template<typename TValue>
+UByteArrayAdapter
+Deque<TValue>::dataAt(uint32_t pos) const {
+	if (pos >= size() || size() == 0) {
+		return UByteArrayAdapter();
+	}
+	return m_data + m_index.at(pos);
+}
+
+template<typename TValue>
+int32_t Deque<TValue>::find(const TValue& value) const {
+	for(uint32_t i = 0; i < size(); i++) {
+		if (at(i) == value)
+			return i;
+	}
+	return -1;
+}
+
+//Template specialications for integral types
+
+template<>
+int32_t
+Deque<int32_t>::at(uint32_t pos) const;
+
+template<>
+uint32_t
+Deque<uint32_t>::at(uint32_t pos) const;
+
+
+template<>
+uint16_t
+Deque<uint16_t>::at(uint32_t pos) const;
+
+template<>
+uint8_t
+Deque<uint8_t>::at(uint32_t pos) const;
+
+template<>
+std::string
+Deque<std::string>::at(uint32_t pos) const;
+
+}}//end namespace
+
+template<typename TValue>
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::deque<TValue> & source) {
+	sserialize::Static::DequeCreator<TValue> dc(destination);
+	for(size_t i = 0; i < source.size(); i++) {
+		dc.put(source[i]);
+	}
+	dc.flush();
+	return destination;
+}
+
+template<typename TValue>
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::vector<TValue> & source) {
+	sserialize::Static::DequeCreator<TValue> dc(destination);
+	for(size_t i = 0; i < source.size(); i++) {
+		dc.put(source[i]);
+	}
+	dc.flush();
+	return destination;
+}
+
+template<typename TValue>
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Deque<TValue> & destination) {
+	sserialize::UByteArrayAdapter tmpAdap(source);
+	tmpAdap.shrinkToGetPtr();
+	destination = sserialize::Static::Deque<TValue>(tmpAdap);
+	source.incGetPtr(destination.getSizeInBytes());
+	return source;
+}
+
+template<typename TValue>
+bool operator==(const sserialize::Static::Deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	if (dequeA.size() != dequeB.size())
+		return false;
+	uint32_t size = dequeA.size();
+	for(uint32_t i = 0; i < size; i++) {
+		if (dequeA.at(i) != dequeB.at(i))
+			return false;
+	}
+	return true;
+}
+
+template<typename TValue>
+bool operator==(const sserialize::Static::Deque<TValue> & dequeA, const std::deque<TValue> & dequeB) {
+	if (dequeA.size() != dequeB.size())
+		return false;
+	uint32_t size = dequeA.size();
+	for(uint32_t i = 0; i < size; i++) {
+		if (dequeA.at(i) != dequeB.at(i))
+			return false;
+	}
+	return true;
+}
+
+template<typename TValue>
+bool operator==(const std::deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	return dequeB == dequeA;
+}
+
+template<typename TValue>
+bool operator<(const sserialize::Static::Deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	uint32_t dequeItA = 0;
+	uint32_t dequeItB = 0;
+	while (dequeItA<dequeA.size()) {
+		if (dequeB.size() <= dequeItB || dequeB.at(dequeItB) < dequeA.at(dequeItA)) {
+			return false;
+		}
+		TValue vA(dequeA.at(dequeItA));
+		TValue vB(dequeB.at(dequeItB));
+		if (vB < vA) {
+			return false;
+		}
+		else if (vA < vB)
+			return true;
+		dequeItA++;
+		dequeItB++;
+	}
+	return (dequeItB < dequeB.size());
+}
+
+template<typename TValue>
+bool operator<(const sserialize::Static::Deque<TValue> & dequeA, const std::deque<TValue> & dequeB) {
+	uint32_t dequeItA = 0;
+	uint32_t dequeItB = 0;
+	while (dequeItA<dequeA.size()) {
+		if (dequeB.size() <= dequeItB || dequeB.at(dequeItB) < dequeA.at(dequeItA)) {
+			return false;
+		}
+		TValue vA(dequeA.at(dequeItA));
+		TValue vB(dequeB.at(dequeItB));
+		if (vB < vA) {
+			return false;
+		}
+		else if (vA < vB)
+			return true;
+		dequeItA++;
+		dequeItB++;
+	}
+	return (dequeItB < dequeB.size());
+}
+
+template<typename TValue>
+bool operator<(const std::deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	uint32_t dequeItA = 0;
+	uint32_t dequeItB = 0;
+	while (dequeItA<dequeA.size()) {
+		if (dequeB.size() <= dequeItB || dequeB.at(dequeItB) < dequeA.at(dequeItA)) {
+			return false;
+		}
+		TValue vA(dequeA.at(dequeItA));
+		TValue vB(dequeB.at(dequeItB));
+		if (vB < vA) {
+			return false;
+		}
+		else if (vA < vB)
+			return true;
+		dequeItA++;
+		dequeItB++;
+	}
+	return (dequeItB < dequeB.size());
+}
+
+template<typename TValue>
+bool operator!=(const sserialize::Static::Deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	return !(dequeA == dequeB);
+}
+
+template<typename TValue>
+bool operator!=(const sserialize::Static::Deque<TValue> & dequeA, const std::deque<TValue> & dequeB) {
+	return !(dequeA == dequeB);
+}
+
+template<typename TValue>
+bool operator!=(const std::deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	return !(dequeA == dequeB);
+}
+
+template<typename TValue>
+bool operator>(const sserialize::Static::Deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	return dequeB < dequeA;
+}
+
+template<typename TValue>
+bool operator<=(const sserialize::Static::Deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	return ! (dequeA > dequeB);
+}
+
+template<typename TValue>
+bool operator>=(const sserialize::Static::Deque<TValue> & dequeA, const sserialize::Static::Deque<TValue> & dequeB) {
+	return ! (dequeA < dequeB);
+}
+
+#endif
