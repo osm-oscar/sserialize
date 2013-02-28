@@ -1,4 +1,4 @@
-#include "ItemIndexIteratorIntersecting.h"
+#include <sserialize/containers/ItemIndexIteratorIntersecting.h>
 
 namespace sserialize {
 

@@ -1,8 +1,8 @@
 #ifndef ITEM_INDEX_PRIVATE_H
 #define ITEM_INDEX_PRIVATE_H
 #include <sserialize/utility/refcounting.h>
-#include "../ItemIndex.h"
-#include "../DynamicBitSet.h"
+#include <sserialize/containers/ItemIndex.h>
+#include <sserialize/containers/DynamicBitSet.h>
 #include <sserialize/utility/AtStlInputIterator.h>
 
 namespace sserialize {

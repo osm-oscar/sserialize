@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(sserialize)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(DEBUG_FLAGS "${DEBUG_FLAGS} -Wall")#-Wconversion -Wextra
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")

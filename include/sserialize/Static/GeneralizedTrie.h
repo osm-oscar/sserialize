@@ -2,7 +2,7 @@
 #define SSERIALIZE_STATIC_GENERALIZED_TRIE_H
 #include <sserialize/completers/StringCompleterPrivate.h>
 #include <sserialize/Static/ItemIndexStore.h>
-#include "TrieNodePrivates/TrieNodePrivates.h"
+#include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 
 #define STATIC_TRIE_HEADER_SIZE 16
 #define PRIVATE_USE_CHAR_VALUE 0xF0F0

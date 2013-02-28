@@ -1,4 +1,4 @@
-#include "GeoShape.h"
+#include <sserialize/spatial/GeoShape.h>
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoShape & shape) {
 	if (&shape)

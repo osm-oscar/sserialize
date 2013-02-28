@@ -1,5 +1,5 @@
 #include <sserialize/templated/StringsItemDB.h>
-#include <completers/StringCompleterPrivateStaticDB.h>
+#include <sserialize/completers/StringCompleterPrivateStaticDB.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"

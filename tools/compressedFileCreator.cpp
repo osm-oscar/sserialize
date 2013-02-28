@@ -1,6 +1,6 @@
 #include <sserialize/utility/CompressedMmappedFile.h>
 #include <sserialize/utility/mmappedfile.h>
-#include <utility/ProgressInfo.h>
+#include <sserialize/utility/ProgressInfo.h>
 #include <iostream>
 
 

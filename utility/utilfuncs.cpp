@@ -1,4 +1,4 @@
-#include "utilfuncs.h"
+#include <sserialize/utility/utilfuncs.h>
 #include <sserialize/containers/ItemIndex.h>
 
 namespace sserialize {

@@ -1,5 +1,5 @@
-#include "StringCompleterPrivate.h"
-#include "StringCompleter.h"
+#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/completers/StringCompleter.h>
 
 namespace sserialize {
 	

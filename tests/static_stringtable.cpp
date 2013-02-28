@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <Static/StringTable.h>
+#include <sserialize/Static/StringTable.h>
 
 using namespace std;
 using namespace sserialize;

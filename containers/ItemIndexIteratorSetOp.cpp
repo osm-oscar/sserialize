@@ -1,4 +1,4 @@
-#include "ItemIndexIteratorSetOp.h"
+#include <sserialize/containers/ItemIndexIteratorSetOp.h>
 
 namespace sserialize {
 

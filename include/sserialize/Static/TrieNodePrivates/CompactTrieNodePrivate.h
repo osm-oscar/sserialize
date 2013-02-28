@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string>
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include "TrieNodePrivate.h"
+#include <sserialize/Static/TrieNodePrivate.h>
 
 
 

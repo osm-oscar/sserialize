@@ -1,11 +1,11 @@
-#include "SetOpTree.h"
+#include <sserialize/containers/SetOpTree.h>
 #include <string.h>
 #include <sstream>
 #include <istream>
 #include <iterator>
-#include "SetOpTreePrivateSimple.h"
-#include "SetOpTreePrivateComplex.h"
-#include "ItemIndexIteratorSetOp.h"
+#include <sserialize/containers/SetOpTreePrivateSimple.h>
+#include <sserialize/containers/SetOpTreePrivateComplex.h>
+#include <sserialize/containers/ItemIndexIteratorSetOp.h>
 
 namespace sserialize {
 

@@ -1,8 +1,8 @@
 #include <sserialize/Static/GeneralizedTrie.h>
-#include <containers/GeneralizedTrie.h>
-#include <containers/ItemSet.h>
-#include <utility/utilfuncs.h>
-#include <utility/filewriter.h>
+#include <sserialize/containers/GeneralizedTrie.h>
+#include <sserialize/containers/ItemSet.h>
+#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/utility/filewriter.h>
 #include "trietestfuncs.h"
 #include "TestItemData.h"
 #include "printfunctions.h"

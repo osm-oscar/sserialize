@@ -1,5 +1,5 @@
-#include "StringCompleter.h"
-#include "StringCompleterPrivate.h"
+#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/completers/StringCompleterPrivate.h>
 #define INDEX_CACHE_SIZE 8
 
 

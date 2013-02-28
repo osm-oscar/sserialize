@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_TRIE_NODE_H
 #define SSERIALIZE_STATIC_TRIE_NODE_H
-#include "TrieNodePrivates/TrieNodePrivate.h"
+#include <sserialize/Static/TrieNodePrivate.h>
 #include <sserialize/utility/refcounting.h>
 
 namespace sserialize {

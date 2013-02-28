@@ -1,10 +1,11 @@
 #ifndef SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_PRIVATE_H
 #define SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_PRIVATE_H
 #include <sserialize/spatial/GeoRect.h>
-#include "Deque.h"
-#include "StringsItemDBPrivate.h"
-#include "GeoPoint.h"
-#include "GeoShape.h"
+#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/StringsItemDBPrivate.h>
+#include <sserialize/Static/GeoPoint.h>
+#include <sserialize/Static/GeoShape.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 
 #define SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_VERSION 0
 

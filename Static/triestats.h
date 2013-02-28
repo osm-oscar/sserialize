@@ -9,7 +9,7 @@
 #include <sserialize/Static/StringsItemDB.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/GeneralizedTrie.h>
-#include "TrieNodePrivates/TrieNodePrivates.h"
+#include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 
 namespace sserialize {
 namespace Static {

@@ -1,4 +1,4 @@
-#include <sserialize/vendor/libs/utf8/source/utf8.h>
+#include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <iostream>
 

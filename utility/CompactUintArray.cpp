@@ -1,7 +1,7 @@
-#include "CompactUintArray.h"
+#include <sserialize/utility/CompactUintArray.h>
 #include <stdint.h>
 #include <iostream>
-#include "utilfuncs.h"
+#include <sserialize/utility/utilfuncs.h>
 
 namespace sserialize {
 

@@ -1,7 +1,7 @@
 #ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #include "UByteArrayAdapterPrivate.h"
-#include "../CompactUintArray.h"
+#include <sserialize/utility/CompactUintArray.h>
 
 /* Compressed Storage Layout:
  * The uncompressed storage is compressed in chunks of 2^n KB

@@ -1,7 +1,7 @@
-#include "ItemIndexIterator.h"
-#include "ItemIndexIteratorIntersecting.h"
-#include "ItemIndexIteratorSetOp.h"
-#include "ItemIndexPrivates/ItemIndexPrivateSimple.h"
+#include <sserialize/containers/ItemIndexIterator.h>
+#include <sserialize/containers/ItemIndexIteratorIntersecting.h>
+#include <sserialize/containers/ItemIndexIteratorSetOp.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 
 namespace sserialize {
 

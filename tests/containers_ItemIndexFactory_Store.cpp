@@ -6,8 +6,8 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <sserialize/containers/ItemIndex.h>
-#include <containers/ItemIndexFactory.h>
-#include <Static/ItemIndexStore.h>
+#include <sserialize/containers/ItemIndexFactory.h>
+#include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
 

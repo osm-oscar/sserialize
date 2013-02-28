@@ -1,4 +1,4 @@
-#include "ItemIndexStore.h"
+#include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/exceptions.h>
 

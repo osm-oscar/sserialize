@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <utility/UByteArrayAdapter.h>
-#include <utility/utilfuncs.h>
-#include <utility/pack_unpack_functions.h>
+#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/utility/pack_unpack_functions.h>
 #include "datacreationfuncs.h"
 
 using namespace sserialize;

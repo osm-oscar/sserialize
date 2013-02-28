@@ -1,4 +1,4 @@
-#include "log.h"
+#include <sserialize/utility/log.h>
 #ifdef __ANDROID__
 #include <android/log.h>
 #else

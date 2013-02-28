@@ -1,9 +1,9 @@
-#include "ItemIndexPrivate.h"
-#include "ItemIndexPrivateSimple.h"
-#include <sserialize/containers/ItemIndexPrivates/ItemIndexSetFunctions.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/AtStlInputIterator.h>
 #include <sserialize/utility/statfuncs.h>
+#include "ItemIndexSetFunctions.h"
 
 namespace sserialize {
 

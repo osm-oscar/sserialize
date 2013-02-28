@@ -1,4 +1,4 @@
-#include "FlatGeneralizedTrie.h"
+#include <sserialize/Static/FlatGeneralizedTrie.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/utility/utilfuncs.h>

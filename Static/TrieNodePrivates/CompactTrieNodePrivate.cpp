@@ -1,14 +1,14 @@
-#include "CompactTrieNodePrivate.h"
+#include <sserialize/Static/TrieNodePrivates/CompactTrieNodePrivate.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/find_key_in_array_functions.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/vendor/libs/utf8/source/utf8.h>
+#include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <iostream>
 #include <stdio.h>
 
-#include "../TrieNode.h"
+#include <sserialize/Static/TrieNode.h>
 
 #define CHILDPTR_STRIPE_SIZE 32
 

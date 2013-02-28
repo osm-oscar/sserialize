@@ -1,5 +1,5 @@
-#include "SortedOffsetIndex.h"
-#include "SortedOffsetIndexPrivate.h"
+#include <sserialize/containers/SortedOffsetIndex.h>
+#include <sserialize/containers/SortedOffsetIndexPrivate.h>
 
 namespace sserialize {
 namespace Static {

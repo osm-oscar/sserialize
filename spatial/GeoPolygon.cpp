@@ -1,4 +1,4 @@
-#include "GeoPolygon.h"
+#include <sserialize/spatial/GeoPolygon.h>
 #include <sserialize/utility/utilfuncs.h>
 #define EPSILON 0.000001
 

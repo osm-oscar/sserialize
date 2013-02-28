@@ -1,5 +1,5 @@
 #include <sserialize/utility/CompressedMmappedFile.h>
-#include <utility/mmappedfile.h>
+#include <sserialize/utility/mmappedfile.h>
 #include <sserialize/utility/filewriter.h>
 #include <cmath>
 #include <limits>

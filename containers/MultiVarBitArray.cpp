@@ -1,4 +1,4 @@
-#include "MultiVarBitArray.h"
+#include <sserialize/containers/MultiVarBitArray.h>
 #include <numeric>
 #include <sserialize/utility/CompactUintArray.h>
 

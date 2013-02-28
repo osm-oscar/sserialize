@@ -3,7 +3,6 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/containers/ItemIndex.h>
-#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 #include <sserialize/containers/ItemIndexIteratorDB.h>
 #include <sserialize/utility/TimeMeasuerer.h>
 #include <sserialize/utility/unicode_case_functions.h>
@@ -139,28 +138,23 @@ StringsItemDBPrivate<MetaDataDeSerializable>::select(const std::unordered_set<ui
 	if (!set.size())
 		return ItemIndex();
 
-	uint8_t bpn = CompactUintArray::minStorageBitsFullBytes(size());
-	uint8_t bytesPN = bpn/8;
-	uint32_t maxSize = size()*bytesPN + 8;
-	UByteArrayAdapter tempSetData( UByteArrayAdapter::createCache(maxSize, false) );
-	CompactUintArray arr(tempSetData+8, bpn);
+	std::vector<uint32_t> arr;
 	
-	uint32_t count = 0;
 	uint32_t size = this->size();
 	uint32_t curOffSet = 0;
 	uint8_t strCount = 0;
 	bool doInsert = false;
 	uint32_t curStrId;
+	UByteArrayAdapter curItemStrings;
 	for(uint32_t i = 0; i < size; i++) {
-#ifdef NEWFOM
 		curOffSet = 0;
-		UByteArrayAdapter curItemStrings( m_itemStrings.at(i));
+		UByteArrayAdapter curItemStrings = m_itemStrings.at(i);
 		strCount = curItemStrings.at(curOffSet);
 		++curOffSet;
 		doInsert = false;
 		uint8_t j = 0;
 		for(; j < strCount; ++j) {
-			curStrId =curItemStrings.getUint32(curOffSet);
+			curStrId = curItemStrings.getUint32(curOffSet);
 			curOffSet += 4;
 			if (set.count(curStrId) > 0) {
 				doInsert = true;
@@ -168,20 +162,10 @@ StringsItemDBPrivate<MetaDataDeSerializable>::select(const std::unordered_set<ui
 			}
 		}
 		if (doInsert) {
-			arr.set(count, i);
-			++count;
+			arr.push_back(i);
 		}
-#else
-		if (at(i).hasAnyStrIdOf(set) ) {
-			arr.set(count, i);
-			count++;
-		}
-#endif
 	}
-	ItemIndexPrivateSimple::addHeader(count, bytesPN, 0, tempSetData);
-
-	
-	return ItemIndex(tempSetData, ItemIndex::T_SIMPLE);
+	return ItemIndex::absorb(arr);
 }
 
 template<class MetaDataDeSerializable>

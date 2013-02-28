@@ -1,4 +1,4 @@
-#include "GeneralizedSuffixArray.h"
+#include <sserialize/Static/GeneralizedSuffixArray.h>
 
 namespace sserialize {
 namespace Static {

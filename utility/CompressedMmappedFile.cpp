@@ -1,11 +1,11 @@
-#include "CompressedMmappedFile.h"
-#include <sserialize/vendor/libs/minilzo/minilzo.h>
+#include <sserialize/utility/CompressedMmappedFile.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
-#include "log.h"
-#include "ProgressInfo.h"
-#include <containers/SortedOffsetIndexPrivate.h>
+#include <sserialize/utility/log.h>
+#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/containers/SortedOffsetIndexPrivate.h>
+#include "vendor/libs/minilzo/minilzo.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

@@ -2,7 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/templated/StringsItemDB.h>
-#include <completers/StringCompleterPrivateItemDB.h>
+#include <sserialize/completers/StringCompleterPrivateItemDB.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"

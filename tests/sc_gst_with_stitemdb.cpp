@@ -1,5 +1,5 @@
 #include <sserialize/containers//GeneralizedTrie.h>
-#include <containers/StringsItemDBWrapperPrivateSSIDB.h>
+#include <sserialize/containers/StringsItemDBWrapperPrivateSSIDB.h>
 #include <sserialize/completers/StringCompleterPrivateGST.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"

@@ -1,10 +1,10 @@
-#include "ItemIndexFactory.h"
-#include "ItemIndex.h"
+#include <sserialize/containers/ItemIndexFactory.h>
+#include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/debuggerfunctions.h>
-#include <utility/ProgressInfo.h>
+#include <sserialize/utility/ProgressInfo.h>
 #include <unordered_map>
 #include <iostream>
 #include <sstream>

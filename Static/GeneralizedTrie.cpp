@@ -1,16 +1,17 @@
-#include "GeneralizedTrie.h"
+#include <sserialize/Static/GeneralizedTrie.h>
 #include <iostream>
 #include <map>
 #include <algorithm>
 #include <string>
-#include <sserialize/vendor/libs/utf8/source/utf8.h>
+#include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/Static/StringCompleter.h>
-#include <sserialize/Static/triestats.h>
+#include <sserialize/containers/DynamicBitSet.h>
+#include "triestats.h"
 
 namespace sserialize {
 namespace Static {

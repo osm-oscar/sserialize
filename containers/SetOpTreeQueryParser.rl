@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stack>
-#include "SetOpTreePrivate.h"
+#include <sserialize/containers/SetOpTreePrivate.h>
 
 /** Grammar:
 /*  Sample Strings: Stutt and Stei = Stutt Stei = (Stutt) and (Stei) = (Stutt and Stei)

@@ -1,10 +1,10 @@
-#include "SetOpTreePrivateComplex.h"
+#include <sserialize/containers/SetOpTreePrivateComplex.h>
 #include <string.h>
 #include <sstream>
 #include <istream>
 #include <iterator>
 #include <iostream>
-#include <sserialize/vendor/libs/utf8/source/utf8/checked.h>
+#include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/containers/ItemIndexIteratorSetOp.h>
 

@@ -1,7 +1,7 @@
-#include "UByteArrayAdapter.h"
-#include "pack_unpack_functions.h"
-#include "UByteArrayAdapterPrivates/UByteArrayAdapterPrivates.h"
-#include "log.h"
+#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/utility/log.h>
+#include "utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivates.h"
 #include <iostream>
 
 

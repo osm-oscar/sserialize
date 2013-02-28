@@ -10,7 +10,6 @@ namespace sserialize {
 
 class DynamicBitSet;
 class UByteArrayAdapter;
-
 class ItemIndexPrivate;
 
 /** This class is an interface for an ItemIndex which is esential a set container of uint32_t,

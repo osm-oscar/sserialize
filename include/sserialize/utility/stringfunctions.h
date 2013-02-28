@@ -4,7 +4,7 @@
 #include <deque>
 #include <set>
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/vendor/libs/utf8/source/utf8/checked.h>
+#include <sserialize/vendor/utf8.h>
 
 
 namespace sserialize {

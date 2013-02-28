@@ -1,4 +1,4 @@
-#include "GeoPoint.h"
+#include <sserialize/Static/GeoPoint.h>
 
 
 namespace sserialize {

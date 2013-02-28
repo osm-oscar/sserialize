@@ -1,7 +1,7 @@
-#include "FlatGST.h"
+#include <sserialize/containers/FlatGST.h>
 #include <set>
-#include <sserialize/vendor/libs/utf8/source/utf8.h>
-#include <utility/unicode_case_functions.h>
+#include "vendor/libs/utf8/source/utf8.h"
+#include <sserialize/utility/unicode_case_functions.h>
 
 
 namespace sserialize { namespace dynamic {

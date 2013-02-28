@@ -1,5 +1,5 @@
-#include "LinearRegressionFunctions.h"
-#include "CompactUintArray.h"
+#include <sserialize/utility/LinearRegressionFunctions.h>
+#include <sserialize/utility/CompactUintArray.h>
 
 
 namespace sserialize {
