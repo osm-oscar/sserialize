@@ -19,26 +19,26 @@
  *
  * Node layout
  * 
- * ----------------------------------------------------------------------------------------------------------------
- * aaaaaccc|cciiiiim|epsSlLLL|LLLLLLLL|SLSLSLSL|FCPFCPFCP|CPDIFFCPDIFF|SSSSSSSSS|CCCCCCCCCC|CPCPCPCPCP|  IDXPTRS |
- * ----------------------------------------------------------------------------------------------------------------
- * 3 byte                     | 1 byte | 1 byte | vl32    |    vl32    |SL byte  |CompactArr|CompactArr|CompactArr|
- * a = bit width in the child-char array
- * c = bit width in the child ptr array
- * i = index bits per number count
+ * ----------------------------------------------------------------------------------------------------------
+ * amliiiii|epsSLLLL|LLLLLLLL|SLSLSLSL|SSSSSSSSS|CCCCCCCCCCCC|FCPFCPFCP|CPCPCPCP|  IDXPTRS |SUBTRIEPTR|
+ * ----------------------------------------------------------------------------------------------------------
+ * 1 byte  | 1 byte | 1 byte | 1 byte | SL byte |(1-2 byte)*l|  4 byte |2*(L-1) |CompactArr|  4 byte  |
+ * a = width of the characters (0 => 1 byte, 1 => 2 bytes)
  * m = node has a merge index
  * e = node has a exact index
  * p = node has a prefix index
  * s = node has a suffix index
  * S = node has a suffixPrefix index
+ * i = index bits per number count
  * l = if true, then there's another length byte following
  * L = length of the following char->pointer array
  * SL = length of the string
  * S = the node's string, not null-terminated, encoded as UTF-8, the first char is stored in the parent 
  * C = character (width is determined by a), encoded in UTF-32 (essentially it's just the unicde point)
  * FCP = displacement from the beginning of the tree to the first child node
- * CPDIFFCPDIFF = minumum diff betwwen child pointers, which is only present if childCount > 2
+ * CP = displacement from the beginning of the first child, every childnode-stripe adds a new offset
  * IDXPTR = Pointer to index (offset in index file
+ * SUBTRIEPTR = Pointer to the subtrie (offset in trie file)
  */
 
 namespace sserialize {
@@ -47,20 +47,15 @@ namespace Static {
 class CompactStaticTrieCreationNode;
 
 class CompactTrieNodePrivate: public TrieNodePrivate {
-enum {HS_CHILD_COUNT=0, HS_CHILD_COUNT_FLAG=11, HS_INDEX_TYPES=12, HS_MERGE_INDEX=16, HS_INDEX_BITS=17, HS_CHILD_PTR_BITS=22, HS_CHILD_CHAR_BITS=27} HeaderShifts;
-enum {HM_CHILD_COUNT=0x7FF, HM_CHILD_COUNT_FLAG=0x1, HM_INDEX_TYPES=0xF, HM_MERGE_INDEX=0x1, HM_INDEX_BITS=0x1F, HM_CHILD_PTR_BITS=0x1F, HM_CHILD_CHAR_BITS=0x1F} HeaderMasks;
 public:
 	friend class CompactStaticTrieCreationNode;
 protected:
 	UByteArrayAdapter m_data;
 
 	//Node info
-	uint32_t m_header;
 	uint16_t m_childCount;
 	uint8_t m_strLen;
-	uint32_t m_childPtrBeginOffset;
-	uint32_t m_childPtrDiff;
-	
+
 	//data pointers:
 	uint32_t m_strStart;
 	uint32_t m_childArrayStart;
@@ -73,20 +68,17 @@ private:
 	uint32_t getSubTriePtrOffset() const;
 	uint32_t getChildPtrBeginOffset() const;
 	
-	
-	IndexTypes indexTypes() const;
-	uint8_t childPtrBits() const;
-	uint8_t indexPtrBits() const;
-	
+	IndexTypes indexTypes() const { return (IndexTypes) (m_data.at(1) >> 4);}
+	uint8_t indexArrBpn() const { return (m_data.at(0) & 0x1F) + 1;}
 	
 public:
 	CompactTrieNodePrivate(const UByteArrayAdapter & nodeData);
 	~CompactTrieNodePrivate() {}
 
 	virtual uint16_t childCount() const { return m_childCount;}
-	virtual uint8_t charWidth() const;
-	virtual uint8_t strLen() const { return m_strLen;}
-	virtual bool hasMergeIndex() const;
+	virtual uint8_t charWidth() const { return ((m_data.at(0) & 0x80) >> 7) + 1;}
+	virtual uint8_t strLen() const { return m_strLen; }
+	virtual bool hasMergeIndex() const { return m_data.at(0) & 0x40; }
 	virtual bool hasExactIndex() const { return indexTypes() & IT_EXACT;}
 	virtual bool hasPrefixIndex() const { return indexTypes() & IT_PREFIX;}
 	virtual bool hasSuffixIndex() const { return indexTypes() & IT_SUFFIX;}
@@ -124,6 +116,7 @@ public:
 	enum ErrorTypes { NO_ERROR=0, TOO_MANY_CHILDREN=1, NODE_STRING_TOO_LONG=2, CHILD_PTR_FAILED=4, INDEX_PTR_FAILED=8};
 	CompactStaticTrieCreationNode(const UByteArrayAdapter & nodeData);
 	~CompactStaticTrieCreationNode() {}
+	bool setChildPointer(uint32_t childNum, uint32_t offSetFromBeginning);
 	static unsigned int createNewNode(const sserialize::Static::TrieNodeCreationInfo & nodeInfo, UByteArrayAdapter& destination);
 	static unsigned int appendNewNode(const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter& destination);
 	static unsigned int prependNewNode(const sserialize::Static::TrieNodeCreationInfo& nodeInfo, std::deque<uint8_t> & destination);

@@ -10,68 +10,57 @@
 
 #include "../TrieNode.h"
 
+#define CHILDPTR_STRIPE_SIZE 32
+
 namespace sserialize {
 namespace Static {
 
 CompactTrieNodePrivate::CompactTrieNodePrivate(const UByteArrayAdapter & nodeData) :
 m_data(nodeData)
 {
-	m_header = m_data.getUint32();
-	m_childCount = m_header & HM_CHILD_COUNT;
-	if ( !((m_header >> HS_CHILD_COUNT_FLAG) & HM_CHILD_COUNT_FLAG) ) {
-		m_childCount >>= 8;
-		m_data.decGetPtr(1);
+	UByteArrayAdapter current = m_data;
+// 	uint8_t m_header = current.at(0);
+	uint8_t arrayInfoLen;
+
+	if (current.at(0) & 0x20) { //carry-bit is set
+		m_childCount = current.getUint16(1);
+		m_childCount = m_childCount & 0xFFF;
+		arrayInfoLen = 3;
 	}
+	else {
+		m_childCount = current.at(1);
+		m_childCount = m_childCount & 0xF;
+		arrayInfoLen = 2;
+	}
+	m_strLen = current.at(arrayInfoLen);
+	m_strStart = arrayInfoLen+1;
+
 	
+	uint32_t curOffSet = arrayInfoLen+1+m_strLen;
 	
-	m_strLen = m_data.getUint8();
 	if (m_childCount > 0) {
-		m_childPtrBeginOffset = m_data.getVlPackedUint32();
-		if (m_childCount > 2)
-			m_childPtrDiff = m_data.getVlPackedUint32();
+		m_childArrayStart = curOffSet;
+		
+		curOffSet += charWidth()*m_childCount;
+		m_childPointerArrayStart = curOffSet;
+		
+		//correct offset for indexPtr
+		curOffSet += (m_childCount+1)*2;
 	}
+	else {
+		m_childArrayStart = 0;
+		m_childPointerArrayStart = 0;
+	}
+	m_indexPtrStart = curOffSet;
 
-	m_strStart = m_data.tellGetPtr();
-	m_data.incGetPtr(m_strLen);
-
-	m_childArrayStart = m_data.tellPutPtr();
-	m_data.incGetPtr( sserialize::CompactUintArray::minStorageBytes(charWidth(), childCount()) );
+	curOffSet += CompactUintArray::minStorageBytes(indexArrBpn(), popCount((unsigned int) indexTypes()));
 	
-	m_childPointerArrayStart = m_data.tellGetPtr();
-	if (childCount() > 1)
-		m_data.incGetPtr( sserialize::CompactUintArray::minStorageBytes(childPtrBits(), childCount()-1) );
-	m_indexPtrStart = m_data.tellGetPtr();
-	
-	if (indexTypes())
-		m_data.incGetPtr( sserialize::CompactUintArray::minStorageBytes(indexPtrBits(), popCount(indexTypes())) );
-	
-	m_myEndPtr = m_data.tellGetPtr();
+	m_myEndPtr = curOffSet;
 }
 
 uint32_t CompactTrieNodePrivate::getChildPtrBeginOffset() const {
 	return m_childPointerArrayStart;
 }
-
-uint8_t CompactTrieNodePrivate::charWidth() const {
-	return (m_header >> HS_CHILD_CHAR_BITS) &  HM_CHILD_CHAR_BITS;
-}
-
-uint8_t CompactTrieNodePrivate::childPtrBits() const {
-	return (m_header >> HS_CHILD_PTR_BITS) & HM_CHILD_PTR_BITS;
-}
-
-bool CompactTrieNodePrivate::hasMergeIndex() const {
-	return (m_header >> HS_MERGE_INDEX) & HM_MERGE_INDEX;
-}
-
-uint8_t CompactTrieNodePrivate::indexPtrBits() const {
-	return (m_header >> HS_INDEX_BITS) & HM_INDEX_BITS;
-}
-
-TrieNodePrivate::IndexTypes CompactTrieNodePrivate::indexTypes() const {
-	return (IndexTypes) ((m_header >> HS_INDEX_TYPES) & HM_INDEX_TYPES);
-}
-
 
 uint32_t CompactTrieNodePrivate::childCharAt(uint16_t pos) const {
 	if (m_childCount == 0)
@@ -79,42 +68,49 @@ uint32_t CompactTrieNodePrivate::childCharAt(uint16_t pos) const {
 	if (pos >= m_childCount) {
 		pos = m_childCount-1;
 	}
-	CompactUintArray arr(m_data + m_childArrayStart, charWidth());
-	return arr.at(pos);
+	if (charWidth() == 1) {
+		return m_data.at(m_childArrayStart+pos);
+	}
+	else {
+		return m_data.getUint16(m_childArrayStart+2*pos);
+	}
 }
 
 uint32_t CompactTrieNodePrivate::getExactIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexPtrBits());
+	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
 	return arr.at(0);
 }
 
 uint32_t CompactTrieNodePrivate::getPrefixIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexPtrBits());
+	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
 	uint32_t offSet = popCount( (indexTypes() & 0x1) );
 	return arr.at(offSet);
 }
 
 uint32_t CompactTrieNodePrivate::getSuffixIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexPtrBits());
+	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
 	uint32_t offSet = popCount( (indexTypes() & 0x3) );
 	return arr.at(offSet);
 }
 
 uint32_t CompactTrieNodePrivate::getSuffixPrefixIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexPtrBits());
+	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
 	uint32_t offSet = popCount( (indexTypes() & 0x7) );
 	return arr.at(offSet);
 }
 
 uint32_t CompactTrieNodePrivate::getChildPtr(uint32_t pos) const {
-	if (m_childCount == 0)
-		return 0;
-	if (pos >= m_childCount)
-		pos = (m_childCount-1);
+	if (m_childCount == 0) return 0;
+	if (pos >= m_childCount) pos = (m_childCount-1);
+	//find our offset child and it's offset
+	uint32_t baseOffset = m_data.getUint32(m_childPointerArrayStart);
 	if (pos == 0)
-		return m_childPtrBeginOffset;
-	CompactUintArray arr(m_data + m_childPointerArrayStart, childPtrBits());
-	return m_childPtrBeginOffset + arr.at(pos-1) + m_childPtrDiff*pos;
+		return baseOffset;
+	for(unsigned int i = CHILDPTR_STRIPE_SIZE; i < pos; i+=CHILDPTR_STRIPE_SIZE) {
+		baseOffset += m_data.getUint16(m_childPointerArrayStart+2+2*i); 
+	}
+	uint32_t newOf = m_data.getUint16(m_childPointerArrayStart+2+2*pos)+baseOffset; 
+	return newOf;
 }
 
 UByteArrayAdapter CompactTrieNodePrivate::strData() const {
@@ -129,8 +125,15 @@ std::string CompactTrieNodePrivate::str() const {
 }
 
 int16_t CompactTrieNodePrivate::posOfChar(uint32_t key) const {
-	CompactUintArray arr(m_data+m_childArrayStart, charWidth());
-	return arr.findSorted(key, childCount());
+	uint8_t charWidth = this->charWidth();
+	if (key > 0xFFFF || (charWidth == 1 && key > 0xFF))
+		return -1;
+	if (charWidth == 1) {
+		return findKeyInArray<1>(m_data+m_childArrayStart, m_childCount, static_cast<uint8_t>(key));
+	}
+	else { //arrayCharSize==2
+		return findKeyInArray_uint16<2>(m_data+m_childArrayStart, m_childCount, key);
+	}
 }
 
 TrieNodePrivate* CompactTrieNodePrivate::childAt(uint16_t pos) const {
@@ -165,9 +168,10 @@ uint32_t CompactTrieNodePrivate::getStorageSize() const {
 }
 
 uint32_t CompactTrieNodePrivate::getHeaderStorageSize() const {
-	if ((m_header >> HS_CHILD_COUNT_FLAG) & HM_CHILD_COUNT_FLAG)
-		return 4;
-	return 3;
+	if (m_data.at(0) & 0x20)
+		return 3;
+	else
+		return 2;
 }
 
 
@@ -176,71 +180,133 @@ uint32_t CompactTrieNodePrivate::getNodeStringStorageSize() const {
 }
 
 uint32_t CompactTrieNodePrivate::getChildPtrStorageSize() const {
-	uint32_t size = vl_pack_uint32_t_size(m_childPtrBeginOffset);
-	size += vl_pack_uint32_t_size(m_childPtrDiff);
-	if (childCount() > 1)
-		size += CompactUintArray::minStorageBytes(childPtrBits(), childCount());
-	return size;
+	return (m_childCount > 0 ? (m_childCount+1)*2 : 0);
 }
 
 uint32_t CompactTrieNodePrivate::getChildCharStorageSize() const {
-	return CompactUintArray::minStorageBytes(charWidth(), childCount());
+	return charWidth()*m_childCount;
 }
 
 uint32_t CompactTrieNodePrivate::getIndexPtrStorageSize() const {
-	return CompactUintArray::minStorageBytes(indexPtrBits(), popCount( indexTypes() ) );
+	return CompactUintArray::minStorageBytes(indexArrBpn(), popCount( indexTypes() ) );
 }
 
 CompactStaticTrieCreationNode::CompactStaticTrieCreationNode(const UByteArrayAdapter & nodeData) : m_node(nodeData), m_data(nodeData) {};
 
+bool CompactStaticTrieCreationNode::setChildPointer(uint32_t childNum, uint32_t offSetFromBeginning) {
+	uint32_t childPtrStripeCount = CHILDPTR_STRIPE_SIZE; //TODO: paramtrise this
 
-uint32_t smallestGap(const std::vector<uint32_t> & src) {
-	if (src.size() < 2)
-		return 0;
-	uint32_t o = std::numeric_limits<uint32_t>::max();
-	std::vector<uint32_t>::const_iterator end(src.end());
-	std::vector<uint32_t>::const_iterator prev(src.begin());
-	std::vector<uint32_t>::const_iterator ahead(prev+1);
-	for(; ahead != end; ++ahead, ++prev) {
-		o = std::min<uint32_t>(*ahead-*prev, o);
+	if (childNum == 0) { //this is the first child
+		m_data.putUint32(m_node.getChildPtrBeginOffset(), offSetFromBeginning);
 	}
-	return o;
-}
-
-uint32_t largestOffset(const std::vector<uint32_t> & src, uint32_t gap) {
-	if (src.size() < 2)
-		return 0;
-	uint32_t first = *src.begin();
-	uint32_t o = 0;
-	std::vector<uint32_t>::const_iterator end(src.end());
-	std::vector<uint32_t>::const_iterator it(src.begin()+1);
-	for(uint32_t cg = gap; it != end; ++it, cg += gap) {
-		o = std::max<uint32_t>((*it-first)- cg, o);
+	else {
+		//Get the baseOffset for our current node
+		uint32_t summedNodeOffset = 0;
+		uint32_t childPtrOffset = m_node.getChildPtrBeginOffset();
+		for(unsigned int i = 0; i < childNum; i+=childPtrStripeCount) {
+			if (i==0) {
+				summedNodeOffset += m_data.getUint32(childPtrOffset);
+			}
+			else {
+				summedNodeOffset += m_data.getUint16(childPtrOffset+2+2*i);
+			}
+		}
+		uint32_t myOffset = offSetFromBeginning-summedNodeOffset;
+		if (myOffset > 0xFFFF) { 
+			std::cout << "FATAL: node pointer is too large" << std::endl;
+			return false;
+		}
+		else {
+			m_data.putUint16(childPtrOffset+2+2*childNum, myOffset);
+		}
 	}
-	return o;
+	return true;
 }
-
 
 unsigned int
 CompactStaticTrieCreationNode::createNewNode(
     const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter & destination) {
-    uint32_t putPtr = destination.tellPutPtr();
-    
-	uint32_t header = 0;
-	
-	uint32_t charBits = CompactUintArray::minStorageBits(nodeInfo.childChars.back());
-	
-	uint32_t ptrGap = smallestGap(nodeInfo.childPtrs);
-	uint32_t ptrOffset = 0;
-	if (nodeInfo.childrenCount > 2) {
-		ptrOffset = largestOffset(nodeInfo.childPtrs, ptrGap);
+
+	uint32_t putPtr = destination.tellPutPtr();
+
+	//change this later if ptr len is not constant
+	uint8_t childPtrLen = 2;
+
+	uint32_t childrenCount = nodeInfo.childChars.size();
+
+	if (childrenCount > 0xFFF) {
+		std::cout << "Error: too many children" << std::endl;
+		return CompactStaticTrieCreationNode::TOO_MANY_CHILDREN;
 	}
-	else if (nodeInfo.childrenCount == 2) {
-		ptrOffset = nodeInfo.childPtrs.back() -  nodeInfo.childPtrs.front();
-	}
-	uint32_t ptrBits = CompactUintArray::minStorageBits(ptrOffset);
 	
-	uint32_t mergeIndex = (nodeInfo.mergeIndex ? 0x1 : 0x0);
+	//Size of a character in the array length of the children array
+	uint16_t nodeHeader = nodeInfo.indexTypes << 4;
+	if (nodeInfo.charWidth == 2)
+		nodeHeader |= 0x8000;
+	
+	if (nodeInfo.mergeIndex)
+		nodeHeader |= 0x4000;
+
+	if (childrenCount > 0xF) {
+		nodeHeader |= 0x2000;
+		nodeHeader |= (childrenCount >> 8) & 0xF;
+		destination.putUint16(nodeHeader);
+		destination.putUint8(childrenCount & 0xFF);
+	}
+	else {
+		nodeHeader |= childrenCount;
+		destination.putUint16(nodeHeader);
+	}
+	
+	//Possibly push our node string
+	uint32_t nodeStrSize = 0;
+	if (nodeInfo.nodeStr.size() > 0) {
+		//push the string with string length
+		std::string::const_iterator nodeStrIt = nodeInfo.nodeStr.begin();
+		utf8::next(nodeStrIt, nodeInfo.nodeStr.end()); //remove the first char as that one is already in our parent
+		std::string stnodeStr;
+		for(; nodeStrIt != nodeInfo.nodeStr.end(); nodeStrIt++) stnodeStr += *nodeStrIt;
+		
+		nodeStrSize = stnodeStr.size();
+		if (nodeStrSize <= 0xFF) {
+			destination.putUint8(nodeStrSize);
+		}
+		else {
+			std::cout << "node string is too long: " << nodeInfo.nodeStr << std::endl;
+			return CompactStaticTrieCreationNode::NODE_STRING_TOO_LONG;
+		}
+		//Node string (not null terminated)
+
+		for(std::string::iterator i = stnodeStr.begin(); i != stnodeStr.end(); i++) {
+			destination.putUint8(static_cast<uint8_t>(*i));
+		}
+	}
+	else { // no nodestring there
+		destination.putUint8(0);
+	}
+
+	//Push the child chars with dummy child pointers
+	if (childrenCount > 0) {
+
+		if (nodeInfo.charWidth == 2) {
+			for(unsigned int i=0; i < childrenCount; i++) {
+				destination.putUint16(nodeInfo.childChars[i]);
+			}
+		}
+		else {
+			for(unsigned int i=0; i < childrenCount; i++) {
+				destination.putUint8(nodeInfo.childChars[i]);
+			}
+		}
+
+		//dummy pointer values
+		for(unsigned int i = 0; i < 4; i++)
+			destination.putUint8(0); //push the first child
+		for(unsigned int i=1; i < childrenCount; i++) {
+			for(unsigned int j = 0; j < childPtrLen; j++)
+				destination.putUint8(0);
+		}
+	}
 	
 	//Push index pointers
 	std::deque<uint32_t> idxPtrs;
@@ -261,77 +327,33 @@ CompactStaticTrieCreationNode::createNewNode(
 	}
 
 	std::deque<uint8_t> indexPtrsData;
-	uint8_t indexBits = CompactUintArray::createFromDeque(idxPtrs, indexPtrsData);
+	uint8_t bpn = CompactUintArray::createFromDeque(idxPtrs, indexPtrsData);
 	
-	if (!indexBits) {
+	if (!bpn) {
 		return CompactStaticTrieCreationNode::INDEX_PTR_FAILED;
 	}
 	
-	uint32_t childCountFlag = (nodeInfo.childrenCount > 0x7 ? 0x1 : 0x0);
-	uint32_t childCount = (childCountFlag ?  nodeInfo.childrenCount : (nodeInfo.childrenCount << 8));
-
-	//assemble header
-	header |= charBits << CompactTrieNodePrivate::HS_CHILD_CHAR_BITS;
-	header |= ptrBits << CompactTrieNodePrivate::HS_CHILD_PTR_BITS;
-	header |= indexBits << CompactTrieNodePrivate::HS_INDEX_BITS;
-	header |= mergeIndex << CompactTrieNodePrivate::HS_MERGE_INDEX;
-	header |= nodeInfo.indexTypes << CompactTrieNodePrivate::HS_INDEX_TYPES;
-	header |= childCountFlag << CompactTrieNodePrivate::HS_CHILD_COUNT_FLAG;
-	header |= (nodeInfo.childrenCount << (childCountFlag ? 0 : 8) );
-
-	//header is completeley assembled
-	if (childCountFlag) {
-		destination.putUint32(header);
-	}
-	else {
-		destination.putUint24(header >> 8);
-	}
-	
-	//put the dummy string length
-	uint8_t & nodeStrLenDestination = destination[destination.tellPutPtr()];
-	destination.putUint8(0);
-	
-	//first child ptr
-	
-	uint32_t childPtrDiff = 0;
-	if (nodeInfo.childrenCount) {
-		destination.putVlPackedUint32(nodeInfo.childPtrs.front());
-		if (nodeInfo.childrenCount > 2) {
-			childPtrDiff = smallestGap(nodeInfo.childPtrs);
-			
-		}
-	}
-
-	
-	//Possibly push our node string
-	
-	if (nodeInfo.nodeStr.size() > 0) {
-		//push the string with string length
-		std::string::const_iterator nodeStrIt = nodeInfo.nodeStr.begin();
-		utf8::next(nodeStrIt, nodeInfo.nodeStr.end()); //remove the first char as that one is already in our parent
-		std::string stnodeStr(nodeStrIt, nodeInfo.nodeStr.end());
-		
-		if (stnodeStr.size() <= 0xFF) {
-			nodeStrLenDestination = stnodeStr.size();
-		}
-		else {
-			std::cout << "node string is too long: " << nodeInfo.nodeStr << std::endl;
-			return CompactStaticTrieCreationNode::NODE_STRING_TOO_LONG;
-		}
-		//Node string (not null terminated)
-
-		for(std::string::iterator i = stnodeStr.begin(); i != stnodeStr.end(); i++) {
-			destination.putUint8(static_cast<uint8_t>(*i));
-		}
-	}
-
-
+	destination[putPtr] |= bpn-1;
+	destination.put(indexPtrsData);
 
 	return CompactStaticTrieCreationNode::NO_ERROR;
 }
 
 unsigned int CompactStaticTrieCreationNode::appendNewNode(const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter & destination) {
-	return CompactStaticTrieCreationNode::createNewNode(nodeInfo, destination);
+	uint32_t putPtr = destination.tellPutPtr();
+	unsigned int errors = CompactStaticTrieCreationNode::createNewNode(nodeInfo, destination);
+	UByteArrayAdapter nodeStart = destination;
+	nodeStart.setPutPtr(putPtr);
+	if (nodeInfo.childChars.size() > 0) {
+		CompactStaticTrieCreationNode creationNode(nodeStart);
+		for(size_t i = 0; i < nodeInfo.childPtrs.size(); i++) {
+			if (!creationNode.setChildPointer(i, nodeInfo.childPtrs[i])) {
+				errors |= CHILD_PTR_FAILED;
+				break;
+			}
+		}
+	}
+	return errors;
 }
 
 unsigned int
