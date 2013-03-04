@@ -31,10 +31,12 @@ bool GeoPolygon::test(const Point & p) const {
 	double testy = p.lon;
 	int i, j, c = 0;
 	for (i = 0, j = nvert-1; i < nvert; j = i++) {
-		double vertx_i = points().at(i).lat;
-		double verty_i = points().at(i).lon;
-		double vertx_j = points().at(j).lat;
-		double verty_j = points().at(j).lon;
+		const GeoPoint & iP = points()[i];
+		const GeoPoint & jP = points()[j];
+		double vertx_i = iP.lat;
+		double verty_i = iP.lon;
+		double vertx_j = jP.lat;
+		double verty_j = jP.lon;
 		
 		if ( ((verty_i>testy) != (verty_j>testy)) &&
 			(testx < (vertx_j-vertx_i) * (testy-verty_i) / (verty_j-verty_i) + vertx_i) ) {
