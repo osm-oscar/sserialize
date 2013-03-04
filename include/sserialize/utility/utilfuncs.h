@@ -1,7 +1,7 @@
 #ifndef COMMON_UTIL_FUNCS_H
 #define COMMON_UTIL_FUNCS_H
 #include <stdint.h>
-#include <limits.h>
+#include <limits>
 #include <deque>
 #include <set>
 #include <map>
@@ -34,11 +34,11 @@ double inline logTo2(double num) {
 }
 
 inline uint32_t createMask(uint8_t bpn) {
-	return ((bpn == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << bpn) - 1));
+	return ((bpn == 32) ? std::numeric_limits<uint32_t>::max() : ((static_cast<uint32_t>(1) << bpn) - 1));
 }
 
 inline uint64_t createMask64(uint8_t bpn) {
-	return ((bpn == 64) ? 0xFFFFFFFFFFFFFFFF : ((static_cast<uint64_t>(1) << bpn) - 1));
+	return ((bpn == 64) ? std::numeric_limits<uint64_t>::max() : ((static_cast<uint64_t>(1) << bpn) - 1));
 }
 
 //pos is between 0 and 30
@@ -46,7 +46,9 @@ inline void setBit(uint32_t & srcDest, uint8_t pos) {
 	srcDest |= (0x1 << pos);
 }
 
-inline uint32_t saturatedAdd32(const uint32_t a, const uint32_t b) { return (a > 0xFFFFFFFF - b) ? 0xFFFFFFFF : a + b;}
+inline uint32_t saturatedAdd32(const uint32_t a, const uint32_t b) {
+	return (a > std::numeric_limits<uint32_t>::max() - b) ? std::numeric_limits<uint32_t>::max() : a + b;
+}
 
 
 ///@return position of the most significant bit, returns 0 iff num == 0
