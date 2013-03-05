@@ -5,12 +5,12 @@ using namespace sserialize;
 
 class TestOpFilter: public SetOpTree::ExternalFunctoid {
 	virtual ItemIndex operator()(const std::string& ) { return ItemIndex(); }
-	virtual const std::string cmdString() { return "TestOpFilter"; }
+	virtual const std::string cmdString() const { return "TestOpFilter"; }
 };
 
 class TestOpFilter2: public SetOpTree::ExternalFunctoid {
 	virtual ItemIndex operator()(const std::string& ) { return ItemIndex(); }
-	virtual const std::string cmdString() { return "TestOpFilter2"; }
+	virtual const std::string cmdString() const { return "TestOpFilter2"; }
 };
 
 int main() {

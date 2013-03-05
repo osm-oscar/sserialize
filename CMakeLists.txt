@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(sserialize)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
+find_package(Ragel)
 
 set(DEBUG_FLAGS "${DEBUG_FLAGS} -Wall")#-Wconversion -Wextra
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
@@ -17,6 +18,10 @@ IF(NOT CMAKE_CROSSCOMPILING)
 	find_package(ICU 4.4 REQUIRED)
 	set(OPTIONAL_SOURCES_CPP utility/DiacriticRemover.cpp)
 ENDIF(NOT CMAKE_CROSSCOMPILING)
+
+set(RAGEL_FLAGS "-T1")
+
+ragel_parser(containers/SetOpTreePrivateSimple_parser.rl)
 
 set(STATIC_TRIENODE_PRIVATE_SOURCES_CPP
 Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
@@ -59,6 +64,7 @@ containers/MultiVarBitArray.cpp
 containers/DynamicBitSet.cpp
 containers/SortedOffsetIndex.cpp
 containers/SortedOffsetIndexPrivate.cpp
+containers/SetOpTreePrivateSimple_parser.cpp
 )
 
 set(SPATIAL_SOURCES_CPP

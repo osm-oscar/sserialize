@@ -12,13 +12,14 @@
  *
  * Supported set operations: EXCLUDE (A \ B), INTERSECT, UNITE
  * Special Strings/Character:
- *   AND => INTERSECT
- *   OR => UNITE
- *   WO => EXCLUDE
+ *   / => INTERSECT
+ *   + => UNITE
+ *   - => DIFF
+ *   ^ => XOR
  *   
- *   \EF(String)
+ *   $EF[String]
  *   
- *   \EF can be registerd on runtime.
+ *   $EF can be registerd on runtime.
  *   it will get the String in the surrounding brackets 
  */
 
@@ -48,7 +49,7 @@ public:
 		virtual ItemIndex complete(const std::string & str) = 0;
 		virtual ItemIndexIterator operator()(SupportedOps op, const std::string & str, const ItemIndexIterator & partner) = 0;
 		virtual ItemIndexIterator partialComplete(const std::string & str) = 0;
-		virtual const std::string cmdString()=0;
+		virtual const std::string cmdString() const = 0;
 // 		virtual ExternalFunctoid* copy() = 0;
 	};
 

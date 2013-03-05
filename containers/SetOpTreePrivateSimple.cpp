@@ -41,7 +41,7 @@ StringCompleter::QuerryType qtfghFromString(std::string & str) {
 }
 
 
-void SetOpTreePrivateSimple::buildTree(const std::string & queryString) {
+void SetOpTreePrivateSimple::handParse(const std::string & queryString) {
 	if (queryString.size() == 0)
 		return;
 	QueryStringParserStates state = QSPS_START;
@@ -120,18 +120,40 @@ void SetOpTreePrivateSimple::buildTree(const std::string & queryString) {
 // 	printStructure(std::cout) << std::endl;
 }
 
+void SetOpTreePrivateSimple::buildTree(const std::string & qstr) {
+	m_diffStrings.clear();
+	m_intersectStrings.clear();
+
+	if (m_ef.size())
+		ragelParse(qstr);
+	else
+		handParse(qstr);
+}
 
 ItemIndexIterator SetOpTreePrivateSimple::asItemIndexIterator() {
 	if (m_intersectStrings.size()) {
 		std::vector<ItemIndexIterator> intersectIts, diffIts;
-		for(std::vector<QueryStringDescription>::const_iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
-			ItemIndexIterator intersectIt = m_strCompleter.partialComplete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+		for(std::vector<QueryStringDescription>::iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
+			ItemIndexIterator intersectIt;
+			if (it->ef().priv()) {
+				intersectIt = it->ef()->partialComplete(it->str());
+			}
+			else {
+				intersectIt = m_strCompleter.partialComplete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			}
 			if (intersectIt.maxSize() > 0)
 				intersectIts.push_back(intersectIt);
 		}
 		
-		for(std::vector<QueryStringDescription>::const_iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
-			ItemIndexIterator diffIt = m_strCompleter.partialComplete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+		for(std::vector<QueryStringDescription>::iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
+			ItemIndexIterator diffIt;
+			if (it->ef().priv()) {
+				diffIt = it->ef()->partialComplete(it->str());
+			}
+			else {
+				diffIt = m_strCompleter.partialComplete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			}
+
 			if (diffIt.maxSize() > 0)
 				diffIts.push_back(diffIt);
 		}
@@ -155,15 +177,25 @@ SetOpTreePrivate * SetOpTreePrivateSimple::copy() const {
 }
 
 void SetOpTreePrivateSimple::doCompletions() {
-	for(std::vector<QueryStringDescription>::const_iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
+	for(std::vector<QueryStringDescription>::iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
 		if (m_completions.count(*it) == 0) {
-			m_completions[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			if (it->qt() == sserialize::StringCompleter::QT_NONE) {
+				m_completions[*it]  = it->ef()->complete(it->str());
+			}
+			else {
+				m_completions[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			}
 		}
 	}
 	
-	for(std::vector<QueryStringDescription>::const_iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
+	for(std::vector<QueryStringDescription>::iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
 		if (m_completions.count(*it) == 0) {
-			m_completions[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			if (it->qt() == sserialize::StringCompleter::QT_NONE) {
+				m_completions[*it]  = it->ef()->complete(it->str());
+			}
+			else {
+				m_completions[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			}
 		}
 	}
 }
@@ -199,11 +231,17 @@ ItemIndex SetOpTreePrivateSimple::doSetOperations() {
 }
 
 bool SetOpTreePrivateSimple::registerExternalFunction(SetOpTree::ExternalFunctoid * function) {
-	return sserialize::SetOpTreePrivate::registerExternalFunction(function);
+	if (!function)
+		return false;
+	m_ef[function->cmdString()] = RCPtrWrapper<SetOpTree::SelectableOpFilter>(function);
+	return true;
 }
 
 bool SetOpTreePrivateSimple::registerSelectableOpFilter(SetOpTree::SelectableOpFilter * filter) {
-	return sserialize::SetOpTreePrivate::registerSelectableOpFilter(filter);
+	if (!filter)
+		return false;
+	m_ef[filter->cmdString()] = RCPtrWrapper<SetOpTree::SelectableOpFilter>(filter);
+	return true;
 }
 
 SetOpTreePrivateSimple::SetOpTreePrivateSimple(const SetOpTreePrivateSimple & other) : 
@@ -222,24 +260,32 @@ SetOpTreePrivateSimple::~SetOpTreePrivateSimple() {}
 
 ItemIndex SetOpTreePrivateSimple::update(const std::string & queryString) {
 // 	std::cout << "SetOpTreePrivateSimple::update(" << queryString << ") with up to " << m_maxResultSetSize << std::endl;
-	m_diffStrings.clear();
-	m_intersectStrings.clear();
-	buildTree(queryString);
+	buildTree(queryString); //clears 
 	
-	std::map< std::pair<std::string, uint8_t>, ItemIndex> tmp;
+	std::map< QueryStringDescription, ItemIndex> tmp;
 	
-	for(std::vector<QueryStringDescription>::const_iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
+	for(std::vector<QueryStringDescription>::iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
 		if (m_completions.count(*it) == 0) {
-			tmp[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			if (it->qt() == sserialize::StringCompleter::QT_NONE) {
+				tmp[*it]  = it->ef()->complete(it->str());
+			}
+			else {
+				tmp[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			}
 		}
 		else {
 			tmp[*it] = m_completions[*it];
 		}
 	}
 	
-	for(std::vector<QueryStringDescription>::const_iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
+	for(std::vector<QueryStringDescription>::iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
 		if (m_completions.count(*it) == 0) {
-			tmp[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			if (it->qt() == sserialize::StringCompleter::QT_NONE) {
+				tmp[*it]  = it->ef()->complete(it->str());
+			}
+			else {
+				tmp[*it] = m_strCompleter.complete(it->str(), (sserialize::StringCompleter::QuerryType) it->qt());
+			}
 		}
 		else {
 			tmp[*it] = m_completions[*it];
@@ -256,29 +302,57 @@ void SetOpTreePrivateSimple::clear() {
 }
 
 std::ostream & SetOpTreePrivateSimple::printStructure(std::ostream & out) const {
-	out << "(";
-	for(std::vector<QueryStringDescription>::const_iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end(); ++it) {
-		if (it->qt() & sserialize::StringCompleter::QT_SUFFIX) {
-			out << "*";
+	for(std::vector<QueryStringDescription>::const_iterator it = m_intersectStrings.begin(); it != m_intersectStrings.end();) {
+		if (it->ef().priv()) {
+			out << "$" << it->ef()->cmdString() << "[" << it->str() << "]";
 		}
-		out << it->str();
-		if (it->qt() & sserialize::StringCompleter::QT_PREFIX) {
-			out << "*";
+		else {
+			if (it->qt() & (sserialize::StringCompleter::QT_SUFFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+				out << "*";
+			}
+			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
+				out << "\"";
+			}
+			out << it->str();
+			if (it->qt() & (sserialize::StringCompleter::QT_PREFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+				out << "*";
+			}
+			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
+				out << "\"";
+			}
 		}
-		out << " ";
+		++it;
+		if (it != m_intersectStrings.end())
+			out << " ";
 	}
-	out << ") ";
 	
-	for(std::vector<QueryStringDescription>::const_iterator it = m_diffStrings.begin(); it != m_diffStrings.end(); ++it) {
-		out << "-";
-		if (it->qt() & sserialize::StringCompleter::QT_SUFFIX) {
-			out << "*";
-		}
-		out << it->str();
-		if (it->qt() & sserialize::StringCompleter::QT_PREFIX) {
-			out << "*";
-		}
+	if (m_intersectStrings.size() && m_diffStrings.size())
 		out << " ";
+	
+	for(std::vector<QueryStringDescription>::const_iterator it = m_diffStrings.begin(); it != m_diffStrings.end();) {
+		out << "-";
+		if (it->ef().priv()) {
+			out << "$" << it->ef()->cmdString() << "[" << it->str() << "]";
+		}
+		else {
+			if (it->qt() & (sserialize::StringCompleter::QT_SUFFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+				out << "*";
+			}
+			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
+				out << "\"";
+			}
+			
+			out << it->str();
+			if (it->qt() & (sserialize::StringCompleter::QT_PREFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+				out << "*";
+			}
+			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
+				out << "\"";
+			}
+		}
+		++it;
+		if (it != m_diffStrings.end())
+			out << " ";
 	}
 	return out;
 }

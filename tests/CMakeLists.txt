@@ -52,6 +52,7 @@ ADD_TEST_TARGET_SINGLE(containers_ItemIndexRleDE)
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexSimple)
 ADD_TEST_TARGET_SINGLE(containers_DynamicBitSet)
 ADD_TEST_TARGET_SINGLE(containers_SortedOffsetIndex)
+ADD_TEST_TARGET_SINGLE(containers_setoptreesimple)
 
 #util
 ADD_TEST_TARGET_SINGLE(util_compactuintarray)
