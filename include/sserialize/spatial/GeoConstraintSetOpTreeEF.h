@@ -67,7 +67,7 @@ public:
 			return ItemIndexIterator();
 		return m_completer.partialComplete(rect, approximate);
 	}
-	virtual const std::string cmdString() { return std::string("GEO"); }
+	virtual const std::string cmdString() const { return std::string("GEO"); }
 };
 
 }}//end namespace
