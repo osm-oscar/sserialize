@@ -68,8 +68,9 @@ public:
 		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, false) );
 		ItemIndexPrivateSimpleCreator creator(partner.first(), partner.last(), partner.size(), cache);
 		for(size_t i = 0; i < partner.size(); i++) {
-			if (match(partner.at(i), rect))
-				creator.push_back(i);
+			uint32_t itemId = partner.at(i);
+			if (match(itemId, rect))
+				creator.push_back(itemId);
 		}
 		creator.flush();
 		return creator.getIndex();
