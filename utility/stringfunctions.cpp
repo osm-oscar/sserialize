@@ -30,6 +30,28 @@ std::deque<std::string> toUpperCase(std::deque<std::string> & strs) {
 	return upperCaseD;
 }
 
+bool backslashEscape(std::string & str, char c) {
+	std::string escaped;
+	escaped.reserve(str.size());
+	
+	std::string::const_iterator from(str.begin());
+	std::string::const_iterator to(str.begin());
+	std::string::const_iterator end(str.end());
+	for(; to != end; ++to) {
+		if (*to == c) {
+			escaped.append(from, to);
+			escaped += '\\';
+			escaped += *to;
+			from = to+1;
+		}
+	}
+	if (escaped.size()) {
+		str.swap(escaped);
+		return true;
+	}
+	return false;
+}
+
 bool toBool(const std::string& str) {
 	return (str == "yes" || str == "true" || str == "1");
 }

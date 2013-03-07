@@ -25,6 +25,8 @@ std::string stringFromUnicodePoints(CPIterator begin, const CPIterator & end) {
 	return ret;
 }
 
+bool backslashEscape(std::string & str, char c);
+
 bool isLowerCase(uint32_t cp);
 bool isUpperCase(uint32_t cp);
 
@@ -59,6 +61,24 @@ uint32_t utf8CharCount(octetIterator begin, const octetIterator & end) {
 template<char TSEP>
 std::deque<std::string> splitLine(const std::string & str) {
 	std::deque<std::string> splits;
+	std::string curStr;
+	for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
+		if (*it == TSEP) {
+			splits.push_back(curStr);
+			curStr = std::string();
+		}
+		else {
+			curStr.push_back(*it);
+		}
+	}
+	if(curStr.length())
+		splits.push_back(curStr);
+	return splits;
+}
+
+template<char TSEP>
+std::vector<std::string> splitLineVec(const std::string & str) {
+	std::vector<std::string> splits;
 	std::string curStr;
 	for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
 		if (*it == TSEP) {
