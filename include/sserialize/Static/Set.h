@@ -166,7 +166,7 @@ Set<std::string>::at(uint32_t pos) const;
 
 template<typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::set<TValue> & source) {
-	std::deque<uint8_t> tmpStore;
+	std::vector<uint8_t> tmpStore;
 	sserialize::UByteArrayAdapter tmpValueStore(&tmpStore);
 	std::set<uint32_t> offSets;
 	for(typename std::set<TValue>::const_iterator it = source.begin(); it != source.end(); it++) {
