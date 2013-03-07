@@ -13,7 +13,7 @@ namespace spatial {
 
 /** This filter has special support for AND. It just filters the given indices
   *
-  * It parses the following String: lat_min;lat_max;lon_min;lon_max
+  * It parses the following String: lat_min;lat_max;lon_min;lon_max;boolean
   *
   */
 template<typename TCompleter>
@@ -29,7 +29,6 @@ protected:
 		rect.lon()[0] = std::atof(splitStr[2].c_str() );
 		rect.lon()[1] = std::atof(splitStr[3].c_str() );
 		approximate = false;
-		std::cout << "GeoConstraintSetOpTreeSF: Parsed rect to: " << rect << std::endl;
 		if (splitStr.size() > 4)
 			approximate = toBool(splitStr[4]);
 		return true;
