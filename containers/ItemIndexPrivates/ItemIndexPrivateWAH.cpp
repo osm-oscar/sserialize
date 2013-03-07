@@ -10,11 +10,10 @@ m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
 m_size(data.getUint32(4)),
 m_dataOffset(0),
 m_curId(0),
-m_cache(UByteArrayAdapter::createCache(m_size*4, false) ),
-m_cacheOffset(0)
+m_cache(UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), false) )
 {}
 
-ItemIndexPrivateWAH::ItemIndexPrivateWAH() : m_size(0),  m_dataOffset(0), m_curId(0), m_cacheOffset(0) {}
+ItemIndexPrivateWAH::ItemIndexPrivateWAH() : m_size(0),  m_dataOffset(0), m_curId(0){}
 
 ItemIndexPrivateWAH::~ItemIndexPrivateWAH() {}
 
@@ -29,7 +28,7 @@ int ItemIndexPrivateWAH::find(uint32_t id) const {
 uint32_t ItemIndexPrivateWAH::at(uint32_t pos) const {
 	if (!size() || size() <= pos)
 		return 0;
-	for(;m_cacheOffset <= pos;) {
+	for(;m_cache.tellPutPtr()/4 <= pos;) {
 		uint32_t val = m_data.getUint32(m_dataOffset);
 		m_dataOffset += 4;
 		if (val & 0x1) { //rle encoded
@@ -38,8 +37,7 @@ uint32_t ItemIndexPrivateWAH::at(uint32_t pos) const {
 				uint32_t count = (val >> 1)*31;
 				uint32_t curId = m_curId;
 				for(std::size_t i = 0; i < count; ++i) {
-					m_cache.putUint32(m_cacheOffset*4, curId);
-					++m_cacheOffset;
+					m_cache.putUint32(curId);
 					++curId;
 				}
 			}
@@ -51,8 +49,7 @@ uint32_t ItemIndexPrivateWAH::at(uint32_t pos) const {
 			uint32_t curId = m_curId;
 			while (val) {
 				if (val & 0x1) {
-					m_cache.putUint32(m_cacheOffset*4, curId);
-					++m_cacheOffset;
+					m_cache.putUint32(curId);
 				}
 				++curId;
 				val >>= 1;

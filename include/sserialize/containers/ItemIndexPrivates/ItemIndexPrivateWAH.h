@@ -26,7 +26,6 @@ private:
 	mutable uint32_t m_dataOffset;
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
-	mutable uint32_t m_cacheOffset;
 private:
 	static bool fastForwardIntersectZero(const std::vector< ItemIndexPrivateWAH * > & intersect, std::vector<uint32_t> & intersectPositions,
 	std::vector<uint32_t> & intersectEncWords, uint64_t & bitOffset);
