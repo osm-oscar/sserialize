@@ -7,7 +7,7 @@ namespace sserialize {
 #ifdef __LP64__
 typedef uint64_t OffsetType;
 typedef int64_t NegativeOffsetType;
-#define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFF
+#define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #else
 typedef uint32_t OffsetType;
