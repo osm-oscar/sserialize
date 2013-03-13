@@ -6,8 +6,8 @@ namespace sserialize {
 
 
 
-#ifndef TEMP_DIR_PATH
-#define TEMP_DIR_PATH "/tmp/sserializetmp"
+#ifndef TEMP_FILE_PREFIX
+#define TEMP_FILE_PREFIX "/tmp/sserializetmp"
 #endif
 
 #ifndef PERSISTENT_CACHE_PATH

@@ -42,7 +42,7 @@ private:
 	OffsetType m_getPtr;
 	OffsetType m_putPtr;
 
-	static std::string m_tempDirPath;
+	static std::string m_tempFilePrefix;
 	
 private:
 	UByteArrayAdapter(UByteArrayAdapterPrivate * priv);
@@ -240,8 +240,8 @@ public:
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
 	static UByteArrayAdapter open(const std::string & fileName);
 	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize, uint8_t chunkSizeExponent);
-	static std::string getTempDirPath();
-	static void setTempDirPath(const std::string & path);
+	static std::string getTempFilePrefix();
+	static void setTempFilePrefix(const std::string & path);
 	
 	static inline uint32_t OffsetTypeSerializedLength() { return 5; }
 };

@@ -8,7 +8,7 @@
 
 namespace sserialize {
 
-std::string UByteArrayAdapter::m_tempDirPath = TEMP_DIR_PATH;
+std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
 
 UByteArrayAdapter::UByteArrayAdapter(UByteArrayAdapterPrivate * priv) :
 m_priv(priv),
@@ -23,7 +23,7 @@ m_putPtr(0)
 
 
 UByteArrayAdapter::UByteArrayAdapter() :
-m_priv(0),
+m_priv(new UByteArrayAdapterPrivateEmpty()),
 m_offSet(0),
 m_len(0),
 m_getPtr(0),
@@ -631,12 +631,12 @@ int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) 
 }
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset(const OffsetType pos) const {
-	if (m_len < pos+OFFSET_BYTE_COUNT) return 0;
+	if (m_len < pos+SSERIALIZED_OFFSET_BYTE_COUNT) return 0;
 	return m_priv->getOffset(m_offSet+pos);
 }
 
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset(const OffsetType pos) const {
-	if (m_len < pos+NEGATIVE_OFFSET_BYTE_COUNT) return 0;
+	if (m_len < pos+SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT) return 0;
 	return m_priv->getNegativeOffset(m_offSet+pos);
 }
 
@@ -685,14 +685,14 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::get(const UByteArrayAdapter::Of
 /** If the supplied memory is not writable then you're on your own! **/
 
 bool UByteArrayAdapter::putOffset(const OffsetType pos, const OffsetType value) {
-	if (m_len < pos+OFFSET_BYTE_COUNT)
+	if (m_len < pos+SSERIALIZED_OFFSET_BYTE_COUNT)
 		return false;
 	m_priv->putOffset(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putNegativeOffset(const OffsetType pos, const NegativeOffsetType value) {
-	if (m_len < pos+NEGATIVE_OFFSET_BYTE_COUNT) return false;
+	if (m_len < pos+SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT) return false;
 	m_priv->putNegativeOffset(m_offSet+pos, value);
 	return true;
 }
@@ -857,7 +857,7 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 	UByteArrayAdapterPrivate * priv = 0;
 	if (forceFileBase || size > MAX_IN_MEMORY_CACHE) {
 		MmappedFile tempFile;
-		if (!tempFile::createTempFile(TEMP_DIR_PATH, size, tempFile)) {
+		if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
 			osmfindlog::err("UByteArrayAdapter::createCache", "Fatal: could not open file");
 			return UByteArrayAdapter();
 		}
@@ -936,12 +936,12 @@ UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool c
 }
 
 
-std::string UByteArrayAdapter::getTempDirPath() {
-	return m_tempDirPath;
+std::string UByteArrayAdapter::getTempFilePrefix() {
+	return m_tempFilePrefix;
 }
 
-void UByteArrayAdapter::setTempDirPath(const std::string& path) {
-	m_tempDirPath = path;
+void UByteArrayAdapter::setTempFilePrefix(const std::string& path) {
+	m_tempFilePrefix = path;
 }
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset() {
