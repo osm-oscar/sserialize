@@ -3,26 +3,8 @@
 #include <sserialize/utility/log.h>
 #include "utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivates.h"
 #include <iostream>
+#include <sserialize/utility/types.h>
 
-
-#ifndef TEMP_DIR_PATH
-#ifdef __ANDROID__
-#define TEMP_DIR_PATH "/sdcard/osmfind/tmpfile"
-#define PERSISTENT_CACHE_PATH "/sdcard/osmfind/pcachefile"
-#else
-#define TEMP_DIR_PATH "/tmp/osmfindtmpfile"
-#define PERSISTENT_CACHE_PATH "/tmp/pcachefile"
-#endif
-#endif
-
-#ifdef __ANDROID__
-#define MAX_IN_MEMORY_CACHE (10*1024*1024)
-#else
-#define MAX_IN_MEMORY_CACHE (10*1024*1024)
-#endif
-
-#define OFFSET_BYTE_COUNT 5
-#define NEGATIVE_OFFSET_BYTE_COUNT 5
 
 namespace sserialize {
 
@@ -874,17 +856,8 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 
 	UByteArrayAdapterPrivate * priv = 0;
 	if (forceFileBase || size > MAX_IN_MEMORY_CACHE) {
-		std::string tempFileName = MmappedFile::findLockFilePath(m_tempDirPath, 2048);
-		if (tempFileName.empty()) {
-			osmfindlog::err("UByteArrayAdapter::createCache", "Could not find a cache file");
-			return UByteArrayAdapter();
-		}
-		if (! MmappedFile::createFile(tempFileName, size) ) {
-			osmfindlog::err("UByteArrayAdapter::createCache", "Fatal: could not create temp file: " + tempFileName);
-			return UByteArrayAdapter();
-		}
-		MmappedFile tempFile = MmappedFile(tempFileName, true);
-		if (! tempFile.open() ) { //TODO:delete file if it exists
+		MmappedFile tempFile;
+		if (!tempFile::createTempFile(TEMP_DIR_PATH, size, tempFile)) {
 			osmfindlog::err("UByteArrayAdapter::createCache", "Fatal: could not open file");
 			return UByteArrayAdapter();
 		}
@@ -973,13 +946,13 @@ void UByteArrayAdapter::setTempDirPath(const std::string& path) {
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset() {
 	OffsetType res = getOffset(m_getPtr);
-	m_getPtr += OFFSET_BYTE_COUNT;
+	m_getPtr += SSERIALIZED_OFFSET_BYTE_COUNT;
 	return res;
 }
 
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset() {
 	NegativeOffsetType res = getNegativeOffset(m_getPtr);
-	m_getPtr += NEGATIVE_OFFSET_BYTE_COUNT;
+	m_getPtr += SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT;
 	return res;
 }
 

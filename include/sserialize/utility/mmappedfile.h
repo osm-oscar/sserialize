@@ -37,6 +37,8 @@ public:
 	inline void setWriteableFlag(bool writable) { m_writable = writable; }
 	inline void setDeleteOnClose(bool deleteOnClose) { m_deleteOnClose = deleteOnClose; }
 	inline void setSyncOnClose(bool syncOnClose) { m_syncOnClose = syncOnClose; }
+	
+	static bool createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest);
 };
 
 class MmappedFile: public RCWrapper<MmappedFilePrivate> {
@@ -113,6 +115,10 @@ public:
 	static std::size_t fileSize(const std::string & fileName);
 	/** Not thread-safe **/
 	static std::string findLockFilePath(const std::string & fileNamePrefix, uint32_t maxTest);
+	
+	///Thread-safe
+	static bool createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest);
+	
 	static bool unlinkFile(const std::string & fileName);
 	static bool isDirectory(const std::string & fileName);
 	///Tries to create a directory at fileName. Alsoreturns true if the dir already existed

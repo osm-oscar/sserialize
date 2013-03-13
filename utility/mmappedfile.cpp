@@ -9,6 +9,7 @@
 #include <sys/mman.h> 
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 #include <limits>
 
 
@@ -145,6 +146,36 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	return allOk;
 }
 
+bool MmappedFilePrivate::createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest) {
+	std::size_t fbSize = fileNameBase.size();
+	char * fileName = new char[fbSize+7];
+	memmove(fileName, fileNameBase.c_str(), sizeof(char)*fbSize);
+	memset(fileName+fbSize, 'X', 6);
+	fileName[fbSize+6] = 0;
+	
+	int fd = mkstemps(fileName, 6);
+	
+	if (fd < 0)
+		return false;
+
+	ftruncate(fd, size);
+	
+	MmappedFilePrivate * mf = new MmappedFilePrivate();
+	mf->m_fd = fd;
+	mf->m_deleteOnClose = true;
+	mf->m_fileName = std::string(fileName, fbSize+6);
+	mf->m_syncOnClose = false;
+	mf->m_size = size;
+	mf->m_writable = true;
+	mf->m_data = (uint8_t*) mmap(0, mf->m_size, PROT_READ | PROT_WRITE, MAP_SHARED, mf->m_fd, 0);
+
+	if (!m_data) {
+		close(m_fd);
+		unlink(fileName);
+		return false;
+	}
+	return true;
+}
 
 bool createFilePrivate(const std::string & fileName, OffsetType size) {
 	int fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
@@ -228,6 +259,10 @@ std::string findLockFilePathPrivate(const std::string & fileNamePrefix, uint32_t
 		}
 	}
 	return std::string();
+}
+
+bool MmappedFile::createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest) {
+	return MmappedFilePrivate::createTempFile(fileNameBase, size, dest);
 }
 
 std::string MmappedFile::findLockFilePath(const std::string & fileNamePrefix, uint32_t maxTest) {

@@ -4,6 +4,27 @@
 
 namespace sserialize {
 
+
+
+#ifndef TEMP_DIR_PATH
+#define TEMP_DIR_PATH "/tmp/sserializetmp"
+#endif
+
+#ifndef PERSISTENT_CACHE_PATH
+#define PERSISTENT_CACHE_PATH "/tmp/sserializecache"
+#endif
+
+#ifndef MAX_IN_MEMORY_CACHE
+	#ifdef __ANDROID__
+	#define MAX_IN_MEMORY_CACHE (10*1024*1024)
+	#else
+	#define MAX_IN_MEMORY_CACHE (10*1024*1024)
+	#endif
+#endif
+
+#define SSERIALIZED_OFFSET_BYTE_COUNT 5
+#define SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT 5
+
 #ifdef __LP64__
 typedef uint64_t OffsetType;
 typedef int64_t NegativeOffsetType;
