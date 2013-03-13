@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(sserialize)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
-find_package(Ragel)
+find_package(Ragel REQUIRED)
 
 set(DEBUG_FLAGS "${DEBUG_FLAGS} -Wall")#-Wconversion -Wextra
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
@@ -21,7 +21,7 @@ ENDIF(NOT CMAKE_CROSSCOMPILING)
 
 set(RAGEL_FLAGS "-T1")
 
-ragel_parser(containers/SetOpTreePrivateSimple_parser.rl)
+RAGEL_PARSER(containers/SetOpTreePrivateSimple_parser.rl)
 
 set(STATIC_TRIENODE_PRIVATE_SOURCES_CPP
 Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
