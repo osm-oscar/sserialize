@@ -46,11 +46,11 @@ bool MmappedFilePrivate::do_open() {
 		proto = O_RDWR;
 	if (m_fileName.size() == 0)
 		return false;
-	m_fd = open(m_fileName.c_str(), proto);
+	m_fd = ::open(m_fileName.c_str(), proto);
 	if (m_fd < 0)
 		return false;
-	struct stat stFileInfo;
-	if (fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size < std::numeric_limits<OffsetType>::max()) {
+	struct ::stat stFileInfo;
+	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size < std::numeric_limits<OffsetType>::max()) {
 		m_size = stFileInfo.st_size;
 	}
 	else {
@@ -60,11 +60,12 @@ bool MmappedFilePrivate::do_open() {
 		return false;
 	
 	int mmap_proto = PROT_READ;
-	if (m_writable) mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) mmap(0, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	if (m_writable)
+		mmap_proto |= PROT_WRITE;
+	m_data = (uint8_t*) ::mmap(0, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
-		close(m_fd);
+		::close(m_fd);
 		return false;
 	}
 		
@@ -75,34 +76,35 @@ bool MmappedFilePrivate::do_close() {
 	if (m_fd < 0) {
 		return true;
 	}
-
-	if ( !(m_data && m_fd > 0) ) {
-		return false;
+	
+	bool allOk = true;
+	if (m_data) {
+		if (m_syncOnClose) {
+			allOk = do_sync() && allOk;
+		}
+		if (::munmap(m_data, m_size) < 0) {
+			::perror("MmappedFilePrivate::do_close()");
+			allOk = false;
+		}
 	}
-	if (m_syncOnClose) {
-		do_sync();
-	}
-	if (munmap(m_data, m_size) == -1) {
-		return false;
-	}
-	if (close(m_fd) == -1) {
-		return false;
+	if (::close(m_fd) == -1) {
+		::perror("MmappedFilePrivate::do_close()");
 	}
 	m_fd = -1;
 	m_size = 0;
 	m_data = 0;
 	
-	if (m_deleteOnClose && unlink(m_fileName.c_str()) < 0) {
-		return false;
+	if (m_deleteOnClose) {
+		allOk = (::unlink(m_fileName.c_str()) < 0) && allOk;
 	}
 	
-	return true;
+	return allOk;
 }
 
 bool MmappedFilePrivate::do_sync() {
 	if ( !(m_data && m_fd > 0) )
 		return false;
-	int result = msync(m_data, m_size, MS_SYNC);
+	int result = ::msync(m_data, m_size, MS_SYNC);
 	return result == 0;
 }
 
@@ -112,7 +114,8 @@ bool MmappedFilePrivate::valid() {
 
 bool MmappedFilePrivate::read(uint8_t * buffer, uint32_t len, OffsetType displacement) {
 	if (m_data && m_size-displacement >= len) {
-		for(size_t i = displacement; i < displacement+len; i++) buffer[i-displacement] = m_data[i];
+		for(size_t i = displacement; i < displacement+len; i++)
+			buffer[i-displacement] = m_data[i];
 		return true;
 	}
 	return false;
@@ -124,14 +127,14 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	}
 
 	//unmap
-	if (munmap(m_data, m_size) == -1) {
+	if (::munmap(m_data, m_size) == -1) {
 		return false;
 	}
 
 	bool allOk = true;
-	int result = ftruncate(m_fd, size);
+	int result = ::ftruncate(m_fd, size);
 	if (result < 0) {
-		perror("MmappedFilePrivate::resize");
+		::perror("MmappedFilePrivate::resize");
 		allOk = false;
 	}
 	else {
@@ -141,7 +144,14 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	m_data = (uint8_t*) ::mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	
+	if (m_data == MAP_FAILED) {
+		::perror("MmappedFilePrivate::resize");
+		m_data = 0;//this needs to come here (do_close() checks for it
+		do_close();
+		allOk = false;
+	}
 
 	return allOk;
 }
@@ -149,55 +159,60 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 bool MmappedFilePrivate::createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest) {
 	std::size_t fbSize = fileNameBase.size();
 	char * fileName = new char[fbSize+7];
-	memmove(fileName, fileNameBase.c_str(), sizeof(char)*fbSize);
-	memset(fileName+fbSize, 'X', 6);
+	::memmove(fileName, fileNameBase.c_str(), sizeof(char)*fbSize);
+	::memset(fileName+fbSize, 'X', 6);
 	fileName[fbSize+6] = 0;
 	
-	int fd = mkstemps(fileName, 6);
+	int fd = mkstemp(fileName);
 	
 	if (fd < 0)
 		return false;
 
-	ftruncate(fd, size);
-	
-	MmappedFilePrivate * mf = new MmappedFilePrivate();
-	mf->m_fd = fd;
-	mf->m_deleteOnClose = true;
-	mf->m_fileName = std::string(fileName, fbSize+6);
-	mf->m_syncOnClose = false;
-	mf->m_size = size;
-	mf->m_writable = true;
-	mf->m_data = (uint8_t*) mmap(0, mf->m_size, PROT_READ | PROT_WRITE, MAP_SHARED, mf->m_fd, 0);
-
-	if (!m_data) {
-		close(m_fd);
-		unlink(fileName);
+	if (::ftruncate(fd, size) < 0) {
+		::close(fd);
+		::unlink(fileName);
 		return false;
 	}
+	
+	uint8_t * data = (uint8_t*) ::mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+	if (data == MAP_FAILED) {
+		::close(fd);
+		::unlink(fileName);
+		return false;
+	}
+	MmappedFilePrivate * mf = new MmappedFilePrivate();
+	mf->m_fileName = std::string(fileName, fbSize+6);
+	mf->m_size = size;
+	mf->m_fd = fd;
+	mf->m_writable = true;
+	mf->m_deleteOnClose = true;
+	mf->m_syncOnClose = false;
+	mf->m_data = data;
 	return true;
 }
 
 bool createFilePrivate(const std::string & fileName, OffsetType size) {
-	int fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+	int fd = ::open(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
 	if (fd == -1) {
 		return false;
 	}
 	off_t result = 0;
 	if (size > 0) {
-		result = lseek(fd, size-1, SEEK_SET);
+		result = ::lseek(fd, size-1, SEEK_SET);
 	}
 	if (result == -1) {
-		close(fd);
+		::close(fd);
 		return false;
 	}
 	result = write(fd, "", 1);
 	if (result != 1) {
-		close(fd);
+		::close(fd);
 		return false;
 	}
-	struct stat stFileInfo;
-	fstat(fd, &stFileInfo);
-	close(fd);
+	struct ::stat stFileInfo;
+	::fstat(fd, &stFileInfo);
+	::close(fd);
 	return stFileInfo.st_size >= size;
 }
 
@@ -206,7 +221,7 @@ bool MmappedFile::createFile(const std::string & fileName, OffsetType size) {
 }
 
 bool MmappedFile::createCacheFile(OffsetType size, sserialize::MmappedFile & dest) {
-	std::string tempFileName = MmappedFile::findLockFilePath(UByteArrayAdapter::getTempDirPath(), 2048);
+	std::string tempFileName = MmappedFile::findLockFilePath(UByteArrayAdapter::getTempFilePrefix(), 2048);
 	if (tempFileName.empty()) {
 		return false;
 	}
@@ -224,7 +239,7 @@ bool MmappedFile::createCacheFile(OffsetType size, sserialize::MmappedFile & des
 }
 
 bool truncateFilePrivate(const std::string & fileName, OffsetType size) {
-	return (truncate(fileName.c_str(), size) > 0);
+	return (::truncate(fileName.c_str(), size) > 0);
 }
 
 bool MmappedFile::truncateFile(const std::string & fileName, OffsetType size) {
@@ -232,8 +247,8 @@ bool MmappedFile::truncateFile(const std::string & fileName, OffsetType size) {
 }
 
 bool fileExistsPrivate(const std::string & fileName) {
-	struct stat stFileInfo;
-	return (stat(fileName.c_str(), &stFileInfo) == 0 );
+	struct ::stat stFileInfo;
+	return (::stat(fileName.c_str(), &stFileInfo) == 0 );
 }
 
 bool MmappedFile::fileExists(const std::string & fileName) {
@@ -241,8 +256,8 @@ bool MmappedFile::fileExists(const std::string & fileName) {
 }
 
 std::size_t MmappedFile::fileSize(const std::string& fileName) {
-	struct stat stFileInfo;
-	if (stat(fileName.c_str(),&stFileInfo) == 0)
+	struct ::stat stFileInfo;
+	if (::stat(fileName.c_str(),&stFileInfo) == 0)
 		return stFileInfo.st_size;
 	else
 		return 0;
@@ -252,7 +267,7 @@ std::string findLockFilePathPrivate(const std::string & fileNamePrefix, uint32_t
 	std::string fn;
 	char buf[32];
 	for(unsigned int i=0; i < maxTest; i++) {
-		int len = snprintf(buf, 32, "%d", i);
+		int len = ::snprintf(buf, 32, "%d", i);
 		if (len > 0) {
 			fn = fileNamePrefix + std::string(buf, len);
 			if (!fileExistsPrivate(fn)) return fn;
@@ -274,21 +289,21 @@ bool MmappedFile::unlinkFile(const std::string & fileName) {
 }
 
 bool MmappedFile::isDirectory(const std::string & fileName) {
-	struct stat stFileInfo;
-	if (stat(fileName.c_str(),&stFileInfo) == 0)
+	struct ::stat stFileInfo;
+	if (::stat(fileName.c_str(),&stFileInfo) == 0)
 		return S_ISDIR( stFileInfo.st_mode );
 	else
 		return false;
 }
 
 bool MmappedFile::createDirectory(const std::string & fileName, __mode_t mode) {
-	if (mkdir(fileName.c_str(), mode) == 0)  {
-		chmod(fileName.c_str(), mode);
+	if (::mkdir(fileName.c_str(), mode) == 0)  {
+		::chmod(fileName.c_str(), mode);
 		return true;
 	}
 	else {
 		if (isDirectory(fileName)) {
-			chmod(fileName.c_str(), mode);
+			::chmod(fileName.c_str(), mode);
 			return true;
 		}
 		return false;
