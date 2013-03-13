@@ -118,7 +118,7 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 		for(; inBufLen < chunkSize && inBufLen+i < src.size(); ++inBufLen) {
 			inBuf[inBufLen] = src.at(inBufLen+i);
 		}
-		int r = lzo1x_1_compress(inBuf,inBufLen,outBuf,&outBufLen,wrkmem);
+		int r = ::lzo1x_1_compress(inBuf,inBufLen,outBuf,&outBufLen,wrkmem);
 		if (r != LZO_E_OK) {
 			delete[] inBuf;
 			delete[] outBuf;
@@ -197,8 +197,8 @@ bool CompressedMmappedFilePrivate::do_open() {
 	m_fd = open(m_fileName.c_str(), O_RDONLY);
 	if (m_fd < 0)
 		return false;
-	struct stat stFileInfo;
-	if (fstat(m_fd,&stFileInfo) == 0) {
+	struct ::stat stFileInfo;
+	if (::fstat(m_fd,&stFileInfo) == 0) {
 		fileSize = stFileInfo.st_size;
 	}
 	else {
@@ -208,13 +208,13 @@ bool CompressedMmappedFilePrivate::do_open() {
 		return false;
 	
 	uint8_t headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE];
-	lseek(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
+	::lseek(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
 	::read(m_fd, headerData, COMPRESSED_MMAPPED_FILE_HEADER_SIZE);
-	lseek(m_fd, 0, SEEK_SET);
+	::lseek(m_fd, 0, SEEK_SET);
 	
 	if (headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] != COMPRESSED_MMAPPED_FILE_VERSION) {
 		osmfindlog::err("CompressedMmappedFile::open", "Wrong version for file " + m_fileName);
-		close(m_fd);
+		::close(m_fd);
 		m_fd = -1;
 		return false;
 	}
@@ -228,11 +228,11 @@ bool CompressedMmappedFilePrivate::do_open() {
 	size_t mapOverHead = (m_compressedSize % m_pageSize);
 	off_t beginOffset = m_compressedSize - mapOverHead; //offset in pageSizes
 	size_t mapLen = fileSize - COMPRESSED_MMAPPED_FILE_HEADER_SIZE - beginOffset;
-	m_chunkIndexData = (uint8_t*) mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
+	m_chunkIndexData = (uint8_t*) ::mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
 	if (m_chunkIndexData == MAP_FAILED) {
 		osmfindlog::err("CompressedMmappedFile", "Maping the chunk index data failed");
-		perror("CompressedMmappedFile map index data");
-		close(m_fd);
+		::perror("CompressedMmappedFile map index data");
+		::close(m_fd);
 		m_fd = -1;
 		return false;
 	}
@@ -243,8 +243,8 @@ bool CompressedMmappedFilePrivate::do_open() {
 	}
 	catch (sserialize::Exception & e) {
 		osmfindlog::err("CompressedMmappedFile::open", e.what());
-		munmap(m_chunkIndexData, mapLen);
-		close(m_fd);
+		::munmap(m_chunkIndexData, mapLen);
+		::close(m_fd);
 		m_fd = -1;
 		return false;
 	}
@@ -254,8 +254,8 @@ bool CompressedMmappedFilePrivate::do_open() {
 	if (!MmappedFile::createCacheFile(chunkSize()*m_maxOccupyCount, m_decTileFile)) {
 		osmfindlog::err("CompressedMmappedFile", "Creating the decompression storage failed");
 		m_chunkIndex = Static::SortedOffsetIndex();
-		munmap(m_chunkIndexData, mapLen);
-		close(m_fd);
+		::munmap(m_chunkIndexData, mapLen);
+		::close(m_fd);
 		m_fd = -1;
 		return false;
 	}
@@ -286,8 +286,8 @@ bool CompressedMmappedFilePrivate::do_close() {
 	//unmap the chunk index
 	
 	std::size_t fileSize;
-	struct stat stFileInfo;
-	if (fstat(m_fd,&stFileInfo) == 0) {
+	struct ::stat stFileInfo;
+	if (::fstat(m_fd,&stFileInfo) == 0) {
 		fileSize = stFileInfo.st_size;
 	}
 	else
@@ -295,12 +295,12 @@ bool CompressedMmappedFilePrivate::do_close() {
 
 	size_t beginOffset = m_compressedSize / m_pageSize; //offset in pageSizes
 	size_t mapLen = fileSize - (m_pageSize*beginOffset+6);
-	munmap(m_chunkIndexData, mapLen);
+	::munmap(m_chunkIndexData, mapLen);
 	m_chunkIndexData = 0;
 	
 	//and close the file
 	m_size = 0;
-	close(m_fd);
+	::close(m_fd);
 	m_fd = -1;
 	return true;
 }
@@ -341,7 +341,7 @@ void CompressedMmappedFilePrivate::ummapChunk(CompressedMmappedFilePrivate::Size
 	
 	mmapChunkParameters(chunk, mapOverHead, beginOffset, mapLen);
 	
-	munmap(data-mapOverHead, mapLen);
+	::munmap(data-mapOverHead, mapLen);
 }
 
 
@@ -356,14 +356,14 @@ bool CompressedMmappedFilePrivate::do_unpack(const CompressedMmappedFilePrivate:
 	uint8_t * data = (uint8_t*) mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
 	if (data == MAP_FAILED) {
 		osmfindlog::err("CompressedMmappedFile", "Maping a chunk failed");
-		perror("CompressedMmappedFile::do_unpack::mmap");
+		::perror("CompressedMmappedFile::do_unpack::mmap");
 		return false;
 	}
 	
 	lzo_uint destLen = chunkSize();
-	int ok = lzo1x_decompress(data+mapOverHead, mapLen-mapOverHead, dest, &destLen, 0);
+	int ok = ::lzo1x_decompress(data+mapOverHead, mapLen-mapOverHead, dest, &destLen, 0);
 	
-	munmap(data, mapLen);
+	::munmap(data, mapLen);
 	
 	return (ok == LZO_E_OK);
 }
@@ -454,14 +454,14 @@ void CompressedMmappedFilePrivate::read(const CompressedMmappedFilePrivate::Size
 	uint32_t beginChunk = chunk(offset);
 	uint32_t endChunk = chunk(offset+len-1);
 
-	memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset)));
+	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset)));
 	dest += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset));
 	for(uint32_t i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
-		memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
+		::memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
 		dest += chunkSize;
 	}
 	if (beginChunk < endChunk) { //copy things from the last chunk
-		memmove(dest, chunkData(endChunk), sizeof(uint8_t)*inChunkOffSet(offset+len));
+		::memmove(dest, chunkData(endChunk), sizeof(uint8_t)*inChunkOffSet(offset+len));
 	}
 }
 

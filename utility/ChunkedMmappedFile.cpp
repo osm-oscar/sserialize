@@ -129,11 +129,11 @@ bool ChunkedMmappedFilePrivate::do_open() {
 		proto = O_RDWR;
 	if (m_fileName.size() == 0)
 		return false;
-	m_fd = open(m_fileName.c_str(), proto);
+	m_fd = ::open(m_fileName.c_str(), proto);
 	if (m_fd < 0)
 		return false;
-	struct stat stFileInfo;
-	if (fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size < std::numeric_limits<SizeType>::max()) {
+	struct ::stat stFileInfo;
+	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size < std::numeric_limits<SizeType>::max()) {
 		m_size = stFileInfo.st_size;
 	}
 	else {
@@ -155,13 +155,13 @@ bool ChunkedMmappedFilePrivate::do_close() {
 
 	bool allOk = do_unmap();
 	
-	if (close(m_fd) == -1) {
+	if (::close(m_fd) == -1) {
 		return false;
 	}
 	m_fd = -1;
 	m_size = 0;
 	
-	if (m_deleteOnClose && unlink(m_fileName.c_str()) < 0) {
+	if (m_deleteOnClose && ::unlink(m_fileName.c_str()) < 0) {
 		return false;
 	}
 	return allOk;
@@ -185,7 +185,7 @@ inline uint8_t * ChunkedMmappedFilePrivate::do_map(const ChunkedMmappedFilePriva
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
 	off_t chunkOffSet = chunk*chunkSize(); //This will always be page aligned as a chunk has a minimum size of PAGE_SIZE
-	uint8_t * data = (uint8_t*) mmap(0, sizeOfChunk(chunk), mmap_proto, MAP_SHARED, m_fd, chunkOffSet);
+	uint8_t * data = (uint8_t*) ::mmap(0, sizeOfChunk(chunk), mmap_proto, MAP_SHARED, m_fd, chunkOffSet);
 	
 	if (data == MAP_FAILED) {
 		osmfindlog::err("ChunkedMmappedFile", "Maping a chunk failed");
@@ -201,7 +201,7 @@ bool ChunkedMmappedFilePrivate::do_unmap(const ChunkedMmappedFilePrivate::SizeTy
 	
 	uint8_t * data = m_cache.directAccess(chunk);
 	
-	if (munmap(data, sizeOfChunk(chunk)) == -1) {
+	if (::munmap(data, sizeOfChunk(chunk)) == -1) {
 		return false;
 	}
 	return true;
@@ -209,7 +209,7 @@ bool ChunkedMmappedFilePrivate::do_unmap(const ChunkedMmappedFilePrivate::SizeTy
 
 bool ChunkedMmappedFilePrivate::do_sync(const ChunkedMmappedFilePrivate::SizeType chunk) {
 	uint8_t * data = m_cache.directAccess(chunk);
-	int result = msync(data, sizeOfChunk(chunk), MS_SYNC);
+	int result = ::msync(data, sizeOfChunk(chunk), MS_SYNC);
 	return result == 0;
 }
 
@@ -234,14 +234,14 @@ void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType o
 	uint32_t beginChunk = chunk(offset);
 	uint32_t endChunk = chunk(offset+len-1);
 
-	memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset)));
+	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset)));
 	dest += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset));
 	for(uint32_t i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
-		memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
+		::memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
 		dest += chunkSize;
 	}
 	if (beginChunk < endChunk) { //copy things from the last chunk
-		memmove(dest, chunkData(endChunk), sizeof(uint8_t)*inChunkOffSet(offset+len));
+		::memmove(dest, chunkData(endChunk), sizeof(uint8_t)*inChunkOffSet(offset+len));
 	}
 }
 
@@ -259,14 +259,14 @@ void ChunkedMmappedFilePrivate::write(const uint8_t * src, const sserialize::Chu
 	uint32_t beginChunk = chunk(destOffset);
 	uint32_t endChunk = chunk(destOffset +len-1);
 
-	memmove(chunkData(beginChunk)+inChunkOffSet(destOffset), src, sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(destOffset)));
+	::memmove(chunkData(beginChunk)+inChunkOffSet(destOffset), src, sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(destOffset)));
 	src += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(destOffset));
 	for(uint32_t i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
-		memmove(chunkData(i), src, sizeof(uint8_t)*chunkSize);
+		::memmove(chunkData(i), src, sizeof(uint8_t)*chunkSize);
 		src += chunkSize;
 	}
 	if (beginChunk < endChunk) { //copy things from the last chunk
-		memmove(chunkData(endChunk), src, sizeof(uint8_t)*inChunkOffSet(destOffset +len));
+		::memmove(chunkData(endChunk), src, sizeof(uint8_t)*inChunkOffSet(destOffset +len));
 	}
 }
 
@@ -318,7 +318,7 @@ bool ChunkedMmappedFilePrivate::resize(const ChunkedMmappedFilePrivate::SizeType
 	bool allOk = true;
 	int result = ftruncate(m_fd, size);
 	if (result < 0) {
-		perror("MmappedFilePrivate::resize");
+		::perror("MmappedFilePrivate::resize");
 		allOk = false;
 	}
 	else {
