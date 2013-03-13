@@ -4,7 +4,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-
 namespace sserialize {
 
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
