@@ -19,13 +19,13 @@ protected:
 private:
 	std::vector<UByteArrayAdapter> m_geoCompleterData;
 	std::vector<sserialize::GeoCompleter> m_geoCompleters;
-	uint8_t m_selectedGeoCompleter;
+	int m_selectedGeoCompleter;
 protected:
 	/** currently this only support the ItemGeoGrid, this has to be called after init */
-	int8_t addGeoCompleter(const UByteArrayAdapter & data) {
+	int addGeoCompleter(const UByteArrayAdapter & data) {
 		if (!data.size() || !MyParentClass::engineStatus())
 			return -1;
-		int8_t id = m_geoCompleters.size();
+		int id = m_geoCompleters.size();
 
 		GeoCompleterPrivateProxy< sserialize::Static::spatial::ItemGeoGrid<DataBaseType> > * gcp = 
 			new GeoCompleterPrivateProxy< Static::spatial::ItemGeoGrid<DataBaseType> >(
@@ -78,11 +78,12 @@ public:
 		return true;
 	}
 	
-	uint8_t selectedGeoCompleter() {
+	int selectedGeoCompleter() {
 		return m_selectedGeoCompleter;
 	}
 	
 	void addGeoCompleterData(const sserialize::UByteArrayAdapter& data) { m_geoCompleterData.push_back(data);}
+	///@warning this will most likely create a segfault when no completer was selected
 	const GeoCompleter & getGeoCompleter() const { return m_geoCompleters[m_selectedGeoCompleter];}
 	const std::vector<sserialize::GeoCompleter> & getGeoCompleters() const { return m_geoCompleters; }
 	std::ostream& printStats(std::ostream & out) const {

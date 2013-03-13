@@ -28,7 +28,7 @@ private:
 	UByteArrayAdapter m_stableData;
 	bool m_engineStatus;
 
-	uint8_t m_selectedCompleter;
+	int m_selectedCompleter;
 	std::vector<sserialize::StringCompleter> m_strCompleters;
 	Static::StringTable m_stable;
 	DataBaseType m_itemDataBase;
@@ -36,7 +36,7 @@ private:
 protected:
 	int8_t addStringCompleter(const UByteArrayAdapter & data);
 	void clear() {
-		m_selectedCompleter = 0;
+		m_selectedCompleter = -1;
 		m_strCompleters = std::vector<sserialize::StringCompleter>();
 		m_stable = Static::StringTable();
 		m_itemDataBase = DataBaseType();
@@ -66,8 +66,9 @@ public:
 	void setDBData(const UByteArrayAdapter & data) { m_dbData = data; }
 	void setStringTableData(const UByteArrayAdapter & data) { m_stableData = data; }
 	bool energize();
-	bool setCompleter(uint8_t id);
-	uint8_t selectedCompleter()const { return m_selectedCompleter; }
+	bool setCompleter(int id);
+	///@return -1 if none selected
+	int selectedCompleter() const { return m_selectedCompleter; }
 
 public:
 	inline UByteArrayAdapter getStringCompleterData() {
@@ -79,7 +80,9 @@ public:
 	inline UByteArrayAdapter getIndexData() { return m_indexData;}
 	inline UByteArrayAdapter getDBData() { return m_dbData;}
 	inline UByteArrayAdapter getStringTableData() { return m_stableData;}
+	inline std::size_t getCompletersSize() const { return m_strCompleters.size(); }
 	inline const std::vector<sserialize::StringCompleter> & getCompleters() const { return m_strCompleters; }
+	///@warning This will cause undefined behaviour if no completer is selected (you'll most probably get a segfault) 
 	inline const sserialize::StringCompleter & getCompleter() const { return m_strCompleters[m_selectedCompleter];}
 	inline const Static::StringTable & getStringTable() const { return m_stable; }
 	inline const DataBaseType & getItemDataBase() const { return m_itemDataBase; }
@@ -100,7 +103,7 @@ public:
 template<class ItemType, class DataBaseType>
 Completer<ItemType, DataBaseType>::Completer() :
 m_engineStatus(false),
-m_selectedCompleter(0)
+m_selectedCompleter(-1)
 {}
 
 template<class ItemType, class DataBaseType>
@@ -108,7 +111,7 @@ Completer<ItemType, DataBaseType>::~Completer() {}
 
 template<class ItemType, class DataBaseType>
 bool
-Completer<ItemType, DataBaseType>::setCompleter(uint8_t id) {
+Completer<ItemType, DataBaseType>::setCompleter(int id) {
 	if (m_strCompleters.size() > id) {
 		m_selectedCompleter = id;
 		return true;
