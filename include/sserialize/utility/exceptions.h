@@ -18,7 +18,7 @@ public:
 	virtual const char* what() const throw() { return m_msg.c_str(); }
 };
 
-class VersionMissMatchException: Exception {
+class VersionMissMatchException: public Exception {
 	uint32_t m_wantVersion;
 	uint32_t m_haveVersion;
 public:
@@ -32,21 +32,29 @@ public:
 	uint32_t haveVersion() const { return m_haveVersion; }
 };
 
-class TypeMissMatchException: Exception {
+class TypeMissMatchException: public Exception {
 public:
 	TypeMissMatchException(const std::string & what) :
 	Exception()
 	{
-		setMsg("VersionMissMatchException: " + what);
+		setMsg("TypeMissMatchException: " + what);
 	}
 };
 
-class CorruptDataException: Exception {
+class CorruptDataException: public Exception {
 public:
 	CorruptDataException(const std::string & what) :
 	Exception()
 	{
 		setMsg("CorruptDataException: " + what);
+	}
+};
+
+class InvalidReferenceException: public Exception {
+	InvalidReferenceException(const std::string & what) :
+	Exception()
+	{
+		setMsg("InvalidReferenceException: " + what);
 	}
 };
 
