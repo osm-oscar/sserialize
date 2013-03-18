@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_COMPRESSED_MMAPPED_FILE_H
 #define SSERIALIZE_COMPRESSED_MMAPPED_FILE_H
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/templated/DirectLRUCache.h>
+#include <sserialize/templated/DirectCaches.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/mmappedfile.h>
@@ -77,6 +77,7 @@ public:
 class CompressedMmappedFilePrivate: public RefCountObject  {
 public:
 	typedef CompressedMmappedFile::SizeType SizeType;
+	typedef DirectRandomCache<uint32_t> MyCacheType;
 private:
 	std::string m_fileName;
 	SizeType m_size; //Total size of the decompressed file
@@ -93,7 +94,7 @@ private:
 	uint32_t m_chunkMask;
 	
 	uint32_t m_maxOccupyCount;
-	DirectLRUCache<uint32_t> m_cache; //cache which maps from File chunks to m_chunkStorage positions
+	MyCacheType m_cache; //cache which maps from File chunks to m_chunkStorage positions
 	MmappedFile m_decTileFile; //the file storage to store the decompressed data
 	std::vector<uint16_t> m_freeList; //list of free places in decTileFile
 	std::vector<uint8_t*> m_chunkStorage;

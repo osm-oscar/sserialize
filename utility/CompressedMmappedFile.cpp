@@ -266,7 +266,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 	m_chunkStorage = std::vector<uint8_t*>(m_maxOccupyCount, 0);
 	
 	
-	m_cache = DirectLRUCache<uint32_t>(m_chunkIndex.size(), std::numeric_limits<uint32_t>::max());
+	m_cache = MyCacheType(m_chunkIndex.size(), std::numeric_limits<uint32_t>::max());
 	
 	return true;
 }
