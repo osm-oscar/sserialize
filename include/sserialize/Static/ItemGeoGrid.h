@@ -75,13 +75,24 @@ public:
 			return ItemIndex();
 			
 		if (approximate) {
-			if (definiteBins.size())
+			uint32_t binsToMerge = definiteBins.size() + possibleBins.size();
+			if (binsToMerge < 1024) {
+				if (definiteBins.size())
+					if (possibleBins.size())
+						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1) + mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
+					else
+						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1);
+				else if (possibleBins.size())
+					return mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
+			}
+			else {
+				DynamicBitSet bitSet;
+				if (definiteBins.size())
+					putBinIndicesInto(definiteBins, bitSet);
 				if (possibleBins.size())
-					return mergeBinIndices(definiteBins, 0, definiteBins.size()-1) + mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
-				else
-					return mergeBinIndices(definiteBins, 0, definiteBins.size()-1);
-			else if (possibleBins.size())
-				return mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
+					putBinIndicesInto(possibleBins, bitSet);
+				return  ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
+			}
 		}
 		else {
 			//let's try to use a set to merge the bins
