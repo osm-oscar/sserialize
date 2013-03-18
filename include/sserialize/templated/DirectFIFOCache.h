@@ -1,25 +1,25 @@
-#ifndef SSERIALIZE_DIRECT_RANDOM_CACHE_H
-#define SSERIALIZE_DIRECT_RANDOM_CACHE_H
+#ifndef SSERIALIZE_DIRECT_FIFO_CACHE_H
+#define SSERIALIZE_DIRECT_FIFO_CACHE_H
 #include <limits>
 #include <vector>
-#include <set>
+#include <list>
 #include <stdlib.h>
 
 template<typename TValue>
-class DirectRandomCache {
+class DirectFIFOCache {
 public:
 	typedef typename std::vector<TValue>::iterator CacheIterator;
 	typedef typename std::vector<TValue>::const_iterator ConstCacheIterator;
-	typedef std::set<uint32_t>::const_iterator OccupyIterator;
+	typedef std::list<uint32_t>::const_iterator OccupyIterator;
 private:
 	std::vector<TValue> m_cache;
-	std::set<uint32_t> m_occupied;
+	std::list<uint32_t> m_occupied;
 	TValue m_defaultValue;
 public:
-	DirectRandomCache() {}
-	DirectRandomCache(uint32_t cacheLineCount, const TValue & defaultValue) : m_cache(cacheLineCount, defaultValue), m_defaultValue(defaultValue) {}
+	DirectFIFOCache() {}
+	DirectFIFOCache(uint32_t cacheLineCount, const TValue & defaultValue) : m_cache(cacheLineCount, defaultValue), m_defaultValue(defaultValue) {}
 	/// It's your task to take of correct deletion of the values! */
-	virtual ~DirectRandomCache() {}
+	virtual ~DirectFIFOCache() {}
 	
 	uint32_t occupyCount() const { return m_occupied.size(); }
 	
@@ -29,18 +29,12 @@ public:
 	uint32_t findVictim() {
 		if (occupyCount() == 0)
 			return std::numeric_limits<uint32_t>::max();
-		uint32_t pos = rand() % occupyCount();
-		std::set<uint32_t>::const_iterator sIt(m_occupied.cbegin());
-		while (pos) {
-			--pos;
-			++sIt;
-		}
-		return *sIt;
+		return m_occupied.front();
 	}
 
-	///evcit
+	///evcit, evicts the FRONT!
 	void evict(uint32_t pos) {
-		m_occupied.erase(pos);
+		m_occupied.pop_front();
 		m_cache[pos] = m_defaultValue;
 	}
 	
@@ -55,13 +49,18 @@ public:
 	}
 	
 	bool occupied(const uint32_t cacheLine) const {
-		return m_occupied.count(cacheLine);
+		std::list<uint32_t>::const_iterator end(m_occupied.end());
+		for(std::list<uint32_t>::const_iterator it(m_occupied.begin()); it != end; ++it) {
+			if (*it == cacheLine)
+				return true;
+		}
+		return false;
 	}
 	
 	/** Inserts @param value into @param cacheLine, inital usage=1 */
 	void insert(const uint32_t cacheLine, const TValue & value) {
 		m_cache[cacheLine] = value;
-		m_occupied.insert(cacheLine);
+		m_occupied.push_back(cacheLine);
 	}
 	///Clears the cache
 	void clear() {
