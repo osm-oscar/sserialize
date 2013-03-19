@@ -380,4 +380,144 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 
 }
 
+struct IndexStates {
+	struct SingleState {
+		SingleState(const UByteArrayAdapter & data) : data(data), rle(0), diff(0), id(0), valid(true) {
+// 			this->data.resetPtrs();
+			next();
+		}
+		UByteArrayAdapter data;
+		uint32_t rle;
+		uint32_t diff;
+		uint32_t id;
+		bool valid;
+		void next() {
+			if (rle) {
+				id += diff;
+				--rle;
+			}
+			else {
+				valid = data.getPtrHasNext();
+				if (valid) {
+					rle = data.getVlPackedUint32();
+					if (rle & 0x1) {
+						rle >>= 1;
+						diff = data.getVlPackedUint32();
+						--rle;
+					}
+					else {
+						diff = rle >> 1;
+						rle = 0;
+					}
+					id += diff;
+				}
+			}
+		}
+		
+		void moveTillLargerOrEqual(uint32_t id) {
+			while (this->valid && this->id < id) {
+				next();
+			}
+		}
+	};
+	
+	IndexStates(uint32_t stateCount) : stateCount(stateCount), validCounter(stateCount) {
+		states.reserve(stateCount);
+	}
+	
+	void push_back(const UByteArrayAdapter & indexData) {
+		states.push_back( SingleState(indexData) );
+	}
+	
+	void next() {
+		for(uint32_t i = 0; i < stateCount; ++i) {
+			next(i);
+		}
+	}
+	
+	void next(uint32_t pos) {
+		SingleState & s = states[pos];
+		s.next();
+		if (!s.valid)
+			--validCounter;
+	}
+	
+	int findMin(uint32_t & minId) {
+		int minPos = std::numeric_limits<int>::min();
+		minId = std::numeric_limits<uint32_t>::max();
+		for(uint32_t i = 0; i < stateCount; ++i) {
+			const SingleState & s = states[i];
+			if (s.valid && s.id <= minId) {
+				minPos = i;
+				minId = s.id;
+			}
+		}
+		return minPos;
+	}
+	
+	bool findMax(uint32_t & maxId) {
+		int maxPos = std::numeric_limits<int>::min();
+		maxId = std::numeric_limits<uint32_t>::min();
+		for(uint32_t i = 0; i < stateCount; ++i) {
+			const SingleState & s = states[i];
+			if (s.valid && s.id >= maxId) {
+				maxPos = i;
+				maxId = s.id;
+			}
+		}
+		return maxPos;
+	}
+	
+
+	void moveTillLargerOrEqual(const uint32_t id, bool & allEqual) {
+		allEqual = true;
+		for(uint32_t i = 0; i < stateCount; ++i) {
+			SingleState & s =  states[i];
+			s.moveTillLargerOrEqual(id);
+			if (!s.valid)
+				--validCounter;
+			allEqual = allEqual && (s.id == id);
+		}
+	}
+	
+	///@return true iff id is valid
+	bool moveToNextEqual(uint32_t & id) {
+		bool allEqual = false;
+		while (allValid() && !allEqual) {
+			findMax(id);
+			moveTillLargerOrEqual(id, allEqual);
+		}
+		return allValid();
+	}
+	
+	bool allValid() {
+		return validCounter == states.size();
+	}
+	
+	bool oneIsValid() {
+		return validCounter;
+	}
+	std::vector<SingleState> states;
+	uint32_t stateCount;
+	uint32_t validCounter;
+};
+
+ItemIndex ItemIndexPrivateRleDE::constrainedIntersect(const std::vector< ItemIndexPrivateRleDE* > & intersect, uint32_t count) {
+	IndexStates states(intersect.size());
+	for(std::size_t i = 0; i < intersect.size(); ++i) {
+		states.push_back(intersect[i]->m_data);
+	}
+	std::vector<uint32_t> resultSet;
+	resultSet.reserve(count);
+	
+	uint32_t id;
+	while (states.allValid() && resultSet.size() < count) {
+		if (states.moveToNextEqual(id)) {
+			resultSet.push_back(id);
+			states.next();
+		}
+	}
+	return ItemIndex::absorb(resultSet);
+}
+
 }//end namespace

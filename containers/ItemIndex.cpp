@@ -402,6 +402,19 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 		
 		return ItemIndexPrivateWAH::constrainedIntersect(intersectPrivates, count);
 	}
+	case ItemIndex::T_RLE_DE:
+	{
+		std::vector<ItemIndexPrivateRleDE*> intersectPrivates;
+		intersectPrivates.reserve(intersect.size());
+		for(std::vector< ItemIndex >::const_iterator it = intersect.begin(); it != endInt; ++it) {
+			if (it->size())
+				intersectPrivates.push_back( static_cast<ItemIndexPrivateRleDE*>( it->priv() ) );
+			else
+				return ItemIndex();
+		}
+		
+		return ItemIndexPrivateRleDE::constrainedIntersect(intersectPrivates, count);
+	}
 	default:
 		return ItemIndex::intersect( intersect );
 	}

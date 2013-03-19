@@ -12,7 +12,8 @@ namespace sserialize {
   *--------------------------------------------------------------------------------------
   *uint32|uint32|*
   *--------------------------------------------------------------------------------------
-  *Data is delta encoded with rle. Type of word is selected by the least significant bit 
+  * Data is delta encoded with rle. Type of word is selected by the least significant bit.
+  * If data[i] &0x1 then data is a rle and the next caruint32 tells the difference between the data[i] >> 1 elements
   *
   *
   */
@@ -133,6 +134,10 @@ public:
 	virtual ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const;
 // 	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
 // 	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
+
+	///The result of this operations uses a memory-based backend
+	///none of the indices has to be empty!
+	static ItemIndex constrainedIntersect(const std::vector< ItemIndexPrivateRleDE* > & intersect, uint32_t count);
 
 
 public:
