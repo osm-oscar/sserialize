@@ -102,6 +102,7 @@ public:
 	UByteArrayAdapter& shrinkToPutPtr();
 
 	OffsetType tellGetPtr() const;
+	bool getPtrHasNext() const;
 	void incGetPtr(OffsetType num);
 	void decGetPtr(OffsetType num);
 	void setGetPtr(OffsetType pos);

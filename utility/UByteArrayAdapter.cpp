@@ -365,6 +365,10 @@ OffsetType UByteArrayAdapter::tellGetPtr() const {
 	return m_getPtr;
 }
 
+bool UByteArrayAdapter::getPtrHasNext() const {
+	return m_getPtr < m_len;
+}
+
 void UByteArrayAdapter::incGetPtr(OffsetType num) {
 	setGetPtr(m_getPtr+num);
 }
