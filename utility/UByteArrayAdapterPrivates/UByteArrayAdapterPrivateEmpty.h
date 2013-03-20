@@ -10,6 +10,11 @@ public:
 	UByteArrayAdapterPrivateEmpty() : UByteArrayAdapterPrivate(), m_default(0) {}
 	virtual ~UByteArrayAdapterPrivateEmpty() {}
 
+	/** Shrink data to size bytes */
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) { return false; }
+	/** grow data to at least! size bytes */
+	virtual bool growStorage(UByteArrayAdapter::OffsetType size) { return false; }
+
 //Access functions
 	virtual uint8_t & operator[](UByteArrayAdapter::OffsetType pos) { return m_default; }
 	virtual const uint8_t & operator[](UByteArrayAdapter::OffsetType pos) const { return m_default; }

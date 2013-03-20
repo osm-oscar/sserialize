@@ -8,10 +8,17 @@ class UByteArrayAdapterPrivateArray: public UByteArrayAdapterPrivate {
 private:
 	uint8_t * m_data;
 protected:
-	uint8_t* &data();
+	uint8_t* & data();
 public:
     UByteArrayAdapterPrivateArray(uint8_t * data) : UByteArrayAdapterPrivate(), m_data(data) {}
 	virtual ~UByteArrayAdapterPrivateArray();
+
+	/** Shrink data to size bytes */
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) { return false; }
+	/** grow data to at least! size bytes */
+	virtual bool growStorage(UByteArrayAdapter::OffsetType size) { return false; }
+	
+
 	virtual uint8_t & operator[](UByteArrayAdapter::OffsetType pos);
 	virtual const uint8_t & operator[](UByteArrayAdapter::OffsetType pos) const;
 

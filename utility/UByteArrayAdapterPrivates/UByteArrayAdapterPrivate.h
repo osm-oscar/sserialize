@@ -15,9 +15,9 @@ public:
 //support opertions
 
 	/** Shrink data to size bytes */
-	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) { return false;}
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) = 0;
 	/** grow data to at least! size bytes */
-	virtual bool growStorage(UByteArrayAdapter::OffsetType size) { return false;}
+	virtual bool growStorage(UByteArrayAdapter::OffsetType size) = 0;
 
 
 //manipulators
