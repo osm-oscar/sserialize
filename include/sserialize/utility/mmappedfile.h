@@ -38,10 +38,13 @@ public:
 	inline void setDeleteOnClose(bool deleteOnClose) { m_deleteOnClose = deleteOnClose; }
 	inline void setSyncOnClose(bool syncOnClose) { m_syncOnClose = syncOnClose; }
 	
-	static bool createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest);
+	///returns 0 on error and a instance of MmappedFilePrivate on success
+	static MmappedFilePrivate* createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size);
 };
 
 class MmappedFile: public RCWrapper<MmappedFilePrivate> {
+private:
+	explicit MmappedFile(MmappedFilePrivate * priv) : RCWrapper<MmappedFilePrivate>(priv) {}
 public:
 	MmappedFile() : RCWrapper<MmappedFilePrivate>(new MmappedFilePrivate()) {
 		if (priv()) {

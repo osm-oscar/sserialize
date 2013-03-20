@@ -156,7 +156,7 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	return allOk;
 }
 
-bool MmappedFilePrivate::createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest) {
+MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & fileNameBase, sserialize::UByteArrayAdapter::OffsetType size) {
 	std::size_t fbSize = fileNameBase.size();
 	char * fileName = new char[fbSize+7];
 	::memmove(fileName, fileNameBase.c_str(), sizeof(char)*fbSize);
@@ -166,12 +166,12 @@ bool MmappedFilePrivate::createTempFile(const std::string & fileNameBase, UByteA
 	int fd = mkstemp(fileName);
 	
 	if (fd < 0)
-		return false;
+		return 0;
 
 	if (::ftruncate(fd, size) < 0) {
 		::close(fd);
 		::unlink(fileName);
-		return false;
+		return 0;
 	}
 	
 	uint8_t * data = (uint8_t*) ::mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -179,7 +179,7 @@ bool MmappedFilePrivate::createTempFile(const std::string & fileNameBase, UByteA
 	if (data == MAP_FAILED) {
 		::close(fd);
 		::unlink(fileName);
-		return false;
+		return 0;
 	}
 	MmappedFilePrivate * mf = new MmappedFilePrivate();
 	mf->m_fileName = std::string(fileName, fbSize+6);
@@ -189,7 +189,7 @@ bool MmappedFilePrivate::createTempFile(const std::string & fileNameBase, UByteA
 	mf->m_deleteOnClose = true;
 	mf->m_syncOnClose = false;
 	mf->m_data = data;
-	return true;
+	return mf;
 }
 
 bool createFilePrivate(const std::string & fileName, OffsetType size) {
@@ -277,7 +277,11 @@ std::string findLockFilePathPrivate(const std::string & fileNamePrefix, uint32_t
 }
 
 bool MmappedFile::createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size, MmappedFile & dest) {
-	return MmappedFilePrivate::createTempFile(fileNameBase, size, dest);
+	MmappedFilePrivate * mf = MmappedFilePrivate::createTempFile(fileNameBase, size);
+	if (mf) {
+		dest = MmappedFile(mf);
+	}
+	return mf;
 }
 
 std::string MmappedFile::findLockFilePath(const std::string & fileNamePrefix, uint32_t maxTest) {
