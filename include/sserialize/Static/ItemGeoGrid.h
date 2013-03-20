@@ -6,6 +6,7 @@
 #include "ItemIndexStore.h"
 #include <iomanip>
 #include <iostream>
+#define MAX_INDICE_COUNT_FOR_TREE_MERGE 1024
 
 namespace sserialize {
 namespace Static {
@@ -73,10 +74,10 @@ public:
 		select(rect, definiteBins, possibleBins);
 		if (!definiteBins.size() && !possibleBins.size())
 			return ItemIndex();
-			
+		
+		uint32_t binsToMerge = definiteBins.size() + possibleBins.size();
 		if (approximate) {
-			uint32_t binsToMerge = definiteBins.size() + possibleBins.size();
-			if (binsToMerge < 1024) {
+			if (binsToMerge < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
 				if (definiteBins.size())
 					if (possibleBins.size())
 						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1) + mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
@@ -95,10 +96,9 @@ public:
 			}
 		}
 		else {
-			//let's try to use a set to merge the bins
 			DynamicBitSet bitSet;
-			for(size_t i = 0; i < possibleBins.size(); ++i) {
-				ItemIndex idx = indexFromBin( possibleBins.at(i) );
+			if (binsToMerge < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
+				ItemIndex idx = mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
 				uint32_t idxSize = idx.size();
 				for(uint32_t idxIt = 0; idxIt < idxSize; ++idxIt) {
 					uint32_t itemId = idx.at(idxIt);
@@ -106,14 +106,47 @@ public:
 						bitSet.set(itemId);
 				}
 			}
-			
+			else {
+				putBinIndicesInto(possibleBins, bitSet);
+				{
+					UByteArrayAdapter & bData = bitSet.data();
+					UByteArrayAdapter::OffsetType bDataSize = bData.size();
+					UByteArrayAdapter::OffsetType curPos = 0;
+					uint32_t curId = 0;
+					for(;curPos < bDataSize; ++curPos, curId += 8) {
+						uint8_t & src = bData[curPos];
+						if (src) {
+							uint8_t tmp = src;
+							src = 0;
+							uint8_t shift = 0;
+							while (tmp) {
+								if (tmp & 0x80) {
+									if (m_db.match(curId+shift, rect))
+										src |= 0x1;
+								}
+								tmp <<= 1;
+								src <<= 1;
+								++shift;
+							}
+							src <<= (8-shift); 
+						}
+					}
+				}
+			}
+
 			if (definiteBins.size())
 				if (bitSet.size()) {
 					putBinIndicesInto(definiteBins, bitSet);
 					return  ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
 				}
 				else
-					return mergeBinIndices(definiteBins, 0, definiteBins.size()-1);
+					if (definiteBins.size() < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
+						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1);
+					}
+					else {
+						putBinIndicesInto(definiteBins, bitSet);
+						return ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
+					}
 			else if (bitSet.size())
 				return ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
 		}
