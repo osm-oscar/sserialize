@@ -20,9 +20,9 @@ m_useRegLine(true),
 m_type(ItemIndex::T_REGLINE)
 {
 	if (memoryBased)
-		m_indexStore = UByteArrayAdapter(new std::vector<uint8_t>(), true);
+		 setIndexFile( UByteArrayAdapter(new std::vector<uint8_t>(), true) );
 	else
-		m_indexStore = UByteArrayAdapter::createCache(8*1024*1024, true);
+		setIndexFile( UByteArrayAdapter::createCache(8*1024*1024, true) );
 }
 
 ItemIndexFactory::~ItemIndexFactory() {}
@@ -32,6 +32,13 @@ UByteArrayAdapter ItemIndexFactory::at(sserialize::OffsetType offset) const {
 }
 
 void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
+	if (m_indexIdCounter > 0) { //clear eversthing
+		m_indexIdCounter = 0;
+		m_hitCount = 0;
+		m_hash.clear();
+		m_offsetsToId.clear();
+	}
+
 	m_header = data;
 	m_header.putUint8(0); // dummy version
 	m_header.putUint8(0); //dumy index type
