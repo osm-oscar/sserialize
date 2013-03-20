@@ -137,6 +137,11 @@ public:
 
 	///The result of this operations uses a memory-based backend
 	///none of the indices has to be empty!
+	static ItemIndex fusedIntersectDifference(const std::vector< ItemIndexPrivateRleDE* > & intersect, const std::vector< ItemIndexPrivateRleDE* >& subtract, uint32_t count);
+
+
+	///The result of this operations uses a memory-based backend
+	///none of the indices has to be empty!
 	static ItemIndex constrainedIntersect(const std::vector< ItemIndexPrivateRleDE* > & intersect, uint32_t count);
 
 

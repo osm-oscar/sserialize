@@ -402,7 +402,7 @@ struct IndexStates {
 					rle = data.getVlPackedUint32();
 					if (rle & 0x1) {
 						rle >>= 1;
-						diff = data.getVlPackedUint32();
+						diff = data.getVlPackedUint32() >> 1;
 						--rle;
 					}
 					else {
@@ -414,7 +414,7 @@ struct IndexStates {
 			}
 		}
 		
-		void moveTillLargerOrEqual(uint32_t id) {
+		inline void moveTillLargerOrEqual(uint32_t id) {
 			while (this->valid && this->id < id) {
 				next();
 			}
@@ -455,7 +455,7 @@ struct IndexStates {
 		return minPos;
 	}
 	
-	bool findMax(uint32_t & maxId) {
+	inline bool findMax(uint32_t & maxId) {
 		int maxPos = std::numeric_limits<int>::min();
 		maxId = std::numeric_limits<uint32_t>::min();
 		for(uint32_t i = 0; i < stateCount; ++i) {
@@ -469,23 +469,26 @@ struct IndexStates {
 	}
 	
 
-	void moveTillLargerOrEqual(const uint32_t id, bool & allEqual) {
+	inline void moveTillLargerOrEqual(const uint32_t id, bool & allEqual, bool & oneEqual) {
 		allEqual = true;
+		oneEqual = false;
 		for(uint32_t i = 0; i < stateCount; ++i) {
 			SingleState & s =  states[i];
 			s.moveTillLargerOrEqual(id);
 			if (!s.valid)
 				--validCounter;
 			allEqual = allEqual && (s.id == id);
+			oneEqual = oneEqual || (s.id == id);
 		}
 	}
 	
 	///@return true iff id is valid
 	bool moveToNextEqual(uint32_t & id) {
 		bool allEqual = false;
+		bool oneEqual = false;
 		while (allValid() && !allEqual) {
 			findMax(id);
-			moveTillLargerOrEqual(id, allEqual);
+			moveTillLargerOrEqual(id, allEqual, oneEqual);
 		}
 		return allValid();
 	}
@@ -501,6 +504,35 @@ struct IndexStates {
 	uint32_t stateCount;
 	uint32_t validCounter;
 };
+
+ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< ItemIndexPrivateRleDE* > & intersect, const std::vector< ItemIndexPrivateRleDE* >& subtract, uint32_t count) {
+	IndexStates intersectStates(intersect.size());
+	for(std::size_t i = 0; i < intersect.size(); ++i) {
+			intersectStates.push_back(intersect[i]->m_data);
+	}
+	IndexStates subtractStates(subtract.size());
+	for(std::size_t i = 0; i < intersect.size(); ++i) {
+			subtractStates.push_back(subtract[i]->m_data);
+	}
+
+
+	std::vector<uint32_t> resultSet;
+	resultSet.reserve(count);
+	
+	uint32_t id;
+	bool allEqual;
+	bool oneEqual;
+	while (intersectStates.allValid() && resultSet.size() < count) {
+		if (intersectStates.moveToNextEqual(id)) {
+			intersectStates.next();
+			subtractStates.moveTillLargerOrEqual(id, allEqual, oneEqual);
+			if (!oneEqual)
+				resultSet.push_back(id);
+		}
+	}
+	return ItemIndex::absorb(resultSet);
+}
+
 
 ItemIndex ItemIndexPrivateRleDE::constrainedIntersect(const std::vector< ItemIndexPrivateRleDE* > & intersect, uint32_t count) {
 	IndexStates states(intersect.size());
