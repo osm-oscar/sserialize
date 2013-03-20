@@ -10,17 +10,27 @@ namespace sserialize {
 
 std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
 
-UByteArrayAdapter::UByteArrayAdapter(UByteArrayAdapterPrivate * priv) :
+UByteArrayAdapter::UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv) :
 m_priv(priv),
 m_offSet(0),
 m_len(0),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv)
-		m_priv->refInc();
 }
 
+UByteArrayAdapter::UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len) :
+m_priv(priv),
+m_offSet(offSet),
+m_len(len),
+m_getPtr(0),
+m_putPtr(0)
+{
+	if (!priv.get()) {
+		m_offSet = 0;
+		m_len = 0;
+	}
+}
 
 UByteArrayAdapter::UByteArrayAdapter() :
 m_priv(new UByteArrayAdapterPrivateEmpty()),
@@ -36,10 +46,7 @@ m_offSet(offSet),
 m_len(len),
 m_getPtr(0),
 m_putPtr(0)
-{
-	if (m_priv)
-		m_priv->refInc();
-}
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, OffsetType offSet, OffsetType len) :
 m_priv(new UByteArrayAdapterPrivateDeque(data)),
@@ -48,8 +55,6 @@ m_len(len),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv)
-		m_priv->refInc();
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data) :
@@ -59,8 +64,6 @@ m_len(data->size()),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv)
-		m_priv->refInc();
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, bool deleteOnClose) :
@@ -70,10 +73,7 @@ m_len(data->size()),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv) {
-		m_priv->refInc();
-		m_priv->setDeleteOnClose(deleteOnClose);
-	}
+	m_priv->setDeleteOnClose(deleteOnClose);
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data, OffsetType offSet, OffsetType len) :
@@ -83,8 +83,6 @@ m_len(len),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv)
-		m_priv->refInc();
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data) :
@@ -94,8 +92,6 @@ m_len(data->size()),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv)
-		m_priv->refInc();
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data, bool deleteOnClose) :
@@ -105,10 +101,7 @@ m_len(data->size()),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (m_priv) {
-		m_priv->refInc();
-		m_priv->setDeleteOnClose(deleteOnClose);
-	}
+	m_priv->setDeleteOnClose(deleteOnClose);
 }
 
 
@@ -119,24 +112,15 @@ m_len(adapter.m_len),
 m_getPtr(adapter.m_getPtr),
 m_putPtr(adapter.m_putPtr)
 {
-	if (m_priv)
-		m_priv->refInc();
 }
 
 UByteArrayAdapter::UByteArrayAdapter(const UByteArrayAdapter & adapter, OffsetType addOffset) :
-m_priv(0),
+m_priv(adapter.m_priv),
 m_offSet(0),
 m_len(0),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (adapter.m_priv) {
-		adapter.m_priv->refInc();
-	}
-	if (m_priv) {
-		m_priv->refDec();
-	}
-	m_priv = adapter.m_priv;
 	m_offSet = adapter.m_offSet;
 	m_len = adapter.m_len;
 
@@ -167,19 +151,12 @@ m_putPtr(0)
 }
 
 UByteArrayAdapter::UByteArrayAdapter(const UByteArrayAdapter & adapter, OffsetType addOffset, OffsetType smallerLen) :
-m_priv(0),
+m_priv(adapter.m_priv),
 m_offSet(0),
 m_len(0),
 m_getPtr(0),
 m_putPtr(0)
 {
-	if (adapter.m_priv) {
-		adapter.m_priv->refInc();
-	}
-	if (m_priv) {
-		m_priv->refDec();
-	}
-	m_priv = adapter.m_priv;
 	m_offSet = adapter.m_offSet;
 	m_len = adapter.m_len;
 
@@ -213,37 +190,13 @@ m_putPtr(0)
 	}
 }
 
-// UByteArrayAdapter::UByteArrayAdapter(const UByteArrayAdapter& adapter, int addOffset) {
-// 	
-// }
-
-
-UByteArrayAdapter::UByteArrayAdapter(UByteArrayAdapterPrivate * priv, OffsetType offSet, OffsetType len) :
-m_priv(priv),
-m_offSet(offSet),
-m_len(len),
-m_getPtr(0),
-m_putPtr(0)
-{
-	if (m_priv) {
-		m_priv->refInc();
-	}
-	else {
-		m_offSet = 0;
-		m_len = 0;
-	}
-}
-
 UByteArrayAdapter::UByteArrayAdapter(MmappedFile file, OffsetType offSet, OffsetType len) :
 m_priv(new UByteArrayAdapterPrivateMmappedFile(file)),
 m_offSet(offSet),
 m_len(len),
 m_getPtr(0),
 m_putPtr(0)
-{
-	if (m_priv)
-		m_priv->refInc();
-}
+{}
 
 
 UByteArrayAdapter::UByteArrayAdapter(MmappedFile file) :
@@ -252,10 +205,7 @@ m_offSet(0),
 m_len(file.size()),
 m_getPtr(0),
 m_putPtr(0)
-{
-	if (m_priv)
-		m_priv->refInc();
-}
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(const ChunkedMmappedFile & file) :
 m_priv(new UByteArrayAdapterPrivateChunkedMmappedFile(file)),
@@ -263,10 +213,7 @@ m_offSet(0),
 m_len(file.size()),
 m_getPtr(0),
 m_putPtr(0)
-{
-	if (m_priv)
-		m_priv->refInc();
-}
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(const CompressedMmappedFile & file) :
 m_priv(new UByteArrayAdapterPrivateCompressedMmappedFile(file)),
@@ -274,24 +221,11 @@ m_offSet(0),
 m_len(file.size()),
 m_getPtr(0),
 m_putPtr(0)
-{
-	if (m_priv)
-		m_priv->refInc();
-}
+{}
 
-UByteArrayAdapter::~UByteArrayAdapter() {
-	if (m_priv) {
-		m_priv->refDec();
-	}
-}
+UByteArrayAdapter::~UByteArrayAdapter() {}
 
 UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapter) {
-	if (adapter.m_priv) {
-		adapter.m_priv->refInc();
-	}
-	if (m_priv) {
-		m_priv->refDec();
-	}
 	m_priv = adapter.m_priv;
 	m_offSet = adapter.m_offSet;
 	m_len = adapter.m_len;
@@ -409,53 +343,44 @@ void UByteArrayAdapter::resetPtrs() {
 
 
 bool UByteArrayAdapter::shrinkStorage(OffsetType byte) {
-	if (m_priv) {
-		if (byte > m_len)
-			byte = m_len;
-		bool ok = m_priv->shrinkStorage(m_offSet+m_len-byte);
-		if (ok)
-			m_len -= byte;
-		return ok;
-	}
-	return false;
+	if (byte > m_len)
+		byte = m_len;
+	bool ok = m_priv->shrinkStorage(m_offSet+m_len-byte);
+	if (ok)
+		m_len -= byte;
+	return ok;
 }
 
 bool UByteArrayAdapter::growStorage(OffsetType byte) {
-	if (m_priv) {
-		bool ok;
-		if (m_offSet+m_len+byte < m_offSet+m_len) //check for wrapp-around
-			ok = false;
-		else
-			ok = m_priv->growStorage(m_offSet+m_len+byte);
-		if (ok)
-			m_len += byte;
-		return ok;
-	}
-	return false;
+	bool ok;
+	if (m_offSet+m_len+byte < m_offSet+m_len) //check for wrapp-around
+		ok = false;
+	else
+		ok = m_priv->growStorage(m_offSet+m_len+byte);
+	if (ok)
+		m_len += byte;
+	return ok;
 }
 
 bool UByteArrayAdapter::resize(OffsetType byte) {
-	if (m_priv) {
-		if (byte < m_len) {
-			m_len = byte;
-			if (m_getPtr < m_len) {
-				m_getPtr = m_len;
-			}
-			if (m_putPtr < m_len) {
-				m_putPtr = m_len;
-			}
+	if (byte < m_len) {
+		m_len = byte;
+		if (m_getPtr < m_len) {
+			m_getPtr = m_len;
 		}
-		else {
-			growStorage(byte-m_len);
+		if (m_putPtr < m_len) {
+			m_putPtr = m_len;
 		}
+		return true;
 	}
-	return false;
+	else {
+		return growStorage(byte-m_len);
+	}
 }
 
 
 void UByteArrayAdapter::setDeleteOnClose(bool del) {
-	if (m_priv)
-		m_priv->setDeleteOnClose(del);
+	m_priv->setDeleteOnClose(del);
 }
 
 
@@ -823,7 +748,6 @@ bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data
 
 
 UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool deleteOnClose) {
-	UByteArrayAdapterPrivate * priv = 0;
 	if (fileName.empty()) {
 		fileName = MmappedFile::findLockFilePath(PERSISTENT_CACHE_PATH, 2048);
 	}
@@ -840,7 +764,7 @@ UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool dele
 		osmfindlog::err("UByteArrayAdapter::writeToDisk", "Fatal: could not open file");
 		return UByteArrayAdapter();
 	}
-	priv = new UByteArrayAdapterPrivateMmappedFile(tempFile);
+	std::shared_ptr<UByteArrayAdapterPrivate> priv(new UByteArrayAdapterPrivateMmappedFile(tempFile));
 	priv->setDeleteOnClose(deleteOnClose);
 	UByteArrayAdapter adap(priv);
 	adap.m_len = m_len;
@@ -858,20 +782,20 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 	if (size == 0)
 		size = 1;
 
-	UByteArrayAdapterPrivate * priv = 0;
+	std::shared_ptr<UByteArrayAdapterPrivate> priv;
 	if (forceFileBase || size > MAX_IN_MEMORY_CACHE) {
 		MmappedFile tempFile;
 		if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
 			osmfindlog::err("UByteArrayAdapter::createCache", "Fatal: could not open file");
 			return UByteArrayAdapter();
 		}
-		priv = new UByteArrayAdapterPrivateMmappedFile(tempFile);
+		priv.reset( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
 	}
 	else {
 		std::vector<uint8_t> * privData = new std::vector<uint8_t>();
 		privData->resize(size, 0);
 		if (privData) {
-			priv = new UByteArrayAdapterPrivateVector(privData);
+			priv.reset( new UByteArrayAdapterPrivateVector(privData) );
 		}
 		else {
 			osmfindlog::err("UByteArrayAdapter::createCache", "Could not allocate memory. Trying file based.");
@@ -896,7 +820,7 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 		return UByteArrayAdapter();
 	}
 	tempFile.setSyncOnClose(true);
-	UByteArrayAdapterPrivate * priv = new UByteArrayAdapterPrivateMmappedFile(tempFile);
+	std::shared_ptr<UByteArrayAdapterPrivate> priv( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
 	priv->setDeleteOnClose(false);
 	UByteArrayAdapter adap(priv);
 	adap.m_len = size;
@@ -1019,10 +943,13 @@ int64_t UByteArrayAdapter::getVlPackedInt64() {
 }
 
 uint32_t UByteArrayAdapter::getVlPackedUint32() {
-	int len;
-	uint32_t res = getVlPackedUint32(m_getPtr, &len);
-	if (len > 0)
-		m_getPtr += len;
+	if (m_len < m_getPtr+1)
+		return 0; //we need to read at least one byte
+	int len = std::min<OffsetType>(5, m_len - m_getPtr);
+	uint32_t res = m_priv->getVlPackedUint32(m_offSet+m_getPtr, &len);
+	if (len < 0)
+		return 0;
+	m_getPtr += len;
 	return res;
 }
 

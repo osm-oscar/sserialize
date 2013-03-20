@@ -6,20 +6,12 @@
 namespace sserialize {
 
 class UByteArrayAdapterPrivate {
-	uint32_t m_refCounter;
 protected:
 	bool m_deleteOnClose;
 public:
-	UByteArrayAdapterPrivate() : m_refCounter(0), m_deleteOnClose(false) {}
+	UByteArrayAdapterPrivate() : m_deleteOnClose(false) {}
 	virtual ~UByteArrayAdapterPrivate() {}
-	inline void refInc() { m_refCounter++;}
-	inline void refDec() {
-		m_refCounter--;
-		if (m_refCounter <= 0) {
-			delete this;
-		}
-	}
-	inline int refCounter() { return m_refCounter; }
+
 //support opertions
 
 	/** Shrink data to size bytes */

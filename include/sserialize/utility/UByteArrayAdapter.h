@@ -6,6 +6,7 @@
 #include <deque>
 #include <vector>
 #include <string>
+#include <memory>
 
 //TODO: prevent segfaults of UByteArrayAdapter is empty (m_priv is 0)
 
@@ -36,7 +37,7 @@ public:
 	typedef sserialize::OffsetType SizeType;
 private:
 	/** Data is at offset, not at base address **/
-	UByteArrayAdapterPrivate * m_priv;
+	std::shared_ptr<UByteArrayAdapterPrivate> m_priv;
 	OffsetType m_offSet;
 	OffsetType m_len;
 	OffsetType m_getPtr;
@@ -45,7 +46,8 @@ private:
 	static std::string m_tempFilePrefix;
 	
 private:
-	UByteArrayAdapter(UByteArrayAdapterPrivate * priv);
+	explicit UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv);
+	explicit UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
 	bool resizeForPush(OffsetType pos, OffsetType length);
 // 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
 
@@ -71,7 +73,6 @@ public:
 	UByteArrayAdapter(sserialize::MmappedFile file);
 	UByteArrayAdapter(const ChunkedMmappedFile & file);
 	UByteArrayAdapter(const CompressedMmappedFile & file);
-	UByteArrayAdapter(UByteArrayAdapterPrivate * priv, OffsetType offSet, OffsetType len);
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
 	uint8_t & operator[](const OffsetType pos);
