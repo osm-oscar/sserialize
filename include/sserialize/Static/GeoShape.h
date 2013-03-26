@@ -71,10 +71,22 @@ public:
 		return false;
 	}
 	
-	
-	
+	inline static sserialize::spatial::GeoRect rectFromData(const UByteArrayAdapter &  data) {
+		GeoPoint bL(data);
+		GeoPoint tR(data+GeoPoint::SERIALIZED_SIZE);
+		return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+	}
+
 };
 
 }}}//end namespace
+
+inline sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
+	sserialize::Static::spatial::GeoPoint bL(in);
+	sserialize::Static::spatial::GeoPoint tR(in+sserialize::Static::spatial::GeoPoint::SERIALIZED_SIZE);
+	out = sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+	in.incGetPtr(2*sserialize::Static::spatial::GeoPoint::SERIALIZED_SIZE);
+	return in;
+}
 
 #endif
