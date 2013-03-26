@@ -44,6 +44,7 @@ Static/GeneralizedTrie.cpp
 Static/FlatGeneralizedTrie.cpp
 Static/GeoPoint.cpp
 Static/triestats.cpp
+Static/RTree.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
