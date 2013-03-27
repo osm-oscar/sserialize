@@ -241,19 +241,21 @@ template<typename T_CONTAINER>
 void UByteArrayAdapterPrivateContainer<T_CONTAINER>::putOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType value) {
 	uint8_t buf[5];
 	pack_uint40_t(value, buf);
-	for(uint8_t i = 0; i < 5; i++) (*m_data)[pos+i] = buf[i];
+	for(uint8_t i = 0; i < 5; i++)
+		(*m_data)[pos+i] = buf[i];
 }
 
 template<typename T_CONTAINER>
 void UByteArrayAdapterPrivateContainer<T_CONTAINER>::putNegativeOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::NegativeOffsetType value) {
 	uint8_t buf[5];
 	pack_int40_t(value, buf);
-	for(uint8_t i = 0; i < 5; i++) (*m_data)[pos+i] = buf[i];
+	for(uint8_t i = 0; i < 5; i++)
+		(*m_data)[pos+i] = buf[i];
 }
 
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType maxLen) {
-	uint8_t buf[5];
+	uint8_t buf[9];
 	int len = vl_pack_uint64_t(value, buf);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
@@ -265,7 +267,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArray
 
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType maxLen) {
-	uint8_t buf[5];
+	uint8_t buf[9];
 	int len = vl_pack_int64_t(value, buf);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
