@@ -877,7 +877,7 @@ fillFlatTrieIndexEntries(FlatTrieEntryConfig<ItemIdType> & flatTrieConfig, const
 	uint32_t count = 0;
 	while (nodesInLevelOrder.size()) {
 		Node * curNode = nodesInLevelOrder.back(); nodesInLevelOrder.pop_back();
-		FlatGST_TPNS * parentIndexStore;
+		FlatGST_TPNS * parentIndexStore = 0;
 		if (curNode->parent) {
 			if (!curNode->parent->temporalPrivateStorage) {
 				curNode->parent->temporalPrivateStorage = new FlatGST_TPNS();
