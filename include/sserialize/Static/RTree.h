@@ -3,7 +3,6 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <sserialize/spatial/GeoRect.h>
-#include <boost-1_49/boost/concept_check.hpp>
 #define SSERIALIZE_STATIC_SPATIAL_RTREE_VERSION 0
 
 /** File format
