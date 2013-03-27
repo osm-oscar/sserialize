@@ -556,7 +556,7 @@ std::deque<uint32_t> createNumber(int testCount) {
 	uint32_t rndNum;
 	uint32_t rndMask;
 	uint32_t mask;
-	for(uint32_t i = 0; i < testCount; i++) {
+	for(int i = 0; i < testCount; i++) {
 		rndNum = rand();
 		rndMask = (double)rand()/RAND_MAX * 31; 
 		mask = ((rndMask+1 == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << (rndMask+1)) - 1));

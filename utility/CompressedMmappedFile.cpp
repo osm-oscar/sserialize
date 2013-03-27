@@ -192,8 +192,6 @@ void CompressedMmappedFilePrivate::setCacheCount(uint32_t count) {
 bool CompressedMmappedFilePrivate::do_open() {
 	std::size_t fileSize;
 
-	if (m_fileName.size() <= COMPRESSED_MMAPPED_FILE_HEADER_SIZE)
-		return false;
 	m_fd = open(m_fileName.c_str(), O_RDONLY);
 	if (m_fd < 0)
 		return false;
@@ -206,6 +204,10 @@ bool CompressedMmappedFilePrivate::do_open() {
 	}
 	if (!S_ISREG (stFileInfo.st_mode))
 		return false;
+
+	if (fileSize <= COMPRESSED_MMAPPED_FILE_HEADER_SIZE)
+		return false;
+
 	
 	uint8_t headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE];
 	::lseek(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);

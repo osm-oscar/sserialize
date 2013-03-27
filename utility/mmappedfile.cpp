@@ -50,7 +50,7 @@ bool MmappedFilePrivate::do_open() {
 	if (m_fd < 0)
 		return false;
 	struct ::stat stFileInfo;
-	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size < std::numeric_limits<OffsetType>::max()) {
+	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<OffsetType>(stFileInfo.st_size) < std::numeric_limits<OffsetType>::max()) {
 		m_size = stFileInfo.st_size;
 	}
 	else {
@@ -213,7 +213,7 @@ bool createFilePrivate(const std::string & fileName, OffsetType size) {
 	struct ::stat stFileInfo;
 	::fstat(fd, &stFileInfo);
 	::close(fd);
-	return stFileInfo.st_size >= size;
+	return  stFileInfo.st_size >= 0 && static_cast<OffsetType>( stFileInfo.st_size ) >= size;
 }
 
 bool MmappedFile::createFile(const std::string & fileName, OffsetType size) {

@@ -112,7 +112,7 @@ Completer<ItemType, DataBaseType>::~Completer() {}
 template<class ItemType, class DataBaseType>
 bool
 Completer<ItemType, DataBaseType>::setCompleter(int id) {
-	if (m_strCompleters.size() > id) {
+	if (id >= 0 && m_strCompleters.size() > static_cast<std::size_t>(id) ) {
 		m_selectedCompleter = id;
 		return true;
 	}

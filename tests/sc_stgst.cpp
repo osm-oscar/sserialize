@@ -7,7 +7,7 @@
 
 using namespace sserialize;
 
-typedef enum { BO_TREE_CASE_SENSITIVE=0x1, BO_SUFFIX_TREE=0x2, BO_MERGE_INDEX=0x4, BO_NO_FULL_INDEX_AT_ALL=0x8, BO_COMPACT_NODE=0x10};
+enum { BO_TREE_CASE_SENSITIVE=0x1, BO_SUFFIX_TREE=0x2, BO_MERGE_INDEX=0x4, BO_NO_FULL_INDEX_AT_ALL=0x8, BO_COMPACT_NODE=0x10};
 
 template<uint32_t T_BUILD_OPTS>
 class StaticGeneralizedTrieTest: public StringCompleterTest {

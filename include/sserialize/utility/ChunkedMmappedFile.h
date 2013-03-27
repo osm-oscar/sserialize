@@ -14,6 +14,7 @@ class ChunkedMmappedFilePrivate;
 class ChunkedMmappedFile: public RCWrapper<ChunkedMmappedFilePrivate>  {
 public:
 	typedef OffsetType SizeType;
+	typedef NegativeOffsetType NegativeSizeType;
 protected:
 	typedef RCWrapper<ChunkedMmappedFilePrivate> MyParentClass;
 public:
@@ -52,6 +53,7 @@ public:
 class ChunkedMmappedFilePrivate: public RefCountObject  {
 public:
 	typedef ChunkedMmappedFile::SizeType SizeType;
+	typedef ChunkedMmappedFile::NegativeSizeType NegativeSizeType;
 private:
 	std::string m_fileName;
 	SizeType m_size; //total size of the array
