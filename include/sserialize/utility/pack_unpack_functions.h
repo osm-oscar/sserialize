@@ -163,7 +163,7 @@ inline void pack_int40_t(int64_t s, uint8_t * d) {
 		tmp = (-s << 1) | 0x1;
 	else
 		tmp = (s << 1);
-	pack_uint64_t(tmp, d);
+	pack_uint40_t(tmp, d);
 }
 
 inline void pack_int32_t(int32_t s, uint8_t * d) {
