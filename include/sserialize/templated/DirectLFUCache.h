@@ -34,10 +34,7 @@ public:
 	  * @return the victim cache line, std::numeric_limits<uint32_t>::max() on failure
 	  */
 	uint32_t findVictim() {
-		if (occupyCount() == 0)
-			return std::numeric_limits<uint32_t>::max();
-
-		uint32_t cacheLine;
+		uint32_t cacheLine = std::numeric_limits<uint32_t>::max();;
 		uint32_t minUsage = std::numeric_limits<uint32_t>::max();
 		OccupyIterator ocEnd( m_occupied.end() );
 		for(OccupyIterator it( m_occupied.begin() ); it != ocEnd; ++it) {
