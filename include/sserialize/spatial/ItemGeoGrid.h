@@ -15,7 +15,14 @@ protected:
 public:
 	ItemGeoGrid() : MyParentClass() {}
 	ItemGeoGrid(const GeoRect & rect, const uint32_t latcount, const uint32_t loncount) : MyParentClass(rect, latcount, loncount) {}
-	virtual ~ItemGeoGrid() {}
+	virtual ~ItemGeoGrid() {
+		for(size_t i = 0; i < storage().size(); ++i) {
+			std::set<uint32_t> * &s = storage().at(i);
+			if (s)
+				delete s;
+			s = 0;
+		}
+	}
 	
 	bool addItem(uint32_t itemId, const GeoShape * shape) {
 		if (!shape)
