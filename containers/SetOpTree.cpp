@@ -89,6 +89,13 @@ void SetOpTree::setMaxResultSetSize(uint32_t size) {
 	priv()->setMaxResultSetSize(size);
 }
 
+void SetOpTree::setMinStrLen(uint32_t size) {
+	if (privRc() > 1) {
+		copyPrivate();
+	}
+	priv()->setMinStrLen(size);
+}
+
 void SetOpTree::buildTree(const std::string & queryString) {
 	if (privRc() > 1) {
 		copyPrivate();

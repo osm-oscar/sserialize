@@ -24,6 +24,7 @@ public:
 	
 	///Tries to set an upper limit to the result set size to speed-up set operations (soft constraint)
 	void setMaxResultSetSize(uint32_t size) { m_setOpTree.setMaxResultSetSize(size); }
+	void setMinStrLen(uint32_t size) { m_setOpTree.setMinStrLen(size); }
 	
 	/** increases the refcount by one */
 	bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter* functoid);

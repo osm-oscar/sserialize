@@ -22,6 +22,7 @@ public:
 
 	//sets the maximum result set size, no need to impement this
 	virtual void setMaxResultSetSize(uint32_t size) { }
+	virtual void setMinStrLen(uint32_t size) {}
 
 	virtual void buildTree(const std::string & queryString) = 0;
 	virtual ItemIndexIterator asItemIndexIterator() = 0;

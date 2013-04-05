@@ -79,6 +79,7 @@ public:
 	
 	///Tries to set an upper limit to the result set size to speed-up set operations (soft constraint)
 	void setMaxResultSetSize(uint32_t size);
+	void setMinStrLen(uint32_t size);
 	
 	void buildTree(const std::string & queryString);
 	ItemIndexIterator asItemIndexIterator();

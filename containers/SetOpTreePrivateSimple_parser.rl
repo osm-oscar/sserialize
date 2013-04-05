@@ -54,7 +54,7 @@
 		else {
 			valid = false;
 		}
-		if (valid) {
+		if (valid && (qsd.ef().priv() != 0 || qsd.str().size() >= m_minStrLen)) {
 			if (subtract) {
 				m_diffStrings.push_back(qsd);
 			}
@@ -91,9 +91,9 @@
 	write data;
 }%%
 
-void sserialize::SetOpTreePrivateSimple::ragelParse(const std::string & qStr) {
+void sserialize::SetOpTreePrivateSimple::ragelParse(const std::string& qStr) {
 	const char * p = qStr.c_str();
-	const char * pe = p+qStr.size();
+	const char * pe = p+ qStr.size();
 	const char * eof = pe;
 	const char * ts = p;
 	int cs;

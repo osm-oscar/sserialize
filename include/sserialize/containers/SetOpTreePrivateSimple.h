@@ -53,6 +53,7 @@ private:
 	std::map< QueryStringDescription, ItemIndex> m_completions;
 	std::map<std::string, RCPtrWrapper<SetOpTree::SelectableOpFilter> > m_ef;
 	uint32_t m_maxResultSetSize;
+	uint32_t m_minStrLen;
 private:
 	SetOpTreePrivateSimple(const SetOpTreePrivateSimple & other);
 	void ragelParse(const std::string & qstr);
@@ -65,8 +66,9 @@ public:
 	virtual SetOpTreePrivate * copy() const;
 	
 	virtual void setMaxResultSetSize(uint32_t size) { m_maxResultSetSize = size; }
+	virtual void setMinStrLen(uint32_t size) { m_minStrLen = size; }
 
-	virtual void buildTree(const std::string & queryString);
+	virtual void buildTree(const std::string & qstr);
 	virtual ItemIndexIterator asItemIndexIterator();
 	virtual ItemIndex update(const std::string & queryString);
 	virtual void doCompletions();

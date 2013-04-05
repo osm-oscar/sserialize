@@ -41,12 +41,12 @@ StringCompleter::QuerryType qtfghFromString(std::string & str) {
 }
 
 
-void SetOpTreePrivateSimple::handParse(const std::string & queryString) {
-	if (queryString.size() == 0)
+void SetOpTreePrivateSimple::handParse(const std::string & qstr) {
+	if (qstr.size() == 0)
 		return;
 	QueryStringParserStates state = QSPS_START;
-	std::string::const_iterator it = queryString.begin();
-	std::string::const_iterator end = queryString.end();
+	std::string::const_iterator it = qstr.begin();
+	std::string::const_iterator end = qstr.end();
 	try { //fetch invalid utf8 encoding errors on the fly
 	
 		bool curIsDiff = false;
@@ -77,11 +77,13 @@ void SetOpTreePrivateSimple::handParse(const std::string & queryString) {
 					//set the qt-flags
 					qsd.qt() = qtfghFromString(qsd.str());
 					
-					if(curIsDiff) {
-						m_diffStrings.push_back(qsd);
-					}
-					else {
-						m_intersectStrings.push_back(qsd);
+					if (qsd.str().size() >= m_minStrLen) {
+						if(curIsDiff) {
+							m_diffStrings.push_back(qsd);
+						}
+						else {
+							m_intersectStrings.push_back(qsd);
+						}
 					}
 					curIsDiff = false;
 					qsd = QueryStringDescription();
@@ -104,20 +106,19 @@ void SetOpTreePrivateSimple::handParse(const std::string & queryString) {
 		if (qsd.str().size()) {
 			qsd.qt() = qtfghFromString(qsd.str());
 			
-			if(curIsDiff) {
-				m_diffStrings.push_back(qsd);
-			}
-			else {
-				m_intersectStrings.push_back(qsd);
+			if (qsd.str().size() >= m_minStrLen) {
+				if(curIsDiff) {
+					m_diffStrings.push_back(qsd);
+				}
+				else {
+					m_intersectStrings.push_back(qsd);
+				}
 			}
 		}
 	}
 	catch (utf8::exception & e) {
 		std::cerr << "Caught exception in SetOpTreePrivateSimple::builTree: " << e.what() << std::endl;
 	}
-	
-// 	std::cout << "SetOpTreePrivateSimple::buildTree parsed " << queryString << " to ";
-// 	printStructure(std::cout) << std::endl;
 }
 
 void SetOpTreePrivateSimple::buildTree(const std::string & qstr) {
