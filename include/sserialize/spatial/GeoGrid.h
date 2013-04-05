@@ -54,6 +54,13 @@ public:
 								m_rect.lon()[0]+y*m_lonStep,
 								m_rect.lon()[0]+(y+1)*m_lonStep);
 	}
+	///inclusive xmin inclusive xmax => multiCellBoundary(x,y,x,y) == cellBoundary(x,y)
+	GeoRect multiCellBoundary(uint32_t xmin, uint32_t ymin, uint32_t xmax, uint32_t ymax) const {
+		return GeoRect(m_rect.lat()[0] + xmin * m_latStep,
+								m_rect.lat()[0]+(xmax+1)*m_latStep,
+								m_rect.lon()[0]+ ymin*m_lonStep,
+								m_rect.lon()[0]+(ymax+1)*m_lonStep);
+	}
 	
 	bool contains(const double lat, const double lon) const {
 		return m_rect.contains(lat, lon);
