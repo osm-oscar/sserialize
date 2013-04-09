@@ -6,3 +6,4 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	else
 		return destination << static_cast<uint8_t>(sserialize::spatial::GS_NONE);
 }
+
