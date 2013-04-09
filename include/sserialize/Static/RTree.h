@@ -77,6 +77,9 @@ public:
 	virtual ~RTree();
 	///@param intersecter: if this is not null, then this class is used to check the elements
 	void intersect(const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, ElementIntersecter * intersecter);
+	const sserialize::Static::ItemIndexStore & indexStore() const { return m_indexStore; }
+	sserialize::Static::ItemIndexStore & indexStore() { return m_indexStore; }
+	const sserialize::spatial::GeoRect & boundary() const { return m_rootBoundary; }
 };
 
 }}}//end namespace

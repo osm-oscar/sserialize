@@ -15,9 +15,12 @@ RTree::Node::Node(const UByteArrayAdapter & data) : m_data(data) {
 	m_childrenPtr.resize(m_size);
 	for(uint32_t i = 0; i < m_size; i++) {
 		m_data >> m_rects[i];
-		m_data >> m_childrenPtr[i];
+		m_childrenPtr[i] = m_data.getVlPackedUint32();
 	}
 }
+
+RTree::RTree() {}
+RTree::~RTree() {}
 
 RTree::RTree(const sserialize::UByteArrayAdapter & data, const Static::ItemIndexStore & indexStore) {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_RTREE_VERSION, data[0], "sserialize::Static::spatial::RTree");
@@ -75,7 +78,6 @@ void RTree::intersect(const sserialize::spatial::GeoRect & rect, DynamicBitSet &
 		intersectRecurse(m_root, rect, dest, intersecter);
 	}
 }
-
 
 }}}
 

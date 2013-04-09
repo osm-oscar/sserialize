@@ -73,6 +73,8 @@ containers/SetOpTreePrivateSimple_parser.cpp
 set(SPATIAL_SOURCES_CPP
 spatial/GeoShape.cpp
 spatial/GeoPolygon.cpp
+spatial/RTree.cpp
+spatial/GridRTree.cpp
 )
 
 set(COMPLETER_SOURCES_CPP

@@ -49,6 +49,22 @@ protected:
 		}
 		return db;
 	}
+	
+	spatial::GeoRect bbox(const GeoStringsItemDB<TestItemData> & db) {
+		spatial::GeoRect rect;
+		uint32_t i = 0;
+		for(; i < db.size(); ++i) {
+			if (db.geoShapeAt(i)) {
+				rect = db.geoShapeAt(i)->boundaryRect();
+				break;
+			}
+		}
+		for(; i < db.size(); ++i) {
+			if (db.geoShapeAt(i))
+				rect.enlarge(db.geoShapeAt(i)->boundaryRect());
+		}
+		return rect;
+	}
 
 public:
 	GeoCompleterTest() : CppUnit::TestFixture() {

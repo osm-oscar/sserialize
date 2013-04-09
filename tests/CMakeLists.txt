@@ -72,6 +72,7 @@ ADD_TEST_TARGET_SINGLE(static_stringsitemdb)
 ADD_TEST_TARGET_SINGLE(static_geostringsitemdb)
 ADD_TEST_TARGET_SINGLE(static_ItemGeoGrid)
 ADD_TEST_TARGET_SINGLE(static_GeoStringsItemDB_GeoCompleter)
+ADD_TEST_TARGET_SINGLE(static_GridRTree)
 
 #completers
 ADD_TEST_TARGET_SINGLE(sc_gsa)

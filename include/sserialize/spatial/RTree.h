@@ -17,28 +17,38 @@ namespace spatial {
 class RTree {
 public:
 	struct Node {
+		virtual ~Node() {}
 		bool leafNode;
 		spatial::GeoRect rect;
 	};
 	
 	struct InnerNode: Node {
+		virtual ~InnerNode() {
+			for(uint32_t i = 0; i< children.size(); ++i) {
+				if (children[i])
+					delete children[i];
+			}
+		}
 		std::vector<Node*> children;
 	};
 	
 	struct LeafNode: Node {
+		virtual ~LeafNode() {}
 		std::vector<uint32_t> items;
 	};
 private:
 	Node * m_root;
 private:
-	std::vector<Node*> nodesInLevelOrder();
+	std::vector<Node*> nodesInLevelOrder() const;
 	void sserializeNode(Node * node, const std::vector<uint32_t> & children, uint32_t indexId);
 protected:
 	Node* & rootNode() { return m_root; }
 public:
-	RTree();
-	virtual ~RTree() {}
-	void sserialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & indexFactory) const;
+	RTree() : m_root(0) {}
+	virtual ~RTree() {
+		delete m_root;
+	}
+	void serialize(sserialize::UByteArrayAdapter & dest, sserialize::ItemIndexFactory & indexFactory);
 };
 
 }}//end namespace
