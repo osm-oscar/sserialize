@@ -50,5 +50,10 @@ inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter 
 	return point.serialize(destination);
 }
 
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
+	sserialize::spatial::GeoPoint(out.lat()[0], out.lon()[0]).serialize(in);
+	sserialize::spatial::GeoPoint(out.lat()[1], out.lon()[1]).serialize(in);
+	return in;
+}
 
 #endif
