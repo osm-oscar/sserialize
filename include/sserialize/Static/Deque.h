@@ -20,7 +20,7 @@ namespace sserialize {
 namespace Static {
 
 template<typename TValue>
-class Deque: public RefCountObject {
+class Deque {
 private:
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
@@ -29,7 +29,7 @@ public:
 	/** Creates a new deque at data.putPtr */
 	Deque(const UByteArrayAdapter & data);
 	/** This does not copy the ref count, but inits it */
-	Deque(const Deque & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
+	Deque(const Deque & other) : m_index(other.m_index), m_data(other.m_data) {}
 	virtual ~Deque() {
 	
 	}
@@ -86,11 +86,10 @@ public:
 };
 
 template<typename TValue>
-Deque<TValue>::Deque() : RefCountObject() {}
+Deque<TValue>::Deque() {}
 
 template<typename TValue>
 Deque<TValue>::Deque(const UByteArrayAdapter & data) :
-RefCountObject(),
 m_index(data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength() + data.getOffset(1))),
 m_data(UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1)))
 {

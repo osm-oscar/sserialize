@@ -37,11 +37,11 @@ public:
 	  * If a filter supports a fast and operation, and its used within an and
 	  * then it's fast filter op is used, otherwise the probably slower function will be used
 	  */
-	class SelectableOpFilter: public RefCountObject {
+	class SelectableOpFilter {
 	public:
 		typedef enum { OP_NONE=0, OP_INTERSECT=1, OP_UNITE=2, OP_DIFF_FIRST=4, OP_DIFF_SECOND=8, OP_XOR=16, OP_ALL=31} SupportedOps;
 	public:
-		SelectableOpFilter() : RefCountObject() {}
+		SelectableOpFilter() {}
 		virtual ~SelectableOpFilter() {}
 		virtual SupportedOps supportedOps() const = 0;
 		/** This should invoke the faster routine */
@@ -88,9 +88,9 @@ public:
 	ItemIndex doSetOperations(bool cached=true);
 	std::set<uint16_t> getCharacterHint(uint32_t posInQueryString) const;
 	/** Register external functoid, increases refcount accordingly */
-	bool registerExternalFunction(ExternalFunctoid * function);
+	bool registerExternalFunction(const std::shared_ptr<ExternalFunctoid> & function);
 	/** Register selectable op filter, increases refcount accordingly */
-	bool registerSelectableOpFilter(SelectableOpFilter * filter);
+	bool registerSelectableOpFilter(const std::shared_ptr<SelectableOpFilter> & filter);
 	void clear();
 	std::ostream & printStructure(std::ostream& out) const;
 };

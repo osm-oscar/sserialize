@@ -3,9 +3,7 @@
 
 namespace sserialize {
 	
-StringCompleterPrivate::StringCompleterPrivate() :
-RefCountObject()
-{}
+StringCompleterPrivate::StringCompleterPrivate() {}
 
 StringCompleterPrivate::~StringCompleterPrivate() {}
 

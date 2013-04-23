@@ -74,7 +74,7 @@ public:
 
 
 
-class CompressedMmappedFilePrivate: public RefCountObject  {
+class CompressedMmappedFilePrivate {
 public:
 	typedef CompressedMmappedFile::SizeType SizeType;
 	typedef DirectRandomCache<uint32_t> MyCacheType;

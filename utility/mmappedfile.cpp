@@ -16,7 +16,6 @@
 namespace sserialize {
 
 MmappedFilePrivate::MmappedFilePrivate(std::string filename) :
-RefCountObject(),
 m_fileName(filename),
 m_size(0),
 m_fd(-1),
@@ -27,7 +26,6 @@ m_syncOnClose(false)
 {}
 
 MmappedFilePrivate::MmappedFilePrivate() :
-RefCountObject(),
 m_size(0),
 m_fd(-1),
 m_data(0),

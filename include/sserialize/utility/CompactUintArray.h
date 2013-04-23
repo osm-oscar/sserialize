@@ -12,7 +12,7 @@
 
 namespace sserialize {
 
-class CompactUintArrayPrivate: public RefCountObject {
+class CompactUintArrayPrivate {
 protected:
 	UByteArrayAdapter m_data;
 public:

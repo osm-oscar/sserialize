@@ -108,9 +108,8 @@ bool ItemIndexIterator::valid() const {
 }
 
 ItemIndexIterator& ItemIndexIterator::operator++() {
-	if (priv()->rc() > 1) {
+	if (privRc() > 1) {
 		ItemIndexIteratorPrivate * newPriv = priv()->copy();
-		newPriv->rcReset();
 		setPrivate(newPriv);
 	}
 	priv()->next();
@@ -118,9 +117,8 @@ ItemIndexIterator& ItemIndexIterator::operator++() {
 }
 
 ItemIndexIterator& ItemIndexIterator::reset() {
-	if (priv()->rc() > 1) {
+	if (privRc() > 1) {
 		ItemIndexIteratorPrivate * newPriv = priv()->copy();
-		newPriv->rcReset();
 		setPrivate(newPriv);
 	}
 	priv()->reset();

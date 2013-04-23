@@ -15,11 +15,11 @@ private:
 	struct QueryStringDescription {
 		std::string m_qstr;
 		uint8_t m_qt;
-		RCPtrWrapper<SetOpTree::SelectableOpFilter> m_ef;
+		std::shared_ptr<SetOpTree::SelectableOpFilter> m_ef;
 	
 		QueryStringDescription() : m_qt(sserialize::StringCompleter::QT_NONE) {}
 		QueryStringDescription(const std::string & qstr) : m_qstr(qstr), m_qt(sserialize::StringCompleter::QT_NONE) {}
-		QueryStringDescription(const std::string & qstr, const RCPtrWrapper<SetOpTree::SelectableOpFilter> & ef) : m_qstr(qstr), m_ef(ef) {}
+		QueryStringDescription(const std::string & qstr, const std::shared_ptr<SetOpTree::SelectableOpFilter> & ef) : m_qstr(qstr), m_ef(ef) {}
 		QueryStringDescription(const std::string & qstr, uint8_t qt) : m_qstr(qstr), m_qt(qt) {}
 		QueryStringDescription(const std::string::const_iterator & begin, const std::string::const_iterator & end, uint8_t qt) :
 			m_qstr(begin, end), m_qt(qt) {}
@@ -28,15 +28,15 @@ private:
 		inline const std::string & str() const { return m_qstr;}
 		inline uint8_t & qt() { return m_qt; }
 		inline const uint8_t & qt() const { return m_qt; }
-		inline RCPtrWrapper<SetOpTree::SelectableOpFilter> & ef() { return m_ef; }
-		inline const RCPtrWrapper<SetOpTree::SelectableOpFilter> & ef() const { return m_ef; }
+		inline std::shared_ptr<SetOpTree::SelectableOpFilter> & ef() { return m_ef; }
+		inline const std::shared_ptr<SetOpTree::SelectableOpFilter> & ef() const { return m_ef; }
 		inline bool operator<(const QueryStringDescription & o) const {
 			if (m_qt == o.m_qt) {
-				if (m_ef.priv() == o.m_ef.priv()) {
+				if (m_ef.get() == o.m_ef.get()) {
 					return m_qstr < o.m_qstr;
 				}
 				else {
-					return m_ef.priv() < o.m_ef.priv();
+					return m_ef.get() < o.m_ef.get();
 				}
 			}
 			else
@@ -51,7 +51,7 @@ private:
 	std::vector<QueryStringDescription> m_intersectStrings;
 	std::vector<QueryStringDescription> m_diffStrings;
 	std::map< QueryStringDescription, ItemIndex> m_completions;
-	std::map<std::string, RCPtrWrapper<SetOpTree::SelectableOpFilter> > m_ef;
+	std::map<std::string, std::shared_ptr<SetOpTree::SelectableOpFilter> > m_ef;
 	uint32_t m_maxResultSetSize;
 	uint32_t m_minStrLen;
 private:

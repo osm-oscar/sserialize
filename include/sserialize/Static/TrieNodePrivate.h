@@ -7,13 +7,13 @@
 namespace sserialize {
 namespace Static {
 
-class TrieNodePrivate: public RefCountObject {
+class TrieNodePrivate {
 public:
 	enum IndexTypes {
 		IT_NONE=0, IT_EXACT=1, IT_PREFIX=2, IT_SUFFIX=4, IT_SUFFIX_PREFIX=8, IT_ALL=15, IT_MERGE_INDEX=0x80
 	};
 public:
-	TrieNodePrivate() : RefCountObject() {}
+	TrieNodePrivate() {}
 	virtual ~TrieNodePrivate() {}
 
 	//Virtual functions that need implementation

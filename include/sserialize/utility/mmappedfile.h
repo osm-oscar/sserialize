@@ -9,7 +9,7 @@
 
 namespace sserialize {
 
-class MmappedFilePrivate: public RefCountObject {
+class MmappedFilePrivate {
 private:
 	std::string m_fileName;
 	OffsetType m_size;

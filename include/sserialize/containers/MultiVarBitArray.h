@@ -25,7 +25,7 @@ namespace sserialize {
   *     1     4        1     |compactuintarra|multivarbitarr 
   */
 	
-class MultiVarBitArrayPrivate: public RefCountObject {
+class MultiVarBitArrayPrivate {
 private:
 	UByteArrayAdapter m_data;
 	std::vector<uint16_t> m_bitSums;

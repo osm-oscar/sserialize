@@ -27,7 +27,7 @@ namespace Static {
  *    ID = IDS(POS) + (SLOPENOM)/(COUNT-1)*POS + ((SLOPENOM % (COUNT-1))*POS)/(COUNT-1) + Y-INTERCEPT - IDOFFSET
  */
 
-class SortedOffsetIndexPrivate: public sserialize::RefCountObject {
+class SortedOffsetIndexPrivate {
 private:
 	CompactUintArray m_idStore;
 	uint32_t m_size;

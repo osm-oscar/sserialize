@@ -5,10 +5,9 @@
 
 namespace sserialize {
 
-CompactUintArrayPrivate::CompactUintArrayPrivate() : RefCountObject() {}
+CompactUintArrayPrivate::CompactUintArrayPrivate() {}
 
 CompactUintArrayPrivate::CompactUintArrayPrivate(const UByteArrayAdapter& adap) :
-RefCountObject(),
 m_data(adap)
 {}
 

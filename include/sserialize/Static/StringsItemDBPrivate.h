@@ -34,7 +34,7 @@ namespace sserialize {
 namespace Static {
 
 template<class MetaDataDeSerializable>
-class StringsItemDBPrivate: public RefCountObject {
+class StringsItemDBPrivate {
 private:
 	StringTable m_stringTable;
 	Static::Deque< UByteArrayAdapter > m_itemStrings;
@@ -65,12 +65,11 @@ public:
 };
 
 template<class MetaDataDeSerializable>
-StringsItemDBPrivate<MetaDataDeSerializable>::StringsItemDBPrivate() : RefCountObject() {}
+StringsItemDBPrivate<MetaDataDeSerializable>::StringsItemDBPrivate() {}
 
 
 template<class MetaDataDeSerializable>
 StringsItemDBPrivate<MetaDataDeSerializable>::StringsItemDBPrivate(const UByteArrayAdapter & db, const StringTable & stable) :
-RefCountObject(),
 m_stringTable(stable),
 m_itemStrings(db+1),
 m_payloads(db+(1+m_itemStrings.getSizeInBytes()))

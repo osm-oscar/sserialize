@@ -50,7 +50,7 @@ public:
 
 
 
-class ChunkedMmappedFilePrivate: public RefCountObject  {
+class ChunkedMmappedFilePrivate {
 public:
 	typedef ChunkedMmappedFile::SizeType SizeType;
 	typedef ChunkedMmappedFile::NegativeSizeType NegativeSizeType;
