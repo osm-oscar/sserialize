@@ -5,7 +5,7 @@
 
 namespace sserialize {
 
-class ItemIndexIteratorPrivate {
+class ItemIndexIteratorPrivate: public RefCountObject {
 public:
 	ItemIndexIteratorPrivate();
 	virtual ~ItemIndexIteratorPrivate();
@@ -15,7 +15,6 @@ public:
 	virtual void next() = 0;
 	virtual void reset() = 0;
 	
-	///@return an unowned copy of this
 	virtual ItemIndexIteratorPrivate * copy() const = 0;
 };
 

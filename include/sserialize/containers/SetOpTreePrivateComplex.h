@@ -110,13 +110,13 @@ private:
 	private:
 		uint32_t m_defaultOp;
 		std::map<char, uint32_t> m_opMap;
-		std::map<std::string,  std::shared_ptr<SetOpTree::SelectableOpFilter> > m_ef; 
+		std::map<std::string, RCPtrWrapper<SetOpTree::SelectableOpFilter> > m_ef; 
 	private:
-		Node * createExternalNode(const sserialize::SetOpTreePrivateComplex::TreeBuilder::Tokenizer::Token& token, std::map<uint32_t, std::shared_ptr<sserialize::SetOpTree::SelectableOpFilter> >& ef) const;
+		Node * createExternalNode(const sserialize::SetOpTreePrivateComplex::TreeBuilder::Tokenizer::Token& token, std::map<uint32_t, sserialize::RCPtrWrapper<sserialize::SetOpTree::SelectableOpFilter> >& ef) const;
 		Node * createOperationNode(const Tokenizer::Token & token) const;
 		Node * createStringCompletionNode(const Tokenizer::Token & token) const;
 	public:
-		TreeBuilder(uint32_t defaultOp, const std::map<char, uint32_t> & opMap, const std::map<std::string, std::shared_ptr<SetOpTree::SelectableOpFilter> > & ef);
+		TreeBuilder(uint32_t defaultOp, const std::map<char, uint32_t> & opMap, const std::map<std::string, RCPtrWrapper<SetOpTree::SelectableOpFilter> > & ef);
 		virtual ~TreeBuilder();
 		void clear();
 		Node* build(const std::string & parseString, std::map< std::pair< std::string, uint8_t >, sserialize::ItemIndex >& cmpStrings);
@@ -130,7 +130,7 @@ private:
 	//Holds the Querry string. i.e. (Stutt AND STEIN) OR (STUTT AND NEU)
 	std::string m_queryString;
 // 	std::map<uint32_t, Node*> m_qSubStrToNode;
-	std::map<std::string, std::shared_ptr<SetOpTree::SelectableOpFilter> > m_externalFunctoids;
+	std::map<std::string, RCPtrWrapper<SetOpTree::SelectableOpFilter> > m_externalFunctoids;
 	std::map< std::pair<std::string, uint8_t>, ItemIndex> m_completions;
 	Node * m_rootNode;
 private://utility functions

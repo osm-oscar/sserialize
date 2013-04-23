@@ -7,9 +7,9 @@
 
 namespace sserialize {
 
-class GeoCompleterPrivate {
+class GeoCompleterPrivate: public RefCountObject {
 public:
-	GeoCompleterPrivate() {}
+	GeoCompleterPrivate() : RefCountObject() {}
 	virtual ~GeoCompleterPrivate() {}
 	virtual ItemIndex complete(const spatial::GeoRect & rect, bool approximate) = 0;
 	virtual ItemIndexIterator partialComplete(const spatial::GeoRect & rect, bool approximate) {

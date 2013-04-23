@@ -127,14 +127,14 @@ std::set<uint16_t> SetOpTree::getCharacterHint(uint32_t posInQueryString) const 
 	return priv()->getCharacterHint(posInQueryString);
 }
 
-bool SetOpTree::registerExternalFunction(const std::shared_ptr<ExternalFunctoid> & function) {
+bool SetOpTree::registerExternalFunction(ExternalFunctoid * function) {
 	if (privRc() > 1) {
 		copyPrivate();
 	}
 	return priv()->registerExternalFunction(function);
 }
 
-bool SetOpTree::registerSelectableOpFilter(const std::shared_ptr<SelectableOpFilter> & filter) {
+bool SetOpTree::registerSelectableOpFilter(SelectableOpFilter * filter) {
 	if (privRc() > 1) {
 		copyPrivate();
 	}

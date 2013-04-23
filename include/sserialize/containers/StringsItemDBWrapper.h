@@ -10,7 +10,7 @@
 namespace sserialize {
 
 template<typename ItemType>
-class StringsItemDBWrapperPrivate {
+class StringsItemDBWrapperPrivate: public RefCountObject {
 public:
 	StringsItemDBWrapperPrivate() {}
 	virtual ~StringsItemDBWrapperPrivate() {}

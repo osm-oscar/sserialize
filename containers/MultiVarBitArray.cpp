@@ -8,9 +8,9 @@ inline uint32_t createMask(uint8_t bpn) {
 	return ((bpn == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << bpn) - 1));
 }
 
-MultiVarBitArrayPrivate::MultiVarBitArrayPrivate() {}
+MultiVarBitArrayPrivate::MultiVarBitArrayPrivate() : RefCountObject() {}
 
-MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const std::vector< uint8_t >& bitConfig, const sserialize::UByteArrayAdapter& data) : m_data(data) {
+MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const std::vector< uint8_t >& bitConfig, const sserialize::UByteArrayAdapter& data) : RefCountObject(), m_data(data) {
 	uint32_t sum = 0;
 	m_bitSums.resize(bitConfig.size(), 0);
 	for(size_t i = 0; i < bitConfig.size(); i++) {
@@ -19,7 +19,7 @@ MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const std::vector< uint8_t >& b
 	}
 }
 
-MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const UByteArrayAdapter & data) : m_size(data.getUint32(1)) {
+MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const UByteArrayAdapter & data) : RefCountObject(), m_size(data.getUint32(1)) {
 	m_size = data.getUint32(1);
 	uint16_t bitConfigCount = data.getUint8(5);
 	CompactUintArray carr(data+MultiVarBitArray::HEADER_SIZE, 5);

@@ -6,7 +6,7 @@
 
 namespace sserialize {
 
-class StringCompleterPrivate {
+class StringCompleterPrivate: public RefCountObject {
 public:
 	StringCompleterPrivate();
 	virtual ~StringCompleterPrivate();    

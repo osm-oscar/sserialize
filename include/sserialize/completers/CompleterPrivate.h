@@ -7,9 +7,9 @@
 namespace sserialize {
 
 template<typename DataBaseItemType, typename DataBaseType>
-class CompleterPrivate {
+class CompleterPrivate: public RefCountObject {
 public:
-	CompleterPrivate() {}
+	CompleterPrivate() : RefCountObject() {}
 	virtual ~CompleterPrivate() {}
 	virtual ItemSet<DataBaseItemType, DataBaseType> complete(const std::string& query) {
 		return ItemSet<DataBaseItemType, DataBaseType>();

@@ -7,7 +7,7 @@
 
 namespace sserialize {
 
-class ItemIndexPrivate {
+class ItemIndexPrivate: public RefCountObject {
 public:
 	typedef ReadOnlyAtStlIterator<ItemIndexPrivate, uint32_t, uint32_t> iterator;
 	typedef ReadOnlyAtStlIterator<const ItemIndexPrivate, uint32_t, uint32_t> const_iterator;

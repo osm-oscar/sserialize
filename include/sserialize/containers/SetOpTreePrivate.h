@@ -11,7 +11,7 @@
  
 namespace sserialize {
  
-class SetOpTreePrivate {
+class SetOpTreePrivate: public RefCountObject {
 private:
 	SetOpTreePrivate & operator=(const SetOpTreePrivate & other);
 	SetOpTreePrivate(const SetOpTreePrivate & other);
@@ -31,9 +31,9 @@ public:
 	virtual ItemIndex doSetOperations() = 0;
 	/** This is actualy const for cow. It may alter things in StringCompleter */
 	virtual std::set<uint16_t> getCharacterHint(uint32_t posInQueryString) { return std::set<uint16_t>(); }
-	virtual bool registerExternalFunction(const std::shared_ptr<SetOpTree::ExternalFunctoid> & function) { return false; }
+	virtual bool registerExternalFunction(SetOpTree::ExternalFunctoid * function) { return false; }
 	/** creates a copy of filter by calling copy() on filter which will be deleted if Tree is deleted  */
-	virtual bool registerSelectableOpFilter(const std::shared_ptr<SetOpTree::SelectableOpFilter> & filter) { return false; }
+	virtual  bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter * filter) { return false; }
 	virtual void clear() = 0;
 	virtual std::ostream & printStructure(std::ostream & out) const { return (out << "SetOpTreePrivate::printStructure: unsupported" << std::endl);}
 };

@@ -15,7 +15,7 @@ namespace sserialize {
 
 
 template<typename ItemType>
-class StringsItemDBPrivate {
+class StringsItemDBPrivate: public RefCountObject {
 public:
 	typedef typename std::vector< ItemType > ItemContainer;
 	typedef typename ItemContainer::iterator ItemIterator;
