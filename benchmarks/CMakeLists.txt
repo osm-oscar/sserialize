@@ -31,3 +31,4 @@ ENDMACRO(ADD_BENCH_TARGET_SINGLE)
 
 ADD_BENCH_TARGET_SINGLE(treevector-stdset-merge-comparisson)
 ADD_BENCH_TARGET_SINGLE(dynamic_bitset_benchmark)
+ADD_BENCH_TARGET_SINGLE(dynamic_bitset_file_bench)
