@@ -21,6 +21,8 @@
   * (u)int32: 1-5
   * (u)int64: 1-9
   * 
+  * All functions that change the size of the underlying storage are NOT thread-safe.
+  * 
   */
 
 namespace sserialize {

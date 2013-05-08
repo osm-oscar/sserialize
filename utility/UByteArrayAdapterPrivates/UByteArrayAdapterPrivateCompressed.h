@@ -2,6 +2,9 @@
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #include "UByteArrayAdapterPrivate.h"
 #include <sserialize/utility/CompactUintArray.h>
+#ifdef SSERIALIZE_WITH_THREADS
+#include <mutex>
+#endif
 
 /* Compressed Storage Layout:
  * The uncompressed storage is compressed in chunks of 2^n KB
@@ -32,6 +35,9 @@ private:
 	CompactUintArray m_pageTable;
 	uint32_t m_maxFrameCount;
 	uint32_t m_freeFrameCount;
+#ifdef SSERIALIZE_WITH_THREADS
+	mutable std::mutex m_fileLock;
+#endif
 private:
 	uint32_t getFreeCacheFrame();
 	bool decompress(uint32_t chunkNum, uint32_t destinationOffset);

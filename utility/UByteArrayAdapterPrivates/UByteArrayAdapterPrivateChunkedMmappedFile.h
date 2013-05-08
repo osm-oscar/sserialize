@@ -2,12 +2,21 @@
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_CHUNKED_MMAPPED_FILE_H
 #include "UByteArrayAdapterPrivate.h"
 #include <sserialize/utility/ChunkedMmappedFile.h>
+#define SSERIALIZE_WITH_THREADS
+#ifdef SSERIALIZE_WITH_THREADS
+#include <mutex>
+#endif
 
 namespace sserialize {
+
+/** Abstracts access to a chunkedMappedFile. This class guarantees thread-safe access iff it's the only object operating on the chunkedMappedFile! **/
 
 class UByteArrayAdapterPrivateChunkedMmappedFile: public UByteArrayAdapterPrivate {
 private:
 	ChunkedMmappedFile m_file;
+#ifdef SSERIALIZE_WITH_THREADS
+	mutable std::mutex m_fileLock;
+#endif
 public:
 	UByteArrayAdapterPrivateChunkedMmappedFile(const ChunkedMmappedFile& file);
 	virtual ~UByteArrayAdapterPrivateChunkedMmappedFile();

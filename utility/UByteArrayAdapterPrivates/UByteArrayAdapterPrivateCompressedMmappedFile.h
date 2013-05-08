@@ -2,12 +2,20 @@
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_COMPRESSED_MMAPPED_FILE_H
 #include "UByteArrayAdapterPrivate.h"
 #include <sserialize/utility/CompressedMmappedFile.h>
+#define SSERIALIZE_WITH_THREADS
+#ifdef SSERIALIZE_WITH_THREADS
+#include <mutex>
+#endif
+
 
 namespace sserialize {
 
 class UByteArrayAdapterPrivateCompressedMmappedFile: public UByteArrayAdapterPrivate {
 private:
 	CompressedMmappedFile m_file;
+#ifdef SSERIALIZE_WITH_THREADS
+	mutable std::mutex m_fileLock;
+#endif
 public:
 	UByteArrayAdapterPrivateCompressedMmappedFile(const CompressedMmappedFile& file);
 	virtual ~UByteArrayAdapterPrivateCompressedMmappedFile();

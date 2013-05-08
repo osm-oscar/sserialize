@@ -1,6 +1,9 @@
 #ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #include "UByteArrayAdapterPrivateCompressed.h"
+#ifdef SSERIALIZE_WITH_THREADS
+#include <sserialize/utility/MutexLocker.h>
+#endif
 #include <stdlib.h>
 /* Compressed Storage Layout:
  * The uncompressed storage is compressed in chunks of 2^n KB

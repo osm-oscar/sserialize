@@ -5,6 +5,7 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIterator.h>
 #include <sserialize/templated/LFUCache.h>
+#include <mutex>
 
 namespace sserialize {
 
@@ -22,6 +23,7 @@ public:
 	};
 private:
 	sserialize::LFUCache< std::pair<std::string, uint16_t>, ItemIndex> m_cache;
+	std::mutex m_cacheLock;
 public:
 	StringCompleter();
 	StringCompleter(const StringCompleter & other);

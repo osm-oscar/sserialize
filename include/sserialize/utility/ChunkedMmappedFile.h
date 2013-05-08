@@ -10,7 +10,11 @@ namespace sserialize {
 
 class ChunkedMmappedFilePrivate;
 
-/** This class implements a chunked mmapped file access. The minimum chunksize is 1 MebiByte and a default cache count of 16 */
+/** This class implements a chunked mmapped file access. The minimum chunksize is 1 MebiByte and a default cache count of 16
+  * 
+  * This class is NOT thread-safe (and never can: i.e. thread-one holds a refernce to a cacheLine by oeprator[] and thread 2 evicts that cacheLine. There's no way to lock the cacheline without user-interaction in thread 19
+  * 
+  */
 class ChunkedMmappedFile: public RCWrapper<ChunkedMmappedFilePrivate>  {
 public:
 	typedef OffsetType SizeType;

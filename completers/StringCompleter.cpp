@@ -1,5 +1,7 @@
 #include <sserialize/completers/StringCompleter.h>
 #include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/utility/MutexLocker.h>
+
 #define INDEX_CACHE_SIZE 8
 
 
@@ -51,12 +53,15 @@ void StringCompleter::clearCache() {
 
 ItemIndex StringCompleter::complete(const std::string & str, StringCompleter::QuerryType qtype) {
 	std::pair<std::string, sserialize::StringCompleter::QuerryType> q(str, qtype);
+	MutexLocker locker(m_cacheLock);
 	if (m_cache.contains(q)) {
 		return m_cache.find(q);
 	}
 	else {
+		m_cacheLock.unlock();
 		ItemIndex idx(priv()->complete(str, qtype));
 		//TODO:write index to file
+		m_cacheLock.lock();
 		m_cache.insert(q, idx);
 		return idx;
 	}

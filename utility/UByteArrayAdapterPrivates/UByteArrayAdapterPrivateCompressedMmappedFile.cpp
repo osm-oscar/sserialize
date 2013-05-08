@@ -1,5 +1,8 @@
 #include "UByteArrayAdapterPrivateCompressedMmappedFile.h"
 #include <sserialize/utility/pack_unpack_functions.h>
+#ifdef SSERIALIZE_WITH_THREADS
+#include <sserialize/utility/MutexLocker.h>
+#endif
 
 namespace sserialize {
 
@@ -21,70 +24,127 @@ void UByteArrayAdapterPrivateCompressedMmappedFile::setDeleteOnClose(bool del) {
 
 //Access functions
 uint8_t & UByteArrayAdapterPrivateCompressedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) {
+#ifdef SSERIALIZE_WITH_THREADS
+	MutexLocker locker(m_fileLock);
+#endif
 	return m_file.operator[](pos);
 }
 
 const uint8_t & UByteArrayAdapterPrivateCompressedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) const {
+#ifdef SSERIALIZE_WITH_THREADS
+	MutexLocker locker(m_fileLock);
+#endif
 	return m_file.operator[](pos);
 }
 
 int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getInt64(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len = 8;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_int64_t(buf);
 }
 
 uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint64(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len = 8;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_uint64_t(buf);
 }
 
 int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getInt32(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len= 4;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_int32_t(buf[0], buf[1], buf[2], buf[3]);
 }
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint32(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len= 4;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_uint32_t(buf[0], buf[1], buf[2], buf[3]);
 }
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint24(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len= 3;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_uint24_t(buf[0], buf[1], buf[2]);
 }
 
 uint16_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint16(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len= 2;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_uint16_t(buf[0], buf[1]);
 }
 
 uint8_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint8(UByteArrayAdapter::OffsetType pos) const {
+#ifdef SSERIALIZE_WITH_THREADS
+	MutexLocker locker(m_fileLock);
+#endif
 	return m_file[pos];
 }
 
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateCompressedMmappedFile::getOffset(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len = 5;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_uint40_t(buf);
 }
 
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateCompressedMmappedFile::getNegativeOffset(UByteArrayAdapter::OffsetType pos) const {
 	uint32_t len = 5;
 	uint8_t buf[len];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, len);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return unPack_int40_t(buf);
 }
 
@@ -92,7 +152,13 @@ int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArr
 	uint32_t bufLen = (*length > 9 ? 9 : *length);
 	*length = bufLen;
 	uint8_t buf[bufLen];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, bufLen);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return vl_unpack_int64_t(buf, length);
 }
 
@@ -100,7 +166,13 @@ uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteA
 	uint32_t bufLen = (*length > 9 ? 9 : *length);
 	*length = bufLen;
 	uint8_t buf[bufLen];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, bufLen);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return vl_unpack_uint64_t(buf, length);
 }
 
@@ -108,19 +180,34 @@ uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint32(UByteA
 	uint32_t bufLen = (*length > 5 ? 5 : *length);
 	*length = bufLen;
 	uint8_t buf[bufLen];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, bufLen);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return vl_unpack_uint32_t(buf, length);
 }
 
 int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
 	uint32_t bufLen = (*length > 5 ? 5 : *length);
 	uint8_t buf[bufLen];
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.lock();
+#endif
 	m_file.read(pos, buf, bufLen);
+#ifdef SSERIALIZE_WITH_THREADS
+	m_fileLock.unlock();
+#endif
 	return vl_unpack_int32_t(buf, length);
 }
 
 void UByteArrayAdapterPrivateCompressedMmappedFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
 	uint32_t mightOverFlow = len;
+#ifdef SSERIALIZE_WITH_THREADS
+	MutexLocker locker(m_fileLock);
+#endif
 	m_file.read(pos, dest, mightOverFlow);
 }
 
