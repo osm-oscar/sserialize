@@ -2,6 +2,7 @@
 #define SSERIALIZE_REF_COUNTING_H
 #include <cstdint>
 #include <assert.h>
+#include <atomic>
 
 //stolen from osmpbf
 namespace sserialize {
@@ -25,7 +26,7 @@ private:
 	RefCountObject(const RefCountObject & other);
 	RefCountObject & operator=(const RefCountObject & other);
 
-	uint32_t m_rc;
+	std::atomic<uint32_t> m_rc;
 };
 
 template<typename RCObj>
