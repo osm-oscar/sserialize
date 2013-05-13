@@ -126,6 +126,7 @@ IF(NOT CMAKE_CROSSCOMPILING)
 	endif(ICU_FOUND)
 	add_subdirectory(tests ${PROJECT_NAME}tests)
 	add_subdirectory(tools ${PROJECT_NAME}-tools)
+	add_subdirectory(support/play ${PROJECT_NAME}-play)
 ENDIF(NOT CMAKE_CROSSCOMPILING)
 
 add_subdirectory(benchmarks ${PROJECT_NAME}benchmarks)
