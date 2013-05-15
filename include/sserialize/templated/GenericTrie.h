@@ -1,180 +1,135 @@
 #ifndef SSERIALIZE_GENERIC_TRIE_H
 #define SSERIALIZE_GENERIC_TRIE_H
-#include <deque>
-#include "TreeNode.h"
+#include <vector>
+#include <map>
 
 namespace sserialize {
 
-template<typename AlphabetType, typename ItemIdType>
-class GenericTrieNode: public TreeNode<AlphabetType, std::set<ItemIdType> > {
-private:
-	std::deque<AlphabetType> m_str;
-public:
-	GenericTrieNode() : TreeNode() {}
-	virtual ~GenericTrieNode() {}
-	std::deque<AlphabetType> str() { return m_str;}
-};
-
-template<typename AlphabetType, typename ItemType>
+template<typename AlphabetType, typename ItemType, typename AlphabetStorage = std::vector<AlphabetType> >
 class GenericTrie {
-public:
-	typedef unsigned int ItemIdType;
-	typedef GenericTrieNode<AlphabetType, ItemIdType> Node;
+	class Node {
+		Node() {}
+		virtual ~Node() {
+			for(std::map<AlphabetType, Node*>::iterator it(m_children.begin()); it != m_children.end(); ++it)
+				delete it->second;
+		}
+	
+		AlphabetStorage m_storage;
+		ItemType m_items;
+		std::map<AlphabetType, Node*> m_children;
+		const ItemType & items() const { return m_items; }
+		ItemType & items() { return m_items; }
+		const std::map<AlphabetType, Node*> & children() const { return m_children; }
+		std::map<AlphabetType, Node*> & children() { return m_children; }
+		const AlphabetStorage & string() const { return m_storage; }
+		AlphabetStorage & string() { return m_storage; }
+	};
 private:
 	Node * m_root;
-	std::deque<ItemType> m_values;
-protected:
-	virtual Node * createNode() {
-		return new Node();
-	}
 public:
-	GenericTrie();
-	virtual ~GenericTrie();
-	virtual bool insert(const std::deque<AlphabetType> & path, const ItemType & value);
-	virtual GenericTrieNode<AlphabetType> * operator[](const std::deque< AlphabetType >& path);
-	ItemType & fromId(ItemIdType id) { return m_values[id];}
-	const ItemType & fromId(ItemIdType id) const { return m_values[id];}
-};
+	GenericTrie() : m_root(0) {}
+	virtual ~GenericTrie() { delete m_root; }
+	template<typename AlphabetIterator>
+	Node * operator[](const AlphabetIterator & strBegin, const AlphabetIterator & strEnd) {
+		AlphabetIterator strIt = strBegin;
+		AlphabetType strItUCode;
+		
+		if (!m_root) {
+			m_root = new Node();
+		}
+		Node * current = m_root;
+		Node * newNode = 0;
 
-template<typename AlphabetType, typename ItemType>
-GenericTrie<AlphabetType, ItemType>::GenericTrie() : m_root(0) {}
-
-template<typename ChildKeyType, typename ItemType>
-GenericTrie<AlphabetType, ItemType>::~GenericTrie() {}
-
-template<typename AlphabetType, typename ItemType>
-bool
-GenericTrie<AlphabetType, ItemType>::insert(const std::deque<AlphabetType> & path, const ItemType & value) {
-	Node * node = operator[](path);
-	if (!node)
-		return false;
-
-	ItemIdType itemId = m_values.size();
-	node->value().insert(itemId);
-	return true;
-}
-
-template<typename AlphabetType, typename ItemType>
-GenericTrie<AlphabetType, ItemType>::Node *
-GenericTrie<AlphabetType, ItemType>::operator[](const std::deque<AlphabetType> & path) {
-	if (!m_root) {
-		m_root = createNode();
-		m_root->str() = path;
-		return m_root;
-	}
-	else {
-
-	strIt = str.begin();
-	while(strIt != str.end()) {
-		//Find the first different character
-		std::string::iterator cIt = current->c.begin();
-		uint32_t cItUCode;
-		strItUCode = ((str.size() > 0) ? utf8::peek_next(strIt, str.end()) : 0);
-		cItUCode = ((current->c.size() > 0) ? utf8::peek_next(cIt, current->c.end()) : 0);
-		while (cIt != current->c.end() && strIt != str.end()) {
-			strItUCode = utf8::peek_next(strIt, str.end());
-			cItUCode = utf8::peek_next(cIt, current->c.end());
-			if (strItUCode == cItUCode) {
-				utf8::next(strIt, str.end());
-				utf8::next(cIt, current->c.end());
+		strIt = strBegin;
+		while(strIt != strEnd) {
+			//Find the first different character
+			AlphabetStorage::const_iterator cIt = current->string().begin();
+			AlphabetType cItUCode;
+			strItUCode = ((strBegin != strEnd) ? *strIt : AlphabetType());
+			cItUCode = ((current->c.size() > 0) ? *cIt : AlphabetType());
+			while (cIt != current->string().end() && strIt != strEnd) {
+				strItUCode = *strIt;
+				cItUCode = *cIt;
+				if (strItUCode == cItUCode) {
+					++strIt;
+					++cIt;
+				}
+				else {
+					break;
+				}
 			}
-			else {
+			//cIt=end or strIt=end or strIt != cIt
+			if (cIt == current->c.end() && strIt != strEnd) { //node->c is real prefix, strIt points to new element
+				strItUCode = *strIt;
+				if (current->children.count(strItUCode) > 0) {
+					current = current->children.at(strItUCode);
+				}
+				else {
+					newNode = new Node;
+					newNode->c = "";
+					newNode->c.append(strIt, strEnd);
+					(current->children)[strItUCode] = newNode;
+					newNode->parent = current;
+					current = newNode;
+					break;
+				}
+			}
+			else if (cIt == current->c.end() && strIt == strEnd) { //node->c is equal to str
 				break;
 			}
-		}
-		//cIt=end or strIt=end or strIt != cIt
-// 		strItUCode = ((str.size() > 0) ? utf8::peek_next(strIt, str.end()) : 0);
-// 		cItUCode = ((current->c.size() > 0) ? utf8::peek_next(cIt, current->c.end()) : 0);
-		if (cIt == current->c.end() && strIt != str.end()) { //node->c is real prefix, strIt points to new element
-// 			std::cout << "case0 node->c real prefix" << std::endl;
-			strItUCode = utf8::peek_next(strIt, str.end());
-			if (current->children.count(strItUCode) > 0) {
-				current = current->children.at(strItUCode);
+			else if (cIt != current->c.end() && strIt == strEnd) { //str is prefix of node->c
+				cItUCode = *cIt;
+				Node * oldStrNode = new Node;
+				oldStrNode->string() = AlphabetStorage(cIt, current->c.end());
+				oldStrNode->children().swap(current->children());
+
+				oldStrNode->fixChildParentPtrRelation();
+				
+				//save char for children
+				AlphabetType c = cItUCode;
+				
+				//clear data, adjust to new c
+				current->items() = ItemType();
+				current->children.clear();
+				current->c.erase(cIt, current->string().end());
+				
+				//insert old node and add value
+				(current->children())[c] = oldStrNode;
+				oldStrNode->parent = current;
+				break;
 			}
-			else {
-				newNode = new Node;
-				m_nodeCount++;
-				newNode->c = "";
-				newNode->c.append(strIt, str.end());
-				(current->children)[strItUCode] = newNode;
+			else if (cIt != current->c.end() && strIt != strEnd) { //possible common prefix, iterator at the different char
+
+				strItUCode = *strIt;
+				cItUCode = *cIt;
+
+				Node * newNode = new Node;
+				newNode->string() = AlphabetStorage(strIt, strEnd);
+				
+				Node * oldStrNode = new Node;
+				oldStrNode->string() = AlphabetStorage(cIt, current->string().end());
+				oldStrNode->children.swap(current->children);
+				std::swap<ItemType>(oldStrNode->items(), current->items());
+				oldStrNode->fixChildParentPtrRelation();
+				
+				current->children().clear();
+				current->items() = ItemType();
+				current->string().erase(cIt, current->c.end());
+
+				//add pointer to node with the rest of the old node string
+				(current->children())[strItUCode] = newNode;
 				newNode->parent = current;
+				//add pointer the node with the rest of the new string
+				(current->children())[cItUCode] = oldStrNode;
+				oldStrNode->parent = current;
 				current = newNode;
 				break;
 			}
-		}
-		else if (cIt == current->c.end() && strIt == str.end()) { //node->c is equal to str
-// 			std::cout << "case1 node->c = str" << std::endl;
-// 			(current->values).push_back(value);
-			break;
-		}
-		else if (cIt != current->c.end() && strIt == str.end()) { //str is prefix of node->c
-// 			std::cout << "case2 str is prefix of node->c" << std::endl;
-			cItUCode = utf8::peek_next(cIt, current->c.end());
-
-			Node * oldStrNode = new Node;
-			oldStrNode->c = "";
-			oldStrNode->c.append(cIt, current->c.end());
-			oldStrNode->children.swap(current->children);
-			oldStrNode->partOfEnd = current->partOfEnd;
-			oldStrNode->exactValues.swap(current->exactValues);
-			oldStrNode->subStrValues.swap(current->subStrValues);
-
-			oldStrNode->fixChildParentPtrRelation();
-			
-			//save char for children
-			uint32_t c = cItUCode;
-			
-			//clear data, adjust to new c
-			current->exactValues.clear();
-			current->subStrValues.clear();
-			current->children.clear();
-			current->c.erase(cIt, current->c.end());
-			current->partOfEnd = false; //will be set to true after while loop
-			
-			//insert old node and add value
-			(current->children)[c] = oldStrNode;
-			oldStrNode->parent = current;
-// 			current->values.push_back(value);
-			break;
-		}
-		else if (cIt != current->c.end() && strIt != str.end()) { //possible common prefix, iterator at the different char
-// 			std::cout << "case3 node->c and string have common prefix" << std::endl;
-
-			strItUCode = utf8::peek_next(strIt, str.end());
-			cItUCode = utf8::peek_next(cIt, current->c.end());
-
-			Node * newNode = new Node;
-			newNode->c = "";
-			newNode->c.append(strIt, str.end());
-// 			newNode->values.push_back(value);
-			
-			Node * oldStrNode = new Node;
-			oldStrNode->c = "";
-			oldStrNode->c.append(cIt, current->c.end());
-			oldStrNode->children.swap(current->children);
-			oldStrNode->partOfEnd = current->partOfEnd;
-			oldStrNode->exactValues.swap(current->exactValues);
-			oldStrNode->subStrValues.swap(current->subStrValues);
-			oldStrNode->fixChildParentPtrRelation();
-			
-			current->children.clear();
-			current->exactValues.clear();
-			current->subStrValues.clear();
-			current->partOfEnd = false;
-			current->c.erase(cIt, current->c.end());
-
-			//add pointer to node with the rest of the old node string
-			(current->children)[strItUCode] = newNode;
-			newNode->parent = current;
-			//add pointer the node with the rest of the new string
-			(current->children)[cItUCode] = oldStrNode;
-			oldStrNode->parent = current;
-			current = newNode;
-			break;
-		}
-	} // end while
+		} // end while
+		return current;
 	}
-}
+};
+
 
 }//end namespace
 
