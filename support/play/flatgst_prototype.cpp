@@ -10,6 +10,7 @@
 #include <sserialize/utility/TimeMeasuerer.h>
 
 typedef std::vector<std::string> StringDataBase;
+typedef std::string TreePath;
 
 inline bool utf8Smaller(std::string::const_iterator itA, std::string::const_iterator endA, std::string::const_iterator itB, std::string::const_iterator endB) {
 		while (itA < endA && itB < endB) {
@@ -50,7 +51,25 @@ struct SubString {
 		const std::string & oBase = db.at(other.stringId);
 		return utf8Smaller(myBase.begin()+begin, myBase.begin()+end, oBase.begin()+other.begin, oBase.begin()+other.end);
 	}
+	
+	std::string::iterator begin(const StringDataBase & db) {
+		return db.at(stringId).begin()+begin;
+	}
+	
+	std::string::const_iterator cbegin(const StringDataBase & db) const {
+		return db.at(stringId).cbegin()+begin;
+	}
+	
+	std::string::iterator end(const StringDataBase & db) {
+		return db.at(stringId).begin()+end;
+	}
+	
+	std::string::const_iterator cend(const StringDataBase & db) const {
+		return db.at(stringId).cbegin()+end;
+	}
 };
+
+
 
 struct SubStringCompare  {
 	StringDataBase * db;
@@ -60,17 +79,17 @@ struct SubStringCompare  {
 };
 
 struct Node {
-	struct StringInfo {
-		StringInfo(const std::string::const_iterator & begin, const std::string::const_iterator & end) :
+	struct TreeRange {
+		TreeRange(const std::string::const_iterator & begin, const std::string::const_iterator & end) :
 		begin(begin), end(end) {}
 		std::string::const_iterator begin;
 		std::string::const_iterator end;
 	};
-	Node(std::vector<StringInfo> & srcStrsIt) : srcStrsIt(srcStrsIt) {
+	Node(std::vector<TreeRange> & srcStrsIt) : srcStrsIt(srcStrsIt) {
 		begin = 0;
 		end = srcStrsIt.size();
 	}
-	Node(std::vector<StringInfo> & srcStrsIt, int32_t begin, int32_t end, const std::string & prefix) : 
+	Node(std::vector<TreeRange> & srcStrsIt, int32_t begin, int32_t end, const std::string & prefix) : 
 	srcStrsIt(srcStrsIt),
 	begin(begin),
 	end(end),
@@ -78,7 +97,7 @@ struct Node {
 	{}
 	~Node() {}
 	
-	std::vector<StringInfo> & srcStrsIt;
+	std::vector<TreeRange> & srcStrsIt;
 	int32_t begin;
 	int32_t end;
 	bool hasEndIterator() {
@@ -188,10 +207,10 @@ int main(int argc, char ** argv) {
 	
 	
 	{
-		std::vector<Node::StringInfo> itemStrIts;
+		std::vector<Node::TreeRange> itemStrIts;
 		itemStrIts.reserve(itemStrings.size());
 		for(std::vector<std::string>::const_iterator it(itemStrings.begin());  it != itemStrings.end(); ++it) {
-			itemStrIts.push_back(Node::StringInfo(it->cbegin(), it->cend()));
+			itemStrIts.push_back(Node::TreeRange(it->cbegin(), it->cend()));
 		}
 		
 		Node rootNode(itemStrIts);

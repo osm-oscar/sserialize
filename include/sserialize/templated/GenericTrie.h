@@ -128,6 +128,47 @@ public:
 		} // end while
 		return current;
 	}
+	
+	template<typename AlphabetIterator>
+	Node * find(const AlphabetIterator & strBegin, const AlphabetIterator & strEnd, bool prefixMatch) {
+		if (!m_root)
+			return 0;
+		
+		Node * node = m_root;
+		AlphabetStorage::const_iterator cIt(node->string().begin());
+		AlphabetIterator strIt(strBegin);
+		while (strIt != strEnd) {
+			while(cIt != node->string().end() && strIt != strEnd) {
+				if (*cIt == *strIt) {
+					++cIt;
+					++strIt;
+				}
+				else {
+					return 0;
+				}
+			}
+			if (strIt != strEnd) {
+				std::map<AlphabetType, Node*>::const_iterator it = node->children().find(*strIt);
+				if (it != std::map<AlphabetType, Node*>::end) {
+					node = it->second;
+					cIt = node->string().begin();
+				}
+				else {
+					return 0;
+				}
+			}
+		}
+		
+		if (cIt != node->node->string().end()) { //
+			if (prefixMatch)
+				return node;
+			else
+				return 0;
+		}
+		else {
+			return node;
+		}
+	}
 };
 
 
