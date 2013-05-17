@@ -8,6 +8,22 @@
 
 namespace sserialize {
 
+class MmappedRegion {
+	uint8_t * m_data;
+	OffsetType m_beginOffset;
+	uint32_t m_size;
+public:
+	MmappedRegion();
+	virtual ~MmappedRegion();
+	bool contains(OffsetType offset) {
+		return (offset >= m_beginOffset && offset < (m_beginOffset+m_size));
+	}
+	uint8_t & operator[](OffsetType globalposition) {
+		return *(m_data + (globalposition-m_beginOffset));
+	}
+	
+};
+
 class ChunkedMmappedFilePrivate;
 
 /** This class implements a chunked mmapped file access. The minimum chunksize is 1 MebiByte and a default cache count of 16
