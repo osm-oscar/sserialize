@@ -30,42 +30,43 @@ struct Utf8Compare {
 	};
 };
 
-struct SubString {
-	uint32_t stringId;
-	uint16_t begin;
-	uint16_t end;
+class SubString {
+	uint32_t m_stringId;
+	uint16_t m_begin;
+	uint16_t m_end;
+public:
 	std::string toString(const StringDataBase & db) const {
-		const std::string & base = db.at(stringId);
-		return std::string(base.begin()+begin, base.begin()+end);
+		const std::string & base = db.at(m_stringId);
+		return std::string(base.begin()+ m_begin, base.begin()+ m_end);
 	}
 	uint16_t len() const {
-		return end-begin;
+		return m_end - m_begin;
 	}
 	
 	bool valid() const {
-		return begin < end;
+		return m_begin < m_end;
 	}
 	
-	bool smallerThan(const SubString & other, const StringDataBase & db) {
-		const std::string & myBase = db.at(stringId);
-		const std::string & oBase = db.at(other.stringId);
-		return utf8Smaller(myBase.begin()+begin, myBase.begin()+end, oBase.begin()+other.begin, oBase.begin()+other.end);
+	bool smallerThan(const SubString & other, const StringDataBase & db) const {
+		const std::string & myBase = db.at(m_stringId);
+		const std::string & oBase = db.at(other.m_stringId);
+		return utf8Smaller(myBase.begin()+ m_begin, myBase.begin()+ m_end, oBase.begin()+other.m_begin, oBase.begin()+other.m_end);
 	}
 	
-	std::string::iterator begin(const StringDataBase & db) {
-		return db.at(stringId).begin()+begin;
+	std::string::iterator begin(StringDataBase & db) {
+		return db.at(m_stringId).begin() + static_cast<int>(m_begin);
 	}
 	
 	std::string::const_iterator cbegin(const StringDataBase & db) const {
-		return db.at(stringId).cbegin()+begin;
+		return db.at(m_stringId).cbegin() + static_cast<int>(m_begin);
 	}
 	
-	std::string::iterator end(const StringDataBase & db) {
-		return db.at(stringId).begin()+end;
+	std::string::iterator end(StringDataBase & db) {
+		return db.at(m_stringId).begin() + static_cast<int>(m_end);
 	}
 	
 	std::string::const_iterator cend(const StringDataBase & db) const {
-		return db.at(stringId).cbegin()+end;
+		return db.at(m_stringId).cbegin() + static_cast<int>(m_end);
 	}
 };
 
