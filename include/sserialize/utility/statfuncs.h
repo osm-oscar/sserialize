@@ -42,11 +42,11 @@ TValue median(const TIterator & begin, const TIterator & end, TValue def) {
 }
 
 
-/** Iterators to a frequency table */
+/** Iterators to a item->frequency table */
 template<typename TIterator, typename TValue>
 TValue entropy(TIterator begin, const TIterator & end, TValue initial, TValue totalCount) {
 	for(; begin != end; ++begin) {
-		TValue wn = begin->first/totalCount;
+		TValue wn = begin->second/totalCount;
 		initial += wn * logTo2(wn) ;
 	}
 	return - initial;
