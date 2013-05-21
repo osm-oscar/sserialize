@@ -41,6 +41,7 @@ public:
 	std::ostream& printStats(std::ostream& out) const;
 	std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const;
 	SortedOffsetIndex & getIndex() { return m_index;}
+	const UByteArrayAdapter & getData() const { return m_data; }
 };
 
 }}//end namespace
