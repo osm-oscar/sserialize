@@ -12,8 +12,10 @@ namespace sserialize {
   *--------------------------------------------------------------------------------------
   *uint32|uint32|*
   *--------------------------------------------------------------------------------------
+  *SIZE is the size of the DATA section
+  *COUNT is the number of elements
   * Data is delta encoded with rle. Type of word is selected by the least significant bit.
-  * If data[i] &0x1 then data is a rle and the next caruint32 tells the difference between the data[i] >> 1 elements
+  * If data[i] & 0x1 then data is a rle and the next varuint32 tells the difference between the (data[i] >> 1) elements
   *
   *
   */
