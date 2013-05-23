@@ -38,6 +38,7 @@ private:
 		Node() {}
 		virtual ~Node() {}
 		virtual uint32_t depth() const {return 1;}
+		virtual uint32_t levelOfFirstLeaf() const { return 1; }
 	};
 
 	struct InnerNode: public Node {
@@ -52,6 +53,12 @@ private:
 			uint32_t md = 0;
 			for(typename std::vector<Node*>::const_iterator it(children.begin()); it != children.end(); ++it)
 				md = std::max<uint32_t>(md, (*it)->depth());
+			return md+1;
+		}
+		virtual uint32_t levelOfFirstLeaf() const {
+			uint32_t md = std::numeric_limits<uint32_t>::max();
+			for(typename std::vector<Node*>::const_iterator it(children.begin()); it != children.end(); ++it)
+				md = std::min<uint32_t>(md, (*it)->levelOfFirstLeaf());
 			return md+1;
 		}
 		std::vector<Node*> children; 
@@ -94,9 +101,14 @@ public:
 	virtual ~HuffmanTree() {
 		delete m_root;
 	}
-	uint32_t depth() {
+	uint32_t depth() const {
 		return m_root->depth();
 	}
+	
+	uint32_t levelOfFirstLeaf() const {
+		return m_root->levelOfFirstLeaf();
+	}
+	
 	///@parameter begin AlphabetIterator should return a uint8_t holding ONE character from the alphabet
 	template<typename AlphabetIterator>
 	TValue at(AlphabetIterator begin, const AlphabetIterator & end, TValue def = TValue()) {

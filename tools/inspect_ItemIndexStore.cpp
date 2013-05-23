@@ -148,6 +148,7 @@ int main(int argc, char ** argv) {
 		HuffmanTree<uint32_t> ht(alphabetBitLength);
 		ht.create(alphabet.begin(), alphabet.end(), size/charSize);
 		std::cout << "Huffman tree depth: " << ht.depth() << std::endl;
+		std::cout << "Huffman tree min code length: " << ht.levelOfFirstLeaf() << std::endl;
 		
 		std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
 		std::cout << "Calculating compressed size (without ht tables):" << std::flush;
