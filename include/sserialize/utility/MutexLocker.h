@@ -1,3 +1,4 @@
+#ifdef SSERIALIZE_WITH_THREADS
 #ifndef SSERIALIZE_MUTEX_LOCKER_H
 #define SSERIALIZE_MUTEX_LOCKER_H
 #include <mutex>
@@ -16,6 +17,5 @@ public:
 };
 
 }//end namespace
-
-
+#endif
 #endif
