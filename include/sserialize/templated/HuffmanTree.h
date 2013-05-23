@@ -4,19 +4,19 @@
 #include <unordered_map>
 #include <vector>
 #include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/utility/hashspecializations.h>
 
 namespace sserialize {
 
 class HuffmanCodePoint {
-	uint8_t * m_data;
+	uint32_t m_code;
 	uint8_t m_codeLength; //length in alphabetSize (bit length = codeLength*alphabetSize)
-	uint8_t m_alphabetSize;
 public:
-	HuffmanCodePoint(uint8_t alphabetSize);
-	virtual ~HuffmanCodePoint();
-	uint8_t size() const;
-	HuffmanCodePoint & operator+=(uint8_t alphabetChar);
-	
+	HuffmanCodePoint() : m_code(0), m_codeLength(0) {}
+	HuffmanCodePoint(uint32_t code, uint8_t length) : m_code(code), m_codeLength(length) {}
+	virtual ~HuffmanCodePoint() {}
+	uint8_t codeLength() const { return m_codeLength; }
+	uint32_t code() const { return m_code; }
 };
 
 class HuffmanCodePointIterator {
@@ -41,6 +41,8 @@ private:
 	};
 
 	struct InnerNode: public Node {
+		typedef typename std::vector<Node*>::const_iterator ConstChildIterator;
+		typedef typename std::vector<Node*>::iterator ChildIterator;
 		InnerNode() {}
 		virtual ~InnerNode() {
 			for(typename std::vector<Node*>::iterator it(children.begin()); it != children.end(); ++it)
@@ -65,7 +67,7 @@ private:
 	struct NodePtrComparator {
 		TLookUpTable * lt;
 		NodePtrComparator(TLookUpTable * lt) : lt(lt) {}
-		bool operator()(const Node * a, const Node * b) {
+		bool operator()(const Node * a, const Node * b) const {
 			return (*lt)[a] < (*lt)[b];
 		};
 	};
@@ -74,6 +76,19 @@ private:
 	Node * m_root;
 	uint32_t m_alphabetSize;
 	uint32_t m_alphabetBitLength;
+private:
+	void codePointMapRecurse(std::unordered_map<uint32_t, HuffmanCodePoint> & dest, Node * node, uint32_t prefixCode, uint8_t length) {
+		if (dynamic_cast<EndNode*>(node)) {
+			EndNode * en = dynamic_cast<EndNode*>(node);
+			dest[en->value] = HuffmanCodePoint(prefixCode, length);
+		}
+		else if (dynamic_cast<InnerNode*>(node)) {
+			InnerNode * in = dynamic_cast<InnerNode*>(node);
+			for(uint32_t i = 0; i < in->children.size(); ++i) {
+				codePointMapRecurse(dest, in->children[i], (prefixCode << m_alphabetBitLength) | i, length+m_alphabetBitLength);
+			}
+		}
+	};
 public:
 	HuffmanTree(uint8_t alphabetBitLength = 1) : m_root(0), m_alphabetSize(static_cast<uint32_t>(1) << alphabetBitLength), m_alphabetBitLength(alphabetBitLength) {}
 	virtual ~HuffmanTree() {
@@ -103,28 +118,32 @@ public:
 	//SymbolProbIterator->first points to the Symbol ->second the symbolprobability or symbolcount
 	template<typename SymbolProbIterator, typename TFreq>
 	void create(const SymbolProbIterator & begin, const SymbolProbIterator & end, TFreq total) {
-		typedef std::unordered_map<const Node*, TFreq> MyFreqTableType;
+		typedef std::unordered_map<const Node*, std::pair<TFreq, uint32_t> > MyFreqTableType;
 		typedef NodePtrComparator<MyFreqTableType> MyNodePtrComparator;
 		typedef std::set<Node*, MyNodePtrComparator> MySortContainer;
 		MyFreqTableType freLookUpTable;
+		uint32_t nodeCounter = 0;
 		MyNodePtrComparator cmp(&freLookUpTable);
 		MySortContainer tree( cmp );
 		SymbolProbIterator it(begin);
 		while(it != end) {
-			Node * node = new EndNode(it->first);
-			freLookUpTable[node] = it->second;
+			EndNode * node = new EndNode(it->first);
+			++nodeCounter;
+			freLookUpTable[node] = std::pair<TFreq, uint32_t>(it->second, nodeCounter);
 			tree.insert(node);
 			++it;
 		};
+		
 		while (tree.size() > 1) {
 			InnerNode * in = new InnerNode();
-			freLookUpTable[in] = TFreq(0);
+			++nodeCounter;
+			freLookUpTable[in] = std::pair<TFreq, uint32_t>(0, nodeCounter);
 			typename MySortContainer::iterator nodeIt;
 			while (tree.size() > 0 && in->children.size() < m_alphabetSize) {
 				nodeIt = tree.begin();
 				Node * node = *nodeIt;
 				in->children.push_back(node);
-				freLookUpTable[in] += freLookUpTable[node];
+				freLookUpTable[in].first += freLookUpTable[node].first;
 				freLookUpTable.erase(node);
 				tree.erase(nodeIt);
 			}
@@ -136,7 +155,9 @@ public:
 	};
 
 	std::unordered_map<TValue, HuffmanCodePoint> codePointMap() {
-		
+		std::unordered_map<TValue, HuffmanCodePoint> ret;
+		codePointMapRecurse(ret, m_root, 0, 0);
+		return ret;
 	};
 	
 };

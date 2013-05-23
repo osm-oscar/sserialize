@@ -148,5 +148,13 @@ int main(int argc, char ** argv) {
 		HuffmanTree<uint32_t> ht(alphabetBitLength);
 		ht.create(alphabet.begin(), alphabet.end(), size/charSize);
 		std::cout << "Huffman tree depth: " << ht.depth() << std::endl;
+		
+		std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
+		std::cout << "Calculating compressed size (without ht tables):" << std::flush;
+		uint64_t bitUsage = 0;
+		for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it) {
+			bitUsage += htMap.at(it->first).codeLength()*it->second;
+		}
+		std::cout << bitUsage/8 << "(" << (double)(bitUsage/8) / size * 100 << "%)" << std::endl;
 	}
 }
