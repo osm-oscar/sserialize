@@ -2,7 +2,6 @@
 #include <sserialize/utility/TimeMeasuerer.h>
 #include <sserialize/utility/CompactUintArray.h>
 #include <iostream>
-#include <boost/type_traits.hpp>
 
 
 int main(int argc, char ** argv) {
