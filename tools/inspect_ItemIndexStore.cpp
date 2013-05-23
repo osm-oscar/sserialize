@@ -4,6 +4,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/statfuncs.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/templated/HuffmanTree.h>
 
 using namespace std;
 using namespace sserialize;
@@ -109,12 +110,7 @@ int main(int argc, char ** argv) {
 			charSize = 4;
 			for(UByteArrayAdapter::OffsetType i = 0; i < size; i += charSize) {
 				uint32_t character = data.getUint32(i);
-				if (alphabet.count(character) == 0) {
-					alphabet[character] = 1;
-				}
-				else {
-					alphabet[character] += 1;
-				}
+				incAlphabet(alphabet, character);
 			}
 		}
 		else if (store.indexType() == ItemIndex::T_RLE_DE) {
@@ -143,6 +139,9 @@ int main(int argc, char ** argv) {
 		std::cout << "#Entropy: " << entropy << std::endl;
 		std::cout << "Compressed length: " << compressedSize << "(" << static_cast<double>(compressedSize)/size*100 << "%)" << std::endl;
 		std::cout << "Compressed length with dict: " << compressedSizeWithDict << "(" << static_cast<double>(compressedSizeWithDict)/size*100 << "%)" << std::endl;
-		
+		std::cout << "Creating fuffman tree" << std::endl;
+		HuffmanTree<uint32_t> ht;
+		ht.create(alphabet.begin(), alphabet.end(), size/charSize);
+		std::cout << "Huffman tree depth: " << ht.depth() << std::endl;
 	}
 }
