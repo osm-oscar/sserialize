@@ -72,9 +72,10 @@ private:
 	
 private:
 	Node * m_root;
-	uint8_t m_alphabetSize; //alphabet size in bits
+	uint32_t m_alphabetSize;
+	uint32_t m_alphabetBitLength;
 public:
-	HuffmanTree(uint8_t alphabetSize = 2) : m_root(0), m_alphabetSize(alphabetSize) {}
+	HuffmanTree(uint8_t alphabetBitLength = 1) : m_root(0), m_alphabetSize(static_cast<uint32_t>(1) << alphabetBitLength), m_alphabetBitLength(alphabetBitLength) {}
 	virtual ~HuffmanTree() {
 		delete m_root;
 	}
@@ -119,7 +120,7 @@ public:
 			InnerNode * in = new InnerNode();
 			freLookUpTable[in] = TFreq(0);
 			typename MySortContainer::iterator nodeIt;
-			while (tree.size() && in->children.size() < m_alphabetSize) {
+			while (tree.size() > 0 && in->children.size() < m_alphabetSize) {
 				nodeIt = tree.begin();
 				Node * node = *nodeIt;
 				in->children.push_back(node);

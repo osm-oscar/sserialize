@@ -34,6 +34,7 @@ int main(int argc, char ** argv) {
 	int64_t dumpIndexId = -1;
 	bool dumpIndexStoreIndex = false;
 	bool dumpDataHisto = false;
+	uint8_t alphabetBitLength = 1;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -45,6 +46,10 @@ int main(int argc, char ** argv) {
 			dumpIndexStoreIndex = true;
 		if (curArg == "-dh")
 			dumpDataHisto = true;
+		if (curArg == "-abl" && i+1 < argc) {
+			alphabetBitLength = ::atoi(argv[i+1]);
+			++i;
+		}
 		if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
 			i++;
@@ -139,8 +144,8 @@ int main(int argc, char ** argv) {
 		std::cout << "#Entropy: " << entropy << std::endl;
 		std::cout << "Compressed length: " << compressedSize << "(" << static_cast<double>(compressedSize)/size*100 << "%)" << std::endl;
 		std::cout << "Compressed length with dict: " << compressedSizeWithDict << "(" << static_cast<double>(compressedSizeWithDict)/size*100 << "%)" << std::endl;
-		std::cout << "Creating fuffman tree" << std::endl;
-		HuffmanTree<uint32_t> ht;
+		std::cout << "Creating huffman tree with alphabetBitLength=" << static_cast<uint32_t>(alphabetBitLength) << std::endl;
+		HuffmanTree<uint32_t> ht(alphabetBitLength);
 		ht.create(alphabet.begin(), alphabet.end(), size/charSize);
 		std::cout << "Huffman tree depth: " << ht.depth() << std::endl;
 	}
