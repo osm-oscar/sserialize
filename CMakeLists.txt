@@ -68,6 +68,8 @@ containers/DynamicBitSet.cpp
 containers/SortedOffsetIndex.cpp
 containers/SortedOffsetIndexPrivate.cpp
 containers/SetOpTreePrivateSimple_parser.cpp
+containers/MultiBitBackInserter.cpp
+containers/MultiBitIterator.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
