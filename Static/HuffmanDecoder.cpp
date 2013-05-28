@@ -1,4 +1,4 @@
-#include <sserialize/containers/HuffmanDecoder.h>
+#include <sserialize/Static/HuffmanDecoder.h>
 
 namespace sserialize {
 namespace Static {
