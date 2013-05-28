@@ -33,7 +33,7 @@ public:
 	~ItemIndexStore();
 	uint32_t size() const;
 	ItemIndex::Types indexType() const { return m_type; }
-	
+	UByteArrayAdapter dataAt(uint32_t pos) const;
 	ItemIndex at(uint32_t pos) const;
 	ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const;
 	uint32_t getSizeInBytes() const;

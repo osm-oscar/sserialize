@@ -33,6 +33,12 @@ uint32_t ItemIndexStore::getSizeInBytes() const {
 	return 2 + UByteArrayAdapter::OffsetTypeSerializedLength() + m_index.getSizeInBytes() + m_data.size();
 }
 
+UByteArrayAdapter ItemIndexStore::dataAt(uint32_t pos) const {
+	if (pos >= size())
+		return UByteArrayAdapter();
+	return m_data + m_index.at(pos);
+}
+
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	if (pos >= size())
 		return ItemIndex();
