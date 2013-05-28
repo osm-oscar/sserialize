@@ -39,6 +39,7 @@ Static/FlatGeneralizedTrie.cpp
 Static/GeoPoint.cpp
 Static/triestats.cpp
 Static/RTree.cpp
+Static/HuffmanDecoder.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
