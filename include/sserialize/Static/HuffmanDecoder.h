@@ -2,7 +2,6 @@
 #define SSERIALIZE_CONTAINERS_HUFFMAN_DECODER_H
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/Static/Deque.h>
-#include <boost-1_49/boost/concept_check.hpp>
 
 /** This is a tablebased huffman decoder.
   * Essentialy its a tree with branching factor B and different child nodes
