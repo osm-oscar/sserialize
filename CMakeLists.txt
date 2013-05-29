@@ -71,6 +71,8 @@ containers/SortedOffsetIndexPrivate.cpp
 containers/SetOpTreePrivateSimple_parser.cpp
 containers/MultiBitBackInserter.cpp
 containers/MultiBitIterator.cpp
+containers/UDWIterator.cpp
+containers/UDWIteratorPrivateHD.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
