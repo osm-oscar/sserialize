@@ -20,6 +20,7 @@ public:
 	///@param bitCount this should not be larger than INT_MAX
 	MultiBitIterator & operator+=(uint32_t bitCount);
 	void reset();
+	bool hasNext() const;
 };
 
 }//end namespace

@@ -82,6 +82,9 @@ void MultiBitIterator::reset() {
 	m_bitOffset = 0;
 }
 
+bool MultiBitIterator::hasNext() const {
+	return m_bitOffset || m_data.getPtrHasNext();
+}
 
 
 
