@@ -61,7 +61,7 @@ uint8_t CompactUintArrayPrivateVarBits::bpn() const {
 	return m_bpn;
 }
 
-
+//BUG:possible overflow in posStart
 uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
 	uint32_t posStart = pos*m_bpn / 8;
 	uint8_t initShift = (pos == 0 ? 0 : (pos*m_bpn) % 8);
