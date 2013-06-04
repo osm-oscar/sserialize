@@ -5,15 +5,15 @@
 
 namespace sserialize {
 
-ItemIndexPrivateWAH::ItemIndexPrivateWAH(const UDWIterator & data) :
-m_data(data),
-m_dataSize(data.next()),
-m_size(data.next()),
+ItemIndexPrivateWAH::ItemIndexPrivateWAH(const UByteArrayAdapter & data) :
+m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
+m_size(data.getUint32(4)),
+m_dataOffset(0),
 m_curId(0),
 m_cache(UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), false) )
 {}
 
-ItemIndexPrivateWAH::ItemIndexPrivateWAH() : m_size(0), m_dataSize(0), m_curId(0){}
+ItemIndexPrivateWAH::ItemIndexPrivateWAH() : m_size(0),  m_dataOffset(0), m_curId(0){}
 
 ItemIndexPrivateWAH::~ItemIndexPrivateWAH() {}
 
@@ -29,8 +29,8 @@ uint32_t ItemIndexPrivateWAH::at(uint32_t pos) const {
 	if (!size() || size() <= pos)
 		return 0;
 	for(;m_cache.tellPutPtr()/4 <= pos;) {
-		uint32_t val = m_data.next();
-		m_dataSize -= 4;
+		uint32_t val = m_data.getUint32(m_dataOffset);
+		m_dataOffset += 4;
 		if (val & 0x1) { //rle encoded
 			val >>= 1;//move out indicator bit
 			if (val & 0x1) {//all ones, push corresponding ids
@@ -76,10 +76,10 @@ uint32_t ItemIndexPrivateWAH::size() const {
 	return m_size;
 }
 
-uint8_t ItemIndexPrivateWAH::bpn() const { return m_data.dataSize()*8/m_size; }
+uint8_t ItemIndexPrivateWAH::bpn() const { return m_data.size()*8/m_size; }
 
 
-uint32_t ItemIndexPrivateWAH::getSizeInBytes() const { return m_data.dataSize(); }
+uint32_t ItemIndexPrivateWAH::getSizeInBytes() const { return m_data.size() + 8; }
 
 void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 	if (!size())
