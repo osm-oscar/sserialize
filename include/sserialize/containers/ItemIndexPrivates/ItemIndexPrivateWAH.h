@@ -2,6 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_WAH_H
 #include "ItemIndexPrivate.h"
 #include <sserialize/utility/utilfuncs.h>
+#include <sserialize/containers/UDWIterator.h>
 
 namespace sserialize {
 
@@ -18,12 +19,15 @@ namespace sserialize {
   *RLE: uint32_t, least significant bit tells if this dword is rle, if yes, then the second least signifant bit tells if zeros or ones
   *
   */
+  
+//TODO: getSizeInBytes() depends on correct length of m_data, breaks compatibility with earlier getSizeInyBytes() which did not depend on that
 
 class ItemIndexPrivateWAH: public ItemIndexPrivate {
 private:
-	UByteArrayAdapter m_data;
+	UDWIterator m_data;
+	uint32_t m_dataSize;
+	uint32_t m_remainingData;
 	uint32_t m_size;
-	mutable uint32_t m_dataOffset;
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
 private:
@@ -31,10 +35,12 @@ private:
 	std::vector<uint32_t> & intersectEncWords, uint64_t & bitOffset);
 	static bool fastForwardIntersectOne(const std::vector< ItemIndexPrivateWAH * > & intersect, std::vector<uint32_t> & intersectPositions, 
 	std::vector<uint32_t> & intersectEncWords, std::vector<uint32_t> & resultIds, uint32_t count, uint64_t & bitOffset);
-
+protected:
+	UDWIterator dataIterator() const;
+	
 public:
 	ItemIndexPrivateWAH();
-	ItemIndexPrivateWAH(const UByteArrayAdapter & data);
+	ItemIndexPrivateWAH(const UDWIterator & data);
 	virtual ~ItemIndexPrivateWAH();
 	virtual ItemIndex::Types type() const;
 	virtual int find(uint32_t id) const;
