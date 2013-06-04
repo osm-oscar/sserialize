@@ -17,6 +17,7 @@ public:
 	virtual uint64_t next64();
 	virtual bool hasNext();
 	virtual UDWIteratorPrivate * copy();
+	virtual UByteArrayAdapter::OffsetType dataSize() const;
 };
 
 

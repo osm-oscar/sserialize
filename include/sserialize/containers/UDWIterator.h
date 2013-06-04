@@ -12,6 +12,7 @@ public:
 	virtual uint32_t next() { return 0; }
 	virtual bool hasNext() { return false; }
 	virtual UDWIteratorPrivate * copy() { return new UDWIteratorPrivate(); }
+	virtual UByteArrayAdapter::OffsetType dataSize() const { return 0; }
 };
 
 class UDWIteratorPrivateDirect: public UDWIteratorPrivate {
@@ -23,6 +24,7 @@ public:
 	virtual uint32_t next() { return m_data.getUint32(); }
 	virtual bool hasNext() { return m_data.getPtrHasNext(); }
 	virtual UDWIteratorPrivate * copy() { return new UDWIteratorPrivateDirect(m_data); }
+	virtual UByteArrayAdapter::OffsetType dataSize() const { return m_data.size(); }
 };
 
 class UDWIterator: protected RCWrapper<UDWIteratorPrivate> {
@@ -32,6 +34,7 @@ public:
 	UDWIterator(const UByteArrayAdapter & data) : MyBaseClass(new UDWIteratorPrivateDirect(data)) {}
 	UDWIterator(UDWIteratorPrivate *  priv) : MyBaseClass(priv){}
 	UDWIterator(const UDWIterator & other) : MyBaseClass(other) {}
+	UDWIterator() : MyBaseClass(new UDWIteratorPrivate() ) {}
 	virtual ~UDWIterator() {}
 	UDWIterator & operator=(const UDWIterator & other) {
 		MyBaseClass::operator=(other);
@@ -39,6 +42,9 @@ public:
 	}
 	uint32_t next() { return priv()->next(); }
 	bool hasNext() { return priv()->hasNext(); }
+	UByteArrayAdapter::OffsetType dataSize() const {
+		return priv()->dataSize();
+	}
 };
 
 

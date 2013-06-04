@@ -26,8 +26,8 @@ UDWIteratorPrivate * UDWIteratorPrivateHD::copy() {
 	return new UDWIteratorPrivateHD(m_bitIterator, m_decoder);
 }
 
-
-
-
+UByteArrayAdapter::OffsetType UDWIteratorPrivateHD::dataSize() const {
+	return m_bitIterator.dataSize();
+}
 
 }//end namespace
