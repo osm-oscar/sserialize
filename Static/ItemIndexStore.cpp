@@ -36,27 +36,35 @@ uint32_t ItemIndexStore::getSizeInBytes() const {
 UByteArrayAdapter ItemIndexStore::dataAt(uint32_t pos) const {
 	if (pos >= size())
 		return UByteArrayAdapter();
-	return m_data + m_index.at(pos);
+	UByteArrayAdapter::OffsetType indexStart = m_index.at(pos);
+	UByteArrayAdapter::OffsetType indexLength;
+	if (pos+1 == size()) {
+		indexLength = m_data.size() - indexStart;
+	}
+	else {
+		indexLength = m_index.at(pos+1) - indexStart;
+	}
+	return UByteArrayAdapter(m_data, indexStart, indexLength);
 }
 
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	if (pos >= size())
 		return ItemIndex();
-	return ItemIndex(m_data + m_index.at(pos), m_type);
+	return ItemIndex(dataAt(pos), m_type);
 }
 
 ItemIndex ItemIndexStore::at(uint32_t pos, const ItemIndex& realIdIndex) const {
 	if (pos >= size())
 		return ItemIndex();
-	return ItemIndex(m_data + m_index.at(pos), realIdIndex, ItemIndex::T_REGLINE);
+	return ItemIndex(dataAt(pos), realIdIndex, ItemIndex::T_REGLINE);
 }
 
 ItemIndex ItemIndexStore::hierachy(const std::deque< uint32_t >& offsets) const {
 	if (offsets.size() == 0)
 		return ItemIndex();
-	ItemIndex idx(m_data + m_index.at(offsets.front()), ItemIndex::T_REGLINE);
+	ItemIndex idx(dataAt(offsets.front()), indexType());
 	for(size_t i = 1; i < offsets.size(); i++) {
-		idx = ItemIndex(m_data + m_index.at(offsets.at(i)), idx, ItemIndex::T_REGLINE);
+		idx = ItemIndex(dataAt(offsets.at(i)), idx, indexType());
 	}
 	return idx;
 }
