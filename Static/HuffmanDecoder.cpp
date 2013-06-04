@@ -17,6 +17,7 @@ HuffmanDecoder::HuffmanCodePointInfo HuffmanDecoder::StaticNode::at(uint16_t pos
 }
 
 HuffmanDecoder::HuffmanDecoder() {}
+
 HuffmanDecoder::HuffmanDecoder(const UByteArrayAdapter & data) :
 m_nodes(data),
 m_root(m_nodes.at(0))

@@ -61,22 +61,19 @@ class HuffmanDecoder {
 	Static::Deque<StaticNode> m_nodes;
 	StaticNode m_root;
 private:
+
 	///selects the @length upper bits
-	static inline uint32_t selectBits(uint32_t value, uint8_t length) {
-		return (value >> (32-length));
-	}
-	
-	///selects the @length upper bits
-	static inline uint64_t selectBits(uint64_t value, uint8_t length) {
-		return (value >> (64-length));
+	template<typename T_UINT_TYPE>
+	static inline typename std::enable_if< std::is_unsigned<T_UINT_TYPE>::value, T_UINT_TYPE>::type selectBits(T_UINT_TYPE value, uint8_t length) {
+		return (value >> (std::numeric_limits<T_UINT_TYPE>::digits-length));
 	}
 
-	template<typename T_INT_TYPE, int T_BITLENGTH>
-	int decodeImp(T_INT_TYPE src, uint32_t & decodedValue) const {
+	template<typename T_UINT_TYPE>
+	int decodeImp(T_UINT_TYPE src, uint32_t & decodedValue) const {
 		uint8_t nodeBitLength = m_root.bitLength();;
 		
 		uint8_t decodedBitsCount = nodeBitLength;
-		T_INT_TYPE selectionBits = selectBits(src, nodeBitLength);
+		T_UINT_TYPE selectionBits = selectBits(src, nodeBitLength);
 		src <<= nodeBitLength;
 		
 		HuffmanCodePointInfo cpInfo = m_root.at(selectionBits);
@@ -87,7 +84,7 @@ private:
 		}
 		
 		StaticNode node = m_nodes.at(m_root.initialChildPtr() + cpInfo.childPtrDiff());
-		while (decodedBitsCount < T_BITLENGTH) {
+		while (decodedBitsCount < std::numeric_limits<T_UINT_TYPE>::digits) {
 			nodeBitLength = node.bitLength();
 			selectionBits = selectBits(src, nodeBitLength);
 			src <<= nodeBitLength;
@@ -108,13 +105,19 @@ public:
 	HuffmanDecoder();
 	HuffmanDecoder(const UByteArrayAdapter & data);
 	virtual ~HuffmanDecoder();
+
+	///@return on success  the bit length, on error -1
+	inline int decode(uint16_t src, uint32_t & decodedValue) const {
+		return decodeImp<uint16_t>(src, decodedValue);
+	};
+	
 	///@return on success  the bit length, on error -1
 	inline int decode(uint32_t src, uint32_t & decodedValue) const {
-		return decodeImp<uint32_t, 32>(src, decodedValue);
+		return decodeImp<uint32_t>(src, decodedValue);
 	};
 	
 	inline int decode(uint64_t src, uint32_t & decodedValue) const {
-		return decodeImp<uint64_t, 64>(src, decodedValue);
+		return decodeImp<uint64_t>(src, decodedValue);
 	}
 };
 }} //end namespace
