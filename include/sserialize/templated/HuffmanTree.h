@@ -5,18 +5,19 @@
 #include <vector>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/hashspecializations.h>
+#include <sserialize/Static/Deque.h>
 
 namespace sserialize {
 
 class HuffmanCodePoint {
-	uint32_t m_code;
+	uint64_t m_code;
 	uint8_t m_codeLength; //length in alphabetSize (bit length = codeLength*alphabetSize)
 public:
 	HuffmanCodePoint() : m_code(0), m_codeLength(0) {}
-	HuffmanCodePoint(uint32_t code, uint8_t length) : m_code(code), m_codeLength(length) {}
+	HuffmanCodePoint(uint64_t code, uint8_t length) : m_code(code), m_codeLength(length) {}
 	virtual ~HuffmanCodePoint() {}
 	uint8_t codeLength() const { return m_codeLength; }
-	uint32_t code() const { return m_code; }
+	uint64_t code() const { return m_code; }
 };
 
 class HuffmanCodePointIterator {
@@ -79,6 +80,32 @@ private:
 		};
 	};
 	
+	struct SerializationNode {
+		uint8_t branchingFactor;
+		int beginChildPtr; //-1 i not set
+		std::vector<TValue> m_childrenValues;
+		std::vector<int> m_childrenPtrs;
+		std::vector<uint8_t> m_codePointLength;
+		
+		sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest) {
+			dest.putUint8(branchingFactor);
+			if (beginChildPtr > 0)
+				dest.putVlPackedUint32(beginChildPtr);
+			else
+				dest.putVlPackedUint32(0);
+			
+			for(uint32_t i = 0; i < branchingFactor; ++i) {
+				dest << m_childrenValues[i];
+				uint16_t childPtrLen = 0;
+				if (m_childrenPtrs[i] >= 0) {
+					childPtrLen = (m_childrenPtrs[i] << 6);
+					childPtrLen |= m_codePointLength[i];
+				}
+				dest.putUint16(childPtrLen);
+			}
+			return dest;
+		}
+	};
 private:
 	Node * m_root;
 	uint32_t m_alphabetSize;
@@ -96,6 +123,8 @@ private:
 			}
 		}
 	};
+	
+	void serialize();
 public:
 	HuffmanTree(uint8_t alphabetBitLength = 1) : m_root(0), m_alphabetSize(static_cast<uint32_t>(1) << alphabetBitLength), m_alphabetBitLength(alphabetBitLength) {}
 	virtual ~HuffmanTree() {
@@ -172,6 +201,11 @@ public:
 		return ret;
 	};
 	
+	void sserialize(sserialize::UByteArrayAdapter & dest) {
+		std::vector<SerializationNode> nodes;
+		
+		
+	}
 };
 
 }//end namespace
