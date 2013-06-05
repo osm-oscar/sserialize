@@ -40,11 +40,11 @@ std::set<uint32_t> myCreateNumbers(uint32_t count, uint32_t maxNum) {
 
 class ItemIndexPrivateWAHTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexPrivateWAHTest );
-// CPPUNIT_TEST( testRandomEquality );
-// CPPUNIT_TEST( testSpecialEquality );
-// CPPUNIT_TEST( testIntersect );
-// CPPUNIT_TEST( testUnite );
-// CPPUNIT_TEST( testRandomMaxSetEquality );
+CPPUNIT_TEST( testRandomEquality );
+CPPUNIT_TEST( testSpecialEquality );
+CPPUNIT_TEST( testIntersect );
+CPPUNIT_TEST( testUnite );
+CPPUNIT_TEST( testRandomMaxSetEquality );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST_SUITE_END();
 public:
