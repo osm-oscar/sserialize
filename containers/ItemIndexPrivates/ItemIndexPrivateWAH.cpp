@@ -573,15 +573,24 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 struct OutPutHandler {
 	UByteArrayAdapter & data;
 	uint32_t outPutWord;
-	OutPutHandler(UByteArrayAdapter & data) : data(data) {}
+	uint32_t idCount;
+	OutPutHandler(UByteArrayAdapter & data) : data(data), outPutWord(0), idCount(0) {}
 	void push() {
+		if (outPutWord & 0x1) {
+			if (outPutWord & 0x2) {
+				idCount += 31*(outPutWord >> 2);
+			}
+		}
+		else {
+			idCount += popCount(outPutWord >> 1);
+		}
 		data.putUint32(outPutWord);
 	}
 	void append(uint32_t nextWord) {
-		if ((nextWord & 0x1) == (outPutWord & 0x1)) { //both are run length encodings, check if we can merge them
-			if ((nextWord & 0x2) == (outPutWord & 0x2)) { //equal
+		if ((outPutWord & 0x1) && (nextWord & 0x1)) { //both are run length encodings, check if we can merge them
+			if ((nextWord & 0x2) == (outPutWord & 0x2)) { //equal rle type
 				//add the lengths
-				outPutWord = (outPutWord + (nextWord & ~static_cast<uint32_t>(0x3)));
+				outPutWord = (outPutWord + (nextWord & (~static_cast<uint32_t>(0x3))));
 			}
 			else {
 				push();
@@ -595,9 +604,11 @@ struct OutPutHandler {
 		}
 	}
 	
-	void flush() {
+	///@return idCount
+	uint32_t flush() {
 		if (outPutWord)
 			push();
+		return idCount;
 	}
 
 };
@@ -606,10 +617,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 	const ItemIndexPrivateWAH * cother = dynamic_cast<const ItemIndexPrivateWAH*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doDifference(other);
-	std::cerr << "UNIMPLEMENTED" << std::endl;
-	
-	uint32_t idCount = 0;
-	
+
 	UDWIterator myIt(m_data);
 	UDWIterator oIt(cother->m_data);
 	myIt.reset();
@@ -625,11 +633,12 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 	while(myIt.hasNext() && oIt.hasNext()) {
 		if ( ! (myVal >> 2) )
 			myVal = myIt.next();
-		if ( !(oVal >> 2))
+		if ( !(oVal >> 2) )
 			oVal = oIt.next();
 		
 		uint32_t pushType = myVal & 0x3; //default to myVal
-		switch (((myVal & 0x3) << 2) | (oVal & 0x3)) {
+		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
+		switch (types) {
 		//myval with zero-rle
 		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = oVal
 			//only set pushType here and fall through to handling of the rest
@@ -655,13 +664,13 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 		{
 			oVal = 0;
 			myVal -= (static_cast<uint32_t>(1) << 2);
-			oHandler.append(0x1); //1-rle zero
+			oHandler.append((0x4 | 0x1)); //1-rle zero
 			break;
 		}
 		case ((0x4 | 0x8) | 0x0): //myval is 1-rle and oVal is no rle
 		case ((0x4 | 0x8) | 0x2):
 		{
-			oHandler.append(~oVal & ~static_cast<uint32_t>(0x1));
+			oHandler.append(~oVal & (~static_cast<uint32_t>(0x1)));
 			myVal -= static_cast<uint32_t>(0x1) << 2;
 			oVal = 0;
 			break;
@@ -676,9 +685,9 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 			break;
 		}
 		case(0x0 | 0x3): //myval no rle, oVal one-rle
-		case(0x80 | 0x3):
+		case(0x8 | 0x3):
 		{
-			oHandler.append(0x1); //one zero-rle
+			oHandler.append((0x4 | 0x1)); //one zero-rle
 			myVal = 0;
 			oVal -= static_cast<uint32_t>(0x1) << 2;
 			break;
@@ -689,31 +698,24 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 		case(0x8 | 0x2):
 		{
 			uint32_t pushVal = myVal & (~oVal);
-			oHandler.append(std::max<uint32_t>(pushVal, 0x1)); //push either a 1-rle-zero or a non-rle
+			pushVal = (pushVal ? pushVal : (0x4 | 0x1));
+			oHandler.append(pushVal); //push either a 1-rle-zero or a non-rle
 			myVal = 0;
 			oVal = 0;
 			break;
 		}
 		default:
-			std::cerr << "BUG!!!!" << std::endl;
+			std::cerr << "BUG!!!!" << static_cast<uint32_t>(types) << std::endl;
 			break;
 		};
 	}
 	
 	while(myIt.hasNext()) {
 		myVal = myIt.next();
-		if (myVal & 0x1) {
-			if (myVal & 0x2) {
-				idCount += 31*(myVal >> 2);
-			}
-		}
-		else {
-			idCount += popCount(myVal);
-		}
 		oHandler.append(myVal);
 	}
 	
-	oHandler.flush();
+	uint32_t idCount = oHandler.flush();
 	oData.putUint32(0, oData.tellPutPtr()-8);
 	oData.putUint32(4, idCount);
 	oData.resetPtrs();
