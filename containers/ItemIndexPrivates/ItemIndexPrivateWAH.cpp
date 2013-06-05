@@ -1,4 +1,5 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
+#include <sserialize/containers/UDWIterator.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <iostream>
@@ -569,24 +570,168 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 	return new ItemIndexPrivateWAH(dest);
 }
 
+struct OutPutHandler {
+	UByteArrayAdapter & data;
+	uint32_t outPutWord;
+	OutPutHandler(UByteArrayAdapter & data) : data(data) {}
+	void push() {
+		data.putUint32(outPutWord);
+	}
+	void append(uint32_t nextWord) {
+		if ((nextWord & 0x1) == (outPutWord & 0x1)) { //both are run length encodings, check if we can merge them
+			if ((nextWord & 0x2) == (outPutWord & 0x2)) { //equal
+				//add the lengths
+				outPutWord = (outPutWord + (nextWord & ~static_cast<uint32_t>(0x3)));
+			}
+			else {
+				push();
+				outPutWord = nextWord;
+			}
+		}
+		else {
+			if (outPutWord)
+				push();
+			outPutWord = nextWord;
+		}
+	}
+	
+	void flush() {
+		if (outPutWord)
+			push();
+	}
+
+};
+
 ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateWAH * cother = dynamic_cast<const ItemIndexPrivateWAH*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doDifference(other);
-	return new ItemIndexPrivateEmpty();
+	std::cerr << "UNIMPLEMENTED" << std::endl;
+	
+	uint32_t idCount = 0;
+	
+	UDWIterator myIt(m_data);
+	UDWIterator oIt(cother->m_data);
+	myIt.reset();
+	oIt.reset();
+	
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	oData.putUint32(0); //dummy size
+	oData.putUint32(0); //dummy count
+	OutPutHandler oHandler(oData);
+	
+	uint32_t myVal = 0;
+	uint32_t oVal = 0;
+	while(myIt.hasNext() && oIt.hasNext()) {
+		if ( ! (myVal >> 2) )
+			myVal = myIt.next();
+		if ( !(oVal >> 2))
+			oVal = oIt.next();
+		
+		uint32_t pushType = myVal & 0x3; //default to myVal
+		switch (((myVal & 0x3) << 2) | (oVal & 0x3)) {
+		//myval with zero-rle
+		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = oVal
+			//only set pushType here and fall through to handling of the rest
+			pushType = oVal & 0x3;
+		case (0x4 | 0x1) ://myVal is zero-rle and oVal is zero-rle => pushType = myVal
+		case (0x4 | 0x3) ://myVal is zero-rle and oVal is one-rle => pushType = myVal
+		case ((0x4 | 0x8) | 0x1): //myval is 1-rle and oVal is zero-rle => pushType = myVal
+		{
+			if ((oVal & ~static_cast<uint32_t>(0x3)) <= (myVal & ~static_cast<uint32_t>(0x3))) {
+				oHandler.append((oVal & ~static_cast<uint32_t>(0x3)) | pushType); //set the correct rle type
+				myVal -= (oVal & ~static_cast<uint32_t>(0x3));
+				oVal = 0;
+			}
+			else {
+				oHandler.append((myVal & ~static_cast<uint32_t>(0x3)) | pushType); //myVal already is n-rle (zero/one)
+				oVal -= (myVal & ~static_cast<uint32_t>(0x3));
+				myVal = 0;
+			}
+			break;
+		}
+		case (0x4 | 0x0): //myval is zero-rle and oval is no rle
+		case (0x4 | 0x2):
+		{
+			oVal = 0;
+			myVal -= (static_cast<uint32_t>(1) << 2);
+			oHandler.append(0x1); //1-rle zero
+			break;
+		}
+		case ((0x4 | 0x8) | 0x0): //myval is 1-rle and oVal is no rle
+		case ((0x4 | 0x8) | 0x2):
+		{
+			oHandler.append(~oVal & ~static_cast<uint32_t>(0x1));
+			myVal -= static_cast<uint32_t>(0x1) << 2;
+			oVal = 0;
+			break;
+		}
+		//myval no rle
+		case (0x8 | 0x1): //myval no rle, oVal zero-rle
+		case (0x0 | 0x1):
+		{
+			oVal -= (static_cast<uint32_t>(1) << 2);
+			oHandler.append(myVal);
+			myVal = 0;
+			break;
+		}
+		case(0x0 | 0x3): //myval no rle, oVal one-rle
+		case(0x80 | 0x3):
+		{
+			oHandler.append(0x1); //one zero-rle
+			myVal = 0;
+			oVal -= static_cast<uint32_t>(0x1) << 2;
+			break;
+		}
+		case(0x0 | 0x0): //myval no-rle oval no-rle
+		case(0x0 | 0x2):
+		case(0x8 | 0x0):
+		case(0x8 | 0x2):
+		{
+			uint32_t pushVal = myVal & (~oVal);
+			oHandler.append(std::max<uint32_t>(pushVal, 0x1)); //push either a 1-rle-zero or a non-rle
+			myVal = 0;
+			oVal = 0;
+			break;
+		}
+		default:
+			std::cerr << "BUG!!!!" << std::endl;
+			break;
+		};
+	}
+	
+	while(myIt.hasNext()) {
+		myVal = myIt.next();
+		if (myVal & 0x1) {
+			if (myVal & 0x2) {
+				idCount += 31*(myVal >> 2);
+			}
+		}
+		else {
+			idCount += popCount(myVal);
+		}
+		oHandler.append(myVal);
+	}
+	
+	oHandler.flush();
+	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(4, idCount);
+	oData.resetPtrs();
+	return new ItemIndexPrivateWAH(oData);
 }
 
 ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateWAH * cother = dynamic_cast<const ItemIndexPrivateWAH*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doSymmetricDifference(other);
+	std::cerr << "UNIMPLEMENTED" << std::endl;
 	return new ItemIndexPrivateEmpty();
 }
 
 //Optimilize:
 //if an subtract index is at the end, remove it
 
-#define FF_SUPPORT
+// #define FF_SUPPORT
 
 ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemIndexPrivateWAH * >& intersect, const std::vector< ItemIndexPrivateWAH * >& subtract, uint32_t count) {
 	std::vector<uint32_t> resultIds;
