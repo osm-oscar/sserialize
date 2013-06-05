@@ -219,14 +219,12 @@ ItemIndex SetOpTreePrivateSimple::doSetOperations() {
 				diffIdx.push_back( idx );
 		}
 		
-		if (intersectIdx.size() > 1) {
+		if (intersectIdx.size() > 0) {
 			if (diffIdx.size())
 				return ItemIndex::fusedIntersectDifference(intersectIdx, diffIdx, m_maxResultSetSize);
 			else
 				return ItemIndex::constrainedIntersect(intersectIdx, m_maxResultSetSize);
 		}
-		else
-			return intersectIdx.front();
 	}
 	return ItemIndex();
 }
