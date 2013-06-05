@@ -22,6 +22,10 @@ bool UDWIteratorPrivateHD::hasNext() {
 	return m_bitIterator.hasNext();
 }
 
+void UDWIteratorPrivateHD::reset() {
+	m_bitIterator.reset();
+}
+
 UDWIteratorPrivate * UDWIteratorPrivateHD::copy() {
 	return new UDWIteratorPrivateHD(m_bitIterator, m_decoder);
 }

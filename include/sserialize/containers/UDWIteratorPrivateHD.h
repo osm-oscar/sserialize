@@ -14,8 +14,8 @@ public:
 	UDWIteratorPrivateHD(const MultiBitIterator & bitIterator, const Static::HuffmanDecoder & decoder);
 	virtual ~UDWIteratorPrivateHD();
 	virtual uint32_t next();
-	virtual uint64_t next64();
 	virtual bool hasNext();
+	virtual void reset();
 	virtual UDWIteratorPrivate * copy();
 	virtual UByteArrayAdapter::OffsetType dataSize() const;
 };

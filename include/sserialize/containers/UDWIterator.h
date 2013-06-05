@@ -11,6 +11,7 @@ public:
 	virtual ~UDWIteratorPrivate() {}
 	virtual uint32_t next() { return 0; }
 	virtual bool hasNext() { return false; }
+	virtual void reset() {}
 	virtual UDWIteratorPrivate * copy() { return new UDWIteratorPrivate(); }
 	virtual UByteArrayAdapter::OffsetType dataSize() const { return 0; }
 };
@@ -23,6 +24,7 @@ public:
 	virtual ~UDWIteratorPrivateDirect() {}
 	virtual uint32_t next() { return m_data.getUint32(); }
 	virtual bool hasNext() { return m_data.getPtrHasNext(); }
+	virtual void reset() { return m_data.resetGetPtr();}
 	virtual UDWIteratorPrivate * copy() { return new UDWIteratorPrivateDirect(m_data); }
 	virtual UByteArrayAdapter::OffsetType dataSize() const { return m_data.size(); }
 };
@@ -44,6 +46,9 @@ public:
 	bool hasNext() { return priv()->hasNext(); }
 	UByteArrayAdapter::OffsetType dataSize() const {
 		return priv()->dataSize();
+	}
+	void reset() {
+		priv()->reset();
 	}
 };
 
