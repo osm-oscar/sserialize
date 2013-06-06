@@ -79,11 +79,13 @@ bool hasLowerCase(const std::string& str) {
 bool hasUpperCase(const std::string& str) {
 	std::string::const_iterator strIt(str.begin());
 	std::string::const_iterator strEnd(str.end());
-	uint32_t ucode;
+	uint32_t ccode, lcode;
 	while(strIt != strEnd) {
-		ucode = utf8::next(strIt, strEnd);
-		if (unicode32_to_upper(ucode) == ucode)
+		ccode = utf8::next(strIt, strEnd);
+		lcode = unicode32_to_lower(ccode);
+		if (! (ccode == lcode) ) {
 			return true;
+		}
 	}
 	return false;
 }
