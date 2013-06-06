@@ -54,9 +54,7 @@ struct ProgressInfo {
 			std::cout.precision(prec);
 		}
 	}
-
 };
-
 
 struct ProgressInfo2 {
 	uint64_t targetCount1;
