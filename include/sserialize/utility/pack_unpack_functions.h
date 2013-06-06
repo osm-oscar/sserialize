@@ -98,8 +98,8 @@ inline uint32_t unPack_uint24_t(const uint8_t b, const uint8_t c, const uint8_t 
 
 inline uint16_t unPack_uint16_t(const uint8_t c, const uint8_t d) {
 	return (
-		(static_cast<uint32_t>(c) << 8) |
-		(static_cast<uint32_t>(d) << 0)
+		(static_cast<uint16_t>(c) << 8) |
+		(static_cast<uint16_t>(d) << 0)
 	);
 }
 

@@ -646,7 +646,8 @@ bool UByteArrayAdapter::putInt32(const OffsetType pos, const int32_t value) {
 }
 
 bool UByteArrayAdapter::putUint32(const OffsetType pos, const uint32_t value) {
-	if (m_len < pos+4) return false;
+	if (m_len < pos+4)
+		return false;
 	m_priv->putUint32(m_offSet+pos, value);
 	return true;
 }
