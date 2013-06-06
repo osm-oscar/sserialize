@@ -640,20 +640,20 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
 		switch (types) {
 		//myval with zero-rle
-		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = oVal
+		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = zero-rle
 			//only set pushType here and fall through to handling of the rest
-			pushType = oVal & 0x3;
+			pushType = 0x1;
 		case (0x4 | 0x1) ://myVal is zero-rle and oVal is zero-rle => pushType = myVal
 		case (0x4 | 0x3) ://myVal is zero-rle and oVal is one-rle => pushType = myVal
 		case ((0x4 | 0x8) | 0x1): //myval is 1-rle and oVal is zero-rle => pushType = myVal
 		{
-			if ((oVal & ~static_cast<uint32_t>(0x3)) <= (myVal & ~static_cast<uint32_t>(0x3))) {
-				oHandler.append((oVal & ~static_cast<uint32_t>(0x3)) | pushType); //set the correct rle type
+			if ((oVal & (~static_cast<uint32_t>(0x3))) <= (myVal & (~static_cast<uint32_t>(0x3)))) {
+				oHandler.append((oVal & ~static_cast<uint32_t>(0x3)) | pushType);
 				myVal -= (oVal & ~static_cast<uint32_t>(0x3));
 				oVal = 0;
 			}
 			else {
-				oHandler.append((myVal & ~static_cast<uint32_t>(0x3)) | pushType); //myVal already is n-rle (zero/one)
+				oHandler.append((myVal & ~static_cast<uint32_t>(0x3)) | pushType);
 				oVal -= (myVal & ~static_cast<uint32_t>(0x3));
 				myVal = 0;
 			}
@@ -709,7 +709,9 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 			break;
 		};
 	}
-	
+	if (myVal >> 2) {
+		oHandler.append(myVal);
+	}
 	while(myIt.hasNext()) {
 		myVal = myIt.next();
 		oHandler.append(myVal);

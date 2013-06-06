@@ -37,6 +37,13 @@ std::set<uint32_t> myCreateNumbers(uint32_t count, uint32_t maxNum) {
 	return ret;
 }
 
+bool testIndexEquality(const std::set<uint32_t> & src) {
+	UByteArrayAdapter adap(new std::vector<uint8_t>(), true);
+	ItemIndexPrivateWAH::create(src, adap);
+	ItemIndex idx(adap, ItemIndex::T_WAH);
+	return (src == idx);
+
+}
 
 class ItemIndexPrivateWAHTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexPrivateWAHTest );
@@ -44,6 +51,7 @@ CPPUNIT_TEST( testRandomEquality );
 CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
+CPPUNIT_TEST( testDifference );
 CPPUNIT_TEST( testRandomMaxSetEquality );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST_SUITE_END();
@@ -96,7 +104,7 @@ public:
 	
 	void testIntersect() {
 		std::set<uint32_t> a,b;
-		createOverLappingSets(a, b,  0xFF, 0xFF, 0xFF);
+		createOverLappingSets(a, b,  0xFFF, 0xFFF, 0xFF);
 		UByteArrayAdapter destA(new std::vector<uint8_t>(), true);
 		UByteArrayAdapter destB(new std::vector<uint8_t>(), true);
 		ItemIndexPrivateWAH::create(a, destA);
@@ -117,6 +125,37 @@ public:
 			std::stringstream ss;
 			ss << "id at " << count;
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, intIdx.at(count));
+		}
+	}
+	
+	void testDifference() {
+		int TEST_RUNS = 10;
+		for(int i = 0; i < TEST_RUNS; ++i) {
+			std::set<uint32_t> a,b;
+			createOverLappingSets(a, b,  0xFF, 0xFF, 0xFF);
+			UByteArrayAdapter destA(new std::vector<uint8_t>(), true);
+			UByteArrayAdapter destB(new std::vector<uint8_t>(), true);
+			ItemIndexPrivateWAH::create(a, destA);
+			ItemIndexPrivateWAH::create(b, destB);
+			ItemIndex idxA(destA, ItemIndex::T_WAH);
+			ItemIndex idxB(destB, ItemIndex::T_WAH);
+			
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)a.size(), idxA.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)b.size(), idxB.size());
+			CPPUNIT_ASSERT_MESSAGE("A set unequal", a == idxA);
+			CPPUNIT_ASSERT_MESSAGE("A set unequal", b == idxB);
+			
+			std::set<uint32_t> intersected;
+			std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator<std::set<uint32_t> >(intersected, intersected.end()));
+			ItemIndex intIdx = idxA - idxB;
+			CPPUNIT_ASSERT_MESSAGE("decoding difference index fails", testIndexEquality(intersected));
+			uint32_t count = 0;
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of difference does not match", (uint32_t) intersected.size(), intIdx.size());
+			for(std::set<uint32_t>::iterator it = intersected.begin(); it != intersected.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count << " run " << i;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, intIdx.at(count));
+			}
 		}
 	}
 
