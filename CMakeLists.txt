@@ -87,6 +87,7 @@ completers/StringCompleter.cpp
 completers/StringCompleterPrivate.cpp
 completers/GeoCompleter.cpp
 completers/GeoStringCompleter.cpp
+completers/StringCompleterPrivateMulti.cpp
 )
 
 set(UTILITY_SOURCES_CPP
