@@ -458,31 +458,26 @@ ItemIndexIterator SetOpTreePrivateComplex::createItemIndexIteratorTree(SetOpTree
 	}
 }
 
-
-SetOpTreePrivateComplex::SetOpTreePrivateComplex(const StringCompleter& stringCompleter) :
-SetOpTreePrivate(),
-m_strCompleter(stringCompleter),
-m_rootNode(0)
-{
-}
-
 SetOpTreePrivateComplex::SetOpTreePrivateComplex() :
 SetOpTreePrivate(),
 m_rootNode(0)
 {
 }
 
+SetOpTreePrivateComplex::SetOpTreePrivateComplex(const SetOpTreePrivateComplex & other) :
+SetOpTreePrivate(),
+m_rootNode(0)
+{
+	m_strCompleter = other.m_strCompleter;
+	m_queryString = other.m_queryString;
+	m_externalFunctoids = other.m_externalFunctoids;
+	m_completions = other.m_completions;
+	if (other.m_rootNode)
+		m_rootNode = other.m_rootNode->getDeepCopy(0);
+}
+
 SetOpTreePrivate * SetOpTreePrivateComplex::copy() const {
-	SetOpTreePrivateComplex * cpt = new SetOpTreePrivateComplex();
-	cpt->m_strCompleter = m_strCompleter;
-	cpt->m_queryString  = m_queryString;
-	cpt->m_externalFunctoids = m_externalFunctoids;
-	cpt->m_completions = m_completions;
-	cpt->m_rootNode = 0;
-	if (m_rootNode) {
-		cpt->m_rootNode = m_rootNode->getDeepCopy(0);
-	}
-	return cpt;
+	return new SetOpTreePrivateComplex(*this);
 }
 
 SetOpTreePrivateComplex::~SetOpTreePrivateComplex() {
@@ -555,6 +550,12 @@ std::set<uint16_t> SetOpTreePrivateComplex::getCharacterHint(uint32_t posInQuery
 		}
 	}
 	return std::set<uint16_t>();
+}
+
+
+bool SetOpTreePrivateComplex::registerStringCompleter(const sserialize::StringCompleter & stringCompleter) {
+	m_strCompleter = stringCompleter;
+	return true;
 }
 
 bool SetOpTreePrivateComplex::registerExternalFunction(SetOpTree::ExternalFunctoid * function) {

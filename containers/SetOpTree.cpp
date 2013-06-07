@@ -61,11 +61,13 @@ SetOpTree::SetOpTree(SotType type) : MyParentClass() {
 
 SetOpTree::SetOpTree(const SetOpTree & other) : RCWrapper< sserialize::SetOpTreePrivate >(other) {}
 
-SetOpTree::SetOpTree(SotType type, const StringCompleter & stringCompleter) :  MyParentClass() {
-	if (type == SOT_SIMPLE)
-		setPrivate( new SetOpTreePrivateSimple(stringCompleter) );
-	else
-		setPrivate( new SetOpTreePrivateComplex(stringCompleter)); 
+SetOpTree::SetOpTree(SetOpTreePrivate * data) : MyParentClass() {
+	if (data->rc() > 1) {
+		setPrivate(data->copy());
+	}
+	else {
+		setPrivate(data);
+	}
 }
 
 SetOpTree & SetOpTree::operator=(const SetOpTree & other ) {
@@ -125,6 +127,14 @@ ItemIndex SetOpTree::doSetOperations(bool /*cached*/) {
 
 std::set<uint16_t> SetOpTree::getCharacterHint(uint32_t posInQueryString) const {
 	return priv()->getCharacterHint(posInQueryString);
+}
+
+
+bool SetOpTree::registerStringCompleter(const sserialize::StringCompleter & strCompleter) {
+	if (privRc() > 1) {
+		copyPrivate();
+	}
+	return priv()->registerStringCompleter(strCompleter);
 }
 
 bool SetOpTree::registerExternalFunction(ExternalFunctoid * function) {

@@ -73,7 +73,7 @@ private:
 public:
 	SetOpTree(SotType type = SOT_COMPLEX);
 	SetOpTree(const sserialize::SetOpTree& other);
-	SetOpTree(SotType type, const StringCompleter & stringCompleter);
+	SetOpTree(SetOpTreePrivate * data);
 	SetOpTree & operator=(const SetOpTree & t );
 	~SetOpTree();
 	
@@ -87,6 +87,7 @@ public:
 	void doCompletions();
 	ItemIndex doSetOperations(bool cached=true);
 	std::set<uint16_t> getCharacterHint(uint32_t posInQueryString) const;
+	bool registerStringCompleter(const sserialize::StringCompleter & strCompleter);
 	/** Register external functoid, increases refcount accordingly */
 	bool registerExternalFunction(ExternalFunctoid * function);
 	/** Register selectable op filter, increases refcount accordingly */

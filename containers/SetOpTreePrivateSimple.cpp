@@ -229,6 +229,11 @@ ItemIndex SetOpTreePrivateSimple::doSetOperations() {
 	return ItemIndex();
 }
 
+bool SetOpTreePrivateSimple::registerStringCompleter(const sserialize::StringCompleter & stringCompleter) {
+	m_strCompleter = stringCompleter;
+	return true;
+}
+
 bool SetOpTreePrivateSimple::registerExternalFunction(SetOpTree::ExternalFunctoid * function) {
 	if (!function)
 		return false;
@@ -247,15 +252,15 @@ SetOpTreePrivateSimple::SetOpTreePrivateSimple(const SetOpTreePrivateSimple & ot
 	m_strCompleter(other.m_strCompleter),
 	m_intersectStrings(other.m_intersectStrings),
 	m_diffStrings(other.m_diffStrings),
-	m_completions(other.m_completions)
+	m_completions(other.m_completions),
+	m_ef(other.m_ef),
+	m_maxResultSetSize(other.m_maxResultSetSize),
+	m_minStrLen(other.m_minStrLen)
 {}
 
 SetOpTreePrivateSimple::SetOpTreePrivateSimple() {}
 
-SetOpTreePrivateSimple::SetOpTreePrivateSimple(const StringCompleter & strCompleter) : m_strCompleter(strCompleter) {}
-
 SetOpTreePrivateSimple::~SetOpTreePrivateSimple() {}
-
 
 ItemIndex SetOpTreePrivateSimple::update(const std::string & queryString) {
 // 	std::cout << "SetOpTreePrivateSimple::update(" << queryString << ") with up to " << m_maxResultSetSize << std::endl;

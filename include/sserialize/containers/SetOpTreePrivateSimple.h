@@ -10,7 +10,7 @@
 namespace sserialize {
  
 class SetOpTreePrivateSimple: public SetOpTreePrivate {
-private:
+protected:
 
 	struct QueryStringDescription {
 		std::string m_qstr;
@@ -55,13 +55,20 @@ private:
 	uint32_t m_maxResultSetSize;
 	uint32_t m_minStrLen;
 private:
-	SetOpTreePrivateSimple(const SetOpTreePrivateSimple & other);
+	SetOpTreePrivateSimple & operator=(const SetOpTreePrivateSimple & other);
+protected:
 	void ragelParse(const std::string & qstr);
 	void handParse(const std::string & qstr);
+protected:
+	SetOpTreePrivateSimple(const SetOpTreePrivateSimple & other);
+	std::vector<QueryStringDescription> & intersectStrings() { return m_intersectStrings; }
+	std::vector<QueryStringDescription> & diffStrings() { return m_diffStrings; }
+	std::map< QueryStringDescription, ItemIndex> completions() { return m_completions; }
+	uint32_t maxResultSetSize() const { return m_maxResultSetSize; }
+	uint32_t minStrLen() const { return m_minStrLen; }
 	
 public:
 	SetOpTreePrivateSimple();
-	SetOpTreePrivateSimple(const sserialize::StringCompleter & strCompleter);
 	virtual ~SetOpTreePrivateSimple();
 	virtual SetOpTreePrivate * copy() const;
 	
@@ -73,6 +80,7 @@ public:
 	virtual ItemIndex update(const std::string & queryString);
 	virtual void doCompletions();
 	virtual ItemIndex doSetOperations();
+	virtual bool registerStringCompleter(const sserialize::StringCompleter & stringCompleter);
 	virtual bool registerExternalFunction(SetOpTree::ExternalFunctoid * function);
 	/** creates a copy of filter by calling copy() on filter which will be deleted if Tree is deleted  */
 	virtual bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter * filter);

@@ -138,6 +138,7 @@ private://utility functions
 	ItemIndexIterator createItemIndexIteratorTree(Node * node);
 
 private:
+	SetOpTreePrivateComplex & operator=(const SetOpTreePrivateComplex & other);
 	ItemIndex doSetOperationsRecurse(SetOpTreePrivateComplex::Node* node);
 	ItemIndex doSetOperationsRecurse(SetOpTreePrivateComplex::Node* node, SetOpTreePrivateComplex::Node* refTree, TreeDiffTypes & diff);
 	bool charHintsCheckChanged(Node * node, Node * child, const ItemIndex & index); 
@@ -146,7 +147,7 @@ private:
 	void clearTree();
 public:
 	SetOpTreePrivateComplex();
-	SetOpTreePrivateComplex(const StringCompleter & stringCompleter);
+	SetOpTreePrivateComplex(const SetOpTreePrivateComplex & other);
 	~SetOpTreePrivateComplex();
 	virtual SetOpTreePrivate * copy() const;
 
@@ -158,6 +159,7 @@ public:
 	virtual ItemIndex doSetOperations();
 	/** This is actualy const for cow. It may alter things in StringCompleter */
 	virtual std::set<uint16_t> getCharacterHint(uint32_t posInQueryString);
+	virtual bool registerStringCompleter(const sserialize::StringCompleter & stringCompleter);
 	virtual bool registerExternalFunction(SetOpTree::ExternalFunctoid * function);
 	/** creates a copy of filter by calling copy() on filter which will be deleted if Tree is deleted  */
 	virtual bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter * filter);

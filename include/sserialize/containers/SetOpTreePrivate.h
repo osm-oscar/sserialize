@@ -31,6 +31,7 @@ public:
 	virtual ItemIndex doSetOperations() = 0;
 	/** This is actualy const for cow. It may alter things in StringCompleter */
 	virtual std::set<uint16_t> getCharacterHint(uint32_t posInQueryString) { return std::set<uint16_t>(); }
+	virtual bool registerStringCompleter(const sserialize::StringCompleter & stringCompleter) { return false; }
 	virtual bool registerExternalFunction(SetOpTree::ExternalFunctoid * function) { return false; }
 	/** creates a copy of filter by calling copy() on filter which will be deleted if Tree is deleted  */
 	virtual  bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter * filter) { return false; }
