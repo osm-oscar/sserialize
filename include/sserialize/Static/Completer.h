@@ -57,6 +57,15 @@ protected:
 	void createItemSetIterator(ItemSetIterator<ItemType, DataBaseType> & itemsetit, const std::string & query, SetOpTree::SotType type) {
 		itemsetit = ItemSetIterator<ItemType, DataBaseType>(query, getCompleter(), getItemDataBase());
 	}
+	
+	void createItemSet(ItemSet<ItemType, DataBaseType> & itemset, const std::string & query, const SetOpTree & setOpTree) {
+		itemset = ItemSet<ItemType, DataBaseType>(query, getItemDataBase(), setOpTree);
+	}
+	
+	void registerStringCompleter(ItemSet<ItemType, DataBaseType> & itemset) {
+		itemset.registerStringCompleter(getCompleter());
+	}
+	
 public:
 	Completer();
 	virtual ~Completer();

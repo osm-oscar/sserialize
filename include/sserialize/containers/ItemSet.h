@@ -12,12 +12,12 @@ template<class DataBaseItemType, class DataBaseType>
 class ItemSet {
 private:
 	std::string m_queryString;
-	StringCompleter m_completer;
 	DataBaseType m_dataBase;
 	SetOpTree m_setOpTree;
 	ItemIndex m_index;
 public:
 	ItemSet() {};
+	ItemSet(const std::string& queryString, const DataBaseType & dataBase, const SetOpTree & setOpTree);
 	ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type);
 	ItemSet(const std::string& queryString, const StringCompleter & completer, const DataBaseType & dataBase, SetOpTree::SotType type);
 	~ItemSet() {};
@@ -28,6 +28,7 @@ public:
 	
 	/** increases the refcount by one */
 	bool registerSelectableOpFilter(SetOpTree::SelectableOpFilter* functoid);
+	bool registerStringCompleter(const sserialize::StringCompleter & strCompleter) { return m_setOpTree.registerStringCompleter(strCompleter); }
 	void execute();
 	void update(const std::string & queryString);
 	std::set<uint16_t> getCharHints(uint32_t posInQuery);
@@ -38,19 +39,27 @@ public:
 };
 
 template<class DataBaseItemType, class DataBaseType>
-ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::string& queryString, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
+ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::string& queryString, const DataBaseType & dataBase, const SetOpTree & setOpTree) :
 m_queryString(queryString),
-m_completer(completer),
 m_dataBase(dataBase),
-m_setOpTree(type, completer)
+m_setOpTree(setOpTree)
 {}
 
 template<class DataBaseItemType, class DataBaseType>
-ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
-m_completer(completer),
+ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::string& queryString, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
+m_queryString(queryString),
 m_dataBase(dataBase),
-m_setOpTree(type, completer)
+m_setOpTree(type)
 {
+	m_setOpTree.registerStringCompleter(completer);
+}
+
+template<class DataBaseItemType, class DataBaseType>
+ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
+m_dataBase(dataBase),
+m_setOpTree(type)
+{
+	m_setOpTree.registerStringCompleter(completer);
 	m_queryString = "";
 	for(size_t i = 0; i < intersectStrings.size(); i++) {
 		m_queryString += intersectStrings.at(i) + " ";

@@ -45,9 +45,11 @@ ItemSetIterator<DataBaseItemType, DataBaseType>::ItemSetIterator(const std::stri
 m_queryString(queryString),
 m_completer(completer),
 m_dataBase(dataBase),
-m_setOpTree(sserialize::SetOpTree::SOT_COMPLEX, completer),
+m_setOpTree(sserialize::SetOpTree::SOT_COMPLEX),
 m_cacheCount(0)
-{}
+{
+	m_setOpTree.registerStringCompleter(completer);
+}
 
 template<class DataBaseItemType, class DataBaseType>
 DataBaseItemType

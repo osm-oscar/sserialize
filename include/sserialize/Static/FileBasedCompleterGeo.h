@@ -43,6 +43,12 @@ protected:
 		itemsetit.registerSelectableOpFilter( new sserialize::spatial::GeoConstraintSetOpTreeSF<sserialize::GeoCompleter>( getGeoCompleter()) );
 	}
 	
+	using sserialize::Static::Completer<ItemType, DataBaseType>::createItemSet;
+	
+	void registerOpFilter(ItemSet<ItemType, DataBaseType> & itemset) {
+		itemset.registerSelectableOpFilter( new sserialize::spatial::GeoConstraintSetOpTreeSF<sserialize::GeoCompleter>( getGeoCompleter()) );
+	}
+	
 	void clear() {
 		m_geoCompleterData = std::vector<UByteArrayAdapter>();
 		m_geoCompleters = std::vector<sserialize::GeoCompleter>();
