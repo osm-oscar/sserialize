@@ -12,6 +12,7 @@ StringCompleterPrivateMulti::~StringCompleterPrivateMulti() {}
 
 void StringCompleterPrivateMulti::addCompleter(const RCPtrWrapper<sserialize::StringCompleterPrivate> & completer) {
 	m_sq = (sserialize::StringCompleter::SupportedQuerries)(m_sq & completer->getSupportedQuerries());
+	m_completers.push_back(completer);
 }
 
 ItemIndex StringCompleterPrivateMulti::complete(const std::string & str, StringCompleter::QuerryType qtype) const {
