@@ -1,5 +1,6 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
 #include <sserialize/containers/UDWIterator.h>
+#include <sserialize/containers/UDWConstrainedIterator.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <iostream>
@@ -214,11 +215,163 @@ ItemIndexPrivate * ItemIndexPrivateWAH::fromBitSet(const DynamicBitSet & bitSet)
 	return new ItemIndexPrivateWAH(tmpData);
 }
 
+struct OutPutHandler {
+	UByteArrayAdapter & data;
+	uint32_t outPutWord;
+	uint32_t idCount;
+	OutPutHandler(UByteArrayAdapter & data) : data(data), outPutWord(0), idCount(0) {}
+	inline void push() {
+		switch (outPutWord & 0x3) {
+		case 0x1: //zero-rle
+			break;
+		case 0x2: //no-rle
+		case 0x0: 
+			idCount += popCount(outPutWord >> 1);
+			break;
+		case 0x3: //one-rle
+			idCount += 31*(outPutWord >> 2);
+			break;
+		}
+		data.putUint32(outPutWord);
+	}
+	
+	void append(uint32_t nextWord) {
+		if ((nextWord & 0x1) && (outPutWord & 0x1)) { //both are run length encodings, check if we can merge them
+			if ((nextWord & 0x2) == (outPutWord & 0x2)) { //equal rle type
+				//add the lengths
+				outPutWord = (outPutWord + (nextWord & (~static_cast<uint32_t>(0x3))));
+			}
+			else {
+				push();
+				outPutWord = nextWord;
+			}
+		}
+		else {
+			if (outPutWord) {
+				push();
+			}
+			outPutWord = nextWord;
+		}
+	}
+	
+	///@return idCount
+	uint32_t flush() {
+		if (outPutWord)
+			push();
+		return idCount;
+	}
+};
+
+#define NEW_SETOPS
 
 ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateWAH * cother = dynamic_cast<const ItemIndexPrivateWAH*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doIntersect(other);
+
+#ifdef NEW_SETOPS
+	UDWIterator myIt(m_data);
+	UDWIterator oIt(cother->m_data);
+	myIt.reset();
+	oIt.reset();
+	
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	oData.putUint32(0); //dummy size
+	oData.putUint32(0); //dummy count
+	OutPutHandler oHandler(oData);
+	
+	uint32_t myVal = 0;
+	uint32_t oVal = 0;
+	while(myIt.hasNext() && oIt.hasNext()) {
+		if ( ! (myVal >> 2) )
+			myVal = myIt.next();
+		if ( !(oVal >> 2) )
+			oVal = oIt.next();
+		
+		uint32_t pushType = 0x1; //default to 1 zero-rle
+		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
+		switch (types) {
+		//myval with zero-rle
+		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = one-rle
+			//only set pushType here and fall through to handling of the rest
+			pushType = 0x3;
+		case (0x4 | 0x1) ://myVal is zero-rle and oVal is zero-rle => pushType = 0-rle
+		case (0x4 | 0x3) ://myVal is zero-rle and oVal is one-rle => pushType = 0-rle
+		case ((0x4 | 0x8) | 0x1): //myval is 1-rle and oVal is zero-rle => pushType = 0-rle
+		{
+			if ((oVal & (~static_cast<uint32_t>(0x3))) <= (myVal & (~static_cast<uint32_t>(0x3)))) {
+				oHandler.append((oVal & ~static_cast<uint32_t>(0x3)) | pushType);
+				myVal -= (oVal & ~static_cast<uint32_t>(0x3));
+				oVal = 0;
+			}
+			else {
+				oHandler.append((myVal & ~static_cast<uint32_t>(0x3)) | pushType);
+				oVal -= (myVal & ~static_cast<uint32_t>(0x3));
+				myVal = 0;
+			}
+			break;
+		}
+		case (0x4 | 0x0): //myval is zero-rle and oval is no rle
+		case (0x4 | 0x2):
+		{
+			oVal = 0;
+			myVal -= (static_cast<uint32_t>(1) << 2);
+			oHandler.append((0x4 | 0x1)); //1 zero-rle
+			break;
+		}
+		case ((0x4 | 0x8) | 0x0): //myval is 1-rle and oVal is no rle
+		case ((0x4 | 0x8) | 0x2):
+		{
+			oHandler.append(oVal);
+			myVal -= static_cast<uint32_t>(0x1) << 2;
+			oVal = 0;
+			break;
+		}
+		//myval no rle
+		case (0x8 | 0x1): //myval no rle, oVal zero-rle
+		case (0x0 | 0x1):
+		{
+			oVal -= (static_cast<uint32_t>(1) << 2);
+			oHandler.append((0x4 | 0x1));
+			myVal = 0;
+			break;
+		}
+		case(0x0 | 0x3): //myval no rle, oVal one-rle
+		case(0x8 | 0x3):
+		{
+			oHandler.append(myVal);
+			myVal = 0;
+			oVal -= static_cast<uint32_t>(0x1) << 2;
+			break;
+		}
+		case(0x0 | 0x0): //myval no-rle oval no-rle
+		case(0x0 | 0x2):
+		case(0x8 | 0x0):
+		case(0x8 | 0x2):
+		{
+			uint32_t pushVal = myVal & oVal;
+			pushVal = (pushVal ? pushVal : (0x4 | 0x1));
+			oHandler.append(pushVal);
+			myVal = 0;
+			oVal = 0;
+			break;
+		}
+		default:
+			std::cerr << "BUG!!!!" << static_cast<uint32_t>(types) << std::endl;
+			break;
+		};
+	}
+	if (myVal >> 2) {
+		oHandler.append(myVal);
+	}
+	
+	uint32_t idCount = oHandler.flush();
+	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(4, idCount);
+	oData.resetPtrs();
+	return new ItemIndexPrivateWAH(oData);
+
+#else
 	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
 	dest.putUint32(0); //dummy data size
 	dest.putUint32(0); //dummy count
@@ -360,12 +513,127 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 	dest.putUint32(0, dest.tellPutPtr()-8);
 	dest.resetGetPtr();
 	return new ItemIndexPrivateWAH(dest);
+#endif
 }
+
+// #undef NEW_SETOPS
 
 ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateWAH * cother = dynamic_cast<const ItemIndexPrivateWAH*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doUnite(other);
+#ifdef NEW_SETOPS
+	UDWConstrainedIterator myIt(m_data, m_data.size()/4);
+	UDWConstrainedIterator oIt(cother->m_data, m_data.size()/4);
+	myIt.reset();
+	oIt.reset();
+	
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	oData.putUint32(0); //dummy size
+	oData.putUint32(0); //dummy count
+	OutPutHandler oHandler(oData);
+	
+	uint32_t myVal = 0;
+	uint32_t oVal = 0;
+	while(myIt.hasNext() && oIt.hasNext()) {
+		if ( ! (myVal >> 2) )
+			myVal = myIt.next();
+		if ( !(oVal >> 2) )
+			oVal = oIt.next();
+
+		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
+		switch (types) {
+		//myval with zero-rle
+		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = myVal | oval
+		case (0x4 | 0x1) ://myVal is zero-rle and oVal is zero-rle => pushType = myVal | oval
+		case (0x4 | 0x3) ://myVal is zero-rle and oVal is one-rle => pushType = myVal | oval
+		case ((0x4 | 0x8) | 0x1): //myval is 1-rle and oVal is zero-rle => pushType = myVal | oval
+		{
+			uint32_t pushType = (myVal & 0x3) | (oVal & 0x3);
+			if ((oVal & (~static_cast<uint32_t>(0x3))) <= (myVal & (~static_cast<uint32_t>(0x3)))) {
+				oHandler.append((oVal & ~static_cast<uint32_t>(0x3)) | pushType);
+				myVal -= (oVal & ~static_cast<uint32_t>(0x3));
+				oVal = 0;
+			}
+			else {
+				oHandler.append((myVal & ~static_cast<uint32_t>(0x3)) | pushType);
+				oVal -= (myVal & ~static_cast<uint32_t>(0x3));
+				myVal = 0;
+			}
+			break;
+		}
+		case (0x4 | 0x0): //myval is zero-rle and oval is no rle
+		case (0x4 | 0x2):
+		{
+			myVal -= (static_cast<uint32_t>(1) << 2);
+			oHandler.append(oVal); //1-rle zero
+			oVal = 0;
+			break;
+		}
+		case ((0x4 | 0x8) | 0x0): //myval is 1-rle and oVal is no rle
+		case ((0x4 | 0x8) | 0x2):
+		{
+			oHandler.append((0x4 | 0x3));
+			myVal -= static_cast<uint32_t>(0x1) << 2;
+			oVal = 0;
+			break;
+		}
+		//myval no rle
+		case (0x8 | 0x1): //myval no rle, oVal zero-rle
+		case (0x0 | 0x1):
+		{
+			oVal -= (static_cast<uint32_t>(1) << 2);
+			oHandler.append(myVal);
+			myVal = 0;
+			break;
+		}
+		case(0x0 | 0x3): //myval no rle, oVal one-rle
+		case(0x8 | 0x3):
+		{
+			oHandler.append((0x4 | 0x3)); //one zero-rle
+			myVal = 0;
+			oVal -= static_cast<uint32_t>(0x1) << 2;
+			break;
+		}
+		case(0x0 | 0x0): //myval no-rle oval no-rle
+		case(0x0 | 0x2):
+		case(0x8 | 0x0):
+		case(0x8 | 0x2):
+		{
+			uint32_t pushVal = myVal | oVal;
+			pushVal = (~pushVal == 0x1 ? (0x4 | 0x3) : pushVal );
+			oHandler.append(pushVal);
+			myVal = 0;
+			oVal = 0;
+			break;
+		}
+// 		default:
+// 			std::cerr << "BUG!!!!" << static_cast<uint32_t>(types) << std::endl;
+// 			break;
+		};
+	}
+	if (myVal >> 2) {
+		oHandler.append(myVal);
+	}
+	while(myIt.hasNext()) {
+		myVal = myIt.next();
+		oHandler.append(myVal);
+	}
+	
+	if (oVal >> 2) {
+		oHandler.append(oVal);
+	}
+	while(oIt.hasNext()) {
+		oVal = oIt.next();
+		oHandler.append(oVal);
+	}
+	
+	uint32_t idCount = oHandler.flush();
+	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(4, idCount);
+	oData.resetPtrs();
+	return new ItemIndexPrivateWAH(oData);
+#else
 	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
 	dest.putUint32(0); //dummy data size
 	dest.putUint32(0); //dummy count
@@ -568,50 +836,8 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 	dest.putUint32(0, dest.tellPutPtr()-8);
 	dest.resetGetPtr();
 	return new ItemIndexPrivateWAH(dest);
+#endif
 }
-
-struct OutPutHandler {
-	UByteArrayAdapter & data;
-	uint32_t outPutWord;
-	uint32_t idCount;
-	OutPutHandler(UByteArrayAdapter & data) : data(data), outPutWord(0), idCount(0) {}
-	void push() {
-		if (outPutWord & 0x1) {
-			if (outPutWord & 0x2) {
-				idCount += 31*(outPutWord >> 2);
-			}
-		}
-		else {
-			idCount += popCount(outPutWord >> 1);
-		}
-		data.putUint32(outPutWord);
-	}
-	void append(uint32_t nextWord) {
-		if ((outPutWord & 0x1) && (nextWord & 0x1)) { //both are run length encodings, check if we can merge them
-			if ((nextWord & 0x2) == (outPutWord & 0x2)) { //equal rle type
-				//add the lengths
-				outPutWord = (outPutWord + (nextWord & (~static_cast<uint32_t>(0x3))));
-			}
-			else {
-				push();
-				outPutWord = nextWord;
-			}
-		}
-		else {
-			if (outPutWord)
-				push();
-			outPutWord = nextWord;
-		}
-	}
-	
-	///@return idCount
-	uint32_t flush() {
-		if (outPutWord)
-			push();
-		return idCount;
-	}
-
-};
 
 ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateWAH * cother = dynamic_cast<const ItemIndexPrivateWAH*>(other);
