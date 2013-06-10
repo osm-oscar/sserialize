@@ -318,7 +318,7 @@ int main(int argc, char ** argv) {
 			bucketFillCountEnd = atol(argv[5]);
 		}
 		if (argc > 6)
-			testSelect = atol(argv[5]);
+			testSelect = atol(argv[6]);
 	}
 	else {
 		std::cout << "Arguments given: " << std::endl;
@@ -335,8 +335,15 @@ int main(int argc, char ** argv) {
 			std::cout << argv[i] << " ";
 		}
 		printHelp();
-		return 1;	
+		return 1;
 	}
+	
+	std::cout << "Test count: " << testCount << std::endl;
+	std::cout << "bucket count: " << bucketCount << std::endl;
+	std::cout << "bucketFillCountStart: " << bucketFillCountStart << std::endl;
+	std::cout << "bucketFillCountMultIncrement: " << bucketFillCountMultIncrement << std::endl;
+	std::cout << "bucketFillCountEnd: " << bucketFillCountEnd << std::endl;
+	std::cout << "testSelect: " << testSelect << std::endl;
 	
 	std::vector<TestResult> results;
 	for(std::size_t i = bucketFillCountStart; i < bucketFillCountEnd; i *= bucketFillCountMultIncrement) {
