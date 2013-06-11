@@ -2,6 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_WAH_H
 #include "ItemIndexPrivate.h"
 #include <sserialize/utility/utilfuncs.h>
+#include <sserialize/containers/UDWConstrainedIterator.h>
 
 namespace sserialize {
 
@@ -21,19 +22,17 @@ namespace sserialize {
 
 class ItemIndexPrivateWAH: public ItemIndexPrivate {
 private:
-	UByteArrayAdapter m_data;
+	mutable UDWConstrainedIterator m_curData;
+	UDWConstrainedIterator m_fullData;
 	uint32_t m_size;
-	mutable uint32_t m_dataOffset;
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
 private:
-	static bool fastForwardIntersectZero(const std::vector< ItemIndexPrivateWAH * > & intersect, std::vector<uint32_t> & intersectPositions,
-	std::vector<uint32_t> & intersectEncWords, uint64_t & bitOffset);
-	static bool fastForwardIntersectOne(const std::vector< ItemIndexPrivateWAH * > & intersect, std::vector<uint32_t> & intersectPositions, 
-	std::vector<uint32_t> & intersectEncWords, std::vector<uint32_t> & resultIds, uint32_t count, uint64_t & bitOffset);
-
+	const UDWConstrainedIterator & dataIterator() const;
+	
 public:
 	ItemIndexPrivateWAH();
+	ItemIndexPrivateWAH(sserialize::UDWIterator data);
 	ItemIndexPrivateWAH(const UByteArrayAdapter & data);
 	virtual ~ItemIndexPrivateWAH();
 	virtual ItemIndex::Types type() const;
