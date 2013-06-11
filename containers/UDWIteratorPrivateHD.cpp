@@ -26,7 +26,7 @@ void UDWIteratorPrivateHD::reset() {
 	m_bitIterator.reset();
 }
 
-UDWIteratorPrivate * UDWIteratorPrivateHD::copy() {
+UDWIteratorPrivate * UDWIteratorPrivateHD::copy() const {
 	return new UDWIteratorPrivateHD(m_bitIterator, m_decoder);
 }
 

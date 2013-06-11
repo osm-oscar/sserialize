@@ -16,7 +16,7 @@ public:
 	virtual uint32_t next();
 	virtual bool hasNext();
 	virtual void reset();
-	virtual UDWIteratorPrivate * copy();
+	virtual UDWIteratorPrivate * copy() const;
 	virtual UByteArrayAdapter::OffsetType dataSize() const;
 };
 

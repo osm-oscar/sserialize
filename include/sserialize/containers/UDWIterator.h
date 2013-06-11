@@ -1,18 +1,18 @@
 #ifndef SSERIALIZE_UDW_ITERATOR_H
 #define SSERIALIZE_UDW_ITERATOR_H
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/refcounting.h>
+#include <sserialize/utility/delegate.h>
 
 namespace sserialize {
 
-class UDWIteratorPrivate: public RefCountObject {
+class UDWIteratorPrivate {
 public:
 	UDWIteratorPrivate() {}
 	virtual ~UDWIteratorPrivate() {}
 	virtual uint32_t next() { return 0; }
 	virtual bool hasNext() { return false; }
 	virtual void reset() {}
-	virtual UDWIteratorPrivate * copy() { return new UDWIteratorPrivate(); }
+	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivate(); }
 	virtual UByteArrayAdapter::OffsetType dataSize() const { return 0; }
 };
 
@@ -25,12 +25,12 @@ public:
 	virtual uint32_t next() { return m_data.getUint32(); }
 	virtual bool hasNext() { return m_data.getPtrHasNext(); }
 	virtual void reset() { return m_data.resetGetPtr();}
-	virtual UDWIteratorPrivate * copy() { return new UDWIteratorPrivateDirect(m_data); }
+	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateDirect(m_data); }
 	virtual UByteArrayAdapter::OffsetType dataSize() const { return m_data.size(); }
 };
 
-class UDWIterator: protected RCWrapper<UDWIteratorPrivate> {
-	typedef RCWrapper<UDWIteratorPrivate> MyBaseClass;
+class UDWIterator: protected DelegateWrapper<UDWIteratorPrivate> {
+	typedef DelegateWrapper<UDWIteratorPrivate> MyBaseClass;
 public:
 	///creates a direct UDW Iterator
 	UDWIterator(const UByteArrayAdapter & data) : MyBaseClass(new UDWIteratorPrivateDirect(data)) {}
@@ -50,6 +50,8 @@ public:
 	void reset() {
 		priv()->reset();
 	}
+	const UDWIteratorPrivate * getPrivate() const { return priv(); }
+	UDWIteratorPrivate * getPrivate() { return priv(); }
 };
 
 }

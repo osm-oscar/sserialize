@@ -4,8 +4,8 @@
 
 namespace sserialize {
 
-class UDWConstrainedIterator: public RCWrapper<UDWIteratorPrivate> {
-	typedef RCWrapper<UDWIteratorPrivate> MyBaseClass;
+class UDWConstrainedIterator: public DelegateWrapper<UDWIteratorPrivate> {
+	typedef DelegateWrapper<UDWIteratorPrivate> MyBaseClass;
 private:
 	uint32_t m_size;
 	uint32_t m_curOffset;
@@ -13,12 +13,14 @@ public:
 	///creates a direct UDW Iterator
 	UDWConstrainedIterator(const UByteArrayAdapter & data, uint32_t size)
 	: MyBaseClass(new UDWIteratorPrivateDirect(data)), m_size(size), m_curOffset(0) {}
-	UDWConstrainedIterator(UDWIteratorPrivate *  priv, uint32_t size) : MyBaseClass(priv), m_size(size), m_curOffset(0) {}
-	UDWConstrainedIterator(const UDWConstrainedIterator & other) : MyBaseClass(other), m_size(other.m_size), m_curOffset(other.m_curOffset) {}
+	///@param priv own pointer, does not create a copy of priv
+	UDWConstrainedIterator(const UDWIteratorPrivate *  priv, uint32_t size) :
+	MyBaseClass((priv ? priv->copy() : 0)), m_size(size), m_curOffset(0) {}
+	UDWConstrainedIterator(const UDWConstrainedIterator & other) : MyBaseClass(other.priv()->copy()), m_size(other.m_size), m_curOffset(other.m_curOffset) {}
 	UDWConstrainedIterator() : MyBaseClass(new UDWIteratorPrivate() ), m_size(0), m_curOffset(0) {}
 	virtual ~UDWConstrainedIterator() {}
 	UDWConstrainedIterator & operator=(const UDWConstrainedIterator & other) {
-		MyBaseClass::operator=(other);
+		setPrivate(other.priv()->copy());
 		m_size = other.m_size;
 		m_curOffset = other.m_curOffset;
 		return *this;
