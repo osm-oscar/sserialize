@@ -61,7 +61,7 @@ protected:
 		m_Private = data;
 	}
 
-	RCObj * priv() const { return m_Private; }
+	inline RCObj * priv() const { return m_Private; }
 	
 private:
 	RCObj * m_Private;
