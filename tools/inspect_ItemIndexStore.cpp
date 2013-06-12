@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <boost-1_49/boost/concept_check.hpp>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/statfuncs.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
@@ -56,6 +57,44 @@ void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_m
 			i += curIndexSize;
 		}
 	}
+}
+
+UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	if (store.indexType() != ItemIndex::T_WAH) {
+		std::cerr << "Unsupported index format" << std::endl;
+		return 0;
+	}
+	UByteArrayAdapter data = store.getData();
+	
+	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
+	dest.putUint8(1);
+	dest.putUint8(ItemIndex::T_WAH);
+	dest.putOffset(0);
+	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	newOffsets.reserve(store.size());
+	
+	data.resetGetPtr();
+	ProgressInfo pinfo;
+	pinfo.begin(data.size(), "Encoding words");
+	while(data.getPtrHasNext()) {
+		newOffsets.push_back(dest.tellPutPtr()-7);
+		uint32_t indexSize = data.getUint32();
+		uint32_t indexCount = data.getUint32();
+		dest.putVlPackedUint32(indexSize);
+		dest.putVlPackedUint32(indexCount);
+		indexSize = indexSize / 4;
+		for(uint32_t i = 0; i < indexSize; ++i) {
+			uint32_t src = data.getUint32();
+			dest.putVlPackedUint32(src);
+		}
+		pinfo(data.tellGetPtr());
+	}
+	pinfo.end("Encoded words");
+	dest.putOffset(beginOffset+2, dest.tellPutPtr()-beginOffset);
+	std::cout << "Creating offset index" << std::endl;
+	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	return dest.tellPutPtr()+7-beginOffset;
 }
 
 UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -119,6 +158,7 @@ int main(int argc, char ** argv) {
 	bool dumpDataHisto = false;
 	uint8_t alphabetBitLength = 1;
 	bool recompress = false;
+	bool recompressVar = false;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -136,6 +176,8 @@ int main(int argc, char ** argv) {
 		}
 		if (curArg == "-rc")
 			recompress = true;
+		if (curArg == "-rcv")
+			recompressVar = true;
 		if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
 			i++;
@@ -231,6 +273,20 @@ int main(int argc, char ** argv) {
 			outFile = outFileName;
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
 		UByteArrayAdapter::OffsetType size = recompressIndexData(1, store, outData);
+		if (size > 0)
+			outData.shrinkStorage(adap.size()-size);
+		else
+			outData.setDeleteOnClose(true);
+	}
+	
+	if (recompressVar) {
+		std::string outFile;
+		if (outFileName.empty())
+			outFile = inFileName + ".vcmp";
+		else
+			outFile = outFileName;
+		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
+		UByteArrayAdapter::OffsetType size = recompressDataVarUint(store, outData);
 		if (size > 0)
 			outData.shrinkStorage(adap.size()-size);
 		else
