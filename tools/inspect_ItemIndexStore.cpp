@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
-#include <boost-1_49/boost/concept_check.hpp>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/statfuncs.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
