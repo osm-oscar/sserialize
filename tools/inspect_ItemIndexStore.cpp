@@ -57,6 +57,64 @@ void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_m
 			i += curIndexSize;
 		}
 	}
+	else {
+		std::cerr << "Unsupported index format for createAlphabet" << std::endl;
+	}
+}
+
+UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	if (store.indexType() != ItemIndex::T_WAH) {
+		std::cerr << "Unsupported index format" << std::endl;
+		return 0;
+	}
+	
+	std::unordered_map<uint32_t, uint32_t> alphabet; //maps from old to new
+	{
+		uint32_t charSize = 4;
+		createAlphabet(store, alphabet, charSize);
+		std::cout << "Created alphabetChar->freq mapping of size: " << alphabet.size() << std::endl;
+		std::vector< std::pair<uint32_t, uint32_t> > tmp;
+		tmp.reserve(alphabet.size());
+		for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it)
+			tmp.push_back(std::pair<uint32_t, uint32_t>(it->second, it->first));
+		std::sort(tmp.begin(), tmp.end());
+		for(std::size_t i = 0; i < tmp.size(); ++i)
+			alphabet[tmp[i].second] = i; 
+	}
+	
+	std::cout << "Alphabet size: " << alphabet.size() << std::endl;
+
+	UByteArrayAdapter data = store.getData();
+	
+	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
+	dest.putUint8(1);
+	dest.putUint8(ItemIndex::T_WAH);
+	dest.putOffset(0);
+	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	newOffsets.reserve(store.size());
+	
+	data.resetGetPtr();
+	ProgressInfo pinfo;
+	pinfo.begin(data.size(), "Encoding words");
+	while(data.getPtrHasNext()) {
+		newOffsets.push_back(dest.tellPutPtr()-7);
+		uint32_t indexSize = data.getUint32();
+		uint32_t indexCount = data.getUint32();
+		dest.putVlPackedUint32(alphabet.at(indexSize));
+		dest.putVlPackedUint32(alphabet.at(indexCount));
+		indexSize = indexSize / 4;
+		for(uint32_t i = 0; i < indexSize; ++i) {
+			uint32_t src = data.getUint32();
+			dest.putVlPackedUint32(alphabet.at(src));
+		}
+		pinfo(data.tellGetPtr());
+	}
+	pinfo.end("Encoded words");
+	dest.putOffset(beginOffset+2, dest.tellPutPtr()-beginOffset);
+	std::cout << "Creating offset index" << std::endl;
+	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	return dest.tellPutPtr()+7-beginOffset;
 }
 
 UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -159,6 +217,7 @@ int main(int argc, char ** argv) {
 	uint8_t alphabetBitLength = 1;
 	bool recompress = false;
 	bool recompressVar = false;
+	bool recompressVarShannon = false;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -174,10 +233,15 @@ int main(int argc, char ** argv) {
 			alphabetBitLength = ::atoi(argv[i+1]);
 			++i;
 		}
-		if (curArg == "-rc")
+		if (curArg == "-rc") {
 			recompress = true;
-		if (curArg == "-rcv")
+		}
+		if (curArg == "-rcv") {
 			recompressVar = true;
+		}
+		if (curArg == "-rcvs") {
+			recompressVarShannon = true;
+		}
 		if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
 			i++;
@@ -287,6 +351,21 @@ int main(int argc, char ** argv) {
 			outFile = outFileName;
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
 		UByteArrayAdapter::OffsetType size = recompressDataVarUint(store, outData);
+		if (size > 0)
+			outData.shrinkStorage(adap.size()-size);
+		else
+			outData.setDeleteOnClose(true);
+	}
+	
+
+	if (recompressVarShannon) {
+		std::string outFile;
+		if (outFileName.empty())
+			outFile = inFileName + ".vscmp";
+		else
+			outFile = outFileName;
+		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
+		UByteArrayAdapter::OffsetType size = recompressVarUintShannon(store, outData);
 		if (size > 0)
 			outData.shrinkStorage(adap.size()-size);
 		else
