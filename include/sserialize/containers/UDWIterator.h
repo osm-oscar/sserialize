@@ -18,6 +18,9 @@ public:
 
 class UDWIteratorPrivateDirect: public UDWIteratorPrivate {
 	UByteArrayAdapter m_data;
+protected:
+	UByteArrayAdapter & data() { return m_data; }
+	const UByteArrayAdapter & data() const { return m_data; }
 public:
 	UDWIteratorPrivateDirect() {}
 	UDWIteratorPrivateDirect(const UByteArrayAdapter & data) : m_data(data) {}
@@ -27,6 +30,16 @@ public:
 	virtual void reset() { return m_data.resetGetPtr();}
 	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateDirect(m_data); }
 	virtual UByteArrayAdapter::OffsetType dataSize() const { return m_data.size(); }
+};
+
+
+class UDWIteratorPrivateVarDirect: public UDWIteratorPrivateDirect {
+public:
+	UDWIteratorPrivateVarDirect() {}
+	UDWIteratorPrivateVarDirect(const UByteArrayAdapter & data) : UDWIteratorPrivateDirect(data) {}
+	virtual ~UDWIteratorPrivateVarDirect() {}
+	virtual uint32_t next() { return data().getVlPackedUint32(); }
+	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateVarDirect(data()); }
 };
 
 class UDWIterator: protected DelegateWrapper<UDWIteratorPrivate> {
