@@ -50,7 +50,18 @@ bool StringCompleter::supportsQuerry(StringCompleter::QuerryType qt) {
 }
 
 void StringCompleter::clearCache() {
+#ifdef SSERIALIZE_WITH_THREADS
+	MutexLocker locker(m_cacheLock);
+#endif
 	m_cache.clear();
+}
+
+void StringCompleter::setCacheSize(uint32_t s) {
+#ifdef SSERIALIZE_WITH_THREADS
+	MutexLocker locker(m_cacheLock);
+#endif
+	m_cache.clear();
+	m_cache.setSize(s);
 }
 
 ItemIndex StringCompleter::complete(const std::string & str, StringCompleter::QuerryType qtype) {

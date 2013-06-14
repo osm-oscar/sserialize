@@ -37,6 +37,7 @@ public:
 	bool supportsQuerry(QuerryType qt);
 
 	void clearCache();
+	void setCacheSize(uint32_t s);
 	
 	ItemIndex complete(const std::string & str, QuerryType qtype);
 	ItemIndexIterator partialComplete(const std::string & str, QuerryType qtype);
