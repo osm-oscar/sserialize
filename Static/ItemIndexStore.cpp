@@ -1,20 +1,34 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/containers/UDWIterator.h>
+#include <sserialize/containers/UDWIteratorPrivateHD.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
 
 namespace sserialize {
 namespace Static {
 
 ItemIndexStore::ItemIndexStore() :
-m_type(ItemIndex::T_EMPTY)
+m_type(ItemIndex::T_EMPTY),
+m_compression(IC_NONE)
 {}
 
 ItemIndexStore::ItemIndexStore(UByteArrayAdapter data) :
-m_type((ItemIndex::Types) data.at(1) )
+m_version(data.at(0)),
+m_type((ItemIndex::Types) data.at(1) ),
+m_compression(IC_NONE)
 {
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, data.at(0), "Static::ItemIndexStore");
+	if (m_version == 1) {
+		data += 2;
+	}
+	else if (m_version == 2) {
+		m_compression = (IndexCompressionType) data.at(2);
+		data += 3;
+	}
+	else {
+		SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, version, "Static::ItemIndexStore");
+	}
 	
-	data += 2;
 	OffsetType off = data.getOffset();
 	data.shrinkToGetPtr();
 	
@@ -30,7 +44,7 @@ uint32_t ItemIndexStore::size() const {
 }
 
 uint32_t ItemIndexStore::getSizeInBytes() const {
-	return 2 + UByteArrayAdapter::OffsetTypeSerializedLength() + m_index.getSizeInBytes() + m_data.size();
+	return 2 + (m_version == 2 ? 1 : 0) + UByteArrayAdapter::OffsetTypeSerializedLength() + m_index.getSizeInBytes() + m_data.size();
 }
 
 UByteArrayAdapter ItemIndexStore::dataAt(uint32_t pos) const {
@@ -50,7 +64,22 @@ UByteArrayAdapter ItemIndexStore::dataAt(uint32_t pos) const {
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	if (pos >= size())
 		return ItemIndex();
-	return ItemIndex(dataAt(pos), m_type);
+	if (m_type == ItemIndex::T_WAH) {
+		switch (m_compression) {
+		case IC_NONE:
+			return ItemIndex(dataAt(pos), m_type);
+		case IC_VARUINT32:
+		{
+			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(dataAt(pos))));
+		}
+		case IC_HUFFMAN:
+			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(dataAt(pos)), m_hd)));
+		};
+	}
+	else {
+		return ItemIndex(dataAt(pos), m_type);
+	}
+	return ItemIndex();
 }
 
 ItemIndex ItemIndexStore::at(uint32_t pos, const ItemIndex& realIdIndex) const {

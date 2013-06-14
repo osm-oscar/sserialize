@@ -2,16 +2,17 @@
 #define SSERIALIZE_STATIC_ITEM_INDEX_STORE
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/containers/ItemIndex.h>
+#include "HuffmanDecoder.h"
 #include <unordered_set>
-#define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 1
+#define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 2
 
-/*Version 1
+/*Version 2
  *
  *
  *------------------------------------------------------------
- *VERSION|IndexTypes|datalength| Data     |      Offsets    |
+ *VERSION|IndexCompressionType|IndexTypes|datalength| Data     |      Offsets    |
  *------------------------------------------------------------
- *   1   |    1     |OffsetType|datalength|SortedOffsetIndex
+ *   1   |        1           |    1     |OffsetType|datalength|SortedOffsetIndex
  *
  * 
  *
@@ -23,8 +24,13 @@ namespace Static {
 
 /** The first index id is ALWAY the empty index*/
 class ItemIndexStore {
+public:
+	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_ILLEGAL=0xFF} IndexCompressionType;
 private:
+	uint8_t m_version;
 	ItemIndex::Types m_type;
+	IndexCompressionType m_compression;
+	HuffmanDecoder m_hd;
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
 public:

@@ -10,6 +10,8 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/utility/types.h>
+#include <sserialize/Static/ItemIndexStore.h>
+#include <sserialize/utility/pack_unpack_functions.h>
 
 
 namespace sserialize {
@@ -28,6 +30,7 @@ private:
 	int8_t m_bitWidth;
 	bool m_useRegLine;
 	ItemIndex::Types m_type;
+	Static::ItemIndexStore::IndexCompressionType m_compressionType;
 	
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
@@ -57,8 +60,19 @@ public:
 			mok = ItemIndexPrivateRegLine::create(idx, s, m_bitWidth, m_useRegLine);
 		else if (m_type == ItemIndex::T_WAH) {
 			mok = true;
-			UByteArrayAdapter dest(&s);
+			std::vector<uint8_t> mys;
+			UByteArrayAdapter dest(&mys);
 			ItemIndexPrivateWAH::create(idx, dest);
+			if (m_compressionType == Static::ItemIndexStore::IC_VARUINT32) {
+				UByteArrayAdapter nd(&s);
+				for(std::vector<uint8_t>::const_iterator it(mys.begin()), end(mys.end()); it != end; it += 4) {
+					uint32_t v = unPack_uint32_t(&(*it));
+					nd.putVlPackedUint32(v);
+				}
+			}
+			else {
+				s.swap(mys);
+			}
 		}
 		else if (m_type == ItemIndex::T_DE) {
 			mok = true;

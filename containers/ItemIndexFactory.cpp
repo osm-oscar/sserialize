@@ -5,6 +5,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/debuggerfunctions.h>
 #include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/Static/ItemIndexStore.h>
 #include <unordered_map>
 #include <iostream>
 #include <sstream>
@@ -42,6 +43,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	m_header = data;
 	m_header.putUint8(0); // dummy version
 	m_header.putUint8(0); //dumy index type
+	m_header.putUint8(0); //dummy compression type
 	m_header.putOffset(0); //dummy offset
 	m_indexStore = m_header;
 	m_indexStore.shrinkToPutPtr();
@@ -131,8 +133,9 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 OffsetType ItemIndexFactory::flush() {
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	m_header.resetPtrs();
-	m_header << static_cast<uint8_t>(1); //Version
+	m_header << static_cast<uint8_t>(2); //Version
 	m_header << static_cast<uint8_t>(m_type);//type
+	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
 	
 	std::cout << "Gathering offsets...";
@@ -157,7 +160,7 @@ OffsetType ItemIndexFactory::flush() {
 	}
 	std::cout << "done." << std::endl;
 
-	return 2+UByteArrayAdapter::OffsetTypeSerializedLength()+m_indexStore.tellPutPtr();
+	return 3+UByteArrayAdapter::OffsetTypeSerializedLength()+m_indexStore.tellPutPtr();
 }
 
 }//end namespace
