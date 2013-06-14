@@ -77,7 +77,7 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 		for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it)
 			tmp.push_back(std::pair<uint32_t, uint32_t>(it->second, it->first));
 		std::sort(tmp.begin(), tmp.end());
-		for(std::size_t i = 0; i < tmp.size(); ++i)
+		for(int i = tmp.size()-1; i >= 0; --i)
 			alphabet[tmp[i].second] = i; 
 	}
 	
@@ -86,7 +86,8 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 	UByteArrayAdapter data = store.getData();
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(1);
+	dest.putUint8(2);
+	dest.putUint8(Static::ItemIndexStore::IC_ILLEGAL);
 	dest.putUint8(ItemIndex::T_WAH);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -109,11 +110,11 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 		pinfo(data.tellGetPtr());
 	}
 	pinfo.end("Encoded words");
-	dest.putOffset(beginOffset+2, dest.tellPutPtr()-beginOffset);
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+7-beginOffset;
+	return dest.tellPutPtr()+8-beginOffset;
 }
 
 UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -124,7 +125,8 @@ UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemInde
 	UByteArrayAdapter data = store.getData();
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(1);
+	dest.putUint8(2);
+	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
 	dest.putUint8(ItemIndex::T_WAH);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -147,11 +149,11 @@ UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemInde
 		pinfo(data.tellGetPtr());
 	}
 	pinfo.end("Encoded words");
-	dest.putOffset(beginOffset+2, dest.tellPutPtr()-beginOffset);
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+7-beginOffset;
+	return dest.tellPutPtr()+8-beginOffset;
 }
 
 UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -171,8 +173,9 @@ UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sse
 	
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(0);
-	dest.putUint8(0);
+	dest.putUint8(2);
+	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
+	dest.putUint8(ItemIndex::T_WAH);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
 	newOffsets.reserve(store.size());
@@ -201,10 +204,11 @@ UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sse
 	backInserter.flush();
 	dest = backInserter.data();
 	pinfo.end("Encoded words");
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+7-beginOffset;
+	return dest.tellPutPtr()+8-beginOffset;
 }
 
 int main(int argc, char ** argv) {
