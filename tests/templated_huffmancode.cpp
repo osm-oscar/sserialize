@@ -1,0 +1,107 @@
+#include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/Asserter.h>
+#include <vector>
+#include <sserialize/templated/HuffmanTree.h>
+#include <sserialize/Static/HuffmanDecoder.h>
+#include <sserialize/containers/MultiBitBackInserter.h>
+#include <sserialize/containers/MultiBitIterator.h>
+#include <sserialize/containers/UDWIterator.h>
+#include <sserialize/containers/UDWIteratorPrivateHD.h>
+#include <sserialize/utility/utilfuncs.h>
+
+using namespace sserialize;
+
+void print(std::stringstream & dest) {}
+
+template<typename T, typename ... Args>
+void print(std::stringstream & dest, T t, Args ... args) {
+	dest << t;
+	print(dest, args...);
+}
+
+
+template<typename ... Args>
+std::string printToString(Args ... args) {
+	std::stringstream  ss;
+	print(ss, args...);
+	return ss.str();
+}
+
+template<int NumberOfRuns, int TestDataLength>
+class HuffmanCodeTest: public CppUnit::TestFixture {
+CPPUNIT_TEST_SUITE( HuffmanCodeTest );
+CPPUNIT_TEST( testEquality );
+CPPUNIT_TEST_SUITE_END();
+private:
+	std::vector<uint32_t> createTestData() {
+		std::vector<uint32_t> ret;
+		for(int i = 0; i < TestDataLength; ++i) {
+			ret.push_back( rand() % 0xFFFF );
+		}
+		return ret;
+	}
+	
+	template<typename TInputIterator>
+	void createAlphabet(TInputIterator begin, const TInputIterator & end, std::unordered_map<uint32_t, uint32_t> & dest) {
+		for(; begin != end; ++begin) {
+			if (dest.count(*begin) == 0)
+				dest[*begin] = 1;
+			else
+				dest[*begin] += 1;
+		}
+	}
+	
+public:
+	virtual void setUp() {}
+	virtual void tearDown() {}
+	
+	void testEquality() {
+		for(int i = 0; i < NumberOfRuns; ++i) {
+			std::vector< uint32_t > testData = createTestData();
+			std::unordered_map<uint32_t, uint32_t> alphabet;
+			createAlphabet(testData.begin(), testData.end(), alphabet);
+			HuffmanTree<uint32_t> ht;
+			ht.create(alphabet.begin(), alphabet.end(), static_cast<uint32_t>(testData.size()));
+		 	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
+			
+			std::vector<uint8_t> dataStore;
+			std::vector<uint8_t> decodeTable;
+			UByteArrayAdapter dataAdap(&dataStore, false);
+			UByteArrayAdapter decodeTableAdap(&decodeTable, false);
+			MultiBitBackInserter backInserter(dataAdap);
+
+			
+			for(std::vector< uint32_t >::const_iterator it(testData.begin()); it != testData.end(); ++it) {
+				const HuffmanCodePoint hcp = htMap.at(*it);
+				 backInserter.push_back(hcp.code(), hcp.codeLength());
+			}
+			backInserter.flush();
+			dataAdap = backInserter.data();
+			dataAdap.resetPtrs();
+			ht.sserialize(decodeTableAdap);
+			decodeTableAdap.resetPtrs();
+			
+			Static::HuffmanDecoder decoder(decodeTableAdap);
+			MultiBitIterator bitIt(dataAdap);
+			UDWIterator udwIt(  new UDWIteratorPrivateHD(bitIt, decoder)  );
+			
+			for(uint32_t i = 0; i < testData.size(); ++i) {
+				uint32_t real = testData[i];
+				uint32_t decoded = udwIt.next();
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(printToString(i), real, decoded);
+			}
+		}
+	}
+};
+
+int main() {
+	srand(0);
+	srandom( 0 );
+	CppUnit::TextUi::TestRunner runner;
+	runner.addTest( HuffmanCodeTest<10, 1011>::suite() );
+	runner.addTest( HuffmanCodeTest<10, 10111>::suite() );
+	runner.addTest( HuffmanCodeTest<10, 101111>::suite() );
+	runner.run();
+	return 0;
+}
