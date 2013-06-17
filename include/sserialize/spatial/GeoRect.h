@@ -31,6 +31,13 @@ public:
 	const double* lat() const { return m_lat; }
 	double* lon() { return m_lon; }
 	const double* lon() const { return m_lon; }
+	
+	double minLat() const { return m_lat[0]; }
+	double maxLat() const { return m_lat[1]; }
+	
+	double minLon() const { return m_lon[0]; }
+	double maxLon() const { return m_lon[1]; }
+	
 	bool overlap(const GeoRect & other) const {
 		if ((m_lat[0] > other.m_lat[1]) || // this is left of other
 			(m_lat[1] < other.m_lat[0]) || // this is right of other
