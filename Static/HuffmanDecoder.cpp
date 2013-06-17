@@ -14,8 +14,8 @@ m_initialChildPtr(m_data.getVlPackedUint32())
 
 HuffmanDecoder::StaticNode::~StaticNode() {}
 
-HuffmanDecoder::HuffmanCodePointInfo HuffmanDecoder::StaticNode::at(uint16_t pos) const {
-	return HuffmanDecoder::HuffmanCodePointInfo(m_data.getUint32(pos*6), m_data.getUint16(pos*6+4));
+HuffmanDecoder::HuffmanCodePointInfo HuffmanDecoder::StaticNode::at(uint32_t pos) const {
+	return HuffmanDecoder::HuffmanCodePointInfo(m_data.getUint32(pos*SerializationInfo<HuffmanCodePointInfo>::length()), m_data.getUint24(pos*SerializationInfo<HuffmanCodePointInfo>::length()+4));
 }
 
 HuffmanDecoder::HuffmanDecoder() {}

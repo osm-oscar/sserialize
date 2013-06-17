@@ -2,23 +2,23 @@
 #define SSERIALIZE_CONTAINERS_HUFFMAN_DECODER_H
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/Static/Deque.h>
+#include <sserialize/utility/SerializationInfo.h>
 
 /** This is a tablebased huffman decoder.
   * Essentialy its a tree with branching factor B and different child nodes
   *
   *
-  * The root level uses fixed 10 Bits which results in 2 4K Pages
   * 
-  * Branching factor should not exceed 2^12 as the child ptr encodes
-  * the child id difference to the first child (12 Bits)
-  * and the length of the huffcode (4 Bits )
+  * Branching factor should not exceed 2^19 as the child ptr encodes
+  * the child id difference to the first child (18 Bits)
+  * and the length of the huffcode (5 Bits )
   * a huff code length of 0 indicates a child node (otherwise childptr is not valid)
   *
   *Node Layout:
   *--------------------------------------------------------------
   *BranchingFactor|FirstChildId|value:childptr|
   *--------------------------------------------------------------
-  *      uint8    | vl32       |(uint32:uint16)
+  *      uint8    | vl32       |(uint32:uint24)
   *
   *
   */
@@ -28,9 +28,10 @@ namespace sserialize {
 namespace Static {
 
 class HuffmanDecoder {
+public:
 	class HuffmanCodePointInfo {
 		uint32_t m_value;
-		uint16_t m_childPtrBitLen;
+		uint32_t m_childPtrBitLen;
 	public:
 		HuffmanCodePointInfo() :
 		m_value(0), m_childPtrBitLen(0) {}
@@ -40,11 +41,11 @@ class HuffmanDecoder {
 		
 		virtual ~HuffmanCodePointInfo() {}
 		inline uint32_t value() const { return m_value; }
-		inline uint8_t length() const { return m_childPtrBitLen & 0xF; }
-		inline uint32_t childPtrDiff() const { return m_childPtrBitLen >> 4; }
-		inline bool hasChild() { return m_childPtrBitLen & 0xF; }
+		inline uint8_t length() const { return m_childPtrBitLen & 0x1F; }
+		inline uint32_t childPtrDiff() const { return m_childPtrBitLen >> 5; }
+		inline bool hasChild() { return m_childPtrBitLen & 0x1F; }
 	};
-
+private:
 	class StaticNode {
 		UByteArrayAdapter m_data;
 		uint8_t m_bitLength;
@@ -55,7 +56,7 @@ class HuffmanDecoder {
 		virtual ~StaticNode();
 		uint8_t bitLength() const { return m_bitLength;}
 		uint32_t initialChildPtr() const { return m_initialChildPtr;}
-		HuffmanCodePointInfo at(uint16_t pos) const;
+		HuffmanCodePointInfo at(uint32_t pos) const;
 	};
 	
 	Static::Deque<StaticNode> m_nodes;
@@ -122,6 +123,12 @@ public:
 };
 }} //end namespace
 
+namespace sserialize {
+	template<> inline bool SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::is_fixed_length() { return true; }
+	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::length() { return 7; }
+	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::max_length() { return 7; }
+	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::min_length() { return 7; }
+}
 
 
 #endif
