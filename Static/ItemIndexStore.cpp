@@ -26,7 +26,7 @@ m_compression(IC_NONE)
 		data += 3;
 	}
 	else {
-		SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, version, "Static::ItemIndexStore");
+		SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, m_version, "Static::ItemIndexStore");
 	}
 	
 	OffsetType off = data.getOffset();
@@ -69,11 +69,11 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 		case IC_NONE:
 			return ItemIndex(dataAt(pos), m_type);
 		case IC_VARUINT32:
-		{
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(dataAt(pos))));
-		}
 		case IC_HUFFMAN:
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(dataAt(pos)), m_hd)));
+		case IC_ILLEGAL:
+			return ItemIndex();
 		};
 	}
 	else {
