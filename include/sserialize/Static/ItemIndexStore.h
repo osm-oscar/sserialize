@@ -9,10 +9,10 @@
 /*Version 2
  *
  *
- *------------------------------------------------------------
- *VERSION|IndexCompressionType|IndexTypes|datalength| Data     |      Offsets    |
- *------------------------------------------------------------
- *   1   |        1           |    1     |OffsetType|datalength|SortedOffsetIndex
+ *----------------------------------------------------------------------------------------------------
+ *VERSION|IndexTypes|IndexCompressionType|datalength| Data     |      Offsets    |HuffmanDecodeTable
+ *----------------------------------------------------------------------------------------------------
+ *   1   |    1     |        1           |OffsetType|datalength|SortedOffsetIndex|HuffmanDecoder
  *
  * 
  *
@@ -30,9 +30,9 @@ private:
 	uint8_t m_version;
 	ItemIndex::Types m_type;
 	IndexCompressionType m_compression;
-	HuffmanDecoder m_hd;
-	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
+	SortedOffsetIndex m_index;
+	HuffmanDecoder m_hd;
 public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);
