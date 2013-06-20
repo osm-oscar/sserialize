@@ -11,6 +11,11 @@
 using namespace std;
 using namespace sserialize;
 
+
+void putWrapper(UByteArrayAdapter & dest, const uint32_t & src) {
+	dest.putUint32(src);
+}
+
 void dumpIndex(std::ostream & out, const ItemIndex & idx) {
 	for(uint32_t i = 0; i < idx.size(); i++) {
 		out << idx.at(i) << std::endl;
@@ -87,8 +92,8 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(2);
-	dest.putUint8(Static::ItemIndexStore::IC_ILLEGAL);
 	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(Static::ItemIndexStore::IC_ILLEGAL);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
 	newOffsets.reserve(store.size());
@@ -126,8 +131,8 @@ UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemInde
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(2);
-	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
 	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
 	newOffsets.reserve(store.size());
@@ -174,8 +179,8 @@ UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sse
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(2);
-	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
 	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
 	newOffsets.reserve(store.size());
@@ -207,6 +212,19 @@ UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sse
 	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	//now comes the deocding table
+	HuffmanTree<uint32_t>::ValueSerializer sfn = &putWrapper;
+	std::vector<uint8_t> bitsPerLevel;
+	bitsPerLevel.push_back(16);
+	int htDepth = ht.depth()-16;
+	while (htDepth > 0) {
+		if (htDepth > 4)
+			bitsPerLevel.push_back(4);
+		else
+			bitsPerLevel.push_back(htDepth);
+		htDepth -= 4;
+	}
+	ht.serialize(dest, sfn, bitsPerLevel);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
 	return dest.tellPutPtr()+8-beginOffset;
 }
