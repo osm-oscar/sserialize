@@ -108,6 +108,10 @@ int main() {
 	runner.addTest( MultiBitIteratorTest<10, 234>::suite() );
 	runner.addTest( MultiBitIteratorTest<10, 554>::suite() );
 	runner.addTest( MultiBitIteratorTest<10, 1011>::suite() );
+	runner.addTest( MultiBitIteratorTest<10, 2022>::suite() );
+	runner.addTest( MultiBitIteratorTest<10, 5034>::suite() );
+	runner.addTest( MultiBitIteratorTest<10, 15034>::suite() );
+	runner.addTest( MultiBitIteratorTest<10, 235034>::suite() );
 	runner.run();
 	return 0;
 }

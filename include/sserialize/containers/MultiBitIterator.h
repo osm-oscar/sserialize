@@ -9,25 +9,28 @@ class MultiBitIterator {
 	UByteArrayAdapter m_data;
 	uint8_t m_bitOffset;
 private:
+	///get get<uint8_t> will NOT! work
 	template<typename T_UINT_TYPE>
 	typename std::enable_if< std::is_unsigned<T_UINT_TYPE>::value, T_UINT_TYPE>::type getN() const {
 		UByteArrayAdapter::OffsetType getPtr = m_data.tellGetPtr();
 		T_UINT_TYPE res = static_cast<T_UINT_TYPE>(m_data.getUint8(getPtr)) << 8;
 		++getPtr;
 		uint8_t headerLength = 8-m_bitOffset;
-		int bitsRead = headerLength;
-		for(; bitsRead < std::numeric_limits<T_UINT_TYPE>::digits && getPtr < m_data.size(); bitsRead += 8) { 
-			uint8_t destLshift = (std::numeric_limits<T_UINT_TYPE>::digits-bitsRead > 8 ? 8 : std::numeric_limits<T_UINT_TYPE>::digits-bitsRead);
-			uint8_t srcRShift = (destLshift < 8 ? 8-destLshift : 0);
+		int remainingBits = std::numeric_limits<T_UINT_TYPE>::digits - headerLength;
+		do {
+			uint8_t srcRShift = (remainingBits > 8 ? 0 : 8-remainingBits);
 			uint8_t byte = m_data.getUint8(getPtr);
 			++getPtr;
 			byte >>= srcRShift;
 			res |= byte;
-			res <<= destLshift;
-		}
-		if (bitsRead < std::numeric_limits<T_UINT_TYPE>::digits) {
-			res <<= (std::numeric_limits<T_UINT_TYPE>::digits-bitsRead);
-		}
+			remainingBits -= 8;
+			if (remainingBits > 0) {
+				res <<= (remainingBits > 8 ? 8 : remainingBits);
+			}
+			else {
+				break;
+			}
+		} while(remainingBits > 0); //no need to check for the end of m_data as it will return zeros on out_of_bounds (saves a lot of calls to size())
 		return res;
 	}
 	
