@@ -1252,6 +1252,21 @@ void UByteArrayAdapter::dumpAsString(uint32_t byteCount) const {
 	std::cout << std::endl;
 }
 
+#define STATIC_PUT_FUNCS_MAKRO(__NAME, __TYPE) void UByteArrayAdapter::__NAME(UByteArrayAdapter & dest, __TYPE src) { dest.__NAME(src); }
+STATIC_PUT_FUNCS_MAKRO(putUint8, uint8_t);
+STATIC_PUT_FUNCS_MAKRO(putUint16, uint16_t);
+STATIC_PUT_FUNCS_MAKRO(putUint24, uint32_t);
+STATIC_PUT_FUNCS_MAKRO(putUint32, uint32_t);
+STATIC_PUT_FUNCS_MAKRO(putInt32, int32_t);
+STATIC_PUT_FUNCS_MAKRO(putUint64, uint64_t);
+STATIC_PUT_FUNCS_MAKRO(putInt64, int64_t);
+STATIC_PUT_FUNCS_MAKRO(putVlPackedInt32, int32_t);
+STATIC_PUT_FUNCS_MAKRO(putVlPackedUint32, uint32_t);
+STATIC_PUT_FUNCS_MAKRO(putVlPackedInt64, int64_t);
+STATIC_PUT_FUNCS_MAKRO(putVlPackedUint64, uint64_t);
+#undef STATIC_PUT_FUNCS_MAKRO
+
+
 }//end namespace
 
 using namespace sserialize;
@@ -1377,3 +1392,5 @@ UByteArrayAdapter& operator>>(UByteArrayAdapter & data, std::string & value) {
 	value = data.getString();
 	return data;
 }
+
+

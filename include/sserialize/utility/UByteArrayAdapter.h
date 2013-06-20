@@ -248,6 +248,18 @@ public:
 	static void setTempFilePrefix(const std::string & path);
 	
 	static inline uint32_t OffsetTypeSerializedLength() { return 5; }
+	
+	static void putUint8(UByteArrayAdapter & dest, uint8_t src);
+	static void putUint16(UByteArrayAdapter & dest, uint16_t src);
+	static void putUint24(UByteArrayAdapter & dest, uint32_t src);
+	static void putUint32(UByteArrayAdapter & dest, uint32_t src);
+	static void putInt32(UByteArrayAdapter & dest, int32_t src);
+	static void putUint64(UByteArrayAdapter & dest, uint64_t src);
+	static void putInt64(UByteArrayAdapter & dest, int64_t src);
+	static void putVlPackedInt32(UByteArrayAdapter & dest, int32_t src);
+	static void putVlPackedUint32(UByteArrayAdapter & dest, uint32_t src);
+	static void putVlPackedInt64(UByteArrayAdapter & dest, int64_t src);
+	static void putVlPackedUint64(UByteArrayAdapter & dest, uint64_t src);
 };
 
 }//end namespace
