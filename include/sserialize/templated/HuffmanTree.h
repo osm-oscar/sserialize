@@ -3,9 +3,12 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
+#include <boost-1_49/boost/concept_check.hpp>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/Static/Deque.h>
+#include <sserialize/utility/utilfuncs.h>
+#include <vendor/libs/minilzo/lzoconf.h>
 
 namespace sserialize {
 
@@ -79,29 +82,55 @@ private:
 			return (*lt)[a] < (*lt)[b];
 		};
 	};
-	
+public:
 	struct SerializationNode {
-		uint8_t branchingFactor;
-		int beginChildPtr; //-1 i not set
+		SerializationNode(uint8_t bitLength) : bitLength(bitLength), m_childrenValues(1 << bitLength), m_childrenPtrs(1 << bitLength, -1), m_codePointLength(1 << bitLength, 0) {}
+		uint8_t bitLength;
 		std::vector<TValue> m_childrenValues;
 		std::vector<int> m_childrenPtrs;
 		std::vector<uint8_t> m_codePointLength;
 		
-		sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest) {
-			dest.putUint8(branchingFactor);
+		
+		void addCode(uint32_t code, uint8_t length, const TValue & value) {
+			uint8_t bitShift = bitLength - length;
+			uint32_t begin = code << bitShift;
+			uint32_t end = begin | sserialize::createMask(bitShift);
+			for(; begin <= end; ++begin) {
+				m_childrenValues[begin] = value;
+				m_childrenPtrs[begin] = -1;
+				m_codePointLength[begin] = length;
+			}
+		}
+		
+		void addChild(uint32_t code, int childPos) {
+			m_childrenPtrs[code] = childPos;
+			m_codePointLength[code] = 0;
+		}
+		
+		sserialize::UByteArrayAdapter & serialize(sserialize::UByteArrayAdapter & dest) const {
+			dest.putUint8(bitLength);
+			int beginChildPtr = std::numeric_limits<int>::max();
+			for(auto x : m_childrenPtrs) {
+				if (x > 0) {
+					beginChildPtr = std::min<int>(beginChildPtr, x);
+				}
+			}
+			if (beginChildPtr == std::numeric_limits<int>::max())
+				beginChildPtr = -1;
+				
 			if (beginChildPtr > 0)
 				dest.putVlPackedUint32(beginChildPtr);
 			else
 				dest.putVlPackedUint32(0);
 			
-			for(uint32_t i = 0; i < branchingFactor; ++i) {
+			for(uint32_t i = 0; i < m_childrenPtrs.size(); ++i) {
 				dest << m_childrenValues[i];
-				uint16_t childPtrLen = 0;
+				uint32_t childPtrLen = m_codePointLength[i];
 				if (m_childrenPtrs[i] >= 0) {
-					childPtrLen = (m_childrenPtrs[i] << 6);
+					childPtrLen = ((m_childrenPtrs[i]-beginChildPtr) << 6);
 					childPtrLen |= m_codePointLength[i];
 				}
-				dest.putUint16(childPtrLen);
+				dest.putUint24(childPtrLen);
 			}
 			return dest;
 		}
@@ -111,7 +140,8 @@ private:
 	uint32_t m_alphabetSize;
 	uint32_t m_alphabetBitLength;
 private:
-	void codePointMapRecurse(std::unordered_map<uint32_t, HuffmanCodePoint> & dest, Node * node, uint32_t prefixCode, uint8_t length) {
+
+	void codePointMapRecurse(std::unordered_map<TValue, HuffmanCodePoint> & dest, Node * node, uint32_t prefixCode, uint8_t length) {
 		if (dynamic_cast<EndNode*>(node)) {
 			EndNode * en = dynamic_cast<EndNode*>(node);
 			dest[en->value] = HuffmanCodePoint(prefixCode, length);
@@ -124,7 +154,46 @@ private:
 		}
 	};
 	
-	void serialize();
+	
+	struct SerializationRecursionInfo {
+		SerializationRecursionInfo(uint32_t destinationNode, uint8_t level, uint32_t prefixCode, uint8_t length) :
+		destinationNode(destinationNode), level(level), prefixCode(prefixCode), length(length) {}
+		uint32_t destinationNode;
+		uint8_t level;
+		uint32_t prefixCode;
+		uint8_t length;
+	};
+	
+	bool serialize(const std::vector<uint8_t> & bpl, std::vector<SerializationNode> & szn, Node * node, SerializationRecursionInfo & info) {
+		bool ok = true;
+		if (dynamic_cast<EndNode*>(node)) {
+			EndNode * en = dynamic_cast<EndNode*>(node);
+			szn[info.destinationNode].addCode(info.prefixCode, info.length, en->value);
+		}
+		else if (dynamic_cast<InnerNode*>(node)) {
+			InnerNode * in = dynamic_cast<InnerNode*>(node);
+			if (info.length == bpl[info.level]) {
+				//push the code and pointer to the child node to the current parent node
+				uint32_t childId = szn.size();
+				szn[info.destinationNode].addChild(info.prefixCode, childId);
+				szn.push_back( SerializationNode(bpl[info.level+1]) );
+				for(uint32_t i = 0; i < in->children.size(); ++i) {
+					SerializationRecursionInfo cinfo(childId, info.level+1, i, m_alphabetBitLength);
+					ok = serialize(bpl, szn, in->children[i], cinfo) && ok;
+				}
+			}
+			else {
+				for(uint32_t i = 0; i < in->children.size(); ++i) {
+					SerializationRecursionInfo cinfo(info.destinationNode, info.level, (info.prefixCode << m_alphabetBitLength) | i, info.length + m_alphabetBitLength);
+					ok = serialize(bpl, szn, in->children[i], cinfo) && ok;
+				}
+			}
+		}
+		else {
+			ok = false;
+		}
+		return ok;
+	};
 public:
 	HuffmanTree(uint8_t alphabetBitLength = 1) : m_root(0), m_alphabetSize(static_cast<uint32_t>(1) << alphabetBitLength), m_alphabetBitLength(alphabetBitLength) {}
 	virtual ~HuffmanTree() {
@@ -201,12 +270,47 @@ public:
 		return ret;
 	};
 	
-	void sserialize(sserialize::UByteArrayAdapter & dest) {
+	typedef void (*ValueSerializer)(sserialize::UByteArrayAdapter & dest, const TValue & src);
+
+	
+	///It's up to the user to set correct bitsPerLevel depending on the alphabetBitLength (i.e. everylevel has to have n*alphabetBitLength where n is a natural number)
+	bool serialize(sserialize::UByteArrayAdapter & dest, ValueSerializer valueSerializer, const std::vector<uint8_t> & bitsPerLevel) {
+		{
+			uint8_t myDepth = depth();
+			uint32_t maxDepth = std::accumulate(bitsPerLevel.begin(), bitsPerLevel.end(), static_cast<uint32_t>(0));
+			if (m_alphabetBitLength* myDepth > maxDepth) {
+				std::cerr << "Cannot create huffman tree. Not enough bits available" << std::endl;
+				return false;
+			}
+		}
+	
 		std::vector<SerializationNode> nodes;
+		nodes.push_back(SerializationNode(bitsPerLevel[0]));
+		SerializationRecursionInfo recInfo(0, 0, 0, 0);
 		
-		
+		bool ok = serialize(bitsPerLevel, nodes, m_root, recInfo);
+		if (ok)
+			dest << nodes;
+		return ok;
+	}
+	
+	///use this in concjunction with explicit instanzations of streaming ops as automaitc template deduction for nested classed doesn't seem to work
+	static sserialize::UByteArrayAdapter & serialize(sserialize::UByteArrayAdapter & dest, const SerializationNode & src) {
+		return src.serialize(dest);
 	}
 };
 
 }//end namespace
+
+
+//some (default streaming ops
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint32_t>::SerializationNode & src) {
+	return sserialize::HuffmanTree<uint32_t>::serialize(dest, src);
+}
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint64_t>::SerializationNode & src) {
+	return sserialize::HuffmanTree<uint64_t>::serialize(dest, src);
+}
+
+
 #endif

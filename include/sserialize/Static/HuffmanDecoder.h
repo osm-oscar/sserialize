@@ -18,7 +18,7 @@
   *--------------------------------------------------------------
   *BranchingFactor|FirstChildId|value:childptr|
   *--------------------------------------------------------------
-  *      uint8    | vl32       |(uint32:uint24)
+  *      uint8    | vl32       |(uint32:uint32)
   *
   *
   */
@@ -36,14 +36,14 @@ public:
 		HuffmanCodePointInfo() :
 		m_value(0), m_childPtrBitLen(0) {}
 		
-		HuffmanCodePointInfo(uint32_t value, uint16_t childPtrBitLen) :
+		HuffmanCodePointInfo(uint32_t value, uint32_t childPtrBitLen) :
 		m_value(value), m_childPtrBitLen(childPtrBitLen) {}
 		
 		virtual ~HuffmanCodePointInfo() {}
 		inline uint32_t value() const { return m_value; }
-		inline uint8_t length() const { return m_childPtrBitLen & 0x1F; }
-		inline uint32_t childPtrDiff() const { return m_childPtrBitLen >> 5; }
-		inline bool hasChild() { return m_childPtrBitLen & 0x1F; }
+		inline uint8_t length() const { return m_childPtrBitLen & 0x3F; }
+		inline uint32_t childPtrDiff() const { return m_childPtrBitLen >> 6; }
+		inline bool hasChild() { return !(m_childPtrBitLen & 0x3F); }
 	};
 private:
 	class StaticNode {
@@ -71,7 +71,7 @@ private:
 
 	template<typename T_UINT_TYPE>
 	int decodeImp(T_UINT_TYPE src, uint32_t & decodedValue) const {
-		uint8_t nodeBitLength = m_root.bitLength();;
+		uint8_t nodeBitLength = m_root.bitLength();
 		
 		uint8_t decodedBitsCount = nodeBitLength;
 		T_UINT_TYPE selectionBits = selectBits(src, nodeBitLength);
@@ -89,14 +89,13 @@ private:
 			nodeBitLength = node.bitLength();
 			selectionBits = selectBits(src, nodeBitLength);
 			src <<= nodeBitLength;
-			decodedBitsCount += nodeBitLength;
 
 			cpInfo = node.at(selectionBits);
 			if (!cpInfo.hasChild()) {
 				decodedValue = cpInfo.value();
-				return cpInfo.length();
+				return cpInfo.length() + decodedBitsCount;
 			}
-			
+			decodedBitsCount += nodeBitLength;
 			node = m_nodes.at(node.initialChildPtr() + cpInfo.childPtrDiff() );
 		}
 		return -1;
@@ -106,7 +105,8 @@ public:
 	HuffmanDecoder();
 	HuffmanDecoder(const UByteArrayAdapter & data);
 	virtual ~HuffmanDecoder();
-
+	UByteArrayAdapter::OffsetType getSizeInBytes() const { return m_nodes.getSizeInBytes(); }
+	
 	///@return on success  the bit length, on error -1
 	inline int decode(uint16_t src, uint32_t & decodedValue) const {
 		return decodeImp<uint16_t>(src, decodedValue);

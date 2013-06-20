@@ -1,4 +1,5 @@
 #include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/TestResult.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <vector>
@@ -28,6 +29,10 @@ std::string printToString(Args ... args) {
 	return ss.str();
 }
 
+void putWrapper(UByteArrayAdapter & dest, const uint32_t & src) {
+	dest.putUint32(src);
+}
+
 template<int NumberOfRuns, int TestDataLength>
 class HuffmanCodeTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( HuffmanCodeTest );
@@ -52,6 +57,19 @@ private:
 		}
 	}
 	
+	std::vector<uint8_t> createBitsPerLevel(uint8_t first, uint8_t minBits, uint8_t maxBits) {
+		std::vector<uint8_t> res;
+		res.push_back(first);
+		uint32_t sum = first;
+		while(sum < 64) {
+			uint32_t b = minBits + (rand() % (maxBits-minBits));
+			sum += b;
+			res.push_back(b);
+		}
+		return res;
+	}
+private:
+	
 public:
 	virtual void setUp() {}
 	virtual void tearDown() {}
@@ -60,6 +78,7 @@ public:
 		for(int i = 0; i < NumberOfRuns; ++i) {
 			std::vector< uint32_t > testData = createTestData();
 			std::unordered_map<uint32_t, uint32_t> alphabet;
+			std::vector<uint8_t> bitsPerLevel = createBitsPerLevel(4, 2, 4);
 			createAlphabet(testData.begin(), testData.end(), alphabet);
 			HuffmanTree<uint32_t> ht;
 			ht.create(alphabet.begin(), alphabet.end(), static_cast<uint32_t>(testData.size()));
@@ -71,6 +90,7 @@ public:
 			UByteArrayAdapter decodeTableAdap(&decodeTable, false);
 			MultiBitBackInserter backInserter(dataAdap);
 
+			HuffmanTree<uint32_t>::ValueSerializer sfn = &putWrapper;
 			
 			for(std::vector< uint32_t >::const_iterator it(testData.begin()); it != testData.end(); ++it) {
 				const HuffmanCodePoint hcp = htMap.at(*it);
@@ -79,7 +99,8 @@ public:
 			backInserter.flush();
 			dataAdap = backInserter.data();
 			dataAdap.resetPtrs();
-			ht.sserialize(decodeTableAdap);
+		
+			CPPUNIT_ASSERT_MESSAGE("Serializing huffman tree", ht.serialize(decodeTableAdap, sfn, bitsPerLevel));
 			decodeTableAdap.resetPtrs();
 			
 			Static::HuffmanDecoder decoder(decodeTableAdap);
@@ -89,7 +110,7 @@ public:
 			for(uint32_t i = 0; i < testData.size(); ++i) {
 				uint32_t real = testData[i];
 				uint32_t decoded = udwIt.next();
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(printToString(i), real, decoded);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(printToString("at position ", i), real, decoded);
 			}
 		}
 	}
@@ -99,6 +120,7 @@ int main() {
 	srand(0);
 	srandom( 0 );
 	CppUnit::TextUi::TestRunner runner;
+	runner.eventManager().popProtector();
 	runner.addTest( HuffmanCodeTest<10, 1011>::suite() );
 	runner.addTest( HuffmanCodeTest<10, 10111>::suite() );
 	runner.addTest( HuffmanCodeTest<10, 101111>::suite() );
