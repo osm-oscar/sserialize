@@ -34,6 +34,9 @@ m_compression(IC_NONE)
 	
 	m_data = UByteArrayAdapter(data, 0, off);
 	m_index = SortedOffsetIndex(data + off);
+	off += m_index.getSizeInBytes();
+	if (m_version > 2)
+		m_hd = HuffmanDecoder(data +  off);
 }
 
 
