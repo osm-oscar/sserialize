@@ -3,12 +3,10 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
-#include <boost-1_49/boost/concept_check.hpp>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/Static/Deque.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <vendor/libs/minilzo/lzoconf.h>
 
 namespace sserialize {
 
