@@ -75,6 +75,11 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(dataAt(pos))));
 		case IC_HUFFMAN:
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(dataAt(pos)), m_hd)));
+		case IC_LZO:
+		{
+			std::cerr << "Unimplemented index compression" << std::endl;
+			return ItemIndex();
+		}
 		case IC_ILLEGAL:
 			return ItemIndex();
 		};

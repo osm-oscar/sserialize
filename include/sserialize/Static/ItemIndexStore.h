@@ -25,7 +25,7 @@ namespace Static {
 /** The first index id is ALWAY the empty index*/
 class ItemIndexStore {
 public:
-	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_ILLEGAL=0xFF} IndexCompressionType;
+	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_LZO=4, IC_ILLEGAL=0xFF} IndexCompressionType;
 private:
 	uint8_t m_version;
 	ItemIndex::Types m_type;
