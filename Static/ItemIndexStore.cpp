@@ -4,6 +4,7 @@
 #include <sserialize/containers/UDWIterator.h>
 #include <sserialize/containers/UDWIteratorPrivateHD.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
+#include <vendor/libs/minilzo/minilzo.h>
 
 namespace sserialize {
 namespace Static {
@@ -64,6 +65,23 @@ UByteArrayAdapter ItemIndexStore::dataAt(uint32_t pos) const {
 	return UByteArrayAdapter(m_data, indexStart, indexLength);
 }
 
+UByteArrayAdapter inlineDecompress(const UByteArrayAdapter & src, UByteArrayAdapter::OffsetType sizeHint) {
+	uint8_t * srcCp = new uint8_t[src.size()];
+	src.get(0, srcCp, src.size());
+	uint8_t * dest = new uint8_t[sizeHint];
+
+	lzo_uint destLen = sizeHint;
+	int ok = ::lzo1x_decompress(srcCp, src.size(), dest, &destLen, 0);
+	if (ok != LZO_E_OK) {
+		return UByteArrayAdapter();
+	}
+	else {
+		UByteArrayAdapter ret(dest, 0, destLen);
+		ret.setDeleteOnClose(true);
+		return ret;
+	}
+}
+
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	if (pos >= size())
 		return ItemIndex();
@@ -77,15 +95,21 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(dataAt(pos)), m_hd)));
 		case IC_LZO:
 		{
-			std::cerr << "Unimplemented index compression" << std::endl;
-			return ItemIndex();
+			UByteArrayAdapter d(dataAt(pos));
+			return ItemIndex(inlineDecompress(d, d.size()*4), indexType() );
 		}
 		case IC_ILLEGAL:
 			return ItemIndex();
 		};
 	}
 	else {
-		return ItemIndex(dataAt(pos), m_type);
+		if (m_compression == IC_LZO) {
+			UByteArrayAdapter d(dataAt(pos));
+			return ItemIndex(inlineDecompress(d, d.size()*4), indexType() );
+		}
+		else {
+			return ItemIndex(dataAt(pos), m_type);
+		}
 	}
 	return ItemIndex();
 }
