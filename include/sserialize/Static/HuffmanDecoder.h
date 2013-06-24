@@ -57,6 +57,7 @@ private:
 		uint8_t bitLength() const { return m_bitLength;}
 		uint32_t initialChildPtr() const { return m_initialChildPtr;}
 		HuffmanCodePointInfo at(uint32_t pos) const;
+		bool valid() const { return m_data.size(); }
 	};
 	
 	Static::Deque<StaticNode> m_nodes;
@@ -85,7 +86,7 @@ private:
 		}
 		
 		StaticNode node = m_nodes.at(m_root.initialChildPtr() + cpInfo.childPtrDiff());
-		while (decodedBitsCount < std::numeric_limits<T_UINT_TYPE>::digits) {
+		while (decodedBitsCount < std::numeric_limits<T_UINT_TYPE>::digits && node.valid()) {
 			nodeBitLength = node.bitLength();
 			selectionBits = selectBits(src, nodeBitLength);
 			src <<= nodeBitLength;
