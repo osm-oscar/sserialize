@@ -9,10 +9,21 @@ class UDWIteratorPrivate {
 public:
 	UDWIteratorPrivate() {}
 	virtual ~UDWIteratorPrivate() {}
+	virtual uint32_t next() = 0;
+	virtual bool hasNext() = 0;
+	virtual void reset() = 0;
+	virtual UDWIteratorPrivate * copy() const = 0;
+	virtual UByteArrayAdapter::OffsetType dataSize() const = 0;
+};
+
+class UDWIteratorPrivateEmpty: public UDWIteratorPrivate {
+public:
+	UDWIteratorPrivateEmpty() {}
+	virtual ~UDWIteratorPrivateEmpty() {}
 	virtual uint32_t next() { return 0; }
 	virtual bool hasNext() { return false; }
 	virtual void reset() {}
-	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivate(); }
+	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateEmpty(); }
 	virtual UByteArrayAdapter::OffsetType dataSize() const { return 0; }
 };
 
@@ -47,12 +58,12 @@ class UDWIterator: protected DelegateWrapper<UDWIteratorPrivate> {
 public:
 	///creates a direct UDW Iterator
 	UDWIterator(const UByteArrayAdapter & data) : MyBaseClass(new UDWIteratorPrivateDirect(data)) {}
-	UDWIterator(UDWIteratorPrivate *  priv) : MyBaseClass(priv){}
-	UDWIterator(const UDWIterator & other) : MyBaseClass(other) {}
-	UDWIterator() : MyBaseClass(new UDWIteratorPrivate() ) {}
+	UDWIterator(UDWIteratorPrivate *  priv) : MyBaseClass(priv->copy()){}
+	UDWIterator(const UDWIterator & other) : MyBaseClass(other.getPrivate()->copy()) {}
+	UDWIterator() : MyBaseClass(new UDWIteratorPrivateEmpty() ) {}
 	virtual ~UDWIterator() {}
 	UDWIterator & operator=(const UDWIterator & other) {
-		MyBaseClass::operator=(other);
+		setPrivate(other.getPrivate()->copy());
 		return *this;
 	}
 	uint32_t next() { return priv()->next(); }

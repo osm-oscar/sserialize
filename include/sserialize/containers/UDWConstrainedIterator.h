@@ -15,9 +15,9 @@ public:
 	: MyBaseClass(new UDWIteratorPrivateDirect(data)), m_size(size), m_curOffset(0) {}
 	///@param priv own pointer, does not create a copy of priv
 	UDWConstrainedIterator(const UDWIteratorPrivate *  priv, uint32_t size) :
-	MyBaseClass((priv ? priv->copy() : 0)), m_size(size), m_curOffset(0) {}
+	MyBaseClass((priv ? priv->copy() : new UDWIteratorPrivateEmpty())), m_size(size), m_curOffset(0) {}
 	UDWConstrainedIterator(const UDWConstrainedIterator & other) : MyBaseClass(other.priv()->copy()), m_size(other.m_size), m_curOffset(other.m_curOffset) {}
-	UDWConstrainedIterator() : MyBaseClass(new UDWIteratorPrivate() ), m_size(0), m_curOffset(0) {}
+	UDWConstrainedIterator() : MyBaseClass(new UDWIteratorPrivateEmpty() ), m_size(0), m_curOffset(0) {}
 	virtual ~UDWConstrainedIterator() {}
 	UDWConstrainedIterator & operator=(const UDWConstrainedIterator & other) {
 		setPrivate(other.priv()->copy());
