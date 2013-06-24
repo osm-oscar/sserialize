@@ -8,6 +8,7 @@
 #include <sserialize/Static/Deque.h>
 #include <sserialize/utility/utilfuncs.h>
 
+//TODO:serialization is currently depth first, switch to breadth first
 namespace sserialize {
 
 class HuffmanCodePoint {
@@ -302,11 +303,11 @@ public:
 
 
 //some (default streaming ops
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint32_t>::SerializationNode & src) {
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint32_t>::SerializationNode & src) {
 	return sserialize::HuffmanTree<uint32_t>::serialize(dest, src);
 }
 
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint64_t>::SerializationNode & src) {
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint64_t>::SerializationNode & src) {
 	return sserialize::HuffmanTree<uint64_t>::serialize(dest, src);
 }
 
