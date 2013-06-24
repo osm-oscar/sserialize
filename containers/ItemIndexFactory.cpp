@@ -6,6 +6,9 @@
 #include <sserialize/utility/debuggerfunctions.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/Static/ItemIndexStore.h>
+#include <sserialize/templated/HuffmanTree.h>
+#include <sserialize/containers/MultiBitBackInserter.h>
+#include <vendor/libs/minilzo/minilzo.h>
 #include <unordered_map>
 #include <iostream>
 #include <sstream>
@@ -161,6 +164,216 @@ OffsetType ItemIndexFactory::flush() {
 	std::cout << "done." << std::endl;
 
 	return 3+UByteArrayAdapter::OffsetTypeSerializedLength()+m_indexStore.tellPutPtr();
+}
+
+void putWrapper(UByteArrayAdapter & dest, const uint32_t & src) {
+	dest.putUint32(src);
+}
+
+void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
+	if (a.count(v) == 0)
+		a[v] = 1;
+	else
+		a[v] += 1;
+}
+
+void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_map<uint32_t, uint32_t> & alphabet, uint32_t & charSize) {
+	UByteArrayAdapter data = store.getData();
+	UByteArrayAdapter::OffsetType size = data.size();
+	if (store.indexType() == ItemIndex::T_WAH) {
+		charSize = 4;
+		for(UByteArrayAdapter::OffsetType i = 0; i < size; i += charSize) {
+			uint32_t character = data.getUint32(i);
+			incAlphabet(alphabet, character);
+		}
+	}
+	else if (store.indexType() == ItemIndex::T_RLE_DE) {
+		for(UByteArrayAdapter::OffsetType i = 0; i < size; ) {
+			uint32_t curIndexSize = data.getUint32(i);
+			i += 4;
+			incAlphabet(alphabet, curIndexSize);
+			uint32_t curIndexCount = data.getUint32(i);
+			i += 4;
+			incAlphabet(alphabet, curIndexCount);
+			UByteArrayAdapter indexData(data, i, curIndexSize);
+			while(indexData.tellGetPtr() < indexData.size()) {
+				uint32_t c = indexData.getVlPackedUint32();
+				incAlphabet(alphabet, c);
+			}
+			i += curIndexSize;
+		}
+	}
+	else {
+		std::cerr << "Unsupported index format for createAlphabet" << std::endl;
+	}
+}
+
+UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	if (store.indexType() != ItemIndex::T_WAH) {
+		std::cerr << "Unsupported index format" << std::endl;
+		return 0;
+	}
+	UByteArrayAdapter data = store.getData();
+	uint64_t size = data.size();
+	std::unordered_map<uint32_t, uint32_t> alphabet;
+	uint32_t charSize = 4;
+	createAlphabet(store, alphabet, charSize);
+	HuffmanTree<uint32_t> ht(1);
+	ht.create(alphabet.begin(), alphabet.end(), size/charSize);
+	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
+	
+	
+	//now recompress
+	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
+	dest.putUint8(2);
+	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
+	dest.putOffset(0);
+	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
+	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	newOffsets.reserve(store.size());
+	
+	MultiBitBackInserter backInserter(dest);
+	data.resetGetPtr();
+	ProgressInfo pinfo;
+	pinfo.begin(data.size(), "Encoding words");
+	while(data.getPtrHasNext()) {
+		newOffsets.push_back(backInserter.data().tellPutPtr()-destDataBeginOffset);
+		uint32_t indexSize = data.getUint32();
+		uint32_t indexCount = data.getUint32();
+		const HuffmanCodePoint & sizeCp = htMap.at(indexSize);
+		const HuffmanCodePoint & countCp = htMap.at(indexCount);
+		backInserter.push_back(sizeCp.code(), sizeCp.codeLength());
+		backInserter.push_back(countCp.code(), countCp.codeLength());
+		indexSize = indexSize / 4;
+		for(uint32_t i = 0; i < indexSize; ++i) {
+			uint32_t src = data.getUint32();
+			const HuffmanCodePoint & srcCp =  htMap.at(src);
+			backInserter.push_back(srcCp.code(), srcCp.codeLength());
+		}
+		backInserter.flush();
+		pinfo(data.tellGetPtr());
+	}
+	backInserter.flush();
+	pinfo.end("Encoded words");
+	dest = backInserter.data();
+	
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
+	std::cout << "Creating offset index" << std::endl;
+	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	//now comes the deocding table
+	HuffmanTree<uint32_t>::ValueSerializer sfn = &putWrapper;
+	std::vector<uint8_t> bitsPerLevel;
+	bitsPerLevel.push_back(16);
+	int htDepth = ht.depth()-16;
+	while (htDepth > 0) {
+		if (htDepth > 4)
+			bitsPerLevel.push_back(4);
+		else
+			bitsPerLevel.push_back(htDepth);
+		htDepth -= 4;
+	}
+	ht.serialize(dest, sfn, bitsPerLevel);
+	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	return dest.tellPutPtr()+beginOffset;
+}
+
+UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	if (store.indexType() != ItemIndex::T_WAH) {
+		std::cerr << "Unsupported index format" << std::endl;
+		return 0;
+	}
+	
+	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
+	dest.putUint8(2);
+	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
+	dest.putOffset(0);
+	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
+	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	newOffsets.reserve(store.size());
+	
+	
+	UByteArrayAdapter data = store.getData();
+	data.resetGetPtr();
+	ProgressInfo pinfo;
+	pinfo.begin(data.size(), "Encoding words");
+	while(data.getPtrHasNext()) {
+		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
+		uint32_t indexSize = data.getUint32();
+		uint32_t indexCount = data.getUint32();
+		dest.putVlPackedUint32(indexSize);
+		dest.putVlPackedUint32(indexCount);
+		indexSize = indexSize / 4;
+		for(uint32_t i = 0; i < indexSize; ++i) {
+			uint32_t src = data.getUint32();
+			dest.putVlPackedUint32(src);
+		}
+		pinfo(data.tellGetPtr());
+	}
+	pinfo.end("Encoded words");
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
+	std::cout << "Creating offset index" << std::endl;
+	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	return dest.tellPutPtr()-beginOffset;
+}
+
+#define HEAP_ALLOC_MINI_LZO(var,size) \
+    lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
+
+UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	UByteArrayAdapter data = store.getData();
+	
+	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
+	dest.putUint8(2);
+	dest.putUint8(store.indexType());
+	dest.putUint8(Static::ItemIndexStore::IC_LZO);
+	dest.putOffset(0);
+	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
+	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	newOffsets.reserve(store.size());
+	
+	HEAP_ALLOC_MINI_LZO(wrkmem, LZO1X_1_MEM_COMPRESS);
+
+	
+	uint32_t bufferSize = 10*1024*1024;
+	uint8_t * inBuf = new uint8_t[bufferSize];
+	uint8_t * outBuf = new uint8_t[2*bufferSize];
+	
+	data.resetGetPtr();
+	ProgressInfo pinfo;
+	pinfo.begin(data.size(), "Encoding words");
+	for(uint32_t i = 0; i < store.size(); ++i ) {
+		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
+		UByteArrayAdapter idxData( store.dataAt(i) );
+		if (idxData.size() > bufferSize) {
+			delete inBuf;
+			delete outBuf;
+			bufferSize = idxData.size();
+			inBuf = new uint8_t[bufferSize];
+			outBuf = new uint8_t[2*bufferSize];
+			
+		}
+		lzo_uint inBufLen = idxData.size();
+		lzo_uint outBufLen = bufferSize*2;
+		idxData.get(inBuf, inBufLen);
+		int r = ::lzo1x_1_compress(inBuf,inBufLen,outBuf,&outBufLen,wrkmem);
+		if (r != LZO_E_OK) {
+			delete[] inBuf;
+			delete[] outBuf;
+			std::cerr << "Compression Error" << std::endl;
+			return 0;
+		}
+		dest.put(outBuf, outBufLen);
+		pinfo(data.tellGetPtr());
+	}
+	pinfo.end("Encoded words");
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
+	std::cout << "Creating offset index" << std::endl;
+	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	return dest.tellPutPtr()+beginOffset;
 }
 
 }//end namespace

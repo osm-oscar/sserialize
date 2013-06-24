@@ -16,8 +16,11 @@ using namespace sserialize;
 template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_TYPE>
 class ItemIndexFactoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
-CPPUNIT_TEST( testSerializedEquality );
-CPPUNIT_TEST( testSameId );
+// CPPUNIT_TEST( testSerializedEquality );
+// CPPUNIT_TEST( testSameId );
+// CPPUNIT_TEST( testCompressionHuffman );
+CPPUNIT_TEST( testCompressionLZO );
+// CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
@@ -74,6 +77,76 @@ public:
 		}
 	}
 	
+	void testCompressionVarUint() {
+		if(T_IDX_TYPE == ItemIndex::T_WAH) {
+		
+			CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_idxFactory.flush());
+
+			UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
+			UByteArrayAdapter cmpDataAdap(new std::vector<uint8_t>(dataAdap.size(), 0), true);
+
+
+			Static::ItemIndexStore sdb(dataAdap);
+			sserialize::ItemIndexFactory::compressWithVarUint(sdb, cmpDataAdap);
+			Static::ItemIndexStore csdb(cmpDataAdap);
+			
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), csdb.size());
+
+			for(size_t i = 0; i < m_sets.size(); ++i) {
+				ItemIndex idx = csdb.at( m_setIds[i] );
+				std::stringstream ss;
+				ss << "Index at " << i;
+				CPPUNIT_ASSERT_MESSAGE(ss.str(), m_sets[i] == idx);
+			}
+		}
+	}
+	
+	void testCompressionHuffman() {
+		if(T_IDX_TYPE == ItemIndex::T_WAH) {
+		
+			CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_idxFactory.flush());
+
+			UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
+			UByteArrayAdapter cmpDataAdap(new std::vector<uint8_t>(dataAdap.size(), 0), true);
+
+
+			Static::ItemIndexStore sdb(dataAdap);
+			sserialize::ItemIndexFactory::compressWithHuffman(sdb, cmpDataAdap);
+			Static::ItemIndexStore csdb(cmpDataAdap);
+			
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), csdb.size());
+
+			for(size_t i = 0; i < m_sets.size(); ++i) {
+				ItemIndex idx = csdb.at( m_setIds[i] );
+				std::stringstream ss;
+				ss << "Index at " << i;
+				CPPUNIT_ASSERT_MESSAGE(ss.str(), m_sets[i] == idx);
+			}
+		}
+	}
+	
+	void testCompressionLZO() {
+		
+		CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_idxFactory.flush());
+
+		UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
+		UByteArrayAdapter cmpDataAdap(new std::vector<uint8_t>(dataAdap.size(), 0), true);
+
+
+		Static::ItemIndexStore sdb(dataAdap);
+		sserialize::ItemIndexFactory::compressWithLZO(sdb, cmpDataAdap);
+		Static::ItemIndexStore csdb(cmpDataAdap);
+		
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), csdb.size());
+
+		for(size_t i = 0; i < m_sets.size(); ++i) {
+			ItemIndex idx = csdb.at( m_setIds[i] );
+			std::stringstream ss;
+			ss << "Index at " << i;
+			CPPUNIT_ASSERT_MESSAGE(ss.str(), m_sets[i] == idx);
+		}
+	}
+	
 	void testVeryLargeItemIndexFactory() {
 	
 	}
@@ -82,10 +155,10 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_REGLINE>::suite() );
+// 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_REGLINE>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_WAH>::suite() );
-	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
-	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_RLE_DE>::suite() );
+// 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
+// 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_RLE_DE>::suite() );
 	runner.run();
 	return 0;
 }

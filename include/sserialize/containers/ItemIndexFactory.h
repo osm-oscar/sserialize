@@ -103,6 +103,10 @@ public:
 	///Flushes the data, don't add indices afterwards
 	///@return number of bytes from the beginning og the indexFile
 	OffsetType flush();
+	
+	static UByteArrayAdapter::OffsetType compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
+	static UByteArrayAdapter::OffsetType compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
+	static UByteArrayAdapter::OffsetType compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
 
 };
 

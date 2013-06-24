@@ -7,7 +7,7 @@
 #include <sserialize/templated/HuffmanTree.h>
 #include <sserialize/containers/MultiBitBackInserter.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
-#include <vendor/libs/minilzo/minilzo.h>
+#include <sserialize/containers/ItemIndexFactory.h>
 
 using namespace std;
 using namespace sserialize;
@@ -67,66 +67,8 @@ void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_m
 	}
 }
 
-#define HEAP_ALLOC_MINI_LZO(var,size) \
-    lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
-
-
-UByteArrayAdapter::OffsetType recompressLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest, double compressionRatio) {
-	UByteArrayAdapter data = store.getData();
-	
-	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
-	dest.putUint8(store.indexType());
-	dest.putUint8(Static::ItemIndexStore::IC_LZO);
-	dest.putOffset(0);
-	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
-	newOffsets.reserve(store.size());
-	
-	HEAP_ALLOC_MINI_LZO(wrkmem, LZO1X_1_MEM_COMPRESS);
-
-	
-	uint32_t bufferSize = 10*1024*1024;
-	uint8_t * inBuf = new uint8_t[bufferSize];
-	uint8_t * outBuf = new uint8_t[2*bufferSize];
-	
-	data.resetGetPtr();
-	ProgressInfo pinfo;
-	pinfo.begin(data.size(), "Encoding words");
-	for(uint32_t i = 0; i < store.size(); ++i ) {
-		UByteArrayAdapter idxData( store.dataAt(i) );
-		if (idxData.size() > bufferSize) {
-			delete inBuf;
-			delete outBuf;
-			bufferSize = idxData.size();
-			inBuf = new uint8_t[bufferSize];
-			outBuf = new uint8_t[2*bufferSize];
-			
-		}
-		lzo_uint inBufLen = idxData.size();
-		lzo_uint outBufLen = bufferSize*2;
-		idxData.get(inBuf, inBufLen);
-		int r = ::lzo1x_1_compress(inBuf,inBufLen,outBuf,&outBufLen,wrkmem);
-		if (r != LZO_E_OK) {
-			delete[] inBuf;
-			delete[] outBuf;
-			std::cerr << "Compression Error" << std::endl;
-			return 0;
-		}
-		double cmpRatio = (double)inBufLen / outBufLen;
-		if (cmpRatio >= compressionRatio) {
-			dest.put(outBuf, outBufLen);
-		}
-		else {
-			dest.put(inBuf, inBufLen);
-		}
-		pinfo(data.tellGetPtr());
-	}
-	pinfo.end("Encoded words");
-	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
-	std::cout << "Creating offset index" << std::endl;
-	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
-	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+8-beginOffset;
+UByteArrayAdapter::OffsetType recompressLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	return sserialize::ItemIndexFactory::compressWithLZO(store, dest);
 }
 
 UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -187,112 +129,11 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 }
 
 UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	if (store.indexType() != ItemIndex::T_WAH) {
-		std::cerr << "Unsupported index format" << std::endl;
-		return 0;
-	}
-	
-	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
-	dest.putUint8(ItemIndex::T_WAH);
-	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
-	dest.putOffset(0);
-	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
-	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
-	newOffsets.reserve(store.size());
-	
-	
-	UByteArrayAdapter data = store.getData();
-	data.resetGetPtr();
-	ProgressInfo pinfo;
-	pinfo.begin(data.size(), "Encoding words");
-	while(data.getPtrHasNext()) {
-		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
-		uint32_t indexSize = data.getUint32();
-		uint32_t indexCount = data.getUint32();
-		dest.putVlPackedUint32(indexSize);
-		dest.putVlPackedUint32(indexCount);
-		indexSize = indexSize / 4;
-		for(uint32_t i = 0; i < indexSize; ++i) {
-			uint32_t src = data.getUint32();
-			dest.putVlPackedUint32(src);
-		}
-		pinfo(data.tellGetPtr());
-	}
-	pinfo.end("Encoded words");
-	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
-	std::cout << "Creating offset index" << std::endl;
-	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
-	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()-beginOffset;
+	return sserialize::ItemIndexFactory::compressWithVarUint(store, dest);
 }
 
-UByteArrayAdapter::OffsetType recompressIndexData(uint8_t alphabetBitLength, sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	if (store.indexType() != ItemIndex::T_WAH) {
-		std::cerr << "Unsupported index format" << std::endl;
-		return 0;
-	}
-	UByteArrayAdapter data = store.getData();
-	uint64_t size = data.size();
-	std::unordered_map<uint32_t, uint32_t> alphabet;
-	uint32_t charSize = 4;
-	createAlphabet(store, alphabet, charSize);
-	HuffmanTree<uint32_t> ht(alphabetBitLength);
-	ht.create(alphabet.begin(), alphabet.end(), size/charSize);
-	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
-	
-	
-	//now recompress
-	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
-	dest.putUint8(ItemIndex::T_WAH);
-	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
-	dest.putOffset(0);
-	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
-	newOffsets.reserve(store.size());
-	
-	MultiBitBackInserter backInserter(dest);
-	data.resetGetPtr();
-	ProgressInfo pinfo;
-	pinfo.begin(data.size(), "Encoding words");
-	while(data.getPtrHasNext()) {
-		newOffsets.push_back(backInserter.data().size()-7);
-		uint32_t indexSize = data.getUint32();
-		uint32_t indexCount = data.getUint32();
-		const HuffmanCodePoint & sizeCp = htMap.at(indexSize);
-		const HuffmanCodePoint & countCp = htMap.at(indexCount);
-		backInserter.push_back(sizeCp.code(), sizeCp.codeLength());
-		backInserter.push_back(countCp.code(), countCp.codeLength());
-		indexSize = indexSize / 4;
-		for(uint32_t i = 0; i < indexSize; ++i) {
-			uint32_t src = data.getUint32();
-			const HuffmanCodePoint & srcCp =  htMap.at(src);
-			backInserter.push_back(srcCp.code(), srcCp.codeLength());
-		}
-		backInserter.flush();
-		pinfo(data.tellGetPtr());
-	}
-	backInserter.flush();
-	dest = backInserter.data();
-	pinfo.end("Encoded words");
-	dest.putOffset(beginOffset+3, dest.tellPutPtr()-beginOffset);
-	std::cout << "Creating offset index" << std::endl;
-	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
-	//now comes the deocding table
-	HuffmanTree<uint32_t>::ValueSerializer sfn = &putWrapper;
-	std::vector<uint8_t> bitsPerLevel;
-	bitsPerLevel.push_back(16);
-	int htDepth = ht.depth()-16;
-	while (htDepth > 0) {
-		if (htDepth > 4)
-			bitsPerLevel.push_back(4);
-		else
-			bitsPerLevel.push_back(htDepth);
-		htDepth -= 4;
-	}
-	ht.serialize(dest, sfn, bitsPerLevel);
-	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+8-beginOffset;
+UByteArrayAdapter::OffsetType recompressIndexData(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	return sserialize::ItemIndexFactory::compressWithHuffman(store, dest);
 }
 
 int main(int argc, char ** argv) {
@@ -306,7 +147,7 @@ int main(int argc, char ** argv) {
 	bool recompress = false;
 	bool recompressVar = false;
 	bool recompressVarShannon = false;
-	double recompressWithLZO = -1.0;
+	bool recompressWithLZO = false;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -331,9 +172,8 @@ int main(int argc, char ** argv) {
 		else if (curArg == "-rcvs") {
 			recompressVarShannon = true;
 		}
-		else if (curArg == "-rclzo" && i+1 < argc) {
-			recompressWithLZO = atof(argv[i+1]);
-			++i;
+		else if (curArg == "-rclzo") {
+			recompressWithLZO = true;
 		}
 		else if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
@@ -432,7 +272,7 @@ int main(int argc, char ** argv) {
 		else
 			outFile = outFileName;
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
-		UByteArrayAdapter::OffsetType size = recompressIndexData(1, store, outData);
+		UByteArrayAdapter::OffsetType size = recompressIndexData(store, outData);
 		if (size > 0)
 			outData.shrinkStorage(adap.size()-size);
 		else
@@ -469,14 +309,14 @@ int main(int argc, char ** argv) {
 	}
 	
 
-	if (recompressWithLZO > 0.0) {
+	if (recompressWithLZO) {
 		std::string outFile;
 		if (outFileName.empty())
 			outFile = inFileName + ".lzocmp";
 		else
 			outFile = outFileName;
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
-		UByteArrayAdapter::OffsetType size =  recompressLZO(store, outData, recompressWithLZO);
+		UByteArrayAdapter::OffsetType size =  recompressLZO(store, outData);
 		if (size > 0)
 			outData.shrinkStorage(adap.size()-size);
 		else
