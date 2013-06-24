@@ -80,13 +80,13 @@ private:
 		
 		HuffmanCodePointInfo cpInfo = m_root.at(selectionBits);
 
-		if (!cpInfo.hasChild()) {
+		if (!cpInfo.hasChild()) { //we definetly end here (otheriwse the data is corrupt)
 			decodedValue = cpInfo.value();
 			return cpInfo.length();
 		}
 		
 		StaticNode node = m_nodes.at(m_root.initialChildPtr() + cpInfo.childPtrDiff());
-		while (decodedBitsCount < std::numeric_limits<T_UINT_TYPE>::digits && node.valid()) {
+		while (decodedBitsCount < std::numeric_limits<T_UINT_TYPE>::digits) {
 			nodeBitLength = node.bitLength();
 			selectionBits = selectBits(src, nodeBitLength);
 			src <<= nodeBitLength;
@@ -98,6 +98,8 @@ private:
 			}
 			decodedBitsCount += nodeBitLength;
 			node = m_nodes.at(node.initialChildPtr() + cpInfo.childPtrDiff() );
+			if (!node.valid())
+				throw sserialize::CorruptDataException("sserialize::HuffmanDecoder::decodeImp");
 		}
 		return -1;
 	}
