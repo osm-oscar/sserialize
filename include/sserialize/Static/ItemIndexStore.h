@@ -32,7 +32,7 @@ private:
 	IndexCompressionType m_compression;
 	UByteArrayAdapter m_data;
 	SortedOffsetIndex m_index;
-	HuffmanDecoder m_hd;
+	std::shared_ptr<HuffmanDecoder> m_hd;
 public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);

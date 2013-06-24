@@ -103,7 +103,7 @@ public:
 			CPPUNIT_ASSERT_MESSAGE("Serializing huffman tree", ht.serialize(decodeTableAdap, sfn, bitsPerLevel));
 			decodeTableAdap.resetPtrs();
 			
-			Static::HuffmanDecoder decoder(decodeTableAdap);
+			std::shared_ptr<Static::HuffmanDecoder> decoder(new Static::HuffmanDecoder(decodeTableAdap) );
 			MultiBitIterator bitIt(dataAdap);
 			UDWIterator udwIt(  new UDWIteratorPrivateHD(bitIt, decoder)  );
 			

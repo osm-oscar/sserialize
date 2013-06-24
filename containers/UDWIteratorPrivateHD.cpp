@@ -4,7 +4,7 @@ namespace sserialize {
 
 UDWIteratorPrivateHD::UDWIteratorPrivateHD() {}
 
-UDWIteratorPrivateHD::UDWIteratorPrivateHD(const MultiBitIterator & bitIterator, const Static::HuffmanDecoder & decoder) :
+UDWIteratorPrivateHD::UDWIteratorPrivateHD(const sserialize::MultiBitIterator & bitIterator, const std::shared_ptr< sserialize::Static::HuffmanDecoder >& decoder) :
 m_bitIterator(bitIterator),
 m_decoder(decoder)
 {}
@@ -13,7 +13,7 @@ UDWIteratorPrivateHD::~UDWIteratorPrivateHD() {}
 
 uint32_t UDWIteratorPrivateHD::next() {
 	uint32_t v = m_bitIterator.get32();
-	int len = m_decoder.decode(v, v);
+	int len = m_decoder->decode(v, v);
 	m_bitIterator += std::max<int>(0, len);
 	return v;
 }
