@@ -147,6 +147,10 @@ bool operator!=(const TCONTAINER & set, const sserialize::ItemIndex & idx) {
 	return !( idx == set);
 }
 
+inline bool operator!=(const sserialize::ItemIndex & idxA, const sserialize::ItemIndex & idxB) {
+	return !(idxA == idxB);
+}
+
 std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & idx);
 
 #endif
