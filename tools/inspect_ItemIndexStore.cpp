@@ -136,6 +136,24 @@ UByteArrayAdapter::OffsetType recompressIndexData(sserialize::Static::ItemIndexS
 	return sserialize::ItemIndexFactory::compressWithHuffman(store, dest);
 }
 
+bool checkCompressedIndex(sserialize::Static::ItemIndexStore & real, sserialize::Static::ItemIndexStore & compressed) {
+	if (real.size() != compressed.size()) {
+		std::cerr << "ItemIndexStore sizes don't match" << std::endl;
+		return false;
+	}
+	ProgressInfo info;
+	info.begin(real.size(), "Testing compressed index");
+	for(uint32_t i = 0; i < real.size(); ++i) {
+		if (real.at(i) != compressed.at(i)) {
+			std::cout << "ItemIndex at postion " << i << " are unequal" << std::endl;
+			return false;
+		}
+		info(i);
+	}
+	info.end("Tested compressed index");
+	return true;
+}
+
 int main(int argc, char ** argv) {
 	std::string inFileName;
 	std::string outFileName;
@@ -148,6 +166,7 @@ int main(int argc, char ** argv) {
 	bool recompressVar = false;
 	bool recompressVarShannon = false;
 	bool recompressWithLZO = false;
+	bool checkCompressed = false;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -174,6 +193,9 @@ int main(int argc, char ** argv) {
 		}
 		else if (curArg == "-rclzo") {
 			recompressWithLZO = true;
+		}
+		else if (curArg == "-cc") {
+			checkCompressed = true;
 		}
 		else if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
@@ -277,6 +299,10 @@ int main(int argc, char ** argv) {
 			outData.shrinkStorage(adap.size()-size);
 		else
 			outData.setDeleteOnClose(true);
+		if (checkCompressed) {
+			sserialize::Static::ItemIndexStore csdb(outData);
+			
+		}
 	}
 	
 	if (recompressVar) {
@@ -291,6 +317,13 @@ int main(int argc, char ** argv) {
 			outData.shrinkStorage(adap.size()-size);
 		else
 			outData.setDeleteOnClose(true);
+		if (checkCompressed) {
+			std::cout << "Checking compressed index for equality..." << std::endl;
+			sserialize::Static::ItemIndexStore cis(outData);
+			if (checkCompressedIndex(store, cis)) {
+				std::cout << "Compressed index is equal to uncompressed index." << std::endl;
+			}
+		}
 	}
 	
 
@@ -306,6 +339,13 @@ int main(int argc, char ** argv) {
 			outData.shrinkStorage(adap.size()-size);
 		else
 			outData.setDeleteOnClose(true);
+		if (checkCompressed) {
+			std::cout << "Checking compressed index for equality..." << std::endl;
+			sserialize::Static::ItemIndexStore cis(outData);
+			if (checkCompressedIndex(store, cis)) {
+				std::cout << "Compressed index is equal to uncompressed index." << std::endl;
+			}
+		}
 	}
 	
 
@@ -321,6 +361,13 @@ int main(int argc, char ** argv) {
 			outData.shrinkStorage(adap.size()-size);
 		else
 			outData.setDeleteOnClose(true);
+		if (checkCompressed) {
+			std::cout << "Checking compressed index for equality..." << std::endl;
+			sserialize::Static::ItemIndexStore cis(outData);
+			if (checkCompressedIndex(store, cis)) {
+				std::cout << "Compressed index is equal to uncompressed index." << std::endl;
+			}
+		}
 	}
 	
 	if (dumpStats) {
