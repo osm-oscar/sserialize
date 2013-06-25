@@ -300,8 +300,11 @@ int main(int argc, char ** argv) {
 		else
 			outData.setDeleteOnClose(true);
 		if (checkCompressed) {
-			sserialize::Static::ItemIndexStore csdb(outData);
-			
+			std::cout << "Checking compressed index for equality..." << std::endl;
+			sserialize::Static::ItemIndexStore cis(outData);
+			if (checkCompressedIndex(store, cis)) {
+				std::cout << "Compressed index is equal to uncompressed index." << std::endl;
+			}
 		}
 	}
 	
