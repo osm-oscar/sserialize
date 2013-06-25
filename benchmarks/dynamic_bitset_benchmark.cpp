@@ -24,8 +24,8 @@ int main(int argc, char ** argv) {
 	
 	srand(0);
 	uint32_t max = 0;
-	for(uint32_t i = 0; i < strCount; i++) {
-		for(uint32_t j = 0; j < itemCount; ++j) {
+	for(int i = 0; i < strCount; i++) {
+		for(int j = 0; j < itemCount; ++j) {
 			uint32_t id = rand() % 0x7FFFFF;
 			values.push_back(id);
 			max = std::max(id, max);
