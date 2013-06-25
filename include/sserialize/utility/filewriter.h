@@ -5,6 +5,7 @@
 #include <string>
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include  <sserialize/utility/CompressedMmappedFile.h>
 
