@@ -36,8 +36,6 @@ void Histogram2D::toFile(std::string fileName) {
 	memset(pic, 0, sizeof(uint32_t)*width*height);
 	uint32_t * colMax = new uint32_t[width];
 	memset(colMax, 0, sizeof(uint32_t)*width);
-	uint32_t xLargest;
-	uint32_t yLargest;
 	uint32_t sum = 0;
 	for(std::map<uint64_t, uint32_t>::iterator it = m_map.begin(); it != m_map.end(); it++) {
 		uint64_t val = it->first;
@@ -45,8 +43,6 @@ void Histogram2D::toFile(std::string fileName) {
 		uint32_t y = val & (0x00000000FFFFFFFF);
 		if (largest <  it->second) {
 			largest =  it->second;
-			xLargest = x;
-			yLargest = y;
 		}
 		if (colMax[x] < it->second) colMax[x] = it->second;
 		if (y*width+x > width*height) {
