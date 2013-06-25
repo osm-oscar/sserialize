@@ -72,6 +72,7 @@ UByteArrayAdapter inlineDecompress(const UByteArrayAdapter & src, UByteArrayAdap
 
 	lzo_uint destLen = sizeHint;
 	int ok = ::lzo1x_decompress(srcCp, src.size(), dest, &destLen, 0);
+	delete srcCp;
 	if (ok != LZO_E_OK) {
 		return UByteArrayAdapter();
 	}
