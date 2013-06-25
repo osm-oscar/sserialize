@@ -16,11 +16,11 @@ using namespace sserialize;
 template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_TYPE>
 class ItemIndexFactoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
-// CPPUNIT_TEST( testSerializedEquality );
-// CPPUNIT_TEST( testSameId );
-// CPPUNIT_TEST( testCompressionHuffman );
-CPPUNIT_TEST( testCompressionLZO );
-// CPPUNIT_TEST( testCompressionVarUint );
+CPPUNIT_TEST( testSerializedEquality );
+CPPUNIT_TEST( testSameId );
+CPPUNIT_TEST( testCompressionHuffman );
+// CPPUNIT_TEST( testCompressionLZO );
+CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
@@ -156,9 +156,11 @@ int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 // 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_REGLINE>::suite() );
-	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_WAH>::suite() );
 // 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
 // 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_RLE_DE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_WAH>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<4047, 1001, ItemIndex::T_WAH>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
 	runner.run();
 	return 0;
 }
