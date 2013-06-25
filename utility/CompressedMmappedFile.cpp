@@ -211,7 +211,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 	
 	uint8_t headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE];
 	::lseek(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
-	::read(m_fd, headerData, COMPRESSED_MMAPPED_FILE_HEADER_SIZE);
+	SSERIALIZE_EQUAL_LENGTH_CHECK(COMPRESSED_MMAPPED_FILE_HEADER_SIZE, ::read(m_fd, headerData, COMPRESSED_MMAPPED_FILE_HEADER_SIZE), "sserialize::CompressedMmappedFile::open");
 	::lseek(m_fd, 0, SEEK_SET);
 	
 	if (headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] != COMPRESSED_MMAPPED_FILE_VERSION) {
