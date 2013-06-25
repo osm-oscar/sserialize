@@ -63,6 +63,6 @@ class InvalidReferenceException: public Exception {
 #define SSERIALIZE_VERSION_MISSMATCH_CHECK(__WANTVERSION, __HAVEVERSION, __MSG) do { if (__WANTVERSION != __HAVEVERSION) throw sserialize::VersionMissMatchException(__MSG, __WANTVERSION, __HAVEVERSION); } while(0);
 
 #define SSERIALIZE_LENGTH_CHECK(__NEEDLENGTH, __HAVELENGTH, __MSG) do { if (__NEEDLENGTH > __HAVELENGTH) throw sserialize::CorruptDataException(__MSG); } while(0);
-
+#define SSERIALIZE_EQUAL_LENGTH_CHECK(__NEEDLENGTH, __HAVELENGTH, __MSG) do { if (__NEEDLENGTH != __HAVELENGTH) throw sserialize::CorruptDataException(__MSG); } while(0);
 
 #endif
