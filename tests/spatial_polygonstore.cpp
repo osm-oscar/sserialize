@@ -9,6 +9,27 @@
 
 using namespace sserialize;
 
+std::ostream & operator<<(std::ostream & out, const std::set<uint32_t> & s) {
+	if (!s.size())
+		return (out << "[]");
+	out << "[";
+	std::set<uint32_t>::const_iterator it = s.cbegin();
+	while(true) {
+		out << *it;
+		++it;
+		if (it == s.cend())
+			break;
+		out << ", ";
+	}
+	out << "]";
+	return out;
+}
+
+std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & p) {
+	out << "GeoPoint[" << p.lat << ", " << p.lon << "]";
+	return out;
+}
+
 template<uint32_t T_RASTER_X, uint32_t T_RASTER_Y>
 class GeoPolygonStoreTest:public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( GeoPolygonStoreTest );
@@ -28,7 +49,9 @@ private:
 	
 	std::string brokenPolyPointIntersect(uint32_t point) {
 		std::stringstream ss;
-		ss << "Broken point/poly intersect with point " << point << ": " << m_data.points.at(point) << std::endl;
+		ss << "Broken point/poly intersect with point " << point << ": ";
+		ss << m_data.points.at(point);
+		ss << std::endl;
 		return ss.str();
 	}
 	
@@ -79,6 +102,9 @@ public:
 		}
 		if (T_RASTER_X && T_RASTER_Y)
 			m_polyStore.addPolygonsToRaster(T_RASTER_X, T_RASTER_Y);
+		
+		std::cout << m_data.points.at(0) << std::endl;
+
 	}
 
 	virtual void tearDown() {}
@@ -149,25 +175,4 @@ int main() {
 	runner.addTest( GeoPolygonStoreTest<47,23>::suite() );
 	runner.run();
 	return 0;
-}
-
-std::ostream & operator<<(std::ostream & out, const std::set<uint32_t> & s) {
-	if (!s.size())
-		return (out << "[]");
-	out << "[";
-	std::set<uint32_t>::const_iterator it = s.cbegin();
-	while(true) {
-		out << *it;
-		++it;
-		if (it == s.cend())
-			break;
-		out << ", ";
-	}
-	out << "]";
-	return out;
-}
-
-std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & p) {
-	out << "GeoPoint[" << p.lat << ", " << p.lon << "]";
-	return out;
 }
