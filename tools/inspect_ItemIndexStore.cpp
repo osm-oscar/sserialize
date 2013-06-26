@@ -167,6 +167,7 @@ int main(int argc, char ** argv) {
 	bool recompressVarShannon = false;
 	bool recompressWithLZO = false;
 	bool checkCompressed = false;
+	std::string equalityTest;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -200,6 +201,9 @@ int main(int argc, char ** argv) {
 		else if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
 			i++;
+		}
+		else if (curArg == "-eq" && i+1 < argc) {
+			equalityTest = argv[i+1];
 		}
 		else if (curArg == "-ds") {
 			dumpStats = true;
@@ -377,6 +381,14 @@ int main(int argc, char ** argv) {
 		std::cout <<  "#element count\tindex size" << std::endl;
 		for(uint32_t i = 0; i < store.size(); ++i) {
 			std::cout << store.at(i).size() << "\t" << store.dataAt(i).size() << std::endl;
+		}
+	}
+	
+	if (!equalityTest.empty()) {
+		UByteArrayAdapter otherAdap(UByteArrayAdapter::open(equalityTest) );
+		Static::ItemIndexStore otherStore(otherAdap);
+		if (checkCompressedIndex(otherStore, store)) {
+			std::cout << "Stores are equal" << std::endl;
 		}
 	}
 }
