@@ -14,7 +14,7 @@ namespace sserialize {
   *uint32|uint32|*
   *--------------------------------------------------------------
   *
-  *SIZE=size of DATA
+  *SIZE=number of DWORDS*4 (equals number of bytes in uncompressed format)
   *COUNT=number of elements
   *RLE: uint32_t, least significant bit tells if this dword is rle, if yes, then the second least signifant bit tells if zeros or ones
   *
@@ -28,6 +28,7 @@ private:
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
 private:
+	///@return returns the dat iterator DO NOT call reset() on them!
 	const UDWConstrainedIterator & dataIterator() const;
 	
 public:

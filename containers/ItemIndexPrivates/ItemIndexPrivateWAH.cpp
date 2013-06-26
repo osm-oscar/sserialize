@@ -18,7 +18,7 @@ m_cache(UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), false
 ItemIndexPrivateWAH::ItemIndexPrivateWAH(UDWIterator data) :
 m_curId(0)
 {
-	uint32_t cpCount = data.next();
+	uint32_t cpCount = data.next()/4;
 	m_size = data.next();
 	m_cache = UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), false);
 	m_fullData = UDWConstrainedIterator(data.getPrivate(), cpCount);
