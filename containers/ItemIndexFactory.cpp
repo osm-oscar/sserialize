@@ -275,7 +275,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::
 	}
 	ht.serialize(dest, sfn, bitsPerLevel);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+beginOffset;
+	return dest.tellPutPtr()-beginOffset;
 }
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -373,7 +373,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
-	return dest.tellPutPtr()+beginOffset;
+	return dest.tellPutPtr()-beginOffset;
 }
 
 }//end namespace
