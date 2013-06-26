@@ -282,8 +282,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 
 	UDWConstrainedIterator myIt(dataIterator());
 	UDWConstrainedIterator oIt(cother->dataIterator());
-	myIt.reset();
-	oIt.reset();
+	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
 	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
 	oData.putUint32(0); //dummy size
@@ -386,8 +385,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 
 	UDWConstrainedIterator myIt(dataIterator());
 	UDWConstrainedIterator oIt(cother->dataIterator());
-	myIt.reset();
-	oIt.reset();
+	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
 	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
 	oData.putUint32(0); //dummy size
@@ -501,8 +499,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 
 	UDWConstrainedIterator myIt(dataIterator());
 	UDWConstrainedIterator oIt(cother->dataIterator());
-	myIt.reset();
-	oIt.reset();
+	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
 	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
 	oData.putUint32(0); //dummy size
@@ -610,8 +607,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 
 	UDWConstrainedIterator myIt(dataIterator());
 	UDWConstrainedIterator oIt(cother->dataIterator());
-	myIt.reset();
-	oIt.reset();
+	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
 	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
 	oData.putUint32(0); //dummy size
