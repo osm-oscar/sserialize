@@ -36,8 +36,10 @@ m_compression(IC_NONE)
 	m_data = UByteArrayAdapter(data, 0, off);
 	m_index = SortedOffsetIndex(data + off);
 	off += m_index.getSizeInBytes();
-	if (m_version >= 2 && m_compression == IC_HUFFMAN)
+	if (m_version >= 2 && m_compression == IC_HUFFMAN) {
 		m_hd = std::shared_ptr<HuffmanDecoder>(new HuffmanDecoder(data +  off) );
+		m_hd->readInCache();
+	}
 }
 
 
