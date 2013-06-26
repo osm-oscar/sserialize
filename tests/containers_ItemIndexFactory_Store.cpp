@@ -111,7 +111,8 @@ public:
 
 
 			Static::ItemIndexStore sdb(dataAdap);
-			sserialize::ItemIndexFactory::compressWithHuffman(sdb, cmpDataAdap);
+			UByteArrayAdapter::OffsetType s = sserialize::ItemIndexFactory::compressWithHuffman(sdb, cmpDataAdap);
+			cmpDataAdap.shrinkStorage(cmpDataAdap.size()-s);
 			Static::ItemIndexStore csdb(cmpDataAdap);
 			
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), csdb.size());
