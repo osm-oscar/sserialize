@@ -18,12 +18,28 @@ HuffmanDecoder::HuffmanCodePointInfo HuffmanDecoder::StaticNode::at(uint32_t pos
 	return HuffmanDecoder::HuffmanCodePointInfo(m_data.getUint32(pos*SerializationInfo<HuffmanCodePointInfo>::length()), m_data.getUint24(pos*SerializationInfo<HuffmanCodePointInfo>::length()+4));
 }
 
+void HuffmanDecoder::StaticNode::readInCache() const {
+	uint32_t s = entryCount()*SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::length();
+	uint8_t * tmp = new uint8_t[s];
+	m_data.get(0, tmp, s);
+	delete tmp;
+}
+
 HuffmanDecoder::HuffmanDecoder() {}
 
 HuffmanDecoder::HuffmanDecoder(const UByteArrayAdapter & data) :
 m_nodes(data),
 m_root(m_nodes.at(0))
-{}
+{
+	m_root.readInCache();
+}
+
+void HuffmanDecoder::readInCache() {
+	uint32_t s = m_nodes.size();
+	for(uint32_t i = 0; i < s; ++i) {
+		m_nodes.at(i).readInCache();
+	}
+}
 
 HuffmanDecoder::~HuffmanDecoder() {}
 

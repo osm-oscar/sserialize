@@ -54,6 +54,8 @@ private:
 		StaticNode();
 		StaticNode(const UByteArrayAdapter & data);
 		virtual ~StaticNode();
+		void readInCache() const;
+		uint32_t entryCount() const { return static_cast<uint32_t>(1) << bitLength(); }
 		uint8_t bitLength() const { return m_bitLength;}
 		uint32_t initialChildPtr() const { return m_initialChildPtr;}
 		HuffmanCodePointInfo at(uint32_t pos) const;
@@ -108,6 +110,7 @@ public:
 	HuffmanDecoder();
 	HuffmanDecoder(const UByteArrayAdapter & data);
 	virtual ~HuffmanDecoder();
+	void readInCache();
 	UByteArrayAdapter::OffsetType getSizeInBytes() const { return m_nodes.getSizeInBytes(); }
 	
 	///@return on success  the bit length, on error -1
