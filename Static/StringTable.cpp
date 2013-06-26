@@ -1,7 +1,6 @@
 #include <sserialize/Static/StringTable.h>
 #include <iostream>
 #include <sserialize/utility/unicode_case_functions.h>
-#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/vendor/utf8.h>
 
 namespace sserialize {
