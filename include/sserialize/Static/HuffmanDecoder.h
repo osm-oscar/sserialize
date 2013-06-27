@@ -41,9 +41,9 @@ public:
 		
 		virtual ~HuffmanCodePointInfo() {}
 		inline uint32_t value() const { return m_value; }
-		inline uint8_t length() const { return m_childPtrBitLen & 0x3F; }
-		inline uint32_t childPtrDiff() const { return m_childPtrBitLen >> 6; }
-		inline bool hasChild() { return !(m_childPtrBitLen & 0x3F); }
+		inline uint8_t length() const { return m_childPtrBitLen & 0x1F; }
+		inline uint32_t childPtrDiff() const { return m_childPtrBitLen >> 5; }
+		inline bool hasChild() { return !(m_childPtrBitLen & 0x1F); }
 	};
 private:
 	class StaticNode {
@@ -131,9 +131,9 @@ public:
 
 namespace sserialize {
 	template<> inline bool SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::is_fixed_length() { return true; }
-	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::length() { return 7; }
-	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::max_length() { return 7; }
-	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::min_length() { return 7; }
+	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::length() { return 8; }
+	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::max_length() { return 8; }
+	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::min_length() { return 8; }
 }
 
 

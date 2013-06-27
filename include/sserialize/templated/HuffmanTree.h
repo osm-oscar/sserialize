@@ -126,13 +126,13 @@ public:
 				dest << m_childrenValues[i];
 				uint32_t childPtrLen = m_codePointLength[i];
 				if (m_childrenPtrs[i] >= 0) {
-					childPtrLen = ((m_childrenPtrs[i]-beginChildPtr) << 6);
+					childPtrLen = ((m_childrenPtrs[i]-beginChildPtr) << 5);
 					childPtrLen |= m_codePointLength[i];
 				}
-				if (m_childrenPtrs[i] > 0x7FFFF) {
+				if (m_childrenPtrs[i] > 0x7FFFFFF) {
 					std::cerr << "HuffmanTree::Node::Serialize: overflow in child pointer detected" << std::endl;
 				}
-				dest.putUint24(childPtrLen);
+				dest.putUint32(childPtrLen);
 			}
 			return dest;
 		}
