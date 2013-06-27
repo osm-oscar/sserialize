@@ -67,6 +67,37 @@ void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_m
 	}
 }
 
+void dumpDataHistoFunc(sserialize::Static::ItemIndexStore & store, 	uint8_t alphabetBitLength) {
+	uint32_t charSize = 4;
+	uint64_t size = store.getData().size();
+	std::unordered_map<uint32_t, uint32_t> alphabet;
+	createAlphabet(store, alphabet, charSize);
+
+	std::cout << "#Data lenth: " << size << std::endl;
+	std::cout << "#Alphabet size: " << alphabet.size() << std::endl;
+	std::cout << "#String length: " << size/charSize << std::endl;
+	std::cout << "#String length/Alphabet size: " << (size/charSize)/((double)alphabet.size()) << std::endl;
+	double entropy = sserialize::statistics::entropy<std::unordered_map<uint32_t, uint32_t>::const_iterator, double>(alphabet.begin(), alphabet.end(), 0.0, size/charSize);
+	uint64_t compressedSize = static_cast<uint64_t>(size)/charSize*std::ceil(entropy)/8;
+	uint64_t compressedSizeWithDict = compressedSize + alphabet.size()*charSize;
+	std::cout << "#Entropy: " << entropy << std::endl;
+	std::cout << "Compressed length: " << compressedSize << "(" << static_cast<double>(compressedSize)/size*100 << "%)" << std::endl;
+	std::cout << "Compressed length with dict: " << compressedSizeWithDict << "(" << static_cast<double>(compressedSizeWithDict)/size*100 << "%)" << std::endl;
+	std::cout << "Creating huffman tree with alphabetBitLength=" << static_cast<uint32_t>(alphabetBitLength) << std::endl;
+	HuffmanTree<uint32_t> ht(alphabetBitLength);
+	ht.create(alphabet.begin(), alphabet.end(), size/charSize);
+	std::cout << "Huffman tree depth: " << ht.depth() << std::endl;
+	std::cout << "Huffman tree min code length: " << ht.levelOfFirstLeaf() << std::endl;
+	
+	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
+	std::cout << "Calculating compressed size (without ht tables):" << std::flush;
+	uint64_t bitUsage = 0;
+	for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it) {
+		bitUsage += htMap.at(it->first).codeLength()*it->second;
+	}
+	std::cout << bitUsage/8 << "(" << (double)(bitUsage/8) / size * 100 << "%)" << std::endl;
+}
+
 UByteArrayAdapter::OffsetType recompressLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	return sserialize::ItemIndexFactory::compressWithLZO(store, dest);
 }
@@ -162,12 +193,13 @@ int main(int argc, char ** argv) {
 	bool dumpDataHisto = false;
 	bool dumpStats = false;
 	uint8_t alphabetBitLength = 1;
-	bool recompress = false;
+	bool recompressHuffman = false;
 	bool recompressVar = false;
 	bool recompressVarShannon = false;
 	bool recompressWithLZO = false;
 	bool checkCompressed = false;
 	std::string equalityTest;
+	ItemIndex::Types transform = ItemIndex::T_NULL;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -183,8 +215,8 @@ int main(int argc, char ** argv) {
 			alphabetBitLength = ::atoi(argv[i+1]);
 			++i;
 		}
-		else if (curArg == "-rc") {
-			recompress = true;
+		else if (curArg == "-rch") {
+			recompressHuffman = true;
 		}
 		else if (curArg == "-rcv") {
 			recompressVar = true;
@@ -207,6 +239,20 @@ int main(int argc, char ** argv) {
 		}
 		else if (curArg == "-ds") {
 			dumpStats = true;
+		}
+		else if (curArg == "-t" && i+1 < argc) {
+			std::string t(argv[i+1]);
+			if (t == "rline")
+				transform = sserialize::ItemIndex::T_REGLINE;
+			else if (t == "wah")
+				transform = sserialize::ItemIndex::T_WAH;
+			else if (t == "de")
+				transform = sserialize::ItemIndex::T_DE;
+			else if (t == "rlede")
+				transform = sserialize::ItemIndex::T_RLE_DE;
+			else if (t == "simple")
+				transform = sserialize::ItemIndex::T_SIMPLE;
+			++i;
 		}
 		else {
 			inFileName = curArg;
@@ -261,37 +307,10 @@ int main(int argc, char ** argv) {
 		}
 	}
 	if (dumpDataHisto) {
-		uint32_t charSize = 4;
-		uint64_t size = store.getData().size();
-		std::unordered_map<uint32_t, uint32_t> alphabet;
-		createAlphabet(store, alphabet, charSize);
-	
-		std::cout << "#Data lenth: " << size << std::endl;
-		std::cout << "#Alphabet size: " << alphabet.size() << std::endl;
-		std::cout << "#String length: " << size/charSize << std::endl;
-		std::cout << "#String length/Alphabet size: " << (size/charSize)/((double)alphabet.size()) << std::endl;
-		double entropy = sserialize::statistics::entropy<std::unordered_map<uint32_t, uint32_t>::const_iterator, double>(alphabet.begin(), alphabet.end(), 0.0, size/charSize);
-		uint64_t compressedSize = static_cast<uint64_t>(size)/charSize*std::ceil(entropy)/8;
-		uint64_t compressedSizeWithDict = compressedSize + alphabet.size()*charSize;
-		std::cout << "#Entropy: " << entropy << std::endl;
-		std::cout << "Compressed length: " << compressedSize << "(" << static_cast<double>(compressedSize)/size*100 << "%)" << std::endl;
-		std::cout << "Compressed length with dict: " << compressedSizeWithDict << "(" << static_cast<double>(compressedSizeWithDict)/size*100 << "%)" << std::endl;
-		std::cout << "Creating huffman tree with alphabetBitLength=" << static_cast<uint32_t>(alphabetBitLength) << std::endl;
-		HuffmanTree<uint32_t> ht(alphabetBitLength);
-		ht.create(alphabet.begin(), alphabet.end(), size/charSize);
-		std::cout << "Huffman tree depth: " << ht.depth() << std::endl;
-		std::cout << "Huffman tree min code length: " << ht.levelOfFirstLeaf() << std::endl;
-		
-		std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
-		std::cout << "Calculating compressed size (without ht tables):" << std::flush;
-		uint64_t bitUsage = 0;
-		for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it) {
-			bitUsage += htMap.at(it->first).codeLength()*it->second;
-		}
-		std::cout << bitUsage/8 << "(" << (double)(bitUsage/8) / size * 100 << "%)" << std::endl;
+		dumpDataHistoFunc(store, alphabetBitLength);
 	}
 	
-	if (recompress) {
+	if (recompressHuffman) {
 		std::string outFile;
 		if (outFileName.empty())
 			outFile = inFileName + ".htcmp";
@@ -390,5 +409,31 @@ int main(int argc, char ** argv) {
 		if (checkCompressedIndex(otherStore, store)) {
 			std::cout << "Stores are equal" << std::endl;
 		}
+	}
+	
+	if (transform != ItemIndex::T_NULL) {
+		if (outFileName.empty()) {
+			std::cerr << "No out file given for transformation" << std::endl;
+			return -1;
+		}
+		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
+		ItemIndexFactory factory;
+		factory.setType(transform);
+		factory.setIndexFile(outData);
+		ProgressInfo info;
+		ItemIndex idx;
+		std::vector<uint32_t> tmpData;
+		info.begin(store.size(), "Transforming IndexStore");
+		for(uint32_t i = 0; i < store.size(); ++i) {
+			idx = store.at(i);
+			idx.insertInto(std::back_insert_iterator< std::vector<uint32_t> >(tmpData));
+			factory.addIndex(tmpData);
+			tmpData.clear();
+			info(i);
+		}
+		info.end("Transformed IndexStore");
+		std::cout << "Serializing IndexStore" << std::endl;
+		UByteArrayAdapter::OffsetType s = factory.flush();
+		outData.shrinkStorage(outData.size() - s);
 	}
 }
