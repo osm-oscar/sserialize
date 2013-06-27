@@ -84,6 +84,11 @@ public:
 			UByteArrayAdapter dest(&s);
 			ItemIndexPrivateRleDE::create(idx, dest);
 		}
+		else if (m_type == ItemIndex::T_SIMPLE) {
+			mok = true;
+			UByteArrayAdapter dest(&s);
+			ItemIndexPrivateSimple::create(idx, dest);
+		}
 		if (ok)
 			*ok = mok;
 		if (mok)
