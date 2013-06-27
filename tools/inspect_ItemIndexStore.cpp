@@ -413,8 +413,26 @@ int main(int argc, char ** argv) {
 	
 	if (transform != ItemIndex::T_NULL) {
 		if (outFileName.empty()) {
-			std::cerr << "No out file given for transformation" << std::endl;
-			return -1;
+			outFileName = inFileName;
+			switch (transform) {
+			case ItemIndex::T_SIMPLE:
+				outFileName += ".simple";
+				break;
+			case ItemIndex::T_REGLINE:
+				outFileName += ".rline";
+				break;
+			case ItemIndex::T_DE:
+				outFileName += ".de";
+				break;
+			case ItemIndex::T_RLE_DE:
+				outFileName += ".rlede";
+				break;
+			case ItemIndex::T_WAH:
+				outFileName += ".wah";
+				break;
+			default:
+				return -1;
+			}
 		}
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
 		ItemIndexFactory factory;
@@ -434,6 +452,15 @@ int main(int argc, char ** argv) {
 		info.end("Transformed IndexStore");
 		std::cout << "Serializing IndexStore" << std::endl;
 		UByteArrayAdapter::OffsetType s = factory.flush();
+		outData = factory.getFlushedData();
+		std::cout << "Created index store with a size of " << s << std::endl;
 		outData.shrinkStorage(outData.size() - s);
+		
+		if (checkCompressed) {
+			Static::ItemIndexStore tstore(outData);
+			if (!checkCompressedIndex(store, tstore)) {
+				std::cerr << "Stores are not equal" << std::endl;
+			}
+		}
 	}
 }
