@@ -90,12 +90,17 @@ public:
 	
 	template<typename TCONTAINER>
 	static void create(const TCONTAINER & src, UByteArrayAdapter & dest) {
-		ItemIndexPrivateSimpleCreator creator(*src.begin(), *src.rbegin(), src.size(), dest);
-		typename TCONTAINER::const_iterator srcIt = src.begin();
-		typename TCONTAINER::const_iterator srcEnd = src.end();
-		for(; srcIt != srcEnd; ++srcIt)
-			creator.push_back(*srcIt);
-		creator.flush();
+		if (src.size()) {
+			ItemIndexPrivateSimpleCreator creator(*src.begin(), *src.rbegin(), src.size(), dest);
+			typename TCONTAINER::const_iterator srcIt = src.begin();
+			typename TCONTAINER::const_iterator srcEnd = src.end();
+			for(; srcIt != srcEnd; ++srcIt)
+				creator.push_back(*srcIt);
+			creator.flush();
+		}
+		else {
+			dest.putUint32(0);
+		}
 	}
 };
 

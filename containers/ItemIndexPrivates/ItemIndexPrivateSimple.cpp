@@ -60,9 +60,10 @@ m_yintercept(0)
 	m_size = index.getUint32(0);
 	m_bpn = ((m_size & 0x3)+1)*8;
 	m_size = m_size >> 2;
-	m_yintercept = index.getUint32(4);
-	if (m_size > 0)
+	if (m_size > 0) {
+		m_yintercept = index.getUint32(4);
 		m_idStore = CompactUintArray(index+8, m_bpn);
+	}
 }
 
 ItemIndexPrivateSimple::~ItemIndexPrivateSimple() {}
