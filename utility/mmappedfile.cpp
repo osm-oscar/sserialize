@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <string.h>
 #include <limits>
+#include <iostream>
 
 
 namespace sserialize {
@@ -123,18 +124,21 @@ bool MmappedFilePrivate::read(uint8_t * buffer, uint32_t len, OffsetType displac
 
 bool MmappedFilePrivate::resize(OffsetType size) {
 	if (!do_sync() ) {
+		::perror("MmappedFilePrivate::resize::sync");
 		return false;
 	}
 
 	//unmap
 	if (::munmap(m_data, m_size) == -1) {
+		::perror("MmappedFilePrivate::resize::munmap");
 		return false;
 	}
 
 	bool allOk = true;
 	int result = ::ftruncate(m_fd, size);
-	if (result < 0) {
-		::perror("MmappedFilePrivate::resize");
+	if (result < 0) { 
+		std::cerr << "MmappedFilePrivate::resize::truncate: failed to truncate file from " << m_size << " to " << size << " bytes:";
+		::perror("");
 		allOk = false;
 	}
 	else {
@@ -147,7 +151,7 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	m_data = (uint8_t*) ::mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
-		::perror("MmappedFilePrivate::resize");
+		::perror("MmappedFilePrivate::resize::mmap");
 		m_data = 0;//this needs to come here (do_close() checks for it
 		do_close();
 		allOk = false;
