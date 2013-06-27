@@ -71,6 +71,15 @@ public:
 	ItemIndex operator^(const ItemIndex & idx) const;
 	
 	std::set<uint32_t> toSet() const;
+	template<typename T_BACK_INSERTER>
+	void insertInto(T_BACK_INSERTER inserter) {
+		uint32_t s = size();
+		for(uint32_t i = 0; i < s; ++i) {
+			*inserter = at(i);
+			++inserter;
+		}
+	}
+	
 	///Store this index temporarily on disk
 	void toDisk();
 
