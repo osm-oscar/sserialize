@@ -129,7 +129,7 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(2);
 	dest.putUint8(ItemIndex::T_WAH);
-	dest.putUint8(Static::ItemIndexStore::IC_ILLEGAL);
+	dest.putUint8(0xFF);
 	dest.putOffset(0);
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
 	newOffsets.reserve(store.size());
