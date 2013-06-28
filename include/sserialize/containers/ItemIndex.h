@@ -33,9 +33,9 @@ protected:
 public:
 	ItemIndex();
 	ItemIndex(const ItemIndex & idx);
-	ItemIndex(const UByteArrayAdapter & index, Types type = T_REGLINE);
-	ItemIndex(const std::deque<uint32_t> & index);
-	ItemIndex(const std::vector<uint32_t> & index);
+	explicit ItemIndex(const UByteArrayAdapter & index, Types type = T_REGLINE);
+	explicit ItemIndex(const std::deque<uint32_t> & index);
+	explicit ItemIndex(const std::vector<uint32_t> & index);
 	ItemIndex(const UByteArrayAdapter & index, const ItemIndex & realIdIndex, Types type = T_REGLINE);
 	ItemIndex(const std::deque<uint32_t> & index, const ItemIndex & realIdIndex);
 	ItemIndex(const std::vector<uint32_t> & index, const ItemIndex & realIdIndex);
