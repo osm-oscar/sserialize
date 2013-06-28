@@ -1,6 +1,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
 
@@ -17,6 +18,10 @@ m_curId(0),
 m_cache(UByteArrayAdapter::createCache(m_size*4, false) ),
 m_cacheOffset(0)
 {}
+
+ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UDWIterator & data) {
+	throw sserialize::CorruptDataException("ItemIndexPrivateRleDE with UDWIterator is unsupported as of now!");
+}
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE() : m_size(0),  m_dataOffset(0), m_curId(0), m_cacheOffset(0) {}
 

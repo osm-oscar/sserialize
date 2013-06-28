@@ -2,6 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_RLE_DE_H
 #include "ItemIndexPrivate.h"
 #include <sserialize/utility/utilfuncs.h>
+#include <sserialize/containers/UDWConstrainedIterator.h>
 
 namespace sserialize {
 
@@ -106,9 +107,12 @@ private:
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
 	mutable uint32_t m_cacheOffset;
+protected:
+	
 public:
 	ItemIndexPrivateRleDE();
 	ItemIndexPrivateRleDE(const UByteArrayAdapter & data);
+	ItemIndexPrivateRleDE(const UDWIterator & data);
 	virtual ~ItemIndexPrivateRleDE();
 	virtual ItemIndex::Types type() const;
 	
