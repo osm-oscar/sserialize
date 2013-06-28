@@ -41,6 +41,7 @@ template<typename octetIterator> int64_t writeBytesToFile(const std::string & fi
 		}
 		size_t writeLen = fwrite(fileBuffer, 1, bufferPointer, dataFile);
 		if (writeLen != bufferPointer) {
+			perror("writeBytesToFile");
 			fclose(dataFile);
 			return -1;
 		}
