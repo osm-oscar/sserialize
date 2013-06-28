@@ -208,20 +208,87 @@ void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_m
 	}
 }
 
-UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	if (store.indexType() != ItemIndex::T_WAH) {
-		std::cerr << "Unsupported index format" << std::endl;
-		return 0;
-	}
-	UByteArrayAdapter data = store.getData();
-	uint64_t size = data.size();
+void createHuffmanTree(sserialize::Static::ItemIndexStore & store, HuffmanTree<uint32_t> & ht) {
+	UByteArrayAdapter::OffsetType size = store.getData().size();
 	std::unordered_map<uint32_t, uint32_t> alphabet;
 	uint32_t charSize = 4;
 	createAlphabet(store, alphabet, charSize);
-	HuffmanTree<uint32_t> ht(1);
+	ht = HuffmanTree<uint32_t>(1);
 	ht.create(alphabet.begin(), alphabet.end(), size/charSize);
 	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
+}
+
+UByteArrayAdapter::OffsetType compressWithHuffmanRLEDE(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	UByteArrayAdapter data = store.getData();
+	HuffmanTree<uint32_t> ht;
+	createHuffmanTree(store, ht);
+	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
 	
+	
+	//now recompress
+	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
+	dest.putUint8(2);
+	dest.putUint8(ItemIndex::T_RLE_DE);
+	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
+	dest.putOffset(0);
+	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
+	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	newOffsets.reserve(store.size());
+	
+	MultiBitBackInserter backInserter(dest);
+	data.resetGetPtr();
+	ProgressInfo pinfo;
+	pinfo.begin(data.size(), "Encoding words");
+	while(data.getPtrHasNext()) {
+		newOffsets.push_back(backInserter.data().tellPutPtr()-destDataBeginOffset);
+
+		uint32_t indexSize = data.getUint32();
+		uint32_t indexCount = data.getUint32();
+		const HuffmanCodePoint & sizeCp = htMap.at(indexSize);
+		const HuffmanCodePoint & countCp = htMap.at(indexCount);
+		backInserter.push_back(sizeCp.code(), sizeCp.codeLength());
+		backInserter.push_back(countCp.code(), countCp.codeLength());
+
+		UByteArrayAdapter indexData = data;
+		indexData.shrinkToGetPtr();
+		while(indexData.tellGetPtr() < indexSize) {
+			uint32_t src = indexData.getVlPackedUint32();
+			const HuffmanCodePoint & srcCp =  htMap.at(src);
+			backInserter.push_back(srcCp.code(), srcCp.codeLength());
+		}
+		data.incGetPtr(indexSize);
+		backInserter.flush();
+		pinfo(data.tellGetPtr());
+	}
+	backInserter.flush();
+	pinfo.end("Encoded words");
+	dest = backInserter.data();
+	
+	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
+	std::cout << "Creating offset index" << std::endl;
+	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
+	//now comes the deocding table
+	HuffmanTree<uint32_t>::ValueSerializer sfn = &putWrapper;
+	std::vector<uint8_t> bitsPerLevel;
+	bitsPerLevel.push_back(16);
+	int htDepth = ht.depth()-16;
+	while (htDepth > 0) {
+		if (htDepth > 4)
+			bitsPerLevel.push_back(4);
+		else
+			bitsPerLevel.push_back(htDepth);
+		htDepth -= 4;
+	}
+	ht.serialize(dest, sfn, bitsPerLevel);
+	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	return dest.tellPutPtr()-beginOffset;
+}
+
+UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	UByteArrayAdapter data = store.getData();
+	HuffmanTree<uint32_t> ht;
+	createHuffmanTree(store, ht);
+	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());	
 	
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
@@ -276,6 +343,19 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::
 	ht.serialize(dest, sfn, bitsPerLevel);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
 	return dest.tellPutPtr()-beginOffset;
+}
+
+UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	if (store.indexType() == ItemIndex::T_WAH) {
+		return compressWithHuffmanWAH(store, dest);
+	}
+	else if (store.indexType() == ItemIndex::T_RLE_DE) {
+		return compressWithHuffmanRLEDE(store, dest);
+	}
+	else {
+		std::cerr << "Unsupported index format" << std::endl;
+		return 0;
+	}
 }
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -366,13 +446,19 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 			return 0;
 		}
 		dest.put(outBuf, outBufLen);
-		pinfo(data.tellGetPtr());
+		pinfo(data.tellPutPtr());
 	}
 	pinfo.end("Encoded words");
 	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
-	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	std::cout << "Offset index created. Current size:" << dest.tellPutPtr()-beginOffset << std::endl;
+	if (store.compressionType() == Static::ItemIndexStore::IC_HUFFMAN) {
+		UByteArrayAdapter htData = store.getHuffmanTreeData();
+		std::cout << "Adding huffman tree with size: " << htData.size() << std::endl;
+		dest.put(htData);
+	}
+	std::cout << "Total size: " << dest.tellPutPtr()-beginOffset << std::endl;
 	return dest.tellPutPtr()-beginOffset;
 }
 
