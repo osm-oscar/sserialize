@@ -92,7 +92,7 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	
 	UByteArrayAdapter idxData = dataAt(pos);
 	if (m_compression & IC_LZO) {
-		idxData = inlineDecompress(idxData, 2*1024*1024);
+		idxData = inlineDecompress(idxData, 10*1024*1024);
 	}
 	if (m_compression & IC_HUFFMAN) {
 		if (m_type == ItemIndex::T_WAH) {
@@ -108,7 +108,7 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 		}
 	}
 	else { //no further compression
-		return ItemIndex(dataAt(pos), m_type);
+		return ItemIndex(idxData, m_type);
 	}
 	return ItemIndex();
 }
