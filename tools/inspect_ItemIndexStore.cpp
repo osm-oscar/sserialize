@@ -29,7 +29,7 @@ void dumpIndex(std::ostream & out, const Static::SortedOffsetIndex & idx) {
 	}
 }
 
-void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
+inline void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
 	if (a.count(v) == 0)
 		a[v] = 1;
 	else
@@ -319,7 +319,7 @@ int main(int argc, char ** argv) {
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
 		UByteArrayAdapter::OffsetType size = recompressIndexData(store, outData);
 		if (size > 0)
-			outData.shrinkStorage(adap.size()-size);
+			outData.shrinkStorage(outData.size()-size);
 		else
 			outData.setDeleteOnClose(true);
 		if (checkCompressed) {
@@ -340,7 +340,7 @@ int main(int argc, char ** argv) {
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
 		UByteArrayAdapter::OffsetType size = recompressDataVarUint(store, outData);
 		if (size > 0)
-			outData.shrinkStorage(adap.size()-size);
+			outData.shrinkStorage(outData.size()-size);
 		else
 			outData.setDeleteOnClose(true);
 		if (checkCompressed) {
@@ -362,7 +362,7 @@ int main(int argc, char ** argv) {
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
 		UByteArrayAdapter::OffsetType size = recompressVarUintShannon(store, outData);
 		if (size > 0)
-			outData.shrinkStorage(adap.size()-size);
+			outData.shrinkStorage(outData.size()-size);
 		else
 			outData.setDeleteOnClose(true);
 		if (checkCompressed) {
@@ -384,7 +384,7 @@ int main(int argc, char ** argv) {
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
 		UByteArrayAdapter::OffsetType size =  recompressLZO(store, outData);
 		if (size > 0)
-			outData.shrinkStorage(adap.size()-size);
+			outData.shrinkStorage(outData.size()-size);
 		else
 			outData.setDeleteOnClose(true);
 		if (checkCompressed) {
