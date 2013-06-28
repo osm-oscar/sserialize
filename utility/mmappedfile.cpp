@@ -151,6 +151,7 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	m_data = (uint8_t*) ::mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
+		std::cerr << "MmappedFilePrivate::resize::mmap: failed to mmap file while resizing from " << m_size << " to " << size << " bytes:";
 		::perror("MmappedFilePrivate::resize::mmap");
 		m_data = 0;//this needs to come here (do_close() checks for it
 		do_close();
