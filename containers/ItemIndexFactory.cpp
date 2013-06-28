@@ -403,12 +403,10 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
     lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	UByteArrayAdapter data = store.getData();
-	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(2);
 	dest.putUint8(store.indexType());
-	dest.putUint8(Static::ItemIndexStore::IC_LZO);
+	dest.putUint8(Static::ItemIndexStore::IC_LZO | store.compressionType());
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -420,16 +418,17 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	uint32_t bufferSize = 10*1024*1024;
 	uint8_t * inBuf = new uint8_t[bufferSize];
 	uint8_t * outBuf = new uint8_t[2*bufferSize];
+
+	UByteArrayAdapter::OffsetType totalOutPutBuffLen = 0;
 	
-	data.resetGetPtr();
 	ProgressInfo pinfo;
-	pinfo.begin(data.size(), "Encoding words");
+	pinfo.begin(store.size(), "Encoding words");
 	for(uint32_t i = 0; i < store.size(); ++i ) {
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
 		UByteArrayAdapter idxData( store.dataAt(i) );
 		if (idxData.size() > bufferSize) {
-			delete inBuf;
-			delete outBuf;
+			delete[] inBuf;
+			delete[] outBuf;
 			bufferSize = idxData.size();
 			inBuf = new uint8_t[bufferSize];
 			outBuf = new uint8_t[2*bufferSize];
@@ -437,19 +436,26 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		}
 		lzo_uint inBufLen = idxData.size();
 		lzo_uint outBufLen = bufferSize*2;
-		idxData.get(inBuf, inBufLen);
-		int r = ::lzo1x_1_compress(inBuf,inBufLen,outBuf,&outBufLen,wrkmem);
+		idxData.get(0, inBuf, inBufLen);
+		int r = ::lzo1x_1_compress(inBuf, inBufLen, outBuf, &outBufLen, wrkmem);
 		if (r != LZO_E_OK) {
 			delete[] inBuf;
 			delete[] outBuf;
 			std::cerr << "Compression Error" << std::endl;
 			return 0;
 		}
+		totalOutPutBuffLen += outBufLen;
 		dest.put(outBuf, outBufLen);
-		pinfo(data.tellPutPtr());
+		pinfo(i);
 	}
 	pinfo.end("Encoded words");
-	std::cout << "Data section has a size of " << dest.tellPutPtr()-beginOffset;
+	
+	if (totalOutPutBuffLen != dest.tellPutPtr()-destDataBeginOffset) {
+		std::cout << "Compression failed" << std::endl;
+		return 0;
+	}
+	
+	std::cout << "Data section has a size of " << dest.tellPutPtr()-destDataBeginOffset;
 	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
