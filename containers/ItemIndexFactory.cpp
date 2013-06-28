@@ -422,7 +422,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	UByteArrayAdapter::OffsetType totalOutPutBuffLen = 0;
 	
 	ProgressInfo pinfo;
-	pinfo.begin(store.size(), "Encoding words");
+	pinfo.begin(store.size(), "Recompressing index");
 	for(uint32_t i = 0; i < store.size(); ++i ) {
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
 		UByteArrayAdapter idxData( store.dataAt(i) );
@@ -448,7 +448,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		dest.put(outBuf, outBufLen);
 		pinfo(i);
 	}
-	pinfo.end("Encoded words");
+	pinfo.end("Recompressed index");
 	
 	if (totalOutPutBuffLen != dest.tellPutPtr()-destDataBeginOffset) {
 		std::cout << "Compression failed" << std::endl;
