@@ -449,6 +449,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		pinfo(data.tellPutPtr());
 	}
 	pinfo.end("Encoded words");
+	std::cout << "Data section has a size of " << dest.tellPutPtr()-beginOffset;
 	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
