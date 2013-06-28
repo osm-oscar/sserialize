@@ -607,7 +607,7 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::get(const UByteArrayAdapter::Of
 		return 0;
 	if (pos+len > m_len)
 		len = m_len - pos;
-	m_priv->get(pos, dest, len);
+	m_priv->get(m_offSet+pos, dest, len);
 	return len;
 }
 
@@ -716,7 +716,7 @@ int UByteArrayAdapter::put(const OffsetType pos, const std::string & str) {
 bool UByteArrayAdapter::put(OffsetType pos, const uint8_t * data, uint32_t len) {
 	if (m_len < pos+len)
 		return false;
-	m_priv->put(pos, data, len);
+	m_priv->put(m_offSet+pos, data, len);
 	return true;
 }
 
