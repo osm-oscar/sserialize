@@ -39,6 +39,7 @@ public:
 	~ItemIndexStore();
 	uint32_t size() const;
 	ItemIndex::Types indexType() const { return m_type; }
+	IndexCompressionType compressionType() const { return m_compression; }
 	UByteArrayAdapter dataAt(uint32_t pos) const;
 	ItemIndex at(uint32_t pos) const;
 	ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const;
@@ -48,6 +49,8 @@ public:
 	std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const;
 	SortedOffsetIndex & getIndex() { return m_index;}
 	const UByteArrayAdapter & getData() const { return m_data; }
+	std::shared_ptr<HuffmanDecoder> getHuffmanTree() const { return m_hd; }
+	UByteArrayAdapter getHuffmanTreeData() const;
 };
 
 }}//end namespace

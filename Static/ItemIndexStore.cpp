@@ -4,6 +4,7 @@
 #include <sserialize/containers/UDWIterator.h>
 #include <sserialize/containers/UDWIteratorPrivateHD.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <vendor/libs/minilzo/minilzo.h>
 
 namespace sserialize {
@@ -36,7 +37,7 @@ m_compression(IC_NONE)
 	m_data = UByteArrayAdapter(data, 0, off);
 	m_index = SortedOffsetIndex(data + off);
 	off += m_index.getSizeInBytes();
-	if (m_version >= 2 && m_compression == IC_HUFFMAN) {
+	if (m_version >= 2 && m_compression & IC_HUFFMAN) {
 		m_hd = std::shared_ptr<HuffmanDecoder>(new HuffmanDecoder(data +  off) );
 		m_hd->readInCache();
 	}
@@ -88,31 +89,26 @@ UByteArrayAdapter inlineDecompress(const UByteArrayAdapter & src, UByteArrayAdap
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	if (pos >= size())
 		return ItemIndex();
-	if (m_type == ItemIndex::T_WAH) {
-		switch (m_compression) {
-		case IC_NONE:
-			return ItemIndex(dataAt(pos), m_type);
-		case IC_VARUINT32:
-			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(dataAt(pos))));
-		case IC_HUFFMAN:
-			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(dataAt(pos)), m_hd)));
-		case IC_LZO:
-		{
-			UByteArrayAdapter d(dataAt(pos));
-			return ItemIndex(inlineDecompress(d, d.size()*4), indexType() );
-		}
-		case IC_ILLEGAL:
-			return ItemIndex();
-		};
+	
+	UByteArrayAdapter idxData = dataAt(pos);
+	if (m_compression & IC_LZO) {
+		idxData = inlineDecompress(idxData, 2*1024*1024);
 	}
-	else {
-		if (m_compression == IC_LZO) {
-			UByteArrayAdapter d(dataAt(pos));
-			return ItemIndex(inlineDecompress(d, d.size()*4), indexType() );
+	if (m_compression & IC_HUFFMAN) {
+		if (m_type == ItemIndex::T_WAH) {
+			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
 		}
-		else {
-			return ItemIndex(dataAt(pos), m_type);
+		else if (m_type == ItemIndex::T_RLE_DE) {
+			return ItemIndex::createInstance<ItemIndexPrivateRleDE>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
 		}
+	}
+	else if (m_compression & IC_VARUINT32) {
+		if (m_type == ItemIndex::T_WAH) {
+			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(idxData)));
+		}
+	}
+	else { //no further compression
+		return ItemIndex(dataAt(pos), m_type);
 	}
 	return ItemIndex();
 }
@@ -133,6 +129,18 @@ ItemIndex ItemIndexStore::hierachy(const std::deque< uint32_t >& offsets) const 
 	return idx;
 }
 
+
+UByteArrayAdapter ItemIndexStore::getHuffmanTreeData() const {
+	if (m_compression & IC_HUFFMAN) {
+		UByteArrayAdapter data = getData();
+		UByteArrayAdapter::OffsetType totalSize = data.size() + m_index.size();
+		data.growStorage(m_index.getSizeInBytes() + m_hd->getSizeInBytes());
+		data.incGetPtr(totalSize);
+		data.shrinkToGetPtr();
+		return data;
+	}
+	return UByteArrayAdapter();
+}
 
 std::ostream& ItemIndexStore::printStats(std::ostream& out) const {
 	std::unordered_set<uint32_t> indexIds;
