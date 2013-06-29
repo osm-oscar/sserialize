@@ -174,49 +174,69 @@ void printTimeVector(const std::vector<long int> & v) {
 }
 
 int main(int argc, char ** argv) {
-	if (argc < 3)
+	if (argc < 3) {
+		std::cout << "testLengthBegin testLengthEnd testLengthMul testCount" << std::endl;
 		return -1;
-	int testLength = atoi(argv[1]);
-	int testCount = atoi(argv[2]);
-	std::cout << "Test Length: " << testLength << std::endl;
-	std::cout << "Test Count: " << testCount << std::endl;
+		
+	}
 	
+	bool printVectors = false;
+	
+	int testLengthBegin = atoi(argv[1]);
+	int testLengthEnd = atoi(argv[2]);
+	int testLengthMul = atoi(argv[3]);
+	int testCount = atoi(argv[4]);
+	
+	std::cout << "#TestLengthBegin: " << testLengthBegin << std::endl;
+	std::cout << "#TestLengtEnd: " << testLengthEnd << std::endl;
+	std::cout << "#TestLengthMul: " << testLengthMul << std::endl; 
+	std::cout << "#Test Count: " << testCount << std::endl;
 	sserialize::TimeMeasurer tm;
-	
-	std::vector<uint32_t> nums = createNumbersSet(testLength);
-	std::vector<uint64_t> nums64 = createNumbersSet64(testLength);
-	
-	std::vector<long int> uba32 = test32UBA(nums, testCount);
-	std::vector<long int> uba32vl = test32VLUBA(nums, testCount);
-	std::vector<long int> vec32 = test32Vec(nums, testCount);
-	std::vector<long int> uba64 = test64UBA(nums64, testCount);
-	std::vector<long int> uba64vl = test64VLUBA(nums64, testCount);
-	std::vector<long int> vec64 = test64Vec(nums64, testCount);
-	
-	std::cout << "UBA32:";
-	printTimeVector(uba32);
-	std::cout << std::endl;
-	
-	std::cout << "UBA32VL:";
-	printTimeVector(uba32vl);
-	std::cout << std::endl;
-	
-	std::cout << "VEC32:";
-	printTimeVector(vec32);
-	std::cout << std::endl;
+	for(testLengthBegin; testLengthBegin < testLengthEnd; testLengthBegin *= testLengthMul) {
+		
+		std::vector<uint32_t> nums = createNumbersSet(testLengthBegin);
+		std::vector<uint64_t> nums64 = createNumbersSet64(testLengthBegin);
+		
+		std::vector<long int> uba32 = test32UBA(nums, testCount);
+		std::vector<long int> uba32vl = test32VLUBA(nums, testCount);
+		std::vector<long int> vec32 = test32Vec(nums, testCount);
+		std::vector<long int> uba64 = test64UBA(nums64, testCount);
+		std::vector<long int> uba64vl = test64VLUBA(nums64, testCount);
+		std::vector<long int> vec64 = test64Vec(nums64, testCount);
+		
+		if (printVectors) {
+			std::cout << "UBA32:";
+			printTimeVector(uba32);
+			std::cout << std::endl;
+			
+			std::cout << "UBA32VL:";
+			printTimeVector(uba32vl);
+			std::cout << std::endl;
+			
+			std::cout << "VEC32:";
+			printTimeVector(vec32);
+			std::cout << std::endl;
 
-	std::cout << "UBA64:";
-	printTimeVector(uba64);
-	std::cout << std::endl;
-	
-	std::cout << "UBA64VL:";
-	printTimeVector(uba64vl);
-	std::cout << std::endl;
-	
-	std::cout << "VEC64:";
-	printTimeVector(vec64);
-	std::cout << std::endl;
-	
-	
-
+			std::cout << "UBA64:";
+			printTimeVector(uba64);
+			std::cout << std::endl;
+			
+			std::cout << "UBA64VL:";
+			printTimeVector(uba64vl);
+			std::cout << std::endl;
+			
+			std::cout << "VEC64:";
+			printTimeVector(vec64);
+			std::cout << std::endl;
+		}
+		else {
+			std::cout << testLengthBegin << ";";
+			std::cout << sserialize::statistics::mean(uba32.begin(), uba32.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(uba32vl.begin(), uba32vl.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(vec32.begin(), vec32.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(uba64.begin(), uba64.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(uba64vl.begin(), uba64vl.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(vec64.begin(), vec64.end(), 0) << std::endl;
+		}
+	}
 }
