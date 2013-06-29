@@ -432,7 +432,7 @@ void GeneralizedTrie<ItemType>::nextSuffixString(std::string::const_iterator & s
 				break;
 		}
 	}
-	else {
+	else if (strIt != strEnd) {
 		utf8::next(strIt, strEnd);
 	}
 }
