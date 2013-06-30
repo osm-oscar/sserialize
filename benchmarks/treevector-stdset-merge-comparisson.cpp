@@ -5,6 +5,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateDE.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <vector>
 #include <set>
 
@@ -101,18 +102,6 @@ std::vector<uint32_t> treeMerge(const std::vector< std::vector<uint32_t> > & v, 
 }
 
 struct TestResult {
-	TestResult(uint32_t bucketFill, uint64_t comparisonCount, uint32_t setSize,
-				long int setTime, long int vecTime, long int indexTime, long int indexVecTime,
-				long int indexWahTime, long int indexReglineTime, long int indexDETime) :
-	bucketFill(bucketFill), comparisonCount(comparisonCount),
-	setSize(setSize), setTime(setTime),
-	vecTime(vecTime),
-	indexTime(indexTime),
-	indexVecTime(indexVecTime),
-	indexWahTime(indexWahTime),
-	indexReglineTime(indexReglineTime),
-	indexDETime(indexDETime)
-	{}
 	uint32_t bucketFill;
 	uint64_t comparisonCount;
 	uint32_t setSize;
@@ -123,6 +112,7 @@ struct TestResult {
 	long int indexWahTime;
 	long int indexReglineTime;
 	long int indexDETime;
+	long int indexRleDETime;
 	void print(std::ostream & out) {
 		std::cout << "bucketFill: " << bucketFill << std::endl;
 		std::cout << "setSize: " << setSize << std::endl;
@@ -140,18 +130,20 @@ struct TestResult {
 		std::cout << "indexWahTime/setTime: " << (double)indexWahTime/setTime << std::endl;
 		std::cout << "indexRegLineTime/setTime: " << (double)indexReglineTime/setTime << std::endl;
 		std::cout << "indexDETime/setTime: " << (double)indexDETime/setTime << std::endl;
+		std::cout << "indexRLeDETime/setTime: " << (double)indexRleDETime/setTime << std::endl;
 	}
 	void printPlotFriendly(std::ostream & out) {
-		std::cout << bucketFill << "\t";
-		std::cout << setSize << "\t";
-		std::cout << comparisonCount << "\t";
-		std::cout << setTime << "\t";
-		std::cout << vecTime << "\t";
-		std::cout << indexTime << "\t";
-		std::cout << indexVecTime << "\t";
-		std::cout << indexWahTime << "\t";
-		std::cout << indexReglineTime << "\t";
-		std::cout << indexDETime;
+		std::cout << bucketFill << ";"; //0
+		std::cout << setSize << ";"; //1
+		std::cout << comparisonCount << ";"; //2
+		std::cout << setTime << ";"; //3
+		std::cout << vecTime << ";"; //4 (vector => vector)
+		std::cout << indexTime << ";"; //5 (vector => simple with ItemIndex)
+		std::cout << indexVecTime << ";"; //6 (vector => vector with ItemIndex)
+		std::cout << indexWahTime << ";"; //7
+		std::cout << indexReglineTime << ";"; //8
+		std::cout << indexDETime << ";"; //9
+		std::cout << indexRleDETime << ";"; // 10
 	}
 };
 
@@ -169,6 +161,7 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 	std::vector< sserialize::ItemIndex > wahItemIndexBuckets;
 	std::vector< sserialize::ItemIndex > reglineItemIndexBuckets;
 	std::vector< sserialize::ItemIndex > deItemIndexBuckets;
+	std::vector< sserialize::ItemIndex > rledeItemIndexBuckets;
 	
 	if (testSelect & 0x4) {
 		itemIndexBuckets.reserve(bucketCount);
@@ -203,6 +196,15 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 			deItemIndexBuckets.push_back( sserialize::ItemIndex(adap, sserialize::ItemIndex::T_DE) );
 		}
 	}
+	
+	if (testSelect & 0x80) {
+		rledeItemIndexBuckets.reserve(bucketCount);
+		for(size_t i = 0; i < bucketCount; i++) {
+			sserialize::UByteArrayAdapter adap(new std::vector<uint8_t>(), true);
+			sserialize::ItemIndexPrivateRleDE::create(buckets[i], adap);
+			rledeItemIndexBuckets.push_back( sserialize::ItemIndex(adap, sserialize::ItemIndex::T_RLE_DE) );
+		}
+	}
 
 	uint64_t comparisonCount = 0;
 	treeMerge(buckets, 0, bucketCount-1, comparisonCount);
@@ -216,6 +218,7 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 	long int indexWahTime = 0;
 	long int indexReglineTime = 0;
 	long int indexDETime = 0;
+	long int indexRleDETime = 0;
 	
 	for(size_t i = 0; i < testCount; i++) {
 		if (testSelect & 0x1) {
@@ -232,11 +235,11 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 			std::cout << " took " << setTime << " useconds. Resultsize=" << result.size() << std::endl;
 		}
 		if (testSelect & 0x2) {
-			std::cout << "Testing tree based merge..." << std::flush;
+			std::cout << "Testing tree merge with std::vector..." << std::flush;
 			sserialize::TimeMeasurer tm; tm.begin();
 			std::vector<uint32_t> result = treeMerge(buckets, 0, bucketCount-1);
 			tm.end();
-			vecTime = +tm.elapsedTime();
+			vecTime += tm.elapsedTime();
 			setSize = std::max(setSize, result.size());
 			std::cout << " took " << vecTime << " useconds. Resultsize=" << result.size() << std::endl;
 		}
@@ -277,10 +280,18 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 		if (testSelect & 0x40) {
 			std::cout << "Testing ItemIndex with delta encoding-Backend merge..." << std::flush;
 			sserialize::TimeMeasurer tm; tm.begin();
-			sserialize::ItemIndex result = sserialize::ItemIndex::unite(reglineItemIndexBuckets);
+			sserialize::ItemIndex result = sserialize::ItemIndex::unite(deItemIndexBuckets);
 			tm.end();
 			indexDETime += tm.elapsedTime();
 			std::cout << " took " << indexDETime << " useconds. Resultsize=" << result.size() << std::endl;
+		}
+		if (testSelect & 0x80) {
+			std::cout << "Testing ItemIndex with run-length delta encoding-Backend merge..." << std::flush;
+			sserialize::TimeMeasurer tm; tm.begin();
+			sserialize::ItemIndex result = sserialize::ItemIndex::unite(rledeItemIndexBuckets);
+			tm.end();
+			indexRleDETime += tm.elapsedTime();
+			std::cout << " took " << indexRleDETime << " useconds. Resultsize=" << result.size() << std::endl;
 		}
 	}
 	if (setTime)
@@ -293,8 +304,21 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 	indexWahTime /= testCount;
 	indexReglineTime /= testCount;
 	indexDETime /= testCount;
+	indexRleDETime /= testCount;
 	
-	return TestResult(bucketFillCount, comparisonCount, setSize, setTime, vecTime, indexTime, indexVecTime, indexWahTime, indexReglineTime, indexDETime);
+	TestResult result;
+	result.bucketFill = bucketFillCount;
+	result.comparisonCount = comparisonCount;
+	result.setSize = setSize;
+	result.setTime = setTime;
+	result.vecTime = vecTime;
+	result.indexTime = indexTime;
+	result.indexVecTime = indexVecTime;
+	result.indexWahTime = indexWahTime;
+	result.indexReglineTime = indexReglineTime;
+	result.indexDETime = indexDETime;
+	result.indexRleDETime = indexRleDETime;
+	return result;
 }
 
 void printHelp() {
@@ -308,7 +332,7 @@ int main(int argc, char ** argv) {
 	uint32_t bucketFillCountMultIncrement = 0;
 	uint32_t bucketFillCountEnd = 0;
 	uint32_t testCount = 0;
-	uint32_t testSelect = 0x7F;
+	uint32_t testSelect = std::numeric_limits<uint32_t>::max();
 	if (argc > 3) {
 		testCount = atol(argv[1]);
 		bucketCount = atol(argv[2]);
