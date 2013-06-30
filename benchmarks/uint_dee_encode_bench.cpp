@@ -56,7 +56,7 @@ std::vector<long int> test32UBA(const std::vector<uint32_t> & nums, int testCoun
 			num += uba.getUint32(4*i);
 		}
 		tm.end();
-		res.push_back( tm.elapsedMilliSeconds() );
+		res.push_back( tm.elapsedTime() );
 	}
 	return res;
 }
@@ -77,7 +77,7 @@ std::vector<long int> test32VLUBA(const std::vector<uint32_t> & nums, int testCo
 			num += uba.getVlPackedUint32();
 		}
 		tm.end();
-		res.push_back( tm.elapsedMilliSeconds() );
+		res.push_back( tm.elapsedTime() );
 	}
 	return res;
 }
@@ -99,7 +99,7 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 			num += vec[i];
 		}
 		tm.end();
-		res.push_back( tm.elapsedMilliSeconds() );
+		res.push_back( tm.elapsedTime() );
 	}
 	return res;
 }
@@ -120,7 +120,7 @@ std::vector<long int> test64UBA(const std::vector<uint64_t> & nums, int testCoun
 			num += uba.getUint64(8*i);
 		}
 		tm.end();
-		res.push_back( tm.elapsedMilliSeconds() );
+		res.push_back( tm.elapsedTime() );
 	}
 	return res;
 }
@@ -141,7 +141,7 @@ std::vector<long int> test64VLUBA(const std::vector<uint64_t> & nums, int testCo
 			num += uba.getVlPackedUint64();
 		}
 		tm.end();
-		res.push_back( tm.elapsedMilliSeconds() );
+		res.push_back( tm.elapsedTime() );
 	}
 	return res;
 }
@@ -163,7 +163,7 @@ std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCoun
 			num += vec[i];
 		}
 		tm.end();
-		res.push_back( tm.elapsedMilliSeconds() );
+		res.push_back( tm.elapsedTime() );
 	}
 	return res;
 }
@@ -191,8 +191,9 @@ int main(int argc, char ** argv) {
 	std::cout << "#TestLengtEnd: " << testLengthEnd << std::endl;
 	std::cout << "#TestLengthMul: " << testLengthMul << std::endl; 
 	std::cout << "#Test Count: " << testCount << std::endl;
+	std::cout << "#uba32;uba32vl;vec32;uba64;uba64vl;vec64" << std::endl;
 	sserialize::TimeMeasurer tm;
-	for(testLengthBegin; testLengthBegin < testLengthEnd; testLengthBegin *= testLengthMul) {
+	for(; testLengthBegin <= testLengthEnd; testLengthBegin *= testLengthMul) {
 		
 		std::vector<uint32_t> nums = createNumbersSet(testLengthBegin);
 		std::vector<uint64_t> nums64 = createNumbersSet64(testLengthBegin);
