@@ -11,22 +11,19 @@ ItemIndexPrivate * ItemIndexPrivateRleDECreator::getPrivateIndex() {
 
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UByteArrayAdapter & data) :
-m_curData(UDWConstrainedIterator(new UDWIteratorPrivateVarDirect(data+8), data.getUint32(0))),
-m_fullData(UDWConstrainedIterator(new UDWIteratorPrivateVarDirect(data+8), data.getUint32(0))),
+m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
 m_size(data.getUint32(4)),
+m_dataOffset(0),
 m_curId(0),
-m_cache(UByteArrayAdapter::createCache(m_size*4, false) )
+m_cache(UByteArrayAdapter::createCache(m_size*4, false) ),
+m_cacheOffset(0)
 {}
 
-ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(UDWIterator data) {
-// 	throw sserialize::TypeMissMatchException("ItemIndexPrivateRleDE with UDWIterator");
-	uint32_t dataSize = data.next();
-	m_size = data.next();
-	m_fullData = UDWConstrainedIterator(data, dataSize/4);
-	
+ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UDWIterator & data) {
+	throw sserialize::CorruptDataException("ItemIndexPrivateRleDE with UDWIterator is unsupported as of now!");
 }
 
-ItemIndexPrivateRleDE::ItemIndexPrivateRleDE() : m_size(0), m_curId(0) {}
+ItemIndexPrivateRleDE::ItemIndexPrivateRleDE() : m_size(0),  m_dataOffset(0), m_curId(0), m_cacheOffset(0) {}
 
 ItemIndexPrivateRleDE::~ItemIndexPrivateRleDE() {}
 
@@ -42,24 +39,29 @@ uint32_t ItemIndexPrivateRleDE::at(uint32_t pos) const {
 	if (!size() || size() <= pos)
 		return 0;
 	int len;
-	for(;m_cache.tellPutPtr()/4 <= pos;) {
-		uint32_t value = m_curData.next();
+	for(;m_cacheOffset <= pos;) {
+		uint32_t value = m_data.getVlPackedUint32(m_dataOffset, &len);
 		if (value & 0x1) { //rle
 			uint32_t rle = value >> 1;
-			value = m_curData.next();
+			m_dataOffset += len;
+			value = m_data.getVlPackedUint32(m_dataOffset, &len);
 			value >>= 1;
 			if (m_cache.size() - m_cache.tellPutPtr() < 4*rle)
 				m_cache.growStorage( 4*rle - (m_cache.size() - m_cache.tellPutPtr()) );
 			while(rle) {
 				m_curId += value;
-				m_cache.putUint32(m_curId);
+				m_cache.putUint32(m_cacheOffset*4, m_curId);
+				++m_cacheOffset;
 				--rle;
 			}
+			m_dataOffset += len;
 		}
 		else {
 			value >>= 1;
 			m_curId += value;
-			m_cache.putUint32(m_curId);
+			m_cache.putUint32(m_cacheOffset*4, m_curId);
+			m_dataOffset += len;
+			++m_cacheOffset;
 		}
 	}
 	return m_cache.getUint32(pos*4);
@@ -81,22 +83,22 @@ uint32_t ItemIndexPrivateRleDE::size() const {
 	return m_size;
 }
 
-uint8_t ItemIndexPrivateRleDE::bpn() const { return 0xFF; } //This shouldn't cause an overflow here
+uint8_t ItemIndexPrivateRleDE::bpn() const { return m_data.size()*8/m_size; } //This shouldn't cause an overflow here
 
 
-uint32_t ItemIndexPrivateRleDE::getSizeInBytes() const { return 0xFFFFFFFF; }
+uint32_t ItemIndexPrivateRleDE::getSizeInBytes() const { return m_data.size() + 8; }
 
 void ItemIndexPrivateRleDE::putInto(DynamicBitSet & bitSet) const {
-	UDWConstrainedIterator myIt = dataIterator();
+	UByteArrayAdapter tmpData(m_data);
 	uint32_t mySize = size();
 	uint32_t count = 0;
 	uint32_t prev = 0;
 	while(count < mySize) {
-		uint32_t val = myIt.next();
+		uint32_t val = tmpData.getVlPackedUint32();
 		if (val & 0x1) {
 			uint32_t rle = (val >> 1);
 			count += rle;
-			val = myIt.next();
+			val = tmpData.getVlPackedUint32();
 			val >>= 1;
 			
 			bitSet.set(prev + rle*val); //set the last bit of this rle to improve buffer allocations
@@ -139,11 +141,15 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 	if (!cother)
 		return ItemIndexPrivate::doIntersect(other);
 
-	UDWConstrainedIterator aData(dataIterator());
-	UDWConstrainedIterator bData(cother->dataIterator());
+	UByteArrayAdapter aData(m_data);
+	UByteArrayAdapter bData(cother->m_data);
 	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
 	ItemIndexPrivateRleDECreator creator(dest);
 
+	uint32_t aIndexIt = 0;
+	uint32_t bIndexIt = 0;
+	uint32_t aSize = m_size;
+	uint32_t bSize = cother->m_size;
 	uint32_t aRle = 0;
 	uint32_t bRle = 0;
 	uint32_t aId = 0;
@@ -164,7 +170,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 	aId = aVal;
 	bId = bVal;
 	
-	while (aData.hasNext() && bData.hasNext()) {
+	while (aIndexIt < aSize && bIndexIt < bSize) {
 		if (aId == bId) {
 			creator.push_back(aId);
 			

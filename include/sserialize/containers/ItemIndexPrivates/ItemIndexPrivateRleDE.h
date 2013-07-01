@@ -101,14 +101,13 @@ public:
 
 class ItemIndexPrivateRleDE: public ItemIndexPrivate {
 private:
-	mutable UDWConstrainedIterator m_curData;
-	UDWConstrainedIterator m_fullData;
+	UByteArrayAdapter m_data;
 	uint32_t m_size;
+	mutable uint32_t m_dataOffset;
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
-private:
-	///@return returns the dat iterator DO NOT call reset() on them!
-	const UDWConstrainedIterator & dataIterator() const;
+	mutable uint32_t m_cacheOffset;
+protected:
 	
 public:
 	ItemIndexPrivateRleDE();
