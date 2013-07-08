@@ -185,7 +185,7 @@ bool checkCompressedIndex(sserialize::Static::ItemIndexStore & real, sserialize:
 	return true;
 }
 
-void help() {
+void printHelp() {
 	std::cout <<
 	"Program options: \n \
 	-d id\t dump index \n \
@@ -281,7 +281,7 @@ int main(int argc, char ** argv) {
 		for (int i=0; i < argc; i++) {
 			cout << argv[i];
 		}
-		cout << endl << "Need in filename" << endl;
+		printHelp();
 		return 1;
 	}
 	
