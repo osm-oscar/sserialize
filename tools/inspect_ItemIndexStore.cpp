@@ -185,6 +185,23 @@ bool checkCompressedIndex(sserialize::Static::ItemIndexStore & real, sserialize:
 	return true;
 }
 
+void help() {
+	std::cout <<
+	"Program options: \n \
+	-d id\t dump index \n \
+	-di\tdump index of index store\n \
+	-abl num\talphabet bit length for huffman encoding \n \
+	-rch\trecompress with huffmann \n \
+	-rcv\trecompress with varuint32 \n \
+	-rclzo\trecompress with lzo \n \
+	-cc\tcheck compressed/transformed \n \
+	-o filename\tout file name\n \
+	-eq filename\tequality test \n \
+	-ds\tdump stats \n \
+	-t type\ttransform to (rline|wah|de|rlede|simple) \n \
+	";
+}
+
 int main(int argc, char ** argv) {
 	std::string inFileName;
 	std::string outFileName;
