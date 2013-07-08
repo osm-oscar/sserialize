@@ -45,3 +45,9 @@ sserialize::Static::Deque<std::string>::at(uint32_t pos) const {
 	}
 	return m_data.getString(m_index.at(pos));
 }
+
+template<>
+sserialize::UByteArrayAdapter
+sserialize::Static::Deque<sserialize::UByteArrayAdapter>::at(uint32_t pos) const {
+	return dataAt(pos);
+}

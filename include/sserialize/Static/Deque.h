@@ -20,41 +20,6 @@ namespace sserialize {
 namespace Static {
 
 template<typename TValue>
-class Deque: public RefCountObject {
-private:
-	SortedOffsetIndex m_index;
-	UByteArrayAdapter m_data;
-public:
-	Deque();
-	/** Creates a new deque at data.putPtr */
-	Deque(const UByteArrayAdapter & data);
-	/** This does not copy the ref count, but inits it */
-	Deque(const Deque & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
-	virtual ~Deque() {
-	
-	}
-	
-	/** This does not copy the ref count, it leaves it intact */
-	Deque & operator=(const Deque & other) {
-		m_data = other.m_data;
-		m_index = other.m_index;
-		return *this;
-	}
-	
-	uint32_t size() const { return m_index.size();}
-	UByteArrayAdapter::OffsetType getSizeInBytes() const {return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
-	TValue at(uint32_t pos) const;
-	UByteArrayAdapter dataAt(uint32_t pos) const;
-	int32_t find(const TValue & value) const;
-	TValue front() const;
-	TValue back() const;
-
-	UByteArrayAdapter & data() { return m_data;}
-	const UByteArrayAdapter & data() const { return m_data; }
-
-};
-
-template<typename TValue>
 class DequeCreator {
 	UByteArrayAdapter & m_dest;
 	std::set<OffsetType> m_offsets;
@@ -86,6 +51,52 @@ public:
 };
 
 template<typename TValue>
+class Deque: public RefCountObject {
+private:
+	SortedOffsetIndex m_index;
+	UByteArrayAdapter m_data;
+public:
+	Deque();
+	/** Creates a new deque at data.putPtr */
+	Deque(const UByteArrayAdapter & data);
+	/** This does not copy the ref count, but inits it */
+	Deque(const Deque & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
+	virtual ~Deque() {
+	
+	}
+	
+	/** This does not copy the ref count, it leaves it intact */
+	Deque & operator=(const Deque & other) {
+		m_data = other.m_data;
+		m_index = other.m_index;
+		return *this;
+	}
+	
+	uint32_t size() const { return m_index.size();}
+	UByteArrayAdapter::OffsetType getSizeInBytes() const {return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
+	TValue at(uint32_t pos) const;
+	UByteArrayAdapter dataAt(uint32_t pos) const;
+	int32_t find(const TValue & value) const;
+	TValue front() const;
+	TValue back() const;
+
+	UByteArrayAdapter & data() { return m_data;}
+	const UByteArrayAdapter & data() const { return m_data; }
+	
+	template<typename T_ORDER_MAP>
+	static void reorder(const Deque & src, const T_ORDER_MAP & order, DequeCreator<TValue> & dest) {
+		uint32_t s= src.size();
+		for(uint32_t i = 0; i < src.size(); ++i) {
+			dest.beginRawPut();
+			dest.rawPut().put(src.dataAt(i));
+			dest.endRawPut();
+		}
+	}
+
+};
+
+
+template<typename TValue>
 Deque<TValue>::Deque() : RefCountObject() {}
 
 template<typename TValue>
@@ -104,7 +115,7 @@ Deque<TValue>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return TValue();
 	}
-	return TValue(m_data + m_index.at(pos));
+	return TValue(dataAt(pos));
 }
 
 template<typename TValue>
@@ -125,7 +136,15 @@ Deque<TValue>::dataAt(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return UByteArrayAdapter();
 	}
-	return m_data + m_index.at(pos);
+	UByteArrayAdapter::OffsetType begin = m_index.at(pos);
+	UByteArrayAdapter::OffsetType len;
+	if (pos+1 == size()) {
+		len = m_data.size()-begin;
+	}
+	else {
+		len = m_index.at(pos+1);
+	}
+	return UByteArrayAdapter(m_data, begin, len);
 }
 
 template<typename TValue>
@@ -159,6 +178,10 @@ Deque<uint8_t>::at(uint32_t pos) const;
 template<>
 std::string
 Deque<std::string>::at(uint32_t pos) const;
+
+template<>
+UByteArrayAdapter
+Deque<UByteArrayAdapter>::at(uint32_t pos) const;
 
 }}//end namespace
 
