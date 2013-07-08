@@ -32,6 +32,15 @@ public:
 	uint32_t haveVersion() const { return m_haveVersion; }
 };
 
+class OutOfBoundsException: public Exception {
+public:
+	OutOfBoundsException(const std::string & what) :
+	Exception()
+	{
+		setMsg("OutOfBoundsException: " + what);
+	}
+};
+
 class TypeMissMatchException: public Exception {
 public:
 	TypeMissMatchException(const std::string & what) :
