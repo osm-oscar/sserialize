@@ -40,6 +40,7 @@ Static/GeoPoint.cpp
 Static/triestats.cpp
 Static/RTree.cpp
 Static/HuffmanDecoder.cpp
+Static/KeyValueObjectStore.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
@@ -73,6 +74,7 @@ containers/MultiBitBackInserter.cpp
 containers/MultiBitIterator.cpp
 containers/UDWIterator.cpp
 containers/UDWIteratorPrivateHD.cpp
+Static/KeyValueObjectStore.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
