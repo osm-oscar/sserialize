@@ -591,6 +591,32 @@ inline int8_t minStorageBytesOfValue(uint32_t v) {
 	else return 4;
 }
 
+template<typename T_OUT_TYPE, typename T_INPUT_IT, typename T_MAP_FUNC>
+T_OUT_TYPE transform(T_INPUT_IT begin, const T_INPUT_IT & end, T_MAP_FUNC func) {
+	T_OUT_TYPE out;
+	typename T_OUT_TYPE::iterator outIt(out.end());
+	while(begin  != end) {
+		outIt = out.insert(outIt, func(*begin));
+		++begin;
+	};
+	return out;
+};
+
+template<typename T_ITERATOR, typename T_FUNC>
+T_ITERATOR::type treeMap(const T_ITERATOR & begin, const T_ITERATOR & end, T_FUNC mapFunc) {
+	if (end - begin == 1) {
+		return *begin;
+	}
+	else if (end - begin == 2) {
+		return mapFunc(*begin, *end);
+	}
+	else {
+		return mapFunc( treeMap<T_ITERATOR, T_FUNC>(begin, begin+(end-begin)/2),
+						treeMap<T_ITERATOR, T_FUNC>(begin+(end-begin)/2, end)
+					);
+	}
+}
+
 }//end namespace
 
 #endif
