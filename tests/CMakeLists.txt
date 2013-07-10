@@ -54,6 +54,8 @@ ADD_TEST_TARGET_SINGLE(containers_DynamicBitSet)
 ADD_TEST_TARGET_SINGLE(containers_SortedOffsetIndex)
 ADD_TEST_TARGET_SINGLE(containers_setoptreesimple)
 ADD_TEST_TARGET_SINGLE(containers_multibititerators)
+ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
+
 
 #util
 ADD_TEST_TARGET_SINGLE(util_compactuintarray)

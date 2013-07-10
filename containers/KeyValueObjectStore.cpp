@@ -3,7 +3,6 @@
 #include <sserialize/Static/Deque.h>
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
-#include "SetOpTreePrivateSimple_parser.rl"
 
 namespace sserialize {
 
@@ -14,25 +13,25 @@ KeyValueObjectStore::~KeyValueObjectStore() {}
 uint32_t KeyValueObjectStore::keyId(const std::string & str) {
 	KeyStringTable::const_iterator it = m_keyStringTable.find(str);
 	if(it != m_keyStringTable.end()) {
-			return *it;
-		}
+			return it->second;
+	}
 	else {
-			uint32_t id = m_keyStringTable.size();
-			m_keyStringTable[str] = id;
-			return id;
-		}
+		uint32_t id = m_keyStringTable.size();
+		m_keyStringTable[str] = id;
+		return id;
+	}
 }
 
 uint32_t KeyValueObjectStore::valueId(const std::string & str) {
 	ValueStringTable::const_iterator it = m_valueStringTable.find(str);
 	if(it != m_valueStringTable.end()) {
-			return *it;
-		}
+		return it->second;
+	}
 	else {
-			uint32_t id = m_valueStringTable.size();
-			m_valueStringTable[str] = id;
-			return id;
-		}
+		uint32_t id = m_valueStringTable.size();
+		m_valueStringTable[str] = id;
+		return id;
+	}
 }
 
 void KeyValueObjectStore::add(const std::vector< std::pair<std::string, std::string> > & extItem) {
@@ -46,15 +45,17 @@ void KeyValueObjectStore::add(const std::vector< std::pair<std::string, std::str
 
 template<typename T>
 std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
-	T::const_iterator it(src.begin());
-	T::const_iterator end(src.end());
-	typename std::vector<const T::value_type *> tmp;
+	typename T::const_iterator it(src.begin());
+	typename T::const_iterator end(src.end());
+	typedef typename T::value_type ValueType;
+	typedef const ValueType * ValueTypePtr;
+	std::vector<ValueTypePtr> tmp;
 	tmp.reserve(src.size());
 	for(const auto & x  : src) {
 		tmp.push_back(&x);
 	}
 
-	auto sortFn = [](const T::value_type * a, const T::value_type * b) {
+	auto sortFn = [](ValueTypePtr a, ValueTypePtr b) {
 		return a->first < b->first;
 	};
 	std::sort(tmp.begin(), tmp.end(), sortFn);
@@ -94,8 +95,7 @@ void KeyValueObjectStore::serialize(const Item & item, UByteArrayAdapter & dest)
 	UByteArrayAdapter d(dest);
 	d.shrinkToPutPtr();
 	
-	uint32_t storageNeed = sserialize::MultiVarBitArray::minStorageBytes(keyBits+valueBits, item.size());
-	UByteArrayAdapter mvbData = UByteArrayAdapter::createCache(0);
+	UByteArrayAdapter mvbData = UByteArrayAdapter::createCache(0, false);
 	std::vector<uint8_t> bitConfig;
 	bitConfig.push_back(keyBits);
 	bitConfig.push_back(valueBits);

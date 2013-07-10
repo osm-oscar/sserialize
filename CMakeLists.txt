@@ -74,7 +74,7 @@ containers/MultiBitBackInserter.cpp
 containers/MultiBitIterator.cpp
 containers/UDWIterator.cpp
 containers/UDWIteratorPrivateHD.cpp
-Static/KeyValueObjectStore.cpp
+containers/KeyValueObjectStore.cpp
 )
 
 set(SPATIAL_SOURCES_CPP

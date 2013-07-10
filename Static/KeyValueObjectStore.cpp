@@ -38,6 +38,15 @@ m_priv(new KeyValueObjectStorePrivate(data))
 
 KeyValueObjectStore::~KeyValueObjectStore() {}
 
+
+uint32_t KeyValueObjectStore::size() const {
+	return priv()->size();
+}
+
+UByteArrayAdapter::OffsetType KeyValueObjectStore::getSizeInBytes() const {
+	return priv()->getSizeInBytes();
+}
+
 uint32_t KeyValueObjectStore::findKeyId(const std::string & str) const {
 	return priv()->findKeyId(str);
 }
@@ -67,6 +76,14 @@ m_items(data+(m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInByte
 {}
 
 KeyValueObjectStorePrivate::~KeyValueObjectStorePrivate() {}
+
+uint32_t KeyValueObjectStorePrivate::size() const {
+	return m_items.size();
+}
+
+UByteArrayAdapter::OffsetType KeyValueObjectStorePrivate::getSizeInBytes() const {
+	return m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInBytes()+m_items.getSizeInBytes();
+}
 
 uint32_t KeyValueObjectStorePrivate::findKeyId(const std::string & str) const {
 	int32_t pos = m_keyStringTable.find(str);

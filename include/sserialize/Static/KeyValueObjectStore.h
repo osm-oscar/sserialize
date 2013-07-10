@@ -35,12 +35,14 @@ public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
 private:
 	std::shared_ptr<KeyValueObjectStorePrivate> m_priv;
-	std::shared_ptr<KeyValueObjectStorePrivate> & priv();
-	const std::shared_ptr<KeyValueObjectStorePrivate> & priv() const;
+	inline std::shared_ptr<KeyValueObjectStorePrivate> & priv() { return m_priv; }
+	inline const std::shared_ptr<KeyValueObjectStorePrivate> & priv() const { return m_priv; }
 public:
 	KeyValueObjectStore();
 	KeyValueObjectStore(const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStore();
+	uint32_t size() const;
+	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t findKeyId(const std::string & str) const;
 	uint32_t findValueId(const std::string & str) const;
 	std::string key(uint32_t id) const;
@@ -71,6 +73,8 @@ public:
 	KeyValueObjectStorePrivate();
 	KeyValueObjectStorePrivate(const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStorePrivate();
+	uint32_t size() const;
+	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t findKeyId(const std::string & str) const;
 	uint32_t findValueId(const std::string & str) const;
 	std::string key(uint32_t id) const;
