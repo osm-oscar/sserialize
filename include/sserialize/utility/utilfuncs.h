@@ -602,8 +602,8 @@ T_OUT_TYPE transform(T_INPUT_IT begin, const T_INPUT_IT & end, T_MAP_FUNC func) 
 	return out;
 };
 
-template<typename T_ITERATOR, typename T_FUNC>
-T_ITERATOR::type treeMap(const T_ITERATOR & begin, const T_ITERATOR & end, T_FUNC mapFunc) {
+template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
+T_RETURN treeMap(const T_ITERATOR & begin, const T_ITERATOR & end, T_FUNC mapFunc) {
 	if (end - begin == 1) {
 		return *begin;
 	}
