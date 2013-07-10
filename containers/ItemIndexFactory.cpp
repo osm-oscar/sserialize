@@ -222,6 +222,12 @@ UByteArrayAdapter::OffsetType compressWithHuffmanRLEDE(sserialize::Static::ItemI
 	UByteArrayAdapter data = store.getData();
 	HuffmanTree<uint32_t> ht;
 	createHuffmanTree(store, ht);
+	
+	if (ht.depth() > 32) {
+		std::cerr << "HuffmanTree depth > 32" << std::endl;
+		return 0;
+	}
+	
 	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());
 	
 	
@@ -288,6 +294,12 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 	UByteArrayAdapter data = store.getData();
 	HuffmanTree<uint32_t> ht;
 	createHuffmanTree(store, ht);
+	
+	if (ht.depth() > 32) {
+		std::cerr << "HuffmanTree depth > 32" << std::endl;
+		return 0;
+	}
+	
 	std::unordered_map<uint32_t, HuffmanCodePoint> htMap(ht.codePointMap());	
 	
 	//now recompress
