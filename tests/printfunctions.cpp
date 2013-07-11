@@ -30,6 +30,18 @@ void printCompletionSet(const sserialize::StringsItemDBWrapper< sserialize::Test
 	}
 }
 
+
+void printCompletionSet(const  std::deque<TestItemData> & db, ItemIndex trieSet) {
+	for(size_t i = 0; i < trieSet.size(); i++) {
+		const TestItemData & item = db.at( trieSet.at(i) );
+		std::cout << "[(";
+		for(std::deque<std::string>::const_iterator sit = item.strs.begin(); sit != item.strs.end(); sit++) {
+			std::cout << *sit << ",";
+		}
+		std::cout << "):" << item.id << "]";
+	}
+}
+
 void printCompletionSet(const std::set<unsigned int> & set, const std::deque<TestItemData> & items) {
 	for(size_t i = 0; i < items.size(); i++) {
 		if (set.count(items.at(i).id) > 0) {

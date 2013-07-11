@@ -118,7 +118,7 @@ private: //variables
 	uint32_t m_count;
 	uint32_t m_nodeCount;
 	Node * m_root;
-	StringsItemDBWrapper<ItemType> m_db;
+	std::vector<std::string> m_strings;
 	bool m_caseSensitive;
 	bool m_addTransDiacs;
 	bool m_isSuffixTrie;
@@ -195,13 +195,20 @@ public: //Fill functions
 	  *
 	  */
 	bool setDB(const StringsItemDBWrapper< ItemType >& db);
+	
+	/** This will create a trie out of a strings factory
+	  * The Stringsfactory should provide begin(), end() iterators with their value_type having begin(), end() as well
+	  */
+	
+	
+	template<typename T_ITEM_FACTORY, typename T_ITEM>
+	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactor);
 
 public://Completion
 	ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUFFIX_PREFIX) const;
 	ItemIndex complete(const std::deque< std::string > & strs, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUFFIX_PREFIX) const;
 
 public: //Access functions
-	StringsItemDBWrapper<ItemType> & db() { return m_db;}
 	Node * rootNode() { return m_root;}
 
 public: //Serialization functions
@@ -226,7 +233,6 @@ GeneralizedTrie<ItemType>::GeneralizedTrie() :
 m_count(0),
 m_nodeCount(0),
 m_root(0),
-m_db(StringsItemDBWrapper<ItemType>(  new StringsItemDBWrapperPrivateSIDB<ItemType>() )),
 m_caseSensitive(false),
 m_addTransDiacs(false),
 m_isSuffixTrie(false)
@@ -238,7 +244,6 @@ GeneralizedTrie<ItemType>::GeneralizedTrie(const StringsItemDBWrapper<ItemType> 
 m_count(0),
 m_nodeCount(0),
 m_root(0),
-m_db(StringsItemDBWrapper<ItemType>( new StringsItemDBWrapperPrivateSIDB<ItemType>() )),
 m_caseSensitive(caseSensitive),
 m_addTransDiacs(false),
 m_isSuffixTrie(suffixTrie)
@@ -438,6 +443,151 @@ void GeneralizedTrie<ItemType>::nextSuffixString(std::string::const_iterator & s
 }
 
 
+template<class ItemType>
+template<typename T_ITEM_FACTORY, typename T_ITEM>
+bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
+	DiacriticRemover transLiterator;
+	if (m_addTransDiacs) {
+		UErrorCode status = transLiterator.init();
+		if (U_FAILURE(status)) {
+			std::cerr << "Failed to create translitorated on request: " << u_errorName(status) << std::endl;
+			return false;
+		}
+	}
+
+	clear();
+	ProgressInfo progressInfo;
+
+	{
+		std::unordered_set<std::string> strings;
+		progressInfo(stringsFactory.end()-stringsFactory.begin(), "Gathering strings from StringsFactory");
+		for(typename T_ITEM_FACTORY::const_iterator it(stringsFactory.begin()); it != stringsFactory.end(); ++it) {
+			for(typename T_ITEM::const_iterator iIt(it->begin()); iIt != it->end(); ++iIt) {
+				strings.insert(*iIt);
+			}
+		}
+		m_strings = std::vector<std::string>(strings.begin(), strings.end());
+		std::sort(m_strings.begin(), m_strings.end());
+	}
+	
+	//This is the first part (create the trie)
+	progressInfo.begin(m_strings.size());
+	uint32_t count = 0;
+	for(std::vector<std::string>::const_iterator strsIt(m_strings.cbegin()); strsIt != m_strings.cend(); ++strsIt) {
+		std::vector<std::string> strs;
+		if (m_caseSensitive)
+			strs.push_back(*strsIt);
+		else
+			strs.push_back( unicode_to_lower(*strsIt) );
+		
+		if (m_addTransDiacs) {
+			strs.push_back( strs.back() );
+			transLiterator.transliterate(strs.back());
+		}
+
+		for(std::vector<std::string>::const_iterator it = strs.begin(); it != strs.end(); ++it) {
+			at(it->begin(), it->end());
+			if (m_isSuffixTrie) {
+				std::string::const_iterator strIt = it->begin();
+				std::string::const_iterator strEnd = it->end();
+				while (strIt != strEnd) {
+					nextSuffixNode(strIt, strEnd);
+				}
+			}
+		}
+		progressInfo(++count, "GeneralizedTrie::setDB::createTrie");
+	}
+	if (!consistencyCheck()) {
+		std::cout << "Trie is broken after GeneralizedTrie::setDB::createTrie" << std::endl;
+		return false;
+	}
+
+	//get all nodes for all strings
+	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes; strIdToSubStrNodes.reserve(m_strings.size());
+	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes; strIdToExactNodes.reserve(m_strings.size());
+	
+	progressInfo.begin(m_strings.size());
+	count = 0;
+	#pragma omp parallel for 
+	for(size_t i = 0; i <  m_strings.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
+		std::vector<std::string> strs;
+		if (m_caseSensitive)
+			strs.push_back(m_strings[i]);
+		else
+			strs.push_back( unicode_to_lower(m_strings[i]) );
+		
+		if (m_addTransDiacs) {
+			strs.push_back( strs.back() );
+			transLiterator.transliterate(strs.back());
+		}
+
+		
+		for(std::vector<std::string>::const_iterator insStrIt = strs.begin(); insStrIt != strs.end(); ++insStrIt) {
+			std::string::const_iterator strIt(insStrIt->begin());
+			std::string::const_iterator strEnd(insStrIt->end());
+			#pragma omp critical
+			{strIdToExactNodes[m_strings[i]].insert( at(strIt, strEnd) );}
+			if (m_isSuffixTrie) {
+				while (strIt != strEnd) {
+					Node * node = nextSuffixNode(strIt, strEnd);
+					#pragma omp critical
+					{strIdToSubStrNodes[m_strings[i]].insert( node );}
+				}
+			}
+		}
+		#pragma omp atomic
+		count++;
+		progressInfo(count, "GeneralizedTrie::setDB::findStringNodes");
+	}
+	progressInfo.end("GeneralizedTrie::setDB::findStringNodes");
+
+	if (!consistencyCheck()) {
+		std::cout << "Trie is broken after GeneralizedTrie::setDB::findStringNodes" << std::endl;
+		return false;
+	}
+
+// 	assert( m_root->parent() == 0 );
+	//Now add the items
+	
+	progressInfo.begin(m_strings.size());
+	count = 0;
+	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()); itemIt != stringsFactory.end(); ++itemIt) {
+		std::unordered_set<Node*> exactNodes;
+		std::unordered_set<Node*> suffixNodes;
+		for(typename T_ITEM::const_iterator itemStrsIt(itemIt->begin()); itemStrsIt != itemIt->end(); ++itemStrsIt) {
+			if (strIdToExactNodes.count(*itemStrsIt)) {
+				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
+			}
+			else {
+				std::cout << "ERROR: No exact node for item string" << std::endl;
+			}
+			if (strIdToSubStrNodes.count(*itemStrsIt)) {
+				suffixNodes.insert(strIdToSubStrNodes[*itemStrsIt].begin(), strIdToSubStrNodes[*itemStrsIt].end());
+			}
+		}
+		
+		for(std::unordered_set<Node*>::iterator esit = exactNodes.begin(); esit != exactNodes.end(); ++esit) {
+			(*esit)->exactValues.insert((*esit)->exactValues.end(), count);
+		}
+		for(std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
+			(*it)->subStrValues.insert((*it)->subStrValues.end(), count);
+		}
+		
+		++count;
+		progressInfo(count, "GeneralizedTrie::setDB::insertItems");
+	}
+	progressInfo.end("GeneralizedTrie::setDB::insertItems");
+	std::cout << std::endl;
+	if (!consistencyCheck()) {
+		std::cout << "Trie is broken after GeneralizedTrie::setDB::insertItems" << std::endl;
+		return false;
+	}
+
+	return true;
+}
+	
+	
+
 /** This function sets the DB the trie uses and creates the trie out of the DB data
   * It does so in 3 Steps:
   * 1. Create trie nodes with all the strings in the db's string table
@@ -458,8 +608,10 @@ bool GeneralizedTrie<ItemType>::setDB(const StringsItemDBWrapper< ItemType >& db
 			return false;
 		}
 	}
-		
-	m_db = db;
+	{
+		insertSecondIntoContainer(db.strIdToStr().cbegin(), db.strIdToStr().cend(), m_strings);
+		std::sort(m_strings.begin(), m_strings.end());
+	}
 	
 	//This is the first part (create the trie)
 	progressInfo.begin(db.strIdToStr().size());
@@ -759,11 +911,10 @@ void GeneralizedTrie<ItemType>::createStaticFlatTrie(FlatGSTConfig & config) {
 	std::set<std::string> trieStrings;
 	
 	if (m_caseSensitive)
-		insertMapValuesIntoSet<unsigned int, std::string>(m_db.strIdToStr(), trieStrings);
+		trieStrings.insert(m_strings.begin(), m_strings.end());
 	else {
-		std::map<unsigned int, std::string>::const_iterator itEnd = m_db.strIdToStr().end();
-		for(std::map<unsigned int, std::string>::const_iterator it = m_db.strIdToStr().begin(); it != itEnd; ++it) {
-			trieStrings.insert( unicode_to_lower(it->second) );
+		for(std::vector<std::string>::const_iterator it = m_strings.begin(); it != m_strings.end(); ++it) {
+			trieStrings.insert( unicode_to_lower(*it) );
 		}
 	}
 	
@@ -965,15 +1116,14 @@ fillFlatTrieIndexEntriesWithStrIds(FlatTrieEntryConfig<ItemIdType> & flatTrieCon
 	initFlatGSTStrIdNodes(m_root, config, 0, 0);
 	std::cout << "GeneralizedTrie::fillFlatTrieIndexEntriesWithStrIds: initFlatGSTStrIdNodes completed!" << std::endl;
 	ProgressInfo progressInfo;
-	std::map<unsigned int, std::string>::const_iterator itEnd = m_db.strIdToStr().end();
-	progressInfo.begin(m_db.strIdToStr().size());
+	progressInfo.begin(m_strings.size());
 	uint32_t count = 0;
-	for(std::map<unsigned int, std::string>::const_iterator it = m_db.strIdToStr().begin(); it != itEnd; ++it) {
+	for(uint32_t i = 0; i< m_strings.size(); ++i) {
 		std::string str;
 		if (m_caseSensitive)
-			str = it->second;
+			str = m_strings[i];
 		else
-			str =  unicode_to_lower(it->second);
+			str =  unicode_to_lower(m_strings[i]);
 			
 		
 		{
@@ -987,7 +1137,7 @@ fillFlatTrieIndexEntriesWithStrIds(FlatTrieEntryConfig<ItemIdType> & flatTrieCon
 			}
 			FlatGSTStrIds_TPNS * curNodeTPNS = dynamic_cast<FlatGSTStrIds_TPNS*>(curNode->temporalPrivateStorage);
 			
-			curNodeTPNS->exactIndex.push_back(it->first);
+			curNodeTPNS->exactIndex.push_back(i);
 		
 			if (m_isSuffixTrie) {
 				for(std::string::const_iterator suffixIt = str.begin(); suffixIt != strEnd; nextSuffixString(suffixIt, strEnd)) {
@@ -999,8 +1149,8 @@ fillFlatTrieIndexEntriesWithStrIds(FlatTrieEntryConfig<ItemIdType> & flatTrieCon
 							curNode = curNode->children.at( utf8::peek_next(strIt, strEnd) );
 					}
 					FlatGSTStrIds_TPNS * curNodeTPNS = dynamic_cast<FlatGSTStrIds_TPNS*>(curNode->temporalPrivateStorage);
-					if (curNodeTPNS->suffixIndex.size() == 0 || curNodeTPNS->suffixIndex.back() != it->first)
-						curNodeTPNS->suffixIndex.push_back(it->first);
+					if (curNodeTPNS->suffixIndex.size() == 0 || curNodeTPNS->suffixIndex.back() != i)
+						curNodeTPNS->suffixIndex.push_back(i);
 				}
 			}
 		}

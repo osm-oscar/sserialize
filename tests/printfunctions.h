@@ -10,6 +10,8 @@ void printCompletionQuery(const std::deque<std::string> & q);
 
 void printCompletionSet(const StringsItemDBWrapper< TestItemData >& db, ItemIndex trieSet);
 
+void printCompletionSet(const  std::deque<TestItemData> & db, ItemIndex trieSet);
+
 void printCompletionSet(std::deque< ItemIndex > & set, std::deque<TestItemData> & items);
 
 void printCompletionSet(TestItemDataItemSet & set);

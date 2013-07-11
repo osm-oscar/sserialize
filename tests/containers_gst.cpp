@@ -25,7 +25,7 @@ checkTrie(std::deque< std::deque<std::string> > & compStrs, GeneralizedTrie<Test
 	}
 	for(size_t i = 0; i < compStrs.size(); i++) {
 		ItemIndex trieSet = trie.complete(compStrs.at(i), (sserialize::StringCompleter::QuerryType) strMatchType);
-		std::set<unsigned int> trieIdsSet = itemIdsFromTrieSet(trie.db(), trieSet);
+		std::set<unsigned int> trieIdsSet = itemIdsFromTrieSet(items, trieSet);
 		std::set<unsigned int> realSet = getItemIdsWithString(compStrs.at(i), (sserialize::StringCompleter::QuerryType) strMatchType, items);
 		if (trieIdsSet.size() != realSet.size() || !std::equal(trieIdsSet.begin(), trieIdsSet.end(), realSet.begin())) { 
 			std::cout << "CompletionSets are not equal:" << std::endl;
@@ -34,7 +34,7 @@ checkTrie(std::deque< std::deque<std::string> > & compStrs, GeneralizedTrie<Test
 			std::cout << " =>" << std::endl << "Should be (size=" << realSet.size() << "):" << std::endl;
 			printCompletionSet(realSet, items);
 			std::cout << "; Is (size=" << trieSet.size() << "): " << std::endl; 
-			printCompletionSet(trie.db(), trieSet);
+			printCompletionSet(items, trieSet);
 			std::cout << std::endl;
 			trie.complete(compStrs.at(i), (sserialize::StringCompleter::QuerryType) strMatchType);
 			getItemIdsWithString(compStrs.at(i), (sserialize::StringCompleter::QuerryType) strMatchType, items);

@@ -246,11 +246,6 @@ public:
 		}
 	}
 
-	void remapValues(const std::map<ItemType, ItemType> & oldToNew) {
-		remapSorted(exactValues, exactValues, oldToNew);
-		remapSorted(subStrValues, subStrValues, oldToNew);
-	}
-	
 	void getSmallestValueRecursive(ItemType & value) {
 		if (this) {
 			if (exactValues.size())

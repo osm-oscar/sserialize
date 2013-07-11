@@ -17,11 +17,13 @@ class StringCompleterTest: public CppUnit::TestFixture {
 private:
 	std::deque<std::string> m_sampleCmpStrs;
 	std::deque<TestItemData> m_items;
+	StringsItemDBWrapper<TestItemData> m_db;
 
 protected:
 	
 	virtual StringCompleter & stringCompleter() = 0;
 	const std::deque<TestItemData> & items() { return m_items;}
+	StringsItemDBWrapper<TestItemData> & db() { return m_db; }
 	
 	StringsItemDBWrapper<TestItemData> createDB() const {
 		StringsItemDBWrapper<TestItemData> db( new StringsItemDBWrapperPrivateSIDB<TestItemData>() );
@@ -60,6 +62,7 @@ public:
 	StringCompleterTest() : CppUnit::TestFixture() {
 		m_sampleCmpStrs = createSampleSingleCompletionStrings();
 		m_items = createSampleData();
+		m_db = createDB();
 	}
     virtual ~StringCompleterTest() {}
 	

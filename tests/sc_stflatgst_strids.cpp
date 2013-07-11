@@ -36,6 +36,9 @@ private:
 	bool m_deleteTree;
 	bool m_mergeIndex;
 	StringCompleter m_strCompleter;
+	
+	StringsItemDBWrapper<TestItemData> m_db;
+	
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
 	
 protected:
@@ -43,7 +46,7 @@ protected:
 		m_trie.setCaseSensitivity(m_caseSensitive);
 		m_trie.setSuffixTrie(m_suffixTree);
 
-		m_trie.setDB(createDB());
+		m_trie.setDB(db());
 		
 		UByteArrayAdapter data(new std::vector<uint8_t>, true);
 		ItemIndexFactory idxFactory;
@@ -60,7 +63,7 @@ protected:
 
 		Static::ItemIndexStore idxStore(idxAdap);
 		stringCompleter() = StringCompleter(
-			new sserialize::Static::FlatGSTStrIds<StringsItemDBWrapper<TestItemData> >(data, idxStore, m_trie.db()) );
+			new sserialize::Static::FlatGSTStrIds<StringsItemDBWrapper<TestItemData> >(data, idxStore, db()) );
 		
 		return true;
 	}

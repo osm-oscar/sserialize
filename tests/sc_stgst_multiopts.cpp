@@ -117,24 +117,24 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 	for(std::deque< std::deque<std::string> >::iterator it = compStrs.begin(); it != compStrs.end(); it++) {
 		TestItemDataItemSet itemSet(*it, scompleter, itemDataBase, SetOpTree::SOT_COMPLEX); itemSet.execute();
 		ItemIndex cset = mtrie.complete(*it, strMatchType);
-		std::set<unsigned int> trieIdsSet = itemIdsFromTrieSet(mtrie.db(), cset);
+		std::set<unsigned int> trieIdsSet = itemIdsFromTrieSet(dbWrapper, cset);
 		std::set<unsigned int> realSet = getItemIdsWithString(*it, strMatchType, data);
 		if (trieIdsSet.size() != realSet.size() || !std::equal(trieIdsSet.begin(), trieIdsSet.end(), realSet.begin())) { 
 			std::cout << "MultiRadixTrie completion-set is broken!" << std::endl;
 			allOk = false;
 			printCompletionQuery(*it); std::cout << " -> ";
 			std::cout << "MultiRadixTrie:  " << std::endl;
-			printCompletionSet(mtrie.db(), cset); std::cout << std::endl << std::endl;
+			printCompletionSet(dbWrapper, cset); std::cout << std::endl << std::endl;
 			std::cout << "StaticRecTrie: " << std::endl;
 			printCompletionSet(itemSet); std::cout << std::endl << std::endl;
 		}
 
-		if (!checkCompletionSetsEquality(mtrie.db(),cset, itemSet)) {
+		if (!checkCompletionSetsEquality(dbWrapper,cset, itemSet)) {
 			allOk = false;
 			std::cout << "Static trie is broken" << std::endl;
 			printCompletionQuery(*it); std::cout << " -> ";
 			std::cout << "MultiRadixTrie:  " << std::endl;
-			printCompletionSet(mtrie.db(), cset); std::cout << std::endl << std::endl;
+			printCompletionSet(dbWrapper, cset); std::cout << std::endl << std::endl;
 			std::cout << "StaticRecTrie: " << std::endl;
 			printCompletionSet(itemSet); std::cout << std::endl << std::endl;
 		}
