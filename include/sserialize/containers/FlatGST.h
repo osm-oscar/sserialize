@@ -140,9 +140,6 @@ FlatGST<ItemType>::insertIntoCsSet(FlatGSTConstructionSet & cs) {
 // 			csIt->exactStrIds.push_back(srcIt->first);
 		}
 		if (m_suffixTrie) {
-			std::string::const_iterator strIt = curSrcString.begin();
-			std::string::const_iterator strBegin = curSrcString.begin();
-			std::string::const_iterator strEnd = curSrcString.end();
 			
 		}
 		
@@ -150,6 +147,7 @@ FlatGST<ItemType>::insertIntoCsSet(FlatGSTConstructionSet & cs) {
 		if (!keepString)
 			m_strings.pop_back();
 	}
+	return false;
 }
 
 template<class ItemType>
