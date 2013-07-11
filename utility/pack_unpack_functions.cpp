@@ -5,32 +5,6 @@
 
 namespace sserialize {
 
-uint32_t vl_unpack_uint32_t(uint8_t * s, int * len) {
-	uint32_t retVal = 0;
-	int myLen = 0;
-	do {
-		retVal |= static_cast<uint32_t>(s[myLen] & 0x7F) << 7*myLen;
-		myLen++;
-	}
-	while (myLen < 5 && s[myLen-1] & 0x80);
-	
-	if (len)
-		*len = myLen;
-		
-	return retVal;
-}
-
-int vl_pack_uint32_t(uint32_t s, uint8_t * d) {
-	int8_t i = 0;
-	do {
-		d[i] = s & 0x7F;
-		s = s >> 7;
-		if (s)
-			d[i] |= 0x80;
-		++i;
-	} while (s);
-	return i;
-}
 
 int vl_pack_uint32_t_size(uint32_t s) {
 	int c = 0;

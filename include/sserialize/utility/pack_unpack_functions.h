@@ -13,6 +13,24 @@ typedef int(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
 typedef uint32_t(*VlUnPackUint32FunctionsFuncPtr)(uint8_t * s, int * len);
 typedef int32_t(*VlUnPackInt32FunctionsFuncPtr)(int8_t * s, int * len);
 
+
+#ifdef ANDROID
+// inline uint32_t unPack_uint32_t(const uint8_t * src) {
+// 	return unPack_uint32_t(src[0], src[1], src[2], src[3]);
+// }
+#else
+union CI {
+	const uint8_t * c;
+	const uint32_t * i;
+};
+
+inline uint32_t unPack_uint32_t(const uint8_t * src) {
+	CI ci;
+	ci.c = src;
+	return ntohl(*ci.i);
+}
+#endif
+
 inline uint32_t unPack_uint32_t(const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
 	return (
 		((static_cast<uint32_t>(a) << 24) |
@@ -22,9 +40,6 @@ inline uint32_t unPack_uint32_t(const uint8_t a, const uint8_t b, const uint8_t 
 	);
 }
 
-inline uint32_t unPack_uint32_t(const uint8_t * src) {
-	return unPack_uint32_t(src[0], src[1], src[2], src[3]);
-}
 
 inline uint64_t unPack_uint64_t(const uint8_t * src) {
 	return (static_cast<uint64_t>( unPack_uint32_t(src) )  << 32) | static_cast<uint64_t>( unPack_uint32_t(&src[4]) );
@@ -175,17 +190,42 @@ inline void pack_int32_t(int32_t s, uint8_t * d) {
 	pack_uint32_t(tmp, d);
 }
 
+inline uint32_t vl_unpack_uint32_t(uint8_t * s, int * len) {
+	uint32_t retVal = 0;
+	int myLen = 0;
+	do {
+		retVal |= static_cast<uint32_t>(s[myLen] & 0x7F) << 7*myLen;
+		myLen++;
+	}
+	while (myLen < 5 && s[myLen-1] & 0x80);
+	
+	if (len)
+		*len = myLen;
+		
+	return retVal;
+}
+
+inline int vl_pack_uint32_t(uint32_t s, uint8_t * d) {
+	int8_t i = 0;
+	do {
+		d[i] = s & 0x7F;
+		s = s >> 7;
+		if (s)
+			d[i] |= 0x80;
+		++i;
+	} while (s);
+	return i;
+}
+
 /** @param len
  * len = length of bytes of the value
  */
-uint32_t vl_unpack_uint32_t(uint8_t * s, int * len);
 
 int32_t vl_unpack_int32_t(uint8_t * s, int * len);
 
 /** @param d needs at most 5 bytes
  *  @return returns the element count (-1 if failed)
  */
-int vl_pack_uint32_t(uint32_t s, uint8_t * d);
 
 int vl_pack_uint32_t_size(uint32_t s);
 
