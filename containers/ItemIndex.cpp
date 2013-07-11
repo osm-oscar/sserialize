@@ -325,7 +325,7 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 }
 
 
-ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & intersect, const std::vector< ItemIndex >& subtract, uint32_t count) {
+ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & intersect, const std::vector< ItemIndex >& subtract, uint32_t count, ItemFilter * filter) {
 	if (! intersect.size())
 		return ItemIndex();
 
@@ -363,15 +363,27 @@ ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & i
 				substractPrivates.push_back( static_cast<ItemIndexPrivateWAH*>( it->priv() ) );
 			}
 		}
-		ItemIndexPrivateWAH::fusedIntersectDifference(intersectPrivates, substractPrivates, count);
+		ItemIndexPrivateWAH::fusedIntersectDifference(intersectPrivates, substractPrivates, count, filter);
 	}
 	default:
-		return ItemIndex::intersect( intersect ) - ItemIndex::unite( subtract );
+		ItemIndex idx = ItemIndex::intersect( intersect ) - ItemIndex::unite( subtract );
+		if (filter) {
+			std::vector<uint32_t> ids;
+			ids.reserve(count);
+			uint32_t size = idx.size();
+			for(uint32_t i = 0; i < size && ids.size() < count; ++i) {
+				uint32_t id = idx.at(i);
+				if ((*filter)(id))
+					ids.push_back(id);
+			}
+			idx = ItemIndex::absorb(ids);
+		}
+		return idx;
 	}
 }
 
 
-ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& intersect, uint32_t count) {
+ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& intersect, uint32_t count, ItemIndex::ItemFilter * filter) {
 	if (! intersect.size())
 		return ItemIndex();
 
@@ -400,23 +412,37 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 				return ItemIndex();
 		}
 		
-		return ItemIndexPrivateWAH::constrainedIntersect(intersectPrivates, count);
+		return ItemIndexPrivateWAH::constrainedIntersect(intersectPrivates, count, filter);
 	}
 	case ItemIndex::T_RLE_DE:
 	{
-		std::vector<ItemIndexPrivateRleDE*> intersectPrivates;
-		intersectPrivates.reserve(intersect.size());
-		for(std::vector< ItemIndex >::const_iterator it = intersect.begin(); it != endInt; ++it) {
-			if (it->size())
-				intersectPrivates.push_back( static_cast<ItemIndexPrivateRleDE*>( it->priv() ) );
-			else
-				return ItemIndex();
+		if (!filter) {
+			std::vector<ItemIndexPrivateRleDE*> intersectPrivates;
+			intersectPrivates.reserve(intersect.size());
+			for(std::vector< ItemIndex >::const_iterator it = intersect.begin(); it != endInt; ++it) {
+				if (it->size())
+					intersectPrivates.push_back( static_cast<ItemIndexPrivateRleDE*>( it->priv() ) );
+				else
+					return ItemIndex();
+			}
+			return ItemIndexPrivateRleDE::constrainedIntersect(intersectPrivates, count);
 		}
-		
-		return ItemIndexPrivateRleDE::constrainedIntersect(intersectPrivates, count);
+		//else fall through and use full intersect 
 	}
 	default:
-		return ItemIndex::intersect( intersect );
+		ItemIndex idx = ItemIndex::intersect( intersect );
+		if (filter) {
+			std::vector<uint32_t> ids;
+			ids.reserve(count);
+			uint32_t size = idx.size();
+			for(uint32_t i = 0; i < size && ids.size() < count; ++i) {
+				uint32_t id = idx.at(i);
+				if ((*filter)(id))
+					ids.push_back(id);
+			}
+			idx = ItemIndex::absorb(ids);
+		}
+		return idx;
 	}
 }
 

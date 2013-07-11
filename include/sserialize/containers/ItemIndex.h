@@ -22,6 +22,10 @@ class ItemIndex: public RCWrapper<ItemIndexPrivate>  {
 public:
 	///Types have to be flags (so it's easier to check a list indices if they all have the same type
 	enum Types {T_NULL=0, T_SIMPLE=1, T_REGLINE=2, T_WAH=4, T_DE=8, T_RLE_DE=16, T_EMPTY=32, T_INDIRECT=64, T_STL_DEQUE=128, T_STL_VECTOR=256};
+	struct ItemFilter {
+		virtual bool operator()(uint32_t id) const = 0;
+	};
+	
 private:
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex::Types type);
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex & realIdIndex, const ItemIndex::Types type);
@@ -116,8 +120,8 @@ public:
 
 	static ItemIndex fromBitSet(const sserialize::DynamicBitSet & bitSet, sserialize::ItemIndex::Types type);
 	
-	static ItemIndex fusedIntersectDifference(const std::vector<ItemIndex> & intersect, const std::vector<ItemIndex> & substract, uint32_t count);
-	static ItemIndex constrainedIntersect(const std::vector< ItemIndex > & intersect, uint32_t count);
+	static ItemIndex fusedIntersectDifference(const std::vector<ItemIndex> & intersect, const std::vector<ItemIndex> & substract, uint32_t count, ItemFilter * filter = 0);
+	static ItemIndex constrainedIntersect(const std::vector< ItemIndex > & intersect, uint32_t count, ItemFilter * filter = 0);
 };
 
 

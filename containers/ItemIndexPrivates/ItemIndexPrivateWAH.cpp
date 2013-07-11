@@ -46,6 +46,7 @@ uint32_t ItemIndexPrivateWAH::at(uint32_t pos) const {
 		return 0;
 	
 	for(;m_cache.tellPutPtr()/4 <= pos;) {
+// 	while(m_curData.hasNext()) {
 		uint32_t val = m_curData.next();
 		if (val & 0x1) { //rle encoded
 			val >>= 1;//move out indicator bit
@@ -719,7 +720,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 //Optimilize:
 //if an subtract index is at the end, remove it
 
-ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemIndexPrivateWAH * >& intersect, const std::vector< ItemIndexPrivateWAH * >& subtract, uint32_t count) {
+ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemIndexPrivateWAH * >& intersect, const std::vector< ItemIndexPrivateWAH * >& subtract, uint32_t count, ItemIndex::ItemFilter * filter) {
 	std::vector<uint32_t> resultIds;
 	resultIds.reserve(count);
 	
@@ -802,8 +803,9 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 		}
 		
 		for(uint32_t i = bitOffset; currentWorkingWord && i < bitOffset+31; ++i) {
-			if (currentWorkingWord & 0x1)
+			if ((currentWorkingWord & 0x1) && (!filter || filter->operator()(i))) {
 				resultIds.push_back(i);
+			}
 			currentWorkingWord >>= 1;
 		}
 		bitOffset += 31;
@@ -812,7 +814,7 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 	return ItemIndex::absorb(resultIds);
 }
 
-ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< ItemIndexPrivateWAH * > & intersect, uint32_t count) {
+ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserialize::ItemIndexPrivateWAH * >& intersect, uint32_t count, sserialize::ItemIndex::ItemFilter * filter) {
 	std::vector<uint32_t> resultIds;
 	resultIds.reserve(count);
 	
@@ -865,8 +867,9 @@ ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< ItemIndex
 		}
 		
 		for(uint32_t i = bitOffset; currentWorkingWord && i < bitOffset+31; ++i) {
-			if (currentWorkingWord & 0x1)
+			if ((currentWorkingWord & 0x1) && (!filter || filter->operator()(i))) {
 				resultIds.push_back(i);
+			}
 			currentWorkingWord >>= 1;
 		}
 		bitOffset += 31;

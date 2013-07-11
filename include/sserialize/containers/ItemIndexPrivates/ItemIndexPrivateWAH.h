@@ -57,11 +57,11 @@ public:
 	
 	///The result of this operations uses a memory-based backend
 	///none of the indices has to be empty!
-	static ItemIndex fusedIntersectDifference(const std::vector< ItemIndexPrivateWAH* > & intersect, const std::vector< ItemIndexPrivateWAH* >& substract, uint32_t count);
+	static ItemIndex fusedIntersectDifference(const std::vector< ItemIndexPrivateWAH* > & intersect, const std::vector< ItemIndexPrivateWAH* >& substract, uint32_t count, ItemIndex::ItemFilter * filter = 0);
 
 	///The result of this operations uses a memory-based backend
 	///none of the indices has to be empty!
-	static ItemIndex constrainedIntersect(const std::vector< ItemIndexPrivateWAH* > & intersect, uint32_t count);
+	static ItemIndex constrainedIntersect(const std::vector< ItemIndexPrivateWAH* > & intersect, uint32_t count, ItemIndex::ItemFilter * filter = 0);
 
 	
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const;
