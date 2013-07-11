@@ -132,6 +132,22 @@ void insertMapValuesIntoSet(const std::map<TKEY, TVALUE> & source, std::set<TVAL
 	}
 }
 
+template<typename T_SOURCE_ITERATOR, typename T_DEST>
+void insertSecondIntoContainer(T_SOURCE_ITERATOR begin, const T_SOURCE_ITERATOR & end, T_DEST & dest) {
+	typename T_DEST::iterator destIt(dest.end());
+	for(; begin != end; ++begin) {
+		destIt = dest.insert(destIt, begin->second);
+	}
+}
+
+template<typename T_SOURCE_ITERATOR, typename T_DEST>
+void insertFirstIntoContainer(T_SOURCE_ITERATOR begin, const T_SOURCE_ITERATOR & end, T_DEST & dest) {
+	typename T_DEST::iterator destIt(dest.end());
+	for(; begin != end; ++begin) {
+		destIt = dest.insert(destIt, begin->first);
+	}
+}
+
 /** Remaps everything in source with map into dest, source and dest can be equal */
 template<typename T1, typename T2>
 bool remapSet(const std::set<T1> & source, std::set<T2> & dest, const std::map<T1, T2> & map) {
