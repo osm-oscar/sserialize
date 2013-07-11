@@ -45,7 +45,7 @@ protected:
 	
 	using sserialize::Static::Completer<ItemType, DataBaseType>::createItemSet;
 	
-	void registerOpFilter(ItemSet<ItemType, DataBaseType> & itemset) {
+	void registerGeoConstraintsFilter(ItemSet<ItemType, DataBaseType> & itemset) {
 		itemset.registerSelectableOpFilter( new sserialize::spatial::GeoConstraintSetOpTreeSF<sserialize::GeoCompleter>( getGeoCompleter()) );
 	}
 	
