@@ -14,6 +14,10 @@ uint32_t KeyValueObjectStoreItem::size() const {
 	return m_size;
 }
 
+std::pair<std::string, std::string> KeyValueObjectStoreItem::at(uint32_t pos) const {
+	return std::pair<std::string, std::string>(key(pos), value(pos));
+}
+
 std::string KeyValueObjectStoreItem::key(uint32_t pos) const {
 	return m_db->key( keyId(pos) );
 }
@@ -28,6 +32,14 @@ uint32_t KeyValueObjectStoreItem::keyId(uint32_t pos) const {
 
 uint32_t KeyValueObjectStoreItem::valueId(uint32_t pos) const {
 	return m_valueBegin + m_kv.at(pos, 1);
+}
+
+KeyValueObjectStoreItem::const_iterator KeyValueObjectStoreItem::begin() const {
+	return const_iterator(0, this);
+}
+
+KeyValueObjectStoreItem::const_iterator KeyValueObjectStoreItem::end() const {
+	return const_iterator(size(), this);
 }
 
 KeyValueObjectStore::KeyValueObjectStore() : m_priv(new KeyValueObjectStorePrivate()) {}
@@ -65,6 +77,14 @@ std::string KeyValueObjectStore::value(uint32_t id) const {
 
 KeyValueObjectStoreItem KeyValueObjectStore::at(uint32_t pos) const {
 	return KeyValueObjectStoreItem(priv(), priv()->dataAt(pos) );
+}
+
+KeyValueObjectStore::const_iterator KeyValueObjectStore::begin() const {
+	return const_iterator(0, *this);
+}
+
+KeyValueObjectStore::const_iterator KeyValueObjectStore::end() const {
+	return const_iterator(size(), *this);
 }
 
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(){}

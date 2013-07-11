@@ -2,6 +2,7 @@
 #define SSERIALIZE_AT_STL_INPUT_ITERATOR_H
 #include <iterator>
 #include <limits>
+#include <functional>
 
 namespace sserialize {
 
@@ -15,15 +16,15 @@ template<typename T_CONTAINER, typename T_RETURN_TYPE, typename T_SIZE_TYPE=std:
 class ReadOnlyAtStlIterator: public std::iterator<std::random_access_iterator_tag, T_RETURN_TYPE, T_SIZE_TYPE> {
 private:
 	T_SIZE_TYPE m_pos;
-	T_CONTAINER * m_data;
+	T_CONTAINER m_data;
 public:
 	ReadOnlyAtStlIterator() : m_pos(), m_data() {}
-	ReadOnlyAtStlIterator(T_SIZE_TYPE pos, T_CONTAINER * data) : m_pos(pos), m_data(data) {}
+	ReadOnlyAtStlIterator(T_SIZE_TYPE pos, T_CONTAINER data) : m_pos(pos), m_data(data) {}
 	virtual ~ReadOnlyAtStlIterator() {}
 	T_SIZE_TYPE & pos() { return m_pos;}
 	const T_SIZE_TYPE & pos() const { return m_pos;}
-	T_CONTAINER* & data() { return m_data; }
-	const T_CONTAINER* & data() const { return m_data; }
+	T_CONTAINER & data() { return m_data; }
+	const T_CONTAINER & data() const { return m_data; }
 	ReadOnlyAtStlIterator & operator=(const ReadOnlyAtStlIterator & other) {
 		m_pos = other.m_pos;
 		m_data = other.m_data;
@@ -86,7 +87,12 @@ public:
 	}
 	
 	T_RETURN_TYPE operator*() {
-		return m_data->at(m_pos);
+		if (std::is_pointer<T_CONTAINER>::value) {
+			return m_data->at(m_pos);
+		}
+		else {
+			return m_data.at(m_pos);
+		}
 	}
 	
 };

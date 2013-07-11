@@ -2,6 +2,7 @@
 #define SSERIALIZE_STATIC_KEY_VALUE_OBJECT_STORE_H
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/containers/MultiVarBitArray.h>
+#include <sserialize/utility/AtStlInputIterator.h>
 #include <memory>
 
 namespace sserialize {
@@ -12,6 +13,8 @@ class KeyValueObjectStorePrivate;
 class KeyValueObjectStoreItem {
 public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
+	typedef ReadOnlyAtStlIterator<const KeyValueObjectStoreItem*, std::pair<std::string, std::string> > const_iterator;
+	typedef const_iterator iterator;
 private:
 	uint32_t m_size;
 	uint32_t m_keyBegin;
@@ -23,16 +26,21 @@ public:
 	KeyValueObjectStoreItem(const std::shared_ptr<KeyValueObjectStorePrivate> & db, const UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStoreItem();
 	uint32_t size() const;
+	std::pair<std::string, std::string> at(uint32_t pos) const;
 	std::string key(uint32_t pos) const;
 	std::string value(uint32_t pos) const;
 	uint32_t keyId(uint32_t pos) const;
 	uint32_t valueId(uint32_t pos) const;
+	const_iterator begin() const;
+	const_iterator end() const;
 };
 
 
 class KeyValueObjectStore {
 public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
+	typedef ReadOnlyAtStlIterator<KeyValueObjectStore, KeyValueObjectStoreItem > iterator;
+	typedef ReadOnlyAtStlIterator<KeyValueObjectStore, KeyValueObjectStoreItem > const_iterator;
 private:
 	std::shared_ptr<KeyValueObjectStorePrivate> m_priv;
 	inline std::shared_ptr<KeyValueObjectStorePrivate> & priv() { return m_priv; }
@@ -48,6 +56,8 @@ public:
 	std::string key(uint32_t id) const;
 	std::string value(uint32_t id) const;
 	KeyValueObjectStoreItem at(uint32_t pos) const;
+	const_iterator begin() const;
+	const_iterator end() const;
 };
 
 
