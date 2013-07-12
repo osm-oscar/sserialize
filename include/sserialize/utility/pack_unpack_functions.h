@@ -1,10 +1,107 @@
 #ifndef COMMON_COMMON_H
 #define COMMON_COMMON_H
+/* uint*_t */
 #include <stdint.h>
-#include <arpa/inet.h>
+/* memcpy */
 #include <string.h>
 
+/* make sure be32toh and be64toh are present */
+#if defined(__linux__)
+#  include <endian.h>
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#  include <sys/endian.h>
+#elif defined(__OpenBSD__)
+#  include <sys/types.h>
+#  define be16toh(x) betoh16(x)
+#  define be32toh(x) betoh32(x)
+#  define be64toh(x) betoh64(x)
+#else
+/* htons/htonl */
+#include <arpa/inet.h>
+#  define htobe16(x) htons(x)
+#  define be16toh(x) htons(x)
+#  define htobe32(x) htonl(x)
+#  define be32toh(x) htonl(x)
+#  define htobe64(x) my_htobe64(x)
+#  define be64toh(x) htobe64(x)
+static uint64_t my_htobe64(uint64_t x) {
+	if (htobe32(1) == 1) return x;
+	return ((uint64_t)htobe32(x)) << 32 | htobe32(x >> 32);
+}
+
+#endif
+
 namespace sserialize {
+
+
+inline uint8_t unPack_uint8_t(const uint8_t a) {
+	return a;
+}
+
+inline uint16_t unPack_uint16_t(const uint8_t c, const uint8_t d) {
+	return (
+		(static_cast<uint16_t>(c) << 8) |
+		(static_cast<uint16_t>(d) << 0)
+	);
+}
+
+inline uint32_t unPack_uint24_t(const uint8_t b, const uint8_t c, const uint8_t d) {
+	return (
+		(static_cast<uint32_t>(b) << 16) |
+		(static_cast<uint32_t>(c) << 8) |
+		(static_cast<uint32_t>(d) << 0)
+	);
+}
+
+inline uint32_t unPack_uint32_t(const unsigned char * src ) {
+	uint32_t i;
+	memcpy(&i, src, sizeof(i));
+	return be32toh(i);
+}
+
+inline uint64_t unPack_uint64_t(const unsigned char * src) {
+	uint64_t i;
+	memcpy(&i, src, sizeof(i));
+	return be64toh(i);
+}
+
+inline uint64_t unPack_uint40_t(const unsigned char * src) {
+	unsigned char tmp[8] = {0};
+	memcpy(tmp + 3, src, 5);
+	return unPack_uint64_t(tmp);
+}
+
+inline void pack_uint8_t(uint32_t s, uint8_t * d) {
+	d[0] = s;
+}
+
+inline void pack_uint16_t(uint32_t s, uint8_t * d) {
+	d[0] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
+	d[1] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
+}
+
+inline void pack_uint24_t(uint32_t s, uint8_t * d) {
+	d[0] = static_cast<uint8_t>((s & 0x00FF0000) >> 16);
+	d[1] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
+	d[2] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
+}
+
+inline void pack_uint32_t(uint32_t src, unsigned char * dest) {
+	src = htobe32(src);
+	memcpy(dest, &src, sizeof(src));
+}
+
+inline void pack_uint40_t(uint64_t src, unsigned char * dest) {
+	src = htobe64(src);
+	memcpy(dest, 3 + (unsigned char*) &src, 5);
+}
+
+inline void pack_uint64_t(uint64_t src, unsigned char * dest) {
+	src = htobe64(src);
+	memcpy(dest, &src, sizeof(src));
+}
+
+
 
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
 typedef int(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
@@ -14,53 +111,19 @@ typedef uint32_t(*VlUnPackUint32FunctionsFuncPtr)(uint8_t * s, int * len);
 typedef int32_t(*VlUnPackInt32FunctionsFuncPtr)(int8_t * s, int * len);
 
 
-#ifdef ANDROID
-// inline uint32_t unPack_uint32_t(const uint8_t * src) {
-// 	return unPack_uint32_t(src[0], src[1], src[2], src[3]);
-// }
-#else
-union CI {
-	const uint8_t * c;
-	const uint32_t * i;
-};
-
-inline uint32_t unPack_uint32_t(const uint8_t * src) {
-	CI ci;
-	ci.c = src;
-	return ntohl(*ci.i);
-}
-#endif
-
 inline uint32_t unPack_uint32_t(const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
-	return (
-		((static_cast<uint32_t>(a) << 24) |
-		(static_cast<uint32_t>(b) << 16)) |
-		((static_cast<uint32_t>(c) << 8) |
-		(static_cast<uint32_t>(d) << 0))
-	);
-}
-
-
-inline uint64_t unPack_uint64_t(const uint8_t * src) {
-	return (static_cast<uint64_t>( unPack_uint32_t(src) )  << 32) | static_cast<uint64_t>( unPack_uint32_t(&src[4]) );
+	uint8_t tmp[4] = {a, b, c , d};
+	return unPack_uint32_t(tmp);
 }
 
 inline uint64_t unPack_uint64_t(const uint8_t i0, const uint8_t i1, const uint8_t i2, const uint8_t i3, const uint8_t i4, const uint8_t i5, const uint8_t i6, const uint8_t i7) {
-	return (static_cast<uint64_t>( unPack_uint32_t(i0, i1, i2, i3) )  << 32) | static_cast<uint64_t>( unPack_uint32_t(i4, i5, i6, i7) );
+	uint8_t tmp[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
+	return unPack_uint64_t(tmp);
 }
 
 inline uint64_t unPack_uint40_t(const uint8_t i0, const uint8_t i1, const uint8_t i2, const uint8_t i3, const uint8_t i4) {
-	return (
-		((static_cast<uint64_t>(i0) << 32) |
-		(static_cast<uint64_t>(i1) << 24)) |
-		((static_cast<uint64_t>(i2) << 16) |
-		(static_cast<uint64_t>(i3) << 8))
-		| static_cast<uint64_t>(i4)
-	);
-}
-
-inline uint64_t unPack_uint40_t(const uint8_t * src) {
-	return unPack_uint40_t(src[0], src[1], src[2], src[3], src[4]);
+	uint8_t tmp[5] = {i0, i1, i2, i3, i4};
+	return unPack_uint40_t(tmp);
 }
 
 inline int64_t unPack_int40_t(const uint8_t * src) {
@@ -101,66 +164,6 @@ inline int32_t unPack_int32_t(const uint8_t a, const uint8_t b, const uint8_t c,
 		return - (tmp >> 1);
 	else
 		return (tmp >> 1);
-}
-
-inline uint32_t unPack_uint24_t(const uint8_t b, const uint8_t c, const uint8_t d) {
-	return (
-		(static_cast<uint32_t>(b) << 16) |
-		(static_cast<uint32_t>(c) << 8) |
-		(static_cast<uint32_t>(d) << 0)
-	);
-}
-
-inline uint16_t unPack_uint16_t(const uint8_t c, const uint8_t d) {
-	return (
-		(static_cast<uint16_t>(c) << 8) |
-		(static_cast<uint16_t>(d) << 0)
-	);
-}
-
-inline uint8_t unPack_uint8_t(const uint8_t a) {
-	return a;
-}
-
-inline void pack_uint64_t(uint64_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s >> 56) & 0xFF);
-	d[1] = static_cast<uint8_t>((s >> 48) & 0xFF);
-	d[2] = static_cast<uint8_t>((s >> 40) & 0xFF);
-	d[3] = static_cast<uint8_t>((s >> 32) & 0xFF);
-	d[4] = static_cast<uint8_t>((s >> 24) & 0xFF);
-	d[5] = static_cast<uint8_t>((s >> 16) & 0xFF);
-	d[6] = static_cast<uint8_t>((s >> 8) & 0xFF);
-	d[7] = static_cast<uint8_t>((s >> 0) & 0xFF);
-}
-
-inline void pack_uint40_t(uint64_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s >> 32) & 0xFF);
-	d[1] = static_cast<uint8_t>((s >> 24) & 0xFF);
-	d[2] = static_cast<uint8_t>((s >> 16) & 0xFF);
-	d[3] = static_cast<uint8_t>((s >> 8) & 0xFF);
-	d[4] = static_cast<uint8_t>((s >> 0) & 0xFF);
-}
-
-inline void pack_uint32_t(uint32_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s & 0xFF000000) >> 24);
-	d[1] = static_cast<uint8_t>((s & 0x00FF0000) >> 16);
-	d[2] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
-	d[3] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
-}
-
-inline void pack_uint24_t(uint32_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s & 0x00FF0000) >> 16);
-	d[1] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
-	d[2] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
-}
-
-inline void pack_uint16_t(uint32_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
-	d[1] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
-}
-
-inline void pack_uint8_t(uint32_t s, uint8_t * d) {
-	d[0] = s;
 }
 
 inline void pack_int64_t(int64_t s, uint8_t * d) {
