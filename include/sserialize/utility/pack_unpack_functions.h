@@ -7,7 +7,14 @@
 
 /* make sure be32toh and be64toh are present */
 #if defined(__linux__)
-#  include <endian.h>
+#  if defined(__ANDROID__)
+#    include <sys/endian.h>
+#    define be16toh(x) betoh16(x)
+#    define be32toh(x) betoh32(x)
+#    define be64toh(x) betoh64(x)
+#  else
+#    include <endian.h>
+#  endif
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 #  include <sys/endian.h>
 #elif defined(__OpenBSD__)
@@ -196,9 +203,11 @@ inline void pack_int32_t(int32_t s, uint8_t * d) {
 inline uint32_t vl_unpack_uint32_t(uint8_t * s, int * len) {
 	uint32_t retVal = 0;
 	int myLen = 0;
+	int myShift = 0;
 	do {
-		retVal |= static_cast<uint32_t>(s[myLen] & 0x7F) << 7*myLen;
-		myLen++;
+		retVal |= static_cast<uint32_t>(s[myLen] & 0x7F) << myShift;
+		++myLen;
+		myShift += 7;
 	}
 	while (myLen < 5 && s[myLen-1] & 0x80);
 	
@@ -218,6 +227,23 @@ inline int vl_pack_uint32_t(uint32_t s, uint8_t * d) {
 		++i;
 	} while (s);
 	return i;
+}
+
+inline uint64_t vl_unpack_uint64_t(uint8_t * s, int * len) {
+	uint64_t retVal = 0;
+	int myLen = 0;
+	int myShift = 0;
+	do {
+		retVal |= static_cast<uint64_t>(s[myLen] & 0x7F) << myShift;
+		++myLen;
+		myShift += 7;
+	}
+	while (s[myLen-1] & 0x80 && myLen < 9);
+	
+	if (len)
+		*len = myLen;
+		
+	return retVal;
 }
 
 /** @param len
@@ -252,7 +278,6 @@ int vl_pack_int32_t_pad4(int32_t s, uint8_t * d);
 bool vl_pack_uint32_t_valid(uint32_t number);
 bool vl_pack_int32_t_valid(int32_t number);
 
-uint64_t vl_unpack_uint64_t(uint8_t* s, int* len);
 int vl_pack_uint64_t(uint64_t s, uint8_t * d);
 
 int64_t vl_unpack_int64_t(uint8_t* s, int* len);

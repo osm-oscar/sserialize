@@ -83,22 +83,6 @@ bool vl_pack_int32_t_valid(int32_t number) {
 	return !(absnum >= (1 << 29));
 }
 
-
-uint64_t vl_unpack_uint64_t(uint8_t * s, int * len) {
-	uint64_t retVal = 0;
-	int myLen = 0;
-	do {
-		retVal |= static_cast<uint64_t>(s[myLen] & 0x7F) << 7*myLen;
-		myLen++;
-	}
-	while (myLen < 9 && s[myLen-1] & 0x80);
-	
-	if (len)
-		*len = myLen;
-		
-	return retVal;
-}
-
 int vl_pack_uint64_t(uint64_t s, uint8_t * d) {
 	int8_t i = 0;
 	do {
