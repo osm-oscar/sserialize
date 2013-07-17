@@ -43,12 +43,12 @@ public:
 		if (type() == sserialize::spatial::GS_POINT)
 			return GeoPoint(m_data);
 		else
-			return GeoPoint(m_data + (GeoPoint::SERIALIZED_SIZE*(2+pos)));
+			return GeoPoint(m_data + (sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length()*(2+pos)));
 	}
 	
 	sserialize::spatial::GeoRect boundary() const {
 		GeoPoint bL(m_data);
-		GeoPoint tR(m_data+GeoPoint::SERIALIZED_SIZE);
+		GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length());
 		return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
 	}
 	
@@ -61,7 +61,7 @@ public:
 		if (!boundary.overlap( this->boundary()) )
 			return false;
 		uint32_t s = size();
-		UByteArrayAdapter tmp(m_data+2*GeoPoint::SERIALIZED_SIZE); tmp.resetGetPtr();
+		UByteArrayAdapter tmp(m_data+2*sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length()); tmp.resetGetPtr();
 		GeoPoint p;
 		for(size_t i = 0; i < s; ++i) {
 			tmp >> p;
@@ -73,7 +73,7 @@ public:
 	
 	inline static sserialize::spatial::GeoRect rectFromData(const UByteArrayAdapter &  data) {
 		GeoPoint bL(data);
-		GeoPoint tR(data+GeoPoint::SERIALIZED_SIZE);
+		GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length());
 		return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
 	}
 
@@ -83,9 +83,9 @@ public:
 
 inline sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
 	sserialize::Static::spatial::GeoPoint bL(in);
-	sserialize::Static::spatial::GeoPoint tR(in+sserialize::Static::spatial::GeoPoint::SERIALIZED_SIZE);
+	sserialize::Static::spatial::GeoPoint tR(in+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length());
 	out = sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
-	in.incGetPtr(2*sserialize::Static::spatial::GeoPoint::SERIALIZED_SIZE);
+	in.incGetPtr(2*sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length());
 	return in;
 }
 

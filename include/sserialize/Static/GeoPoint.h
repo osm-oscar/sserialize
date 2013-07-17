@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_GEOPOINT_H
 #define SSERIALIZE_STATIC_SPATIAL_GEOPOINT_H
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/SerializationInfo.h>
 #include <stdint.h>
 
 namespace sserialize {
@@ -38,10 +39,6 @@ public:
 	static inline double toDoubleLon(uint32_t lon) {
 		return ((double)lon*360.0/0xFFFFFF-180.0);
 	}
-	
-	//simulate constexpr
-	enum {SERIALIZED_FIXED_SIZE=0};
-	enum {SERIALIZED_SIZE=6};
 };
 
 
@@ -53,4 +50,10 @@ inline sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter 
 	return destination;
 }
 
+namespace sserialize {
+	template<> inline bool sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::is_fixed_length() { return true; }
+	template<> inline sserialize::OffsetType sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length() { return 6; }
+	template<> inline sserialize::OffsetType sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::max_length() { return 6; }
+	template<> inline sserialize::OffsetType sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::min_length() { return 6; }
+}
 #endif
