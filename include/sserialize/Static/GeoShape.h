@@ -47,9 +47,15 @@ public:
 	}
 	
 	sserialize::spatial::GeoRect boundary() const {
-		GeoPoint bL(m_data);
-		GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length());
-		return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+		if (m_type == sserialize::spatial::GS_POINT) {
+			GeoPoint p(at(0));
+			return sserialize::spatial::GeoRect(p.latD(), p.latD(), p.lonD(), p.lonD());
+		}
+		else {
+			GeoPoint bL(m_data);
+			GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length());
+			return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+		}
 	}
 	
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const {
