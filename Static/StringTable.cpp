@@ -258,7 +258,8 @@ bool StringTable::match(uint32_t stringId, const std::string & searchStr, sseria
 
 /** strings should be sorted in usage frequency, strid will be the position **/
 bool StringTable::create(UByteArrayAdapter& destination, const std::map< unsigned int, std::string >& strs) {
-	std::deque<std::string> strDeque;
+	std::vector<std::string> strDeque;
+	strDeque.reserve(strs.size());
 	for(unsigned int sit = 0; sit < strs.size(); sit++) {
 		if (strs.count(sit) == 0) {
 			std::cout << "String Table from Trie is broken!" << std::endl;
