@@ -8,6 +8,14 @@ DynamicBitSet::DynamicBitSet() : m_data(UByteArrayAdapter::createCache(0, false)
 DynamicBitSet::DynamicBitSet(const UByteArrayAdapter & data) : m_data(data) {}
 DynamicBitSet::~DynamicBitSet() {}
 
+bool DynamicBitSet::align(uint8_t shift) {
+	UByteArrayAdapter::OffsetType newSize = m_data.size() >> shift;
+	if ((newSize << shift) & m_data.size())
+		++newSize;
+	newSize <<= shift;
+	return m_data.resize(newSize);
+}
+
 bool DynamicBitSet::isSet(uint32_t pos) const {
 	return m_data.at( pos/8 ) & (static_cast<uint8_t>(1) << (pos % 8));
 }
@@ -37,12 +45,76 @@ ItemIndex DynamicBitSet::toIndex(int type) const {
 uint32_t DynamicBitSet::size() const {
 	uint32_t resSize = 0;
 	UByteArrayAdapter::SizeType s = m_data.size();
-	for(UByteArrayAdapter::SizeType it = 0; it < s; ++it) {
-		resSize += popCount( m_data.at(it) );
+	UByteArrayAdapter::SizeType i;
+	for(i = 0; i+4 <= s; i += 4) {
+		resSize += popCount( m_data.getUint32(i));
+	}
+	for(; i < s; ++i) {
+		resSize += popCount( m_data.at(i));
 	}
 	return resSize;
 }
 
+DynamicBitSet DynamicBitSet::operator&(const DynamicBitSet & other) const {
+	UByteArrayAdapter::SizeType s = std::min<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(s, false) );
+	for(UByteArrayAdapter::SizeType i = 0; i < s; ++i) {
+		d[i] = m_data[i] & other.m_data[i];
+	}
+	return DynamicBitSet(d);
+}
 
+DynamicBitSet DynamicBitSet::operator|(const DynamicBitSet & other) const {
+	UByteArrayAdapter::SizeType smax = std::max<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(smax, false) );
+	
+	UByteArrayAdapter::SizeType i = 0;
+	UByteArrayAdapter::SizeType s;
+	for(s = std::min<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size()); i < s; ++i) {
+		d[i] = m_data[i] | other.m_data[i];
+	}
+	for(s = m_data.size(); i < s; ++i) {
+		d[i] = m_data[i];
+	}
+	for(s = other.m_data.size(); i < s; ++i) {
+		d[i] = other.m_data[i];
+	}
+	return DynamicBitSet(d);
+}
+
+DynamicBitSet DynamicBitSet::operator-(const DynamicBitSet & other) const {
+	UByteArrayAdapter::SizeType s = std::min<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(s, false) );
+	for(UByteArrayAdapter::SizeType i = 0; i < s; ++i) {
+		d[i] = m_data[i] & (~other.m_data[i]);
+	}
+	return DynamicBitSet(d);
+}
+DynamicBitSet DynamicBitSet::operator^(const DynamicBitSet & other) const {
+	UByteArrayAdapter::SizeType smax = std::max<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(smax, false) );
+	
+	UByteArrayAdapter::SizeType i = 0;
+	UByteArrayAdapter::SizeType s;
+	for(s = std::min<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size()); i < s; ++i) {
+		d[i] = m_data[i] ^ other.m_data[i];
+	}
+	for(s = m_data.size(); i < s; ++i) {
+		d[i] = m_data[i];
+	}
+	for(s = other.m_data.size(); i < s; ++i) {
+		d[i] = other.m_data[i];
+	}
+	return DynamicBitSet(d);
+}
+
+DynamicBitSet DynamicBitSet::operator~() const {
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(m_data.size(), false) );
+	UByteArrayAdapter::SizeType s = m_data.size();
+	for(UByteArrayAdapter::SizeType i = 0; i < s; ++i) {
+		d[i] = ~m_data[i];
+	}
+	return DynamicBitSet(d);
+}
 
 }//end namespace

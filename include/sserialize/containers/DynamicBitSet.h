@@ -14,13 +14,14 @@ public:
 	///Create DynamicBitSet at the beginning of data
 	DynamicBitSet(const sserialize::UByteArrayAdapter & data);
 	virtual ~DynamicBitSet();
+	///@param shift: number of bytes to align to expressed as aa power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
+	bool align(uint8_t shift);
 	
 	DynamicBitSet operator&(const DynamicBitSet & other) const;
 	DynamicBitSet operator|(const DynamicBitSet & other) const;
 	DynamicBitSet operator-(const DynamicBitSet & other) const;
 	DynamicBitSet operator^(const DynamicBitSet & other) const;
 	DynamicBitSet operator~() const;
-	DynamicBitSet operator!() const;
 	
 	UByteArrayAdapter & data() { return m_data;}
 	const UByteArrayAdapter & data() const { return m_data;}

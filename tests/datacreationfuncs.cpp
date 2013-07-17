@@ -151,6 +151,32 @@ void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint3
 	}
 }
 
+void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t maxValue, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand) {
+	uint32_t rndNum;
+	uint32_t rndMask;
+	uint32_t mask;
+	for(uint32_t i = 0; i < minEqual; i++) {
+		rndNum = ((double)rand())/RAND_MAX * maxValue;
+		a.insert(rndNum);
+		b.insert(rndNum);
+	}
+
+	for(uint32_t i = 0; i < maxUnEqual; i++) {
+		rndNum = ((double)rand())/RAND_MAX * maxValue;
+		a.insert(rndNum);
+	}
+
+	for(uint32_t i = 0; i < maxUnEqual; i++) {
+		rndNum = ((double)rand())/RAND_MAX * maxValue;
+		b.insert(rndNum);
+	}
+
+	for(uint32_t i = 0; i < secondAddRand; i++) {
+		rndNum = ((double)rand())/RAND_MAX * maxValue;
+		b.insert(rndNum);
+	}
+}
+
 void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::deque< std::set<uint32_t> > & destination) {
 	uint32_t rndNum;
 	uint32_t rndMask;

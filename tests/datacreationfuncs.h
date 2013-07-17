@@ -27,6 +27,7 @@ std::set<uint32_t> createNumbersSet(uint32_t start, uint32_t end, uint32_t minDi
 std::set<uint16_t> createNumbers16Set(uint32_t count);
 
 void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand);
+void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t maxValue, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand);
 void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::deque< std::set<uint32_t> > & destination);
 
 struct SamplePolygonTestData {
