@@ -40,7 +40,7 @@ public:
 		sserialize::KeyValueObjectStore kvo;
 		
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
-			kvo.add(m_items[i]);
+			kvo.push_back(m_items[i]);
 		}
 		
 		m_skvData = UByteArrayAdapter(new std::vector<uint8_t>(), true);

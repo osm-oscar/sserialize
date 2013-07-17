@@ -3,6 +3,7 @@
 #include <sserialize/Static/Deque.h>
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/utilfuncs.h>
 
 namespace sserialize {
 
@@ -11,32 +12,16 @@ KeyValueObjectStore::~KeyValueObjectStore() {}
 
 
 uint32_t KeyValueObjectStore::keyId(const std::string & str) {
-	KeyStringTable::const_iterator it = m_keyStringTable.find(str);
-	if(it != m_keyStringTable.end()) {
-			return it->second;
-	}
-	else {
-		uint32_t id = m_keyStringTable.size();
-		m_keyStringTable[str] = id;
-		return id;
-	}
+	return m_keyStringTable.insert(str);
 }
 
 uint32_t KeyValueObjectStore::valueId(const std::string & str) {
-	ValueStringTable::const_iterator it = m_valueStringTable.find(str);
-	if(it != m_valueStringTable.end()) {
-		return it->second;
-	}
-	else {
-		uint32_t id = m_valueStringTable.size();
-		m_valueStringTable[str] = id;
-		return id;
-	}
+	return m_valueStringTable.insert(str);
 }
 
-void KeyValueObjectStore::add(const std::vector< std::pair<std::string, std::string> > & extItem) {
-	m_items.push_back(Item());
-	Item & item = m_items.back();
+void KeyValueObjectStore::push_back(const std::vector< std::pair<std::string, std::string> > & extItem) {
+	m_items.push_back(ItemData());
+	ItemData & item = m_items.back();
 	item.reserve(extItem.size());
 	for(const std::pair<std::string, std::string> & kv : extItem) {
 		item.push_back(KeyValue(keyId(kv.first), valueId(kv.second)));
@@ -67,7 +52,7 @@ std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
 	return remap;
 }
 
-void KeyValueObjectStore::serialize(const Item & item, UByteArrayAdapter & dest) {
+void KeyValueObjectStore::serialize(const ItemData & item, UByteArrayAdapter & dest) {
 	uint32_t minKey = std::numeric_limits<uint32_t>::max();
 	uint32_t minValue = std::numeric_limits<uint32_t>::max();
 	uint32_t maxKey = std::numeric_limits<uint32_t>::min();
@@ -110,20 +95,29 @@ void KeyValueObjectStore::serialize(const Item & item, UByteArrayAdapter & dest)
 }
 
 void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
-	std::unordered_map<uint32_t, uint32_t> keyRemap = createRemap(m_keyStringTable);
-	std::unordered_map<uint32_t, uint32_t> valueRemap = createRemap(m_valueStringTable);
+	std::unordered_map<uint32_t, uint32_t> keyRemap, valueRemap;
+	m_keyStringTable.sort(keyRemap);
+	m_valueStringTable.sort(valueRemap);
 
 	Static::DequeCreator<UByteArrayAdapter> creator(dest);
 	auto remapFunc = [&keyRemap, &valueRemap](const KeyValue & kv) {
 		return KeyValue(keyRemap.at(kv.key), valueRemap.at(kv.value));
 	};
 
-	for(const Item & item : m_items) {
+	for(const ItemData & item : m_items) {
 		creator.beginRawPut();
-		serialize(sserialize::transform<Item>(item.begin(), item.end(), remapFunc), creator.rawPut());
+		serialize(sserialize::transform<ItemData>(item.begin(), item.end(), remapFunc), creator.rawPut());
 		creator.endRawPut();
 	}
 	creator.flush();
+}
+
+void KeyValueObjectStore::reorder(const std::unordered_map<uint32_t, uint32_t> & reorderMap) {
+	sserialize::reorder(m_items, reorderMap);
+}
+
+std::pair<std::string, std::string> KeyValueObjectStore::keyValue(uint32_t keyId, uint32_t valueId) const {
+	return std::pair<std::string, std::string>(m_keyStringTable.at(keyId), m_valueStringTable.at(valueId));
 }
 
 }//end namespace

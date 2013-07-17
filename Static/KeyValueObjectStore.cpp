@@ -34,6 +34,87 @@ uint32_t KeyValueObjectStoreItem::valueId(uint32_t pos) const {
 	return m_valueBegin + m_kv.at(pos, 1);
 }
 
+uint32_t KeyValueObjectStoreItem::findKey(const std::string & str, uint32_t start) const {
+	uint32_t keyId = m_db->findKeyId(str);
+	if (keyId == KeyValueObjectStore::npos)
+		return npos;
+	return findKey(keyId, start);
+}
+
+uint32_t KeyValueObjectStoreItem::findKey(uint32_t id, uint32_t start) const {
+	uint32_t s = size();
+	for(uint32_t i = start; i < s; ++i) {
+		if (keyId(i) == id)
+			return i;
+	}
+	return npos;
+}
+
+uint32_t KeyValueObjectStoreItem::findValue(const std::string & str, uint32_t start) const {
+	uint32_t valueId = m_db->findValueId(str);
+	if (valueId == KeyValueObjectStore::npos)
+		return npos;
+	return findValue(valueId, start);
+}
+
+uint32_t KeyValueObjectStoreItem::findValue(uint32_t id, uint32_t start) const {
+	uint32_t s = size();
+	for(uint32_t i = start; i < s; ++i) {
+		if (valueId(i) == id)
+			return i;
+	}
+	return npos;
+}
+
+
+uint32_t KeyValueObjectStoreItem::countKey(const std::string & str) const {
+	uint32_t keyId = m_db->findKeyId(str);
+	if (keyId == KeyValueObjectStore::npos)
+		return 0;
+	return countKey(keyId);
+}
+
+uint32_t KeyValueObjectStoreItem::countKey(uint32_t id) const {
+	uint32_t s = size();
+	uint32_t count = 0;
+	for(uint32_t i = 0; i < s; ++i) {
+		if (keyId(i) == id)
+			++count;
+	}
+	return count;
+}
+
+uint32_t KeyValueObjectStoreItem::countValue(const std::string & str) const {
+	uint32_t valueId = m_db->findValueId(str);
+	if (valueId == KeyValueObjectStore::npos)
+		return 0;
+	return countValue(valueId);
+}
+
+
+uint32_t KeyValueObjectStoreItem::countValue(uint32_t id) const {
+	uint32_t s = size();
+	uint32_t count = 0;
+	for(uint32_t i = 0; i < s; ++i) {
+		if (valueId(i) == id)
+			++count;
+	}
+	return count;
+}
+
+bool KeyValueObjectStoreItem::matchValues(const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {
+	uint32_t s = size();
+	for(uint32_t i = 0; i < s; ++i) {
+		if (matchValue(i, query))
+			return true;
+	}
+	return false;
+}
+
+bool KeyValueObjectStoreItem::matchValue(uint32_t pos, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {
+	return m_db->matchValue(valueId(pos), query);
+}
+
 KeyValueObjectStoreItem::const_iterator KeyValueObjectStoreItem::begin() const {
 	return const_iterator(0, this);
 }
@@ -87,6 +168,16 @@ KeyValueObjectStore::const_iterator KeyValueObjectStore::end() const {
 	return const_iterator(size(), *this);
 }
 
+bool KeyValueObjectStore::matchValues(uint32_t pos, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {
+	if (size() >= pos)
+		return false;
+	return at(pos).matchValues(query);
+}
+
+sserialize::StringCompleter::SupportedQuerries KeyValueObjectStore::getSupportedQuerries() const {
+	return sserialize::StringCompleter::SQ_ALL;
+}
+
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(){}
 
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(const UByteArrayAdapter & data) :
@@ -134,5 +225,12 @@ UByteArrayAdapter KeyValueObjectStorePrivate::dataAt(uint32_t pos) const {
 	return m_items.at(pos);
 }
 
+bool KeyValueObjectStorePrivate::matchKey(uint32_t id, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {
+	return m_keyStringTable.match(id, query.first, query.second);
+}
+
+bool KeyValueObjectStorePrivate::matchValue(uint32_t id, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {
+	return m_valueStringTable.match(id, query.first, query.second);
+}
 
 }}//end namespace
