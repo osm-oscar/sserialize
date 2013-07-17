@@ -16,6 +16,9 @@ public:
 		m_lon[0] = 0;
 		m_lon[1] = 0;
 	}
+	
+	GeoRect(const GeoRect & other) : m_lat({other.m_lat[0], other.m_lat[1]}), m_lon({other.m_lon[0], other.m_lon[1]}) {}
+	
 	GeoRect(double latLeft, double latRight, double lonLeft, double lonRight) {
 		if (latLeft > latRight)
 			std::swap(latLeft, latRight);
