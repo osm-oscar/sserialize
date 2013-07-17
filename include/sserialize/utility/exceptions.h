@@ -67,6 +67,15 @@ class InvalidReferenceException: public Exception {
 	}
 };
 
+class CreationException: public Exception {
+public:
+	CreationException(const std::string & what) :
+	Exception()
+	{
+		setMsg("CreationException: " + what);
+	}
+};
+
 }//end namespace
 
 #define SSERIALIZE_VERSION_MISSMATCH_CHECK(__WANTVERSION, __HAVEVERSION, __MSG) do { if (__WANTVERSION != __HAVEVERSION) throw sserialize::VersionMissMatchException(__MSG, __WANTVERSION, __HAVEVERSION); } while(0);
