@@ -36,4 +36,24 @@ uint32_t ItemIndexPrivateStlVector::size() const {
 	return m_data.size();
 }
 
+ItemIndexPrivate * ItemIndexPrivateStlVector::fromBitSet(const DynamicBitSet & bitSet) {
+	ItemIndexPrivateStlVector * ret = new ItemIndexPrivateStlVector();
+	std::vector<uint32_t> & vec = ret->m_data;
+	const UByteArrayAdapter & data = bitSet.data();
+	UByteArrayAdapter::SizeType s = data.size();
+	uint32_t id = 0;
+	for(UByteArrayAdapter::SizeType i = 0; i < s; ++i) {
+		uint8_t tmp = data[i];
+		uint32_t curId = id;
+		while (tmp) {
+			if (tmp & 0x1)
+				vec.push_back(curId);
+			++curId;
+			tmp >>= 1;
+		}
+		id += 8;
+	}
+	return ret;
+}
+
 }//end namespace

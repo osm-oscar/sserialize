@@ -5,6 +5,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/mmappedfile.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
 
@@ -319,8 +320,10 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 	case (ItemIndex::T_REGLINE):
 	case (ItemIndex::T_SIMPLE):
 		return ItemIndex( ItemIndexPrivateSimple::fromBitSet(bitSet) );
+	case (ItemIndex::T_STL_VECTOR):
+		return ItemIndex( ItemIndexPrivateStlVector::fromBitSet(bitSet) );
 	default:
-		return ItemIndex();
+		throw UnimplementedFunctionException("ItemIndex::fromBitSet type not supported");
 	}
 }
 

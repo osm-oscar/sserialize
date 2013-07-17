@@ -33,7 +33,7 @@ public:
 	virtual uint32_t getRegressionLineBytes() const { return 0; }
 	virtual uint32_t getIdBytes() const { return size()*4;}
 
-	
+	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 };
 
 typedef ItemIndexPrivateIndirectWrapper<std::vector<uint32_t>, ItemIndexPrivateStlVector> ItemIndexPrivateStlVectorIndirect;
