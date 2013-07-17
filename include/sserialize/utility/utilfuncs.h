@@ -599,12 +599,18 @@ void mergeSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const
 
 void mergeSortedContainer(std::vector<uint32_t> & out, const std::vector<uint32_t> & a, const std::vector<uint32_t> & b);
 
+template<typename T_SORTED_CONTAINER_A, typename T_SORTED_CONTAINER_B = T_SORTED_CONTAINER_A, typename T_OUT_CONTAINER = T_SORTED_CONTAINER_A>
+T_OUT_CONTAINER intersect(const T_SORTED_CONTAINER_A & a, T_SORTED_CONTAINER_B & b) {
+	T_OUT_CONTAINER ret;
+	std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::inserter(ret, ret.end()));
+	return ret;
+}
 
 inline int8_t minStorageBytesOfValue(uint32_t v) {
 	if (v <= 0xFF) return 1;
-	else if (v <= 0xFFFF) return 2;
-	else if (v <= 0xFFFFFF) return 3;
-	else return 4;
+	if (v <= 0xFFFF) return 2;
+	if (v <= 0xFFFFFF) return 3;
+	return 4;
 }
 
 template<typename T_OUT_TYPE, typename T_INPUT_IT, typename T_MAP_FUNC>
@@ -630,6 +636,24 @@ T_RETURN treeMap(const T_ITERATOR & begin, const T_ITERATOR & end, T_FUNC mapFun
 		return mapFunc( treeMap<T_ITERATOR, T_FUNC>(begin, begin+(end-begin)/2),
 						treeMap<T_ITERATOR, T_FUNC>(begin+(end-begin)/2, end)
 					);
+	}
+}
+
+///reorderMap maps new positions to old positions
+template<typename T_RANDOM_ACCESS_CONTAINER, typename T_REORDER_MAP>
+void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderMap) {
+	std::unordered_map<uint32_t, uint32_t> positions;
+	std::unordered_map<uint32_t, uint32_t>::const_iterator pIt;
+	uint32_t s = srcDest.size();
+	for(uint32_t i = 0; i < s; ++i) {
+		uint32_t oldPos = reorderMap.at(i);
+		pIt = positions.find(oldPos);
+		if (pIt != positions.end()) {
+			oldPos = pIt->second;
+			positions.erase(pIt);
+		}
+		positions[i] = oldPos;
+		std::swap(srcDest[oldPos], srcDest[i]);
 	}
 }
 
