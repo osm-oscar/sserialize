@@ -20,7 +20,7 @@ class KeyValueObjectStorePrivate;
   *22 Bit|5b |5b|   v32   |   v32    | MultiVarBitArray
   *
   *
-  * The Key are sorted in  ascending order
+  * The keys are sorted in ascending order
   *
   */
 

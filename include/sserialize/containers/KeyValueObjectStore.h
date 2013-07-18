@@ -11,6 +11,9 @@ public:
 		KeyValue() {}
 		uint32_t key;
 		uint32_t value;
+		bool operator<(const KeyValue & other) const {
+			return (key < other.key ? true : (key > other.key ? false : (value < other.value)));
+		}
 	};
 	typedef std::vector< KeyValue > ItemData;
 
@@ -45,8 +48,14 @@ public:
 	uint32_t size() const { return m_items.size(); }
 	inline Item at(uint32_t pos) const { return Item(this, &m_items.at(pos)); }
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
+	
+	///This remaps the strings ids ot the items and orders the keys of the item in ascending order
+	void sort();
+	
+	///sort() has to be  called before using this!
 	void serialize(sserialize::UByteArrayAdapter & dest);
 	std::pair<std::string, std::string> keyValue(uint32_t keyId, uint32_t valueId) const;
+	///@param reorderMap maps old positions to new positions
 	void reorder(const std::unordered_map<uint32_t, uint32_t> & reorderMap);
 };
 

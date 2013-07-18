@@ -94,19 +94,26 @@ void KeyValueObjectStore::serialize(const ItemData & item, UByteArrayAdapter & d
 	dest.put(mvbData);
 }
 
-void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
+void KeyValueObjectStore::sort() {
 	std::unordered_map<uint32_t, uint32_t> keyRemap, valueRemap;
 	m_keyStringTable.sort(keyRemap);
 	m_valueStringTable.sort(valueRemap);
 
-	Static::DequeCreator<UByteArrayAdapter> creator(dest);
 	auto remapFunc = [&keyRemap, &valueRemap](const KeyValue & kv) {
 		return KeyValue(keyRemap.at(kv.key), valueRemap.at(kv.value));
 	};
 
+	for(ItemData & item : m_items) {
+		std::transform(item.begin(), item.end(), item.begin(), remapFunc);
+		std::sort(item.begin(), item.end());
+	}
+}
+
+void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
+	Static::DequeCreator<UByteArrayAdapter> creator(dest);
 	for(const ItemData & item : m_items) {
 		creator.beginRawPut();
-		serialize(sserialize::transform<ItemData>(item.begin(), item.end(), remapFunc), creator.rawPut());
+		serialize(item, creator.rawPut());
 		creator.endRawPut();
 	}
 	creator.flush();
