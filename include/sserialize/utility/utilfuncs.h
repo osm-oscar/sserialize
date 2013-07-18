@@ -339,38 +339,31 @@ int find(const std::deque< T > & src, const T & k) {
 	return -1;
 }
 
-template<typename T>
-std::map<T, uint32_t> mapTableFromDeque(const std::deque<T> & s) {
-	std::map<T, uint32_t> r;
-	for(size_t i = 0; i < s.size(); i++) {
-		r[s[i]] = i;
-	}
-	return r;
-}
-
-template<typename T>
-std::unordered_map<T, uint32_t> unordered_mapTableFromDeque(const std::deque<T> & s) {
-	std::unordered_map<T, uint32_t> r;
-	for(size_t i = 0; i < s.size(); i++) {
-		r[s[i]] = i;
-	}
-	return r;
-}
-
-template<typename T, typename TCONTAINER>
-std::map<T, uint32_t> mapTableFromLinearContainer(const TCONTAINER & s) {
-	std::map<T, uint32_t> r;
+template<typename T_OUT_CONTAINER, typename T, typename TCONTAINER>
+T_OUT_CONTAINER toMapTable(const TCONTAINER & s) {
+	T_OUT_CONTAINER r;
 	for(size_t i = 0; i < s.size(); i++) {
 		r[ s[i] ] = i;
 	}
 	return r;
 }
 
+///creates for i in 0..s.size: std::unordered_map[s[i]] = i
 template<typename T, typename TCONTAINER>
-std::unordered_map<T, uint32_t> unordered_mapTableFromLinearDeque(const TCONTAINER & s) {
+std::unordered_map<T, uint32_t> unordered_mapTableFromLinearContainer(const TCONTAINER & s) {
 	std::unordered_map<T, uint32_t> r;
 	for(size_t i = 0; i < s.size(); i++) {
-		r[s[i]] = i;
+		r[ s[i] ] = i;
+	}
+	return r;
+}
+
+///creates for i in 0..s.size: std::map[s[i]] = i
+template<typename T, typename TCONTAINER>
+std::map<T, uint32_t> mapTableFromLinearContainer(const TCONTAINER & s) {
+	std::map<T, uint32_t> r;
+	for(size_t i = 0; i < s.size(); i++) {
+		r[ s[i] ] = i;
 	}
 	return r;
 }
@@ -624,6 +617,12 @@ T_OUT_TYPE transform(T_INPUT_IT begin, const T_INPUT_IT & end, T_MAP_FUNC func) 
 	return out;
 };
 
+template<typename T_CONTAINER>
+T_CONTAINER sort(T_CONTAINER a) {
+	std::sort(a.begin(), a.end());
+	return a;
+}
+
 template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
 T_RETURN treeMap(const T_ITERATOR & begin, const T_ITERATOR & end, T_FUNC mapFunc) {
 	if (end - begin == 1) {
@@ -655,6 +654,16 @@ void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderM
 		positions[i] = oldPos;
 		std::swap(srcDest[oldPos], srcDest[i]);
 	}
+}
+
+///creates a range starting with begin and ending with end exclusive (if begin + m*inc < end)
+template<typename T_OUT_CONTAINER, typename T_TYPE, typename T_INC = T_TYPE>
+T_OUT_CONTAINER range(T_TYPE begin, const T_TYPE & end, const T_INC & inc) {
+	T_OUT_CONTAINER ret;
+	for(; begin < end; begin += inc) {
+		appendOrInsert(begin, ret);
+	}
+	return ret;
 }
 
 }//end namespace
