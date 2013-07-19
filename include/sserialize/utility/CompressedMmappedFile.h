@@ -43,6 +43,7 @@ public:
 	CompressedMmappedFile & operator=(const CompressedMmappedFile & other);
 	virtual ~CompressedMmappedFile();
 
+	///@return Total size of the decompressed data
 	SizeType size() const;
 	std::string fileName() const;
 	bool valid() const;
@@ -130,6 +131,7 @@ public:
 	///sets the cache count, costly operation
 	void setCacheCount(uint32_t count);
 
+	///@return Total size of the decompressed data
 	inline SizeType size() const { return m_size; }
 	inline std::string fileName() const { return m_fileName;}
 	bool valid() const;
