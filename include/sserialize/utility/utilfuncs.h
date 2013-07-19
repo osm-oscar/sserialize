@@ -638,22 +638,14 @@ T_RETURN treeMap(const T_ITERATOR & begin, const T_ITERATOR & end, T_FUNC mapFun
 	}
 }
 
-///reorderMap maps new positions to old positions
+///@param reorderMap maps new positions to old positions
 template<typename T_RANDOM_ACCESS_CONTAINER, typename T_REORDER_MAP>
 void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderMap) {
-	std::unordered_map<uint32_t, uint32_t> positions;
-	std::unordered_map<uint32_t, uint32_t>::const_iterator pIt;
-	uint32_t s = srcDest.size();
-	for(uint32_t i = 0; i < s; ++i) {
-		uint32_t oldPos = reorderMap.at(i);
-		pIt = positions.find(oldPos);
-		if (pIt != positions.end()) {
-			oldPos = pIt->second;
-			positions.erase(pIt);
-		}
-		positions[i] = oldPos;
-		std::swap(srcDest[oldPos], srcDest[i]);
+	T_RANDOM_ACCESS_CONTAINER tmp(srcDest.size());
+	for(uint32_t i = 0, s = srcDest.size(); i < s; ++i) {
+		std::swap(srcDest[reorderMap.at(i)], tmp[i]);
 	}
+	srcDest.swap(tmp);
 }
 
 ///creates a range starting with begin and ending with end exclusive (if begin + m*inc < end)
