@@ -38,15 +38,30 @@ extern Log info;
 extern Log debug;
 extern Log err;
 
+
+inline void toString(std::stringstream & ss) {}
+
+std::string toString(bool value);
+
 template<typename PrintType>
-std::string toString(PrintType t) {
-	std::stringstream ss;
+void toString(std::stringstream & ss, PrintType t) {
 	ss << t;
+}
+
+template<typename PrintType, typename ... PrintTypeList>
+void toString(std::stringstream & ss, PrintType t, PrintTypeList ... args) {
+	ss << t;
+	toString(ss, args...);
+}
+
+template<typename ... PrintTypeList>
+std::string toString(PrintTypeList ... args) {
+	std::stringstream ss;
+	toString(ss, args...);
 	return ss.str();
 }
 
-std::string toString(bool value);
-}
+}//end namespace
 
 osmfindlog::Log& operator<<(osmfindlog::Log& log, const std::string & msg);
 osmfindlog::Log& operator<<(osmfindlog::Log& log, int num);
