@@ -369,7 +369,6 @@ uint64_t CompactUintArray::set64(const uint32_t pos, const uint64_t value) {
 	return priv()->set64(pos, value);
 }
 
-
 bool CompactUintArray::reserve(uint32_t newMaxCount) {
 	if (maxCount() >= newMaxCount)
 		return true;
@@ -382,6 +381,15 @@ bool CompactUintArray::reserve(uint32_t newMaxCount) {
 		return true;
 	}
 	return false;
+}
+
+
+UByteArrayAdapter & CompactUintArray::data() {
+	return priv()->data();
+}
+
+const UByteArrayAdapter & CompactUintArray::data() const {
+	return priv()->data();
 }
 
 std::ostream & CompactUintArray::dump(std::ostream& out, uint32_t len) {

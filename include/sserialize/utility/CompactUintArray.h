@@ -133,6 +133,8 @@ public:
 	uint64_t at64(uint32_t pos) const;
 	inline uint32_t maxCount() const { return m_maxCount; }
 	bool reserve(uint32_t newMaxCount);
+	UByteArrayAdapter & data();
+	const UByteArrayAdapter & data() const;
 
 	/** @param: returns the value set (i.e. if value is to large the nit ets masked */
 	uint32_t set(const uint32_t pos, const uint32_t value);
