@@ -39,7 +39,7 @@ public:
 	
 	inline bool count(const std::string & str) const { return m_map.count(str) > 0; }
 	inline std::string at(uint32_t id) const {
-		return (m_strings.size() < id ? m_strings[id] : std::string());
+		return (id < m_strings.size() ? m_strings[id] : std::string());
 	}
 	
 	///This remapds the string ids, sort has to be called before and you should update your string ids afterwards
