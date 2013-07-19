@@ -5,14 +5,16 @@ namespace Static {
 
 KeyValueObjectStoreItem::KeyValueObjectStoreItem() {}
 
-KeyValueObjectStoreItem::KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, const sserialize::UByteArrayAdapter & data)
-{}
+KeyValueObjectStoreItem::KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, sserialize::UByteArrayAdapter data) :
+m_sizeBPKV(data.getVlPackedUint32()),
+m_keyBegin(data.getVlPackedUint32()),
+m_valueBegin(data.getVlPackedUint32()),
+m_kv(data.shrinkToGetPtr(), keyBits() + valueBits()),
+m_db(db)
+{
+}
 
 KeyValueObjectStoreItem::~KeyValueObjectStoreItem() {}
-
-uint32_t KeyValueObjectStoreItem::size() const {
-	return m_size;
-}
 
 std::pair<std::string, std::string> KeyValueObjectStoreItem::at(uint32_t pos) const {
 	return std::pair<std::string, std::string>(key(pos), value(pos));
@@ -27,11 +29,11 @@ std::string KeyValueObjectStoreItem::value(uint32_t pos) const {
 }
 
 uint32_t KeyValueObjectStoreItem::keyId(uint32_t pos) const {
-	return m_keyBegin + m_kv.at(pos, 0);
+	return m_keyBegin + (m_kv.at64(pos) >> valueBits());
 }
 
 uint32_t KeyValueObjectStoreItem::valueId(uint32_t pos) const {
-	return m_valueBegin + m_kv.at(pos, 1);
+	return m_valueBegin + (m_kv.at64(pos) & valueMask());
 }
 
 uint32_t KeyValueObjectStoreItem::findKey(const std::string & str, uint32_t start) const {

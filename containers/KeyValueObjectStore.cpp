@@ -53,19 +53,19 @@ std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
 }
 
 void KeyValueObjectStore::serialize(const ItemData & item, UByteArrayAdapter & dest) {
+	if(item.size() > (std::numeric_limits<uint32_t>::max() >> 10)) {
+		throw sserialize::CreationException("Out of bounds in KeyValueObjectStore::serialize(item)");
+	}
+	
 	uint32_t minKey = std::numeric_limits<uint32_t>::max();
 	uint32_t minValue = std::numeric_limits<uint32_t>::max();
 	uint32_t maxKey = std::numeric_limits<uint32_t>::min();
 	uint32_t maxValue = std::numeric_limits<uint32_t>::min();
 	for(const KeyValue & kv : item) {
-			minKey = std::min(kv.key, minKey);
-			minValue = std::min(kv.value, minValue);
-			maxKey = std::max(kv.key, maxKey);
-			maxValue = std::max(kv.value, maxValue);
-		}
-
-	if(item.size() > (std::numeric_limits<uint32_t>::max() >> 10)) {
-			throw sserialize::Exception("Out of boundsin KeyValueObjectStore::serialize(item)");
+		minKey = std::min(kv.key, minKey);
+		minValue = std::min(kv.value, minValue);
+		maxKey = std::max(kv.key, maxKey);
+		maxValue = std::max(kv.value, maxValue);
 	}
 
 	uint32_t keyBits = sserialize::CompactUintArray::minStorageBits((maxKey - minKey) + 1);
@@ -76,22 +76,16 @@ void KeyValueObjectStore::serialize(const ItemData & item, UByteArrayAdapter & d
 	countBPKV |= (valueBits-1);
 
 	dest.putVlPackedUint32(countBPKV);
+	dest.putVlPackedUint32(minKey);
+	dest.putVlPackedUint32(minValue);
 	
-	UByteArrayAdapter d(dest);
-	d.shrinkToPutPtr();
-	
-	UByteArrayAdapter mvbData = UByteArrayAdapter::createCache(0, false);
-	std::vector<uint8_t> bitConfig;
-	bitConfig.push_back(keyBits);
-	bitConfig.push_back(valueBits);
-	MultiVarBitArrayCreator mvbCreator(bitConfig, mvbData);
-	mvbCreator.reserve(item.size());
+	CompactUintArray carr(UByteArrayAdapter::createCache(0, false), keyBits+valueBits);
+	carr.reserve(item.size());
 	for(uint32_t i = 0; i < item.size(); ++i) {
-		mvbCreator.set(i, 0, item[i].key);
-		mvbCreator.set(i, 1, item[i].value);
+		uint64_t pv = ( static_cast<uint64_t>(item.at(i).key-minKey) << valueBits) | (item.at(i).value-minValue);
+		carr.set64(i, pv);
 	}
-	mvbData = mvbCreator.flush();
-	dest.put(mvbData);
+	dest.put(carr.data());
 }
 
 void KeyValueObjectStore::sort() {
@@ -110,6 +104,9 @@ void KeyValueObjectStore::sort() {
 }
 
 void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
+	m_keyStringTable.serialize(dest);
+	m_valueStringTable.serialize(dest);
+
 	Static::DequeCreator<UByteArrayAdapter> creator(dest);
 	for(const ItemData & item : m_items) {
 		creator.beginRawPut();
@@ -117,10 +114,6 @@ void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
 		creator.endRawPut();
 	}
 	creator.flush();
-}
-
-void KeyValueObjectStore::reorder(const std::unordered_map<uint32_t, uint32_t> & reorderMap) {
-	sserialize::reorder(m_items, reorderMap);
 }
 
 std::pair<std::string, std::string> KeyValueObjectStore::keyValue(uint32_t keyId, uint32_t valueId) const {

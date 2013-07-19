@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_KEY_VALUE_OBJECT_STORE_H
 #define SSERIALIZE_STATIC_KEY_VALUE_OBJECT_STORE_H
 #include <sserialize/Static/StringTable.h>
-#include <sserialize/containers/MultiVarBitArray.h>
+#include <sserialize/utility/CompactUintArray.h>
 #include <sserialize/utility/AtStlInputIterator.h>
 #include <sserialize/completers/StringCompleter.h>
 #include <memory>
@@ -14,10 +14,10 @@ class KeyValueObjectStorePrivate;
 /** File layout
   *
   * Layout of a single Item
-  *-------------------------------------------------
+  *----------------------------------------------------
   *count |bpk|bpv|KeyBegin|ValueBegin|KeyValuePairs
-  *------------------------------------------------
-  *22 Bit|5b |5b|   v32   |   v32    | MultiVarBitArray
+  *----------------------------------------------------
+  *22 Bit|5b |5b|   v32   |   v32    | CompactUintArray
   *
   *
   * The keys are sorted in ascending order
@@ -31,16 +31,20 @@ public:
 	typedef ReadOnlyAtStlIterator<const KeyValueObjectStoreItem*, std::pair<std::string, std::string> > const_iterator;
 	typedef const_iterator iterator;
 private:
-	uint32_t m_size;
+	uint32_t m_sizeBPKV;
 	uint32_t m_keyBegin;
 	uint32_t m_valueBegin;
-	MultiVarBitArray m_kv;
+	CompactUintArray m_kv;
 	std::shared_ptr<KeyValueObjectStorePrivate> m_db;
+private:
+	inline uint8_t keyBits() const { return ((m_sizeBPKV >> 5) & 0x1F)+1;}
+	inline uint8_t valueBits() const { return (m_sizeBPKV & 0x1F)+1;}
+	inline uint32_t valueMask() const { return createMask(valueBits()); }
 public:
 	KeyValueObjectStoreItem();
-	KeyValueObjectStoreItem(const std::shared_ptr<KeyValueObjectStorePrivate> & db, const UByteArrayAdapter & data);
+	KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, sserialize::UByteArrayAdapter data);
 	virtual ~KeyValueObjectStoreItem();
-	uint32_t size() const;
+	inline uint32_t size() const { return m_sizeBPKV >> 10; }
 	std::pair<std::string, std::string> at(uint32_t pos) const;
 	std::string key(uint32_t pos) const;
 	std::string value(uint32_t pos) const;

@@ -4,6 +4,7 @@
 #include <cppunit/Asserter.h>
 #include <sserialize/containers/KeyValueObjectStore.h>
 #include <sserialize/Static/KeyValueObjectStore.h>
+#include <sserialize/utility/log.h>
 #include <algorithm>
 #define EPS 0.000025
 
@@ -13,7 +14,7 @@ using namespace sserialize;
 std::vector<std::string> testStrings;
 
 std::string getRandomString() {
-	uint32_t pos = rand()/RAND_MAX*testStrings.size();
+	uint32_t pos = ((double)rand())/RAND_MAX*testStrings.size();
 	return testStrings.at(pos);
 }
 
@@ -63,8 +64,10 @@ public:
 	virtual void setUp() {
 		for(int i = 0; i < T_ITEM_COUNT; ++i) {
 			m_items.push_back(SourceItem());
+			SourceItem & sitem = m_items.back();
+			sitem.push_back(KeyValuePair("0id", osmfindlog::toString(i)));
 			for(int j = 0; j < T_ITEM_STR_COUNT; ++j) {
-				m_items.back().push_back( KeyValuePair(getRandomString(), getRandomString()) );
+				sitem.push_back( KeyValuePair(getRandomString(), getRandomString()) );
 			}
 		}
 		
@@ -86,10 +89,10 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[i];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item key does not match", item[j].first, kvitem.at(j).first);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item value does not match", item[j].second, kvitem.at(j).second);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
 			}
 		}
 	}
@@ -98,20 +101,17 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
 		
 		std::vector<uint32_t> perm = range< std::vector<uint32_t>, uint32_t >(0, m_items.size(), 1);
-		for(uint32_t i = 0, s = 10 + rand()%128; i < s; ++i)
-			std::next_permutation(perm.begin(), perm.end());
+		std::random_shuffle(perm.begin(), perm.end());
 		
-		std::unordered_map<uint32_t, uint32_t> reorderMap = unordered_mapTableFromLinearContainer<uint32_t>(perm);
-		
-		m_kv.reorder(reorderMap);
+		m_kv.reorder(perm);
 		
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[perm[i]];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item key does not match", item[j].first, kvitem.at(j).first);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item value does not match", item[j].second, kvitem.at(j).second);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
 			}
 		}
 	}
@@ -126,10 +126,10 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[i];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item key does not match", item[j].first, kvitem.at(j).first);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item value does not match", item[j].second, kvitem.at(j).second);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
 			}
 		}
 	}
@@ -148,8 +148,10 @@ public:
 			Static::KeyValueObjectStoreItem sitem = m_skv.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), sitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item key does not match", item.at(j).first, sitem.key(j));
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item value does not match", item.at(j).second, sitem.value(j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item.at(j).first, sitem.key(j));
+			}
+			for(uint32_t j = 0; j < item.size(); ++j) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item.at(j).second, sitem.value(j));
 			}
 		}
 	}
@@ -162,7 +164,7 @@ public:
 			Static::KeyValueObjectStoreItem sitem = m_skv.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), sitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item pos does not match", i, sitem.findKey(item.at(j).first));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), j, sitem.findKey(item.at(j).first, j));
 			}
 		}
 	}
@@ -175,7 +177,7 @@ public:
 			Static::KeyValueObjectStoreItem sitem = m_skv.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), sitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("item pos does not match", i, sitem.findValue(item.at(j).second));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item ", i, " pos=", j, "does not match"), j, sitem.findValue(item.at(j).second, j));
 			}
 		}
 	}

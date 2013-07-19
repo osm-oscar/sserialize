@@ -55,8 +55,11 @@ public:
 	///sort() has to be  called before using this!
 	void serialize(sserialize::UByteArrayAdapter & dest);
 	std::pair<std::string, std::string> keyValue(uint32_t keyId, uint32_t valueId) const;
-	///@param reorderMap maps old positions to new positions
-	void reorder(const std::unordered_map<uint32_t, uint32_t> & reorderMap);
+	///@param reorderMap maps new positions to old positions
+	template<typename T_REORDER_MAP>
+	void reorder(const T_REORDER_MAP & reorderMap) {
+		sserialize::reorder(m_items, reorderMap);
+	}
 };
 
 
