@@ -10,6 +10,11 @@ UByteArrayAdapterPrivateArray(file.data()), m_file(file)
 
 UByteArrayAdapterPrivateMmappedFile::~UByteArrayAdapterPrivateMmappedFile() {}
 
+UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateMmappedFile::size() const {
+	return m_file.size();
+}
+
+
 void UByteArrayAdapterPrivateMmappedFile::setDeleteOnClose(bool del) {
 	m_file.setDeleteOnClose(del);
 }

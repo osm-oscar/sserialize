@@ -12,7 +12,8 @@ protected:
 public:
     UByteArrayAdapterPrivateArray(uint8_t * data) : UByteArrayAdapterPrivate(), m_data(data) {}
 	virtual ~UByteArrayAdapterPrivateArray();
-
+	virtual UByteArrayAdapter::OffsetType size() const;
+	
 	/** Shrink data to size bytes */
 	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) { return false; }
 	/** grow data to at least! size bytes */

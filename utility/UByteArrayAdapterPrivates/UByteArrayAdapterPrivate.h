@@ -11,6 +11,7 @@ protected:
 public:
 	UByteArrayAdapterPrivate() : m_deleteOnClose(false) {}
 	virtual ~UByteArrayAdapterPrivate() {}
+	virtual UByteArrayAdapter::OffsetType size() const = 0;
 
 //support opertions
 

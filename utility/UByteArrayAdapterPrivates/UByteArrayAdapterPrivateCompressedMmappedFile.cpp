@@ -9,6 +9,10 @@ namespace sserialize {
 UByteArrayAdapterPrivateCompressedMmappedFile::UByteArrayAdapterPrivateCompressedMmappedFile(const CompressedMmappedFile& file) : m_file(file) {}
 UByteArrayAdapterPrivateCompressedMmappedFile::~UByteArrayAdapterPrivateCompressedMmappedFile() {}
 
+UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateCompressedMmappedFile::size() const {
+	return m_file.size();
+}
+
 
 /** Shrink data to size bytes */
 bool UByteArrayAdapterPrivateCompressedMmappedFile::shrinkStorage(UByteArrayAdapter::OffsetType size) {

@@ -1,5 +1,6 @@
 #include "UByteArrayAdapterPrivateArray.h"
 #include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
 
@@ -7,6 +8,10 @@ UByteArrayAdapterPrivateArray::~UByteArrayAdapterPrivateArray() {
 	if (m_deleteOnClose) {
 		delete[] m_data;
 	}
+}
+
+UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateArray::size() const {
+	throw sserialize::UnimplementedFunctionException("UByteArrayAdapterPrivateArray::size");
 }
 
 uint8_t*& UByteArrayAdapterPrivateArray::data() {

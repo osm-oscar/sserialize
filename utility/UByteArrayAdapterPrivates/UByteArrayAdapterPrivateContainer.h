@@ -12,6 +12,7 @@ private:
 public:
     UByteArrayAdapterPrivateContainer(T_CONTAINER * data) : UByteArrayAdapterPrivate(), m_data(data) {}
     virtual ~UByteArrayAdapterPrivateContainer();
+	virtual sserialize::UByteArrayAdapter::OffsetType size() const;
 
 	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size);
 	virtual bool growStorage(UByteArrayAdapter::OffsetType size);
@@ -67,6 +68,12 @@ UByteArrayAdapterPrivateContainer<T_CONTAINER>::~UByteArrayAdapterPrivateContain
 		delete m_data;
 	}
 }
+
+template<typename T_CONTAINER>
+UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateContainer<T_CONTAINER>::size() const {
+	return m_data->size();
+}
+
 template<typename T_CONTAINER>
 bool UByteArrayAdapterPrivateContainer<T_CONTAINER>::shrinkStorage(UByteArrayAdapter::OffsetType size) {
 	if (m_data->size() < size)

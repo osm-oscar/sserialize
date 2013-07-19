@@ -9,6 +9,7 @@ class UByteArrayAdapterPrivateEmpty: public UByteArrayAdapterPrivate {
 public:
 	UByteArrayAdapterPrivateEmpty() : UByteArrayAdapterPrivate(), m_default(0) {}
 	virtual ~UByteArrayAdapterPrivateEmpty() {}
+	virtual UByteArrayAdapter::OffsetType size() const { return 0; }
 
 	/** Shrink data to size bytes */
 	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) { return false; }

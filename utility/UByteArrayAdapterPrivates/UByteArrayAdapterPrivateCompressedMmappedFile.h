@@ -18,7 +18,7 @@ private:
 public:
 	UByteArrayAdapterPrivateCompressedMmappedFile(const CompressedMmappedFile& file);
 	virtual ~UByteArrayAdapterPrivateCompressedMmappedFile();
-
+	virtual UByteArrayAdapter::OffsetType size() const;
 
 	/** Shrink data to size bytes */
 	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size);

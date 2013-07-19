@@ -121,7 +121,11 @@ public:
 	/** tries to grow the storage of this adapter by byte bytes.
 	  * If the underlying storage is already larege enough, then no additional storage will be allocates */
 	bool growStorage(OffsetType byte);
+	
+	///resize to @param byte bytes (grows but does not shrink the underlying storage)
 	bool resize(OffsetType byte);
+
+	void resetToStorage();
 
 	void setDeleteOnClose(bool del);
 

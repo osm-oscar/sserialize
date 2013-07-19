@@ -378,6 +378,12 @@ bool UByteArrayAdapter::resize(OffsetType byte) {
 	}
 }
 
+void UByteArrayAdapter::resetToStorage() {
+	m_putPtr = 0;
+	m_getPtr = 0;
+	m_offSet = 0;
+	m_len = m_priv->size();
+}
 
 void UByteArrayAdapter::setDeleteOnClose(bool del) {
 	m_priv->setDeleteOnClose(del);
