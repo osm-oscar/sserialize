@@ -63,6 +63,7 @@ ADD_TEST_TARGET_SINGLE(util_pack_unpack_functions)
 ADD_TEST_TARGET_SINGLE(util_ubytearrayadapter)
 ADD_TEST_TARGET_SINGLE(util_ChunkedMmappedFile)
 ADD_TEST_TARGET_SINGLE(util_CompressedMmappedFile)
+ADD_TEST_TARGET_SINGLE(util_utilfuncs)
 
 #static
 ADD_TEST_TARGET_SINGLE(static_deque)
