@@ -27,6 +27,10 @@ struct ProgressInfo {
 		std::cout << std::endl;
 	}
 
+	inline void end() {
+		end(message);
+	}
+	
 	inline void end(const std::string & message) {
 			time_t timer = time(NULL);
 			std::cout << std::endl;
