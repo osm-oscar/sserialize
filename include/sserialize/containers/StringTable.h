@@ -15,6 +15,7 @@ class StringTable {
 public:
 	StringTable() {}
 	~StringTable() {}
+	inline std::size_t size() const { return m_strings.size(); }
 	inline uint32_t insert(const std::string & str) {
 		if (m_map.count(str))
 			return m_map[str];
