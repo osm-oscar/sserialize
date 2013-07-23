@@ -461,9 +461,9 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 	{
 		std::unordered_set<std::string> strings;
 		progressInfo(stringsFactory.end()-stringsFactory.begin(), "Gathering strings from StringsFactory");
-		for(typename T_ITEM_FACTORY::const_iterator it(stringsFactory.begin()); it != stringsFactory.end(); ++it) {
-			for(typename T_ITEM::const_iterator iIt(it->begin()); iIt != it->end(); ++iIt) {
-				strings.insert(*iIt);
+		for(typename T_ITEM_FACTORY::const_iterator itemsIt(stringsFactory.begin()), itemsEnd(stringsFactory.end()); itemsIt != itemsEnd; ++itemsEnd) {
+			for(typename T_ITEM::const_iterator itemStrsIt((*itemsIt).begin()), itemStrsEnd((*itemsIt).end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
+				strings.insert(*itemStrsIt);
 			}
 		}
 		m_strings = std::vector<std::string>(strings.begin(), strings.end());
@@ -551,10 +551,10 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 	
 	progressInfo.begin(m_strings.size());
 	count = 0;
-	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()); itemIt != stringsFactory.end(); ++itemIt) {
+	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
 		std::unordered_set<Node*> exactNodes;
 		std::unordered_set<Node*> suffixNodes;
-		for(typename T_ITEM::const_iterator itemStrsIt(itemIt->begin()); itemStrsIt != itemIt->end(); ++itemStrsIt) {
+		for(typename T_ITEM::const_iterator itemStrsIt((*itemIt).begin()), itemStrsEnd((*itemIt).end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 			if (strIdToExactNodes.count(*itemStrsIt)) {
 				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
 			}
