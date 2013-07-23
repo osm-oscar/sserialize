@@ -1,1 +1,1 @@
-Licensed under the LGPLv2 (with the exception of third-party code of course)
+Licensed under the LGPLv2/v3 (with the exception of third-party code of course)
