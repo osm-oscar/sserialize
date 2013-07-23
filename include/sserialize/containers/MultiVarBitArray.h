@@ -60,11 +60,14 @@ public:
 	MultiVarBitArray & operator=(const MultiVarBitArray & other);
 	
 	uint32_t size() const;
+	///This is not valid if you used the second constructor with a given bitConfig
 	uint32_t getSizeInBytes() const;
 	uint32_t at(uint32_t pos, uint32_t subPos) const;
 	uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
 
+	///return the data without the header
 	const UByteArrayAdapter & data() const;
+	///return the data without the header
 	UByteArrayAdapter & data();
 	void setSize(uint32_t newSize);
 
