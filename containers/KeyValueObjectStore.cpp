@@ -10,6 +10,11 @@ namespace sserialize {
 KeyValueObjectStore::KeyValueObjectStore() {}
 KeyValueObjectStore::~KeyValueObjectStore() {}
 
+void KeyValueObjectStore::clear() {
+	m_keyStringTable = KeyStringTable();
+	m_valueStringTable = ValueStringTable();
+	m_items = ItemDataContainer();
+}
 
 uint32_t KeyValueObjectStore::keyId(const std::string & str) {
 	return m_keyStringTable.insert(str);
@@ -103,7 +108,8 @@ void KeyValueObjectStore::sort() {
 	}
 }
 
-void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
+UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
+	UByteArrayAdapter::OffsetType dataBegin = dest.tellPutPtr();
 	m_keyStringTable.serialize(dest);
 	m_valueStringTable.serialize(dest);
 
@@ -114,6 +120,7 @@ void KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
 		creator.endRawPut();
 	}
 	creator.flush();
+	return dest.tellPutPtr()-dataBegin;
 }
 
 std::pair<std::string, std::string> KeyValueObjectStore::keyValue(uint32_t keyId, uint32_t valueId) const {

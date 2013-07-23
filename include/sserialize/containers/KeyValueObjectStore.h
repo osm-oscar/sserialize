@@ -20,6 +20,8 @@ public:
 	class Item {
 		const KeyValueObjectStore * m_store;
 		const ItemData * m_item;
+	protected:
+		inline const KeyValueObjectStore * store() const { return m_store; }
 	public:
 		Item(const KeyValueObjectStore * store, const ItemData * item) : m_store(store), m_item(item) {}
 		~Item() {}
@@ -32,19 +34,20 @@ public:
 private:
 	typedef sserialize::StringTable KeyStringTable;
 	typedef sserialize::StringTable ValueStringTable;
+	typedef std::vector<ItemData> ItemDataContainer;
 private:
 	KeyStringTable m_keyStringTable;
 	ValueStringTable m_valueStringTable;
-	std::vector<ItemData> m_items;
+	ItemDataContainer m_items;
 private:
 	uint32_t keyId(const std::string & str);
 	uint32_t valueId(const std::string & str);
 	void serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest);
-protected:
-	
+	KeyValueObjectStore & operator=(const KeyValueObjectStore & other);
 public:
 	KeyValueObjectStore();
 	virtual ~KeyValueObjectStore();
+	void clear();
 	uint32_t size() const { return m_items.size(); }
 	inline Item at(uint32_t pos) const { return Item(this, &m_items.at(pos)); }
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
@@ -53,7 +56,7 @@ public:
 	void sort();
 	
 	///sort() has to be  called before using this!
-	void serialize(sserialize::UByteArrayAdapter & dest);
+		UByteArrayAdapter::OffsetType serialize(sserialize::UByteArrayAdapter & dest);
 	std::pair<std::string, std::string> keyValue(uint32_t keyId, uint32_t valueId) const;
 	///@param reorderMap maps new positions to old positions
 	template<typename T_REORDER_MAP>
