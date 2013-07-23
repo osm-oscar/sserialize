@@ -9,6 +9,7 @@
 #include <memory>
 
 //TODO: prevent segfaults of UByteArrayAdapter is empty (m_priv is 0)
+//TODO: split this class into UByteArrayAdapterIterator and UByteArrayAdapter to seperate concepts
 
 /** This is the main storage abstraction class.
   * It gives a unified view on an Array of uint8_t.
@@ -134,7 +135,6 @@ public:
 	inline OffsetType offset() const { return m_offSet;}
 	inline bool isEmpty() const { return (m_len == 0);}
 
-
 	int64_t getInt64(const OffsetType pos) const;
 	uint64_t getUint64(const OffsetType pos) const;
 	int32_t getInt32(const OffsetType pos) const;
@@ -252,6 +252,63 @@ public:
 	static void setTempFilePrefix(const std::string & path);
 	
 	static inline uint32_t OffsetTypeSerializedLength() { return 5; }
+
+	//convinience functions
+	
+	inline uint64_t getVlPackedUint64(const OffsetType pos) const { return getVlPackedUint64(pos, 0); }
+	inline int64_t getVlPackedInt64(const OffsetType pos) const { return getVlPackedInt64(pos, 0); }
+	inline uint32_t getVlPackedUint32(const OffsetType pos) const { return getVlPackedUint32(pos, 0); }
+	inline int32_t getVlPackedInt32(const OffsetType pos) const { return getVlPackedInt32(pos, 0); }
+	
+	inline uint64_t getVlPackedUint64(const OffsetType pos, int & length) const { return getVlPackedUint64(pos, &length); }
+	inline int64_t getVlPackedInt64(const OffsetType pos, int & length) const { return getVlPackedInt64(pos, &length); }
+	inline uint32_t getVlPackedUint32(const OffsetType pos, int & length) const { return getVlPackedUint32(pos, &length); }
+	inline int32_t getVlPackedInt32(const OffsetType pos, int & length) const { return getVlPackedInt32(pos, &length); }
+
+	inline void put(UByteArrayAdapter::OffsetType pos, uint8_t value) { putUint8(pos, value); }
+	inline void put(UByteArrayAdapter::OffsetType pos, uint16_t value) { putUint16(pos, value); }
+	inline void put(UByteArrayAdapter::OffsetType pos, uint32_t value) { putUint32(pos, value); }
+	inline void put(UByteArrayAdapter::OffsetType pos, uint64_t value) { putUint64(pos, value); }
+	inline void put(UByteArrayAdapter::OffsetType pos, int32_t value) { putInt32(pos, value); }
+	inline void put(UByteArrayAdapter::OffsetType pos, int64_t value) { putInt64(pos, value); }
+	
+	inline void get(UByteArrayAdapter::OffsetType pos, uint8_t & value) const { getUint8(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint16_t & value) const { getUint16(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint32_t & value) const { getUint32(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint64_t & value) const { getUint64(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, int32_t & value) const { getInt32(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, int64_t & value) const { getInt64(pos); }
+	
+	inline void get(uint8_t & value) { value = getUint8(); }
+	inline void get(uint16_t & value) { value = getUint16(); }
+	inline void get(uint32_t & value) { value = getUint32(); }
+	inline void get(uint64_t & value) { value = getUint64(); }
+	inline void get(int32_t & value) { value = getInt32(); }
+	inline void get(int64_t & value) { value = getInt64(); }
+	
+	template<typename TValue>
+	TValue getV(UByteArrayAdapter::OffsetType pos) const {
+		TValue v;
+		get(pos, v);
+		return v;
+	}
+	
+	template<typename TValue>
+	TValue getV() {
+		TValue v;
+		get(v);
+		return v;
+	}
+	
+	template<typename TValue>
+	void putV(UByteArrayAdapter::OffsetType pos, TValue v) {
+		put(pos, v);
+	}
+	
+	template<typename TValue>
+	void putV(TValue v) {
+		put(v);
+	}
 	
 	static void putUint8(UByteArrayAdapter & dest, uint8_t src);
 	static void putUint16(UByteArrayAdapter & dest, uint16_t src);
@@ -264,6 +321,41 @@ public:
 	static void putVlPackedUint32(UByteArrayAdapter & dest, uint32_t src);
 	static void putVlPackedInt64(UByteArrayAdapter & dest, int64_t src);
 	static void putVlPackedUint64(UByteArrayAdapter & dest, uint64_t src);
+	
+	template<typename TValue>
+	struct SerializationSupport {
+		static const bool value = false;
+	};
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<uint8_t> {
+	static const bool value = true;
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<uint16_t> {
+	static const bool value = true;
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<uint32_t> {
+	static const bool value = true;
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<uint64_t> {
+	static const bool value = true;
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<int32_t> {
+	static const bool value = true;
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<int64_t> {
+	static const bool value = true;
 };
 
 }//end namespace
