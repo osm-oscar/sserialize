@@ -31,7 +31,7 @@ public:
 		}
 	};
 	
-private:
+protected:
 	typedef sserialize::StringTable KeyStringTable;
 	typedef sserialize::StringTable ValueStringTable;
 	typedef std::vector<ItemData> ItemDataContainer;
@@ -44,6 +44,9 @@ private:
 	uint32_t valueId(const std::string & str);
 	void serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest);
 	KeyValueObjectStore & operator=(const KeyValueObjectStore & other);
+protected:
+	const KeyStringTable & keyStringTable() const { return m_keyStringTable; }
+	const ValueStringTable & valueStringTable() const { return m_valueStringTable; }
 public:
 	KeyValueObjectStore();
 	virtual ~KeyValueObjectStore();
