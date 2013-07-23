@@ -42,7 +42,7 @@ private:
 private:
 	uint32_t keyId(const std::string & str);
 	uint32_t valueId(const std::string & str);
-	void serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest);
+	void serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) const;
 	KeyValueObjectStore & operator=(const KeyValueObjectStore & other);
 protected:
 	const KeyStringTable & keyStringTable() const { return m_keyStringTable; }
@@ -59,7 +59,7 @@ public:
 	void sort();
 	
 	///sort() has to be  called before using this!
-		UByteArrayAdapter::OffsetType serialize(sserialize::UByteArrayAdapter & dest);
+	UByteArrayAdapter::OffsetType serialize(sserialize::UByteArrayAdapter & dest) const;
 	std::pair<std::string, std::string> keyValue(uint32_t keyId, uint32_t valueId) const;
 	///@param reorderMap maps new positions to old positions
 	template<typename T_REORDER_MAP>

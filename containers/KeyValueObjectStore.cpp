@@ -57,7 +57,7 @@ std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
 	return remap;
 }
 
-void KeyValueObjectStore::serialize(const ItemData & item, UByteArrayAdapter & dest) {
+void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) const {
 	if(item.size() > (std::numeric_limits<uint32_t>::max() >> 10)) {
 		throw sserialize::CreationException("Out of bounds in KeyValueObjectStore::serialize(item)");
 	}
@@ -108,7 +108,7 @@ void KeyValueObjectStore::sort() {
 	}
 }
 
-UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(UByteArrayAdapter & dest) {
+UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(sserialize::UByteArrayAdapter & dest) const {
 	UByteArrayAdapter::OffsetType dataBegin = dest.tellPutPtr();
 	m_keyStringTable.serialize(dest);
 	m_valueStringTable.serialize(dest);
