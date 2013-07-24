@@ -198,9 +198,8 @@ public: //Fill functions
 	
 	/** This will create a trie out of a strings factory
 	  * The Stringsfactory should provide begin(), end() iterators with their value_type having begin(), end() as well
+	  * Dereferencing the StringFactory::const_iterator can yield a temporary value which should have a fast copy or move operation
 	  */
-	
-	
 	template<typename T_ITEM_FACTORY, typename T_ITEM>
 	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactor);
 
@@ -459,19 +458,23 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 	ProgressInfo progressInfo;
 
 	{
+		uint32_t count = 0;
 		std::unordered_set<std::string> strings;
-		progressInfo(stringsFactory.end()-stringsFactory.begin(), "Gathering strings from StringsFactory");
-		for(typename T_ITEM_FACTORY::const_iterator itemsIt(stringsFactory.begin()), itemsEnd(stringsFactory.end()); itemsIt != itemsEnd; ++itemsEnd) {
-			for(typename T_ITEM::const_iterator itemStrsIt((*itemsIt).begin()), itemStrsEnd((*itemsIt).end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
+		progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "GeneralizedTrie::fromStringsFactory: Gathering strings");
+		for(typename T_ITEM_FACTORY::const_iterator itemsIt(stringsFactory.begin()), itemsEnd(stringsFactory.end()); itemsIt != itemsEnd; ++itemsIt) {
+			T_ITEM item = *itemsIt;
+			for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 				strings.insert(*itemStrsIt);
 			}
+			progressInfo(++count);
 		}
+		progressInfo.end();
 		m_strings = std::vector<std::string>(strings.begin(), strings.end());
 		std::sort(m_strings.begin(), m_strings.end());
 	}
 	
 	//This is the first part (create the trie)
-	progressInfo.begin(m_strings.size());
+	progressInfo.begin(m_strings.size(), "GeneralizedTrie::fromStringsFactory: Creating Trie form strings");
 	uint32_t count = 0;
 	for(std::vector<std::string>::const_iterator strsIt(m_strings.cbegin()); strsIt != m_strings.cend(); ++strsIt) {
 		std::vector<std::string> strs;
@@ -495,8 +498,10 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 				}
 			}
 		}
-		progressInfo(++count, "GeneralizedTrie::setDB::createTrie");
+		progressInfo(++count);
 	}
+	progressInfo.end();
+	
 	if (!consistencyCheck()) {
 		std::cout << "Trie is broken after GeneralizedTrie::setDB::createTrie" << std::endl;
 		return false;
@@ -506,7 +511,7 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes; strIdToSubStrNodes.reserve(m_strings.size());
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes; strIdToExactNodes.reserve(m_strings.size());
 	
-	progressInfo.begin(m_strings.size());
+	progressInfo.begin(m_strings.size(), "GeneralizedTrie::fromStringsFactory: Finding String->node mappings" );
 	count = 0;
 	#pragma omp parallel for 
 	for(size_t i = 0; i <  m_strings.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
@@ -536,25 +541,30 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 			}
 		}
 		#pragma omp atomic
-		count++;
-		progressInfo(count, "GeneralizedTrie::setDB::findStringNodes");
+		++count;
+		
+		if (count % 100 == 0) {
+			#pragma omp critical
+			progressInfo(count);
+		}
 	}
-	progressInfo.end("GeneralizedTrie::setDB::findStringNodes");
+	progressInfo.end();
 
 	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after GeneralizedTrie::setDB::findStringNodes" << std::endl;
+		std::cout << "Trie is broken after GeneralizedTrie::fromStringsFactory::findStringNodes" << std::endl;
 		return false;
 	}
 
 // 	assert( m_root->parent() == 0 );
 	//Now add the items
 	
-	progressInfo.begin(m_strings.size());
+	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "GeneralizedTrie::fromStringsFactory::insertItems");
 	count = 0;
 	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
 		std::unordered_set<Node*> exactNodes;
 		std::unordered_set<Node*> suffixNodes;
-		for(typename T_ITEM::const_iterator itemStrsIt((*itemIt).begin()), itemStrsEnd((*itemIt).end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
+		T_ITEM item = *itemIt;
+		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 			if (strIdToExactNodes.count(*itemStrsIt)) {
 				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
 			}
@@ -572,14 +582,13 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 		for(std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
 			(*it)->subStrValues.insert((*it)->subStrValues.end(), count);
 		}
-		
-		++count;
-		progressInfo(count, "GeneralizedTrie::setDB::insertItems");
+
+		progressInfo(++count);
 	}
-	progressInfo.end("GeneralizedTrie::setDB::insertItems");
+	progressInfo.end();
 	std::cout << std::endl;
 	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after GeneralizedTrie::setDB::insertItems" << std::endl;
+		std::cout << "Trie is broken after GeneralizedTrie::fromStringsFactory::insertItems" << std::endl;
 		return false;
 	}
 
