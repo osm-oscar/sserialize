@@ -59,6 +59,15 @@ public:
 	}
 };
 
+class MissingDataException: public Exception {
+public:
+	MissingDataException(const std::string & what) :
+	Exception()
+	{
+		setMsg("MissingDataException: " + what);
+	}
+};
+
 class InvalidReferenceException: public Exception {
 	InvalidReferenceException(const std::string & what) :
 	Exception()
