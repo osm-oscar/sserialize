@@ -88,13 +88,11 @@ public:
 	}
 	inline UByteArrayAdapter getIndexData() { return m_indexData;}
 	inline UByteArrayAdapter getDBData() { return m_dbData;}
-	inline UByteArrayAdapter getStringTableData() { return m_stableData;}
 	inline std::size_t getCompletersSize() const { return m_strCompleters.size(); }
 	inline const std::vector<sserialize::StringCompleter> & getCompleters() const { return m_strCompleters; }
 	///@warning This will cause undefined behaviour if no completer is selected (you'll most probably get a segfault) 
 	inline const sserialize::StringCompleter & getCompleter() const { return m_strCompleters[m_selectedCompleter];}
 	inline sserialize::StringCompleter & getCompleter() { return m_strCompleters[m_selectedCompleter];}
-	inline const Static::StringTable & getStringTable() const { return m_stable; }
 	inline const DataBaseType & getItemDataBase() const { return m_itemDataBase; }
 	inline const Static::ItemIndexStore & getIndexStore() const { return m_indexStore;}
 	inline std::vector<sserialize::StringCompleter> & getStringCompleters() { return m_strCompleters; }
