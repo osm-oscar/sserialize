@@ -180,6 +180,10 @@ sserialize::StringCompleter::SupportedQuerries KeyValueObjectStore::getSupported
 	return sserialize::StringCompleter::SQ_ALL;
 }
 
+std::ostream & KeyValueObjectStore::printStats(std::ostream & out) const {
+	return priv()->printStats(out);
+}
+
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(){}
 
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(const UByteArrayAdapter & data) :
@@ -233,6 +237,18 @@ bool KeyValueObjectStorePrivate::matchKey(uint32_t id, const std::pair< std::str
 
 bool KeyValueObjectStorePrivate::matchValue(uint32_t id, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {
 	return m_valueStringTable.match(id, query.first, query.second);
+}
+
+std::ostream & KeyValueObjectStorePrivate::printStats(std::ostream & out) const {
+	out << "sserialize::Static::KeyValueObjectStore::printStats -- BEGIN" << std::endl;
+	out << "Size: " << size() << std::endl;
+	out << "#Key strings: " << m_keyStringTable.size() << std::endl;
+	out << "#Value strings: " << m_valueStringTable.size() << std::endl;
+	out << "Size of items: " << m_items.getSizeInBytes() << "(" << ((double)m_items.getSizeInBytes())/getSizeInBytes()*100.0 << "%)" << std::endl;
+	out << "Size of key strings: " << m_keyStringTable.getSizeInBytes() << "(" << ((double)m_keyStringTable.getSizeInBytes())/getSizeInBytes()*100.0 << "%)" << std::endl;
+	out << "Size of value strings: " << m_valueStringTable.getSizeInBytes() << "(" << ((double)m_valueStringTable.getSizeInBytes())/getSizeInBytes()*100.0 << "%)" << std::endl;
+	out << "sserialize::Static::OsmKeyValueObjectStore::printStats -- END" << std::endl;
+	return out;
 }
 
 }}//end namespace

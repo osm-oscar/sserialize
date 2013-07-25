@@ -93,6 +93,8 @@ public:
 	bool matchValues(uint32_t pos, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const;
 	sserialize::StringCompleter::SupportedQuerries getSupportedQuerries() const;
 	
+	std::ostream & printStats(std::ostream & out) const;
+	
 };
 
 class KeyValueObjectStorePrivate {
@@ -114,6 +116,9 @@ public:
 	
 	bool matchKey(uint32_t id, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const;
 	bool matchValue(uint32_t id, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const;
+
+	std::ostream & printStats(std::ostream & out) const;
+
 };
 
 
