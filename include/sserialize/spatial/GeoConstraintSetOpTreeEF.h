@@ -36,6 +36,7 @@ protected:
 public:
 	GeoConstraintSetOpTreeSF(const TCompleter & completer) : m_completer(completer) {}
 	virtual ~GeoConstraintSetOpTreeSF() {}
+	TCompleter & completer() { return m_completer; }
 	virtual SupportedOps supportedOps() const { return sserialize::SetOpTree::SelectableOpFilter::OP_INTERSECT;}
 	/** This should invoke the faster routine */
 	virtual ItemIndex operator()(SupportedOps op, const std::string & str, const ItemIndex & partner) {
@@ -67,6 +68,8 @@ public:
 		return m_completer.partialComplete(rect, approximate);
 	}
 	virtual const std::string cmdString() const { return std::string("GEO"); }
+	
+	virtual std::string describe() const { return std::string("GeoConstraintSetOpTreeSF");}
 };
 
 }}//end namespace

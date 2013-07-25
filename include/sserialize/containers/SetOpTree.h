@@ -50,6 +50,7 @@ public:
 		virtual ItemIndexIterator operator()(SupportedOps op, const std::string & str, const ItemIndexIterator & partner) = 0;
 		virtual ItemIndexIterator partialComplete(const std::string & str) = 0;
 		virtual const std::string cmdString() const = 0;
+		virtual std::string describe() const { return std::string("no description available"); }
 // 		virtual ExternalFunctoid* copy() = 0;
 	};
 
