@@ -35,6 +35,11 @@ public:
 	inline uint32_t size() const { return m_index.size(); }
 	DataBaseItemType at(uint32_t pos) const;
 	inline ItemIndex & getIndex() { return m_index; }
+	inline const ItemIndex & index() const { return m_index; }
+	inline ItemIndex & index() { return m_index; }
+	inline const DataBaseType & db() const { return m_dataBase; }
+	inline DataBaseType & db() { return m_dataBase; }
+
 	void printTreeStructure(std::ostream & out) const { m_setOpTree.printStructure(out); }
 };
 
