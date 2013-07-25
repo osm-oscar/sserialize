@@ -9,11 +9,14 @@ namespace Static {
 
 template<class DataBaseType>
 class FlatGSTStrIds: public sserialize::Static::FlatGST {
+private:
+	typedef sserialize::Static::FlatGST MyBaseClass;
+private:
 	DataBaseType m_sdb;
 public:
 	FlatGSTStrIds() : FlatGST() {}
-	FlatGSTStrIds(const UByteArrayAdapter & data, ItemIndexStore & indexStore, const DataBaseType & sdb) :
-	FlatGST(data, indexStore), m_sdb(sdb) {}
+	FlatGSTStrIds(const UByteArrayAdapter & data, const ItemIndexStore & indexStore, const DataBaseType & sdb) :
+	MyBaseClass(data, indexStore), m_sdb(sdb) {}
 	virtual ~FlatGSTStrIds() {}
 
 	virtual ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const {
@@ -41,11 +44,11 @@ public:
 	}
 	
 	virtual ItemIndex indexFromEntry(const IndexEntry & e, sserialize::StringCompleter::QuerryType qtype) const {
-		if (e.indexType() & FlatGST::IndexEntry::IT_ITEM_ID_INDEX) {
-			return FlatGST::indexFromEntry(e, qtype);
+		if (e.indexType() & MyBaseClass::IndexEntry::IT_ITEM_ID_INDEX) {
+			return MyBaseClass::indexFromEntry(e, qtype);
 		}
 		else {
-			return m_sdb.select(FlatGST::indexFromEntry(e, qtype));
+			return m_sdb.select(MyBaseClass::indexFromEntry(e, qtype));
 		}
 	}
 	
@@ -57,18 +60,18 @@ public:
 	}
 
 	virtual ItemIndexIterator indexIteratorFromPosition(uint32_t pos, sserialize::StringCompleter::QuerryType qtype) const {
-		FlatGST::IndexEntry e( indexEntries().at(pos) );
-		if (e.indexType() & FlatGST::IndexEntry::IT_ITEM_ID_INDEX) {
-			return FlatGST::indexIteratorFromEntry(e, qtype);
+		MyBaseClass::IndexEntry e( indexEntries().at(pos) );
+		if (e.indexType() & MyBaseClass::IndexEntry::IT_ITEM_ID_INDEX) {
+			return MyBaseClass::indexIteratorFromEntry(e, qtype);
 		}
 		else {
-			return ItemIndexIterator( new ItemIndexIteratorDB<DataBaseType, ItemIndex>(m_sdb, FlatGST::indexFromEntry(e, qtype), e.minId(), e.maxId()+1) );
+			return ItemIndexIterator( new ItemIndexIteratorDB<DataBaseType, ItemIndex>(m_sdb, MyBaseClass::indexFromEntry(e, qtype), e.minId(), e.maxId()+1) );
 		}
 	}
 	
 	virtual std::ostream& printStats(std::ostream& out) const {
 		out << "FlatGSTStrIds::Stats::Begin" << std::endl;
-		FlatGST::printStats(out);
+		MyBaseClass::printStats(out);
 		out << "FlatGSTStrIds::Stats::End" << std::endl;
 		return out;
 	}
