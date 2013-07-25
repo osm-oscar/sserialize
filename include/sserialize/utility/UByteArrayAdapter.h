@@ -247,7 +247,7 @@ public:
 	static UByteArrayAdapter createCache(OffsetType size, bool forceFileBase);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
 	static UByteArrayAdapter open(const std::string & fileName);
-	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize, uint8_t chunkSizeExponent);
+	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
 	static std::string getTempFilePrefix();
 	static void setTempFilePrefix(const std::string & path);
 	
