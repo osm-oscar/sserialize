@@ -26,6 +26,10 @@ public:
 		virtual bool operator()(uint32_t id) const = 0;
 	};
 	
+	struct ItemFilterIdentity: ItemFilter {
+		virtual bool operator()(uint32_t id) const { return true; }
+	};
+	
 private:
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex::Types type);
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex & realIdIndex, const ItemIndex::Types type);
