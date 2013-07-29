@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/utilfuncs.h>
+#include <sserialize/utility/TimeMeasuerer.h>
+#include <sserialize/utility/ProgressInfo.h>
 
 namespace sserialize {
 
@@ -110,15 +112,26 @@ void KeyValueObjectStore::sort() {
 
 UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(sserialize::UByteArrayAdapter & dest) const {
 	UByteArrayAdapter::OffsetType dataBegin = dest.tellPutPtr();
+	sserialize::TimeMeasurer tm;
+	tm.begin();
+	std::cout << "KeyValueObjectStore::serialize: Serializing string tables..." << std::flush;
 	m_keyStringTable.serialize(dest);
 	m_valueStringTable.serialize(dest);
+	tm.end();
+	std::cout << "took " << tm.elapsedSeconds() << " seconds" << std::endl;
 
 	Static::DequeCreator<UByteArrayAdapter> creator(dest);
-	for(const ItemData & item : m_items) {
+	
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(m_items.size(), "KeyValueObjectStore::serialize: items");
+	for(uint32_t i = 0, s = m_items.size(); i < s; ++i) {
+		const ItemData & item = m_items[i];
 		creator.beginRawPut();
 		serialize(item, creator.rawPut());
 		creator.endRawPut();
+		pinfo(i);
 	}
+	pinfo.end();
 	creator.flush();
 	return dest.tellPutPtr()-dataBegin;
 }
