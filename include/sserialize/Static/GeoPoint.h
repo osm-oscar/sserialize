@@ -51,9 +51,15 @@ inline sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter 
 }
 
 namespace sserialize {
-	template<> inline bool sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::is_fixed_length() { return true; }
-	template<> inline sserialize::OffsetType sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length() { return 6; }
-	template<> inline sserialize::OffsetType sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::max_length() { return 6; }
-	template<> inline sserialize::OffsetType sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::min_length() { return 6; }
+
+	template<>
+	struct SerializationInfo<sserialize::Static::spatial::GeoPoint> {
+		static const bool is_fixed_length = true;
+		static const OffsetType length = 6;
+		static const OffsetType max_length = 6;
+		static const OffsetType min_length = 6;
+		static inline OffsetType sizeInBytes(const sserialize::Static::spatial::GeoPoint & value) { return 6; }
+	};
+	
 }
 #endif

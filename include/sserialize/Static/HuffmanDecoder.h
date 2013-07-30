@@ -39,6 +39,10 @@ public:
 		HuffmanCodePointInfo(uint32_t value, uint32_t childPtrBitLen) :
 		m_value(value), m_childPtrBitLen(childPtrBitLen) {}
 		
+		HuffmanCodePointInfo(const UByteArrayAdapter & data) :
+		m_value(data.get<uint32_t>(0)), m_childPtrBitLen(data.get<uint32_t>(sserialize::SerializationInfo<uint32_t>::length))
+		{}
+		
 		virtual ~HuffmanCodePointInfo() {}
 		inline uint32_t value() const { return m_value; }
 		inline uint8_t length() const { return m_childPtrBitLen & 0x1F; }
@@ -130,10 +134,14 @@ public:
 }} //end namespace
 
 namespace sserialize {
-	template<> inline bool SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::is_fixed_length() { return true; }
-	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::length() { return 8; }
-	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::max_length() { return 8; }
-	template<> inline OffsetType SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo>::min_length() { return 8; }
+	template<>
+	struct SerializationInfo<sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo> {
+		static const bool is_fixed_length = true;
+		static const OffsetType length = 8;
+		static const OffsetType max_length = 8;
+		static const OffsetType min_length = 8;
+		static inline OffsetType sizeInBytes(const sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo & value) { return 8; }
+	};
 }
 
 

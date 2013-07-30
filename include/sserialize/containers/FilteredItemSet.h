@@ -48,7 +48,7 @@ public:
 	bool valid() const { return m_pos < m_itemSet.size(); }
 	DataBaseItemType operator*() const {
 		if (m_cache.tellPutPtr() > 0) {
-			uint32_t id = m_cache.getUint32(m_cache.tellPutPtr()/sserialize::SerializationInfo<uint32_t>::length() - 1);
+			uint32_t id = m_cache.getUint32(m_cache.tellPutPtr()/sserialize::SerializationInfo<uint32_t>::length - 1);
 			return m_itemSet.db().at(id);
 		}
 		return DataBaseItemType();
@@ -78,7 +78,7 @@ public:
 	}
 	DataBaseItemType at(uint32_t pos) {
 		if (m_cache.tellPutPtr()/4 > pos)  {
-			return m_itemSet.db().at( m_cache.getUint32( m_cache.tellPutPtr()/sserialize::SerializationInfo<uint32_t>::length() - 1 ) );
+			return m_itemSet.db().at( m_cache.getUint32( m_cache.tellPutPtr()/sserialize::SerializationInfo<uint32_t>::length - 1 ) );
 		}
 		return DataBaseItemType();
 	}
