@@ -52,7 +52,8 @@ std::set<uint64_t> largeOffsets(uint32_t count, uint32_t minDistance) {
 class SortedOffsetIndexTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( SortedOffsetIndexTest );
 // CPPUNIT_TEST( testRandomEquality );
-CPPUNIT_TEST( testLargeOffsets );
+// CPPUNIT_TEST( testLargeOffsets );
+CPPUNIT_TEST( testLargestOffsetsSpecial );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -95,6 +96,33 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 		
 			uint32_t count = 0;
+			for(std::set<uint64_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
+			}
+		}
+	}
+	
+	void testLargestOffsetsSpecial() {
+		for(int i = 0; i < 32; ++i) {
+			uint64_t count = 0xFFFFF;
+			uint64_t begin = (uint32_t)rand();
+			uint64_t end = begin * ((uint32_t)rand());
+			uint64_t add = (end-begin)/count;
+			std::set<uint64_t> realValues;
+			std::set<uint64_t>::iterator it(realValues.end());
+			for(; begin < end; begin += add) {
+				it = realValues.insert(it, begin);
+			}
+			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
+			CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
+			Static::SortedOffsetIndex idx(dest);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
+		
+			count = 0;
 			for(std::set<uint64_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count;
