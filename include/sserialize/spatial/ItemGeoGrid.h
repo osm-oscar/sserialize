@@ -3,6 +3,7 @@
 #include <set>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/Static/Deque.h>
+#include <sserialize/Static/GeoShape.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include "RWGeoGrid.h"
 
@@ -24,6 +25,7 @@ public:
 		}
 	}
 	
+	///@param shape can be NULL
 	bool addItem(uint32_t itemId, const GeoShape * shape) {
 		if (!shape)
 			return false;
@@ -40,6 +42,22 @@ public:
 		}
 		return allOk;
 	}
+
+	bool addItem(uint32_t itemId, const sserialize::Static::spatial::GeoShape & shape) {
+		std::vector<GridBin> bins = select( shape.boundary() );
+		bool allOk = bins.size();
+		for(size_t i = 0; i < bins.size(); ++i) {
+			allOk = bins[i].valid() && allOk;
+			if (bins[i].valid() && shape.intersects( cellBoundary(bins[i].x, bins[i].y) ) ) {
+				std::set<uint32_t>* & tile = binAt(bins[i].x, bins[i].y);
+				if ( ! tile )
+					tile = new std::set<uint32_t>();
+				tile->insert(itemId);
+			}
+		}
+		return allOk;
+	}
+
 	
 	using MyParentClass::serialize;
 	
