@@ -517,6 +517,17 @@ uint8_t UByteArrayAdapter::getUint8(const OffsetType pos) const {
 	return m_priv->getUint8(m_offSet+pos);
 }
 
+//BUG:make this portable!
+double UByteArrayAdapter::getDouble(const OffsetType pos) const {
+	if (m_len < pos+8) return std::numeric_limits<double>::signaling_NaN();
+	return unpack_double_from_uint64_t(m_priv->getUint64(m_offSet+pos));
+}
+
+float UByteArrayAdapter::getFloat(const OffsetType pos) const {
+	if (m_len < pos+4) return std::numeric_limits<float>::signaling_NaN();
+	return unpack_float_from_uint32_t(m_priv->getUint32(m_offSet+pos));
+}
+
 uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
@@ -673,6 +684,18 @@ bool UByteArrayAdapter::putUint16(const OffsetType pos, const uint16_t value) {
 bool UByteArrayAdapter::putUint8(const OffsetType pos, const uint8_t value) {
 	if (m_len < pos+1) return false;
 	m_priv->putUint8(m_offSet+pos, value);
+	return true;
+}
+
+bool UByteArrayAdapter::putDouble(const OffsetType pos, const double value) {
+	if (m_len < pos+8) return false;
+	m_priv->putUint64(m_offSet+pos, pack_double_to_uint64_t(value));
+	return true;
+}
+
+bool UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
+	if (m_len < pos+4) return false;
+	m_priv->putUint32(m_offSet+pos, pack_float_to_uint32_t(value));
 	return true;
 }
 
@@ -890,48 +913,23 @@ UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset() {
 	m_getPtr += SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT;
 	return res;
 }
+#define UBA_STREAMING_GET_FUNC(__NAME, __TYPE, __LENGTH) \
+__TYPE UByteArrayAdapter::__NAME() { \
+	__TYPE res = __NAME(m_getPtr); \
+	m_getPtr += __LENGTH; \
+	return res; \
+} \
 
-uint64_t UByteArrayAdapter::getUint64() {
-	uint64_t res = getUint64(m_getPtr);
-	m_getPtr += 8;
-	return res;
-}
-
-int64_t UByteArrayAdapter::getInt64() {
-	int64_t res = getInt64(m_getPtr);
-	m_getPtr += 8;
-	return res;
-}
-
-int32_t UByteArrayAdapter::getInt32() {
-	int32_t res = getInt32(m_getPtr);
-	m_getPtr += 4;
-	return res;
-}
-
-uint32_t UByteArrayAdapter::getUint32() {
-	uint32_t res = getUint32(m_getPtr);
-	m_getPtr += 4;
-	return res;
-}
-
-uint32_t UByteArrayAdapter::getUint24() {
-	uint32_t res = getUint24(m_getPtr);
-	m_getPtr += 3;
-	return res;
-}
-
-uint16_t UByteArrayAdapter::getUint16() {
-	uint16_t res = getUint16(m_getPtr);
-	m_getPtr += 2;
-	return res;
-}
-
-uint8_t UByteArrayAdapter::getUint8() {
-	uint8_t res = getUint8(m_getPtr);
-	m_getPtr += 1;
-	return res;
-}
+UBA_STREAMING_GET_FUNC(getUint64, uint64_t, 8);
+UBA_STREAMING_GET_FUNC(getInt64, int64_t, 8);
+UBA_STREAMING_GET_FUNC(getUint32, uint32_t, 4);
+UBA_STREAMING_GET_FUNC(getInt32, int32_t, 4);
+UBA_STREAMING_GET_FUNC(getUint24, uint32_t, 3);
+UBA_STREAMING_GET_FUNC(getUint16, uint16_t, 2);
+UBA_STREAMING_GET_FUNC(getUint8, uint8_t, 1);
+UBA_STREAMING_GET_FUNC(getDouble, double, 8);
+UBA_STREAMING_GET_FUNC(getFloat, float, 4);
+#undef UBA_STREAMING_GET_FUNC
 
 uint64_t UByteArrayAdapter::getVlPackedUint64() {
 	int len;
@@ -1005,131 +1003,49 @@ bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
 	return true;
 }
 
-bool UByteArrayAdapter::putOffset(const OffsetType value) {
-	if (!resizeForPush(m_putPtr, 5))
-		return false;
-	bool ok = putOffset(m_putPtr, value);
-	if (ok)
-		m_putPtr += 5;
-	return ok;
-}
+#define UBA_PUT_STREAMING_FUNC(__NAME, __TYPE, __LENGTH) \
+bool UByteArrayAdapter::__NAME(const __TYPE value) { \
+	if (!resizeForPush(m_putPtr, __LENGTH)) \
+		return false; \
+	bool ok = __NAME(m_putPtr, value); \
+	if (ok) \
+		m_putPtr += __LENGTH; \
+	return ok; \
+} \
 
-bool UByteArrayAdapter::putNegativeOffset(const NegativeOffsetType value) {
-	if (!resizeForPush(m_putPtr, 5))
-		return false;
-	bool ok = putNegativeOffset(m_putPtr, value);
-	if (ok)
-		m_putPtr += 5;
-	return ok;
-}
+UBA_PUT_STREAMING_FUNC(putOffset, OffsetType, 5);
+UBA_PUT_STREAMING_FUNC(putNegativeOffset, NegativeOffsetType, 5);
+UBA_PUT_STREAMING_FUNC(putInt64, int64_t, 8);
+UBA_PUT_STREAMING_FUNC(putUint64, uint64_t, 8);
+UBA_PUT_STREAMING_FUNC(putInt32, int32_t, 4);
+UBA_PUT_STREAMING_FUNC(putUint32, uint32_t, 4);
+UBA_PUT_STREAMING_FUNC(putUint24, uint32_t, 3);
+UBA_PUT_STREAMING_FUNC(putUint16, uint16_t, 2);
+UBA_PUT_STREAMING_FUNC(putUint8, uint8_t, 1);
+UBA_PUT_STREAMING_FUNC(putDouble, double, 8);
+UBA_PUT_STREAMING_FUNC(putFloat, float, 4);
 
-bool UByteArrayAdapter::putInt64(const int64_t value) {
-	if (!resizeForPush(m_putPtr, 8))
-		return false;
-	bool ok = putInt64(m_putPtr, value);
-	if (ok)
-		m_putPtr += 8;
-	return ok;
-}
+#undef UBA_PUT_STREAMING_FUNC
 
-bool UByteArrayAdapter::putUint64(const uint64_t value) {
-	if (!resizeForPush(m_putPtr, 8))
-		return false;
-	bool ok = putUint64(m_putPtr, value);
-	if (ok)
-		m_putPtr += 8;
-	return ok;
-}
+#define UBA_PUT_VL_STREAMING_FUNC(__NAME, __SIZEFUNC, __TYPE) \
+int UByteArrayAdapter::__NAME(const __TYPE value) { \
+	int len = __SIZEFUNC(value); \
+	if (len < 0) \
+		return false; \
+	if (!resizeForPush(m_putPtr, len)) \
+		return false; \
+	len = __NAME(m_putPtr, value); \
+	if (len > 0) \
+		m_putPtr += len; \
+	return len; \
+} \
 
-bool UByteArrayAdapter::putInt32(const int32_t value) {
-	if (!resizeForPush(m_putPtr, 4))
-		return false;
-	bool ok = putInt32(m_putPtr, value);
-	if (ok)
-		m_putPtr += 4;
-	return ok;
-}
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, vl_pack_uint64_t_size, uint64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, vl_pack_int64_t_size, int64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint32, vl_pack_uint32_t_size, uint32_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, vl_pack_int32_t_size, int32_t);
 
-bool UByteArrayAdapter::putUint32(const uint32_t value) {
-	if (!resizeForPush(m_putPtr, 4))
-		return false;
-	bool ok = putUint32(m_putPtr, value);
-	if (ok)
-		m_putPtr += 4;
-	return ok;
-}
-
-bool UByteArrayAdapter::putUint24(const uint32_t value) {
-	if (!resizeForPush(m_putPtr, 3))
-		return false;
-	bool ok = putUint24(m_putPtr, value);
-	if (ok)
-		m_putPtr += 3;
-	return ok;
-}
-
-bool UByteArrayAdapter::putUint16(const uint16_t value) {
-	if (!resizeForPush(m_putPtr, 2))
-		return false;
-	bool ok = putUint16(m_putPtr, value);
-	if (ok)
-		m_putPtr += 2;
-	return ok;
-}
-
-bool UByteArrayAdapter::putUint8(const uint8_t value) {
-	if (!resizeForPush(m_putPtr, 1))
-		return false;
-	bool ok = putUint8(m_putPtr, value);
-	if (ok)
-		m_putPtr += 1;
-	return ok;
-}
-
-int UByteArrayAdapter::putVlPackedUint64(const uint64_t value) {
-	int len = vl_pack_uint64_t_size(value);
-	if (len < 0)
-		return false;
-	if (!resizeForPush(m_putPtr, len))
-		return false;
-
-	len = putVlPackedUint64(m_putPtr, value);
-
-	if (len > 0)
-		m_putPtr += len;
-
-	return len;
-}
-
-int UByteArrayAdapter::putVlPackedInt64(const int64_t value) {
-	int len = vl_pack_int64_t_size(value);
-	if (len < 0)
-		return false;
-	if (!resizeForPush(m_putPtr, len))
-		return false;
-
-	len = putVlPackedInt64(m_putPtr, value);
-
-	if (len > 0)
-		m_putPtr += len;
-
-	return len;
-}
-
-int UByteArrayAdapter::putVlPackedUint32(const uint32_t value) {
-	int len = vl_pack_uint32_t_size(value);
-	if (len < 0)
-		return false;
-	if (!resizeForPush(m_putPtr, len))
-		return false;
-
-	len = putVlPackedUint32(m_putPtr, value);
-
-	if (len > 0)
-		m_putPtr += len;
-
-	return len;
-}
+#undef UBA_PUT_VL_STREAMING_FUNC
 
 int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 	if (!resizeForPush(m_putPtr, 4))
@@ -1140,20 +1056,6 @@ int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 	if (len > 0)
 		m_putPtr += len;
 	
-	return len;
-}
-
-int UByteArrayAdapter::putVlPackedInt32(const int32_t value) {
-	int len = vl_pack_int32_t_size(value);
-	if (len < 0)
-		return false;
-	if (!resizeForPush(m_putPtr, len))
-		return false;
-
-	len = putVlPackedInt32(m_putPtr, value);
-
-	if (len > 0)
-		m_putPtr += len;
 	return len;
 }
 
@@ -1266,6 +1168,8 @@ STATIC_PUT_FUNCS_MAKRO(putUint32, uint32_t);
 STATIC_PUT_FUNCS_MAKRO(putInt32, int32_t);
 STATIC_PUT_FUNCS_MAKRO(putUint64, uint64_t);
 STATIC_PUT_FUNCS_MAKRO(putInt64, int64_t);
+STATIC_PUT_FUNCS_MAKRO(putDouble, double);
+STATIC_PUT_FUNCS_MAKRO(putFloat, float);
 STATIC_PUT_FUNCS_MAKRO(putVlPackedInt32, int32_t);
 STATIC_PUT_FUNCS_MAKRO(putVlPackedUint32, uint32_t);
 STATIC_PUT_FUNCS_MAKRO(putVlPackedInt64, int64_t);
@@ -1312,91 +1216,42 @@ bool operator!=(const UByteArrayAdapter& b, const std::deque< uint8_t >& a) {
 
 //Streaming operators
 
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const int64_t value) {
-	data.putInt64(value);
-	return data;
-}
+#define UBA_OPERATOR_PUT_STREAMING_FUNC(__NAME, __TYPE) \
+UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const __TYPE value) { \
+	data.__NAME(value); \
+	return data; \
+} \
 
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const uint64_t value) {
-	data.putUint64(value);
-	return data;
-}
+UBA_OPERATOR_PUT_STREAMING_FUNC(putInt64, int64_t);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putInt32, int32_t);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putUint64, uint64_t);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putUint32, uint32_t);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putUint16, uint16_t);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putUint64, uint8_t);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putDouble, double);
+UBA_OPERATOR_PUT_STREAMING_FUNC(putFloat, float);
+UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::string &);
+UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::deque<uint8_t> &);
+UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::vector<uint8_t> &);
+UBA_OPERATOR_PUT_STREAMING_FUNC(put, UByteArrayAdapter &);
 
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const int32_t value) {
-	data.putInt32(value);
-	return data;
-}
-
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const uint32_t value) {
-	data.putUint32(value);
-	return data;
-}
-
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const uint16_t value) {
-	data.putUint16(value);
-	return data;
-}
+#undef UBA_OPERATOR_PUT_STREAMING_FUNC
 
 
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const uint8_t value) {
-	data.putUint8(value);
-	return data;
-}
+#define UBA_OPERATOR_GET_STREAMING_FUNC(__NAME, __TYPE) \
+UByteArrayAdapter& operator>>(UByteArrayAdapter & data, __TYPE & value) { \
+	value = data.__NAME(); \
+	return data; \
+} \
 
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const std::string & value) {
-	data.put(value);
-	return data;
-}
+UBA_OPERATOR_GET_STREAMING_FUNC(getInt64, int64_t);
+UBA_OPERATOR_GET_STREAMING_FUNC(getInt32, int32_t);
+UBA_OPERATOR_GET_STREAMING_FUNC(getUint64, uint64_t);
+UBA_OPERATOR_GET_STREAMING_FUNC(getUint32, uint32_t);
+UBA_OPERATOR_GET_STREAMING_FUNC(getUint16, uint16_t);
+UBA_OPERATOR_GET_STREAMING_FUNC(getUint8, uint8_t);
+UBA_OPERATOR_GET_STREAMING_FUNC(getDouble, double);
+UBA_OPERATOR_GET_STREAMING_FUNC(getFloat, float);
+UBA_OPERATOR_GET_STREAMING_FUNC(getString, std::string);
 
-
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const std::deque<uint8_t> & value) {
-	data.put(value);
-	return data;
-}
-
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const std::vector<uint8_t> & value) {
-	data.put(value);
-	return data;
-}
-
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const UByteArrayAdapter & value) {
-	data.put(value);
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, int64_t & value) {
-	value = data.getInt64();
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, uint64_t & value) {
-	value = data.getUint64();
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, int32_t & value) {
-	value = data.getInt32();
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, uint32_t & value) {
-	value = data.getUint32();
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, uint16_t & value) {
-	value = data.getUint16();
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, uint8_t & value) {
-	value = data.getUint8();
-	return data;
-}
-
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, std::string & value) {
-	value = data.getString();
-	return data;
-}
-
-
+#undef UBA_OPERATOR_STREAMING_FUNC

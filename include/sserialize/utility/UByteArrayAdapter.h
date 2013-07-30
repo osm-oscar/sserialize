@@ -142,6 +142,8 @@ public:
 	uint32_t getUint24(const OffsetType pos) const;
 	uint16_t getUint16(const OffsetType pos) const;
 	uint8_t getUint8(const OffsetType pos) const;
+	double getDouble(const OffsetType pos) const;
+	float getFloat(const OffsetType pos) const;
 
 	uint64_t getVlPackedUint64(const OffsetType pos, int* length) const;
 	int64_t getVlPackedInt64(const OffsetType pos, int* length) const;
@@ -168,6 +170,8 @@ public:
 	bool putUint24(const OffsetType pos, const uint32_t value);
 	bool putUint16(const OffsetType pos, const uint16_t value);
 	bool putUint8(const OffsetType pos, const uint8_t value);
+	bool putDouble(const OffsetType pos, const double value);
+	bool putFloat(const OffsetType pos, const float value);
 	
 	bool putOffset(const OffsetType pos, const OffsetType value);
 	bool putNegativeOffset(const OffsetType pos, const NegativeOffsetType value);
@@ -200,6 +204,8 @@ public:
 	uint32_t getUint24();
 	uint16_t getUint16();
 	uint8_t getUint8();
+	double getDouble();
+	float getFloat();
 
 	uint64_t getVlPackedUint64();
 	int64_t getVlPackedInt64();
@@ -223,6 +229,8 @@ public:
 	bool putUint24(const uint32_t value);
 	bool putUint16(const uint16_t value);
 	bool putUint8(const uint8_t value);
+	bool putDouble(const double value);
+	bool putFloat(const float value);
 
 	int putVlPackedUint64(const uint64_t value);
 	int putVlPackedInt64(const int64_t value);
@@ -285,28 +293,30 @@ public:
 	inline void get(uint64_t & value) { value = getUint64(); }
 	inline void get(int32_t & value) { value = getInt32(); }
 	inline void get(int64_t & value) { value = getInt64(); }
+	inline void get(double & value) { value = getDouble(); }
+	inline void get(float & value) { value = getFloat(); }
 	
 	template<typename TValue>
-	TValue getV(UByteArrayAdapter::OffsetType pos) const {
+	TValue get(UByteArrayAdapter::OffsetType pos) const {
 		TValue v;
 		get(pos, v);
 		return v;
 	}
 	
 	template<typename TValue>
-	TValue getV() {
+	TValue get() {
 		TValue v;
 		get(v);
 		return v;
 	}
 	
 	template<typename TValue>
-	void putV(UByteArrayAdapter::OffsetType pos, TValue v) {
+	void put(UByteArrayAdapter::OffsetType pos, TValue v) {
 		put(pos, v);
 	}
 	
 	template<typename TValue>
-	void putV(TValue v) {
+	void put(TValue v) {
 		put(v);
 	}
 	
@@ -317,6 +327,8 @@ public:
 	static void putInt32(UByteArrayAdapter & dest, int32_t src);
 	static void putUint64(UByteArrayAdapter & dest, uint64_t src);
 	static void putInt64(UByteArrayAdapter & dest, int64_t src);
+	static void putDouble(UByteArrayAdapter & dest, double src);
+	static void putFloat(UByteArrayAdapter & dest, float src);
 	static void putVlPackedInt32(UByteArrayAdapter & dest, int32_t src);
 	static void putVlPackedUint32(UByteArrayAdapter & dest, uint32_t src);
 	static void putVlPackedInt64(UByteArrayAdapter & dest, int64_t src);
@@ -358,6 +370,16 @@ struct UByteArrayAdapter::SerializationSupport<int64_t> {
 	static const bool value = true;
 };
 
+template<>
+struct UByteArrayAdapter::SerializationSupport<double> {
+	static const bool value = true;
+};
+
+template<>
+struct UByteArrayAdapter::SerializationSupport<float> {
+	static const bool value = true;
+};
+
 }//end namespace
 
 //Streaming operators
@@ -384,6 +406,8 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, 
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint32_t value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint16_t value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint8_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const double value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const float value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::string & value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::deque<uint8_t> & value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::vector<uint8_t> & value);
@@ -395,6 +419,8 @@ sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, 
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint32_t & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint16_t & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint8_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, double & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, float & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, std::string & value);
 
 

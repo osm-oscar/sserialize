@@ -108,7 +108,25 @@ inline void pack_uint64_t(uint64_t src, unsigned char * dest) {
 	memcpy(dest, &src, sizeof(src));
 }
 
+//BUG: do this right
+inline uint64_t pack_double_to_uint64_t(const double src) {
+	union {
+		double d;
+		uint64_t ui;
+	} tmp;
+	tmp.d = src;
+	return tmp.ui;
+}
 
+//BUG: do this right
+inline uint32_t pack_float_to_uint32_t(const float src) {
+	union {
+		float d;
+		uint32_t ui;
+	} tmp;
+	tmp.d = src;
+	return tmp.ui;
+}
 
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
 typedef int(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
