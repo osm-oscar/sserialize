@@ -1,12 +1,12 @@
 #ifndef OSMFIND_LOG_H
 #define OSMFIND_LOG_H
 #include <sstream>
+#include <vector>
 #ifdef __ANDROID__
 #include <android/log.h>
 #else
 #include <iostream>
 #endif
-
 
 namespace osmfindlog {
 
@@ -38,6 +38,23 @@ extern Log info;
 extern Log debug;
 extern Log err;
 
+template<typename T>
+std::string nameOfType();
+
+#define __NAME_OF_TYPE_SPECIALICATION(__TYPE) template<> inline std::string nameOfType<__TYPE>() { return std::string("__TYPE"); }
+
+__NAME_OF_TYPE_SPECIALICATION(uint8_t);
+__NAME_OF_TYPE_SPECIALICATION(uint16_t);
+__NAME_OF_TYPE_SPECIALICATION(uint32_t);
+__NAME_OF_TYPE_SPECIALICATION(uint64_t);
+__NAME_OF_TYPE_SPECIALICATION(int8_t);
+__NAME_OF_TYPE_SPECIALICATION(int16_t);
+__NAME_OF_TYPE_SPECIALICATION(int32_t);
+__NAME_OF_TYPE_SPECIALICATION(int64_t);
+__NAME_OF_TYPE_SPECIALICATION(float);
+__NAME_OF_TYPE_SPECIALICATION(double);
+__NAME_OF_TYPE_SPECIALICATION(std::string);
+#undef __NAME_OF_TYPE_SPECIALICATION
 
 inline void toString(std::stringstream & ss) {}
 
@@ -59,6 +76,21 @@ std::string toString(PrintTypeList ... args) {
 	std::stringstream ss;
 	toString(ss, args...);
 	return ss.str();
+}
+
+template<typename T>
+void putInto(std::ostream & out, const std::vector<T> & vec) {
+	out << "std::vector<" << nameOfType<T>() << ">[";
+	typename std::vector<T>::const_iterator it(vec.begin());
+	typename std::vector<T>::const_iterator end(vec.end());
+	if (vec.size()) {
+		--end;
+		for(; it < end; ++it) {
+			out << *it << ", ";
+		}
+		out << *it;
+	}
+	out << "]";
 }
 
 }//end namespace
