@@ -128,6 +128,25 @@ inline uint32_t pack_float_to_uint32_t(const float src) {
 	return tmp.ui;
 }
 
+inline double unpack_double_from_uint64_t(const uint64_t src) {
+	union {
+		double d;
+		uint64_t ui;
+	} tmp;
+	tmp.ui = src;
+	return tmp.d;
+}
+
+//BUG: do this right
+inline float unpack_float_from_uint32_t(const uint32_t src) {
+	union {
+		float d;
+		uint32_t ui;
+	} tmp;
+	tmp.ui = src;
+	return tmp.d;
+}
+
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
 typedef int(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
 typedef int(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
