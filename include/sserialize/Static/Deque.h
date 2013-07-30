@@ -22,7 +22,7 @@ namespace Static {
 template<typename TValue>
 class DequeCreator {
 	UByteArrayAdapter & m_dest;
-	std::set<OffsetType> m_offsets;
+	std::vector<OffsetType> m_offsets;
 	OffsetType m_dataLenPtr;
 	OffsetType m_beginOffSet;
 public:
@@ -33,24 +33,28 @@ public:
 		
 		m_beginOffSet = m_dest.tellPutPtr();
 	}
+	const std::vector<OffsetType> & offsets() const { return m_offsets; }
 	virtual ~DequeCreator() {}
 	void put(const TValue & value) {
-		m_offsets.insert(m_dest.tellPutPtr() - m_beginOffSet);
+		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
 		m_dest << value;
 	}
 	void beginRawPut() {
-		m_offsets.insert(m_dest.tellPutPtr() - m_beginOffSet);
+		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
 	}
 	UByteArrayAdapter & rawPut() { return m_dest;}
 	void endRawPut() {}
 	
-	void flush() {
+	///@return data to create the deque (NOT dest data)
+	UByteArrayAdapter flush() {
 		UByteArrayAdapter::OffsetType offsetIndexBegin = m_dest.tellPutPtr();
 		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
 		sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest);
 		sserialize::Static::SortedOffsetIndex oi(m_dest+offsetIndexBegin);
-		if (m_offsets != oi)
+		if (m_offsets != oi) {
 			throw sserialize::CreationException("SortedOffsetIndex is not equal to source index");
+		}
+		return m_dest + m_beginOffSet;
 	}
 };
 
