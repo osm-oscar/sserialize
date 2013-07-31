@@ -47,13 +47,8 @@ public:
 	
 	///@return data to create the deque (NOT dest data)
 	UByteArrayAdapter flush() {
-		UByteArrayAdapter::OffsetType offsetIndexBegin = m_dest.tellPutPtr();
 		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
 		sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest);
-		sserialize::Static::SortedOffsetIndex oi(m_dest+offsetIndexBegin);
-		if (m_offsets != oi) {
-			throw sserialize::CreationException("SortedOffsetIndex is not equal to source index");
-		}
 		return m_dest + m_beginOffSet;
 	}
 };
