@@ -2,6 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <vector>
+#include <fstream>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
@@ -49,11 +50,14 @@ std::set<uint64_t> largeOffsets(uint32_t count, uint32_t minDistance) {
 	return ret;
 }
 
+std::string inFile;
+
 class SortedOffsetIndexTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( SortedOffsetIndexTest );
 // CPPUNIT_TEST( testRandomEquality );
 // CPPUNIT_TEST( testLargeOffsets );
-CPPUNIT_TEST( testLargestOffsetsSpecial );
+// CPPUNIT_TEST( testLargestOffsetsSpecial );
+CPPUNIT_TEST( testFromFile );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -130,9 +134,41 @@ public:
 			}
 		}
 	}
+	
+	void testFromFile() {
+		if (!inFile.empty()) {
+			std::ifstream file;
+			file.open(inFile);
+			CPPUNIT_ASSERT_MESSAGE("Test file could not be opened", file.is_open());
+			
+			std::vector<uint64_t> values;
+			while (!file.eof()) {
+				uint64_t v;
+				file >> v;
+				values.push_back(v);
+			}
+			UByteArrayAdapter d(UByteArrayAdapter::createCache(1, false));
+			Static::SortedOffsetIndexPrivate::create(values, d);
+			Static::SortedOffsetIndex idx(d);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)values.size(), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)d.size(), idx.getSizeInBytes());
+		
+			uint32_t count = 0;
+			for(std::vector<uint64_t>::iterator it = values.begin(); it != values.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
+			}
+		}
+	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	if (argc > 1) {
+		inFile = std::string(argv[1]);
+	}
+
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  SortedOffsetIndexTest::suite() );

@@ -69,7 +69,11 @@ private:
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
 			yintercept = floor(yinterceptd);
-			slopenom = floor(sloped) * (ids.size()-1);
+			double slopenomd = floor(sloped) * (ids.size()-1);
+			slopenom = slopenomd;
+			if (slopenomd >= floor((double)std::numeric_limits<uint64_t>::max()) || yinterceptd >= floor((double)std::numeric_limits<uint64_t>::max())) {
+				return false;
+			}
 		}
 		else {
 			slopenom = 0;
@@ -103,7 +107,10 @@ public:
 			int64_t yintercept = 0;
 			uint8_t bitsForIds = 32;
 			uint64_t idOffset = 0;
-			getLinearRegressionParamsInteger(src, slopenom, yintercept, bitsForIds, idOffset);
+			if (!getLinearRegressionParamsInteger(src, slopenom, yintercept, bitsForIds, idOffset)) {
+				bitsForIds = 0xFF;
+				std::cerr << "Failed to create regressionline params" << std::endl;
+			}
 			
 			if (bitsForIds >= CompactUintArray::minStorageBits64(*src.rbegin())) {
 				bitsForIds = CompactUintArray::minStorageBits64(*src.rbegin());
@@ -112,7 +119,7 @@ public:
 				idOffset = 0;
 			}
 
-			uint64_t countTypeHeader = src.size() << 6;
+			uint64_t countTypeHeader = static_cast<uint64_t>(src.size()) << 6;
 			countTypeHeader |= (bitsForIds-1);
 
 			if (destination.putVlPackedUint64(countTypeHeader) < 0)
@@ -140,7 +147,7 @@ public:
 				curOffSetCorrection = yintercept + static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, src.size(), count));
 				offSetCorrectedId = static_cast<int64_t>(*i)  - curOffSetCorrection + idOffset;
 				carr.set64(count, offSetCorrectedId);
-				count++;
+				++count;
 			}
 		}
 		else if (src.size() == 1) { //a single element

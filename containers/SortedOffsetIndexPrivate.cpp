@@ -16,14 +16,14 @@ m_idOffset(0)
 bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 	
 	int curLen;
-	m_size = data.getVlPackedUint64(0, &curLen);
+	uint64_t size = data.getVlPackedUint64(0, &curLen);
 	if (curLen < 0) {
 		osmfindlog::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_size");
 		return false;
 	}
 	data += curLen;
-	uint8_t bpn = (m_size & 0x3F)+1;
-	m_size = m_size >> 6;
+	uint8_t bpn = (size & 0x3F)+1;
+	m_size = size >> 6;
 	
 	if (m_size > 1) {
 		m_yintercept = data.getVlPackedInt64(0, &curLen);
