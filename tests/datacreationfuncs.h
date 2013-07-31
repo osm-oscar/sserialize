@@ -30,6 +30,9 @@ void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint3
 void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t maxValue, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand);
 void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::deque< std::set<uint32_t> > & destination);
 
+void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::vector< std::vector<uint32_t> > & destination);
+
+
 struct SamplePolygonTestData {
 	inline sserialize::spatial::GeoPolygon poly(uint32_t p) { return polys.at(p).first; }
 	inline sserialize::spatial::GeoPoint point(uint32_t p) { return points.at(p);}

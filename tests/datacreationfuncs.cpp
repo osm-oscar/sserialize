@@ -202,6 +202,33 @@ void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVaria
 	}
 }
 
+void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::vector< std::vector<uint32_t> > & destination) {
+	uint32_t rndNum;
+	uint32_t rndMask;
+	uint32_t mask;
+
+	std::set<uint32_t> equalPart;
+
+	for(uint32_t i = 0; i < minEqual; i++) {
+		rndNum = rand();
+		rndMask = (double)rand()/RAND_MAX * 23; 
+		mask = ((rndMask+1 == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << (rndMask+1)) - 1));
+		equalPart.insert(rndNum & mask);
+	}
+
+	for(size_t i = 0; i < count; i++) {
+		std::set<uint32_t> s = equalPart;
+		uint16_t addCount = (double)rand()/RAND_MAX * sizeVariance;
+		for(size_t j = 0; j < addCount; j++) {
+			rndNum = rand();
+			rndMask = (double)rand()/RAND_MAX * 23; 
+			mask = ((rndMask+1 == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << (rndMask+1)) - 1));
+			s.insert(rndNum & mask);
+		}
+		destination.push_back(std::vector<uint32_t>(s.begin(), s.end()));
+	}
+}
+
 void createHandSamplePolygons(SamplePolygonTestData & data) { 
 	using namespace spatial;
 	std::vector<spatial::GeoPoint> polyA(3);

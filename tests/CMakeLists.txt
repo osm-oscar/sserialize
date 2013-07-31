@@ -55,6 +55,7 @@ ADD_TEST_TARGET_SINGLE(containers_SortedOffsetIndex)
 ADD_TEST_TARGET_SINGLE(containers_setoptreesimple)
 ADD_TEST_TARGET_SINGLE(containers_multibititerators)
 ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
+ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
 
 
 #util
