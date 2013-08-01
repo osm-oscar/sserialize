@@ -162,7 +162,10 @@ private:
 	bool checkFlatTrieEquality(Node* node, std::string prefix, uint32_t& posInFTrie, const sserialize::Static::FlatGST& trie, bool checkIndex);
 	bool consistencyCheckRecurse(Node * node) const;
 
+	template<typename T_ITEM_FACTORY, typename T_ITEM>
+	bool trieFromStringsFactory(const T_ITEM_FACTORY & stringsFactory, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToSubStrNodes, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToExactNodes);
 
+	
 public: //Initalization and Destruction
 	GeneralizedTrie();
 	GeneralizedTrie(const StringsItemDBWrapper<ItemType> & db, bool caseSensitive=false, bool suffixTrie=false);
@@ -441,10 +444,9 @@ void GeneralizedTrie<ItemType>::nextSuffixString(std::string::const_iterator & s
 	}
 }
 
-
 template<class ItemType>
 template<typename T_ITEM_FACTORY, typename T_ITEM>
-bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
+bool GeneralizedTrie<ItemType>::trieFromStringsFactory(const T_ITEM_FACTORY & stringsFactory, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToSubStrNodes, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToExactNodes) {
 	DiacriticRemover transLiterator;
 	if (m_addTransDiacs) {
 		UErrorCode status = transLiterator.init();
@@ -508,8 +510,8 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 	}
 
 	//get all nodes for all strings
-	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes; strIdToSubStrNodes.reserve(m_strings.size());
-	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes; strIdToExactNodes.reserve(m_strings.size());
+	strIdToSubStrNodes.reserve(m_strings.size());
+	strIdToExactNodes.reserve(m_strings.size());
 	
 	progressInfo.begin(m_strings.size(), "GeneralizedTrie::fromStringsFactory: Finding String->node mappings" );
 	count = 0;
@@ -554,12 +556,23 @@ bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & string
 		std::cout << "Trie is broken after GeneralizedTrie::fromStringsFactory::findStringNodes" << std::endl;
 		return false;
 	}
+}
 
-// 	assert( m_root->parent() == 0 );
-	//Now add the items
+
+template<class ItemType>
+template<typename T_ITEM_FACTORY, typename T_ITEM>
+bool GeneralizedTrie<ItemType>::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
+	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes;
+	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes;
 	
+	if (trieFromStringsFactory(stringsFactory, strIdToSubStrNodes, strIdToExactNodes)) {
+		return false;
+	}
+	
+	//Now add the items
+	ProgressInfo progressInfo;
 	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "GeneralizedTrie::fromStringsFactory::insertItems");
-	count = 0;
+	uint32_t count = 0;
 	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
 		std::unordered_set<Node*> exactNodes;
 		std::unordered_set<Node*> suffixNodes;
