@@ -47,6 +47,12 @@ public:
 		}
 	}
 	
+	///This does not check if it is in the range
+	iterator insert(iterator it, const T_VALUE & value) {
+		*it = value;
+		return ++it;
+	}
+	
 	T_VALUE & operator[](std::size_t pos) { return *(m_begin+pos); }
 	const T_VALUE & operator[](std::size_t pos) const { return *(m_begin+pos); }
 	
