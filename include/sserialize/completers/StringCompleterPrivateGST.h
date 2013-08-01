@@ -5,12 +5,12 @@
 
 namespace sserialize {
 
-template<typename GSTItemType>
+template<typename IndexStorageContainer>
 class StringCompleterPrivateGST: public StringCompleterPrivate {
-	GeneralizedTrie<GSTItemType> * m_trie;
+	GeneralizedTrie::BaseTrie<IndexStorageContainer> * m_trie;
 public:
 	StringCompleterPrivateGST() : StringCompleterPrivate(), m_trie(0) {}
-	StringCompleterPrivateGST(GeneralizedTrie<GSTItemType> * trie) : StringCompleterPrivate(), m_trie(trie) {}
+	StringCompleterPrivateGST(GeneralizedTrie::BaseTrie<IndexStorageContainer> * trie) : StringCompleterPrivate(), m_trie(trie) {}
 	virtual ~StringCompleterPrivateGST() {}
 	
 	virtual StringCompleter::SupportedQuerries getSupportedQuerries() const;
@@ -20,9 +20,9 @@ public:
 
 };
 
-template<typename GSTItemType>
+template<typename IndexStorageContainer>
 StringCompleter::SupportedQuerries
-StringCompleterPrivateGST<GSTItemType>::getSupportedQuerries() const {
+StringCompleterPrivateGST<IndexStorageContainer>::getSupportedQuerries() const {
 	if (!m_trie)
 		return StringCompleter::SQ_NONE;
 	

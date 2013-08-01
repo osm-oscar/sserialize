@@ -1,5 +1,4 @@
 #include <sserialize/containers/GeneralizedTrie.h>
-#include <sserialize/containers/GeneralizedTrieHelpers.h>
 #include <sserialize/Static/GeneralizedTrie.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -32,9 +31,9 @@ private: //builds opts;
 	bool m_mergeIndex;
 	bool m_noFullIndexAtAll;
 private:
-	GeneralizedTrie<TestItemData> m_trie;
+	GeneralizedTrie::MultiPassTrie m_trie;
 	std::deque<uint8_t> m_stTrieList;
-	sserialize::GeneralizedTrieCreatorConfig m_config;
+	sserialize::GeneralizedTrie::GeneralizedTrieCreatorConfig m_config;
 	StringCompleter m_strCompleter;
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
 

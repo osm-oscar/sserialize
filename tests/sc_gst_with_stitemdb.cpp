@@ -23,8 +23,9 @@ CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testStringCompleterPrivateCast );
 CPPUNIT_TEST_SUITE_END();
 private:
-	typedef StringCompleterPrivateGST<TestItemData> StringCompleterPrivateType;
-	GeneralizedTrie<TestItemData> * m_trie;
+	typedef GeneralizedTrie::MultiPassTrie TrieImp;
+	typedef StringCompleterPrivateGST< TrieImp::MyBaseClass::ItemSetContainer > StringCompleterPrivateType;
+	TrieImp * m_trie;
 	StringCompleter m_strCompleter;
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
 protected:
@@ -40,10 +41,8 @@ protected:
 		sdbAdap << db;
 		
 		Static::StringsItemDB<TestItemData> sdb(sdbAdap, stableAdap);
-		m_trie = new GeneralizedTrie<TestItemData>(
-						StringsItemDBWrapper<TestItemData>(new StringsItemDBWrapperPrivateSSIDB<TestItemData>(sdb)),
-						T_TREE_CASE_SENSITIVE,
-						true);
+		m_trie = new GeneralizedTrie::MultiPassTrie(T_TREE_CASE_SENSITIVE, true);
+		m_trie->setDB(StringsItemDBWrapper<TestItemData>(new StringsItemDBWrapperPrivateSSIDB<TestItemData>(sdb)));
 		
 		StringCompleterPrivateType * p = new StringCompleterPrivateType(m_trie);
 		stringCompleter() = StringCompleter( p );

@@ -17,7 +17,7 @@ std::string toString(bool b) {
 }
 
 
-bool populateTrie(GeneralizedTrie<TestItemData> & trie, std::deque<TestItemData> & items) {
+bool populateTrie(GeneralizedTrie::MultiPassTrie & trie, std::deque<TestItemData> & items) {
 	items = createSampleData();
 	for(size_t i = 0; i < items.size(); i++) {
 		trie.insert(items.at(i).strs, items.at(i));
@@ -161,7 +161,7 @@ checkTrie(std::deque< std::deque<std::string> > & compStrs, std::deque<TestItemD
 
 bool testTrieOptions(const TrieTestOptions & opts) {
 	
-	GeneralizedTrie<TestItemData> trie;
+	GeneralizedTrie::MultiPassTrie trie;
 	trie.setCaseSensitivity(opts.caseSensitiveTrie);
 	trie.setSuffixTrie(opts.suffixTrie);
 	std::deque<TestItemData> items;

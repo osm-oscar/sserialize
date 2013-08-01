@@ -1,5 +1,4 @@
 #include <sserialize/containers/GeneralizedTrie.h>
-#include <sserialize/containers/GeneralizedTrieHelpers.h>
 #include <sserialize/Static/FlatGSTStrIds.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -29,7 +28,7 @@ CPPUNIT_TEST_SUITE_END();
 private:
 	typedef StringsItemDBWrapper<TestItemData> ItemDBType;
 	typedef sserialize::Static::FlatGSTStrIds<StringsItemDBWrapper<TestItemData> > FGSTType;
-	GeneralizedTrie<TestItemData> m_trie;
+	GeneralizedTrie::FlatTrie m_trie;
 	
 	bool m_caseSensitive;
 	bool m_suffixTree;
@@ -51,7 +50,7 @@ protected:
 		UByteArrayAdapter data(new std::vector<uint8_t>, true);
 		ItemIndexFactory idxFactory;
 		
-		FlatGSTConfig config(data, idxFactory, true, T_MAX_ITEM_IDS_FOR_STRID_INDEX, T_MIN_STR_LEN_FOR_ITEM_ID_INDEX, m_deleteTree, m_mergeIndex);
+		GeneralizedTrie::FlatGSTConfig config(data, idxFactory, true, T_MAX_ITEM_IDS_FOR_STRID_INDEX, T_MIN_STR_LEN_FOR_ITEM_ID_INDEX, m_deleteTree, m_mergeIndex);
 		
 		m_trie.createStaticFlatTrie(config);
 		

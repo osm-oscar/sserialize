@@ -18,9 +18,10 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 	StringsItemDBWrapper<TestItemData> dbWrapper(new StringsItemDBWrapperPrivateSIDB<TestItemData>(db));
 	
 #ifdef TRIE_INSERT
-	GeneralizedTrie<TestItemData> mtrie( dbWrapper );
+	GeneralizedTrie::MultiPassTrie mtrie;
 	mtrie.setCaseSensitivity(false);
 	mtrie.setSuffixTrie(true);
+	mtrie.setDB( dbWrapper );
 	for(std::deque<TestItemData>::iterator it = data.begin(); it != data.end(); it++) {
 		mtrie.insert(it->strs, *it);
 	}
@@ -28,7 +29,8 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 	for(std::deque<TestItemData>::iterator it = data.begin(); it != data.end(); it++) {
 		dbWrapper.insert(it->strs, *it);
 	}
-	GeneralizedTrie<TestItemData> mtrie(dbWrapper, false, true);
+	GeneralizedTrie::MultiPassTrie mtrie(false, true);
+	mtrie.setDB(dbWrapper);
 #endif
 	if (!mtrie.consistencyCheck()) {
 		std::cout << "Trie consistencyCheck failed!" << std::endl;
@@ -41,7 +43,7 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 
 	UByteArrayAdapter stableAdap(&staticStringList);
 
-	sserialize::GeneralizedTrieCreatorConfig config;
+	sserialize::GeneralizedTrie::GeneralizedTrieCreatorConfig config;
 	config.trieList = &staticTrieList;
 	config.levelsWithoutFullIndex = levelsWithoutFullIndex;
 	config.nodeType = Static::TrieNode::T_SIMPLE;

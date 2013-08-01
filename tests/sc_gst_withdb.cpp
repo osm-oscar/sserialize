@@ -23,8 +23,9 @@ CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testStringCompleterPrivateCast );
 CPPUNIT_TEST_SUITE_END();
 private:
-	typedef StringCompleterPrivateGST<TestItemData> StringCompleterPrivateType;
-	GeneralizedTrie<TestItemData> * m_trie;
+	typedef GeneralizedTrie::MultiPassTrie TrieImp;
+	typedef StringCompleterPrivateGST< TrieImp::MyBaseClass::ItemSetContainer > StringCompleterPrivateType;
+	TrieImp * m_trie;
 	StringCompleter m_strCompleter;
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
 protected:
@@ -34,7 +35,7 @@ protected:
 		for(size_t i = 0; i < items().size(); i++) {
 			db.insert(items()[i].strs, items()[i]);
 		}
-		m_trie = new GeneralizedTrie<TestItemData>();
+		m_trie = new GeneralizedTrie::MultiPassTrie();
 		
 		m_trie->setCaseSensitivity(T_TREE_CASE_SENSITIVE);
 		m_trie->setSuffixTrie(true);

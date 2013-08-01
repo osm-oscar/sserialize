@@ -113,7 +113,7 @@ public:
 		UByteArrayAdapter dAdap(&d, false);
 		if (m_compressionType != Static::ItemIndexStore::IC_NONE && sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 8) {
 			std::vector<uint32_t> midx;
-			ItemIndex::unite(indices).putInto(std::back_inserter(midx));
+			ItemIndex::unite(indices).insertInto(std::back_inserter(midx));
 			return addIndex(midx, false, &indexOffset);
 		}
 		else {

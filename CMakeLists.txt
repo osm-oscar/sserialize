@@ -75,6 +75,9 @@ containers/MultiBitIterator.cpp
 containers/UDWIterator.cpp
 containers/UDWIteratorPrivateHD.cpp
 containers/KeyValueObjectStore.cpp
+containers/GeneralizedTrie/FlatTrie.cpp
+containers/GeneralizedTrie/MultiPassTrie.cpp
+containers/GeneralizedTrie/SinglePassTrie.cpp
 )
 
 set(SPATIAL_SOURCES_CPP

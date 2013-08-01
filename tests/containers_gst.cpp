@@ -7,7 +7,7 @@
 
 using namespace sserialize;
 
-bool populateTrie(GeneralizedTrie<TestItemData> & trie, std::deque<TestItemData> & items) {
+bool populateTrie(GeneralizedTrie::MultiPassTrie & trie, std::deque<TestItemData> & items) {
 	items = createSampleData();
 	StringsItemDBWrapper<TestItemData> db( new StringsItemDBWrapperPrivateSIDB<TestItemData>() );
 	for(size_t i = 0; i < items.size(); i++) {
@@ -19,7 +19,7 @@ bool populateTrie(GeneralizedTrie<TestItemData> & trie, std::deque<TestItemData>
 
 
 bool
-checkTrie(std::deque< std::deque<std::string> > & compStrs, GeneralizedTrie<TestItemData> & trie, std::deque<TestItemData> & items, bool caseSensitiveTrie, bool caseSensitiveSearch, unsigned int strMatchType) {
+checkTrie(std::deque< std::deque<std::string> > & compStrs, GeneralizedTrie::MultiPassTrie & trie, std::deque<TestItemData> & items, bool caseSensitiveTrie, bool caseSensitiveSearch, unsigned int strMatchType) {
 	if (!caseSensitiveSearch || !caseSensitiveTrie) {
 		strMatchType |= sserialize::StringCompleter::QT_CASE_INSENSITIVE;
 	}
@@ -55,7 +55,7 @@ bool testTrieOptions(bool suffixTrie, bool caseSensitiveTrie, bool caseSensitive
 	}
 	
 	
-	GeneralizedTrie<TestItemData> trie;
+	GeneralizedTrie::MultiPassTrie trie;
 	trie.setCaseSensitivity(caseSensitiveTrie);
 	trie.setSuffixTrie(suffixTrie);
 	std::deque<TestItemData> items;

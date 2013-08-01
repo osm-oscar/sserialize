@@ -1,5 +1,5 @@
 #include <sserialize/containers/GeneralizedTrie.h>
-#include <sserialize/containers/GeneralizedTrieHelpers.h>
+#include <sserialize/containers/GeneralizedTrie/Helpers.h>
 #include <sserialize/Static/FlatGeneralizedTrie.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -28,7 +28,7 @@ CPPUNIT_TEST( testFlatGSTEquality );
 CPPUNIT_TEST( testConsistency );
 CPPUNIT_TEST_SUITE_END();
 private:
-	GeneralizedTrie<TestItemData> m_trie;
+	GeneralizedTrie::FlatTrie m_trie;
 	bool m_treeCaseSensitive;
 	bool m_suffixTree;
 	bool m_deletTree;
@@ -45,7 +45,7 @@ protected:
 		UByteArrayAdapter data(new std::vector<uint8_t>, true);
 		ItemIndexFactory idxFactory;
 		
-		FlatGSTConfig config(data, idxFactory, false, 0, 0xFFFFFFFF, false, m_mergeIndex);
+		GeneralizedTrie::FlatGSTConfig config(data, idxFactory, false, 0, 0xFFFFFFFF, false, m_mergeIndex);
 		
 		m_trie.createStaticFlatTrie(config);
 		
@@ -118,7 +118,7 @@ CPPUNIT_TEST_SUITE_END();
 public:
 	void testFlatGSTIndexEntry() {
 		uint32_t count = 0x1FFFF;
-		std::deque<IndexEntry> entries;
+		std::deque<GeneralizedTrie::FlatTrie::IndexEntry> entries;
 		std::deque<uint32_t> ptrs[5] = {
 			createNumbers(count),
 			createNumbers(count),
@@ -130,7 +130,7 @@ public:
 			ptrs[i].push_back(0xFEFEFEFE);
 		}
 		for(size_t i = 0; i < count; ++i) {
-			IndexEntry e;
+			GeneralizedTrie::FlatTrie::IndexEntry e;
 			e.exactValues = ptrs[0][i];
 			e.suffixValues = ptrs[1][i];
 			e.prefixValues = ptrs[2][i];

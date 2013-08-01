@@ -5,7 +5,8 @@
 #include <set>
 #include <sserialize/completers/StringCompleter.h>
 #include <sserialize/containers/StringsItemDBWrapper.h>
-#include <sserialize/containers/GeneralizedTrieHelpers.h>
+#include <sserialize/containers/GeneralizedTrie/Helpers.h>
+#include <sserialize/containers/GeneralizedTrie/FlatTrie.h>
 
 namespace sserialize { namespace dynamic {
 
@@ -96,7 +97,7 @@ public:
 	
 	virtual std::string getName() const { return std::string("dynamic::FlatGST"); }
 	
-	void serialize(FlatGSTConfig & config);
+	void serialize(GeneralizedTrie::FlatGSTConfig & config);
 };
 
 template<class ItemType>

@@ -1,5 +1,5 @@
-#ifndef GENERAALIZED_TRIE_HELPERS_H
-#define GENERAALIZED_TRIE_HELPERS_H
+#ifndef GENERALIZED_TRIE_HELPERS_H
+#define GENERALIZED_TRIE_HELPERS_H
 #include <algorithm>
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/utilfuncs.h>
@@ -309,59 +309,6 @@ public:
 	}
 };
 
-	
-	struct StringEntry {
-		uint32_t stringId;
-		uint16_t strBegin;
-		uint16_t strLen;
-	};
-	struct IndexEntry {
-		IndexEntry() : mergeIndex(true), itemIdIndex(true), exactValues(0), prefixValues(0), suffixValues(0), suffixPrefixValues(0)  {}
-		bool mergeIndex;
-		bool itemIdIndex;
-		uint32_t exactValues;
-		uint32_t prefixValues;
-		uint32_t suffixValues;
-		uint32_t suffixPrefixValues;
-		
-		uint32_t minId;
-		uint32_t maxId;
-	};
-	
-	struct FlatGSTConfig {
-		FlatGSTConfig(UByteArrayAdapter & destination, sserialize::ItemIndexFactory & indexFactory) :
-			destination(destination), indexFactory(indexFactory),
-			withStringIds(false), maxSizeForItemIdIndex(0), minStrLenForItemIdIndex(0),
-			deleteTrie(false), mergeIndex(true)  {}
-		FlatGSTConfig(UByteArrayAdapter & destination, sserialize::ItemIndexFactory & indexFactory, bool withStringIds, uint32_t maxSizeForItemIdIndex, uint32_t minStrLenForItemIdIndex, bool deleteTrie, bool mergeIndex) : 
-			destination(destination), indexFactory(indexFactory), withStringIds(withStringIds),
-			maxSizeForItemIdIndex(maxSizeForItemIdIndex), minStrLenForItemIdIndex(minStrLenForItemIdIndex), deleteTrie(deleteTrie), mergeIndex(mergeIndex)  {}
-		UByteArrayAdapter & destination;
-		sserialize::ItemIndexFactory & indexFactory;
-		bool withStringIds;
-		uint32_t maxSizeForItemIdIndex;
-		uint32_t minStrLenForItemIdIndex;
-		bool deleteTrie;
-		bool mergeIndex;
-	};
-	
-	template<typename ItemIdType>
-	class FlatTrieEntryConfig {
-	public:
-	private:
-// 		FlatTrieEntryConfig & operator=(const FlatTrieEntry & f);
-	public:
-		FlatTrieEntryConfig(ItemIndexFactory & indexFactory) : indexFactory(indexFactory) {}
-		 ~FlatTrieEntryConfig() {}
-		std::deque<std::string> flatTrieStrings;
-		std::unordered_map<MultiTrieNode<ItemIdType>*, StringEntry> stringEntries;
-		ItemIndexFactory & indexFactory;
-		uint32_t curStrId;
-		std::string::const_iterator strIt;
-		std::string::const_iterator strBegin;
-		std::string::const_iterator strEnd;
-	};
-
 	inline bool isValidString(const std::string & str) {
 		if (! utf8::is_valid(str.begin(), str.end())) {
 			std::cout << "Invalid unicode string detected!" << std::endl;
@@ -381,129 +328,6 @@ public:
 		return true;
 	}
 
-	//stupid set intersection function
-	template<typename ItemType>
-	std::set<ItemType> intersectSets(std::deque< std::set<ItemType> > sets) {
-		if (sets.size() == 0)
-			return std::set<ItemType>();
-		if (sets.size() == 1)
-			return sets[0];
-		std::set<ItemType> res;
-		for(typename std::set<ItemType>::const_iterator it = sets[0].begin(); it != sets[0].end(); ++it) {
-			bool insert = true;
-			for(size_t j = 1; j < sets.size(); j++) {
-				if (sets[j].count(*it) == 0) {
-					insert = false;
-					break;
-				}
-			}
-			if (insert)
-				res.insert(*it);
-		}
-		return res;
-	}
-
-
-	struct GeneralizedTrieCreatorConfig {
-	GeneralizedTrieCreatorConfig() :
-			trieList(0),
-			mergeIndex(true),
-			maxPrefixMergeCount(-1),
-			maxSuffixMergeCount(-1),
-			deleteRootTrie(false),
-			nodeType(Static::TrieNode::T_SIMPLE)
-			{};
-		GeneralizedTrieCreatorConfig(
-			std::deque<uint8_t>* trieList,
-			bool indirectIndex,
-			bool mergeIndex,
-			std::set<uint8_t> levelsWithoutFullIndex,
-			int32_t maxPrefixMergeCount,
-			int32_t maxSuffixMergeCount,
-			bool deleteRootTrie,
-			int8_t fixedBitWidth,
-			Static::TrieNode::Types nodeType) :
-				trieList(trieList),
-				mergeIndex(mergeIndex),
-				levelsWithoutFullIndex(levelsWithoutFullIndex),
-				maxPrefixMergeCount(maxPrefixMergeCount),
-				maxSuffixMergeCount(maxSuffixMergeCount),
-				deleteRootTrie(deleteRootTrie),
-				nodeType(nodeType)
-				{};
-		std::deque<uint8_t>* trieList;
-		ItemIndexFactory indexFactory;
-		bool mergeIndex;
-		std::set<uint8_t> levelsWithoutFullIndex;
-		//if the cumulated count of children itemindices is smaller than this threshold, then don't create a full index
-		int32_t maxPrefixMergeCount;
-		int32_t maxSuffixMergeCount;
-		bool deleteRootTrie;
-		Static::TrieNode::Types nodeType;
-		bool isValid() {
-			return nodeType == Static::TrieNode::T_SIMPLE || nodeType == Static::TrieNode::T_COMPACT;
-		}
-		UByteArrayAdapter trieListAdapter() {
-			UByteArrayAdapter adap(trieList);
-			adap.setPutPtr(trieList->size());
-			return adap;
-		}
-	};
-
-	
 }//end namespace
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::StringEntry & source) {
-	destination.putVlPackedUint32(source.stringId);
-	destination.putVlPackedUint32(source.strBegin);
-	destination.putVlPackedUint32(source.strLen);
-	return destination;
-}
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::IndexEntry & source) {
-	uint8_t header = 0;
-	std::deque<uint32_t> indexPtrs;
-	if (source.exactValues) {
-		header |= 0x1;
-		indexPtrs.push_back(source.exactValues);
-	}
-	if (source.prefixValues) {
-		header |= 0x2;
-		indexPtrs.push_back(source.prefixValues);
-	}
-	if (source.suffixValues) {
-		header |= 0x4;
-		indexPtrs.push_back(source.suffixValues);
-	}
-	if (source.suffixPrefixValues) {
-		header |= 0x8;
-		indexPtrs.push_back(source.suffixPrefixValues);
-	}
-	
-	if (source.itemIdIndex)
-		header |= 0x10;
-	else {
-		indexPtrs.push_back(source.minId);
-		indexPtrs.push_back(source.maxId);
-	}
-
-	if (source.mergeIndex)
-		header |= 0x80;
-		
-	uint32_t largestPtr = std::max(std::max(source.exactValues, source.prefixValues), std::max(source.suffixValues, source.suffixPrefixValues) );
-	if (!source.itemIdIndex)
-		largestPtr = std::max(largestPtr, source.maxId);
-	uint8_t bpn = sserialize::CompactUintArray::minStorageBitsFullBytes(largestPtr);
-	header |= ((bpn/8-1) & 0x3) << 5;
-	
-
-	std::deque<uint8_t> sidxPtrs; 
-	sserialize::CompactUintArray::createFromSet(indexPtrs, sidxPtrs, bpn);
-	
-	destination << header;
-	destination.put(sidxPtrs);
-	return destination;
-}
-
 
 #endif

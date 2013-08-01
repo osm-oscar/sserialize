@@ -23,8 +23,8 @@ CPPUNIT_TEST( testStringCompleterPrivateCast );
 CPPUNIT_TEST( testConsistency );
 CPPUNIT_TEST_SUITE_END();
 private:
-	typedef StringCompleterPrivateGST<TestItemData> StringCompleterPrivateType;
-	GeneralizedTrie<TestItemData> m_trie;
+	typedef StringCompleterPrivateGST< std::vector<uint32_t> > StringCompleterPrivateType;
+	GeneralizedTrie::MultiPassTrie m_trie;
 	StringCompleter m_strCompleter;
 	virtual StringCompleter & stringCompleter() { return m_strCompleter; }
 protected:
