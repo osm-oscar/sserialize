@@ -17,12 +17,12 @@
 namespace sserialize {
 
 
-template<class ItemType>
+template<typename ItemType, typename TItemSetContainer = std::vector<ItemType> >
 class MultiTrieNode {
 public:
 	typedef typename std::map<uint32_t, MultiTrieNode*>::iterator ChildNodeIterator;
 	typedef typename std::map<uint32_t, MultiTrieNode*>::const_iterator ConstChildNodeIterator;
-	typedef typename std::vector<ItemType> ItemSetContainer;
+	typedef TItemSetContainer ItemSetContainer;
 	typedef typename ItemSetContainer::iterator ItemSetIterator;
 	typedef typename ItemSetContainer::const_iterator ConstItemSetIterator;
 	class TemporalPrivateStorage {
