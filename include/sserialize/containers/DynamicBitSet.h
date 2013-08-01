@@ -31,6 +31,33 @@ public:
 	void unset(uint32_t pos);
 	ItemIndex toIndex(int type) const;
 	
+	template<typename T_OUTPUT_ITERATOR>
+	void putInto(T_OUTPUT_ITERATOR & out) {
+		UByteArrayAdapter::SizeType s = m_data.size();
+		UByteArrayAdapter::SizeType i;
+		uint32_t id = 0;
+		for(i = 0; i+8 <= s; i += 8) {
+			uint64_t d = m_data.getUint64(i);
+			for(uint64_t curId = id; d; ++curId, d >>= 1) {
+				if (d & 0x1) {
+					*out = curId;
+					++out;
+				}
+			}
+			id += 64;
+		}
+		for(; i < s; ++i) {
+			uint8_t d = m_data.getUint8(i);
+			for(uint32_t curId = id; d; ++curId, d >>= 1) {
+				if (d & 0x1) {
+					*out = curId;
+					++out;
+				}
+			}
+			id += 8;
+		}
+	}
+	
 	uint32_t size() const;
 };
 
