@@ -40,6 +40,7 @@ public:
 	ItemIndexFactory(bool memoryBase = false);
 	~ItemIndexFactory();
 	uint32_t size() { return m_indexIdCounter;}
+	ItemIndex::Types type() const { return m_type; }
 	UByteArrayAdapter at(OffsetType offset) const;
 	///Sets the type. should not be called after having added indices
 	void setType(ItemIndex::Types type) { m_type = type;}
@@ -49,6 +50,8 @@ public:
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }
 	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
+	
+	inline ItemIndex getIndex(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
 	
 	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0);
 
@@ -98,7 +101,31 @@ public:
 	}
 	
 	uint32_t addIndex(const std::unordered_set<uint32_t> & idx, bool * ok = 0, OffsetType * indexOffset = 0);
-
+	
+	template<typename T_RANDOM_ACCESS_CONTAINER_ITERATOR>
+	uint32_t addMergedIndex(T_RANDOM_ACCESS_CONTAINER_ITERATOR begin, const T_RANDOM_ACCESS_CONTAINER_ITERATOR & end, OffsetType & indexOffset) {
+		std::vector<ItemIndex> indices;
+		indices.reserve(end-begin);
+		for(; begin != end; ++begin) {
+			indices.push_back( getIndex(*begin) );
+		}
+		std::vector<uint8_t> d;
+		UByteArrayAdapter dAdap(&d, false);
+		if (m_compressionType != Static::ItemIndexStore::IC_NONE && sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 8) {
+			std::vector<uint32_t> midx;
+			ItemIndex::unite(indices).putInto(std::back_inserter(midx));
+			return addIndex(midx, false, &indexOffset);
+		}
+		else {
+			sserialize::DynamicBitSet dbs(dAdap);
+			for(std::vector<ItemIndex>::const_iterator it(indices.begin()), end(indices.end()); it != end; ++it) {
+				it->putInto(dbs);
+			}
+			std::vector<uint32_t> midx;
+			dbs.putInto(std::back_inserter(midx));
+			return addIndex(midx, false, &indexOffset);
+		}
+	}
 	
 	inline UByteArrayAdapter & getIndexStore() { return m_indexStore;}
 	inline uint32_t hitCount() { return m_hitCount; }
