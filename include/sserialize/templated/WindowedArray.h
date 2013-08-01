@@ -29,6 +29,10 @@ public:
 	
 	std::size_t size() const { return m_push - m_begin; }
 	std::size_t capacity() const { return m_end - m_begin; }
+	///This does not check if the new size is valid!
+	void reserve(std::size_t newCap) {
+		m_end = m_begin+newCap;
+	}
 	
 	///This does NOT free the associated memory 
 	virtual ~WindowedArray() {}
