@@ -449,7 +449,6 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 	}
 }
 
-
 }//end namespace
 
 using namespace sserialize;
