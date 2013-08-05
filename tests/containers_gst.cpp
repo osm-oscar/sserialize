@@ -1,6 +1,6 @@
 #include <iostream>
 #include <algorithm>
-#include <sserialize/containers//GeneralizedTrie.h>
+#include <sserialize/containers/GeneralizedTrie/MultiPassTrie.h>
 #include "TestItemData.h"
 #include "trietestfuncs.h"
 #include "printfunctions.h"
