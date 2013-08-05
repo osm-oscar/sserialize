@@ -149,10 +149,14 @@ void CompactTrieNodePrivate::dump() const {
 	std::cout << "m_childCount=" << static_cast<int>(m_childCount) << "; ";
 	std::cout << "m_strLen=" << static_cast<int>(m_strLen) << "; ";
 	std::cout << "str=" << str() << ";";
-	std::cout << "exactIndexPtr=" << getExactIndexPtr() << ";";
-	std::cout << "prefixIndexPtr=" << getPrefixIndexPtr() << ";";
-	std::cout << "suffixIndexPtr=" << getSuffixIndexPtr() << ";";
-	std::cout << "suffixPrefixIndexPtr=" << getSuffixPrefixIndexPtr() << ";";
+	if(hasExactIndex())
+		std::cout << "exactIndexPtr=" << getExactIndexPtr() << ";";
+	if (hasPrefixIndex())
+		std::cout << "prefixIndexPtr=" << getPrefixIndexPtr() << ";";
+	if(hasSuffixIndex())
+		std::cout << "suffixIndexPtr=" << getSuffixIndexPtr() << ";";
+	if(hasSuffixPrefixIndex())
+		std::cout << "suffixPrefixIndexPtr=" << getSuffixPrefixIndexPtr() << ";";
 	std::cout << "childrenChars=(";
 	std::string childCharStr;
 	for(uint16_t i = 0; i < m_childCount; i++) {
