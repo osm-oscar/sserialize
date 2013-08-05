@@ -178,12 +178,12 @@ void ItemIndex::dump(const char* fileName) {
 }
 
 void ItemIndex::dump(std::ostream & out) {
-	out << "ItemIndex: size=" << size() << "; bpn=" << static_cast<uint32_t>(bpn());
-	out << "ids in index:" << std::endl << "(";
+	out << "ItemIndex<size=" << size() << ", bpn=" << static_cast<uint32_t>(bpn());
+	out << ">[";
 	for(uint32_t i = 0; i < size(); i++) {
 		out << at(i) << ", ";
 	}
-	out << ")" << std::endl;
+	out << "]" << std::endl;
 }
 
 void ItemIndex::dump() {
