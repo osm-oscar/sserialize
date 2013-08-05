@@ -3,6 +3,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <algorithm>
+#include <iterator>
 
 namespace sserialize {
 
@@ -11,6 +12,8 @@ class WindowedArray {
 public:
 	typedef T_VALUE * iterator;
 	typedef const T_VALUE * const_iterator;
+	typedef std::reverse_iterator<iterator> reverse_iterator;
+	typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 private:
 	T_VALUE * m_begin;
 	T_VALUE * m_end;
@@ -79,6 +82,16 @@ public:
 	const_iterator begin() const { return m_begin; }
 	const_iterator end() const { return m_push; }
 	const_iterator capacityEnd() const { return m_end; }
+	
+	reverse_iterator rbegin() { return reverse_iterator(m_end-1); }
+	reverse_iterator rend() { return reverse_iterator(m_begin-1); }
+	
+	const_reverse_iterator rbegin() const { return reverse_iterator(m_end-1); }
+	const_reverse_iterator rend() const { return reverse_iterator(m_begin-1); }
+	
+	WindowedArray<T_VALUE> slice(std::size_t begin, std::size_t end) {
+		return WindowedArray(m_begin+begin, m_begin+end);
+	}
 	
 	static WindowedArray uniteSortedInPlace(WindowedArray a, WindowedArray b) {
 		if (b.m_end == a.m_begin)
