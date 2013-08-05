@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <sserialize/utility/refcounting.h>
+#include <sserialize/utility/AtStlInputIterator.h>
 #include "ItemIndex.h"
 
 
@@ -53,6 +54,16 @@ public:
 	std::vector<unsigned int> itemStringIDs(uint32_t itemPos) const {
 		return RCWrapper< StringsItemDBWrapperPrivate< ItemType > >::priv()->itemStringIDs(itemPos);
 	}
+
+	std::vector<std::string> itemStrings(uint32_t itemPos) const {
+		std::vector<std::string> itemStrs;
+		std::vector<unsigned int> itemStrIds = itemStringIDs(itemPos);
+		itemStrs.reserve(itemStrIds.size());
+		for(std::vector<unsigned int>::iterator it(itemStrIds.begin()), end(itemStrIds.end()); it != end; ++it) {
+			itemStrs.push_back(strIdToStr().at(*it));
+		}
+		return itemStrs;
+	}
 	
 	const ItemType & at(uint32_t itemPos) const {
 		return RCWrapper< StringsItemDBWrapperPrivate< ItemType > >::priv()->at(itemPos);
@@ -83,6 +94,29 @@ public:
 	
 };
 
+template<typename ItemType>
+class StringsItemDBWrapperStringsFactory {
+private:
+	struct Derefer {
+		std::vector<std::string> operator()(const StringsItemDBWrapper<ItemType> * db, uint32_t pos) const {
+			return db->itemStrings(pos);
+		}
+	};
+public:
+	typedef sserialize::ReadOnlyAtStlIterator<StringsItemDBWrapper<ItemType>*, std::vector<std::string>, uint32_t, Derefer > iterator;
+	typedef sserialize::ReadOnlyAtStlIterator<const StringsItemDBWrapper<ItemType> *, std::vector<std::string>, uint32_t, Derefer > const_iterator;
+	typedef std::vector<std::string> value_type;
+private:
+	StringsItemDBWrapper<ItemType> m_db;
+public:
+	StringsItemDBWrapperStringsFactory() {}
+	StringsItemDBWrapperStringsFactory(const StringsItemDBWrapper<ItemType> & db) : m_db(db) {}
+	virtual ~StringsItemDBWrapperStringsFactory() {}
+	iterator begin() { return iterator(0, &m_db); }
+	iterator end() { return iterator(m_db.size(), &m_db);}
+	const_iterator begin() const { return const_iterator(0, &m_db); }
+	const_iterator end() const { return const_iterator(m_db.size(), &m_db); }
+};
 
 };
 
