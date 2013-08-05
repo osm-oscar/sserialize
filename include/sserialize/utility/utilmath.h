@@ -42,8 +42,25 @@ inline uint32_t saturatedAdd32(const uint32_t a, const uint32_t b) {
 	return (a > std::numeric_limits<uint32_t>::max() - b) ? std::numeric_limits<uint32_t>::max() : a + b;
 }
 
+///@return position of the most significant bit, returns 0 iff num == 0 (index starts at 1)
+inline uint8_t msb(uint8_t num) {
+	uint8_t r = 0;
+	while (num >>= 1) {
+		++r;
+	}
+	return r;
+}
 
-///@return position of the most significant bit, returns 0 iff num == 0
+///@return position of the most significant bit, returns 0 iff num == 0 (index starts at 1)
+inline uint8_t msb(uint16_t num) {
+	uint8_t r = 0;
+	while (num >>= 1) {
+		++r;
+	}
+	return r;
+}
+
+///@return position of the most significant bit, returns 0 iff num == 0 (index starts at 1)
 inline uint8_t msb(uint32_t num) {
 	uint8_t r = 0;
 	while (num >>= 1) {
