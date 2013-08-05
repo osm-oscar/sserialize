@@ -45,8 +45,11 @@ protected: //completion functions
 	void completionRecurse(Node * node, std::string::const_iterator strBegin, const std::string::const_iterator & strEnd, sserialize::StringCompleter::QuerryType qt, std::set<ItemIdType> & destination) const;
 
 protected: //check functions
+	/** This compactifies stl-containers to decrease their size-overhead and removes all exactIndices from suffixIndices
+		It calls at least std::swap, ItemSetContainer() and diffSortedContainer<ItemSetContainer>()
+	*/
 	void compactify(Node * node);
-	/** Fixes Problems in the trie before serialization. Current Problems: Nodes with a string length > 255 */
+	/** Fixes Problems in the trie before serialization. Current Problems: Nodes with a string length > 255, calls std::swap on the IndexStorageContainer */
 	void trieSerializationProblemFixer(Node * node);
 	bool consistencyCheckRecurse(Node * node) const;
 
@@ -229,9 +232,9 @@ BaseTrie<IndexStorageContainer>::at(const std::string::const_iterator & strBegin
 			m_nodeCount++;
 			oldStrNode->c = "";
 			oldStrNode->c.append(cIt, current->c.end());
-			oldStrNode->children.swap(current->children);
-			oldStrNode->exactValues.swap(current->exactValues);
-			oldStrNode->subStrValues.swap(current->subStrValues);
+			std::swap(oldStrNode->children, current->children);
+			std::swap(oldStrNode->exactValues, current->exactValues);
+			std::swap(oldStrNode->subStrValues, current->subStrValues);
 
 			oldStrNode->fixChildParentPtrRelation();
 			
@@ -263,9 +266,9 @@ BaseTrie<IndexStorageContainer>::at(const std::string::const_iterator & strBegin
 			m_nodeCount++;
 			oldStrNode->c = "";
 			oldStrNode->c.append(cIt, current->c.end());
-			oldStrNode->children.swap(current->children);
-			oldStrNode->exactValues.swap(current->exactValues);
-			oldStrNode->subStrValues.swap(current->subStrValues);
+			std::swap(oldStrNode->children, current->children);
+			std::swap(oldStrNode->exactValues, current->exactValues);
+			std::swap(oldStrNode->subStrValues, current->subStrValues);
 			oldStrNode->fixChildParentPtrRelation();
 			
 			current->children.clear();
@@ -327,7 +330,7 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	{
 		uint32_t count = 0;
 		std::unordered_set<std::string> strings;
-		progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::fromStringsFactory: Gathering strings");
+		progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::trieFromStringsFactory: Gathering strings");
 		for(typename T_ITEM_FACTORY::const_iterator itemsIt(stringsFactory.begin()), itemsEnd(stringsFactory.end()); itemsIt != itemsEnd; ++itemsIt) {
 			T_ITEM item = *itemsIt;
 			for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
@@ -341,7 +344,7 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	}
 	
 	//This is the first part (create the trie)
-	progressInfo.begin(m_strings.size(), "BaseTrie::fromStringsFactory: Creating Trie form strings");
+	progressInfo.begin(m_strings.size(), "BaseTrie::trieFromStringsFactory: Creating Trie form strings");
 	uint32_t count = 0;
 	for(std::vector<std::string>::const_iterator strsIt(m_strings.cbegin()); strsIt != m_strings.cend(); ++strsIt) {
 		std::vector<std::string> strs;
@@ -370,7 +373,7 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	progressInfo.end();
 	
 	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::setDB::createTrie" << std::endl;
+		std::cout << "Trie is broken after BaseTrie::trieFromStringsFactory" << std::endl;
 		return false;
 	}
 
@@ -378,7 +381,7 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	strIdToSubStrNodes.reserve(m_strings.size());
 	strIdToExactNodes.reserve(m_strings.size());
 	
-	progressInfo.begin(m_strings.size(), "BaseTrie::fromStringsFactory: Finding String->node mappings" );
+	progressInfo.begin(m_strings.size(), "BaseTrie::trieFromStringsFactory: Finding String->node mappings" );
 	count = 0;
 	#pragma omp parallel for 
 	for(size_t i = 0; i <  m_strings.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
@@ -418,9 +421,10 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	progressInfo.end();
 
 	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::fromStringsFactory::findStringNodes" << std::endl;
+		std::cout << "Trie is broken after BaseTrie::trieFromStringsFactory::findStringNodes" << std::endl;
 		return false;
 	}
+	return true;
 }
 
 
@@ -751,8 +755,8 @@ void BaseTrie<IndexStorageContainer>::trieSerializationProblemFixer(Node* node) 
 			Node * newNode = new Node();
 			newNode->parent = node;
 			newNode->children.swap(node->children);
-			newNode->exactValues.swap(node->exactValues);
-			newNode->subStrValues.swap(node->subStrValues);
+			std::swap(newNode->exactValues, node->exactValues);
+			std::swap(newNode->subStrValues, node->subStrValues);
 			newNode->fixChildParentPtrRelation();
 			
 			std::string::iterator oldStrBegin = oldStr.begin();
