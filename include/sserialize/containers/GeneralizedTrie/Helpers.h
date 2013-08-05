@@ -15,6 +15,7 @@
 
 
 namespace sserialize {
+namespace GeneralizedTrie {
 
 
 template<typename ItemType, typename TItemSetContainer = std::vector<ItemType> >
@@ -280,6 +281,20 @@ public:
 		}
 	}
 	
+	template<class TMapper>
+	void mapBreadthFirst(TMapper & mapper) {
+		if (this) {
+			std::deque<MultiTrieNode*> nodes;
+			nodes.push_back(this);
+			while(nodes.size()) {
+				for(auto & x : nodes.front()->children)
+					nodes.push_back( x.second );
+				mapper(nodes.front());
+				nodes.pop_front();
+			}
+		}
+	}
+	
 	static ItemSetContainer mergeExactIndices(const std::vector<MultiTrieNode*> & nodes, uint32_t begin, uint32_t end) {
 		if (begin ==  end)
 			return nodes[begin]->exactValues;
@@ -328,6 +343,6 @@ public:
 		return true;
 	}
 
-}//end namespace
+}}//end namespace
 
 #endif
