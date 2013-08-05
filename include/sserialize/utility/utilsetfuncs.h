@@ -9,7 +9,7 @@ template<typename T>
 void diffSortedContainer(std::set<T> & out, const std::set<T> & a, const std::set<T> & b) {
 	std::set<T> result;
 	std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator< std::set<T> >(result, result.end()));
-	out.swap(result);
+	std::swap(out, result);
 }
 
 template<typename T, typename T_CONTAINER_A, typename T_CONTAINER_B>
@@ -38,7 +38,7 @@ void diffSortedContainer(std::set<T> & out, const T_CONTAINER_A & a, const T_CON
 		++aIt;
 	}
 	
-	out.swap(result);
+	std::swap(out, result);
 }
 
 template<typename T_CONTAINER_DEST, typename T_CONTAINER_A, typename T_CONTAINER_B>
@@ -65,7 +65,7 @@ void diffSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const 
 		result.push_back(*aIt);
 		++aIt;
 	}
-	out.swap(result);
+	std::swap(out, result);
 }
 
 template<typename T, typename T_CONTAINER>
