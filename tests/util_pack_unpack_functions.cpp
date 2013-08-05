@@ -58,32 +58,32 @@ bool test_packFunctions2() {
 	vl_pack_int32_t(shouldn, array);
 	isn = vl_unpack_int32_t(array, &len);
 	if (isn != shouldn) std::cout << "5 byte: vl_pack/unpack_int32_t wrong" << std::endl;
-	if (vl_pack_int32_t_size(should) != 5) std::cout << "5 byte: vl_pack_int32_t_size wrong" << std::endl;
+	if (vl_pack_int32_t_size(shouldn) != 5) std::cout << "5 byte: vl_pack_int32_t_size wrong" << std::endl;
 
 	
 	shouldn = -0x07FFFFFF; //28 bits
 	vl_pack_int32_t(shouldn, array);
 	isn = vl_unpack_int32_t(array, &len);
 	if (isn != shouldn) std::cout << "4 byte: vl_pack/unpack_int32_t wrong" << std::endl;
-	if (vl_pack_int32_t_size(should) != 4) std::cout << "4 byte: vl_pack_int32_t_size wrong" << std::endl;
+	if (vl_pack_int32_t_size(shouldn) != 4) std::cout << "4 byte: vl_pack_int32_t_size wrong" << std::endl;
 	
 	shouldn = -0x0007FFFF;
 	vl_pack_int32_t(shouldn, array);
 	isn = vl_unpack_int32_t(array, &len);
 	if (isn != shouldn) std::cout << "3 byte: vl_pack/unpack_int32_t wrong" << std::endl;
-	if (vl_pack_int32_t_size(should) != 3) std::cout << "3 byte: vl_pack_int32_t_size wrong" << std::endl;
+	if (vl_pack_int32_t_size(shouldn) != 3) std::cout << "3 byte: vl_pack_int32_t_size wrong" << std::endl;
 	
 	shouldn = -0x000007FF;
 	vl_pack_int32_t(shouldn, array);
 	isn = vl_unpack_int32_t(array, &len);
 	if (isn != shouldn) std::cout << "2 byte: vl_pack/unpack_int32_t wrong" << std::endl;
-	if (vl_pack_int32_t_size(should) != 2) std::cout << "2 byte: vl_pack_int32_t_size wrong" << std::endl;
+	if (vl_pack_int32_t_size(shouldn) != 2) std::cout << "2 byte: vl_pack_int32_t_size wrong" << std::endl;
 	
 	shouldn = -0x0000003F;
 	vl_pack_int32_t(shouldn, array);
 	isn = vl_unpack_int32_t(array, &len);
 	if (isn != shouldn) std::cout << "1 byte: vl_pack/unpack_int32_t wrong" << std::endl;
-	if (vl_pack_int32_t_size(should) != 1) std::cout << "1 byte: vl_pack_int32_t_size wrong" << std::endl;
+	if (vl_pack_int32_t_size(shouldn) != 1) std::cout << "1 byte: vl_pack_int32_t_size wrong" << std::endl;
 
 	shouldn = 0x0;
 	vl_pack_int32_t(shouldn, array);
