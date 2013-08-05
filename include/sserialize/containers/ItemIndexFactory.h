@@ -107,14 +107,16 @@ public:
 		std::vector<ItemIndex> indices;
 		indices.reserve(end-begin);
 		for(; begin != end; ++begin) {
-			indices.push_back( getIndex(*begin) );
+			ItemIndex idx = getIndex(*begin);
+			if (idx.size())
+				indices.push_back( idx );
 		}
 		std::vector<uint8_t> d;
 		UByteArrayAdapter dAdap(&d, false);
 		if (m_compressionType != Static::ItemIndexStore::IC_NONE && sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 8) {
 			std::vector<uint32_t> midx;
 			ItemIndex::unite(indices).insertInto(std::back_inserter(midx));
-			return addIndex(midx, false, &indexOffset);
+			return addIndex(midx, 0, &indexOffset);
 		}
 		else {
 			sserialize::DynamicBitSet dbs(dAdap);
@@ -123,7 +125,7 @@ public:
 			}
 			std::vector<uint32_t> midx;
 			dbs.putInto(std::back_inserter(midx));
-			return addIndex(midx, false, &indexOffset);
+			return addIndex(midx, 0, &indexOffset);
 		}
 	}
 	
