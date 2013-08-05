@@ -4,6 +4,7 @@
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/SerializationInfo.h>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
 
 
@@ -109,7 +110,7 @@ m_index(data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength() + data.getOf
 m_data(UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1)))
 {
 SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_DEQUE_VERSION, data.at(0), "Static::Deque");
-SSERIALIZE_LENGTH_CHECK(m_index.size(), m_data.size(), "Static::Deque::Deque::Insufficient data");
+SSERIALIZE_LENGTH_CHECK(m_index.size()*sserialize::SerializationInfo<TValue>::min_length, m_data.size(), "Static::Deque::Deque::Insufficient data");
 }
 
 template<typename TValue>
