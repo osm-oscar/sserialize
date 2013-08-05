@@ -3,4 +3,134 @@
 namespace sserialize {
 namespace GeneralizedTrie {
 
+
+SinglePassTrie::SinglePassTrie() {}
+
+SinglePassTrie::SinglePassTrie(bool caseSensitive, bool suffixTrie) : MyBaseClass(caseSensitive, suffixTrie) {}
+
+SinglePassTrie::~SinglePassTrie() {}
+
+void SinglePassTrie::swap(MyBaseClass::MyBaseClass & other) {
+	MyBaseClass::swap(other);
+}
+
+//The prefix/substr index is constructed out of the prefix/substr index ptrs of our children and our own exact/suffix indices. handle those first
+
+bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig & config, Static::TrieNodeCreationInfo& nodeInfo) {
+	if (!node)
+		return false;
+	
+	nodeInfo.mergeIndex = false;
+	int idxTypes = Static::TrieNodePrivate::IT_NONE;
+	bool ok = true;
+	
+	OffsetType exactIndexOffset = 0;
+	OffsetType suffixIndexOffset = 0;
+	OffsetType prefixIndexOffset = 0;
+	OffsetType subStrIndexOffset = 0;
+	if (node->exactValues.size()) {
+		idxTypes |= Static::TrieNodePrivate::IT_EXACT;
+		nodeInfo.exactIndexPtr = config.indexFactory.addIndex(node->exactValues, &ok, &exactIndexOffset);
+	}
+	if (node->subStrValues.size()) {
+		idxTypes |= Static::TrieNodePrivate::IT_SUFFIX;
+		nodeInfo.suffixIndexPtr = config.indexFactory.addIndex(node->subStrValues, &ok, &suffixIndexOffset);
+	}
+	
+	if (node->children.size()) {
+		std::vector<uint64_t> prefixIndexOffsets, subStrIndexOffsets;
+		if (idxTypes & Static::TrieNodePrivate::IT_EXACT)
+			prefixIndexOffsets.push_back(exactIndexOffset);
+		if (idxTypes & Static::TrieNodePrivate::IT_SUFFIX)
+			subStrIndexOffsets.push_back(suffixIndexOffset);
+		for(ChildNodeIterator it(node->children.begin()), end(node->children.end()); it != end; ++it) {
+			ChildTPNS * ctpns = static_cast<ChildTPNS*>(it->second->temporalPrivateStorage);
+			prefixIndexOffsets.push_back( ctpns->prefixIndexPtr );
+			subStrIndexOffsets.push_back( ctpns->subStrIndexPtr );
+		}
+		nodeInfo.prefixIndexPtr = config.indexFactory.addMergedIndex(prefixIndexOffsets.begin(), prefixIndexOffsets.end(), prefixIndexOffset);
+		idxTypes |= Static::TrieNodePrivate::IT_PREFIX;
+		if (isSuffixTrie()) {
+			nodeInfo.suffixPrefixIndexPtr = config.indexFactory.addMergedIndex(subStrIndexOffsets.begin(), subStrIndexOffsets.end(), subStrIndexOffset);
+			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
+		}
+	}
+	else {
+		if (idxTypes & Static::TrieNodePrivate::IT_EXACT) {
+			nodeInfo.prefixIndexPtr = nodeInfo.exactIndexPtr;
+			prefixIndexOffset = exactIndexOffset;
+			idxTypes |= Static::TrieNodePrivate::IT_PREFIX;
+		}
+		if (idxTypes & Static::TrieNodePrivate::IT_SUFFIX) {
+			nodeInfo.suffixPrefixIndexPtr = nodeInfo.suffixIndexPtr;
+			subStrIndexOffset = suffixIndexOffset;
+			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
+		}
+		else if (isSuffixTrie()) {
+			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
+			nodeInfo.suffixPrefixIndexPtr = nodeInfo.prefixIndexPtr;
+			subStrIndexOffset = prefixIndexOffset;
+		}
+	}
+	nodeInfo.indexTypes = (Static::TrieNodePrivate::IndexTypes) idxTypes;
+	
+	node->deleteTemporalPrivateStorage();
+	node->temporalPrivateStorage = new ChildTPNS(prefixIndexOffset, subStrIndexOffset);
+	return ok;
+}
+
+void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
+
+	std::cout << "BaseTrie<IndexStorageContainer>::createStaticTrie: consistencyCheck...";
+	if (consistencyCheck()) {
+		std::cout << "OK" << std::endl;
+	}
+	else {
+		std::cout << "Failed" << std::endl;
+	}
+
+	if (m_root) {
+		std::cout << "Fixing possible problems" << std::endl;
+		trieSerializationProblemFixer(m_root);
+		std::cout << "done" << std::endl;
+		if (!consistencyCheck()) {
+			std::cout << "Fixing problems caused problems broke trie!" << std::endl;
+			return;
+		}
+	}
+
+	if (config.nodeType == Static::TrieNode::T_SIMPLE) {
+		serializeTrieBottomUp<Static::SimpleStaticTrieCreationNode>(config);
+	}
+	else if (config.nodeType == Static::TrieNode::T_COMPACT) {
+		serializeTrieBottomUp<Static::CompactStaticTrieCreationNode>(config);
+	}
+
+	//Add the stats
+	uint8_t trieType = 0;
+	trieType |= Static::GeneralizedTrie::STO_NORMALIZED;
+	if (m_caseSensitive)
+		trieType |= Static::GeneralizedTrie::STO_CASE_SENSITIVE;
+	if (m_isSuffixTrie)
+		trieType |= Static::GeneralizedTrie::STO_SUFFIX;
+		
+	uint8_t nodeType = config.nodeType;
+	uint16_t longestString = 0;
+	uint16_t depth = getDepth();
+	std::deque<uint8_t> header;
+	uint8_t strCompleterType = sserialize::Static::StringCompleter::T_TRIE;
+	
+	Static::StringCompleter::addHeader(strCompleterType, header);
+	
+	Static::GeneralizedTrie::addHeader(trieType, nodeType, longestString, depth, header);
+	prependToDeque(header, *(config.trieList));
+
+	if (config.deleteRootTrie) {
+		delete m_root;
+		m_root = 0;
+		m_count = 0;
+		m_nodeCount = 0;
+	}
+}
+
 }}//end namespace
