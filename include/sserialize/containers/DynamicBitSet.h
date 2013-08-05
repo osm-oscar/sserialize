@@ -17,6 +17,9 @@ public:
 	///@param shift: number of bytes to align to expressed as aa power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
 	bool align(uint8_t shift);
 	
+	uint32_t smallestEntry() const;
+	uint32_t largestEntry() const;
+	
 	DynamicBitSet operator&(const DynamicBitSet & other) const;
 	DynamicBitSet operator|(const DynamicBitSet & other) const;
 	DynamicBitSet operator-(const DynamicBitSet & other) const;
@@ -32,20 +35,10 @@ public:
 	ItemIndex toIndex(int type) const;
 	
 	template<typename T_OUTPUT_ITERATOR>
-	void putInto(T_OUTPUT_ITERATOR & out) {
+	void putInto(T_OUTPUT_ITERATOR out) {
 		UByteArrayAdapter::SizeType s = m_data.size();
-		UByteArrayAdapter::SizeType i;
+		UByteArrayAdapter::SizeType i = 0;
 		uint32_t id = 0;
-		for(i = 0; i+8 <= s; i += 8) {
-			uint64_t d = m_data.getUint64(i);
-			for(uint64_t curId = id; d; ++curId, d >>= 1) {
-				if (d & 0x1) {
-					*out = curId;
-					++out;
-				}
-			}
-			id += 64;
-		}
 		for(; i < s; ++i) {
 			uint8_t d = m_data.getUint8(i);
 			for(uint32_t curId = id; d; ++curId, d >>= 1) {

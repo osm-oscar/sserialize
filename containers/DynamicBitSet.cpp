@@ -16,6 +16,37 @@ bool DynamicBitSet::align(uint8_t shift) {
 	return m_data.resize(newSize);
 }
 
+
+uint32_t DynamicBitSet::smallestEntry() const {
+	uint32_t id = 0;
+	for(uint32_t i = 0; i < m_data.size(); ++i) {
+		uint8_t d = m_data.getUint8(i);
+		if (d) {
+			return id + msb(d);
+		}
+		else {
+			id += 8;
+		}
+	}
+	return id;
+}
+
+uint32_t DynamicBitSet::largestEntry() const {
+	if (m_data.size() == 0)
+		return 0;
+	uint32_t id = m_data.size()*8-1;
+	for(uint32_t i = m_data.size(); i > 0; --i) {
+		uint8_t d = m_data.getUint8(i-1);
+		if (d) {
+			return id - (8-msb(d));
+		}
+		else {
+			id -= 8;
+		}
+	}
+	return id;
+}
+
 bool DynamicBitSet::isSet(uint32_t pos) const {
 	return m_data.at( pos/8 ) & (static_cast<uint8_t>(1) << (pos % 8));
 }
@@ -46,7 +77,7 @@ uint32_t DynamicBitSet::size() const {
 	uint32_t resSize = 0;
 	UByteArrayAdapter::SizeType s = m_data.size();
 	UByteArrayAdapter::SizeType i;
-	for(i = 0; i+4 <= s; i += 4) {
+	for(i = 0; i+4 <= s; i += 4) {//we can use this here as the order of the bits is not relevant
 		resSize += popCount( m_data.getUint32(i));
 	}
 	for(; i < s; ++i) {
