@@ -5,16 +5,19 @@ namespace sserialize {
 
 std::string baseStringChars("ABCDEFGHIJKLMOPQRSTUVWXYZabcdevghijklmnopqrstuvxyz1234567890!$%&/{}()[]+-*~<> ");
 
+std::string createString(uint32_t maxStrLen) {
+	size_t strLen = (double)rand() / RAND_MAX * maxStrLen;
+	std::string newStr;
+	for(size_t j = 0; j < strLen; j++) {
+		newStr += baseStringChars[(double)rand() / RAND_MAX * (baseStringChars.size()-1)];
+	}
+	return newStr;
+}
 
 std::deque<std::string> createStrings(uint32_t maxStrLen, uint32_t strCount) {
 	std::deque<std::string> ret;
 	for(size_t i = 0; i< strCount; i++) {
-		size_t strLen = (double)rand() / RAND_MAX * maxStrLen;
-		std::string newStr;
-		for(size_t j = 0; j < strLen; j++) {
-			newStr += baseStringChars[(double)rand() / RAND_MAX * (baseStringChars.size()-1)];
-		}
-		ret.push_back(newStr);
+		ret.push_back(createString(maxStrLen));
 	}
 	return ret;
 }

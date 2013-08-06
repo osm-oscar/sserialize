@@ -15,6 +15,7 @@ void addRange(uint32_t begin, uint32_t end, TCONTAINER & dest) {
 		dest.insert(dest.end(), begin);
 }
 
+std::string createString(uint32_t maxStrLen);
 std::deque<std::string> createStrings(uint32_t maxStrLen, uint32_t strCount);
 std::deque<uint32_t> createNumbers(uint32_t count);
 std::deque<uint16_t> createNumbers16(uint32_t count);
