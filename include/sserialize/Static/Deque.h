@@ -36,6 +36,7 @@ public:
 	}
 	const std::vector<OffsetType> & offsets() const { return m_offsets; }
 	virtual ~DequeCreator() {}
+	void reserveOffsets(uint32_t size) { m_offsets.reserve(size); }
 	void put(const TValue & value) {
 		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
 		m_dest << value;
