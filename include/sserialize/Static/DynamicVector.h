@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_DYNAMIC_VECTOR_H
 #define SSERIALIZE_DYNAMIC_VECTOR_H
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/Static/Deque.h>
 
 namespace sserialize {
 namespace Static {
@@ -24,6 +25,8 @@ public:
 	template<typename TDeserializer = UByteArrayAdapter::Deserializer<TGetValue> >
 	TGetValue at(uint32_t pos, const TDeserializer & derefer = TDeserializer()) const;
 	UByteArrayAdapter dataAt(uint32_t pos) const;
+	
+	UByteArrayAdapter & toDeque(UByteArrayAdapter & dest) const;
 };
 
 template<typename TPushValue, typename TGetValue>
@@ -98,6 +101,23 @@ UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) con
 	return UByteArrayAdapter(m_data, begin, len);
 }
 
+template<typename TPushValue, typename TGetValue>
+UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toDeque(UByteArrayAdapter & dest) const {
+	Static::DequeCreator<UByteArrayAdapter> dc(dest);
+	for(uint32_t i = 0, s = size(); i < s; ++i) {
+		dc.beginRawPut();
+		dc.rawPut().put(dataAt(i));
+		dc.endRawPut();
+	}
+	dc.flush();
+	return dest;
+}
+
 }}//end namespace
+
+template<typename TPushValue, typename TGetValue>
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::DynamicVector<TPushValue, TGetValue> & src) {
+	return src.toDeque(dest);
+}
 
 #endif
