@@ -338,6 +338,20 @@ public:
 	struct SerializationSupport {
 		static const bool value = false;
 	};
+	
+	template<typename TValue>
+	struct StreamingSerializer {
+		void operator()(const TValue & src, UByteArrayAdapter & dest) const {
+			dest << src;
+		}
+	};
+	
+	template<typename TValue>
+	struct Deserializer {
+		TValue operator()(const UByteArrayAdapter & dest) const {
+			return TValue(dest);
+		}
+	};
 };
 
 template<>
@@ -379,6 +393,26 @@ template<>
 struct UByteArrayAdapter::SerializationSupport<float> {
 	static const bool value = true;
 };
+
+#define UBA_DESERIALIZER_SPECIALIZATIONS(__TYPE, __FUNCNAME) \
+template<> \
+struct UByteArrayAdapter::Deserializer<__TYPE> { \
+	inline __TYPE operator()(const UByteArrayAdapter & dest) const { \
+		return dest.__FUNCNAME(0); \
+	} \
+}; \
+
+UBA_DESERIALIZER_SPECIALIZATIONS(uint8_t, getUint8);
+UBA_DESERIALIZER_SPECIALIZATIONS(uint16_t, getUint16);
+UBA_DESERIALIZER_SPECIALIZATIONS(uint32_t, getUint32);
+UBA_DESERIALIZER_SPECIALIZATIONS(uint64_t, getUint64);
+UBA_DESERIALIZER_SPECIALIZATIONS(int32_t, getInt32);
+UBA_DESERIALIZER_SPECIALIZATIONS(int64_t, getInt64);
+UBA_DESERIALIZER_SPECIALIZATIONS(float, getFloat);
+UBA_DESERIALIZER_SPECIALIZATIONS(double, getDouble);
+UBA_DESERIALIZER_SPECIALIZATIONS(std::string, getString);
+
+#undef UBA_DESERIALIZER_SPECIALIZATIONS
 
 }//end namespace
 
