@@ -19,15 +19,17 @@ public:
 
 	class Item {
 		const KeyValueObjectStore * m_store;
-		const ItemData * m_item;
+		uint32_t m_id;
 	protected:
 		inline const KeyValueObjectStore * store() const { return m_store; }
+		inline uint32_t id() const { return m_id; }
+		const ItemData & itemData() const { return store()->itemDataAt(id()); }
 	public:
-		Item(const KeyValueObjectStore * store, const ItemData * item) : m_store(store), m_item(item) {}
+		Item(const KeyValueObjectStore * store, uint32_t id) : m_store(store), m_id(id) {}
 		~Item() {}
-		inline uint32_t size() const { return m_item->size(); }
+		inline uint32_t size() const { return itemData().size(); }
 		inline std::pair<std::string, std::string> at(uint32_t pos) const {
-			return m_store->keyValue((*m_item)[pos].key, (*m_item)[pos].value);
+			return store()->keyValue(itemData()[pos].key, itemData()[pos].value);
 		}
 	};
 	
@@ -54,7 +56,8 @@ public:
 	///Pre-allocate space for items
 	void reserve(uint32_t size);
 	uint32_t size() const { return m_items.size(); }
-	inline Item at(uint32_t pos) const { return Item(this, &m_items.at(pos)); }
+	inline const ItemData & itemDataAt(uint32_t pos) const { return m_items[pos]; }
+	inline Item at(uint32_t pos) const { return Item(this, pos); }
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
 	
 	///This remaps the strings ids ot the items and orders the keys of the item in ascending order
