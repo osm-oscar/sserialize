@@ -11,17 +11,17 @@ enum { BO_TREE_CASE_SENSITIVE=0x1, BO_SUFFIX_TREE=0x2, BO_COMPACT_NODE=0x4};
 template<uint32_t T_BUILD_OPTS>
 class StaticGeneralizedTrieTest: public StringCompleterTest {
 CPPUNIT_TEST_SUITE( StaticGeneralizedTrieTest );
-// CPPUNIT_TEST( testCreateStringCompleter );
-// CPPUNIT_TEST( testSupportedQuerries );
-// CPPUNIT_TEST( testCompletionECS );
-// CPPUNIT_TEST( testCompletionECI );
-// CPPUNIT_TEST( testCompletionPCS );
-// CPPUNIT_TEST( testCompletionPCI );
-// CPPUNIT_TEST( testCompletionSCS );
-// CPPUNIT_TEST( testCompletionSCI );
-// CPPUNIT_TEST( testCompletionSPCS );
-// CPPUNIT_TEST( testCompletionSPCI );
-// CPPUNIT_TEST( testStringCompleterPrivateCast );
+CPPUNIT_TEST( testCreateStringCompleter );
+CPPUNIT_TEST( testSupportedQuerries );
+CPPUNIT_TEST( testCompletionECS );
+CPPUNIT_TEST( testCompletionECI );
+CPPUNIT_TEST( testCompletionPCS );
+CPPUNIT_TEST( testCompletionPCI );
+CPPUNIT_TEST( testCompletionSCS );
+CPPUNIT_TEST( testCompletionSCI );
+CPPUNIT_TEST( testCompletionSPCS );
+CPPUNIT_TEST( testCompletionSPCI );
+CPPUNIT_TEST( testStringCompleterPrivateCast );
 CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST( testIndexEquality );
 CPPUNIT_TEST_SUITE_END();
