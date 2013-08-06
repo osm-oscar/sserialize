@@ -12,6 +12,10 @@ namespace sserialize {
 KeyValueObjectStore::KeyValueObjectStore() {}
 KeyValueObjectStore::~KeyValueObjectStore() {}
 
+void KeyValueObjectStore::reserve(uint32_t size) {
+	m_items.reserve(size);
+}
+
 void KeyValueObjectStore::clear() {
 	m_keyStringTable = KeyStringTable();
 	m_valueStringTable = ValueStringTable();

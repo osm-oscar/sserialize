@@ -51,6 +51,8 @@ public:
 	KeyValueObjectStore();
 	virtual ~KeyValueObjectStore();
 	void clear();
+	///Pre-allocate space for items
+	void reserve(uint32_t size);
 	uint32_t size() const { return m_items.size(); }
 	inline Item at(uint32_t pos) const { return Item(this, &m_items.at(pos)); }
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
