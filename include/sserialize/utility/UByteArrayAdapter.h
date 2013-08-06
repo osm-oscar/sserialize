@@ -280,12 +280,12 @@ public:
 	inline void put(UByteArrayAdapter::OffsetType pos, int32_t value) { putInt32(pos, value); }
 	inline void put(UByteArrayAdapter::OffsetType pos, int64_t value) { putInt64(pos, value); }
 	
-	inline void get(UByteArrayAdapter::OffsetType pos, uint8_t & value) const { getUint8(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, uint16_t & value) const { getUint16(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, uint32_t & value) const { getUint32(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, uint64_t & value) const { getUint64(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, int32_t & value) const { getInt32(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, int64_t & value) const { getInt64(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint8_t & value) const { value = getUint8(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint16_t & value) const { value = getUint16(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint32_t & value) const { value = getUint32(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, uint64_t & value) const { value = getUint64(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, int32_t & value) const { value = getInt32(pos); }
+	inline void get(UByteArrayAdapter::OffsetType pos, int64_t & value) const { value = getInt64(pos); }
 	
 	inline void get(uint8_t & value) { value = getUint8(); }
 	inline void get(uint16_t & value) { value = getUint16(); }
