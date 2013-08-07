@@ -259,7 +259,7 @@ public:
 	static std::string getTempFilePrefix();
 	static void setTempFilePrefix(const std::string & path);
 	
-	static inline uint32_t OffsetTypeSerializedLength() { return 5; }
+	static inline OffsetType OffsetTypeSerializedLength() { return 5; }
 
 	//convinience functions
 	
