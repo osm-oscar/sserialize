@@ -3,16 +3,73 @@
 namespace sserialize {
 namespace Static {
 
-KeyValueObjectStoreItem::KeyValueObjectStoreItem() {}
+KeyValueObjectStoreItemBase::KeyValueObjectStoreItemBase() :
+m_sizeBPKV(0),
+m_keyBegin(0),
+m_valueBegin(0)
+{}
 
-KeyValueObjectStoreItem::KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, sserialize::UByteArrayAdapter data) :
+KeyValueObjectStoreItemBase::KeyValueObjectStoreItemBase(sserialize::UByteArrayAdapter data) :
 m_sizeBPKV(data.getVlPackedUint32()),
 m_keyBegin(data.getVlPackedUint32()),
 m_valueBegin(data.getVlPackedUint32()),
-m_kv(data.shrinkToGetPtr(), keyBits() + valueBits()),
-m_db(db)
-{
+m_kv(data.shrinkToGetPtr(), keyBits() + valueBits())
+{}
+
+KeyValueObjectStoreItemBase::~KeyValueObjectStoreItemBase() {}
+
+uint32_t KeyValueObjectStoreItemBase::keyId(uint32_t pos) const {
+	return m_keyBegin + (m_kv.at64(pos) >> valueBits());
 }
+
+uint32_t KeyValueObjectStoreItemBase::valueId(uint32_t pos) const {
+	return m_valueBegin + (m_kv.at64(pos) & valueMask());
+}
+
+uint32_t KeyValueObjectStoreItemBase::findKey(uint32_t id, uint32_t start) const {
+	uint32_t s = size();
+	for(uint32_t i = start; i < s; ++i) {
+		if (keyId(i) == id)
+			return i;
+	}
+	return npos;
+}
+
+uint32_t KeyValueObjectStoreItemBase::findValue(uint32_t id, uint32_t start) const {
+	uint32_t s = size();
+	for(uint32_t i = start; i < s; ++i) {
+		if (valueId(i) == id)
+			return i;
+	}
+	return npos;
+}
+
+uint32_t KeyValueObjectStoreItemBase::countKey(uint32_t id) const {
+	uint32_t s = size();
+	uint32_t count = 0;
+	for(uint32_t i = 0; i < s; ++i) {
+		if (keyId(i) == id)
+			++count;
+	}
+	return count;
+}
+
+uint32_t KeyValueObjectStoreItemBase::countValue(uint32_t id) const {
+	uint32_t s = size();
+	uint32_t count = 0;
+	for(uint32_t i = 0; i < s; ++i) {
+		if (valueId(i) == id)
+			++count;
+	}
+	return count;
+}
+
+KeyValueObjectStoreItem::KeyValueObjectStoreItem() {}
+
+KeyValueObjectStoreItem::KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, const sserialize::UByteArrayAdapter & data) :
+KeyValueObjectStoreItemBase(data),
+m_db(db)
+{}
 
 KeyValueObjectStoreItem::~KeyValueObjectStoreItem() {}
 
@@ -28,80 +85,33 @@ std::string KeyValueObjectStoreItem::value(uint32_t pos) const {
 	return m_db->value( valueId(pos) );
 }
 
-uint32_t KeyValueObjectStoreItem::keyId(uint32_t pos) const {
-	return m_keyBegin + (m_kv.at64(pos) >> valueBits());
-}
-
-uint32_t KeyValueObjectStoreItem::valueId(uint32_t pos) const {
-	return m_valueBegin + (m_kv.at64(pos) & valueMask());
-}
 
 uint32_t KeyValueObjectStoreItem::findKey(const std::string & str, uint32_t start) const {
 	uint32_t keyId = m_db->findKeyId(str);
 	if (keyId == KeyValueObjectStore::npos)
 		return npos;
-	return findKey(keyId, start);
-}
-
-uint32_t KeyValueObjectStoreItem::findKey(uint32_t id, uint32_t start) const {
-	uint32_t s = size();
-	for(uint32_t i = start; i < s; ++i) {
-		if (keyId(i) == id)
-			return i;
-	}
-	return npos;
+	return KeyValueObjectStoreItemBase::findKey(keyId, start);
 }
 
 uint32_t KeyValueObjectStoreItem::findValue(const std::string & str, uint32_t start) const {
 	uint32_t valueId = m_db->findValueId(str);
 	if (valueId == KeyValueObjectStore::npos)
 		return npos;
-	return findValue(valueId, start);
+	return KeyValueObjectStoreItemBase::findValue(valueId, start);
 }
-
-uint32_t KeyValueObjectStoreItem::findValue(uint32_t id, uint32_t start) const {
-	uint32_t s = size();
-	for(uint32_t i = start; i < s; ++i) {
-		if (valueId(i) == id)
-			return i;
-	}
-	return npos;
-}
-
 
 uint32_t KeyValueObjectStoreItem::countKey(const std::string & str) const {
 	uint32_t keyId = m_db->findKeyId(str);
 	if (keyId == KeyValueObjectStore::npos)
 		return 0;
-	return countKey(keyId);
-}
-
-uint32_t KeyValueObjectStoreItem::countKey(uint32_t id) const {
-	uint32_t s = size();
-	uint32_t count = 0;
-	for(uint32_t i = 0; i < s; ++i) {
-		if (keyId(i) == id)
-			++count;
-	}
-	return count;
+	return KeyValueObjectStoreItemBase::countKey(keyId);
 }
 
 uint32_t KeyValueObjectStoreItem::countValue(const std::string & str) const {
 	uint32_t valueId = m_db->findValueId(str);
 	if (valueId == KeyValueObjectStore::npos)
 		return 0;
-	return countValue(valueId);
-}
-
-
-uint32_t KeyValueObjectStoreItem::countValue(uint32_t id) const {
-	uint32_t s = size();
-	uint32_t count = 0;
-	for(uint32_t i = 0; i < s; ++i) {
-		if (valueId(i) == id)
-			++count;
-	}
-	return count;
+	return KeyValueObjectStoreItemBase::countValue(valueId);
 }
 
 bool KeyValueObjectStoreItem::matchValues(const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const {

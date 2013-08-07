@@ -23,42 +23,50 @@ class KeyValueObjectStorePrivate;
   * The keys are sorted in ascending order
   *
   */
-
-
-class KeyValueObjectStoreItem {
+  
+class KeyValueObjectStoreItemBase {
 public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
-	typedef ReadOnlyAtStlIterator<const KeyValueObjectStoreItem*, std::pair<std::string, std::string> > const_iterator;
-	typedef const_iterator iterator;
-private:
+protected:
 	uint32_t m_sizeBPKV;
 	uint32_t m_keyBegin;
 	uint32_t m_valueBegin;
 	CompactUintArray m_kv;
-	std::shared_ptr<KeyValueObjectStorePrivate> m_db;
-private:
+protected:
 	inline uint8_t keyBits() const { return ((m_sizeBPKV >> 5) & 0x1F)+1;}
 	inline uint8_t valueBits() const { return (m_sizeBPKV & 0x1F)+1;}
 	inline uint32_t valueMask() const { return createMask(valueBits()); }
 public:
-	KeyValueObjectStoreItem();
-	KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, sserialize::UByteArrayAdapter data);
-	virtual ~KeyValueObjectStoreItem();
+	KeyValueObjectStoreItemBase();
+	KeyValueObjectStoreItemBase(sserialize::UByteArrayAdapter data);
+	virtual ~KeyValueObjectStoreItemBase();
 	inline uint32_t size() const { return m_sizeBPKV >> 10; }
+	uint32_t keyId(uint32_t pos) const;
+	uint32_t valueId(uint32_t pos) const;
+	uint32_t findKey(uint32_t id, uint32_t start = 0) const;
+	uint32_t findValue(uint32_t id, uint32_t start = 0) const;
+	uint32_t countKey(uint32_t id) const;
+	uint32_t countValue(uint32_t id) const;
+};
+
+
+class KeyValueObjectStoreItem: public KeyValueObjectStoreItemBase {
+public:
+	typedef ReadOnlyAtStlIterator<const KeyValueObjectStoreItem*, std::pair<std::string, std::string> > const_iterator;
+	typedef const_iterator iterator;
+private:
+	std::shared_ptr<KeyValueObjectStorePrivate> m_db;
+public:
+	KeyValueObjectStoreItem();
+	KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, const sserialize::UByteArrayAdapter & data);
+	virtual ~KeyValueObjectStoreItem();
 	std::pair<std::string, std::string> at(uint32_t pos) const;
 	std::string key(uint32_t pos) const;
 	std::string value(uint32_t pos) const;
-	uint32_t keyId(uint32_t pos) const;
-	uint32_t valueId(uint32_t pos) const;
 	uint32_t findKey(const std::string & str, uint32_t start = 0) const;
-	uint32_t findKey(uint32_t id, uint32_t start = 0) const;
 	uint32_t findValue(const std::string & str, uint32_t start = 0) const;
-	uint32_t findValue(uint32_t id, uint32_t start = 0) const;
-	
 	uint32_t countKey(const std::string & str) const;
-	uint32_t countKey(uint32_t id) const;
 	uint32_t countValue(const std::string & str) const;
-	uint32_t countValue(uint32_t id) const;
 	
 	bool matchValues(const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const;
 	bool matchValue(uint32_t pos, const std::pair< std::string, sserialize::StringCompleter::QuerryType > & query) const;

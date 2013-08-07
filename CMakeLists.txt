@@ -41,6 +41,7 @@ Static/triestats.cpp
 Static/RTree.cpp
 Static/HuffmanDecoder.cpp
 Static/KeyValueObjectStore.cpp
+Static/DynamicKeyValueObjectStore.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP

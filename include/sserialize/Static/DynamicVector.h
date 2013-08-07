@@ -16,7 +16,7 @@ public:
 	DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize);
 	virtual ~DynamicVector();
 	uint32_t size() const;
-	void reserve(uint32_t size) {}
+	void reserve(uint32_t size) { std::cerr << "Reserving is not supported by sserialize::Static::DynamicVector" << std::endl; }
 	template<typename TStreamingSerializer = UByteArrayAdapter::StreamingSerializer<TPushValue> >
 	void push_back(const TPushValue & value, const TStreamingSerializer & serializer = TStreamingSerializer());
 	void pop_back();
