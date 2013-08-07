@@ -57,22 +57,8 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 uint64_t ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
 	uint64_t h = 0;
 	uint32_t count = std::min<uint32_t>(v.size(), 1024);
-#if 1
-	const uint8_t * vPtr = &(v[0]);
-	for(size_t i = 0; i < count; ++i, ++vPtr)
-		h += *vPtr;
-#else
-	for(size_t i = 0, k = 0; i < count; i = ((i+1) << 1), k+=8) {
-		uint64_t tmp = 0;
-		for(size_t j = 0; j+i < count; ++j) {
-			tmp |= (static_cast<uint64_t>(v[i+j]) << j);
-		}
-		h += (tmp << k);
-	}
-#endif
-	count = std::min<uint32_t>(count, 16*4);
-	for(size_t i = 3;  i < count; i+=4) {
-		h += (static_cast<uint64_t>(v[i]) << 48);
+	for(std::vector<uint8_t>::const_iterator it(v.begin()), end(v.begin()+count); it != end; ++it) {
+		hash_combine(h, *it);
 	}
 	return h;
 }
@@ -85,8 +71,7 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv
 		return -1;
 	}
 	else {
-		std::list<OffsetType>::const_iterator end = m_hash.at(hv).end();
-		for(std::list<OffsetType>::const_iterator it = m_hash.at(hv).begin(); it != end; ++it) {
+		for(DataOffsetContainer::const_iterator it(m_hash[hv].begin()), end(m_hash[hv].end()); it != end; ++it) {
 			if (indexInStore(v, *it))
 				return *it;
 		}
@@ -97,8 +82,8 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv
 bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint64_t offset) {
 	if (v.size() > (m_indexStore.tellPutPtr()-offset))
 		return false;
-	for(size_t i = 0; i < v.size(); i++) {
-		if (v.at(i) != m_indexStore.at(offset+i))
+	for(std::size_t i = 0, s = v.size(); i < s; ++i) {
+		if (v[i] != m_indexStore.at(offset+i))
 			return false;
 	}
 	return true;
@@ -112,7 +97,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 		m_offsetsToId[indexPos] = m_indexIdCounter;
 		m_indexIdCounter++;
 		m_indexStore.put(idx);
-		m_hash[hv].push_back(indexPos);//deque<> takes of creating an empty list if none exists
+		m_hash[hv].push_front(indexPos);
 	}
 	else {
 		m_hitCount++;
@@ -144,7 +129,7 @@ OffsetType ItemIndexFactory::flush() {
 	std::cout << "Gathering offsets...";
 	//Create the offsets
 	std::vector<uint64_t> os(m_offsetsToId.size(), 0);
-	for(std::unordered_map<uint64_t, uint32_t>::const_iterator it = m_offsetsToId.begin(); it != m_offsetsToId.end(); ++it) {
+	for(OffsetToIdHashType::const_iterator it (m_offsetsToId.begin()), end(m_offsetsToId.end()); it != end; ++it) {
 			os[it->second] = it->first;
 	}
 	std::cout << os.size() << " gathered" << std::endl;

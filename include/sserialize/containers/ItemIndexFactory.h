@@ -1,8 +1,9 @@
 #ifndef ITEM_INDEX_FACTORY_H
 #define ITEM_INDEX_FACTORY_H
-#include <list>
+#include <forward_list>
 #include <unordered_set>
 #include <unordered_map>
+#include <google/sparse_hash_map>
 #include <vector>
 #include <stdint.h>
 #include <iostream>
@@ -19,12 +20,16 @@ namespace sserialize {
 /** This class is a storage for multiple ItemIndex. It can create a file suitable for the Static::IndexStore */
 
 class ItemIndexFactory {
+public:
+	typedef std::forward_list<OffsetType> DataOffsetContainer;
+	typedef std::unordered_map< uint64_t, std::forward_list<OffsetType> > DataHashType;
+	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
 private:
 	uint32_t m_indexIdCounter;
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
-	std::unordered_map<uint64_t, std::list<OffsetType> > m_hash;
-	std::unordered_map<uint64_t, uint32_t> m_offsetsToId;
+	DataHashType m_hash;
+	OffsetToIdHashType m_offsetsToId;
 	uint32_t m_hitCount;
 	bool m_checkIndex;
 	int8_t m_bitWidth;

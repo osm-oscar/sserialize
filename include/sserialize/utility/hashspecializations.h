@@ -12,6 +12,11 @@ inline void hash_combine(std::size_t & seed, const T & v) {
 	seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
+inline void hash_combine(uint64_t & seed, const uint8_t v) {
+	seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+
 namespace std {
 
 	template<>
