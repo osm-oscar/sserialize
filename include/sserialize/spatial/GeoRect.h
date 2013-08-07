@@ -14,6 +14,7 @@ public:
 	GeoRect(const GeoRect & other);
 	GeoRect(double latLeft, double latRight, double lonLeft, double lonRight);
 	///@param str a string holding the definition in the same order as above @GeoRect(double latLeft, double latRight, double lonLeft, double lonRight)
+	///separated by whitespace
 	GeoRect(const std::string & str); 
 	virtual ~GeoRect();
 	double* lat();
