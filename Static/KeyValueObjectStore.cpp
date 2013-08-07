@@ -1,4 +1,5 @@
 #include <sserialize/Static/KeyValueObjectStore.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
 namespace Static {
@@ -197,10 +198,12 @@ std::ostream & KeyValueObjectStore::printStats(std::ostream & out) const {
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(){}
 
 KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(const UByteArrayAdapter & data) :
-m_keyStringTable(data),
-m_valueStringTable(data+m_keyStringTable.getSizeInBytes()),
-m_items(data+(m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInBytes()))
-{}
+m_keyStringTable(data+1),
+m_valueStringTable(data+(m_keyStringTable.getSizeInBytes()+1)),
+m_items(data+(m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInBytes()+1))
+{
+	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_KEY_VALUE_OBJECTSTORE_VERSION, data.at(0), "sserialize::Static::KeyValueObjectStore");
+}
 
 KeyValueObjectStorePrivate::~KeyValueObjectStorePrivate() {}
 

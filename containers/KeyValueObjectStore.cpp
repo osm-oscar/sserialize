@@ -116,6 +116,7 @@ void KeyValueObjectStore::sort() {
 
 UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(sserialize::UByteArrayAdapter & dest) const {
 	UByteArrayAdapter::OffsetType dataBegin = dest.tellPutPtr();
+	dest.putUint8(0); //Version
 	sserialize::TimeMeasurer tm;
 	tm.begin();
 	std::cout << "KeyValueObjectStore::serialize: Serializing string tables..." << std::flush;

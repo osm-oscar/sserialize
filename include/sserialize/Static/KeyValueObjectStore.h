@@ -5,6 +5,7 @@
 #include <sserialize/utility/AtStlInputIterator.h>
 #include <sserialize/completers/StringCompleter.h>
 #include <memory>
+#define SSERIALIZE_STATIC_KEY_VALUE_OBJECTSTORE_VERSION 0
 
 namespace sserialize {
 namespace Static {
@@ -12,6 +13,10 @@ namespace Static {
 class KeyValueObjectStorePrivate;
 
 /** File layout
+  *----------------------------------------------------------
+  *VERSION|KeyStrings |ValueStrings|Item
+  *----------------------------------------------------------
+  * 1 Byte|StringTable|StringTable |*
   *
   * Layout of a single Item
   *----------------------------------------------------
