@@ -44,6 +44,12 @@ T_RETURN treeMap(T_ITERATOR begin, T_ITERATOR end, T_FUNC mapFunc) {
 	}
 }
 
+namespace ReorderMappers {
+	struct Identity {
+		std::size_t at(std::size_t pos) const { return pos; }
+	};
+};
+
 ///@param reorderMap maps new positions to old positions
 template<typename T_RANDOM_ACCESS_CONTAINER, typename T_REORDER_MAP>
 void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderMap) {
