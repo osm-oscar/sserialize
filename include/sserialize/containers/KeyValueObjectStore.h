@@ -44,7 +44,6 @@ private:
 private:
 	uint32_t keyId(const std::string & str);
 	uint32_t valueId(const std::string & str);
-	void serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) const;
 	KeyValueObjectStore & operator=(const KeyValueObjectStore & other);
 protected:
 	const KeyStringTable & keyStringTable() const { return m_keyStringTable; }
@@ -71,6 +70,8 @@ public:
 	void reorder(const T_REORDER_MAP & reorderMap) {
 		sserialize::reorder(m_items, reorderMap);
 	}
+public:
+	static void serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest);
 };
 
 

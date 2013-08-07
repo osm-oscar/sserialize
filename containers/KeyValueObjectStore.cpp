@@ -63,7 +63,7 @@ std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
 	return remap;
 }
 
-void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) const {
+void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) {
 	if(item.size() > (std::numeric_limits<uint32_t>::max() >> 10)) {
 		throw sserialize::CreationException("Out of bounds in KeyValueObjectStore::serialize(item)");
 	}
