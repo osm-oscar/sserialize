@@ -27,20 +27,33 @@ public:
 		}
 	}
 	
+	///@param oldToNew an object with operator[] = ;
 	template<typename T_OLD_TO_NEW_MAP>
 	void sort(T_OLD_TO_NEW_MAP & oldToNew) {
 		std::sort(m_strings.begin(), m_strings.end());
-		uint32_t s = m_strings.size();
-		for(uint32_t i = 0; i < s; ++i) {
+		for(uint32_t i = 0, s = m_strings.size(); i < s; ++i) {
 			uint32_t & old = m_map[ m_strings[i] ];
 			oldToNew[old] = i;
 			old = i;
+		}
+	}
+
+	void sort() {
+		std::sort(m_strings.begin(), m_strings.end());
+		for(uint32_t i = 0, s = m_strings.size(); i < s; ++i) {
+			m_map[ m_strings[i] ] = i;
 		}
 	}
 	
 	inline bool count(const std::string & str) const { return m_map.count(str) > 0; }
 	inline std::string at(uint32_t id) const {
 		return (id < m_strings.size() ? m_strings[id] : std::string());
+	}
+	
+	uint32_t at(const std::string & str) const {
+		if (count(str))
+			return m_map.at(str);
+		throw sserialize::OutOfBoundsException("sserialize::StringTable::at");
 	}
 	
 	///This remapds the string ids, sort has to be called before and you should update your string ids afterwards
@@ -50,8 +63,21 @@ public:
 		}
 		return dest << m_strings;
 	};
+	
+	void swap(StringTable & other) {
+		std::swap(m_map, other.m_map);
+		std::swap(m_strings, other.m_strings);
+	}
 };
 
 }//end namespace
 
+namespace std {
+
+template<>
+inline void swap<sserialize::StringTable>(sserialize::StringTable & a, sserialize::StringTable & b) {
+	a.swap(b);
+}
+
+}
 #endif
