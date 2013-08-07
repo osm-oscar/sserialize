@@ -32,7 +32,7 @@ public:
 template<typename TPushValue, typename TGetValue>
 DynamicVector<TPushValue, TGetValue>::DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize) :
 m_size(0),
-m_offsets(UByteArrayAdapter::createCache(approxItemCount*UByteArrayAdapter::OffsetTypeSerializedLength(), true)),
+m_offsets(UByteArrayAdapter::createCache(static_cast<OffsetType>(approxItemCount)*UByteArrayAdapter::OffsetTypeSerializedLength(), true)),
 m_data(UByteArrayAdapter::createCache(initalDataSize, true))
 {}
 
@@ -55,8 +55,8 @@ void DynamicVector<TPushValue, TGetValue>::push_back(const TPushValue & value, c
 template<typename TPushValue, typename TGetValue>
 void DynamicVector<TPushValue, TGetValue>::pop_back() {
 	if (m_size) {
-		OffsetType tmp = m_offsets.getOffset((m_size-1)*UByteArrayAdapter::OffsetTypeSerializedLength());
-		m_offsets.setPutPtr((m_size-1)*UByteArrayAdapter::OffsetTypeSerializedLength());
+		OffsetType tmp = m_offsets.getOffset(static_cast<OffsetType>(m_size-1)*UByteArrayAdapter::OffsetTypeSerializedLength());
+		m_offsets.setPutPtr(static_cast<OffsetType>(m_size-1)*UByteArrayAdapter::OffsetTypeSerializedLength());
 		--m_size;
 		if (!m_size) {
 			m_data.setPutPtr(0);
@@ -90,13 +90,13 @@ template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) const {
 	if (pos >= size())
 		return UByteArrayAdapter();
-	OffsetType begin = m_offsets.getOffset(pos*UByteArrayAdapter::OffsetTypeSerializedLength());
+	OffsetType begin = m_offsets.getOffset(static_cast<sserialize::UByteArrayAdapter::OffsetType>(pos)*UByteArrayAdapter::OffsetTypeSerializedLength());
 	OffsetType len;
 	if (pos == m_size-1) {
 		len = m_data.tellPutPtr()-begin;
 	}
 	else {
-		len = m_offsets.getOffset((pos+1)*UByteArrayAdapter::OffsetTypeSerializedLength())-begin;
+		len = m_offsets.getOffset(static_cast<sserialize::UByteArrayAdapter::OffsetType>(pos+1)*UByteArrayAdapter::OffsetTypeSerializedLength())-begin;
 	}
 	return UByteArrayAdapter(m_data, begin, len);
 }
