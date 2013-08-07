@@ -6,7 +6,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/SerializationInfo.h>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
-
+#define OFFSET_INDEX_DEBUG
 
 /** FileFormat: v3
  *
@@ -49,8 +49,25 @@ public:
 	
 	///@return data to create the deque (NOT dest data)
 	UByteArrayAdapter flush() {
+#ifdef OFFSET_INDEX_DEBUG
+		OffsetType oiBegin = m_dest.tellPutPtr();
+#endif
 		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
-		sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest);
+		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest)) {
+			throw sserialize::CreationException("Deque::flush: Creating the offset");
+		}
+#ifdef OFFSET_INDEX_DEBUG
+		sserialize::UByteArrayAdapter tmp = m_dest;
+		tmp.setPutPtr(oiBegin);
+		tmp.shrinkToPutPtr();
+		sserialize::Static::SortedOffsetIndex oIndex(tmp);
+		if (offsets() != oIndex) {
+			throw sserialize::CreationException("Deque::flush Offset index is unequal");
+		}
+		if (oIndex.getSizeInBytes() != tmp.size()) {
+			throw sserialize::CreationException("Deque::flush Offset index reports wrong sizeInBytes()");
+		}
+#endif
 		return m_dest + m_beginOffSet;
 	}
 };
@@ -66,9 +83,7 @@ public:
 	Deque(const UByteArrayAdapter & data);
 	/** This does not copy the ref count, but inits it */
 	Deque(const Deque & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
-	virtual ~Deque() {
-	
-	}
+	virtual ~Deque() {}
 	
 	/** This does not copy the ref count, it leaves it intact */
 	Deque & operator=(const Deque & other) {
