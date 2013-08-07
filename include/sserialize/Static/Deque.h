@@ -64,7 +64,7 @@ public:
 		if (offsets() != oIndex) {
 			throw sserialize::CreationException("Deque::flush Offset index is unequal");
 		}
-		if (oIndex.getSizeInBytes() != tmp.size()) {
+		if (oIndex.getSizeInBytes() != (m_dest.tellPutPtr()-oiBegin)) {
 			throw sserialize::CreationException("Deque::flush Offset index reports wrong sizeInBytes()");
 		}
 #endif
