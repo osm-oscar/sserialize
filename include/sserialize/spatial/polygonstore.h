@@ -192,6 +192,7 @@ private:
 public:
 	PolygonStore(): m_polyRaster(0) {}
 	~PolygonStore() {}
+	std::size_t size() const { return polygons().size(); }
 	const std::vector<Polygon> & polygons() const { return m_polyStore; }
 	const std::vector<TValue> & values() const { return m_values; }
 	inline void push_back(const Polygon & p, const TValue & value) {
