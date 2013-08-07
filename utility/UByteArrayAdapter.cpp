@@ -759,19 +759,21 @@ bool UByteArrayAdapter::put(const OffsetType pos, const std::deque< uint8_t >& d
 }
 
 bool UByteArrayAdapter::put(const OffsetType pos, const std::vector< uint8_t >& data) {
-	if (m_len < pos+data.size())
-		return false;
-	for(size_t i = 0; i < data.size(); i++) {
-		putUint8(pos+i, data[i]);
-	}
+	if (data.size())
+		return put(pos, &data[0], data.size());
 	return true;
 }
 
 bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data) {
 	if (m_len < pos+data.size())
 		return false;
-	for(size_t i = 0; i < data.size(); i++) {
-		putUint8(pos+i, data.getUint8(i));
+	uint32_t bufLen = std::min<OffsetType>(data.size(), 1024*1024);
+	uint8_t * buf = new uint8_t[bufLen];
+	for(OffsetType i = 0, s = data.size(); i < s;) {
+		OffsetType len = std::min<OffsetType>(s-i, bufLen);
+		data.get(i, buf, len);
+		put(pos+i, buf, len);
+		i += len;
 	}
 	return true;
 }
