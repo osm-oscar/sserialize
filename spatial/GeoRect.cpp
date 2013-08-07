@@ -1,4 +1,5 @@
 #include <sserialize/spatial/GeoRect.h>
+#include <sstream>
 
 namespace sserialize {
 namespace spatial {
@@ -23,6 +24,12 @@ GeoRect::GeoRect(double latLeft, double latRight, double lonLeft, double lonRigh
 	m_lon[0] = lonLeft;
 	m_lon[1] = lonRight;
 }
+
+GeoRect::GeoRect(const std::string & str) {
+	std::stringstream ss(str);
+	ss >> m_lat[0] >> m_lat[1] >> m_lon[0] >> m_lon[1];
+}
+
 GeoRect::~GeoRect() {}
 double* GeoRect::lat() { return m_lat; }
 const double* GeoRect::lat() const { return m_lat; }
