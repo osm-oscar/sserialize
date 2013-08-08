@@ -33,6 +33,15 @@ public:
 		return m_bitSet.size() + m_upperData.size();
 	}
 	
+	void mark(uint64_t pos) {
+		if (m_begin <= pos && pos < m_end) {
+			m_bitSet.set(pos-m_begin);
+		}
+		else {
+			m_upperData[pos] = TValue();
+		}
+	}
+	
 	bool count(uint64_t pos) const {
 		if (m_begin <= pos && pos < m_end) {
 			return m_bitSet.isSet(pos-m_begin);
