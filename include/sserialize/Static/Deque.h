@@ -8,7 +8,7 @@
 #include <sserialize/utility/mmappedfile.h>
 #include <fstream>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
-#define OFFSET_INDEX_DEBUG
+// #define OFFSET_INDEX_DEBUG
 
 /** FileFormat: v3
  *
