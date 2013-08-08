@@ -25,14 +25,20 @@ namespace sserialize {
 #define SSERIALIZED_OFFSET_BYTE_COUNT 5
 #define SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT 5
 
+///OffsetType >= SizeType >= IdType!
+
 #ifdef __LP64__
 typedef uint64_t OffsetType;
 typedef int64_t NegativeOffsetType;
+typedef uint64_t SizeType;
+typedef uint64_t IdType;
 #define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #else
 typedef uint32_t OffsetType;
 typedef int32_t NegativeOffsetType;
+typedef uint32_t SizeType;
+typedef uint32_t IdType;
 #define MAX_SIZE_FOR_FULL_MMAP 0x3FFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #endif
