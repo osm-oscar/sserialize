@@ -234,6 +234,16 @@ UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapt
 	return *this;
 }
 
+void UByteArrayAdapter::zero() {
+	uint32_t bufLen = 1024*1024;
+	uint8_t * zeros = new uint8_t[bufLen];
+	memset(zeros, 0, bufLen);
+	for(OffsetType i = 0; i < m_len; i += bufLen) {
+		put(i, zeros, std::min<OffsetType>(m_len-i, bufLen));
+	}
+	delete zeros;
+}
+
 bool UByteArrayAdapter::equal(const UByteArrayAdapter& b) const {
 	return (m_offSet == b.m_offSet && m_len == b.m_len && m_priv == b.m_priv && m_getPtr == b.m_getPtr && m_putPtr == b.m_putPtr);
 }

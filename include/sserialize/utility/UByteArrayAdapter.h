@@ -78,6 +78,7 @@ public:
 	UByteArrayAdapter(const CompressedMmappedFile & file);
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
+	void zero();
 	uint8_t & operator[](const OffsetType pos);
 	const uint8_t & operator[](const OffsetType pos) const;
 	uint8_t & operator*();
