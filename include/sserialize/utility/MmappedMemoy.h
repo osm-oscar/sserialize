@@ -11,7 +11,7 @@
 
 namespace sserialize {
 
-/** This class provides a remproary memory extension with the possiblity to grow the storage */
+/** This class provides a temporary memory extension with the possiblity to grow the storage */
 
 
 struct FileHandler {
@@ -113,6 +113,7 @@ private:
 public:
 	///This will not create memory region => data() equals nullptr and resize() will not work
 	MmappedMemory() : m_priv(new MmappedMemoryPrivate<TValue>(0)) {}
+	///@param size Number of elements
 	MmappedMemory(OffsetType size) : m_priv(new MmappedMemoryPrivate<TValue>(size)) {}
 	virtual ~MmappedMemory() {}
 	TValue * data() { return m_priv->data(); }

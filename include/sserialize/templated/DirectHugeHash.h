@@ -21,7 +21,7 @@ public:
 	DirectHugheHash(uint64_t begin, uint64_t end) :
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
-	m_data( static_cast<uint64_t>(m_end-m_begin)*sizeof(TValue)),
+	m_data( static_cast<uint64_t>(m_end-m_begin)),
 	m_bitSet(UByteArrayAdapter::createCache(static_cast<uint64_t>(m_end-m_begin)/8, true))
 	{
 		m_bitSet.data().zero();
