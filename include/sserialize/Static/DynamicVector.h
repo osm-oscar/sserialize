@@ -104,6 +104,7 @@ UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) con
 template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toDeque(UByteArrayAdapter & dest) const {
 	Static::DequeCreator<UByteArrayAdapter> dc(dest);
+	dc.reserveOffsets(size());
 	for(uint32_t i = 0, s = size(); i < s; ++i) {
 		dc.beginRawPut();
 		dc.rawPut().put(dataAt(i));
