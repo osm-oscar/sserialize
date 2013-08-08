@@ -21,3 +21,4 @@ ${sserialize_BINARY_DIR}/libsserialize.a)
 
 add_tools_target_single(inspect_ItemIndexStore)
 add_tools_target_single(compressedFileCreator)
+add_tools_target_single(mmappedmem)
