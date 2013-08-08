@@ -96,7 +96,7 @@ UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::getSizeInBytes() const {
 	case 0: return 1;
 	case 1: return 1+vl_pack_uint64_t_size(m_yintercept);
 	default:
-		UByteArrayAdapter::OffsetType size = vl_pack_uint64_t_size(m_size << 6);
+		UByteArrayAdapter::OffsetType size = vl_pack_uint64_t_size( static_cast<uint64_t>(m_size) << 6);
 		size += vl_pack_uint64_t_size(m_slopenom);
 		size += vl_pack_int64_t_size(m_yintercept);
 		size += vl_pack_uint64_t_size(m_idOffset);
