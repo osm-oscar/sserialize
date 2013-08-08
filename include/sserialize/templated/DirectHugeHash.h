@@ -37,18 +37,20 @@ public:
 		if (m_begin <= pos && pos < m_end) {
 			return m_bitSet.isSet(pos-m_begin);
 		}
-		return (m_upperData.count(pos) > 0);
+		return m_upperData.count(pos);
 	}
 	
 	const TValue & at(uint64_t pos) const {
-		if (count(pos))
+		if (count(pos)) {
 			return operator[](pos);
+		}
 		throw sserialize::OutOfBoundsException("DirectHugheHash::at");
 	}
 	
 	TValue & at(uint64_t pos) {
-		if (count(pos))
+		if (count(pos)) {
 			return operator[](pos);
+		}
 		throw sserialize::OutOfBoundsException("DirectHugheHash::at");
 	}
 	
@@ -61,6 +63,7 @@ public:
 	
 	TValue & operator[](uint64_t pos) {
 		if (m_begin <= pos && pos < m_end) {
+			m_bitSet.set(pos-m_begin);
 			return m_data.data()[pos-m_begin]; 
 		}
 		return m_upperData[pos];
