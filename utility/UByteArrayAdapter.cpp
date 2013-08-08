@@ -785,6 +785,7 @@ bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data
 		put(pos+i, buf, len);
 		i += len;
 	}
+	delete buf;
 	return true;
 }
 
