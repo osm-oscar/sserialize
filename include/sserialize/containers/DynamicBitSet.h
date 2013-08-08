@@ -17,8 +17,8 @@ public:
 	///@param shift: number of bytes to align to expressed as aa power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
 	bool align(uint8_t shift);
 	
-	uint32_t smallestEntry() const;
-	uint32_t largestEntry() const;
+	IdType smallestEntry() const;
+	IdType largestEntry() const;
 	
 	DynamicBitSet operator&(const DynamicBitSet & other) const;
 	DynamicBitSet operator|(const DynamicBitSet & other) const;
@@ -29,16 +29,16 @@ public:
 	UByteArrayAdapter & data() { return m_data;}
 	const UByteArrayAdapter & data() const { return m_data;}
 
-	bool isSet(uint32_t pos) const;
-	void set(uint32_t pos);
-	void unset(uint32_t pos);
+	bool isSet(SizeType pos) const;
+	void set(SizeType pos);
+	void unset(SizeType pos);
 	ItemIndex toIndex(int type) const;
 	
 	template<typename T_OUTPUT_ITERATOR>
 	void putInto(T_OUTPUT_ITERATOR out) {
-		UByteArrayAdapter::SizeType s = m_data.size();
-		UByteArrayAdapter::SizeType i = 0;
-		uint32_t id = 0;
+		UByteArrayAdapter::OffsetType s = m_data.size();
+		UByteArrayAdapter::OffsetType i = 0;
+		SizeType id = 0;
 		for(; i < s; ++i) {
 			uint8_t d = m_data.getUint8(i);
 			for(uint32_t curId = id; d; ++curId, d >>= 1) {
@@ -51,7 +51,7 @@ public:
 		}
 	}
 	
-	uint32_t size() const;
+	SizeType size() const;
 };
 
 }//end namespace
