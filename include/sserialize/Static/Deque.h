@@ -5,6 +5,8 @@
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/utility/mmappedfile.h>
+#include <fstream>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
 #define OFFSET_INDEX_DEBUG
 
@@ -62,13 +64,28 @@ public:
 		tmp.shrinkToPutPtr();
 		sserialize::Static::SortedOffsetIndex oIndex(tmp);
 		if (offsets() != oIndex) {
+			writeOutOffset();
 			throw sserialize::CreationException("Deque::flush Offset index is unequal");
 		}
 		if (oIndex.getSizeInBytes() != (m_dest.tellPutPtr()-oiBegin)) {
+			writeOutOffset();
 			throw sserialize::CreationException("Deque::flush Offset index reports wrong sizeInBytes()");
 		}
 #endif
 		return m_dest + m_beginOffSet;
+	}
+	
+	void writeOutOffset() {
+		std::ofstream of;
+		std::string str = MmappedFile::findLockFilePath(UByteArrayAdapter::getTempFilePrefix(), 1024);
+		of.open(str);
+		if (of.is_open()) {
+			for(uint64_t x : offsets()) {
+				of << x << std::endl;
+			}
+			of.close();
+		}
+		
 	}
 };
 
