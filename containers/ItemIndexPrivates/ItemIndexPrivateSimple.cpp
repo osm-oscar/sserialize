@@ -1,4 +1,5 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
 
@@ -154,6 +155,9 @@ bool ItemIndexPrivateSimple::addItemIndexFromIds(const std::set<uint32_t> & ids,
 }
 
 void ItemIndexPrivateSimple::addHeader(uint32_t count, uint8_t bytesPerId, uint32_t lowestId, UByteArrayAdapter& adap) {
+	if (count > 0x3FFFFFFF) {
+		throw sserialize::OutOfBoundsException("sserialize::ItemIndexPrivateSimple::creation");
+	}
 	uint32_t countBits = (count << 2);
 	countBits |= (bytesPerId-1);
 	adap.putUint32(0, countBits);

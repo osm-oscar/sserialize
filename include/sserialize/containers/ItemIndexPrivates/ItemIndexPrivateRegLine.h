@@ -3,6 +3,7 @@
 #include "ItemIndexPrivate.h"
 #include <sserialize/utility/CompactUintArray.h>
 #include <sserialize/utility/LinearRegressionFunctions.h>
+#include <sserialize/utility/exceptions.h>
 #include <cstdlib>
 
 //TODO: Möglichkeit, delta-enkodierung zu nutzen
@@ -12,7 +13,7 @@
  * -------------------------------------------------------
  * CONTIDBITS|Y-INTCEPT|SLOPENOM|IDOFFSET|IDS
  * -------------------------------------------------------
- *  1-4 byte |1-4 bytes|1-4 byte|1-4 byte|COMPACTARRAY
+ *  1-5 byte |1-5 bytes|1-5 byte|1-5 byte|COMPACTARRAY
  * -------------------------------------------------------
  * 
  * IDBITS: 5 bits, define the bits per number for IDS: bpn = IDBITS+1;
@@ -172,8 +173,9 @@ public:
 	  */
 	template<class TSortedContainer>
 	static bool create(const TSortedContainer & ids, UByteArrayAdapter & destination, int8_t fixedBitWith = -1, bool regLine = false) {
-		if (ids.size() > 0xFFFFFF)
-			return false;
+		if (ids.size() > 0x7FFFFFF) {
+			throw sserialize::OutOfBoundsException("sserialize::ItemIndexPrivateRegLine");
+		}
 		if (ids.size() > 1) {
 			uint32_t slopenom = 0;
 			int32_t yintercept = 0;
