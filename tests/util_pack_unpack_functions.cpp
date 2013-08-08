@@ -7,48 +7,46 @@
 using namespace sserialize;
 
 bool test_packFunctions2() {
-	uint32_t should;
-	uint32_t is;
+	uint64_t should;
+	uint64_t is;
 	int len;
-	uint8_t array[5];
+	uint8_t array[9];
 
-	should = 0xFEFEFEFE; //32 bits
-	vl_pack_uint32_t(should, array);
-	is = vl_unpack_uint32_t(array, &len);
-	if (is != should) std::cout << "5 byte: vl_pack/unpack wrong" << std::endl;
-	if (vl_pack_uint32_t_size(should) != 5) std::cout << "5 byte: vl_pack_uint32_t_size wrong" << std::endl;
+#define VL_PACK_32_TEST(__VALUE, __LEN) \
+	should = __VALUE; \
+	vl_pack_uint32_t(should, array); \
+	is = vl_unpack_uint32_t(array, &len); \
+	if (is != should) std::cout << "__LEN byte: vl_pack/unpack wrong" << std::endl;\
+	if (vl_pack_uint32_t_size(should) != __LEN) std::cout << "__LEN byte: vl_pack_uint32_t_size wrong" << std::endl; \
 	
-	
-	should = 0x0FFFFFFF; //28 bits
-	vl_pack_uint32_t(should, array);
-	is = vl_unpack_uint32_t(array, &len);
-	if (is != should) std::cout << "4 byte: vl_pack/unpack wrong" << std::endl;
-	if (vl_pack_uint32_t_size(should) != 4) std::cout << "4 byte: vl_pack_uint32_t_size wrong" << std::endl;
-	
-	should = 0x000FFFFF;
-	vl_pack_uint32_t(should, array);
-	is = vl_unpack_uint32_t(array, &len);
-	if (is != should) std::cout << "3 byte: vl_pack/unpack wrong" << std::endl;
-	if (vl_pack_uint32_t_size(should) != 3) std::cout << "4 byte: vl_pack_uint32_t_size wrong" << std::endl;
-	
-	should = 0x00000FFF;
-	vl_pack_uint32_t(should, array);
-	is = vl_unpack_uint32_t(array, &len);
-	if (is != should) std::cout << "2 byte: vl_pack/unpack wrong" << std::endl;
-	if (vl_pack_uint32_t_size(should) != 2) std::cout << "2 byte: vl_pack_uint32_t_size wrong" << std::endl;
-	
-	should = 0x0000005F;
-	vl_pack_uint32_t(should, array);
-	is = vl_unpack_uint32_t(array, &len);
-	if (is != should) std::cout << "1 byte: vl_pack/unpack wrong" << std::endl;
-	if (vl_pack_uint32_t_size(should) != 1) std::cout << "1 byte: vl_pack_uint32_t_size wrong" << std::endl;
-	
-	should = 0x0;
-	vl_pack_uint32_t(should, array);
-	is = vl_unpack_uint32_t(array, &len);
-	if (is != should || len != 1)
-		std::cout << "1 byte (0x0): vl_pack/unpack wrong" << std::endl;
+VL_PACK_32_TEST(0xFEFEFEFE, 5);
+VL_PACK_32_TEST(0x0FFFFFFF, 4);
+VL_PACK_32_TEST(0x000FFFFF, 3);
+VL_PACK_32_TEST(0x00000FFF, 2);
+VL_PACK_32_TEST(0x0000005F, 1);
+VL_PACK_32_TEST(0x00000000, 1);
 
+#undef VL_PACK_32_TEST
+	
+#define VL_PACK_64_TEST(__VALUE, __LEN) \
+	should = __VALUE; \
+	vl_pack_uint64_t(should, array); \
+	is = vl_unpack_uint64_t(array, &len); \
+	if (is != should) std::cout << "__LEN byte: vl_pack/unpack64 wrong" << std::endl;\
+	if (vl_pack_uint64_t_size(should) != __LEN) std::cout << "__LEN byte: vl_pack_uint64_t_size wrong" << std::endl; \
+	
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 62), 9);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 54), 8);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 47), 7);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 40), 6);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 35), 5);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 26), 4);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 19), 3);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 14), 2);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 6), 1);
+VL_PACK_64_TEST(0x00000000, 1);
+
+#undef VL_PACK_64_TEST
 
 	
 	int32_t shouldn;
