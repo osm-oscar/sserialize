@@ -34,7 +34,7 @@ public:
 	}
 	
 	bool count(uint64_t pos) const {
-		if (pos <= m_begin && pos < m_end) {
+		if (m_begin <= pos && pos < m_end) {
 			return m_bitSet.isSet(pos-m_begin);
 		}
 		return (m_upperData.count(pos) > 0);
@@ -53,14 +53,14 @@ public:
 	}
 	
 	const TValue & operator[](uint64_t pos) const {
-		if (pos <= m_begin && pos < m_end) {
+		if (m_begin <= pos && pos < m_end) {
 			return m_data.data()[pos-m_begin]; 
 		}
 		return m_upperData.at(pos);
 	}
 	
 	TValue & operator[](uint64_t pos) {
-		if (pos <= m_begin && pos < m_end) {
+		if (m_begin <= pos && pos < m_end) {
 			return m_data.data()[pos-m_begin]; 
 		}
 		return m_upperData[pos];
