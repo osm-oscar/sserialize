@@ -54,6 +54,34 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	addIndex(std::set<uint32_t>(), 0);
 }
 
+void ItemIndexFactory::fromIndexStore(const sserialize::Static::ItemIndexStore & store) {
+	if (store.compressionType() == sserialize::Static::ItemIndexStore::IC_VARUINT32 || store.compressionType() == sserialize::Static::ItemIndexStore::IC_VARUINT32) {
+		m_type = store.indexType();
+		m_compressionType = store.compressionType();
+		m_indexIdCounter = store.size();
+		for(uint32_t i = 0, s = store.size(); i < s; ++i) {
+			UByteArrayAdapter d = store.dataAt(i);
+			uint64_t h = hashFunc(d);
+			UByteArrayAdapter::OffsetType o = m_indexStore.tellPutPtr();
+			m_hash[h].push_front(o);
+			m_offsetsToId[o] = i;
+			m_indexStore.put(d);
+		}
+	}
+	else {
+		throw sserialize::CreationException("ItemIndexFactory::fromIndexStore unsupported compression options");
+	}
+}
+
+uint64_t ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
+	uint64_t h = 0;
+	uint32_t count = std::min<uint32_t>(v.size(), 1024);
+	for(uint32_t i = 0; i < count; ++i) {
+		hash_combine(h, v.at(i));
+	}
+	return h;
+}
+
 uint64_t ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
 	uint64_t h = 0;
 	uint32_t count = std::min<uint32_t>(v.size(), 1024);

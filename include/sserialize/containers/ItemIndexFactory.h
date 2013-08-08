@@ -37,6 +37,7 @@ private:
 	ItemIndex::Types m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
 	
+	uint64_t hashFunc(const UByteArrayAdapter & v);
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint64_t offset);
@@ -49,8 +50,10 @@ public:
 	UByteArrayAdapter at(OffsetType offset) const;
 	///Sets the type. should not be called after having added indices
 	void setType(ItemIndex::Types type) { m_type = type;}
-	//create the index Store at the beginning of data
+	///create the index Store at the beginning of data
 	void setIndexFile(UByteArrayAdapter data);
+	///from IndexStore set after setIndexFile
+	void fromIndexStore(const sserialize::Static::ItemIndexStore & store);
 	
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }
