@@ -94,8 +94,12 @@ public:
 	}
 	
 	static WindowedArray uniteSortedInPlace(WindowedArray a, WindowedArray b) {
-		if (b.m_end == a.m_begin)
+		if (b.m_end == a.m_begin) {
+			if (a.m_end == b.m_begin) { //this means their size is zero and they begin at the same boundaries 
+				return a;
+			}
 			return uniteSortedInPlace(b, a);
+		}
 		else {
 			if (a.m_end != b.m_begin)
 				throw sserialize::OutOfBoundsException("WindowedArray::uniteSortedInPlace: bounds don't match");
