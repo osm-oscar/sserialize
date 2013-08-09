@@ -18,7 +18,7 @@ namespace sserialize {
 	#ifdef __ANDROID__
 	#define MAX_IN_MEMORY_CACHE (10*1024*1024)
 	#else
-	#define MAX_IN_MEMORY_CACHE (10*1024*1024)
+	#define MAX_IN_MEMORY_CACHE (200*1024*1024)
 	#endif
 #endif
 
