@@ -123,7 +123,7 @@ public:
 		}
 		std::vector<uint8_t> d;
 		UByteArrayAdapter dAdap(&d, false);
-		if (sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 16) {
+		if (sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 32) {
 			std::vector<uint32_t> midx;
 			ItemIndex::unite(indices).insertInto(std::back_inserter(midx));
 			return addIndex(midx, 0, &indexOffset);
