@@ -71,7 +71,6 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 		return false;
 	}
 	
-	//Now add the items
 	ProgressInfo progressInfo;
 	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::fromStringsFactory::calculating storage need");
 	uint32_t count = 0;
@@ -184,7 +183,7 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 	}
 
 	ProgressInfo progressInfo;
-	progressInfo.begin(m_nodeCount);
+	progressInfo.begin(m_nodeCount, "SinglePassTrie::Bottom-up-Serialization");
 	uint32_t finishedNodeCount = 0;
 	std::cout << "Serializing Trie:" << std::endl;
 	
@@ -266,11 +265,11 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 
 			++curNodeCount;
 			++finishedNodeCount;
-			progressInfo(finishedNodeCount, "BaseTrie::Bottom-up-Serialization");
+			progressInfo(finishedNodeCount);
 		}
 		trieNodeQue.pop_back();
 	}
-	progressInfo.end("BaseTrie::Bottom-up-Serialization");
+	progressInfo.end();
 	rootNode()->deleteTemporalPrivateStorage();
 }
 

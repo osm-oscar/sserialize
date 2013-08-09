@@ -81,7 +81,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 
 void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 
-	std::cout << "BaseTrie<IndexStorageContainer>::createStaticTrie: consistencyCheck...";
+	std::cout << "SinglePassTrie::createStaticTrie: consistencyCheck...";
 	if (consistencyCheck()) {
 		std::cout << "OK" << std::endl;
 	}
