@@ -16,6 +16,72 @@ void SinglePassTrie::swap(MyBaseClass::MyBaseClass & other) {
 
 //The prefix/substr index is constructed out of the prefix/substr index ptrs of our children and our own exact/suffix indices. handle those first
 
+#define WINDOWED_ARRAY_MERGE
+#ifdef WINDOWED_ARRAY_MERGE
+bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig & config, Static::TrieNodeCreationInfo& nodeInfo) {
+	if (!node)
+		return false;
+	
+	nodeInfo.mergeIndex = false;
+	int idxTypes = Static::TrieNodePrivate::IT_NONE;
+	bool ok = true;
+	
+	if (node->exactValues.size()) {
+		idxTypes |= Static::TrieNodePrivate::IT_EXACT;
+		nodeInfo.exactIndexPtr = config.indexFactory.addIndex(node->exactValues, &ok);
+	}
+	if (node->subStrValues.size()) {
+		idxTypes |= Static::TrieNodePrivate::IT_SUFFIX;
+		nodeInfo.suffixIndexPtr = config.indexFactory.addIndex(node->subStrValues, &ok);
+	}
+	
+	if (node->children.size()) {
+		{
+			std::vector<ItemSetContainer> prefixIndices;
+			prefixIndices.reserve(node->children.size()+1);
+			if (idxTypes & Static::TrieNodePrivate::IT_EXACT)
+					prefixIndices.push_back(node->exactValues);
+			for(ChildNodeIterator it(node->children.begin()), end(node->children.end()); it != end; ++it) {
+				prefixIndices.push_back( it->second->exactValues );
+			}
+			node->exactValues = ItemSetContainer::uniteSortedInPlace(prefixIndices.begin(), prefixIndices.end());
+			nodeInfo.prefixIndexPtr = config.indexFactory.addIndex(node->exactValues, &ok);
+			idxTypes |= Static::TrieNodePrivate::IT_PREFIX;
+		}
+		if (isSuffixTrie()) {
+			std::vector<ItemSetContainer> subStrIndices;
+			subStrIndices.reserve(node->children.size()+1);
+			if (idxTypes & Static::TrieNodePrivate::IT_SUFFIX)
+				subStrIndices.push_back(node->subStrValues);
+
+			for(ChildNodeIterator it(node->children.begin()), end(node->children.end()); it != end; ++it) {
+				subStrIndices.push_back( it->second->subStrValues );
+			}
+			node->subStrValues = ItemSetContainer::uniteSortedInPlace(subStrIndices.begin(), subStrIndices.end());
+			nodeInfo.suffixPrefixIndexPtr = config.indexFactory.addIndex(node->subStrValues, &ok);
+			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
+		}
+	}
+	else {
+		if (idxTypes & Static::TrieNodePrivate::IT_EXACT) {
+			nodeInfo.prefixIndexPtr = nodeInfo.exactIndexPtr;
+			idxTypes |= Static::TrieNodePrivate::IT_PREFIX;
+		}
+		if (idxTypes & Static::TrieNodePrivate::IT_SUFFIX) {
+			nodeInfo.suffixPrefixIndexPtr = nodeInfo.suffixIndexPtr;
+			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
+		}
+		else if (isSuffixTrie()) {
+			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
+			nodeInfo.suffixPrefixIndexPtr = nodeInfo.prefixIndexPtr;
+		}
+	}
+	nodeInfo.indexTypes = (Static::TrieNodePrivate::IndexTypes) idxTypes;
+	
+	node->deleteTemporalPrivateStorage();
+	return ok;
+}
+#else
 bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig & config, Static::TrieNodeCreationInfo& nodeInfo) {
 	if (!node)
 		return false;
@@ -78,6 +144,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 	node->temporalPrivateStorage = new ChildTPNS(prefixIndexOffset, subStrIndexOffset);
 	return ok;
 }
+#endif
 
 void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 

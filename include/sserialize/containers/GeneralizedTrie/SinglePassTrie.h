@@ -9,6 +9,7 @@ namespace GeneralizedTrie {
 class SinglePassTrie: public SerializableTrie< WindowedArray<uint32_t> > {
 public:
 	typedef SerializableTrie< WindowedArray<uint32_t> > MyBaseClass;
+	typedef MyBaseClass::ItemSetContainer ItemSetContainer;
 protected:
 	class ParentTPNS: public Node::TemporalPrivateStorage {
 	public:
@@ -120,7 +121,7 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 			node->subStrValues = WindowedArray<uint32_t>(suffixIndicesPtr, suffixIndicesPtr+cap);
 			suffixIndicesPtr = suffixIndicesPtr+cap;
 		};
-		m_root->mapBreadthFirst(indexStorageDistributor);
+		m_root->mapDepthFirst(indexStorageDistributor);
 	}
 	std::cout << "Distributed memory to nodes" << std::endl;
 	
