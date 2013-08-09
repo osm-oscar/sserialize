@@ -5,32 +5,56 @@
 
 namespace sserialize {
 
-template<typename AlphabetType, typename ItemType, typename AlphabetStorage = std::vector<AlphabetType> >
+///AlphabetStorage has to provide size() and const_iterator
+template<typename AlphabetType, typename TValue, typename AlphabetStorage = std::vector<AlphabetType> >
 class GenericTrie {
+protected:
+	typedef typename AlphabetStorage::iterator AlphabetStorageIterator;
+	typedef typename AlphabetStorage::const_iterator AlphabetStorageConstIterator;
+	
 	class Node {
+	public:
+		typedef std::map<AlphabetType, Node*> ChildrenMap;
+		typedef typename ChildrenMap::iterator ChildrenIterator;
+		typedef typename ChildrenMap::const_iterator ChildrenConstIterator;
+	protected:
+		AlphabetStorage m_storage;
+		TValue m_value;
+		ChildrenMap m_children;
+		Node * m_parent;
+	public:
 		Node() {}
 		virtual ~Node() {
-			for(std::map<AlphabetType, Node*>::iterator it(m_children.begin()); it != m_children.end(); ++it)
+			for(ChildrenIterator it(children().begin()), end(children().end()); it != end; ++it)
 				delete it->second;
 		}
+		Node* & parent() { return m_parent; }
+		const Node* const & parent()  const { return m_parent; }
 	
-		AlphabetStorage m_storage;
-		ItemType m_items;
-		std::map<AlphabetType, Node*> m_children;
-		const ItemType & items() const { return m_items; }
-		ItemType & items() { return m_items; }
-		const std::map<AlphabetType, Node*> & children() const { return m_children; }
-		std::map<AlphabetType, Node*> & children() { return m_children; }
+		const TValue & value() const { return m_value; }
+		TValue & value() { return m_value; }
+		const ChildrenMap & children() const { return m_children; }
+		ChildrenMap & children() { return m_children; }
 		const AlphabetStorage & string() const { return m_storage; }
 		AlphabetStorage & string() { return m_storage; }
+		void fixChildParentPtrRelation() {
+			for(ChildrenIterator it(children().begin()), end(children().end()); it != end; ++it) {
+				it->second->parent() = this;
+			}
+		}
 	};
+	
+	typedef typename Node::ChildrenMap NodeChildrenMap;
+	typedef typename Node::ChildrenIterator NodeChildrenIterator;
+	typedef typename Node::ChildrenConstIterator NodeChildrenConstIterator;
+	
 private:
 	Node * m_root;
 public:
 	GenericTrie() : m_root(0) {}
 	virtual ~GenericTrie() { delete m_root; }
 	template<typename AlphabetIterator>
-	Node * operator[](const AlphabetIterator & strBegin, const AlphabetIterator & strEnd) {
+	TValue & at(const AlphabetIterator & strBegin, const AlphabetIterator & strEnd) {
 		AlphabetIterator strIt = strBegin;
 		AlphabetType strItUCode;
 		
@@ -43,10 +67,10 @@ public:
 		strIt = strBegin;
 		while(strIt != strEnd) {
 			//Find the first different character
-			AlphabetStorage::const_iterator cIt = current->string().begin();
+			AlphabetStorageIterator cIt = current->string().begin();
 			AlphabetType cItUCode;
 			strItUCode = ((strBegin != strEnd) ? *strIt : AlphabetType());
-			cItUCode = ((current->c.size() > 0) ? *cIt : AlphabetType());
+			cItUCode = ((current->string().size() > 0) ? *cIt : AlphabetType());
 			while (cIt != current->string().end() && strIt != strEnd) {
 				strItUCode = *strIt;
 				cItUCode = *cIt;
@@ -59,29 +83,28 @@ public:
 				}
 			}
 			//cIt=end or strIt=end or strIt != cIt
-			if (cIt == current->c.end() && strIt != strEnd) { //node->c is real prefix, strIt points to new element
+			if (cIt == current->string().end() && strIt != strEnd) { //node->c is real prefix, strIt points to new element
 				strItUCode = *strIt;
-				if (current->children.count(strItUCode) > 0) {
-					current = current->children.at(strItUCode);
+				if (current->children().count(strItUCode) > 0) {
+					current = current->children().at(strItUCode);
 				}
 				else {
 					newNode = new Node;
-					newNode->c = "";
-					newNode->c.append(strIt, strEnd);
-					(current->children)[strItUCode] = newNode;
-					newNode->parent = current;
+					newNode->string().insert(newNode->string().end(), strIt, strEnd);
+					(current->children())[strItUCode] = newNode;
+					newNode->parent() = current;
 					current = newNode;
 					break;
 				}
 			}
-			else if (cIt == current->c.end() && strIt == strEnd) { //node->c is equal to str
+			else if (cIt == current->string().end() && strIt == strEnd) { //node->c is equal to str
 				break;
 			}
-			else if (cIt != current->c.end() && strIt == strEnd) { //str is prefix of node->c
+			else if (cIt != current->string().end() && strIt == strEnd) { //str is prefix of node->c
 				cItUCode = *cIt;
 				Node * oldStrNode = new Node;
-				oldStrNode->string() = AlphabetStorage(cIt, current->c.end());
-				oldStrNode->children().swap(current->children());
+				oldStrNode->string() = AlphabetStorage(cIt, current->string().end());
+				std::swap(oldStrNode->children(), current->children());
 
 				oldStrNode->fixChildParentPtrRelation();
 				
@@ -89,16 +112,16 @@ public:
 				AlphabetType c = cItUCode;
 				
 				//clear data, adjust to new c
-				current->items() = ItemType();
-				current->children.clear();
-				current->c.erase(cIt, current->string().end());
+				current->value() = TValue();
+				current->children().clear();
+				current->string().erase(cIt, current->string().end());
 				
 				//insert old node and add value
 				(current->children())[c] = oldStrNode;
-				oldStrNode->parent = current;
+				oldStrNode->parent() = current;
 				break;
 			}
-			else if (cIt != current->c.end() && strIt != strEnd) { //possible common prefix, iterator at the different char
+			else if (cIt != current->string().end() && strIt != strEnd) { //possible common prefix, iterator at the different char
 
 				strItUCode = *strIt;
 				cItUCode = *cIt;
@@ -108,34 +131,34 @@ public:
 				
 				Node * oldStrNode = new Node;
 				oldStrNode->string() = AlphabetStorage(cIt, current->string().end());
-				oldStrNode->children.swap(current->children);
-				std::swap<ItemType>(oldStrNode->items(), current->items());
+				std::swap(oldStrNode->children(), current->children());
+				std::swap(oldStrNode->value(), current->value());
 				oldStrNode->fixChildParentPtrRelation();
 				
 				current->children().clear();
-				current->items() = ItemType();
-				current->string().erase(cIt, current->c.end());
+				current->value() = TValue();
+				current->string().erase(cIt, current->string().end());
 
 				//add pointer to node with the rest of the old node string
 				(current->children())[strItUCode] = newNode;
-				newNode->parent = current;
+				newNode->parent() = current;
 				//add pointer the node with the rest of the new string
 				(current->children())[cItUCode] = oldStrNode;
-				oldStrNode->parent = current;
+				oldStrNode->parent() = current;
 				current = newNode;
 				break;
 			}
 		} // end while
-		return current;
+		return current->value();
 	}
 	
 	template<typename AlphabetIterator>
-	Node * find(const AlphabetIterator & strBegin, const AlphabetIterator & strEnd, bool prefixMatch) {
+	int count(const AlphabetIterator & strBegin, const AlphabetIterator & strEnd, bool prefixMatch) {
 		if (!m_root)
 			return 0;
 		
 		Node * node = m_root;
-		AlphabetStorage::const_iterator cIt(node->string().begin());
+		AlphabetStorageConstIterator cIt(node->string().begin());
 		AlphabetIterator strIt(strBegin);
 		while (strIt != strEnd) {
 			while(cIt != node->string().end() && strIt != strEnd) {
@@ -148,8 +171,8 @@ public:
 				}
 			}
 			if (strIt != strEnd) {
-				std::map<AlphabetType, Node*>::const_iterator it = node->children().find(*strIt);
-				if (it != std::map<AlphabetType, Node*>::end) {
+				NodeChildrenConstIterator it = node->children().find(*strIt);
+				if (it != node->children().end()) {
 					node = it->second;
 					cIt = node->string().begin();
 				}
@@ -159,14 +182,14 @@ public:
 			}
 		}
 		
-		if (cIt != node->node->string().end()) { //
+		if (cIt != node->string().end()) {
 			if (prefixMatch)
-				return node;
+				return 1;
 			else
 				return 0;
 		}
 		else {
-			return node;
+			return 1;
 		}
 	}
 };

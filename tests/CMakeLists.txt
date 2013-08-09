@@ -56,6 +56,7 @@ ADD_TEST_TARGET_SINGLE(containers_setoptreesimple)
 ADD_TEST_TARGET_SINGLE(containers_multibititerators)
 ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
 ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
+ADD_TEST_TARGET_SINGLE(templated_GenericTrie)
 
 
 #util
