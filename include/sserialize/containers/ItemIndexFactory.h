@@ -110,6 +110,8 @@ public:
 	
 	uint32_t addIndex(const std::unordered_set<uint32_t> & idx, bool * ok = 0, OffsetType * indexOffset = 0);
 	
+	
+	///This only works in conjunction with the IC_NONE
 	template<typename T_RANDOM_ACCESS_CONTAINER_ITERATOR>
 	uint32_t addMergedIndex(T_RANDOM_ACCESS_CONTAINER_ITERATOR begin, const T_RANDOM_ACCESS_CONTAINER_ITERATOR & end, OffsetType & indexOffset) {
 		std::vector<ItemIndex> indices;
@@ -121,7 +123,7 @@ public:
 		}
 		std::vector<uint8_t> d;
 		UByteArrayAdapter dAdap(&d, false);
-		if (m_compressionType != Static::ItemIndexStore::IC_NONE && sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 8) {
+		if (sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 16) {
 			std::vector<uint32_t> midx;
 			ItemIndex::unite(indices).insertInto(std::back_inserter(midx));
 			return addIndex(midx, 0, &indexOffset);
