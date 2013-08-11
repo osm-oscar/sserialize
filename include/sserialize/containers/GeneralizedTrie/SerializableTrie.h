@@ -75,6 +75,9 @@ public:
 		return checkTrieEqualityRecurse(MyBaseClass::rootNode(), staticTrie.getRootNode(), "");
 	}
 	bool checkIndexEquality(GeneralizedTrieCreatorConfig config, Static::GeneralizedTrie staticTrie, StringCompleter::SupportedQuerries sqtype);
+	
+	//for debugging only
+	void trieSerializationProblemFixer() { MyBaseClass::trieSerializationProblemFixer(MyBaseClass::rootNode());}
 };
 
 template<typename IndexStorageContainer>

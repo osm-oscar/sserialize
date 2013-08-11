@@ -52,6 +52,8 @@ public:
 	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactory);
 	
 	void createStaticTrie(GeneralizedTrieCreatorConfig & config);
+	
+	using MyBaseClass::trieSerializationProblemFixer;
 };
 
 template<typename ItemType>
@@ -82,6 +84,7 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 			if (strIdToExactNodes.count(*itemStrsIt)) {
 				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
+				suffixNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
 			}
 			else {
 				std::cout << "ERROR: No exact node for item string" << std::endl;
@@ -135,6 +138,7 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 			if (strIdToExactNodes.count(*itemStrsIt)) {
 				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
+				suffixNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
 			}
 			else {
 				std::cout << "ERROR: No exact node for item string" << std::endl;

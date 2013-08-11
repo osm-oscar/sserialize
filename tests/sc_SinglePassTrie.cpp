@@ -1,4 +1,5 @@
 #include <sserialize/containers/GeneralizedTrie/SinglePassTrie.h>
+#include <sserialize/containers/GeneralizedTrie/MultiPassTrie.h>
 #include <sserialize/Static/GeneralizedTrie.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -22,8 +23,10 @@ CPPUNIT_TEST( testCompletionSCI );
 CPPUNIT_TEST( testCompletionSPCS );
 CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testStringCompleterPrivateCast );
-CPPUNIT_TEST( testTrieEquality );
-// CPPUNIT_TEST( testIndexEquality ); //does not work
+CPPUNIT_TEST( testSinglePassTrieEquality );
+CPPUNIT_TEST( testMultiPassTrieEquality );
+CPPUNIT_TEST( testSinglePassTrieIndexEquality );
+CPPUNIT_TEST( testMultiPassTrieIndexEquality );
 CPPUNIT_TEST_SUITE_END();
 private: //builds opts;
 	bool m_caseSensitive;
@@ -42,7 +45,7 @@ protected:
 		m_trie.setCaseSensitivity(m_caseSensitive);
 		m_trie.setSuffixTrie(m_suffixTrie);
 	
-		m_trie.setDB(createDB());
+		m_trie.setDB(db());
 		
 		m_config.trieList = &m_stTrieList;
 		m_config.mergeIndex = m_mergeIndex;
@@ -98,26 +101,73 @@ public:
 	}
 	virtual void tearDown() {}
 	
-	void testTrieEquality() {
+	void testSinglePassTrieEquality() {
 		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
 		
 		CPPUNIT_ASSERT( stTriePtr );
 		
 		CPPUNIT_ASSERT( m_trie.checkTrieEquality(m_config, *stTriePtr) );
 	}
+
+	void testMultiPassTrieEquality() {
+		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		
+		CPPUNIT_ASSERT( stTriePtr );
+		
+		GeneralizedTrie::MultiPassTrie tempTrie;
+		tempTrie.setCaseSensitivity(m_caseSensitive);
+		tempTrie.setSuffixTrie(m_suffixTrie);
 	
-	void testIndexEquality() {
+		tempTrie.setDB(db());
+		tempTrie.trieSerializationProblemFixer();
+
+		
+		CPPUNIT_ASSERT( tempTrie.checkTrieEquality(m_config, *stTriePtr) );
+	}
+	
+	void testSinglePassTrieIndexEquality() {
+		
+		GeneralizedTrie::SinglePassTrie tempTrie;
+		tempTrie.setCaseSensitivity(m_caseSensitive);
+		tempTrie.setSuffixTrie(m_suffixTrie);
+	
+		tempTrie.setDB(db());
+		tempTrie.trieSerializationProblemFixer();
+		
 		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
 		
 		CPPUNIT_ASSERT( stTriePtr );
 
-		CPPUNIT_ASSERT_MESSAGE("Exact indices", m_trie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_EXACT));
+		CPPUNIT_ASSERT_MESSAGE("Exact indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_EXACT));
 		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUFFIX)
-			CPPUNIT_ASSERT_MESSAGE("Suffix indices", m_trie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX));
+			CPPUNIT_ASSERT_MESSAGE("Suffix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX));
 
-		CPPUNIT_ASSERT_MESSAGE("Prefix indices", m_trie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_PREFIX));
+		CPPUNIT_ASSERT_MESSAGE("Prefix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_PREFIX));
 		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUFFIX_PREFIX)
-			CPPUNIT_ASSERT_MESSAGE("Substring indices", m_trie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX_PREFIX));
+			CPPUNIT_ASSERT_MESSAGE("Substring indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX_PREFIX));
+		
+	}
+	
+	void testMultiPassTrieIndexEquality() {
+		
+		GeneralizedTrie::MultiPassTrie tempTrie;
+		tempTrie.setCaseSensitivity(m_caseSensitive);
+		tempTrie.setSuffixTrie(m_suffixTrie);
+	
+		tempTrie.setDB(db());
+		tempTrie.trieSerializationProblemFixer();
+		
+		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		
+		CPPUNIT_ASSERT( stTriePtr );
+
+		CPPUNIT_ASSERT_MESSAGE("Exact indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_EXACT));
+		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUFFIX)
+			CPPUNIT_ASSERT_MESSAGE("Suffix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX));
+
+		CPPUNIT_ASSERT_MESSAGE("Prefix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_PREFIX));
+		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUFFIX_PREFIX)
+			CPPUNIT_ASSERT_MESSAGE("Substring indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX_PREFIX));
 		
 	}
 	

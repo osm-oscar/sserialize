@@ -25,7 +25,7 @@ void MultiPassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 	if (m_root) {
 		std::cout << "Compactifying...";
 		compactify(m_root);
-		trieSerializationProblemFixer(m_root);
+		trieSerializationProblemFixer();
 		std::cout << "done" << std::endl;
 		if (!consistencyCheck()) {
 			std::cout << "Compactifying broke trie!" << std::endl;

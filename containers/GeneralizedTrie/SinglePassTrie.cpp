@@ -58,6 +58,9 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 				subStrIndices.push_back( it->second->subStrValues );
 			}
 			node->subStrValues = ItemSetContainer::uniteSortedInPlace(subStrIndices.begin(), subStrIndices.end());
+// 			std::vector<uint32_t> subStrIndex;
+// 			mergeSortedContainer(subStrIndex, node->subStrValues, node->exactValues);
+// 			nodeInfo.suffixPrefixIndexPtr = config.indexFactory.addIndex(subStrIndex, &ok);
 			nodeInfo.suffixPrefixIndexPtr = config.indexFactory.addIndex(node->subStrValues, &ok);
 			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
 		}
@@ -146,6 +149,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 }
 #endif
 
+
 void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 
 	std::cout << "SinglePassTrie::createStaticTrie: consistencyCheck...";
@@ -158,7 +162,7 @@ void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 
 	if (m_root) {
 		std::cout << "Fixing possible problems" << std::endl;
-		trieSerializationProblemFixer(m_root);
+		MyBaseClass::trieSerializationProblemFixer();
 		std::cout << "done" << std::endl;
 		if (!consistencyCheck()) {
 			std::cout << "Fixing problems caused problems broke trie!" << std::endl;
