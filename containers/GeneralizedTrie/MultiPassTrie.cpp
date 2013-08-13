@@ -39,6 +39,13 @@ void MultiPassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 	else if (config.nodeType == Static::TrieNode::T_COMPACT) {
 		serializeTrieBottomUp<Static::CompactStaticTrieCreationNode>(config);
 	}
+	else if (config.nodeType == Static::TrieNode::T_LARGE_COMPACT) {
+		serializeTrieBottomUp<Static::LargeCompactTrieNodeCreator>(config);
+	}
+	else {
+		std::cerr << "Unsupported node type" << std::endl;
+		return;
+	}
 
 	//Add the stats
 	uint8_t trieType = 0;

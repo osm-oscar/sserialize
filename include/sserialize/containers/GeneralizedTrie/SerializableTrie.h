@@ -42,7 +42,7 @@ GeneralizedTrieCreatorConfig() :
 	bool deleteRootTrie;
 	Static::TrieNode::Types nodeType;
 	bool isValid() {
-		return nodeType == Static::TrieNode::T_SIMPLE || nodeType == Static::TrieNode::T_COMPACT;
+		return nodeType == Static::TrieNode::T_SIMPLE || nodeType == Static::TrieNode::T_COMPACT || nodeType == Static::TrieNode::T_LARGE_COMPACT;
 	}
 	UByteArrayAdapter trieListAdapter() {
 		UByteArrayAdapter adap(trieList);

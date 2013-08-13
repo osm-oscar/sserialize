@@ -190,5 +190,6 @@ int main() {
 	runner.addTest( StaticGeneralizedTrieTest<0x1, Static::TrieNode::T_LARGE_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x2, Static::TrieNode::T_LARGE_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x3, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.run();
 	return 0;
 }
