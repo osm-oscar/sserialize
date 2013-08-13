@@ -6,9 +6,9 @@
 
 using namespace sserialize;
 
-enum { BO_TREE_CASE_SENSITIVE=0x1, BO_SUFFIX_TREE=0x2, BO_MERGE_INDEX=0x4, BO_NO_FULL_INDEX_AT_ALL=0x8, BO_COMPACT_NODE=0x10};
+enum { BO_TREE_CASE_SENSITIVE=0x1, BO_SUFFIX_TREE=0x2, BO_MERGE_INDEX=0x4, BO_NO_FULL_INDEX_AT_ALL=0x8};
 
-template<uint32_t T_BUILD_OPTS>
+template<uint32_t T_BUILD_OPTS, Static::TrieNode::Types NODE_TYPE>
 class StaticGeneralizedTrieTest: public StringCompleterTest {
 CPPUNIT_TEST_SUITE( StaticGeneralizedTrieTest );
 CPPUNIT_TEST( testCreateStringCompleter );
@@ -51,11 +51,8 @@ protected:
 			for(uint32_t i = 0; i <= 0xFF; ++i)
 				m_config.levelsWithoutFullIndex.insert(i);
 		
-		if (BO_COMPACT_NODE)
-			m_config.nodeType = Static::TrieNode::T_COMPACT;
-		else
-			m_config.nodeType = Static::TrieNode::T_SIMPLE;
-		
+		m_config.nodeType = NODE_TYPE;
+
 		m_trie.createStaticTrie(m_config);
 		
 		
@@ -124,39 +121,56 @@ public:
 
 int main() {
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest( StaticGeneralizedTrieTest<0x0>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x2>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x3>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x4>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x5>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x6>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x7>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x8>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x9>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0xA>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0xB>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0xC>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0xD>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0xE>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0xF>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x0, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x1, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x2, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x3, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x4, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x5, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x6, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x7, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x8, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x9, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xA, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xB, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xC, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xD, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xE, Static::TrieNode::T_SIMPLE>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xF, Static::TrieNode::T_SIMPLE>::suite() );
 	
-	runner.addTest( StaticGeneralizedTrieTest<0x10>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x11>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x12>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x13>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x14>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x15>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x16>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x17>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x18>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x19>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1A>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1B>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1C>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1D>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1E>::suite() );
-	runner.addTest( StaticGeneralizedTrieTest<0x1F>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x0, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x1, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x2, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x3, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x4, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x5, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x6, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x7, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x8, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x9, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xA, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xB, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xC, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xD, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xE, Static::TrieNode::T_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xF, Static::TrieNode::T_COMPACT>::suite() );
+	
+	runner.addTest( StaticGeneralizedTrieTest<0x0, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x1, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x2, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x3, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x4, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x5, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x6, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x7, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x8, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0x9, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xA, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xB, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xC, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xD, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xE, Static::TrieNode::T_LARGE_COMPACT>::suite() );
+	runner.addTest( StaticGeneralizedTrieTest<0xF, Static::TrieNode::T_LARGE_COMPACT>::suite() );
 	runner.run();
 	return 0;
 }

@@ -26,7 +26,7 @@ struct NodeConfig {
 
 	//Filled during creation
 	std::string nodeStr;
-	uint16_t childCount;
+	uint32_t childCount;
 	std::vector<uint32_t> childChars;
 	std::vector<uint32_t> childOffSets;
 	uint32_t exactIndexPtr;
@@ -41,7 +41,6 @@ struct NodeConfig {
 
 	Static::TrieNodeCreationInfo creationNodeInfo() {
 		TrieNodeCreationInfo info;
-		info.charWidth = charWidth;
 		info.childChars = childChars;
 		info.childPtrs = childOffSets;
 		info.exactIndexPtr = exactIndexPtr;
@@ -73,17 +72,25 @@ void createNodeBottomUp(NodeConfig & config) {
 			uint32_t addOffSet = (double)rand()/RAND_MAX * 0x1FF;
 			config.childOffSets.push_back(config.childOffSets.back()+addOffSet);
 		}
-		for(uint16_t i = 0; i < config.childCount; i++) {
-			if (config.charWidth == 2) {
-				config.childChars.push_back((double)rand()/RAND_MAX * 0xFFFF);
-			}
-			else if (config.charWidth == 1) {
+		for(uint32_t i = 1; i < config.childCount; i++) {
+			if (config.charWidth == 1) {
 				config.childChars.push_back((double)rand()/RAND_MAX * 0xFF);
 			}
+			else if (config.charWidth == 2) {
+				config.childChars.push_back((double)rand()/RAND_MAX * 0xFFFF);
+			}
+			else if (config.charWidth == 3) {
+				config.childChars.push_back((double)rand()/RAND_MAX * 0xFFFFFF);
+			}
+			else if (config.charWidth == 4) {
+				config.childChars.push_back((double)rand()/RAND_MAX * 0xFFFFFFFF);
+			}
 			else {
-				std::cout << "Tester: Unsupported charWidth" << std::endl;
+				std::cout << "Tester: Unsupported charWidth: " << static_cast<uint32_t>( config.charWidth ) << std::endl;
 			}
 		}
+		config.childChars.push_back( static_cast<uint32_t>(0xFE) << ((config.charWidth-1)*8) );
+		std::sort(config.childChars.begin(), config.childChars.end());
 	}
 	
 	config.exactIndexPtr = rand() + rand();
@@ -130,8 +137,10 @@ bool testNode(NodeConfig & config, StaticTrieNodeT & node) {
 
 	bool allOk = true;
 
-	if (! checkAndDebugPrint("charWidth", config.charWidth, node.charWidth())) {
-		allOk = false;
+	if (config.childChars.size()) {
+		if (! checkAndDebugPrint("charWidth", (uint32_t) config.charWidth, (uint32_t) node.charWidth())) {
+			allOk = false;
+		}
 	}
 
 	if (! checkAndDebugPrint("exactIndex", (bool) (config.indexType & TrieNodePrivate::IT_EXACT), node.hasExactIndex()) ) {
@@ -173,7 +182,7 @@ bool testNode(NodeConfig & config, StaticTrieNodeT & node) {
 	}
 
 	//This depends on single wide chars
-	if (config.nodeStr.size() > 0 && (config.nodeStr.size()-1 != node.strLen())) {
+	if (config.nodeStr.size() > 0 && (config.nodeStr.size() != node.strLen())) {
 		printDebugShouldIs("nodeStr", 0, node.strLen());
 		allOk = false;
 	}
@@ -194,7 +203,7 @@ bool testNode(NodeConfig & config, StaticTrieNodeT & node) {
 	for(uint8_t i = 0; i < node.strLen(); i++) {
 		std::stringstream ss;
 		ss << "Single node char at position " << i;
-		if (! checkAndDebugPrint(ss.str(), config.nodeStr.at(i+1), nodeStr.at(i)) ) {
+		if (! checkAndDebugPrint(ss.str(), config.nodeStr.at(i), nodeStr.at(i)) ) {
 			allOk = false;
 		}
 	}
@@ -239,16 +248,17 @@ bool createAndTestNodePrivateBottomUp(NodeConfig & config) {
 
 
 template<class StaticTrieCreationNodeT, class StaticTrieNodeT>
-bool testNodeImplementationPrivateBottumUp() {
-
-	uint8_t charWidth[2] = { 1, 2};
-
+bool testNodeImplementationPrivateBottumUp(uint8_t minCharWidth, uint8_t maxCharWidth, int minIndexType, int maxIndexType, int nodeType) {
 	bool allOk = true;
-	for(size_t cWIT = 0; cWIT < 2; cWIT++) {
-		for(size_t indexTypeIt = 1; indexTypeIt <= 0xF; indexTypeIt++) {
+	for(uint8_t charWidth = minCharWidth; charWidth <= maxCharWidth; ++charWidth) {
+		for(int indexTypeIt = minIndexType; indexTypeIt <= maxIndexType; indexTypeIt++) {
 			NodeConfig config;
-			config.charWidth = charWidth[cWIT];
+			config.charWidth = charWidth;
 			config.indexType = (TrieNodePrivate::IndexTypes) indexTypeIt;
+			std::cout << "Run with charWidth=" << (int) config.charWidth << " and indexType=" << config.indexType << std::endl;
+			if (charWidth == 2 && indexTypeIt == 3 && nodeType == 3) {
+				std::cout << "da" << std::endl;
+			}
 			if (!createAndTestNodePrivateBottomUp<StaticTrieCreationNodeT, StaticTrieNodeT>(config)) {
 				allOk = false;
 			}
@@ -269,12 +279,13 @@ int main() {
 	srand(0);
 
 	std::cout << "Testing SimpleTrieNodePrivate" << std::endl;
-	testNodeImplementationPrivateBottumUp<SimpleStaticTrieCreationNode, SimpleTrieNodePrivate>();
+	testNodeImplementationPrivateBottumUp<SimpleStaticTrieCreationNode, SimpleTrieNodePrivate>(1,2,0,0xF, 1);
 
 	std::cout << "Testing CompactTrieNodePrivate" << std::endl;
-	testNodeImplementationPrivateBottumUp<CompactStaticTrieCreationNode, CompactTrieNodePrivate>();
+	testNodeImplementationPrivateBottumUp<CompactStaticTrieCreationNode, CompactTrieNodePrivate>(1,2,0,0xF, 2);
 
-
+	std::cout << "Testing LargeCompactTrieNodePrivate" << std::endl;
+	testNodeImplementationPrivateBottumUp<LargeCompactTrieNodeCreator, LargeCompactTrieNodePrivate>(1,4,0x0,0xF, 3);
 	
 	return 0;
 }

@@ -10,7 +10,7 @@ namespace Static {
 class TrieNode: public RCWrapper<TrieNodePrivate> {
 public:
 	enum Types {
-		T_EMPTY, T_SIMPLE, T_COMPACT
+		T_EMPTY, T_SIMPLE, T_COMPACT, T_LARGE_COMPACT
 	};
 private:
 	uint32_t getSubTriePtrOffset() const;
@@ -27,15 +27,15 @@ public:
 		return *this;
 	}
 
-	~TrieNode() {}
-	inline uint16_t childCount() const { return priv()->childCount();}
+	virtual ~TrieNode() {}
+	inline uint32_t childCount() const { return priv()->childCount();}
 	inline uint8_t charWidth() const { return priv()->charWidth(); }
-	inline uint32_t childCharAt(const uint16_t pos) const { return priv()->childCharAt(pos);}
+	inline uint32_t childCharAt(const uint32_t pos) const { return priv()->childCharAt(pos);}
 	inline uint8_t strLen() const { return priv()->strLen(); }
 	inline UByteArrayAdapter strData() const { return priv()->strData(); }
 	inline std::string str() const { return priv()->str(); }
-	inline int16_t posOfChar(const uint32_t ucode) const { return priv()->posOfChar(ucode);};
-	inline TrieNode childAt(const uint16_t pos) const { return TrieNode( priv()->childAt(pos) );}
+	inline int32_t posOfChar(const uint32_t ucode) const { return priv()->posOfChar(ucode);};
+	inline TrieNode childAt(const uint32_t pos) const { return TrieNode( priv()->childAt(pos) );}
 
 	inline bool hasMergeIndex() const { return priv()->hasMergeIndex();}
 	inline bool hasExactIndex() const { return priv()->hasExactIndex();}
@@ -59,7 +59,6 @@ public:
 	inline uint32_t getSuffixIndexPtr() const { return priv()->getSuffixIndexPtr();}
 	inline uint32_t getSuffixPrefixIndexPtr() const { return priv()->getSuffixPrefixIndexPtr();}
 
-	inline uint32_t getSubTriePtr() const { return priv()->getSubTriePtr();}
 	inline uint32_t getChildPtr(const uint32_t pos) const { return priv()->getChildPtr(pos); }
 };
 

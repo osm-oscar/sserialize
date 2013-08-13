@@ -3,6 +3,7 @@
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <string>
+#include <limits>
 
 namespace sserialize {
 namespace Static {
@@ -12,12 +13,52 @@ public:
 	enum IndexTypes {
 		IT_NONE=0, IT_EXACT=1, IT_PREFIX=2, IT_SUFFIX=4, IT_SUFFIX_PREFIX=8, IT_ALL=15, IT_MERGE_INDEX=0x80
 	};
+	static const uint32_t npos = std::numeric_limits<uint32_t>::max();
 public:
 	TrieNodePrivate() : RefCountObject() {}
 	virtual ~TrieNodePrivate() {}
 
 	//Virtual functions that need implementation
-	virtual uint16_t childCount() const { return 0;}
+	virtual uint32_t childCount() const = 0;
+	virtual uint8_t charWidth() const = 0;
+	virtual uint8_t strLen() const = 0;
+
+	virtual bool hasMergeIndex() const = 0;
+	virtual bool hasExactIndex() const = 0;
+	virtual bool hasPrefixIndex() const = 0;
+	virtual bool hasSuffixIndex() const = 0;
+	virtual bool hasSuffixPrefixIndex() const = 0;
+	virtual bool hasAnyIndex() const = 0;
+
+
+	/** @return: Returns a pointer to the subclass, destruction will be handled by the outer non-private class **/
+	virtual TrieNodePrivate* childAt(uint32_t pos) const = 0;
+
+	virtual uint32_t childCharAt(uint32_t pos) const = 0;
+	virtual UByteArrayAdapter strData() const = 0;
+	virtual std::string str() const = 0;
+	virtual int32_t posOfChar(uint32_t ucode) const = 0;
+	virtual void dump() const = 0;
+	virtual uint32_t getStorageSize() const = 0;
+	virtual uint32_t getHeaderStorageSize() const = 0;
+	virtual uint32_t getNodeStringStorageSize() const = 0;
+	virtual uint32_t getChildPtrStorageSize() const = 0;
+	virtual uint32_t getChildCharStorageSize() const = 0;
+	virtual uint32_t getIndexPtrStorageSize() const = 0;
+	virtual uint32_t getExactIndexPtr() const = 0;
+	virtual uint32_t getPrefixIndexPtr() const = 0;
+	virtual uint32_t getSuffixIndexPtr() const = 0;
+	virtual uint32_t getSuffixPrefixIndexPtr() const = 0;
+	virtual uint32_t getChildPtr(uint32_t pos) const = 0;
+
+};
+
+class EmptyTrieNodePrivate: public TrieNodePrivate {
+public:
+	EmptyTrieNodePrivate() {}
+	virtual ~EmptyTrieNodePrivate() {}
+	
+	virtual uint32_t childCount() const { return 0;}
 	virtual uint8_t charWidth() const { return 0; }
 	virtual uint8_t strLen() const { return 0; }
 
@@ -30,12 +71,12 @@ public:
 
 
 	/** @return: Returns a pointer to the subclass, destruction will be handled by the outer non-private class **/
-	virtual TrieNodePrivate* childAt(uint16_t pos) const { return new TrieNodePrivate();}
+	virtual TrieNodePrivate* childAt(uint32_t pos) const { return new EmptyTrieNodePrivate();}
 
-	virtual uint32_t childCharAt(uint16_t pos) const { return 0;} 
+	virtual uint32_t childCharAt(uint32_t pos) const { return 0;} 
 	virtual UByteArrayAdapter strData() const { return UByteArrayAdapter();}
 	virtual std::string str() const { return std::string();}
-	virtual int16_t posOfChar(uint32_t ucode) const { return -1;}
+	virtual int32_t posOfChar(uint32_t ucode) const { return -1;}
 	virtual void dump() const {}
 	virtual uint32_t getStorageSize() const { return 0;}
 	virtual uint32_t getHeaderStorageSize() const { return 0;}
@@ -47,18 +88,13 @@ public:
 	virtual uint32_t getPrefixIndexPtr() const { return 0;}
 	virtual uint32_t getSuffixIndexPtr() const { return 0;}
 	virtual uint32_t getSuffixPrefixIndexPtr() const { return 0;}
-	virtual uint32_t getSubTriePtr() const { return 0;}
 	virtual uint32_t getChildPtr(uint32_t pos) const { return 0;}
-
 };
 
-
 struct TrieNodeCreationInfo {
-	TrieNodeCreationInfo() : charWidth(1), childrenCount(0), indexTypes(TrieNodePrivate::IT_NONE), mergeIndex(true), exactIndexPtr(0), prefixIndexPtr(0), suffixIndexPtr(0), suffixPrefixIndexPtr(0) {}
-	uint8_t charWidth;
+	TrieNodeCreationInfo() : indexTypes(TrieNodePrivate::IT_NONE), mergeIndex(true), exactIndexPtr(0), prefixIndexPtr(0), suffixIndexPtr(0), suffixPrefixIndexPtr(0) {}
 	std::string nodeStr;
-	uint32_t childrenCount;
-	std::vector< uint32_t > childChars;
+	std::vector< uint32_t > childChars; //sorted
 	std::vector< uint32_t > childPtrs;
 	TrieNodePrivate::IndexTypes indexTypes;
 	bool mergeIndex;

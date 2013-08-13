@@ -27,7 +27,7 @@ inline int16_t findKeyInArray_uint16(const UByteArrayAdapter & arrayStart, uint1
 template<int TSTRIDE>
 inline int32_t findKeyInArray_uint24(const UByteArrayAdapter & arrayStart, uint32_t len, uint32_t key) {
 	uint32_t srcKey;
-	for(int i = 0; i < len; i++) {
+	for(uint32_t i = 0; i < len; i++) {
 		srcKey = arrayStart.getUint24(TSTRIDE*i);
 		if (srcKey == key) return i;
 	}

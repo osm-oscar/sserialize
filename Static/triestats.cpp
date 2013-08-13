@@ -259,7 +259,7 @@ void TrieStats::recurse(const sserialize::Static::TrieNode& node, uint32_t level
 		}
 	}
 	//Recurse
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		recurse(node.childAt(i), level+1);
 	}
 }
@@ -288,7 +288,7 @@ void TrieStats::indexBitsVariancePerLevelRecurse(const TrieNode& node, uint32_t 
 	}
 
 	//Recurse
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		indexBitsVariancePerLevelRecurse(node.childAt(i), depth+1);
 	}
 }
@@ -361,7 +361,7 @@ writeMaxBitUsageIndexPerLevelRecurse(sserialize::Static::TrieNode node, uint32_t
 			}
 		}
 	}
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		writeMaxBitUsageIndexPerLevelRecurse(node.childAt(i), depth+1, remWriteFilePerLevel, fnprefix);
 	}
 }
@@ -422,7 +422,7 @@ void getLargestIndexRecurse( Static::TrieNode node, Static::ItemIndexStore index
 		}
 		
 	}
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		getLargestIndexRecurse(node.childAt(i), indexFile, count, indexPositions);
 	}
 }
@@ -439,21 +439,21 @@ std::deque<ItemIndex> getLargestIndex(Static::TrieNode node, Static::ItemIndexSt
 
 void histoStringLenOverDepthRecurse(sserialize::Static::TrieNode node, int depth, Histogram2D * histo) {
 	histo->inc(node.strLen(), depth);
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		histoStringLenOverDepthRecurse(node.childAt(i), depth+1, histo);
 	}
 }
 
 void histoBranchCountOverDepthRecurse(Static::TrieNode node, int depth, Histogram2D * histo) {
 	histo->inc(node.childCount(), depth);
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		histoBranchCountOverDepthRecurse(node.childAt(i), depth+1, histo);
 	}
 }
 
 void histoBranchCountOverStrLenRecurse(Static::TrieNode node, Histogram2D * histo) {
 	histo->inc(node.strLen(), node.childCount());
-	for(int i=0; i < node.childCount(); i++) {
+	for(uint32_t i=0; i < node.childCount(); i++) {
 		histoBranchCountOverStrLenRecurse(node.childAt(i), histo);
 	}
 }

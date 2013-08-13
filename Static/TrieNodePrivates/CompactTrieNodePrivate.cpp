@@ -62,7 +62,7 @@ uint32_t CompactTrieNodePrivate::getChildPtrBeginOffset() const {
 	return m_childPointerArrayStart;
 }
 
-uint32_t CompactTrieNodePrivate::childCharAt(uint16_t pos) const {
+uint32_t CompactTrieNodePrivate::childCharAt(uint32_t pos) const {
 	if (m_childCount == 0)
 		return 0;
 	if (pos >= m_childCount) {
@@ -124,7 +124,7 @@ std::string CompactTrieNodePrivate::str() const {
 	return st;
 }
 
-int16_t CompactTrieNodePrivate::posOfChar(uint32_t key) const {
+int32_t CompactTrieNodePrivate::posOfChar(uint32_t key) const {
 	uint8_t charWidth = this->charWidth();
 	if (key > 0xFFFF || (charWidth == 1 && key > 0xFF))
 		return -1;
@@ -136,7 +136,7 @@ int16_t CompactTrieNodePrivate::posOfChar(uint32_t key) const {
 	}
 }
 
-TrieNodePrivate* CompactTrieNodePrivate::childAt(uint16_t pos) const {
+TrieNodePrivate* CompactTrieNodePrivate::childAt(uint32_t pos) const {
 	if (pos >= m_childCount)
 		pos = (m_childCount-1);
 	return new CompactTrieNodePrivate(m_data + (m_myEndPtr + getChildPtr(pos)));
@@ -243,9 +243,14 @@ CompactStaticTrieCreationNode::createNewNode(
 		return CompactStaticTrieCreationNode::TOO_MANY_CHILDREN;
 	}
 	
+	uint8_t charWidth = 1;
+	if (nodeInfo.childChars.size() > 0) {
+		charWidth = minStorageBytesOfValue(nodeInfo.childChars.back());
+	}
+
 	//Size of a character in the array length of the children array
 	uint16_t nodeHeader = nodeInfo.indexTypes << 4;
-	if (nodeInfo.charWidth == 2)
+	if (charWidth == 2)
 		nodeHeader |= 0x8000;
 	
 	if (nodeInfo.mergeIndex)
@@ -263,36 +268,17 @@ CompactStaticTrieCreationNode::createNewNode(
 	}
 	
 	//Possibly push our node string
-	uint32_t nodeStrSize = 0;
+	if (nodeInfo.nodeStr.size() > 0xFF)
+		return NODE_STRING_TOO_LONG;
+	destination.putUint8(nodeInfo.nodeStr.size());
 	if (nodeInfo.nodeStr.size() > 0) {
-		//push the string with string length
-		std::string::const_iterator nodeStrIt = nodeInfo.nodeStr.begin();
-		utf8::next(nodeStrIt, nodeInfo.nodeStr.end()); //remove the first char as that one is already in our parent
-		std::string stnodeStr;
-		for(; nodeStrIt != nodeInfo.nodeStr.end(); nodeStrIt++) stnodeStr += *nodeStrIt;
-		
-		nodeStrSize = stnodeStr.size();
-		if (nodeStrSize <= 0xFF) {
-			destination.putUint8(nodeStrSize);
-		}
-		else {
-			std::cout << "node string is too long: " << nodeInfo.nodeStr << std::endl;
-			return CompactStaticTrieCreationNode::NODE_STRING_TOO_LONG;
-		}
-		//Node string (not null terminated)
-
-		for(std::string::iterator i = stnodeStr.begin(); i != stnodeStr.end(); i++) {
-			destination.putUint8(static_cast<uint8_t>(*i));
-		}
-	}
-	else { // no nodestring there
-		destination.putUint8(0);
+		destination.put(reinterpret_cast<const uint8_t*>(nodeInfo.nodeStr.c_str()), nodeInfo.nodeStr.size());
 	}
 
 	//Push the child chars with dummy child pointers
 	if (childrenCount > 0) {
 
-		if (nodeInfo.charWidth == 2) {
+		if (charWidth == 2) {
 			for(unsigned int i=0; i < childrenCount; i++) {
 				destination.putUint16(nodeInfo.childChars[i]);
 			}

@@ -51,7 +51,7 @@ public:
 	SimpleTrieNodePrivate(const UByteArrayAdapter & nodeData);
 	~SimpleTrieNodePrivate() {}
 
-	virtual uint16_t childCount() const { return m_childCount;}
+	virtual uint32_t childCount() const { return m_childCount;}
 	virtual uint8_t charWidth() const { return m_charWidth; }
 	virtual uint8_t strLen() const { return m_strLen; }
 	virtual bool hasMergeIndex() const { return m_indexTypes & IT_MERGE_INDEX;}
@@ -62,12 +62,12 @@ public:
 	virtual bool hasAnyIndex() const { return m_indexTypes;}
 
 	/** @return: Returns a pointer to the subclass, destruction will be handled by the outer non-private class **/
-	virtual TrieNodePrivate* childAt(uint16_t pos) const;
+	virtual TrieNodePrivate* childAt(uint32_t pos) const;
 
-	virtual uint32_t childCharAt(uint16_t pos) const;
+	virtual uint32_t childCharAt(uint32_t pos) const;
 	virtual UByteArrayAdapter strData() const;
 	virtual std::string str() const;
-	virtual int16_t posOfChar(uint32_t ucode) const;
+	virtual int32_t posOfChar(uint32_t ucode) const;
 	virtual void dump() const;
 
 	virtual uint32_t getStorageSize() const;

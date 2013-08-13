@@ -3,4 +3,5 @@
 #include "../TrieNode.h"
 #include "CompactTrieNodePrivate.h"
 #include "SimpleTrieNodePrivate.h"
+#include "LargeCompactTrieNodePrivate.h"
 #endif

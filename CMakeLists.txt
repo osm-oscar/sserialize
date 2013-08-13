@@ -27,7 +27,9 @@ RAGEL_PARSER(containers/SetOpTreePrivateSimple_parser.rl)
 
 set(STATIC_TRIENODE_PRIVATE_SOURCES_CPP
 Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
-Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp)
+Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp
+Static/TrieNodePrivates/LargeCompactTrieNodePrivate.cpp
+)
 
 set(STATIC_SOURCES_CPP
 Static/Deque.cpp

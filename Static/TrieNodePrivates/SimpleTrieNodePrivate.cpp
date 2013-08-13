@@ -47,7 +47,7 @@ uint32_t SimpleTrieNodePrivate::getChildPtrBeginOffset() const {
 	return m_childPointerArrayStart;
 }
 
-uint32_t SimpleTrieNodePrivate::childCharAt(uint16_t pos) const {
+uint32_t SimpleTrieNodePrivate::childCharAt(uint32_t pos) const {
 	if (m_childCount == 0)
 		return 0;
 	if (pos >= m_childCount) {
@@ -93,13 +93,13 @@ std::string SimpleTrieNodePrivate::str() const {
 	return st;
 }
 
-int16_t SimpleTrieNodePrivate::posOfChar(uint32_t key) const {
-	if (key > 0xFFFF || (m_charWidth == 1 && key > 0xFF))
+int32_t SimpleTrieNodePrivate::posOfChar(uint32_t ucode) const {
+	if (ucode > 0xFFFF || (m_charWidth == 1 && ucode > 0xFF))
 		return -1;
-	return findKeyInArray_uint32<4>(m_data+m_childArrayStart, m_childCount, key);
+	return findKeyInArray_uint32<4>(m_data+m_childArrayStart, m_childCount, ucode);
 }
 
-TrieNodePrivate* SimpleTrieNodePrivate::childAt(uint16_t pos) const {
+TrieNodePrivate* SimpleTrieNodePrivate::childAt(uint32_t pos) const {
 	if (pos >= m_childCount)
 		pos = (m_childCount-1);
 	uint32_t childOffSet = getChildPtr(pos);
@@ -173,40 +173,24 @@ SimpleStaticTrieCreationNode::createNewNode(
 		std::cout << "Error: too many children" << std::endl;
 		return SimpleStaticTrieCreationNode::TOO_MANY_CHILDREN;
 	}
-	
+
+	uint8_t charWidth = 1;
+	if (nodeInfo.childChars.size() > 0) {
+		charWidth = minStorageBytesOfValue(nodeInfo.childChars.back());
+	}
 
 	destination.putUint16(childrenCount);
 
-	destination.putUint8(nodeInfo.charWidth);
+	destination.putUint8(charWidth);
 
 	destination.putUint8(nodeInfo.indexTypes | (nodeInfo.mergeIndex ? Static::TrieNodePrivate::IT_MERGE_INDEX : 0));
 	
 	//Possibly push our node string
-	uint32_t nodeStrSize = 0;
+	if (nodeInfo.nodeStr.size() > 0xFF)
+		return NODE_STRING_TOO_LONG;
+	destination.putUint8(nodeInfo.nodeStr.size());
 	if (nodeInfo.nodeStr.size() > 0) {
-		//push the string with string length
-		std::string::const_iterator nodeStrIt = nodeInfo.nodeStr.begin();
-		utf8::next(nodeStrIt, nodeInfo.nodeStr.end()); //remove the first char as that one is already in our parent
-		std::string stnodeStr;
-		for(; nodeStrIt != nodeInfo.nodeStr.end(); nodeStrIt++)
-			stnodeStr += *nodeStrIt;
-		
-		nodeStrSize = stnodeStr.size();
-		if (nodeStrSize <= 0xFF) {
-			destination.putUint8(nodeStrSize);
-		}
-		else {
-			std::cout << "node string is too long: " << nodeInfo.nodeStr << std::endl;
-			return SimpleStaticTrieCreationNode::NODE_STRING_TOO_LONG;
-		}
-		//Node string (not null terminated)
-
-		for(std::string::iterator i = stnodeStr.begin(); i != stnodeStr.end(); i++) {
-			destination.putUint8(static_cast<uint8_t>(*i));
-		}
-	}
-	else { // no nodestring there
-		destination.putUint8(0);
+		destination.put(reinterpret_cast<const uint8_t*>(nodeInfo.nodeStr.c_str()), nodeInfo.nodeStr.size());
 	}
 
 	//Push the child chars and child ptrs

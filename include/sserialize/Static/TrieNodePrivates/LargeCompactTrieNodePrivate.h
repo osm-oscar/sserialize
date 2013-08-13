@@ -1,5 +1,5 @@
-#ifndef COMPACT_STATIC_TRIE_NODE_PRIVATE_H
-#define COMPACT_STATIC_TRIE_NODE_PRIVATE_H
+#ifndef LARGE_COMPACT_STATIC_TRIE_NODE_PRIVATE_H
+#define LARGE_COMPACT_STATIC_TRIE_NODE_PRIVATE_H
 #include <stdint.h>
 #include <string>
 #include <sserialize/utility/UByteArrayAdapter.h>
@@ -10,7 +10,7 @@
 //TODO: Im Fall eines nicht vollständigen index sollte die Größe für den Merge angegeben werden
 
 
-/* Data and Layout definitions (v3):
+/* Data and Layout definitions (v0):
  * 
  * 
  * 
@@ -19,63 +19,73 @@
  *
  * Node layout
  * 
- * ----------------------------------------------------------------------------------------------------------
- * amliiiii|4idtlLLL|LLLLLLLL|SLSLSLSL|SSSSSSSSS|CCCCCCCCCCCC|FCPFCPFCP|CPCPCPCP|  IDXPTRS |SUBTRIEPTR|
- * ----------------------------------------------------------------------------------------------------------
- * 1 byte  | 1 byte | 1 byte | 1 byte | SL byte |(1-2 byte)*l|  4 byte |2*(L-1) |CompactArr|  4 byte  |
- * a = width of the characters (0 => 1 byte, 1 => 2 bytes)
+ * -----------------------------------------------------------------------------------------------------------
+ * aamiiiii4idtlLLL|LLLLLLLLL|SLSLSLSL|SSSSSSSSS|CCCCCCCCCCCC|FCPFCPFCPFCP|CPCPCPCPCPCPCPCPCPCPCP| IndexPtr
+ * -----------------------------------------------------------------------------------------------------------
+ * 2 Bytes         |1-5 v32  | 1 Byte |SL byte |(1-4 byte)*L|  1-5 byte   |CompactUintArray(L-1) |IndexEntry
+ * a = width of the characters (0 => 1 byte, 1 => 2 bytes, 2 => 3 bytes, 3 => 4 bytes)
  * m = node has a merge index
  * 4idt = index types (4 bits)
- * i = index bits per number count
- * l = if true, then there's another length byte following
- * L = length of the following char->pointer array
+ * l = length bytes following
+ * L = length of the following char->pointer array 
  * SL = length of the string
  * S = the node's string, not null-terminated, encoded as UTF-8, the first char is stored in the parent 
  * C = character (width is determined by a), encoded in UTF-32 (essentially it's just the unicde point)
- * FCP = displacement from the beginning of the tree to the first child node
+ * FCP = displacement from the end of the node to the first child node, only present if L > 0
  * CP = displacement from the beginning of the first child, every childnode-stripe adds a new offset
- * IDXPTR = Pointer to index (offset in index file
- * SUBTRIEPTR = Pointer to the subtrie (offset in trie file)
- */
+ *
+ * IndexEntry
+ * -----------------------------------
+ * BASEOFFSET|Offsets
+ * -----------------------------------
+ *   v32
+ *
+ *
+ */ 
 
 namespace sserialize {
 namespace Static {
 
-class CompactStaticTrieCreationNode;
 
-class CompactTrieNodePrivate: public TrieNodePrivate {
+class LargeCompactTrieNodePrivate: public TrieNodePrivate {
 public:
 	friend class CompactStaticTrieCreationNode;
 protected:
 	UByteArrayAdapter m_data;
 
 	//Node info
-	uint16_t m_childCount;
+	uint16_t m_header; //aami iiii 4idt
+	uint32_t m_childCount;
 	uint8_t m_strLen;
-
+	uint32_t m_childPtrBaseOffset;
+	
 	//data pointers:
-	uint32_t m_strStart;
+	uint32_t m_strBegin;
 	uint32_t m_childArrayStart;
 	uint32_t m_childPointerArrayStart;
-	uint32_t m_indexPtrStart;
 	uint32_t m_myEndPtr;
+	
+	//index ptr
+	uint32_t m_exactIndexPtr;
+	uint32_t m_prefixIndexPtr;
+	uint32_t m_suffixIndexPtr;
+	uint32_t m_substrIndexPtr;
 
 
 private:
-	uint32_t getSubTriePtrOffset() const;
 	uint32_t getChildPtrBeginOffset() const;
 	
-	IndexTypes indexTypes() const { return (IndexTypes) (m_data.at(1) >> 4);}
-	uint8_t indexArrBpn() const { return (m_data.at(0) & 0x1F) + 1;}
+	IndexTypes indexTypes() const { return (IndexTypes) (m_header & 0xF); }
+	uint8_t childPtrBits() const { return ((m_header >> 4) & 0x1F) +1; }
 	
 public:
-	CompactTrieNodePrivate(const UByteArrayAdapter & nodeData);
-	~CompactTrieNodePrivate() {}
+	LargeCompactTrieNodePrivate(const UByteArrayAdapter & nodeData);
+	virtual ~LargeCompactTrieNodePrivate() {}
 
 	virtual uint32_t childCount() const { return m_childCount;}
-	virtual uint8_t charWidth() const { return ((m_data.at(0) & 0x80) >> 7) + 1;}
+	virtual uint8_t charWidth() const { return ((m_header >> 10) & 0x3) + 1; }
 	virtual uint8_t strLen() const { return m_strLen; }
-	virtual bool hasMergeIndex() const { return m_data.at(0) & 0x40; }
+	virtual bool hasMergeIndex() const { return m_header & 0x300; }
 	virtual bool hasExactIndex() const { return indexTypes() & IT_EXACT;}
 	virtual bool hasPrefixIndex() const { return indexTypes() & IT_PREFIX;}
 	virtual bool hasSuffixIndex() const { return indexTypes() & IT_SUFFIX;}
@@ -106,14 +116,8 @@ public:
 };
 
 
-class CompactStaticTrieCreationNode {
-	CompactTrieNodePrivate m_node;
-	UByteArrayAdapter m_data;
-public:
-	enum ErrorTypes { NO_ERROR=0, TOO_MANY_CHILDREN=1, NODE_STRING_TOO_LONG=2, CHILD_PTR_FAILED=4, INDEX_PTR_FAILED=8};
-	CompactStaticTrieCreationNode(const UByteArrayAdapter & nodeData);
-	~CompactStaticTrieCreationNode() {}
-	bool setChildPointer(uint32_t childNum, uint32_t offSetFromBeginning);
+struct LargeCompactTrieNodeCreator {
+	enum ErrorTypes { NO_ERROR=0, TOO_MANY_CHILDREN=1, NODE_STRING_TOO_LONG=2, CHILD_PTR_FAILED=4, INDEX_PTR_FAILED=8, CHILD_CHAR_FAILED=16};
 	static unsigned int createNewNode(const sserialize::Static::TrieNodeCreationInfo & nodeInfo, UByteArrayAdapter& destination);
 	static unsigned int appendNewNode(const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter& destination);
 	static unsigned int prependNewNode(const sserialize::Static::TrieNodeCreationInfo& nodeInfo, std::deque<uint8_t> & destination);

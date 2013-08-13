@@ -63,8 +63,10 @@ Static::TrieNode GeneralizedTrie::getRootNode() const {
 			return TrieNode(new SimpleTrieNodePrivate(m_tree));
 		case (Static::TrieNode::T_COMPACT):
 			return TrieNode(new CompactTrieNodePrivate(m_tree));
+		case (Static::TrieNode::T_LARGE_COMPACT):
+			return TrieNode(new LargeCompactTrieNodePrivate(m_tree));
 		default:
-			return TrieNode(new TrieNodePrivate());
+			return TrieNode(new EmptyTrieNodePrivate());
 	}
 }
 
@@ -323,7 +325,7 @@ std::map< uint16_t, ItemIndex > GeneralizedTrie::getNextCharacters(const std::st
 			charHints[utf8::peek_next<std::string::const_iterator>(nStrIt, nodeStr.end())] = (withIndex ? getItemIndexFromNode(node, qtype): ItemIndex());
 	}
 	else {
-		for(int i = 0; i < node.childCount(); i++) {
+		for(uint32_t i = 0, s = node.childCount(); i < s; i++) {
 			charHints[node.childCharAt(i)] = (withIndex ? getItemIndexFromNode(node.childAt(i), qtype): ItemIndex());
 		}
 	}
@@ -373,8 +375,8 @@ completeCISRecursive(std::string::const_iterator strIt, const std::string::const
 	if (nStrIt == nStrEnd && strIt != strEnd) { //node->c is real prefix, strIt points to new element
 		uint32_t lowerCaseKey = unicode32_to_lower(utf8::next(strIt, strEnd)); //watchout: this already moves to the next ptr. no need to do it later
 		uint32_t upperCaseKey = unicode32_to_upper(lowerCaseKey);
-		int16_t lowerCasePos = node.posOfChar(lowerCaseKey);
-		int16_t upperCasePos = (lowerCaseKey != upperCaseKey ? node.posOfChar(upperCaseKey) : -1);
+		int32_t lowerCasePos = node.posOfChar(lowerCaseKey);
+		int32_t upperCasePos = (lowerCaseKey != upperCaseKey ? node.posOfChar(upperCaseKey) : -1);
 		
 		if (upperCasePos >= 0 && lowerCasePos >= 0) {
 			return completeCISRecursive(strIt, strEnd, qtype, node.childAt(lowerCasePos)) + completeCISRecursive(strIt, strEnd, qtype, node.childAt(upperCasePos));
@@ -422,7 +424,7 @@ ItemIndex GeneralizedTrie::completeCS(const std::string & str, sserialize::Strin
 
 		if (nStrIt == nStrEnd && strIt != strEnd) { //node->c is real prefix, strIt points to new element
 			uint32_t key = utf8::peek_next(strIt, strEnd);
-			int16_t pos = node.posOfChar(key);
+			int32_t pos = node.posOfChar(key);
 			if (pos >= 0) {
 				utf8::next(strIt, strEnd);
 				node = node.childAt(pos);

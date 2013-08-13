@@ -209,12 +209,12 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 			
 			Static::TrieNodeCreationInfo nodeInfo;
 
-			nodeInfo.nodeStr = curNode->c;
-			curNode->insertSortedChildChars(nodeInfo.childChars);
-			nodeInfo.charWidth = 1;
-			if (nodeInfo.childChars.size() > 0) {
-				nodeInfo.charWidth = (nodeInfo.childChars.back() > 0xFF ? 2 : 1);
+			if (curNode->c.size()) {
+				std::string::const_iterator nodeStrIt(curNode->c.cbegin());
+				utf8::next(nodeStrIt, curNode->c.cend());
+				nodeInfo.nodeStr = std::string(nodeStrIt, curNode->c.cend());
 			}
+			curNode->insertSortedChildChars(nodeInfo.childChars);
 
 			if (nodeInfo.childChars.size() != curNode->children.size()) {
 				std::cout << "Error:  nodeInfo.childChars.size()=" << nodeInfo.childChars.size() << "!= curNode->children.size()=" << curNode->children.size() << std::endl;
