@@ -164,39 +164,7 @@ void GeneralizedTrie::addSuffixPrefixIndexPtrsRecursive(const Static::TrieNode &
 }
 
 ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType type) const {
-	if (type & sserialize::StringCompleter::QT_EXACT) {
-		if (node.hasExactIndex()) {
-			return indexFromId(node.getExactIndexPtr());
-		}
-	}
-	else if (type & sserialize::StringCompleter::QT_SUFFIX) {
-		if (node.hasSuffixIndex()) {
-			if (node.hasMergeIndex() && node.hasExactIndex()) {
-				return indexFromId(node.getExactIndexPtr()) + indexFromId(node.getSuffixIndexPtr());
-			}
-			else {
-				return indexFromId(node.getSuffixIndexPtr());
-			}
-		}
-	}
-	else if (type & sserialize::StringCompleter::QT_PREFIX) {
-		if (node.hasPrefixIndex()) {
-			if (node.hasMergeIndex() && node.hasExactIndex())
-				return indexFromId(node.getPrefixIndexPtr()) + indexFromId(node.getExactIndexPtr());
-			else
-				return indexFromId(node.getPrefixIndexPtr());
-		}
-		else {
-			if (node.childCount()) {
-				DynamicBitSet bitSet(UByteArrayAdapter::createCache(0, false));
-				insertIndexRecursive(node, IT_PREFIX, bitSet);
-				return bitSet.toIndex(m_indexStore.indexType());
-			}
-			else if (node.hasExactIndex())
-				return indexFromId(node.getExactIndexPtr());
-		}
-	}
-	else if (type & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+	if (type & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
 		if (node.hasSuffixPrefixIndex()) {
 			if (node.hasMergeIndex()) {
 				ItemIndex tmp;
@@ -228,13 +196,55 @@ ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNo
 			}
 		}
 	}
+	else if (type & sserialize::StringCompleter::QT_SUFFIX) {
+		if (node.hasSuffixIndex()) {
+			if (node.hasMergeIndex() && node.hasExactIndex()) {
+				return indexFromId(node.getExactIndexPtr()) + indexFromId(node.getSuffixIndexPtr());
+			}
+			else {
+				return indexFromId(node.getSuffixIndexPtr());
+			}
+		}
+	}
+	else if (type & sserialize::StringCompleter::QT_PREFIX) {
+		if (node.hasPrefixIndex()) {
+			if (node.hasMergeIndex() && node.hasExactIndex())
+				return indexFromId(node.getPrefixIndexPtr()) + indexFromId(node.getExactIndexPtr());
+			else
+				return indexFromId(node.getPrefixIndexPtr());
+		}
+		else {
+			if (node.childCount()) {
+				DynamicBitSet bitSet(UByteArrayAdapter::createCache(0, false));
+				insertIndexRecursive(node, IT_PREFIX, bitSet);
+				return bitSet.toIndex(m_indexStore.indexType());
+			}
+			else if (node.hasExactIndex())
+				return indexFromId(node.getExactIndexPtr());
+		}
+	}
+	else if (type & sserialize::StringCompleter::QT_EXACT) {
+		if (node.hasExactIndex()) {
+			return indexFromId(node.getExactIndexPtr());
+		}
+	}
 	return ItemIndex();
 }
 
 ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType qtype, const ItemIndex& indirectIndexParent) const {
-	if (qtype & sserialize::StringCompleter::QT_EXACT) {
-		if (node.hasExactIndex()) {
-			return m_indexStore.at(node.getExactIndexPtr(), indirectIndexParent);
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+		if (node.hasSuffixPrefixIndex()) {
+			return m_indexStore.at(node.getSuffixPrefixIndexPtr(), indirectIndexParent);
+		}
+		else {
+			std::vector<uint32_t> childIndexPtrs;
+			addSuffixPrefixIndexPtrsRecursive(node, childIndexPtrs);
+			std::vector<ItemIndex> idxSet;
+			idxSet.reserve(childIndexPtrs.size());
+			for(size_t i = 0; i < childIndexPtrs.size(); i++) {
+				idxSet.push_back(m_indexStore.at(childIndexPtrs[i], indirectIndexParent));
+			}
+			return ItemIndex::unite(idxSet);
 		}
 	}
 	else if (qtype & sserialize::StringCompleter::QT_SUFFIX) {
@@ -257,19 +267,9 @@ ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNo
 			return ItemIndex::unite(idxSet);
 		}
 	}
-	else if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
-		if (node.hasSuffixPrefixIndex()) {
-			return m_indexStore.at(node.getSuffixPrefixIndexPtr(), indirectIndexParent);
-		}
-		else {
-			std::vector<uint32_t> childIndexPtrs;
-			addSuffixPrefixIndexPtrsRecursive(node, childIndexPtrs);
-			std::vector<ItemIndex> idxSet;
-			idxSet.reserve(childIndexPtrs.size());
-			for(size_t i = 0; i < childIndexPtrs.size(); i++) {
-				idxSet.push_back(m_indexStore.at(childIndexPtrs[i], indirectIndexParent));
-			}
-			return ItemIndex::unite(idxSet);
+	else if (qtype & sserialize::StringCompleter::QT_EXACT) {
+		if (node.hasExactIndex()) {
+			return m_indexStore.at(node.getExactIndexPtr(), indirectIndexParent);
 		}
 	}
 	return ItemIndex();
@@ -392,6 +392,10 @@ completeCISRecursive(std::string::const_iterator strIt, const std::string::const
 		}
 	}
 	//Check if we're at the end of the string
+	
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX)
+		return getItemIndexFromNode(node, qtype);
+	
 	if ((qtype & sserialize::StringCompleter::QT_EXACT || qtype & sserialize::StringCompleter::QT_SUFFIX) && (strIt != strEnd || nStrIt != nStrEnd))
 		return ItemIndex();
 
@@ -437,6 +441,10 @@ ItemIndex GeneralizedTrie::completeCS(const std::string & str, sserialize::Strin
 			}
 		}
 	}
+	
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX)
+		return getItemIndexFromNode(node, qtype);
+	
 	//Check if we're at the end of the string
 	if ((qtype & sserialize::StringCompleter::QT_EXACT || qtype & sserialize::StringCompleter::QT_SUFFIX) && (strIt != strEnd || nStrIt != nStrEnd))
 		return ItemIndex();

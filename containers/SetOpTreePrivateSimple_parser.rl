@@ -28,7 +28,7 @@
 	action checkMatchType {
 		if (matchType == sserialize::StringCompleter::QT_NONE ||
 		(matchType & sserialize::StringCompleter::QT_PREFIX && matchType & sserialize::StringCompleter::QT_SUFFIX)) {
-			matchType |= sserialize::StringCompleter::QT_SUFFIX_PREFIX;
+			matchType = sserialize::StringCompleter::QT_SUFFIX_PREFIX;
 		}
 	}
 	

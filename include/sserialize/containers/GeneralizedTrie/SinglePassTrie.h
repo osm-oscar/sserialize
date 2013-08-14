@@ -2,6 +2,7 @@
 #define SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
 #include <sserialize/containers/GeneralizedTrie/SerializableTrie.h>
 #include <sserialize/utility/MmappedMemoy.h>
+#include <sserialize/utility/log.h>
 
 namespace sserialize {
 namespace GeneralizedTrie {
@@ -109,6 +110,8 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 	std::cout << std::endl;
 	
 	std::cout << "Creating temporary on-disk storage for indices" << std::endl;
+	std::cout << "Exact index: " << osmfindlog::prettyFormatSize(exactStorageNeed) << std::endl;
+	std::cout << "Suffix index: " << osmfindlog::prettyFormatSize(suffixStorageNeed) << std::endl;
 	exactIndicesMem = sserialize::MmappedMemory<uint32_t>(exactStorageNeed);
 	suffixIndicesMem= sserialize::MmappedMemory<uint32_t>(suffixStorageNeed);
 	{
@@ -129,7 +132,7 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 	std::cout << "Distributed memory to nodes" << std::endl;
 	
 	
-	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::fromStringsFactory::popluating exact/suffix index");
+	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "SinglePassTrie::fromStringsFactory::popluating exact/suffix index");
 	count = 0;
 	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
 		std::unordered_set<Node*> exactNodes;
@@ -160,7 +163,7 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 	progressInfo.end();
 	
 	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::fromStringsFactory::insertItems" << std::endl;
+		std::cout << "Trie is broken after SinglePassTrie::fromStringsFactory::insertItems" << std::endl;
 		return false;
 	}
 
