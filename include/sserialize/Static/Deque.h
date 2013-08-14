@@ -8,7 +8,6 @@
 #include <sserialize/utility/mmappedfile.h>
 #include <fstream>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
-// #define OFFSET_INDEX_DEBUG
 
 /** FileFormat: v3
  *
@@ -51,14 +50,14 @@ public:
 	
 	///@return data to create the deque (NOT dest data)
 	UByteArrayAdapter flush() {
-#ifdef OFFSET_INDEX_DEBUG
+#if defined(DEBUG_DEQUE_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
 		OffsetType oiBegin = m_dest.tellPutPtr();
 #endif
 		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
 		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest)) {
 			throw sserialize::CreationException("Deque::flush: Creating the offset");
 		}
-#ifdef OFFSET_INDEX_DEBUG
+#if defined(DEBUG_DEQUE_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
 		sserialize::UByteArrayAdapter tmp = m_dest;
 		tmp.setPutPtr(oiBegin);
 		tmp.shrinkToPutPtr();

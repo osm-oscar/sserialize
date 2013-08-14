@@ -102,10 +102,26 @@ public:
 		}
 		if (ok)
 			*ok = mok;
-		if (mok)
+#if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
+		if (mok) {
+			uint64_t idxOf;
+			uint32_t idxId = addIndex(s, &idxOf);
+			sserialize::ItemIndex sIdx = getIndex(idxOf);
+			if (sIdx != idx) {
+				std::cerr << "Broken index detected in ItemIndexFactory" << std::endl;
+			}
+			if (indexOffset)
+				*indexOffset = idxOf;
+			return idxId;
+		}
+#else
+		if (mok) {
 			return addIndex(s, indexOffset);
-		else
+		}
+#endif
+		else {
 			return 0;
+		}
 	}
 	
 	uint32_t addIndex(const std::unordered_set<uint32_t> & idx, bool * ok = 0, OffsetType * indexOffset = 0);
