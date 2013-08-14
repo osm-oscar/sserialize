@@ -54,9 +54,9 @@ std::string inFile;
 
 class SortedOffsetIndexTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( SortedOffsetIndexTest );
-// CPPUNIT_TEST( testRandomEquality );
-// CPPUNIT_TEST( testLargeOffsets );
-// CPPUNIT_TEST( testLargestOffsetsSpecial );
+CPPUNIT_TEST( testRandomEquality );
+CPPUNIT_TEST( testLargeOffsets );
+CPPUNIT_TEST( testLargestOffsetsSpecial );
 CPPUNIT_TEST( testFromFile );
 CPPUNIT_TEST_SUITE_END();
 public:
