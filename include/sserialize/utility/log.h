@@ -93,6 +93,19 @@ void putInto(std::ostream & out, const std::vector<T> & vec) {
 	out << "]";
 }
 
+inline std::string prettyFormatSize(uint64_t bytes) {
+	if ( bytes >> 30 ) {
+		return toString(bytes >> 30, " Gibibytes");
+	}
+	if ( bytes >> 20 ) {
+		return toString(bytes >> 20, " Mebibytes");
+	}
+	if ( bytes >> 10 ) {
+		return toString(bytes >> 10, " Kibibytes");
+	}
+	return toString(bytes, " Bytes");
+}
+
 }//end namespace
 
 osmfindlog::Log& operator<<(osmfindlog::Log& log, const std::string & msg);
