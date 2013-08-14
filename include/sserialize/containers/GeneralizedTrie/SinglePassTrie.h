@@ -110,8 +110,8 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 	std::cout << std::endl;
 	
 	std::cout << "Creating temporary on-disk storage for indices" << std::endl;
-	std::cout << "Exact index: " << osmfindlog::prettyFormatSize(exactStorageNeed) << std::endl;
-	std::cout << "Suffix index: " << osmfindlog::prettyFormatSize(suffixStorageNeed) << std::endl;
+	std::cout << "Exact index: " << sserialize::prettyFormatSize(exactStorageNeed) << std::endl;
+	std::cout << "Suffix index: " << sserialize::prettyFormatSize(suffixStorageNeed) << std::endl;
 	exactIndicesMem = sserialize::MmappedMemory<uint32_t>(exactStorageNeed);
 	suffixIndicesMem= sserialize::MmappedMemory<uint32_t>(suffixStorageNeed);
 	{

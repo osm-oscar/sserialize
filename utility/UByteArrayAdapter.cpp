@@ -795,16 +795,16 @@ UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool dele
 		fileName = MmappedFile::findLockFilePath(PERSISTENT_CACHE_PATH, 2048);
 	}
 	if (fileName.empty()) {
-		osmfindlog::err("UByteArrayAdapter::writeToDisk", "Could not find a file");
+		sserialize::err("UByteArrayAdapter::writeToDisk", "Could not find a file");
 		return UByteArrayAdapter();
 	}
 	if (! MmappedFile::createFile(fileName, m_len) ) {
-		osmfindlog::err("UByteArrayAdapter::writeToDisk", "Fatal: could not create file: " + fileName);
+		sserialize::err("UByteArrayAdapter::writeToDisk", "Fatal: could not create file: " + fileName);
 		return UByteArrayAdapter();
 	}
 	MmappedFile tempFile = MmappedFile(fileName, true);
 	if (! tempFile.open() ) {
-		osmfindlog::err("UByteArrayAdapter::writeToDisk", "Fatal: could not open file");
+		sserialize::err("UByteArrayAdapter::writeToDisk", "Fatal: could not open file");
 		return UByteArrayAdapter();
 	}
 	std::shared_ptr<UByteArrayAdapterPrivate> priv(new UByteArrayAdapterPrivateMmappedFile(tempFile));
@@ -829,7 +829,7 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 	if (forceFileBase || size > MAX_IN_MEMORY_CACHE) {
 		MmappedFile tempFile;
 		if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
-			osmfindlog::err("UByteArrayAdapter::createCache", "Fatal: could not open file");
+			sserialize::err("UByteArrayAdapter::createCache", "Fatal: could not open file");
 			return UByteArrayAdapter();
 		}
 		priv.reset( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
@@ -841,7 +841,7 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 			priv.reset( new UByteArrayAdapterPrivateVector(privData) );
 		}
 		else {
-			osmfindlog::err("UByteArrayAdapter::createCache", "Could not allocate memory. Trying file based.");
+			sserialize::err("UByteArrayAdapter::createCache", "Could not allocate memory. Trying file based.");
 			return createCache(size, true);
 		}
 	}
@@ -854,12 +854,12 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 
 UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType size, std::string fileName) {
 	if (! MmappedFile::createFile(fileName, size) ) {
-		osmfindlog::err("UByteArrayAdapter::createFile", "Could not create file: " + fileName);
+		sserialize::err("UByteArrayAdapter::createFile", "Could not create file: " + fileName);
 		return UByteArrayAdapter();
 	}
 	MmappedFile tempFile = MmappedFile(fileName, true);
 	if (! tempFile.open() ) { //TODO:delete file if it exists
-		osmfindlog::err("UByteArrayAdapter::createFile", "Fatal: could not open file: " + fileName);
+		sserialize::err("UByteArrayAdapter::createFile", "Fatal: could not open file: " + fileName);
 		return UByteArrayAdapter();
 	}
 	tempFile.setSyncOnClose(true);

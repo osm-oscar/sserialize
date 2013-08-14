@@ -13,7 +13,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 	int curLen;
 	m_size = index.getVlPackedUint32(0, &curLen); //vl_unpack_uint32_t(m_index.data(), &curLen);
 	if (curLen < 0) {
-		osmfindlog::err("ItemIndexPrivateRegLine::init", "ERROR: Index is invalid");
+		sserialize::err("ItemIndexPrivateRegLine::init", "ERROR: Index is invalid");
 		return false;
 	}
 	index += curLen;
@@ -23,7 +23,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 	if (m_size > 1) {
 		m_yintercept = index.getVlPackedInt32(0, &curLen); //vl_unpack_int32_t(m_index.data(), &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("ItemIndexPrivateRegLine::init", "ERROR: Index is invalid");
+			sserialize::err("ItemIndexPrivateRegLine::init", "ERROR: Index is invalid");
 			m_size = 0;
 			m_yintercept = 0;
 			return false;
@@ -31,7 +31,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 		index += curLen;
 		m_slopenom = index.getVlPackedUint32(0, &curLen); //vl_unpack_uint32_t(m_index.data(), &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
+			sserialize::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
 			m_size = 0;
 			m_yintercept = 0;
 			m_slopenom = 0;
@@ -41,7 +41,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 
 		m_idOffset = index.getVlPackedUint32(0, &curLen); //vl_unpack_uint32_t(m_index.data(), &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
+			sserialize::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
 			m_size = 0;
 			m_yintercept = 0;
 			m_slopenom = 0;

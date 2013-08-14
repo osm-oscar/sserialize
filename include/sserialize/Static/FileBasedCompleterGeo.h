@@ -71,7 +71,7 @@ public:
 			if (id > 0)
 				m_selectedGeoCompleter = id;
 			else {
-				osmfindlog::err("sserialize::GeoCompleter::energize", "Failed to init a geo completer");
+				sserialize::err("sserialize::GeoCompleter::energize", "Failed to init a geo completer");
 				ok = false;
 			}
 		}
@@ -119,7 +119,7 @@ protected:
 				CompleterBase::addGeoCompleterData(adap);
 			}
 			else {
-				osmfindlog::err("sserialize::FileBasedCompleterGeo::openAll", "Failed to open geo completer file: " + m_geoCompleterFileNames[i]);
+				sserialize::err("sserialize::FileBasedCompleterGeo::openAll", "Failed to open geo completer file: " + m_geoCompleterFileNames[i]);
 			}
 		}
 		return true;
@@ -140,7 +140,7 @@ public:
 			return true;
 		}
 		else {
-			osmfindlog::err("FileBasedCompleterGeo::addGeoCompleterFile", "File " + filename + " is not available"); 
+			sserialize::err("FileBasedCompleterGeo::addGeoCompleterFile", "File " + filename + " is not available"); 
 		}
 		return false;
 	}

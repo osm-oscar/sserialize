@@ -59,7 +59,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", (uint32_t)rawData.size(), dynVec.size());
 		
 		for(uint32_t i = 0, s = rawData.size(); i < s; ++i) {
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item at ", i), rawData[i], dynVec.at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item at ", i), rawData[i], dynVec.at(i));
 		}
 	}
 	
@@ -73,7 +73,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", (uint32_t)rawData.size(), dynVec.size());
 		
 		for(uint32_t i = 0, s = rawData.size(); i < s; ++i) {
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item at ", i), rawData[i], dynVec.at(i, ComplexDataDeserializer()));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item at ", i), rawData[i], dynVec.at(i, ComplexDataDeserializer()));
 		}
 	}
 	

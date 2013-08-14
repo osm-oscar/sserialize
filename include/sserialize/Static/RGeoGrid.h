@@ -24,7 +24,7 @@ public:
 		MyParentClass::storage() = Static::Deque<uint32_t>( data.shrinkToGetPtr() );
 		
 		if (latcount*loncount > MyParentClass::storage().size()) {
-			osmfindlog::err("RGeoGrid", "Broken Grid detected");
+			sserialize::err("RGeoGrid", "Broken Grid detected");
 			latcount = 0;
 			loncount = 0;
 			return;

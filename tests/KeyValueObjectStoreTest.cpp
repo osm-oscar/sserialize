@@ -65,7 +65,7 @@ public:
 		for(int i = 0; i < T_ITEM_COUNT; ++i) {
 			m_items.push_back(SourceItem());
 			SourceItem & sitem = m_items.back();
-			sitem.push_back(KeyValuePair("0id", osmfindlog::toString(i)));
+			sitem.push_back(KeyValuePair("0id", sserialize::toString(i)));
 			for(int j = 0; j < T_ITEM_STR_COUNT; ++j) {
 				sitem.push_back( KeyValuePair(getRandomString(), getRandomString()) );
 			}
@@ -89,10 +89,10 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[i];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
 			}
 		}
 	}
@@ -108,10 +108,10 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[perm[i]];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
 			}
 		}
 	}
@@ -126,10 +126,10 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[i];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
 			}
 		}
 	}
@@ -148,10 +148,10 @@ public:
 			Static::KeyValueObjectStoreItem sitem = m_skv.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), sitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].key[", j, "] does not match"), item.at(j).first, sitem.key(j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item.at(j).first, sitem.key(j));
 			}
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), item.at(j).second, sitem.value(j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item.at(j).second, sitem.value(j));
 			}
 		}
 	}
@@ -164,7 +164,7 @@ public:
 			Static::KeyValueObjectStoreItem sitem = m_skv.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), sitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item[", i, "].value[", j, "] does not match"), j, sitem.findKey(item.at(j).first, j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), j, sitem.findKey(item.at(j).first, j));
 			}
 		}
 	}
@@ -177,7 +177,7 @@ public:
 			Static::KeyValueObjectStoreItem sitem = m_skv.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("item size does not match", static_cast<uint32_t>( item.size() ), sitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("item ", i, " pos=", j, "does not match"), j, sitem.findValue(item.at(j).second, j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item ", i, " pos=", j, "does not match"), j, sitem.findValue(item.at(j).second, j));
 			}
 		}
 	}

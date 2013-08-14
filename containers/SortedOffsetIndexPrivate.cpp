@@ -18,7 +18,7 @@ bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 	int curLen;
 	uint64_t size = data.getVlPackedUint64(0, &curLen);
 	if (curLen < 0) {
-		osmfindlog::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_size");
+		sserialize::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_size");
 		return false;
 	}
 	data += curLen;
@@ -28,7 +28,7 @@ bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 	if (m_size > 1) {
 		m_yintercept = data.getVlPackedInt64(0, &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_yintercept");
+			sserialize::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_yintercept");
 			m_size = 0;
 			m_yintercept = 0;
 			return false;
@@ -36,7 +36,7 @@ bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 		data += curLen;
 		m_slopenom = data.getVlPackedUint64(0, &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("SortedOffsetIndexPrivate::init","ERROR:  Failed to retrieve m_slopenom");
+			sserialize::err("SortedOffsetIndexPrivate::init","ERROR:  Failed to retrieve m_slopenom");
 			m_size = 0;
 			m_yintercept = 0;
 			m_slopenom = 0;
@@ -46,7 +46,7 @@ bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 
 		m_idOffset = data.getVlPackedUint64(0, &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("SortedOffsetIndexPrivate::init","ERROR:  Failed to retrieve m_idOffset");
+			sserialize::err("SortedOffsetIndexPrivate::init","ERROR:  Failed to retrieve m_idOffset");
 			m_size = 0;
 			m_yintercept = 0;
 			m_slopenom = 0;
@@ -57,7 +57,7 @@ bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 		m_idStore = CompactUintArray(data, bpn);
 		bool idStoreHasEnoughIds = (m_idStore.maxCount() >= m_size);
 		if (!idStoreHasEnoughIds) {
-			osmfindlog::err("SortedOffsetIndexPrivate::init","ERROR:  Id store has not enought ids");
+			sserialize::err("SortedOffsetIndexPrivate::init","ERROR:  Id store has not enought ids");
 			m_size = 0;
 			m_yintercept = 0;
 			m_slopenom = 0;
@@ -70,7 +70,7 @@ bool SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 		m_idOffset = 0;
 		m_yintercept = data.getVlPackedUint64(0, &curLen);
 		if (curLen < 0) {
-			osmfindlog::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_yinterecept with m_size=1");
+			sserialize::err("SortedOffsetIndexPrivate::init", "ERROR: Failed to retrieve m_yinterecept with m_size=1");
 			m_size = 0;
 			m_yintercept = 0;
 			return false;

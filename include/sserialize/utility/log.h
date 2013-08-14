@@ -8,7 +8,7 @@
 #include <iostream>
 #endif
 
-namespace osmfindlog {
+namespace sserialize {
 
 class Log {
 public:
@@ -108,11 +108,11 @@ inline std::string prettyFormatSize(uint64_t bytes) {
 
 }//end namespace
 
-osmfindlog::Log& operator<<(osmfindlog::Log& log, const std::string & msg);
-osmfindlog::Log& operator<<(osmfindlog::Log& log, int num);
-osmfindlog::Log& operator<<(osmfindlog::Log& log, unsigned int num);
-osmfindlog::Log& operator<<(osmfindlog::Log& log, double num);
-osmfindlog::Log& operator<<(osmfindlog::Log& log, bool value);
-osmfindlog::Log& operator<<(osmfindlog::Log& log, osmfindlog::Log::CmdTypes cmdt);
+sserialize::Log& operator<<(sserialize::Log& log, const std::string & msg);
+sserialize::Log& operator<<(sserialize::Log& log, int num);
+sserialize::Log& operator<<(sserialize::Log& log, unsigned int num);
+sserialize::Log& operator<<(sserialize::Log& log, double num);
+sserialize::Log& operator<<(sserialize::Log& log, bool value);
+sserialize::Log& operator<<(sserialize::Log& log, sserialize::Log::CmdTypes cmdt);
 
 #endif

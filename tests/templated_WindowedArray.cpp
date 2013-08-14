@@ -64,7 +64,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("Merged data don't have the same size", mergedTestData.size(), mergedWa.size());
 			
 			for(uint32_t i = 0, s = mergedWa.size(); i < s; ++i) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("Merged data at ", i), mergedTestData[i], mergedWa[i]);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("Merged data at ", i), mergedTestData[i], mergedWa[i]);
 			}
 			
 			delete[] waData;

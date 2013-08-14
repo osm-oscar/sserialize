@@ -188,7 +188,7 @@ inline uint8_t * ChunkedMmappedFilePrivate::do_map(const ChunkedMmappedFilePriva
 	uint8_t * data = (uint8_t*) ::mmap(0, sizeOfChunk(chunk), mmap_proto, MAP_SHARED, m_fd, chunkOffSet);
 	
 	if (data == MAP_FAILED) {
-		osmfindlog::err("ChunkedMmappedFile", "Maping a chunk failed");
+		sserialize::err("ChunkedMmappedFile", "Maping a chunk failed");
 		return 0;
 	}
 	return data;

@@ -322,7 +322,7 @@ ItemIndex SetOpTreePrivateComplex::doSetOperationsRecurse(SetOpTreePrivateComple
 			}
 			break;
 		default:
-			osmfindlog::err("SetOpTreePrivate::doSetOperationsRecurse-Update", "Node-type is invalid");
+			sserialize::err("SetOpTreePrivate::doSetOperationsRecurse-Update", "Node-type is invalid");
 			return ItemIndex();
 			break;
 	}

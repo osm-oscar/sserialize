@@ -63,7 +63,7 @@ bool FileBasedCompleter<ItemType, DataBaseType, CompleterBase>::addStringComplet
 		return true;
 	}
 	else {
-		osmfindlog::err("FileBasedCompleter::addStringCompleterFile", "File " + filename + " is not available"); 
+		sserialize::err("FileBasedCompleter::addStringCompleterFile", "File " + filename + " is not available"); 
 	}
 	return false;
 }
@@ -74,7 +74,7 @@ bool FileBasedCompleter<ItemType, DataBaseType, CompleterBase>::openAll() {
 	UByteArrayAdapter dataAdapter(UByteArrayAdapter::openRo(m_dataFileName, m_dataFileCompression, MAX_SIZE_FOR_FULL_MMAP, CHUNKED_MMAP_EXPONENT));
 	
 	if (! dataAdapter.size() ) {
-		osmfindlog::err("sserialize::FileBasedCompleter::openAll", "Failed to open data file: " + m_dataFileName);
+		sserialize::err("sserialize::FileBasedCompleter::openAll", "Failed to open data file: " + m_dataFileName);
 		return false;
 	}
 	
@@ -82,7 +82,7 @@ bool FileBasedCompleter<ItemType, DataBaseType, CompleterBase>::openAll() {
 	
 	if (! stringTableAdapter.size() ) {
 		dataAdapter = UByteArrayAdapter();
-		osmfindlog::err("sserialize::FileBasedCompleter::openAll", "Failed to open string table file: " + m_stringTableFileName);
+		sserialize::err("sserialize::FileBasedCompleter::openAll", "Failed to open string table file: " + m_stringTableFileName);
 		return false;
 	}
 	
@@ -91,7 +91,7 @@ bool FileBasedCompleter<ItemType, DataBaseType, CompleterBase>::openAll() {
 	if (! indexAdapter.size()) {
 		dataAdapter = UByteArrayAdapter();
 		stringTableAdapter = UByteArrayAdapter();
-		osmfindlog::err("sserialize::FileBasedCompleter::openAll", "Failed to open index file: " + m_indexFileName);
+		sserialize::err("sserialize::FileBasedCompleter::openAll", "Failed to open index file: " + m_indexFileName);
 		return false;
 	}
 		
@@ -107,7 +107,7 @@ bool FileBasedCompleter<ItemType, DataBaseType, CompleterBase>::openAll() {
 			CompleterBase::addStringCompleterData(strCompleterAdapter);
 		}
 		else {
-			osmfindlog::err("sserialize::FileBasedCompleter::openAll", "Failed to open completer file: " + m_strCompleterFileNames[i]);
+			sserialize::err("sserialize::FileBasedCompleter::openAll", "Failed to open completer file: " + m_strCompleterFileNames[i]);
 		}
 	}
 

@@ -144,7 +144,7 @@ ItemSetIterator<ItemType, DataBaseType> Completer<ItemType, DataBaseType>::parti
 template<class ItemType, class DataBaseType>
 bool Completer<ItemType, DataBaseType>::energize() {
 	if (m_indexData.size() == 0 || m_stableData.size() == 0 || m_dbData.size() == 0) {
-		osmfindlog::err("sserialize::Completer::energize", "At least one needed data array is empty");
+		sserialize::err("sserialize::Completer::energize", "At least one needed data array is empty");
 		return false;
 	}
 	m_indexStore = Static::ItemIndexStore(m_indexData);
@@ -158,7 +158,7 @@ bool Completer<ItemType, DataBaseType>::energize() {
 		if (id > 0)
 			m_selectedCompleter = id;
 		else
-			osmfindlog::err("sserialize::Completer::energize", "Failed to init a completer");
+			sserialize::err("sserialize::Completer::energize", "Failed to init a completer");
 	}
 	
 	return true;

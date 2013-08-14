@@ -5,11 +5,11 @@
 #include <iostream>
 #endif
 
-namespace osmfindlog {
+namespace sserialize {
 
-Log info(osmfindlog::Log::INFO);
-Log debug(osmfindlog::Log::DEBUG);
-Log err(osmfindlog::Log::DEBUG);
+Log info(sserialize::Log::INFO);
+Log debug(sserialize::Log::DEBUG);
+Log err(sserialize::Log::DEBUG);
 
 Log::Log() : m_defLogLevel(INFO) {
 #ifdef __ANDROID__
@@ -85,31 +85,31 @@ std::string toString(bool value) {
 
 }//End namespace
 
-osmfindlog::Log& operator<<(osmfindlog::Log& log, const std::string & msg) {
+sserialize::Log& operator<<(sserialize::Log& log, const std::string & msg) {
 	log.sbuf() << msg;
 	return log;
 }
-osmfindlog::Log& operator<<(osmfindlog::Log& log, int num) {
+sserialize::Log& operator<<(sserialize::Log& log, int num) {
 	log.sbuf().operator<<(num);
 	return log;
 }
 
-osmfindlog::Log& operator<<(osmfindlog::Log& log, unsigned int num) {
+sserialize::Log& operator<<(sserialize::Log& log, unsigned int num) {
 	log.sbuf().operator<<(num);
 	return log;
 }
 
-osmfindlog::Log& operator<<(osmfindlog::Log& log, double num) {
+sserialize::Log& operator<<(sserialize::Log& log, double num) {
 	log.sbuf().operator<<(num);
 	return log;
 }
 
-osmfindlog::Log& operator<<(osmfindlog::Log& log, bool value) {
+sserialize::Log& operator<<(sserialize::Log& log, bool value) {
 	log.sbuf().operator<<((value ? "true" : "false"));
 	return log;
 }
 
-osmfindlog::Log& operator<<(osmfindlog::Log& log, osmfindlog::Log::CmdTypes cmdt) {
+sserialize::Log& operator<<(sserialize::Log& log, sserialize::Log::CmdTypes cmdt) {
 	log.sbufCmd(cmdt);
 	return log;
 }

@@ -37,7 +37,7 @@ public:
 			reorder(src, shuffled);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", shuffled.size(), src.size());
 			for(uint32_t i = 0; i < shuffled.size(); ++i) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(osmfindlog::toString("at ", i), shuffled[i], src[i]);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), shuffled[i], src[i]);
 			}
 		}
 	}

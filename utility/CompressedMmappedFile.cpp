@@ -215,7 +215,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 	::lseek(m_fd, 0, SEEK_SET);
 	
 	if (headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] != COMPRESSED_MMAPPED_FILE_VERSION) {
-		osmfindlog::err("CompressedMmappedFile::open", "Wrong version for file " + m_fileName);
+		sserialize::err("CompressedMmappedFile::open", "Wrong version for file " + m_fileName);
 		::close(m_fd);
 		m_fd = -1;
 		return false;
@@ -232,7 +232,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 	size_t mapLen = fileSize - COMPRESSED_MMAPPED_FILE_HEADER_SIZE - beginOffset;
 	m_chunkIndexData = (uint8_t*) ::mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
 	if (m_chunkIndexData == MAP_FAILED) {
-		osmfindlog::err("CompressedMmappedFile", "Maping the chunk index data failed");
+		sserialize::err("CompressedMmappedFile", "Maping the chunk index data failed");
 		::perror("CompressedMmappedFile map index data");
 		::close(m_fd);
 		m_fd = -1;
@@ -244,7 +244,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 		m_chunkIndex = Static::SortedOffsetIndex(chunkIndexAdap);
 	}
 	catch (sserialize::Exception & e) {
-		osmfindlog::err("CompressedMmappedFile::open", e.what());
+		sserialize::err("CompressedMmappedFile::open", e.what());
 		::munmap(m_chunkIndexData, mapLen);
 		::close(m_fd);
 		m_fd = -1;
@@ -254,7 +254,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 	
 	//prepare the cache
 	if (!MmappedFile::createCacheFile(chunkSize()*m_maxOccupyCount, m_decTileFile)) {
-		osmfindlog::err("CompressedMmappedFile", "Creating the decompression storage failed");
+		sserialize::err("CompressedMmappedFile", "Creating the decompression storage failed");
 		m_chunkIndex = Static::SortedOffsetIndex();
 		::munmap(m_chunkIndexData, mapLen);
 		::close(m_fd);
@@ -330,7 +330,7 @@ uint8_t* CompressedMmappedFilePrivate::mmapChunk(CompressedMmappedFilePrivate::S
 	
 	uint8_t * data = (uint8_t*) mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
 	if (data == MAP_FAILED) {
-		osmfindlog::err("CompressedMmappedFile", "Maping a chunk failed");
+		sserialize::err("CompressedMmappedFile", "Maping a chunk failed");
 		return 0;
 	}
 	return data+mapOverHead;
@@ -357,7 +357,7 @@ bool CompressedMmappedFilePrivate::do_unpack(const CompressedMmappedFilePrivate:
 	
 	uint8_t * data = (uint8_t*) mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
 	if (data == MAP_FAILED) {
-		osmfindlog::err("CompressedMmappedFile", "Maping a chunk failed");
+		sserialize::err("CompressedMmappedFile", "Maping a chunk failed");
 		::perror("CompressedMmappedFile::do_unpack::mmap");
 		return false;
 	}
