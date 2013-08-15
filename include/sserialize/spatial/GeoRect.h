@@ -18,6 +18,7 @@ public:
 	///@param str a string holding the definition in the same order as above @GeoRect(double latLeft, double latRight, double lonLeft, double lonRight)
 	///separated by whitespace, if fromLeafletBBox is set then southwest_lng,southwest_lat,northeast_lng,northeast_lat
 	GeoRect(const std::string & str, bool fromLeafletBBox = false);
+	GeoRect(const UByteArrayAdapter & data);
 	virtual ~GeoRect();
 	
 	double* lat();
@@ -30,6 +31,12 @@ public:
 	
 	double minLon() const;
 	double maxLon() const;
+	
+	double & minLat();
+	double & maxLat();
+	
+	double & minLon();
+	double & maxLon();
 	
 	bool overlap(const GeoRect & other) const;
 	bool contains(double lat, double lon) const;

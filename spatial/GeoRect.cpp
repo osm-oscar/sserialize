@@ -40,6 +40,13 @@ GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
 	}
 }
 
+GeoRect::GeoRect(const UByteArrayAdapter & data) {
+	sserialize::Static::spatial::GeoPoint bL(data);
+	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
+	m_lat[0] = bL.latD();
+	m_lat[1] = tR.latD();
+	m_lon[0] = bL.lonD();
+	m_lon[1] = tR.lonD();
 }
 
 GeoRect::~GeoRect() {}
@@ -53,6 +60,13 @@ double GeoRect::maxLat() const { return m_lat[1]; }
 
 double GeoRect::minLon() const { return m_lon[0]; }
 double GeoRect::maxLon() const { return m_lon[1]; }
+
+double & GeoRect::minLat() { return m_lat[0]; }
+double & GeoRect::maxLat() { return m_lat[1]; }
+
+double & GeoRect::minLon() { return m_lon[0]; }
+double & GeoRect::maxLon() { return m_lon[1]; }
+
 
 bool GeoRect::overlap(const GeoRect & other) const {
 	if ((m_lat[0] > other.m_lat[1]) || // this is left of other
