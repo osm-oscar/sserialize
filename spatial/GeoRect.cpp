@@ -1,5 +1,7 @@
 #include <sserialize/spatial/GeoRect.h>
+#include <sserialize/Static/GeoPoint.h>
 #include <sstream>
+#include <algorithm>
 
 namespace sserialize {
 namespace spatial {
@@ -28,7 +30,7 @@ GeoRect::GeoRect(double latLeft, double latRight, double lonLeft, double lonRigh
 GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
 	if (fromLeafletBBox) {
 		std::string tempStr = str;
-		std::replace(tempStr, ',', ' ');
+		std::replace(tempStr.begin(), tempStr.end(), ',', ' ');
 		std::stringstream ss(tempStr);
 		ss >> m_lon[0] >> m_lat[0] >> m_lon[1] >> m_lat[1];
 	}
