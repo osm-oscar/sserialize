@@ -24,7 +24,7 @@ public:
 	
 	inline sserialize::spatial::GeoShapeType type() const { return m_type; }
 	
-	GeoPoint at(uint32_t pos) const;
+	sserialize::Static::spatial::GeoPoint at(uint32_t pos) const;
 	sserialize::spatial::GeoRect boundary() const;
 	
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const;

@@ -31,28 +31,28 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 }
 	
 	
-GeoPoint GeoShape::at(uint32_t pos) const {
+sserialize::Static::spatial::GeoPoint GeoShape::at(uint32_t pos) const {
 	if (type() == sserialize::spatial::GS_POINT)
-		return GeoPoint(m_data);
+		return sserialize::Static::spatial::GeoPoint(m_data);
 	else
-		return GeoPoint(m_data + (sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*(2+pos)));
+		return sserialize::Static::spatial::GeoPoint(m_data + (sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*(2+pos)));
 }
 	
 sserialize::spatial::GeoRect GeoShape::boundary() const {
 	if (m_type == sserialize::spatial::GS_POINT) {
-		GeoPoint p(at(0));
+		sserialize::Static::spatial::GeoPoint p(at(0));
 		return sserialize::spatial::GeoRect(p.latD(), p.latD(), p.lonD(), p.lonD());
 	}
 	else {
-		GeoPoint bL(m_data);
-		GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
+		sserialize::Static::spatial::GeoPoint bL(m_data);
+		sserialize::Static::spatial::GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
 		return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
 	}
 }
 	
 bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
 	if (type() == sserialize::spatial::GS_POINT) {
-		GeoPoint p(at(0));
+		sserialize::Static::spatial::GeoPoint p(at(0));
 		return boundary.contains(p.latF(), p.lonF());
 	}
 	
@@ -60,7 +60,7 @@ bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
 		return false;
 	uint32_t s = size();
 	UByteArrayAdapter tmp(m_data+2*sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length); tmp.resetGetPtr();
-	GeoPoint p;
+	sserialize::Static::spatial::GeoPoint p;
 	for(size_t i = 0; i < s; ++i) {
 		tmp >> p;
 		if (boundary.contains(p.latF(), p.lonF()))
@@ -70,8 +70,8 @@ bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
 }
 	
 sserialize::spatial::GeoRect GeoShape::rectFromData(const UByteArrayAdapter &  data) {
-	GeoPoint bL(data);
-	GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
+	sserialize::Static::spatial::GeoPoint bL(data);
+	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
 	return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
 }
 
