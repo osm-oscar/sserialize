@@ -44,6 +44,7 @@ Static/RTree.cpp
 Static/HuffmanDecoder.cpp
 Static/KeyValueObjectStore.cpp
 Static/DynamicKeyValueObjectStore.cpp
+Static/GeoShape.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
