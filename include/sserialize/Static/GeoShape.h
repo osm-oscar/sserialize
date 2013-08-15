@@ -1,7 +1,8 @@
 #ifndef SSERIALIZE_STATIC_GEO_SHAPE_H
 #define SSERIALIZE_STATIC_GEO_SHAPE_H
 #include <sserialize/spatial/GeoShape.h>
-#include "GeoPoint.h"
+#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/Static/GeoPoint.h>
 
 namespace sserialize {
 namespace Static {
@@ -33,8 +34,18 @@ public:
 	
 	uint32_t size() const {
 		return m_size;
-	
 	}
+	
+	UByteArrayAdapter::OffsetType getSizeInBytes() const {
+		if (m_type == sserialize::spatial::GS_WAY || sserialize::spatial::GS_POLYGON) {
+			return 1 +  vl_pack_uint32_t_size(m_size) +  SerializationInfo<sserialize::spatial::GeoRect>::length + SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*m_size;
+		}
+		else if (m_data.size() || m_type == sserialize::spatial::GS_POINT) {
+			return 1;
+		}
+		return 0;
+	}
+	
 	sserialize::spatial::GeoShapeType type() const {
 		return m_type;
 	}
