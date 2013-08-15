@@ -15,7 +15,7 @@ namespace sserialize {
 
 
 struct FileHandler {
-	static inline void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName) {
+	static inline void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate) {
 		std::size_t fbSize = sserialize::UByteArrayAdapter::getTempFilePrefix().size();
 		char * fileName = new char[fbSize+7];
 		::memmove(fileName, sserialize::UByteArrayAdapter::getTempFilePrefix().c_str(), sizeof(char)*fbSize);
@@ -34,7 +34,12 @@ struct FileHandler {
 			return 0;
 		}
 		
-		void * data = ::mmap(0, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		int param = MAP_SHARED;
+		if (prePopulate) {
+			param |= MAP_POPULATE;
+		}
+		
+		void * data = ::mmap(0, fileSize, PROT_READ | PROT_WRITE, param, fd, 0);
 
 		if (data == MAP_FAILED) {
 			::close(fd);
@@ -79,9 +84,9 @@ private:
 	std::string m_fileName;
 	int m_fd;
 public:
-	MmappedMemoryPrivate(OffsetType size) : m_data(0), m_size(0), m_fd(-1) {
+	MmappedMemoryPrivate(OffsetType size, bool populate = false) : m_data(0), m_size(0), m_fd(-1) {
 		if (size) {
-			m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName);
+			m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate);
 			if (m_data) {
 				m_size = size;
 			}
