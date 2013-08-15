@@ -1,6 +1,8 @@
 #ifndef SSERIALIZE_SPATIAL_GEO_RECT_H
 #define SSERIALIZE_SPATIAL_GEO_RECT_H
 #include <ostream>
+#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/SerializationInfo.h>
 
 namespace sserialize {
 namespace spatial {
@@ -14,9 +16,10 @@ public:
 	GeoRect(const GeoRect & other);
 	GeoRect(double latLeft, double latRight, double lonLeft, double lonRight);
 	///@param str a string holding the definition in the same order as above @GeoRect(double latLeft, double latRight, double lonLeft, double lonRight)
-	///separated by whitespace
-	GeoRect(const std::string & str); 
+	///separated by whitespace, if fromLeafletBBox is set then southwest_lng,southwest_lat,northeast_lng,northeast_lat
+	GeoRect(const std::string & str, bool fromLeafletBBox = false);
 	virtual ~GeoRect();
+	
 	double* lat();
 	const double* lat() const;
 	double* lon();
@@ -45,5 +48,20 @@ public:
 }}//end namespace
 
 std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoRect & rect);
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoRect & rect);
+sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, sserialize::spatial::GeoRect & rect);
+
+namespace sserialize {
+
+	template<>
+	struct SerializationInfo<sserialize::spatial::GeoRect> {
+		static const bool is_fixed_length = true;
+		static const OffsetType length = 12;
+		static const OffsetType max_length = 12;
+		static const OffsetType min_length = 12;
+		static inline OffsetType sizeInBytes(const sserialize::spatial::GeoRect & value) { return 12; }
+	};
+}
 
 #endif

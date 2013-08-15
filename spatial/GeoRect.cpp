@@ -25,9 +25,19 @@ GeoRect::GeoRect(double latLeft, double latRight, double lonLeft, double lonRigh
 	m_lon[1] = lonRight;
 }
 
-GeoRect::GeoRect(const std::string & str) {
-	std::stringstream ss(str);
-	ss >> m_lat[0] >> m_lat[1] >> m_lon[0] >> m_lon[1];
+GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
+	if (fromLeafletBBox) {
+		std::string tempStr = str;
+		std::replace(tempStr, ',', ' ');
+		std::stringstream ss(tempStr);
+		ss >> m_lon[0] >> m_lat[0] >> m_lon[1] >> m_lat[1];
+	}
+	else {
+		std::stringstream ss(str);
+		ss >> m_lat[0] >> m_lat[1] >> m_lon[0] >> m_lon[1];
+	}
+}
+
 }
 
 GeoRect::~GeoRect() {}
