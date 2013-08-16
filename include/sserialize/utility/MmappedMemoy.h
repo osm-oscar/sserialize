@@ -15,7 +15,7 @@ namespace sserialize {
 
 
 struct FileHandler {
-	static inline void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate) {
+	static inline void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess) {
 		std::size_t fbSize = sserialize::UByteArrayAdapter::getFastTempFilePrefix().size();
 		char * fileName = new char[fbSize+7];
 		::memmove(fileName, sserialize::UByteArrayAdapter::getFastTempFilePrefix().c_str(), sizeof(char)*fbSize);
@@ -47,23 +47,37 @@ struct FileHandler {
 			fd = -1;
 			return 0;
 		}
+
+		if (randomAccess) {
+			::madvise(data, fileSize, MADV_RANDOM);
+		}
+
 		
 		tmpFileName = std::string(fileName);
 		
 		return data;
 	}
 	
-	static inline void * resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize) {
+	static inline void * resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize, bool prePopulate, bool randomAccess) {
 		if (::munmap(mem, oldSize) < 0) {
 			return 0;
 		}
 		if (::ftruncate(fd, newSize) < 0) {
 			return 0;
 		}
-		void * data = ::mmap(0, newSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		
+		int param = MAP_SHARED;
+		if (prePopulate) {
+			param |= MAP_POPULATE;
+		}
+
+		void * data = ::mmap(0, newSize, PROT_READ | PROT_WRITE, param, fd, 0);
 
 		if (data == MAP_FAILED) {
 			return 0;
+		}
+		if (randomAccess) {
+			::madvise(data, newSize, MADV_RANDOM);
 		}
 		return data;
 	}
@@ -83,10 +97,12 @@ private:
 	OffsetType m_size;
 	std::string m_fileName;
 	int m_fd;
+	bool m_populate;
+	bool m_randomAccess;
 public:
-	MmappedMemoryPrivate(OffsetType size, bool populate = false) : m_data(0), m_size(0), m_fd(-1) {
+	MmappedMemoryPrivate(OffsetType size, bool populate = false, bool randomAccess = true) : m_data(0), m_size(0), m_fd(-1), m_populate(populate), m_randomAccess(randomAccess) {
 		if (size) {
-			m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate);
+			m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess);
 			if (m_data) {
 				m_size = size;
 			}
@@ -102,7 +118,7 @@ public:
 	}
 	TValue * data() { return m_data; }
 	TValue * resize(OffsetType newSize) {
-		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue));
+		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), m_populate, m_randomAccess);
 		if (!m_data)
 			throw sserialize::CreationException("MmappedMemory::resize");
 		m_size = newSize;
