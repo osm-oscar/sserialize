@@ -88,7 +88,7 @@ sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, s
 namespace sserialize {
 template<>
 sserialize::Static::spatial::GeoShape sserialize::UByteArrayAdapter::get<sserialize::Static::spatial::GeoShape>() {
-	sserialize::Static::spatial::GeoShape shape(*this);
+	sserialize::Static::spatial::GeoShape shape(*this+this->tellGetPtr());
 	this->incGetPtr(shape.getSizeInBytes());
 	return shape;
 }
