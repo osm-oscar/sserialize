@@ -16,9 +16,9 @@ namespace sserialize {
 
 struct FileHandler {
 	static inline void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate) {
-		std::size_t fbSize = sserialize::UByteArrayAdapter::getTempFilePrefix().size();
+		std::size_t fbSize = sserialize::UByteArrayAdapter::getFastTempFilePrefix().size();
 		char * fileName = new char[fbSize+7];
-		::memmove(fileName, sserialize::UByteArrayAdapter::getTempFilePrefix().c_str(), sizeof(char)*fbSize);
+		::memmove(fileName, sserialize::UByteArrayAdapter::getFastTempFilePrefix().c_str(), sizeof(char)*fbSize);
 		::memset(fileName+fbSize, 'X', 6);
 		fileName[fbSize+6] = 0;
 		

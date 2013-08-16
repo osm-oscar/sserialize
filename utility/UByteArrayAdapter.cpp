@@ -9,6 +9,7 @@
 namespace sserialize {
 
 std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
+std::string UByteArrayAdapter::m_fastTempFilePrefix = TEMP_FILE_PREFIX;
 
 UByteArrayAdapter::UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv) :
 m_priv(priv),
@@ -911,8 +912,17 @@ std::string UByteArrayAdapter::getTempFilePrefix() {
 	return m_tempFilePrefix;
 }
 
+std::string UByteArrayAdapter::getFastTempFilePrefix() {
+	return m_fastTempFilePrefix;
+}
+
 void UByteArrayAdapter::setTempFilePrefix(const std::string& path) {
 	m_tempFilePrefix = path;
+}
+
+
+void UByteArrayAdapter::setFastTempFilePrefix(const std::string & path) {
+	m_fastTempFilePrefix = path;
 }
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset() {
