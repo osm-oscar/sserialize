@@ -67,6 +67,10 @@ double & GeoRect::maxLat() { return m_lat[1]; }
 double & GeoRect::minLon() { return m_lon[0]; }
 double & GeoRect::maxLon() { return m_lon[1]; }
 
+///TODO:check how fast it would be to calculate the real length
+double GeoRect::length() const {
+	return 2*(m_lat[0]-m_lat[1])+2*(m_lon[0]-m_lon[1]);
+}
 
 bool GeoRect::overlap(const GeoRect & other) const {
 	if ((m_lat[0] > other.m_lat[1]) || // this is left of other

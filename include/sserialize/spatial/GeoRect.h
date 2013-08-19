@@ -38,6 +38,10 @@ public:
 	double & minLon();
 	double & maxLon();
 	
+	double diagonalLength() const;
+	
+	double length() const;
+	
 	bool overlap(const GeoRect & other) const;
 	bool contains(double lat, double lon) const;
 	
