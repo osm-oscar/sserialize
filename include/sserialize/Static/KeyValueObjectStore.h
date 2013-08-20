@@ -94,6 +94,8 @@ public:
 	KeyValueObjectStore(const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStore();
 	uint32_t size() const;
+	const Static::StringTable & keyStringTable() const;
+	const Static::StringTable & valueStringTable() const;
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t findKeyId(const std::string & str) const;
 	uint32_t findValueId(const std::string & str) const;
@@ -120,6 +122,8 @@ public:
 	KeyValueObjectStorePrivate(const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStorePrivate();
 	uint32_t size() const;
+	inline const Static::StringTable & keyStringTable() const { return m_keyStringTable; }
+	inline const Static::StringTable & valueStringTable() const { return m_valueStringTable; }
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t findKeyId(const std::string & str) const;
 	uint32_t findValueId(const std::string & str) const;

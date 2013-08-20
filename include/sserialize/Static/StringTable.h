@@ -35,6 +35,7 @@ public:
 	inline std::string at(uint32_t pos) const { return priv()->at(pos); }
 	inline UByteArrayAdapter dataAt(uint32_t pos) const { return priv()->dataAt(pos);}
 	inline int32_t find(const std::string & value) const { return priv()->find(value);}
+	inline bool count(const std::string & value) const { return find(value) >= 0; }
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
 };

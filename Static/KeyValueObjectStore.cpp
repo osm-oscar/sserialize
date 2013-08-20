@@ -149,6 +149,14 @@ uint32_t KeyValueObjectStore::size() const {
 	return priv()->size();
 }
 
+const Static::StringTable & KeyValueObjectStore::keyStringTable() const {
+	return m_priv->keyStringTable();
+}
+
+const Static::StringTable & KeyValueObjectStore::valueStringTable() const {
+	return m_priv->valueStringTable();
+}
+
 UByteArrayAdapter::OffsetType KeyValueObjectStore::getSizeInBytes() const {
 	return priv()->getSizeInBytes();
 }
