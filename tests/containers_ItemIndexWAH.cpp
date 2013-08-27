@@ -197,8 +197,6 @@ public:
 		uint32_t setCount = 16;
 
 		for(size_t i = 0; i < setCount; i++) {
-			if (i == 8)
-				std::cout << "reached" << std::endl;
 		
 			DynamicBitSet bitSet;
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );

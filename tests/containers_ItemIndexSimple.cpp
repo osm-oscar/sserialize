@@ -38,12 +38,12 @@ std::set<uint32_t> myCreateNumbers(uint32_t count, uint32_t maxNum) {
 
 class ItemIndexPrivateSimpleTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexPrivateSimpleTest );
-// CPPUNIT_TEST( testRandomCreator );
-// CPPUNIT_TEST( testRandomEquality );
+CPPUNIT_TEST( testRandomCreator );
+CPPUNIT_TEST( testRandomEquality );
 CPPUNIT_TEST( testSpecialEquality );
-// CPPUNIT_TEST( testIntersect );
-// CPPUNIT_TEST( testUnite );
-// CPPUNIT_TEST( testDynamicBitSet );
+CPPUNIT_TEST( testIntersect );
+CPPUNIT_TEST( testUnite );
+CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
