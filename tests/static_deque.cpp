@@ -1,10 +1,10 @@
+#include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/Asserter.h>
 #include <sserialize/Static/Deque.h>
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <deque>
+#include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
+#include <deque>
 
 using namespace sserialize;
 
@@ -12,113 +12,90 @@ std::deque< std::deque<uint32_t> > createDequeOfDequeNumbers(uint32_t maxCountPe
 	std::deque< std::deque<uint32_t> > res;
 	for(size_t i = 0; i < maxDequeCount; i++) {
 		uint32_t tmpCount = (double)rand()/RAND_MAX * maxCountPerDeque;
-		res.push_back(createNumbers(tmpCount));
+		res.push_back(sserialize::createNumbers(tmpCount));
 	}
 	return res;
 }
 
-template<typename TValue>
-bool testDeque(std::deque<TValue> & realValues) {
-	UByteArrayAdapter adap(new std::deque<uint8_t>(), true);
-	adap << realValues;
+int TestCount = 10;
+uint32_t TestMask = 0xFFF;
 
-	sserialize::Static::Deque<TValue> sdeque;
-	adap >> sdeque;
-	return (sdeque == realValues) && (adap.size() == sdeque.getSizeInBytes());
-}
-
-template<typename TValue>
-bool testDequeCreatorRawPut(std::deque<TValue> & realValues) {
-	UByteArrayAdapter adap(new std::vector<uint8_t>(), true);
-	Static::DequeCreator<TValue> creator(adap);
-	for(size_t i = 0; i< realValues.size(); ++i) {
-		creator.beginRawPut();
-		creator.rawPut() << realValues[i];
-		creator.endRawPut();
+class TestDeque: public CppUnit::TestFixture {
+CPPUNIT_TEST_SUITE( TestDeque );
+CPPUNIT_TEST( testNumbers );
+CPPUNIT_TEST( testStrings );
+CPPUNIT_TEST( testDequeInDeque );
+CPPUNIT_TEST( testStringsRawPut );
+CPPUNIT_TEST_SUITE_END();
+public:
+	virtual void setUp() {}
+	virtual void tearDown() {}
+	void testNumbers() {
+		std::deque<uint32_t> realValues = createNumbers(TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		d << realValues;
+		d.resetPutPtr();
+		sserialize::Static::Deque<uint32_t> sd(d);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
+		}
 	}
-	creator.flush();
-	sserialize::Static::Deque<TValue> sdeque;
-	adap >> sdeque;
-	return (sdeque == realValues) && (adap.size() == sdeque.getSizeInBytes());
-}
-
-
-bool testDeque(std::deque< std::deque<uint32_t> > & realValues) {
-	UByteArrayAdapter adap(new std::deque<uint8_t>(), true);
-	adap << realValues;
-
-	sserialize::Static::Deque< sserialize::Static::Deque<uint32_t> > sdeque;
-	adap >> sdeque;
-	if (realValues.size() != sdeque.size())
-		return false;
-	for(size_t i = 0; i < realValues.size(); i++) {
-		if (sdeque.at(i) != realValues.at(i))
-			return false;
+	
+	void testStrings() {
+		std::deque<std::string> realValues = createStrings(33, TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		d << realValues;
+		sserialize::Static::Deque<std::string> sd(d);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
+		}
 	}
-	return adap.size() == sdeque.getSizeInBytes();
-}
+	
+	void testStringsRawPut() {
+		std::deque<std::string> realValues = createStrings(33, TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		Static::DequeCreator<std::string> creator(d);
+		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			creator.beginRawPut();
+			creator.rawPut() << realValues[i];
+			creator.endRawPut();
+		}
+		sserialize::Static::Deque<std::string> sd(creator.flush());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
+		}
+	}
+	
+	void testDequeInDeque() {
+		std::deque< std::deque<uint32_t> > realValues = createDequeOfDequeNumbers(TestMask & rand(), TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		d << realValues;
+		sserialize::Static::Deque< Static::Deque<uint32_t>  > sd(d);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			Static::Deque<uint32_t> t = sd.at(i);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(toString("size at ", i), (uint32_t)realValues[i].size(), t.size());
+			for(uint32_t j = 0, sj = realValues[i].size(); j < sj; ++j) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at [", i,":",j,"]"), realValues[i][j], t.at(j));
+			}
+		}
+	}
+	
+
+	
+};
 
 int main() {
-	srand(0);
-	bool allOk = true;
-	
-	std::deque<uint32_t> nums = createNumbers(1023);
-	if (testDeque(nums)) {
-		std::cout << "Passed number test" << std::endl;
-	}
-	else {
-		allOk = false;
-		std::cout << "Failed number test" << std::endl;
-	}
-
-	if (testDequeCreatorRawPut(nums)) {
-		std::cout << "Passed DequeCreatorRawPut number test" << std::endl;
-	}
-	else {
-		allOk = false;
-		std::cout << "Failed DequeCreatorRawPut number test" << std::endl;
-	}
-
-
-	std::deque<std::string> strs = createStrings(33, 1023);
-	if (testDeque(strs)) {
-		std::cout << "Passed string test" << std::endl;
-	}
-	else {
-		allOk = false;
-		std::cout << "Failed string test" << std::endl;
-	}
-
-	strs = createStrings(0xFFFF, 0xFF);
-	if (testDeque(strs)) {
-		std::cout << "Passed large string test" << std::endl;
-	}
-	else {
-		allOk = false;
-		std::cout << "Failed large string test" << std::endl;
-	}
-	
-	strs = createStrings(0xFFFF, 0xFF);
-	if (testDequeCreatorRawPut(strs)) {
-		std::cout << "Passed DequeCreatorRawPut large string test" << std::endl;
-	}
-	else {
-		allOk = false;
-		std::cout << "Failed DequeCreatorRawPut large string test" << std::endl;
-	}
-	
-	
-	std::deque< std::deque<uint32_t> > dequeOfDequeNums = createDequeOfDequeNumbers(129, 33);
-	if (testDeque(dequeOfDequeNums)) {
-		std::cout << "Passed dequeOfDequeNums test" << std::endl;
-	}
-	else {
-		allOk = false;
-		std::cout << "Failed dequeOfDequeNums test" << std::endl;
-	}
-
-	if (allOk)
-		std::cout << "PASSED all test." << std::endl;
-	else
-		std::cout << "FAILED at least one test!" << std::endl;
+	srand( 0 );
+	CppUnit::TextUi::TestRunner runner;
+	runner.addTest(  TestDeque::suite() );
+	runner.run();
+	return 0;
 }
