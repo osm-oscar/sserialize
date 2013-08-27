@@ -297,16 +297,14 @@ bool fillVariableSize(const std::deque<uint32_t> & realNumbers, std::deque<uint3
 	codedPositions.resize(realNumbers.size(), 0);
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		if (vl_pack_uint32_t_valid(num)) {
-			int len = adapter.putVlPackedUint32(curPos, num);
-			if (len > 0) {
-				codedPositions[i] = curPos;
-				curPos += len;
-			}
-			else {
-				std::cout << "Failed to encode number " << num << std::endl;
-				return false;
-			}
+		int len = adapter.putVlPackedUint32(curPos, num);
+		if (len > 0) {
+			codedPositions[i] = curPos;
+			curPos += len;
+		}
+		else {
+			std::cout << "Failed to encode number " << num << std::endl;
+			return false;
 		}
 	}
 	return true;
@@ -315,9 +313,7 @@ bool fillVariableSize(const std::deque<uint32_t> & realNumbers, std::deque<uint3
 bool fillVariableSizeStreaming(const std::deque<uint32_t> & realNumbers, UByteArrayAdapter & adapter) {
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		if (vl_pack_uint32_t_valid(num)) {
-			adapter.putVlPackedUint32(num);
-		}
+		adapter.putVlPackedUint32(num);
 	}
 	return true;
 }
@@ -327,12 +323,10 @@ bool testVariableSize(std::deque<uint32_t> & realNumbers, const std::deque<uint3
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum;
-		if (vl_pack_uint32_t_valid(num)) {
-			int len;
-			codedNum = adapter.getVlPackedUint32(codedPositions[i], &len);
-			if (len <= 0 || codedNum != num) {
-				return false;
-			}
+		int len;
+		codedNum = adapter.getVlPackedUint32(codedPositions[i], &len);
+		if (len <= 0 || codedNum != num) {
+			return false;
 		}
 	}
 	return true;
@@ -343,11 +337,9 @@ bool testVariableSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAda
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum;
-		if (vl_pack_uint32_t_valid(num)) {
-			codedNum = adapter.getVlPackedUint32();
-			if (codedNum != num) {
-				return false;
-			}
+		codedNum = adapter.getVlPackedUint32();
+		if (codedNum != num) {
+			return false;
 		}
 	}
 	return true;
@@ -382,16 +374,14 @@ bool fillVariableSizeNegative(const std::deque<uint32_t> & realNumbers, std::deq
 	codedPositions.resize(realNumbers.size(), 0);
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		int32_t num = -realNumbers.at(i);
-		if (vl_pack_int32_t_valid(num)) {
-			int len = adapter.putVlPackedInt32(curPos, num);
-			if (len > 0) {
-				codedPositions[i] = curPos;
-				curPos += len;
-			}
-			else {
-				std::cout << "Failed to encode number " << num << std::endl;
-				return false;
-			}
+		int len = adapter.putVlPackedInt32(curPos, num);
+		if (len > 0) {
+			codedPositions[i] = curPos;
+			curPos += len;
+		}
+		else {
+			std::cout << "Failed to encode number " << num << std::endl;
+			return false;
 		}
 	}
 	return true;
@@ -400,12 +390,10 @@ bool fillVariableSizeNegative(const std::deque<uint32_t> & realNumbers, std::deq
 bool fillVariableSizeNegativeStreaming(const std::deque<uint32_t> & realNumbers, UByteArrayAdapter & adapter) {
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		int32_t num = -realNumbers.at(i);
-		if (vl_pack_int32_t_valid(num)) {
-			int len = adapter.putVlPackedInt32(num);
-			if (len < 0) {
-				std::cout << "Failed to encode number " << num << std::endl;
-				return false;
-			}
+		int len = adapter.putVlPackedInt32(num);
+		if (len < 0) {
+			std::cout << "Failed to encode number " << num << std::endl;
+			return false;
 		}
 	}
 	return true;
@@ -416,12 +404,10 @@ bool testVariableSizeNegative(const std::deque<uint32_t> & realNumbers, const st
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		int32_t num = -realNumbers.at(i);
 		int32_t codedNum;
-		if (vl_pack_int32_t_valid(num)) {
-			int len;
-			codedNum = adapter.getVlPackedInt32(codedPositions[i], &len);
-			if (len <= 0 || codedNum != num) {
-				return false;
-			}
+		int len;
+		codedNum = adapter.getVlPackedInt32(codedPositions[i], &len);
+		if (len <= 0 || codedNum != num) {
+			return false;
 		}
 	}
 	return true;
@@ -432,11 +418,9 @@ bool testVariableSizeNegativeStreaming(const std::deque<uint32_t> & realNumbers,
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		int32_t num = -realNumbers.at(i);
 		int32_t codedNum;
-		if (vl_pack_int32_t_valid(num)) {
-			codedNum = adapter.getVlPackedInt32();
-			if (codedNum != num) {
-				return false;
-			}
+		codedNum = adapter.getVlPackedInt32();
+		if (codedNum != num) {
+			return false;
 		}
 	}
 	return true;
