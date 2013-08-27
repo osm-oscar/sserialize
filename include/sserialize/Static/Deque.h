@@ -71,7 +71,7 @@ public:
 			throw sserialize::CreationException("Deque::flush Offset index reports wrong sizeInBytes()");
 		}
 #endif
-		return m_dest + m_beginOffSet;
+		return m_dest + (m_beginOffSet-1-UByteArrayAdapter::OffsetTypeSerializedLength());
 	}
 	
 	void writeOutOffset() {
