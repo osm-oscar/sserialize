@@ -87,7 +87,7 @@ int32_t UByteArrayAdapterPrivateChunkedMmappedFile::getInt32(UByteArrayAdapter::
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_int32_t(buf[0], buf[1], buf[2], buf[3]);
+	return unPack_int32_t(buf);
 }
 
 uint32_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint32(UByteArrayAdapter::OffsetType pos) const {
@@ -100,7 +100,7 @@ uint32_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint32(UByteArrayAdapter
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint32_t(buf[0], buf[1], buf[2], buf[3]);
+	return unPack_uint32_t(buf);
 }
 
 uint32_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint24(UByteArrayAdapter::OffsetType pos) const {
@@ -113,7 +113,7 @@ uint32_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint24(UByteArrayAdapter
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint24_t(buf[0], buf[1], buf[2]);
+	return unPack_uint24_t(buf);
 }
 
 uint16_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint16(UByteArrayAdapter::OffsetType pos) const {
@@ -126,7 +126,7 @@ uint16_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint16(UByteArrayAdapter
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint16_t(buf[0], buf[1]);
+	return unPack_uint16_t(buf);
 }
 
 uint8_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint8(UByteArrayAdapter::OffsetType pos) const {

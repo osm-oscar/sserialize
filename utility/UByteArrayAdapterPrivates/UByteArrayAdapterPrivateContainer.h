@@ -2,6 +2,7 @@
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_CONTAINER_H
 #include "UByteArrayAdapterPrivate.h"
 #include <sserialize/utility/pack_unpack_functions.h>
+#include <array>
 
 namespace sserialize {
 
@@ -101,35 +102,41 @@ const uint8_t & UByteArrayAdapterPrivateContainer<T_CONTAINER>::operator[](UByte
 }
 template<typename T_CONTAINER>
 int64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getInt64(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_int64_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3],
-							(*m_data)[pos+4], (*m_data)[pos+5], (*m_data)[pos+6], (*m_data)[pos+7]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3],
+							(*m_data)[pos+4], (*m_data)[pos+5], (*m_data)[pos+6], (*m_data)[pos+7]};
+	return unPack_int64_t(tmp);
 }
 
 template<typename T_CONTAINER>
 uint64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getUint64(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint64_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3],
-							(*m_data)[pos+4], (*m_data)[pos+5], (*m_data)[pos+6], (*m_data)[pos+7]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3],
+							(*m_data)[pos+4], (*m_data)[pos+5], (*m_data)[pos+6], (*m_data)[pos+7]};
+	return unPack_uint64_t(tmp);
 }
 
 
 template<typename T_CONTAINER>
 int32_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getInt32(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_int32_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3]};
+	return unPack_int32_t(tmp);
 }
 
 template<typename T_CONTAINER>
 uint32_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getUint32(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint32_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3]};
+	return unPack_uint32_t(tmp);
 }
 
 template<typename T_CONTAINER>
 uint32_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getUint24(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint24_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2]};
+	return unPack_uint24_t(tmp);
 }
 
 template<typename T_CONTAINER>
 uint16_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getUint16(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint16_t((*m_data)[pos], (*m_data)[pos+1]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1]};
+	return unPack_uint16_t(tmp);
 }
 
 template<typename T_CONTAINER>
@@ -139,12 +146,14 @@ uint8_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getUint8(UByteArrayAdapt
 
 template<typename T_CONTAINER>
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateContainer<T_CONTAINER>::getNegativeOffset(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_int40_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3], (*m_data)[pos+4]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3], (*m_data)[pos+4]};
+	return unPack_int40_t(tmp);
 }
 
 template<typename T_CONTAINER>
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateContainer<T_CONTAINER>::getOffset(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint40_t((*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3], (*m_data)[pos+4]);
+	uint8_t tmp[] = {(*m_data)[pos], (*m_data)[pos+1], (*m_data)[pos+2], (*m_data)[pos+3], (*m_data)[pos+4]};
+	return unPack_uint40_t(tmp);
 }
 
 template<typename T_CONTAINER>

@@ -35,7 +35,7 @@ uint64_t UByteArrayAdapterPrivateArray::getUint64(UByteArrayAdapter::OffsetType 
 }
 
 int32_t UByteArrayAdapterPrivateArray::getInt32(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_int32_t(m_data[pos], m_data[pos+1], m_data[pos+2], m_data[pos+3]);
+	return unPack_int32_t(&m_data[pos]);
 }
 
 uint32_t UByteArrayAdapterPrivateArray::getUint32(UByteArrayAdapter::OffsetType pos) const {
@@ -43,11 +43,11 @@ uint32_t UByteArrayAdapterPrivateArray::getUint32(UByteArrayAdapter::OffsetType 
 }
 
 uint32_t UByteArrayAdapterPrivateArray::getUint24(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint24_t(m_data[pos], m_data[pos+1], m_data[pos+2]);
+	return unPack_uint24_t(&m_data[pos]);
 }
 
 uint16_t UByteArrayAdapterPrivateArray::getUint16(UByteArrayAdapter::OffsetType pos) const {
-	return unPack_uint16_t(m_data[pos], m_data[pos+1]);
+	return unPack_uint16_t(&m_data[pos]);
 }
 
 uint8_t UByteArrayAdapterPrivateArray::getUint8(UByteArrayAdapter::OffsetType pos) const {

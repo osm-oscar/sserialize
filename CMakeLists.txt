@@ -104,7 +104,6 @@ set(UTILITY_SOURCES_CPP
 utility/mmappedfile.cpp
 utility/ChunkedMmappedFile.cpp
 utility/CompressedMmappedFile.cpp
-utility/pack_unpack_functions.cpp
 utility/stringfunctions.cpp
 utility/unicode_case_functions.cpp
 utility/CompactUintArray.cpp

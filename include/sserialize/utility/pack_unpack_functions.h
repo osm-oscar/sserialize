@@ -5,6 +5,11 @@
 /* memcpy */
 #include <string.h>
 
+#include <type_traits>
+#include <functional>
+#include <limits>
+#include <sserialize/utility/utilmath.h>
+
 /* make sure be32toh and be64toh are present */
 #if defined(__linux__)
 #  if defined(__ANDROID__)
@@ -38,94 +43,77 @@ static uint64_t my_htobe64(uint64_t x) {
 
 #endif
 
+///Pack functions:
+///Current default encoding: little-endian encoding, signed values as two-complement TODO:check for architectures not using two complement
+
 namespace sserialize {
 
+//unpack functions
 
-inline uint8_t unPack_uint8_t(const uint8_t a) {
-	return a;
+inline uint8_t unPack_uint8_t(const uint8_t * src ) {
+	return *src;
 }
 
-inline uint16_t unPack_uint16_t(const uint8_t c, const uint8_t d) {
-	return (
-		(static_cast<uint16_t>(c) << 8) |
-		(static_cast<uint16_t>(d) << 0)
-	);
+inline uint16_t unPack_uint16_t(const uint8_t * src ) {
+	uint16_t i;
+	memcpy(&i, src, sizeof(i));
+	return le16toh(i);
 }
 
-inline uint32_t unPack_uint24_t(const uint8_t b, const uint8_t c, const uint8_t d) {
-	return (
-		(static_cast<uint32_t>(b) << 16) |
-		(static_cast<uint32_t>(c) << 8) |
-		(static_cast<uint32_t>(d) << 0)
-	);
-}
-
-inline uint32_t unPack_uint32_t(const unsigned char * src ) {
+inline uint32_t unPack_uint32_t(const uint8_t * src ) {
 	uint32_t i;
 	memcpy(&i, src, sizeof(i));
-	return be32toh(i);
+	return le32toh(i);
 }
 
-inline uint64_t unPack_uint64_t(const unsigned char * src) {
+inline uint64_t unPack_uint64_t(const uint8_t * src) {
 	uint64_t i;
 	memcpy(&i, src, sizeof(i));
-	return be64toh(i);
+	return le64toh(i);
 }
 
-inline uint64_t unPack_uint40_t(const unsigned char * src) {
-	unsigned char tmp[8] = {0};
-	memcpy(tmp + 3, src, 5);
-	return unPack_uint64_t(tmp);
+inline uint32_t unPack_uint24_t(const uint8_t * src ) {
+	uint32_t i = 0;
+	memcpy(&i, src, 3);
+	return le32toh(i);
 }
 
-inline void pack_uint8_t(uint32_t s, uint8_t * d) {
-	d[0] = s;
+inline uint64_t unPack_uint40_t(const uint8_t * src) {
+	uint64_t i = 0;
+	memcpy(&i, src, 5);
+	return le64toh(i);
 }
 
-inline void pack_uint16_t(uint32_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
-	d[1] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
+inline int8_t up_s8(const uint8_t * src) {
+	return *src;
 }
 
-inline void pack_uint24_t(uint32_t s, uint8_t * d) {
-	d[0] = static_cast<uint8_t>((s & 0x00FF0000) >> 16);
-	d[1] = static_cast<uint8_t>((s & 0x0000FF00) >> 8);
-	d[2] = static_cast<uint8_t>((s & 0x000000FF) >> 0); 
+inline int16_t up_s16(const uint8_t * src) {
+	return unPack_uint16_t(src);
 }
 
-inline void pack_uint32_t(uint32_t src, unsigned char * dest) {
-	src = htobe32(src);
-	memcpy(dest, &src, sizeof(src));
+inline int32_t up_s24(const uint8_t * src) {
+	uint32_t tmp = unPack_uint24_t(src);
+	if (tmp & 0x1)
+		return - (tmp >> 1);
+	else
+		return (tmp >> 1);
 }
 
-inline void pack_uint40_t(uint64_t src, unsigned char * dest) {
-	src = htobe64(src);
-	memcpy(dest, 3 + (unsigned char*) &src, 5);
+inline int32_t unPack_int32_t(const uint8_t * src) {
+	return unPack_uint32_t(src);
 }
 
-inline void pack_uint64_t(uint64_t src, unsigned char * dest) {
-	src = htobe64(src);
-	memcpy(dest, &src, sizeof(src));
+inline int64_t unPack_int40_t(const uint8_t * src) {
+	uint64_t tmp = unPack_uint40_t(src);
+	if (tmp & 0x1)
+		return - (tmp >> 1);
+	else
+		return (tmp >> 1);
 }
 
-//BUG: do this right
-inline uint64_t pack_double_to_uint64_t(const double src) {
-	union {
-		double d;
-		uint64_t ui;
-	} tmp;
-	tmp.d = src;
-	return tmp.ui;
-}
-
-//BUG: do this right
-inline uint32_t pack_float_to_uint32_t(const float src) {
-	union {
-		float d;
-		uint32_t ui;
-	} tmp;
-	tmp.d = src;
-	return tmp.ui;
+inline int64_t unPack_int64_t(const uint8_t * src) {
+	return unPack_uint64_t(src);
 }
 
 inline double unpack_double_from_uint64_t(const uint64_t src) {
@@ -147,6 +135,84 @@ inline float unpack_float_from_uint32_t(const uint32_t src) {
 	return tmp.d;
 }
 
+//pack functions
+
+inline void pack_uint8_t(uint8_t src, uint8_t * dest) {
+	dest[0] = src;
+}
+
+inline void pack_uint16_t(uint16_t src, uint8_t * dest) {
+	src  = htole16(src);
+	memcpy(dest, &src, sizeof(src));
+}
+
+inline void pack_uint32_t(uint32_t src, unsigned char * dest) {
+	src = htole32(src);
+	memcpy(dest, &src, sizeof(src));
+}
+
+inline void pack_uint64_t(uint64_t src, unsigned char * dest) {
+	src = htole64(src);
+	memcpy(dest, &src, sizeof(src));
+}
+
+inline void pack_uint24_t(uint32_t src, uint8_t * dest) {
+	uint8_t tmp[4];
+	pack_uint32_t(src, tmp);
+	memcpy(dest, tmp, 3);
+}
+
+inline void pack_uint40_t(uint64_t src, unsigned char * dest) {
+	uint8_t tmp[8];
+	pack_uint64_t(src, tmp);
+	memcpy(dest, tmp, 5);
+}
+
+inline void p_s8(int8_t src, uint8_t * d) {
+	*d = src;
+}
+
+inline void p_s16(int16_t src, uint8_t * d) {
+	pack_uint16_t(src, d);
+}
+
+inline void p_s24(int32_t src, uint8_t * d) {
+	pack_uint24_t( (src < 0 ? ((static_cast<uint32_t>(-src) << 1) | 0x1) : static_cast<uint32_t>(src) << 1 ), d);
+}
+
+inline void pack_int32_t(int32_t s, uint8_t * d) {
+	pack_uint32_t(s, d);
+}
+
+inline void pack_int40_t(int64_t s, uint8_t * d) {
+	pack_uint40_t( (s < 0 ? ((static_cast<uint64_t>(-s) << 1) | 0x1) : static_cast<uint64_t>(s) << 1 ), d);
+}
+
+inline void pack_int64_t(int64_t s, uint8_t * d) {
+	pack_uint64_t(s, d);
+}
+
+
+//BUG: do this right
+inline uint64_t pack_double_to_uint64_t(const double src) {
+	union {
+		double d;
+		uint64_t ui;
+	} tmp;
+	tmp.d = src;
+	return tmp.ui;
+}
+
+//BUG: do this right
+inline uint32_t pack_float_to_uint32_t(const float src) {
+	union {
+		float d;
+		uint32_t ui;
+	} tmp;
+	tmp.d = src;
+	return tmp.ui;
+}
+
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
 typedef int(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
 typedef int(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
@@ -154,107 +220,8 @@ typedef int(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
 typedef uint32_t(*VlUnPackUint32FunctionsFuncPtr)(uint8_t * s, int * len);
 typedef int32_t(*VlUnPackInt32FunctionsFuncPtr)(int8_t * s, int * len);
 
-
-inline uint32_t unPack_uint32_t(const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
-	uint8_t tmp[4] = {a, b, c , d};
-	return unPack_uint32_t(tmp);
-}
-
-inline uint64_t unPack_uint64_t(const uint8_t i0, const uint8_t i1, const uint8_t i2, const uint8_t i3, const uint8_t i4, const uint8_t i5, const uint8_t i6, const uint8_t i7) {
-	uint8_t tmp[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
-	return unPack_uint64_t(tmp);
-}
-
-inline uint64_t unPack_uint40_t(const uint8_t i0, const uint8_t i1, const uint8_t i2, const uint8_t i3, const uint8_t i4) {
-	uint8_t tmp[5] = {i0, i1, i2, i3, i4};
-	return unPack_uint40_t(tmp);
-}
-
-inline int64_t unPack_int40_t(const uint8_t * src) {
-	uint64_t tmp = unPack_uint40_t(src);
-	if (tmp & 0x1)
-		return - (tmp >> 1);
-	else
-		return (tmp >> 1);
-}
-
-inline int64_t unPack_int40_t(const uint8_t i0, const uint8_t i1, const uint8_t i2, const uint8_t i3, const uint8_t i4) {
-	uint64_t tmp = unPack_uint40_t(i0, i1, i2, i3, i4);
-	if (tmp & 0x1)
-		return - (tmp >> 1);
-	else
-		return (tmp >> 1);
-}
-
-inline int64_t unPack_int64_t(const uint8_t * src) {
-	uint64_t tmp = unPack_uint64_t(src);
-	if (tmp & 0x1)
-		return - (tmp >> 1);
-	else
-		return (tmp >> 1);
-}
-
-inline int64_t unPack_int64_t(const uint8_t i0, const uint8_t i1, const uint8_t i2, const uint8_t i3, const uint8_t i4, const uint8_t i5, const uint8_t i6, const uint8_t i7) {
-	uint64_t tmp = unPack_uint64_t(i0, i1, i2, i3, i4, i5, i6, i7);
-	if (tmp & 0x1)
-		return - (tmp >> 1);
-	else
-		return (tmp >> 1);
-}
-
-inline int32_t unPack_int32_t(const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d) {
-	uint32_t tmp = unPack_uint32_t(a,b,c,d);
-	if (tmp & 0x1)
-		return - (tmp >> 1);
-	else
-		return (tmp >> 1);
-}
-
-inline void pack_int64_t(int64_t s, uint8_t * d) {
-	uint64_t tmp;
-	if (s < 0)
-		tmp = (-s << 1) | 0x1;
-	else
-		tmp = (s << 1);
-	pack_uint64_t(tmp, d);
-}
-
-inline void pack_int40_t(int64_t s, uint8_t * d) {
-	uint64_t tmp;
-	if (s < 0)
-		tmp = (-s << 1) | 0x1;
-	else
-		tmp = (s << 1);
-	pack_uint40_t(tmp, d);
-}
-
-inline void pack_int32_t(int32_t s, uint8_t * d) {
-	uint32_t tmp;
-	if (s < 0)
-		tmp = (-s << 1) | 0x1;
-	else
-		tmp = (s << 1);
-	pack_uint32_t(tmp, d);
-}
-
-inline uint32_t vl_unpack_uint32_t(uint8_t * s, int * len) {
-	uint32_t retVal = 0;
-	int myLen = 0;
-	int myShift = 0;
-	do {
-		retVal |= static_cast<uint32_t>(s[myLen] & 0x7F) << myShift;
-		++myLen;
-		myShift += 7;
-	}
-	while (myLen < 5 && s[myLen-1] & 0x80);
-	
-	if (len)
-		*len = myLen;
-		
-	return retVal;
-}
-
-inline int vl_pack_uint32_t(uint32_t s, uint8_t * d) {
+template<typename UnsignedType>
+int p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s, uint8_t * d) {
 	int8_t i = 0;
 	do {
 		d[i] = s & 0x7F;
@@ -266,16 +233,67 @@ inline int vl_pack_uint32_t(uint32_t s, uint8_t * d) {
 	return i;
 }
 
-inline uint64_t vl_unpack_uint64_t(uint8_t * s, int * len) {
-	uint64_t retVal = 0;
+template<typename SignedType>
+int p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s, uint8_t * d) {
+	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
+	UnsignedType tmp;
+	if (s < 0) {
+		tmp = -s;
+		tmp <<= 1;
+		tmp |= 0x1;
+	}
+	else {
+		tmp = s;
+		tmp <<= 1;
+	}
+	return p_v<UnsignedType>(tmp, d);
+}
+
+
+inline int vl_pack_uint32_t(uint32_t s, uint8_t * d) { return p_v<uint32_t>(s, d);}
+
+inline int vl_pack_uint32_t_pad4(uint32_t s, uint8_t * d) {
+	int8_t i = 0;
+	while (i < 4) {
+		d[i] = (s & 0x7F) | 0x80;
+		s = s >> 7;
+		++i;
+	}
+	d[3] = d[3] & 0x7F;
+	return i;
+}
+
+inline int vl_pack_uint64_t(uint64_t s, uint8_t * d) { return p_v<uint64_t>(s, d);}
+
+inline int vl_pack_int32_t(int32_t s, uint8_t * d) { return p_v<int32_t>(s, d);}
+
+inline int vl_pack_int32_t_pad4(int32_t s, uint8_t * d) {
+	uint32_t tmp;
+	if (s < 0) {
+		tmp = -s;
+		tmp = (tmp << 1) | 0x1;
+	}
+	else {
+		tmp = s;
+		tmp = (tmp << 1);
+	}
+	return vl_pack_uint32_t_pad4(tmp, d);
+}
+
+inline int vl_pack_int64_t(int64_t s, uint8_t * d) { return p_v<int64_t>(s, d);}
+
+template<typename UnsignedType>
+typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type up_v(uint8_t * s, int * len) {
+	const int maxLen = std::numeric_limits<UnsignedType>::digits/7 + (std::numeric_limits<uint32_t>::digits % 7 ? 1 : 0);
+	UnsignedType retVal = 0;
 	int myLen = 0;
 	int myShift = 0;
 	do {
-		retVal |= static_cast<uint64_t>(s[myLen] & 0x7F) << myShift;
+		retVal |= static_cast<UnsignedType>(s[myLen] & 0x7F) << myShift;
 		++myLen;
 		myShift += 7;
 	}
-	while (s[myLen-1] & 0x80 && myLen < 9);
+	while (myLen < maxLen && s[myLen-1] & 0x80);
 	
 	if (len)
 		*len = myLen;
@@ -283,45 +301,63 @@ inline uint64_t vl_unpack_uint64_t(uint8_t * s, int * len) {
 	return retVal;
 }
 
-/** @param len
- * len = length of bytes of the value
- */
+template<typename SignedType>
+typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type up_v(uint8_t * s, int * len) {
+	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
+	UnsignedType tmp = up_v<UnsignedType>(s, len);
+	//check if signed or unsigned
+	SignedType stmp = (tmp >> 1);
+	if (tmp & 0x1)
+		return -stmp;
+	return stmp;
+}
 
-int32_t vl_unpack_int32_t(uint8_t * s, int * len);
+inline uint32_t vl_unpack_uint32_t(uint8_t * s, int * len) { return up_v<uint32_t>(s, len);}
+inline uint64_t vl_unpack_uint64_t(uint8_t * s, int * len) { return up_v<uint64_t>(s, len);}
+inline int32_t vl_unpack_int32_t(uint8_t * s, int * len) { return up_v<int32_t>(s, len);}
+inline int64_t vl_unpack_int64_t(uint8_t* s, int* len) { return up_v<int64_t>(s, len);}
 
-/** @param d needs at most 5 bytes
- *  @return returns the element count (-1 if failed)
- */
+template<typename UnsignedType>
+int psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s) {
+	int8_t i = 0;
+	do {
+		s >>= 7;
+		++i;
+	} while (s);
+	return i;
+}
 
-int vl_pack_uint32_t_size(uint32_t s);
+template<typename SignedType>
+int psize_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s) {
+	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
+	UnsignedType tmp;
+	if (s < 0) {
+		tmp = -s;
+		tmp <<= 1;
+		tmp |= 0x1;
+	}
+	else {
+		tmp = s;
+		tmp <<= 1;
+	}
+	return psize_v<UnsignedType>(tmp);
+}
 
-/** @param d needs 4 bytes
- *  @return returns the element count (-1 if failed)
- */
-int vl_pack_uint32_t_pad4(uint32_t s, uint8_t * d);
+inline int vl_pack_uint32_t_size(uint32_t s) {
+	return psize_v<uint32_t>(s);
+}
 
+inline int vl_pack_int32_t_size(int32_t s) {
+	return psize_v<int32_t>(s);
+}
 
-/** @param d needs at most 4 bytes
- *  @return returns the element count (-1 if failed)
- */
-int vl_pack_int32_t(int32_t s, uint8_t * d);
+inline int vl_pack_uint64_t_size(uint64_t s) {
+	return psize_v<uint64_t>(s);
+}
 
-int vl_pack_int32_t_size(int32_t s);
-
-
-int vl_pack_int32_t_pad4(int32_t s, uint8_t * d);
-
-
-bool vl_pack_uint32_t_valid(uint32_t number);
-bool vl_pack_int32_t_valid(int32_t number);
-
-int vl_pack_uint64_t(uint64_t s, uint8_t * d);
-
-int64_t vl_unpack_int64_t(uint8_t* s, int* len);
-int vl_pack_int64_t(int64_t s, uint8_t * d);
-
-int vl_pack_uint64_t_size(uint64_t s);
-int vl_pack_int64_t_size(int64_t s);
+inline int vl_pack_int64_t_size(int64_t s) {
+	return psize_v<int64_t>(s);
+}
 
 }//end namespace
 
