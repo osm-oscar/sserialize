@@ -19,17 +19,15 @@ CompactTrieNodePrivate::CompactTrieNodePrivate(const UByteArrayAdapter & nodeDat
 m_data(nodeData)
 {
 	UByteArrayAdapter current = m_data;
-// 	uint8_t m_header = current.at(0);
+	m_nodeHeader = m_data.getUint16(0);
 	uint8_t arrayInfoLen;
 
-	if (current.at(0) & 0x20) { //carry-bit is set
-		m_childCount = current.getUint16(1);
-		m_childCount = m_childCount & 0xFFF;
+	if (m_nodeHeader & 0x2000) { //carry-bit is set
+		m_childCount = (m_nodeHeader & 0xF) | ( static_cast<uint16_t>(m_data.getUint8(2)) << 4);
 		arrayInfoLen = 3;
 	}
 	else {
-		m_childCount = current.at(1);
-		m_childCount = m_childCount & 0xF;
+		m_childCount = m_nodeHeader & 0xF;
 		arrayInfoLen = 2;
 	}
 	m_strLen = current.at(arrayInfoLen);
@@ -144,7 +142,7 @@ TrieNodePrivate* CompactTrieNodePrivate::childAt(uint32_t pos) const {
 
 void CompactTrieNodePrivate::dump() const {
 	std::cout << "[";
-	std::cout << "m_current[0]=" << static_cast<int>(m_data.at(0)) << ";";
+	std::cout << "m_nodeHeader=" << m_nodeHeader << ";";
 	std::cout << "m_charWidth=" << static_cast<int>(charWidth()) << "; ";
 	std::cout << "m_childCount=" << static_cast<int>(m_childCount) << "; ";
 	std::cout << "m_strLen=" << static_cast<int>(m_strLen) << "; ";
@@ -172,7 +170,7 @@ uint32_t CompactTrieNodePrivate::getStorageSize() const {
 }
 
 uint32_t CompactTrieNodePrivate::getHeaderStorageSize() const {
-	if (m_data.at(0) & 0x20)
+	if (m_nodeHeader & 0x2000)
 		return 3;
 	else
 		return 2;
@@ -258,9 +256,9 @@ CompactStaticTrieCreationNode::createNewNode(
 
 	if (childrenCount > 0xF) {
 		nodeHeader |= 0x2000;
-		nodeHeader |= (childrenCount >> 8) & 0xF;
+		nodeHeader |= childrenCount & 0xF;
 		destination.putUint16(nodeHeader);
-		destination.putUint8(childrenCount & 0xFF);
+		destination.putUint8((childrenCount >> 4) & 0xFF);
 	}
 	else {
 		nodeHeader |= childrenCount;
@@ -323,7 +321,8 @@ CompactStaticTrieCreationNode::createNewNode(
 		return CompactStaticTrieCreationNode::INDEX_PTR_FAILED;
 	}
 	
-	destination[putPtr] |= bpn-1;
+	nodeHeader |= static_cast<uint16_t>(bpn-1) << 8;
+	destination.putUint16(putPtr, nodeHeader);
 	destination.put(indexPtrsData);
 
 	return CompactStaticTrieCreationNode::NO_ERROR;

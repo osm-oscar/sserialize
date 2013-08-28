@@ -20,12 +20,15 @@
  * Node layout
  * 
  * ----------------------------------------------------------------------------------------------------------
- * amliiiii|4idtlLLL|LLLLLLLL|SLSLSLSL|SSSSSSSSS|CCCCCCCCCCCC|FCPFCPFCP|CPCPCPCP|  IDXPTRS |SUBTRIEPTR|
+ * amliiiii|epsSLLLL|LLLLLLLL|SLSLSLSL|SSSSSSSSS|CCCCCCCCCCCC|FCPFCPFCP|CPCPCPCP|  IDXPTRS |SUBTRIEPTR|
  * ----------------------------------------------------------------------------------------------------------
  * 1 byte  | 1 byte | 1 byte | 1 byte | SL byte |(1-2 byte)*l|  4 byte |2*(L-1) |CompactArr|  4 byte  |
  * a = width of the characters (0 => 1 byte, 1 => 2 bytes)
  * m = node has a merge index
- * 4idt = index types (4 bits)
+ * e = node has a exact index
+ * p = node has a prefix index
+ * s = node has a suffix index
+ * S = node has a suffixPrefix index
  * i = index bits per number count
  * l = if true, then there's another length byte following
  * L = length of the following char->pointer array
@@ -50,6 +53,7 @@ protected:
 	UByteArrayAdapter m_data;
 
 	//Node info
+	uint16_t m_nodeHeader;
 	uint16_t m_childCount;
 	uint8_t m_strLen;
 
@@ -65,17 +69,17 @@ private:
 	uint32_t getSubTriePtrOffset() const;
 	uint32_t getChildPtrBeginOffset() const;
 	
-	IndexTypes indexTypes() const { return (IndexTypes) (m_data.at(1) >> 4);}
-	uint8_t indexArrBpn() const { return (m_data.at(0) & 0x1F) + 1;}
+	IndexTypes indexTypes() const { return (IndexTypes) ((m_nodeHeader & 0xF0) >> 4);}
+	uint8_t indexArrBpn() const { return ((m_nodeHeader >> 8) & 0x1F) + 1;}
 	
 public:
 	CompactTrieNodePrivate(const UByteArrayAdapter & nodeData);
 	~CompactTrieNodePrivate() {}
 
 	virtual uint32_t childCount() const { return m_childCount;}
-	virtual uint8_t charWidth() const { return ((m_data.at(0) & 0x80) >> 7) + 1;}
+	virtual uint8_t charWidth() const { return (m_nodeHeader >> 15) + 1;}
 	virtual uint8_t strLen() const { return m_strLen; }
-	virtual bool hasMergeIndex() const { return m_data.at(0) & 0x40; }
+	virtual bool hasMergeIndex() const { return (m_nodeHeader >> 14) & 0x1; }
 	virtual bool hasExactIndex() const { return indexTypes() & IT_EXACT;}
 	virtual bool hasPrefixIndex() const { return indexTypes() & IT_PREFIX;}
 	virtual bool hasSuffixIndex() const { return indexTypes() & IT_SUFFIX;}
