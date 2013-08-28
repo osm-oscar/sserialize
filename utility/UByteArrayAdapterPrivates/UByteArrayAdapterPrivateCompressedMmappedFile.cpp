@@ -51,7 +51,7 @@ int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getInt64(UByteArrayAdapte
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_int64_t(buf);
+	return up_s64(buf);
 }
 
 uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint64(UByteArrayAdapter::OffsetType pos) const {
@@ -64,7 +64,7 @@ uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint64(UByteArrayAdap
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint64_t(buf);
+	return up_u64(buf);
 }
 
 int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getInt32(UByteArrayAdapter::OffsetType pos) const {
@@ -77,7 +77,7 @@ int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getInt32(UByteArrayAdapte
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_int32_t(buf);
+	return up_s32(buf);
 }
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint32(UByteArrayAdapter::OffsetType pos) const {
@@ -90,7 +90,7 @@ uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint32(UByteArrayAdap
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint32_t(buf);
+	return up_u32(buf);
 }
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint24(UByteArrayAdapter::OffsetType pos) const {
@@ -103,7 +103,7 @@ uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint24(UByteArrayAdap
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint24_t(buf);
+	return up_u24(buf);
 }
 
 uint16_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint16(UByteArrayAdapter::OffsetType pos) const {
@@ -116,7 +116,7 @@ uint16_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint16(UByteArrayAdap
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint16_t(buf);
+	return up_u16(buf);
 }
 
 uint8_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint8(UByteArrayAdapter::OffsetType pos) const {
@@ -136,7 +136,7 @@ UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateCompressedMmappedFile::get
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_uint40_t(buf);
+	return up_u40(buf);
 }
 
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateCompressedMmappedFile::getNegativeOffset(UByteArrayAdapter::OffsetType pos) const {
@@ -149,7 +149,7 @@ UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateCompressedMmappedF
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return unPack_int40_t(buf);
+	return up_s40(buf);
 }
 
 int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -163,7 +163,7 @@ int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArr
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return vl_unpack_int64_t(buf, length);
+	return up_vs64(buf, length);
 }
 
 uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -177,7 +177,7 @@ uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteA
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return vl_unpack_uint64_t(buf, length);
+	return up_vu64(buf, length);
 }
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -191,7 +191,7 @@ uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint32(UByteA
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return vl_unpack_uint32_t(buf, length);
+	return up_vu32(buf, length);
 }
 
 int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -204,7 +204,7 @@ int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt32(UByteArr
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return vl_unpack_int32_t(buf, length);
+	return up_vs32(buf, length);
 }
 
 void UByteArrayAdapterPrivateCompressedMmappedFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {

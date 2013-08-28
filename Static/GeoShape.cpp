@@ -22,7 +22,7 @@ GeoShape::GeoShape(const UByteArrayAdapter & data) : m_type(static_cast<sseriali
 
 UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 	if (m_type == sserialize::spatial::GS_WAY || sserialize::spatial::GS_POLYGON) {
-		return 1 +  vl_pack_uint32_t_size(m_size) +  SerializationInfo<sserialize::spatial::GeoRect>::length + SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*m_size;
+		return 1 +  psize_vu32(m_size) +  SerializationInfo<sserialize::spatial::GeoRect>::length + SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*m_size;
 	}
 	else if (m_data.size() || m_type == sserialize::spatial::GS_POINT) {
 		return 1;

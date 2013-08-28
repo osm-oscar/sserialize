@@ -743,7 +743,7 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t 
 }
 
 int UByteArrayAdapter::put(const OffsetType pos, const std::string & str) {
-	uint32_t needSize = vl_pack_uint32_t_size(str.size()) + str.size();
+	uint32_t needSize = psize_vu32(str.size()) + str.size();
 	if (m_len < pos+needSize)
 		return -1;
 	int len = putVlPackedUint32(pos, str.size());
@@ -1063,10 +1063,10 @@ int UByteArrayAdapter::__NAME(const __TYPE value) { \
 	return len; \
 } \
 
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, vl_pack_uint64_t_size, uint64_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, vl_pack_int64_t_size, int64_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint32, vl_pack_uint32_t_size, uint32_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, vl_pack_int32_t_size, int32_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, psize_vu64, uint64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, psize_vs64, int64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint32, psize_vu32, uint32_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, psize_vs32, int32_t);
 
 #undef UBA_PUT_VL_STREAMING_FUNC
 
@@ -1094,7 +1094,7 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 }
 
 bool UByteArrayAdapter::put(const std::string& str) {
-	uint32_t needSize = vl_pack_uint32_t_size(str.size()) + str.size();
+	uint32_t needSize = psize_vu32(str.size()) + str.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	int pushedBytes = put(m_putPtr, str);

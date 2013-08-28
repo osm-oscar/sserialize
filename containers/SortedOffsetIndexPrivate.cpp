@@ -94,12 +94,12 @@ SortedOffsetIndexPrivate::~SortedOffsetIndexPrivate() {}
 UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::getSizeInBytes() const {
 	switch (m_size) {
 	case 0: return 1;
-	case 1: return 1+vl_pack_uint64_t_size(m_yintercept);
+	case 1: return 1+psize_vu64(m_yintercept);
 	default:
-		UByteArrayAdapter::OffsetType size = vl_pack_uint64_t_size( static_cast<uint64_t>(m_size) << 6);
-		size += vl_pack_uint64_t_size(m_slopenom);
-		size += vl_pack_int64_t_size(m_yintercept);
-		size += vl_pack_uint64_t_size(m_idOffset);
+		UByteArrayAdapter::OffsetType size = psize_vu64( static_cast<uint64_t>(m_size) << 6);
+		size += psize_vu64(m_slopenom);
+		size += psize_vs64(m_yintercept);
+		size += psize_vu64(m_idOffset);
 		uint64_t idStoreBitCount = static_cast<uint64_t>(m_size)*m_idStore.bpn();
 		size += idStoreBitCount/8 + (idStoreBitCount % 8 ? 1 : 0);
 		return size;

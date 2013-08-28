@@ -483,7 +483,7 @@ bool GeneralizedTrie::addHeader(uint8_t trieType, uint8_t nodeType, uint16_t lon
 	destination.push_back(nodeType);
 	
 	uint8_t buf[4];
-	pack_uint16_t(longestString, buf);
+	p_u16(longestString, buf);
 	for(size_t i = 0; i < 2; i++)
 		destination.push_back(buf[i]);
 

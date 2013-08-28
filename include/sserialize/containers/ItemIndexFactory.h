@@ -77,7 +77,7 @@ public:
 			if (m_compressionType == Static::ItemIndexStore::IC_VARUINT32) {
 				UByteArrayAdapter nd(&s);
 				for(std::vector<uint8_t>::const_iterator it(mys.begin()), end(mys.end()); it != end; it += 4) {
-					uint32_t v = unPack_uint32_t(&(*it));
+					uint32_t v = up_u32(&(*it));
 					nd.putVlPackedUint32(v);
 				}
 			}

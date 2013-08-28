@@ -146,8 +146,8 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 
 	std::vector<uint8_t> header(COMPRESSED_MMAPPED_FILE_HEADER_SIZE, 0);
 	header[0] = chunkSizeExponent;
-	pack_uint40_t(src.size(), &header[1]);
-	pack_uint40_t(dataSize, &header[6]);
+	p_u40(src.size(), &header[1]);
+	p_u40(dataSize, &header[6]);
 	header[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] = COMPRESSED_MMAPPED_FILE_VERSION;
 	
 	dest.put(header);
@@ -223,8 +223,8 @@ bool CompressedMmappedFilePrivate::do_open() {
 	
 	m_chunkShift = headerData[0];
 	m_chunkMask = createMask(m_chunkShift);
-	m_size = unPack_uint40_t(&headerData[1]);
-	m_compressedSize = unPack_uint40_t(&headerData[6]);
+	m_size = up_u40(&headerData[1]);
+	m_compressedSize = up_u40(&headerData[6]);
 	
 	//prepare the data for the index
 	size_t mapOverHead = (m_compressedSize % m_pageSize);

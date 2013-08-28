@@ -6,7 +6,6 @@
 
 namespace sserialize {
 
-#if 1
 class UByteArrayAdapterPrivateVector: public UByteArrayAdapterPrivateArray {
 	std::vector<uint8_t> * m_data;
 public:
@@ -38,9 +37,7 @@ public:
 		return true;
 	}
 };
-#else
-	typedef UByteArrayAdapterPrivateContainer< std::vector<uint8_t> > UByteArrayAdapterPrivateVector;
-#endif
+
 }
 
 #endif

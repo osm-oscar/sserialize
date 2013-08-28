@@ -147,7 +147,7 @@ template<int TSTRIDE>
 inline int16_t findKeyInArray_uint16(uint8_t * arrayStart, uint16_t len, uint16_t key) {
 	uint16_t srcKey;
 	for(int i = 0; i < len; i++) {
-		srcKey = unPack_uint16_t(&arrayStart[TSTRIDE*i]);
+		srcKey = up_u16(&arrayStart[TSTRIDE*i]);
 		if (srcKey == key) return i;
 	}
 	return -1;
@@ -157,7 +157,7 @@ template<int TSTRIDE>
 inline int32_t findKeyInArray_uint24(uint8_t * arrayStart, uint32_t len, uint32_t key) {
 	uint32_t srcKey;
 	for(int i = 0; i < len; i++) {
-		srcKey = unPack_uint24_t(&arrayStart[TSTRIDE*i]);
+		srcKey = up_u24(&arrayStart[TSTRIDE*i]);
 		if (srcKey == key) return i;
 	}
 	return -1;
@@ -167,7 +167,7 @@ template<int TSTRIDE>
 inline int32_t findKeyInArray_uint32(uint8_t * arrayStart, uint32_t len, uint32_t key) {
 	uint32_t srcKey;
 	for(int i = 0; i < len; i++) {
-		srcKey = unPack_uint32_t(&arrayStart[TSTRIDE*i]);
+		srcKey = up_u32(&arrayStart[TSTRIDE*i]);
 		if (srcKey == key) return i;
 	}
 	return -1;
@@ -201,7 +201,7 @@ inline int16_t binarySearchKeyInArray_uint16(uint8_t * arrayStart, int16_t len, 
 	int16_t mid = (right-left)/2+left;
 	uint16_t srcKey;
 	while( left < right ) {
-		srcKey = unPack_uint16_t(&arrayStart[TSTRIDE*mid]);
+		srcKey = up_u16(&arrayStart[TSTRIDE*mid]);
 		if (srcKey == key) return mid;
 		if (srcKey < key) { // key should be to the right
 			left = mid+1;
@@ -211,7 +211,7 @@ inline int16_t binarySearchKeyInArray_uint16(uint8_t * arrayStart, int16_t len, 
 		}
 		mid = (right-left)/2+left;
 	}
-	srcKey = unPack_uint16_t(&arrayStart[TSTRIDE*mid]);
+	srcKey = up_u16(&arrayStart[TSTRIDE*mid]);
 	return ((srcKey == key) ? mid : -1);
 }
 
@@ -223,7 +223,7 @@ inline int32_t binarySearchKeyInArray_uint24(uint8_t * arrayStart, int32_t len, 
 	int32_t mid = (right-left)/2+left;
 	uint32_t srcKey;
 	while( left < right ) {
-		srcKey = unPack_uint24_t(&arrayStart[TSTRIDE*mid]);
+		srcKey = up_u24(&arrayStart[TSTRIDE*mid]);
 		if (srcKey == key) return mid;
 		if (srcKey < key) { // key should be to the right
 			left = mid+1;
@@ -233,7 +233,7 @@ inline int32_t binarySearchKeyInArray_uint24(uint8_t * arrayStart, int32_t len, 
 		}
 		mid = (right-left)/2+left;
 	}
-	srcKey = unPack_uint24_t(&arrayStart[TSTRIDE*mid]);
+	srcKey = up_u24(&arrayStart[TSTRIDE*mid]);
 	return ((srcKey == key) ? mid : -1);
 }
 
@@ -245,7 +245,7 @@ inline int32_t binarySearchKeyInArray_uint32(uint8_t * arrayStart, int32_t len, 
 	int32_t mid = (right-left)/2+left;
 	uint32_t srcKey;
 	while( left < right ) {
-		srcKey = unPack_uint32_t(&arrayStart[TSTRIDE*mid]);
+		srcKey = up_u32(&arrayStart[TSTRIDE*mid]);
 		if (srcKey == key) return mid;
 		if (srcKey < key) { // key should be to the right
 			left = mid+1;
@@ -255,7 +255,7 @@ inline int32_t binarySearchKeyInArray_uint32(uint8_t * arrayStart, int32_t len, 
 		}
 		mid = (right-left)/2+left;
 	}
-	srcKey = unPack_uint32_t(&arrayStart[TSTRIDE*mid]);
+	srcKey = up_u32(&arrayStart[TSTRIDE*mid]);
 	return ((srcKey == key) ? mid : -1);
 }
 

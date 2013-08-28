@@ -193,7 +193,7 @@ uint32_t LargeCompactTrieNodePrivate::getStorageSize() const {
 }
 
 uint32_t LargeCompactTrieNodePrivate::getHeaderStorageSize() const {
-	return 2 + vl_pack_uint32_t_size(m_childCount >> 3);
+	return 2 + psize_vu32(m_childCount >> 3);
 }
 
 uint32_t LargeCompactTrieNodePrivate::getNodeStringStorageSize() const {
@@ -202,7 +202,7 @@ uint32_t LargeCompactTrieNodePrivate::getNodeStringStorageSize() const {
 
 uint32_t LargeCompactTrieNodePrivate::getChildPtrStorageSize() const {
 	if (childCount()) {
-		uint32_t s = vl_pack_uint32_t_size(m_childPtrBaseOffset);
+		uint32_t s = psize_vu32(m_childPtrBaseOffset);
 		if (childCount() > 1)
 			s += CompactUintArray::minStorageBytes(childPtrBits(), childCount()-1);
 		return s;

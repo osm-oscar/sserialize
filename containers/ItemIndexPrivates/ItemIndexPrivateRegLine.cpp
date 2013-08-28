@@ -11,7 +11,7 @@ namespace sserialize {
 bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 	
 	int curLen;
-	m_size = index.getVlPackedUint32(0, &curLen); //vl_unpack_uint32_t(m_index.data(), &curLen);
+	m_size = index.getVlPackedUint32(0, &curLen); //up_vu32(m_index.data(), &curLen);
 	if (curLen < 0) {
 		sserialize::err("ItemIndexPrivateRegLine::init", "ERROR: Index is invalid");
 		return false;
@@ -29,7 +29,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 			return false;
 		}
 		index += curLen;
-		m_slopenom = index.getVlPackedUint32(0, &curLen); //vl_unpack_uint32_t(m_index.data(), &curLen);
+		m_slopenom = index.getVlPackedUint32(0, &curLen); //up_vu32(m_index.data(), &curLen);
 		if (curLen < 0) {
 			sserialize::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
 			m_size = 0;
@@ -39,7 +39,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 		}
 		index += curLen;
 
-		m_idOffset = index.getVlPackedUint32(0, &curLen); //vl_unpack_uint32_t(m_index.data(), &curLen);
+		m_idOffset = index.getVlPackedUint32(0, &curLen); //up_vu32(m_index.data(), &curLen);
 		if (curLen < 0) {
 			sserialize::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
 			m_size = 0;
@@ -177,16 +177,16 @@ uint32_t ItemIndexPrivateRegLine::getSizeInBytes() const {
 uint32_t ItemIndexPrivateRegLine::getHeaderbytes() const {
 	if (m_size == 0)
 		return 1;
-	return vl_pack_uint32_t_size(m_size << 5);
+	return psize_vu32(m_size << 5);
 }
 
 uint32_t ItemIndexPrivateRegLine::getRegressionLineBytes() const {
 	if (m_size == 0) return 0;
 	uint32_t size = 0;
 	if (m_size > 1) {
-		size += vl_pack_uint32_t_size(m_slopenom);
-		size += vl_pack_int32_t_size(m_yintercept);
-		size += vl_pack_uint32_t_size(m_idOffset);
+		size += psize_vu32(m_slopenom);
+		size += psize_vs32(m_yintercept);
+		size += psize_vu32(m_idOffset);
 	}
 	return size;
 }
