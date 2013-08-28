@@ -1050,23 +1050,20 @@ UBA_PUT_STREAMING_FUNC(putFloat, float, 4);
 
 #undef UBA_PUT_STREAMING_FUNC
 
-#define UBA_PUT_VL_STREAMING_FUNC(__NAME, __SIZEFUNC, __TYPE) \
+#define UBA_PUT_VL_STREAMING_FUNC(__NAME, __BUFSIZE, __SERFUNC, __TYPE) \
 int UByteArrayAdapter::__NAME(const __TYPE value) { \
-	int len = __SIZEFUNC(value); \
+	uint8_t tmp[__BUFSIZE]; \
+	int len = __SERFUNC(value, tmp); \
 	if (len < 0) \
-		return false; \
-	if (!resizeForPush(m_putPtr, len)) \
-		return false; \
-	len = __NAME(m_putPtr, value); \
-	if (len > 0) \
-		m_putPtr += len; \
+		return -1; \
+	put(tmp, len); \
 	return len; \
 } \
 
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, psize_vu64, uint64_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, psize_vs64, int64_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint32, psize_vu32, uint32_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, psize_vs32, int32_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, 9, p_vu64, uint64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, 9, p_vs64, int64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint32, 5, p_vu32, uint32_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, 5, p_vs32, int32_t);
 
 #undef UBA_PUT_VL_STREAMING_FUNC
 
