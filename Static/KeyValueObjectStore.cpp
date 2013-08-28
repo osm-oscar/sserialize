@@ -220,7 +220,7 @@ uint32_t KeyValueObjectStorePrivate::size() const {
 }
 
 UByteArrayAdapter::OffsetType KeyValueObjectStorePrivate::getSizeInBytes() const {
-	return m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInBytes()+m_items.getSizeInBytes();
+	return 1+m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInBytes()+m_items.getSizeInBytes();
 }
 
 uint32_t KeyValueObjectStorePrivate::findKeyId(const std::string & str) const {
