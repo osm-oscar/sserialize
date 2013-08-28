@@ -47,6 +47,11 @@ int main(int argc, char **argv) {
 
 
 	Static::StringTable stable(stableDataAdapter);
+	
+	if (stable.getSizeInBytes() != stableDataAdapter.size()) {
+		std::cerr << "Static::StringTable::getSizeInBytes() wrong" << std::endl;
+	}
+	
 	if (stable.size() != strings.size()) {
 		std::cout << "Static::StringTable.count() is invalid. Should: " << strings.size() << " is: " << stable.size() << std::endl;
 	}
