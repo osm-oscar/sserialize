@@ -256,9 +256,6 @@ bool testNodeImplementationPrivateBottumUp(uint8_t minCharWidth, uint8_t maxChar
 			config.charWidth = charWidth;
 			config.indexType = (TrieNodePrivate::IndexTypes) indexTypeIt;
 			std::cout << "Run with charWidth=" << (int) config.charWidth << " and indexType=" << config.indexType << std::endl;
-			if (charWidth == 2 && indexTypeIt == 3 && nodeType == 3) {
-				std::cout << "da" << std::endl;
-			}
 			if (!createAndTestNodePrivateBottomUp<StaticTrieCreationNodeT, StaticTrieNodeT>(config)) {
 				allOk = false;
 			}
@@ -279,13 +276,17 @@ int main() {
 	srand(0);
 
 	std::cout << "Testing SimpleTrieNodePrivate" << std::endl;
-	testNodeImplementationPrivateBottumUp<SimpleStaticTrieCreationNode, SimpleTrieNodePrivate>(1,2,0,0xF, 1);
+	bool ok = testNodeImplementationPrivateBottumUp<SimpleStaticTrieCreationNode, SimpleTrieNodePrivate>(1,2,0,0xF, 1);
 
 	std::cout << "Testing CompactTrieNodePrivate" << std::endl;
-	testNodeImplementationPrivateBottumUp<CompactStaticTrieCreationNode, CompactTrieNodePrivate>(1,2,0,0xF, 2);
+	ok = testNodeImplementationPrivateBottumUp<CompactStaticTrieCreationNode, CompactTrieNodePrivate>(1,2,0,0xF, 2) && ok;
 
 	std::cout << "Testing LargeCompactTrieNodePrivate" << std::endl;
-	testNodeImplementationPrivateBottumUp<LargeCompactTrieNodeCreator, LargeCompactTrieNodePrivate>(1,4,0x0,0xF, 3);
+	ok = testNodeImplementationPrivateBottumUp<LargeCompactTrieNodeCreator, LargeCompactTrieNodePrivate>(1,4,0x0,0xF, 3) && ok;
+	
+	if (!ok) {
+		std::cout << "Some tests Failed" << std::endl;
+	}
 	
 	return 0;
 }
