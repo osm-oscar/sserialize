@@ -45,7 +45,7 @@ protected:
 		m_trie.setCaseSensitivity(m_caseSensitive);
 		m_trie.setSuffixTrie(m_suffixTrie);
 	
-		m_trie.setDB(db());
+		m_trie.setDB(db(), true);
 		
 		m_config.trieList = &m_stTrieList;
 		m_config.mergeIndex = m_mergeIndex;
@@ -127,7 +127,7 @@ public:
 		tempTrie.setCaseSensitivity(m_caseSensitive);
 		tempTrie.setSuffixTrie(m_suffixTrie);
 	
-		tempTrie.setDB(db());
+		tempTrie.setDB(db(), true);
 		tempTrie.trieSerializationProblemFixer();
 		
 		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());

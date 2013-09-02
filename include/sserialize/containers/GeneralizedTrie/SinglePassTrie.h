@@ -47,10 +47,10 @@ public:
 	void swap(MyBaseClass::MyBaseClass & other);
 	
 	template<typename ItemType>
-	bool setDB(const StringsItemDBWrapper< ItemType >& db);
+	bool setDB(const StringsItemDBWrapper< ItemType >& db, bool inMemoryIndex);
 	
 	template<typename T_ITEM_FACTORY, typename T_ITEM>
-	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactory);
+	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, bool inMemoryIndex);
 	
 	void createStaticTrie(GeneralizedTrieCreatorConfig & config);
 	
@@ -58,13 +58,13 @@ public:
 };
 
 template<typename ItemType>
-bool SinglePassTrie::setDB(const StringsItemDBWrapper< ItemType >& db) {
+bool SinglePassTrie::setDB(const StringsItemDBWrapper< ItemType >& db, bool inMemoryIndex) {
 	StringsItemDBWrapperStringsFactory<ItemType> stringsFactory(db);
-	return fromStringsFactory<StringsItemDBWrapperStringsFactory<ItemType>, typename StringsItemDBWrapperStringsFactory<ItemType>::value_type>(stringsFactory);
+	return fromStringsFactory<StringsItemDBWrapperStringsFactory<ItemType>, typename StringsItemDBWrapperStringsFactory<ItemType>::value_type>(stringsFactory, inMemoryIndex);
 }
 
 template<typename T_ITEM_FACTORY, typename T_ITEM>
-bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
+bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, bool inMemoryIndex) {
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes;
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes;
 	uint64_t exactStorageNeed = 0;
@@ -112,8 +112,8 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
 	std::cout << "Creating temporary on-disk storage for indices" << std::endl;
 	std::cout << "Exact index: " << sserialize::prettyFormatSize(exactStorageNeed*sizeof(uint32_t)) << std::endl;
 	std::cout << "Suffix index: " << sserialize::prettyFormatSize(suffixStorageNeed*sizeof(uint32_t)) << std::endl;
-	exactIndicesMem = sserialize::MmappedMemory<uint32_t>(exactStorageNeed);
-	suffixIndicesMem= sserialize::MmappedMemory<uint32_t>(suffixStorageNeed);
+	exactIndicesMem = sserialize::MmappedMemory<uint32_t>(exactStorageNeed, inMemoryIndex);
+	suffixIndicesMem= sserialize::MmappedMemory<uint32_t>(suffixStorageNeed, inMemoryIndex);
 	{
 		uint32_t * exactIndicesPtr = exactIndicesMem.begin();
 		uint32_t * suffixIndicesPtr = suffixIndicesMem.begin();
