@@ -37,7 +37,7 @@ protected:
 			return dest;
 		}
 	};
-	friend class ItemDataPushSerializer;
+	friend struct ItemDataPushSerializer;
 private:
 	KeyStringTable m_keyStringTable;
 	ValueStringTable m_valueStringTable;
