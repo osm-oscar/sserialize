@@ -72,7 +72,7 @@ public:
 
 	/**create a static stringtable, you should call reAssignStringIds before **/
 	void createStaticStringTable(UByteArrayAdapter & destination) {
-		Static::StringTable::create(destination, m_strIdToStr);
+		Static::StringTable::create<std::map<unsigned int, std::string>, std::string >(destination, m_strIdToStr);
 	}
 	
 	void absorb(StringsItemDBPrivate<ItemType> & db);

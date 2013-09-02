@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/vendor/utf8.h>
+#include <sserialize/utility/find_key_in_array_functions.h>
 
 namespace sserialize {
 namespace Static {
@@ -255,22 +256,6 @@ bool StringTable::match(uint32_t stringId, const std::string & searchStr, sseria
 	return  (*strMatchFunc)(searchStr, dataAt(stringId).getStringData());
 }
 
-
-/** strings should be sorted in usage frequency, strid will be the position **/
-bool StringTable::create(UByteArrayAdapter& destination, const std::map< unsigned int, std::string >& strs) {
-	std::vector<std::string> strDeque;
-	strDeque.reserve(strs.size());
-	for(unsigned int sit = 0; sit < strs.size(); sit++) {
-		if (strs.count(sit) == 0) {
-			std::cout << "String Table from Trie is broken!" << std::endl;
-			return false;
-		}
-		strDeque.push_back(strs.at(sit));
-	}
-	destination << strDeque;
-	return true;
-}
-
 std::ostream& StringTable::printStats(std::ostream& out) const {
 	out << "Static::StringTable::Stats->BEGIN" << std::endl;
 	out << "size: " << size() << std::endl;
@@ -289,6 +274,23 @@ std::ostream& StringTable::printStats(std::ostream& out) const {
 	}
 	out << "Static::StringTable::Stats->END" << std::endl;
 	return out;
+}
+
+FrequencyStringTable::FrequencyStringTable() : StringTable() {}
+FrequencyStringTable::FrequencyStringTable(const UByteArrayAdapter & data) : StringTable(data) {}
+FrequencyStringTable::FrequencyStringTable(const FrequencyStringTable & other) : StringTable(other) {}
+FrequencyStringTable::~FrequencyStringTable() {}
+FrequencyStringTable & FrequencyStringTable::operator=(const FrequencyStringTable & other) {
+	StringTable::operator=(other);
+	return *this;
+}
+
+SortedStringTable::SortedStringTable() : StringTable() {}
+SortedStringTable::SortedStringTable(const UByteArrayAdapter & data) : StringTable(data) {}
+SortedStringTable::SortedStringTable(const sserialize::Static::SortedStringTable & other) : StringTable(other) {}
+SortedStringTable::~SortedStringTable() {}
+int32_t SortedStringTable::find(const std::string & value) const {
+	return binarySearchKeyInArray(*priv(), value);
 }
 
 }}//end namespace

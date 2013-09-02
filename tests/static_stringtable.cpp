@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 	std::cout << "Read file. Testing table" << std::endl;
 
 	UByteArrayAdapter stableDataAdapter(new std::deque<uint8_t>(), true);
-	if (Static::StringTable::create(stableDataAdapter, strings) ) {
+	if (Static::StringTable::create< std::map<unsigned int, std::string>, std::string >(stableDataAdapter, strings) ) {
 		std::cout << "Created string table with size:  " << stableDataAdapter.size() << std::endl;
 	}
 	else {

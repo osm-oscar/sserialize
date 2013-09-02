@@ -1,6 +1,7 @@
 #ifndef COMPLETIONTREE_COMMON_H
 #define COMPLETIONTREE_COMMON_H
 #include <stdint.h>
+#include <type_traits>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include "UByteArrayAdapter.h"
 
@@ -63,6 +64,39 @@ inline int16_t binarySearchKeyInArray(const UByteArrayAdapter & arrayStart, uint
 		mid = (right-left)/2+left;
 	}
 	return ((arrayStart.at(TSTRIDE*mid) == key) ? mid : -1);
+}
+
+template<typename T_VALUE_A, typename T_VALUE_B>
+int compareWrapper(const T_VALUE_A & a, const T_VALUE_B & b) {
+	if (a == b)
+		return 0;
+	if (a < b)
+		return -1;
+	return 1;
+}
+
+///@return position of key otherwise std::numeric_limits<SizeType>::max()
+template<typename TRANDOM_ACCESS_CONTAINER, typename TVALUE_TYPE>
+inline SizeType binarySearchKeyInArray(const TRANDOM_ACCESS_CONTAINER & container, const TVALUE_TYPE & key) {
+	SignedSizeType len = container.size();
+	if (len == 0)
+		return std::numeric_limits<SizeType>::max();
+	SignedSizeType left = 0;
+	SignedSizeType right = len-1;
+	SignedSizeType mid = (right-left)/2+left;
+	while( left < right ) {
+		int cmp = compareWrapper(container.at(mid), key);
+		if (cmp == 0)
+			return mid;
+		if (cmp < 1) { // key should be to the right
+			left = mid+1;
+		}
+		else { // key should be to the left of mid
+			right = mid-1;
+		}
+		mid = (right-left)/2+left;
+	}
+	return ((container.at(mid) == key) ? mid : std::numeric_limits<SizeType>::max());
 }
 
 template<int TSTRIDE>

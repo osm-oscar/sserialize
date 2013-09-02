@@ -26,18 +26,46 @@ public:
 	std::unordered_set< uint32_t > find(const std::string& searchStr, sserialize::StringCompleter::QuerryType qtype) const;
 	void find(std::unordered_set< uint32_t >& ret, std::string searchStr, sserialize::StringCompleter::QuerryType qtype) const;
 	bool match(uint32_t stringId, const std::string & searchStr, sserialize::StringCompleter::QuerryType qtype) const;
-	/** strings should be sorted in usage frequency, strid will be the position **/
-	static bool create(UByteArrayAdapter & destination, const std::map<unsigned int, std::string> & strs);
 	std::ostream& printStats(std::ostream & out) const;
 	
 	inline uint32_t size() const { return priv()->size();}
 	inline uint32_t getSizeInBytes() const { return priv()->getSizeInBytes();}
 	inline std::string at(uint32_t pos) const { return priv()->at(pos); }
 	inline UByteArrayAdapter dataAt(uint32_t pos) const { return priv()->dataAt(pos);}
-	inline int32_t find(const std::string & value) const { return priv()->find(value);}
-	inline bool count(const std::string & value) const { return find(value) >= 0; }
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
+
+	///The order of the strings impacts the type
+	template<typename T_RANDOM_ACCESS_CONTAINER, typename T_VALUE_TYPE = typename T_RANDOM_ACCESS_CONTAINER::value_type>
+	static bool create(UByteArrayAdapter & destination, const T_RANDOM_ACCESS_CONTAINER & src) {
+		Static::DequeCreator<T_VALUE_TYPE> creator(destination);
+		for(uint32_t i = 0, s = src.size(); i < s; ++i) {
+			creator.put( src.at(i) );
+		}
+		creator.flush();
+		return true;
+	}
+};
+
+class FrequencyStringTable: public StringTable {
+public:
+	FrequencyStringTable();
+	FrequencyStringTable(const UByteArrayAdapter & data);
+	FrequencyStringTable(const FrequencyStringTable & other);
+	FrequencyStringTable & operator=(const FrequencyStringTable & other);
+	virtual ~FrequencyStringTable();
+	inline int32_t find(const std::string & value) const { return priv()->find(value);}
+	inline bool count(const std::string & value) const { return find(value) >= 0; }
+};
+
+class SortedStringTable: public StringTable {
+public:
+	SortedStringTable();
+	SortedStringTable(const UByteArrayAdapter & data);
+	SortedStringTable(const SortedStringTable & other);
+	virtual ~SortedStringTable();
+	int32_t find(const std::string & value) const;
+	inline bool count(const std::string & value) const { return find(value) >= 0; }
 };
 
 }}//end namespace

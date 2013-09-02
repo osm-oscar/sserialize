@@ -14,9 +14,9 @@ class KeyValueObjectStorePrivate;
 
 /** File layout
   *----------------------------------------------------------
-  *VERSION|KeyStrings |ValueStrings|Item
+  *VERSION|      KeyStrings |   ValueStrings   |Item
   *----------------------------------------------------------
-  * 1 Byte|StringTable|StringTable |*
+  * 1 Byte|SortedStringTable|SortedStringTable |*
   *
   * Layout of a single Item
   *----------------------------------------------------
@@ -25,7 +25,7 @@ class KeyValueObjectStorePrivate;
   *22 Bit|5b |5b|   v32   |   v32    | CompactUintArray
   *
   *
-  * The keys are sorted in ascending order
+  * The keys/values are sorted in ascending order
   *
   */
   
@@ -114,8 +114,8 @@ public:
 
 class KeyValueObjectStorePrivate {
 private:
-	Static::StringTable m_keyStringTable;
-	Static::StringTable m_valueStringTable;
+	Static::SortedStringTable m_keyStringTable;
+	Static::SortedStringTable m_valueStringTable;
 	Static::Deque<UByteArrayAdapter> m_items;
 public:
 	KeyValueObjectStorePrivate();
