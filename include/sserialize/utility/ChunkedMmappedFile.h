@@ -34,7 +34,7 @@ class ChunkedMmappedFilePrivate;
 class ChunkedMmappedFile: public RCWrapper<ChunkedMmappedFilePrivate>  {
 public:
 	typedef OffsetType SizeType;
-	typedef NegativeOffsetType NegativeSizeType;
+	typedef SignedOffsetType NegativeSizeType;
 protected:
 	typedef RCWrapper<ChunkedMmappedFilePrivate> MyParentClass;
 public:

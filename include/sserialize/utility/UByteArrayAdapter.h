@@ -36,7 +36,7 @@ class CompressedMmappedFile;
 class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, int> {
 public:
 	typedef sserialize::OffsetType OffsetType;
-	typedef sserialize::NegativeOffsetType NegativeOffsetType;
+	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
 private:
 	/** Data is at offset, not at base address **/
