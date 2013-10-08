@@ -464,7 +464,7 @@ uint8_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
 	return res;
 }
 
-uint32_t CompactUintArray::minStorageBytes(uint8_t bpn, uint32_t count) {
+UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint8_t bpn, uint32_t count) {
 	uint64_t bits = static_cast<uint64_t>(count)*bpn;
 	return bits/8 + (bits % 8 ? 1 : 0);
 }
