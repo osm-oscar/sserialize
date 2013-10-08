@@ -78,9 +78,9 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, b
 	ProgressInfo progressInfo;
 	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::fromStringsFactory::calculating storage need");
 	uint32_t count = 0;
+	std::unordered_set<Node*> exactNodes;
+	std::unordered_set<Node*> suffixNodes;
 	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
-		std::unordered_set<Node*> exactNodes;
-		std::unordered_set<Node*> suffixNodes;
 		T_ITEM item = *itemIt;
 		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 			if (strIdToExactNodes.count(*itemStrsIt)) {
@@ -104,6 +104,8 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, b
 		for(std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
 			(*it)->subStrValues.reserve((*it)->subStrValues.capacity()+1);
 		}
+		exactNodes.clear();
+		suffixNodes.clear();
 		progressInfo(++count);
 	}
 	progressInfo.end();
@@ -135,8 +137,6 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, b
 	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "SinglePassTrie::fromStringsFactory::popluating exact/suffix index");
 	count = 0;
 	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
-		std::unordered_set<Node*> exactNodes;
-		std::unordered_set<Node*> suffixNodes;
 		T_ITEM item = *itemIt;
 		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
 			if (strIdToExactNodes.count(*itemStrsIt)) {
@@ -157,7 +157,9 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, b
 		for(std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
 			(*it)->subStrValues.push_back(count);
 		}
-
+		exactNodes.clear();
+		suffixNodes.clear();
+		
 		progressInfo(++count);
 	}
 	progressInfo.end();
