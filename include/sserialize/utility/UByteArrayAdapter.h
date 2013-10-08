@@ -130,6 +130,10 @@ public:
 
 	void resetToStorage();
 
+	///reserves @bytes bytes beginning at tellPutPtr()
+	bool reserveFromPutPtr(OffsetType bytes);
+
+
 	void setDeleteOnClose(bool del);
 
 	uint8_t at(OffsetType pos) const;

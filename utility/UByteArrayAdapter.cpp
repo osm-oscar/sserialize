@@ -396,10 +396,17 @@ void UByteArrayAdapter::resetToStorage() {
 	m_len = m_priv->size();
 }
 
+bool UByteArrayAdapter::reserveFromPutPtr(OffsetType bytes) {
+	if (m_putPtr < m_len && (m_len - m_putPtr) >= bytes) {
+		return true;
+	}
+	OffsetType storageNeed = m_putPtr - m_len + 1;
+	return growStorage(storageNeed);
+}
+
 void UByteArrayAdapter::setDeleteOnClose(bool del) {
 	m_priv->setDeleteOnClose(del);
 }
-
 
 uint8_t & UByteArrayAdapter::operator[](const OffsetType pos) {
 	return (*m_priv)[m_offSet+pos];
