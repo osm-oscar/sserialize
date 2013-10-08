@@ -40,4 +40,8 @@ std::string StringCompleterPrivate::getName() const {
 }
 
 
+StringCompleterPrivate::ForwardIterator * StringCompleterPrivate::forwardIterator() const {
+	return 0;
+}
+
 }

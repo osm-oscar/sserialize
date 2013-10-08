@@ -16,6 +16,65 @@
 namespace sserialize {
 namespace Static {
 
+GeneralizedTrie::ForwardIterator::ForwardIterator(const Node & node) :
+m_node(node),
+m_nodeString(m_node.str()),
+m_it(m_nodeString.begin()),
+m_end(m_nodeString.end())
+{}
+
+GeneralizedTrie::ForwardIterator::ForwardIterator(const ForwardIterator & other) :
+m_node(other.m_node),
+m_nodeString(other.m_nodeString),
+m_it(m_nodeString.begin()),
+m_end(m_nodeString.end())
+{}
+
+GeneralizedTrie::ForwardIterator::~ForwardIterator() {}
+
+std::set<uint32_t> GeneralizedTrie::ForwardIterator::getNext() const {
+	std::set<uint32_t> ret;
+	if (m_it < m_end) {
+		ret.insert( utf8::peek_next(m_it, m_end) );
+	}
+	else {
+		std::set<uint32_t>::iterator it(ret.end());
+		for(uint32_t i = 0, s = m_node.childCount(); i < s; ++i) {
+			it = ret.insert(it, m_node.childCharAt(i));
+		}
+	}
+	return ret;
+}
+
+bool GeneralizedTrie::ForwardIterator::hasNext(uint32_t codepoint) const {
+	if (m_it < m_end) {
+		return utf8::peek_next(m_it, m_end) == codepoint;
+	}
+	return m_node.childCount() && m_node.posOfChar(codepoint) >= 0;
+}
+
+bool GeneralizedTrie::ForwardIterator::next(uint32_t codepoint) {
+	if (m_it < m_end) {
+		uint32_t myCp = utf8::next(m_it, m_end);
+		return myCp == codepoint;
+	}
+	else if (m_node.childCount()) {
+		int32_t posOfChar = m_node.posOfChar(codepoint);
+		if (posOfChar >= 0) {
+			m_node = m_node.childAt(posOfChar);
+			m_nodeString = m_node.str();
+			m_it = m_nodeString.begin();
+			m_end = m_nodeString.end();
+		}
+	}
+	return false;
+}
+
+StringCompleterPrivate::ForwardIterator * GeneralizedTrie::ForwardIterator::copy() const {
+	return new GeneralizedTrie::ForwardIterator(*this);
+}
+
+
 GeneralizedTrie::GeneralizedTrie() :
 StringCompleterPrivate()
 {}
@@ -347,6 +406,9 @@ ItemIndex GeneralizedTrie::complete(const std::string & str, sserialize::StringC
 	}
 }
 
+StringCompleterPrivate::ForwardIterator * GeneralizedTrie::forwardIterator() const {
+	return new GeneralizedTrie::ForwardIterator(getRootNode());
+}
 
 /** @param str: string to complete. */
 ItemIndex

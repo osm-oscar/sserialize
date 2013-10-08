@@ -14,6 +14,32 @@ namespace sserialize {
 
 class StringCompleterPrivate;
 
+namespace detail {
+namespace types {
+namespace StringCompleterPrivate {
+	
+	class ForwardIterator: public RefCountObject {
+	public:
+		virtual ~ForwardIterator() {}
+		virtual std::set<uint32_t> getNext() const = 0;
+		virtual bool hasNext(uint32_t codepoint) const = 0;
+		virtual bool next(uint32_t codepoint) = 0;
+		virtual ForwardIterator * copy() const = 0;
+	};
+	
+	class EmptyForwardIterator: public ForwardIterator {
+	public:
+		virtual ~EmptyForwardIterator();
+		virtual std::set<uint32_t> getNext() const;
+		virtual bool hasNext(uint32_t codepoint) const;
+		virtual bool next(uint32_t codepoint);
+		virtual ForwardIterator * copy() const;
+	};
+	
+}
+}
+}
+
 class StringCompleter: public RCWrapper<StringCompleterPrivate> {
 public:
 	enum QuerryType {
@@ -23,6 +49,20 @@ public:
 	enum SupportedQuerries {
 		SQ_NONE=0, SQ_EXACT=1, SQ_PREFIX=2, SQ_EP=3, SQ_SUFFIX=4, SQ_SUFFIX_PREFIX=8, SQ_SSP=12, SQ_EPSP=15, SQ_CASE_INSENSITIVE=16, SQ_CASE_SENSITIVE=32, SQ_ALL=63
 	};
+	
+	class ForwardIterator: public RCWrapper<detail::types::StringCompleterPrivate::ForwardIterator> {
+		typedef RCWrapper<detail::types::StringCompleterPrivate::ForwardIterator> MyBaseClass;
+	public:
+		ForwardIterator();
+		ForwardIterator(detail::types::StringCompleterPrivate::ForwardIterator * data);
+		ForwardIterator(const ForwardIterator & other);
+		~ForwardIterator();
+		ForwardIterator & operator=(const ForwardIterator & other);
+		std::set<uint32_t> getNext() const;
+		bool hasNext(uint32_t codepoint) const;
+		bool next(uint32_t codepoint);
+	};
+	
 private:
 	sserialize::LFUCache< std::pair<std::string, uint16_t>, ItemIndex> m_cache;
 #ifdef SSERIALIZE_WITH_THREADS
@@ -41,6 +81,9 @@ public:
 	
 	ItemIndex complete(const std::string & str, QuerryType qtype);
 	ItemIndexIterator partialComplete(const std::string & str, QuerryType qtype);
+	
+	ForwardIterator forwardIterator() const;
+	
 	/** @return returns pairs of char->ItemIndex **/
 	std::map<uint16_t, ItemIndex> getNextCharacters(const std::string& str, QuerryType qtype, bool withIndex) const;
 	ItemIndex indexFromId(uint32_t idxId) const;

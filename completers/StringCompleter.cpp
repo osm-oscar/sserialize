@@ -9,6 +9,55 @@
 
 namespace sserialize {
 
+namespace detail {
+namespace types {
+namespace StringCompleterPrivate {
+
+EmptyForwardIterator::~EmptyForwardIterator() {}
+
+std::set<uint32_t> EmptyForwardIterator::EmptyForwardIterator::getNext() const {
+	return std::set<uint32_t>();
+}
+
+bool EmptyForwardIterator::hasNext(uint32_t codepoint) const {
+	return false;
+}
+
+bool EmptyForwardIterator::next(uint32_t codepoint) {
+	return false;
+}
+
+ForwardIterator * EmptyForwardIterator::copy() const {
+	return new EmptyForwardIterator();
+}
+
+}}}
+	
+StringCompleter::ForwardIterator::ForwardIterator() {}
+
+StringCompleter::ForwardIterator::ForwardIterator(detail::types::StringCompleterPrivate::ForwardIterator * data) : MyBaseClass(data) {}
+
+StringCompleter::ForwardIterator::ForwardIterator(const ForwardIterator & other) : MyBaseClass(other) {}
+
+StringCompleter::ForwardIterator::~ForwardIterator() {}
+
+StringCompleter::ForwardIterator & StringCompleter::ForwardIterator::operator=(const ForwardIterator & other) {
+	MyBaseClass::operator=(other);
+	return *this;
+}
+
+std::set<uint32_t> StringCompleter::ForwardIterator::getNext() const {
+	return priv()->getNext();
+}
+
+bool StringCompleter::ForwardIterator::hasNext(uint32_t codepoint) const {
+	return priv()->hasNext(codepoint);
+}
+
+bool StringCompleter::ForwardIterator::next(uint32_t codepoint) {
+	return priv()->next(codepoint);
+}
+
 StringCompleter::StringCompleter() :
 RCWrapper<StringCompleterPrivate>(new StringCompleterPrivate())
 {
@@ -90,6 +139,9 @@ ItemIndexIterator StringCompleter::partialComplete(const std::string& str, Strin
 	return priv()->partialComplete(str, qtype);
 }
 
+StringCompleter::ForwardIterator StringCompleter::forwardIterator() const {
+	return ForwardIterator( priv()->forwardIterator() );
+}
 
 std::map< uint16_t, ItemIndex > StringCompleter::getNextCharacters(const std::string& str, StringCompleter::QuerryType qtype, bool withIndex) const {
 	return priv()->getNextCharacters(str, qtype, withIndex);

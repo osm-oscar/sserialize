@@ -8,6 +8,8 @@ namespace sserialize {
 
 class StringCompleterPrivate: public RefCountObject {
 public:
+	typedef detail::types::StringCompleterPrivate::ForwardIterator ForwardIterator;
+public:
 	StringCompleterPrivate();
 	virtual ~StringCompleterPrivate();    
 	
@@ -25,6 +27,8 @@ public:
 	virtual std::ostream& printStats(std::ostream& out) const;
 	
 	virtual std::string getName() const;
+	
+	virtual ForwardIterator * forwardIterator() const;
 };
 
 }//end namespace

@@ -43,7 +43,23 @@ namespace Static {
 
 class GeneralizedTrie: public StringCompleterPrivate {
 public:
+	typedef StringCompleterPrivate MyBaseClass;
 	typedef sserialize::Static::TrieNode Node;
+	class ForwardIterator: public MyBaseClass::ForwardIterator {
+	private:
+		Node m_node;
+		std::string m_nodeString;
+		std::string::const_iterator m_it;
+		std::string::const_iterator m_end;
+	public:
+		ForwardIterator(const Node & node);
+		ForwardIterator(const ForwardIterator & other);
+		virtual ~ForwardIterator();
+		virtual std::set<uint32_t> getNext() const;
+		virtual bool hasNext(uint32_t codepoint) const;
+		virtual bool next(uint32_t codepoint);
+		virtual MyBaseClass::ForwardIterator * copy() const;
+	};
 protected:
 	UByteArrayAdapter m_tree;
 	Static::ItemIndexStore m_indexStore;
@@ -83,6 +99,9 @@ public:
 
 
 	virtual ItemIndex complete(const std::string& str, sserialize::StringCompleter::QuerryType qtype) const;
+	
+	virtual StringCompleterPrivate::ForwardIterator * forwardIterator() const;
+	
 	/** @return returns pairs of char->ItemIndex **/
 	virtual std::map<uint16_t, ItemIndex> getNextCharacters(const std::string& str, sserialize::StringCompleter::QuerryType qtype, bool withIndex) const;
 
