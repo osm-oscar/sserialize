@@ -1,6 +1,6 @@
 #include <sserialize/containers/FlatGST.h>
 #include <set>
-#include "vendor/libs/utf8/source/utf8.h"
+#include <include/sserialize/vendor/utf8.h>
 #include <sserialize/utility/unicode_case_functions.h>
 
 
