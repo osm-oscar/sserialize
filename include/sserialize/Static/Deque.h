@@ -121,7 +121,6 @@ public:
 	
 	template<typename T_ORDER_MAP>
 	static void reorder(const Deque & src, const T_ORDER_MAP & order, DequeCreator<TValue> & dest) {
-		uint32_t s= src.size();
 		for(uint32_t i = 0; i < src.size(); ++i) {
 			dest.beginRawPut();
 			dest.rawPut().put(src.dataAt(i));
