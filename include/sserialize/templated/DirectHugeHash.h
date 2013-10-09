@@ -18,11 +18,11 @@ private:
 	THashMap m_upperData;
 public:
 	DirectHugheHash() : m_begin(0), m_end(0) {}
-	DirectHugheHash(uint64_t begin, uint64_t end) :
+	DirectHugheHash(uint64_t begin, uint64_t end, bool inMemory = false) :
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
-	m_data( static_cast<uint64_t>(m_end-m_begin), false),
-	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>(static_cast<uint64_t>(m_end-m_begin)/8, 0)))
+	m_data( static_cast<uint64_t>(m_end-m_begin), inMemory),
+	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>(static_cast<uint64_t>(m_end-m_begin)/8, 0), true))
 	{
 		m_bitSet.data().zero();
 	}
