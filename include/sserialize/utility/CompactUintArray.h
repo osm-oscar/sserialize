@@ -169,6 +169,7 @@ bool CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter 
 	for(typename T_SOURCE_CONTAINER::const_iterator it(src.begin()), end(src.end()); it != end; ++it, ++pos) {
 		carr.set(pos, *it);
 	}
+	dest.incPutPtr(spaceNeed);
 	return true;
 }
 
