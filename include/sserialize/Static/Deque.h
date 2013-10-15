@@ -223,7 +223,8 @@ Deque<UByteArrayAdapter>::at(uint32_t pos) const;
 template<typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::deque<TValue> & source) {
 	sserialize::Static::DequeCreator<TValue> dc(destination);
-	for(size_t i = 0; i < source.size(); i++) {
+	dc.reserveOffsets(source.size());
+	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
 		dc.put(source[i]);
 	}
 	dc.flush();
@@ -233,7 +234,8 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destin
 template<typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::vector<TValue> & source) {
 	sserialize::Static::DequeCreator<TValue> dc(destination);
-	for(size_t i = 0; i < source.size(); i++) {
+	dc.reserveOffsets(source.size());
+	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
 		dc.put(source[i]);
 	}
 	dc.flush();
