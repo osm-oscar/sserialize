@@ -49,6 +49,8 @@ public:
 	ItemIndex(const std::vector<uint32_t> & index, const ItemIndex & realIdIndex);
 	~ItemIndex();
 	
+	UByteArrayAdapter data() const;
+	
 	ItemIndex & operator=(const ItemIndex & idx);
 
 	uint32_t size() const;

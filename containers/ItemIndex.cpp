@@ -105,6 +105,10 @@ ItemIndex & ItemIndex::operator=(const ItemIndex & idx) {
 	return *this;
 }
 
+UByteArrayAdapter ItemIndex::data() const {
+	return priv()->data();
+}
+
 uint32_t ItemIndex::at(uint32_t pos) const { return priv()->at(pos);}
 uint32_t ItemIndex::first() const { return priv()->first(); }
 uint32_t ItemIndex::last() const { return priv()->last(); }

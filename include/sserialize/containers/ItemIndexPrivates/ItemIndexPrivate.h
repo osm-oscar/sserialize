@@ -14,6 +14,7 @@ public:
 public:
 	ItemIndexPrivate();
 	virtual ~ItemIndexPrivate();
+	virtual UByteArrayAdapter data() const { return UByteArrayAdapter(); }
 	
 	virtual ItemIndex::Types type() const = 0;
 	
