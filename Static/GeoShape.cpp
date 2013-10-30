@@ -78,10 +78,9 @@ sserialize::spatial::GeoRect GeoShape::rectFromData(const UByteArrayAdapter &  d
 }}}//end namespace
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
-	sserialize::Static::spatial::GeoPoint bL(in);
-	sserialize::Static::spatial::GeoPoint tR(in+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
+	sserialize::Static::spatial::GeoPoint bL, tR;
+	in >> bL >> tR;
 	out = sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
-	in.incGetPtr(2*sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
 	return in;
 }
 
