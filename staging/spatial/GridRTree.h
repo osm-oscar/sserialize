@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_GRID_RTREE_H
 #define SSERIALIZE_GRID_RTREE_H
-#include <sserialize/spatial/RTree.h>
+#include <staging/spatial/RTree.h>
 #include <sserialize/spatial/GeoShape.h>
 #include <unordered_map>
 

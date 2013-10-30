@@ -1,8 +1,8 @@
 #include "GeoCompleterTest.h"
-#include <sserialize/Static/RTreeGeoDBCompleter.h>
+#include <staging/Static/RTreeGeoDBCompleter.h>
 #include <sserialize/Static/GeoStringsItemDB.h>
-#include <sserialize/Static/RTree.h>
-#include <sserialize/spatial/GridRTree.h>
+#include <staging/Static/RTree.h>
+#include <staging/spatial/GridRTree.h>
 #include "utilalgos.h"
 #define EPS 0.000025
 
@@ -11,7 +11,6 @@ using namespace sserialize;
 template<uint32_t latcount, uint32_t loncount>
 class StaticGridRTreeTest: public GeoCompleterTest {
 CPPUNIT_TEST_SUITE( StaticGridRTreeTest );
-CPPUNIT_TEST( testHeaderInfo );
 CPPUNIT_TEST( testGeoCompletion );
 CPPUNIT_TEST( testPartialGeoCompletion );
 CPPUNIT_TEST_SUITE_END();
@@ -44,6 +43,7 @@ public:
 		m_srcGridRTree->bulkLoad(srcItemLoad);
 		
 		ItemIndexFactory indexFactory(true);
+		indexFactory.setType(ItemIndex::T_WAH);
 		UByteArrayAdapter gridAdap(new std::vector<uint8_t>(), true);
 		UByteArrayAdapter idxStoreAdap;
 		UByteArrayAdapter stableAdap(new std::vector<uint8_t>(), true);
@@ -67,30 +67,24 @@ public:
 	virtual void tearDown() {
 		delete m_srcGridRTree;
 	}
-
-	void testHeaderInfo() {
-		CPPUNIT_ASSERT_MESSAGE("Rect-lat[0]", doubleEq(m_rect.lat()[0], m_srtree.boundary().lat()[0], EPS) );
-		CPPUNIT_ASSERT_MESSAGE("Rect-lat[1]", doubleEq(m_rect.lat()[1], m_srtree.boundary().lat()[1], EPS) );
-		CPPUNIT_ASSERT_MESSAGE("Rect-lon[0]", doubleEq(m_rect.lon()[0], m_srtree.boundary().lon()[0], EPS) );
-		CPPUNIT_ASSERT_MESSAGE("Rect-lon[1]", doubleEq(m_rect.lon()[1], m_srtree.boundary().lon()[1], EPS) );
-	}
 };
 
 int main() {
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticGridRTreeTest<1, 1>::suite() );
-	runner.addTest( StaticGridRTreeTest<3, 2>::suite() );
-	runner.addTest( StaticGridRTreeTest<3, 3>::suite() );
-	runner.addTest( StaticGridRTreeTest<4, 4>::suite() );
-	runner.addTest( StaticGridRTreeTest<5, 5>::suite() );
-	runner.addTest( StaticGridRTreeTest<5, 5>::suite() );
-	runner.addTest( StaticGridRTreeTest<6, 6>::suite() );
-	runner.addTest( StaticGridRTreeTest<7, 7>::suite() );
-	runner.addTest( StaticGridRTreeTest<8, 8>::suite() );
-	runner.addTest( StaticGridRTreeTest<9, 9>::suite() );
-	runner.addTest( StaticGridRTreeTest<7, 11>::suite() );
-	runner.addTest( StaticGridRTreeTest<20, 20>::suite() );
-	runner.addTest( StaticGridRTreeTest<200, 200>::suite() );
+	runner.addTest( StaticGridRTreeTest<2, 2>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<3, 3>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<4, 4>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<5, 5>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<6, 6>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<7, 7>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<8, 8>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<9, 9>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<3, 2>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<7, 11>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<20, 20>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<13, 31>::suite() );
+// 	runner.addTest( StaticGridRTreeTest<200, 200>::suite() );
 	runner.run();
 	return 0;
 };

@@ -31,6 +31,12 @@ Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp
 Static/TrieNodePrivates/LargeCompactTrieNodePrivate.cpp
 )
 
+set(STAGING_SOURCES_CPP
+staging/Static/RTree.cpp
+staging/spatial/RTree.cpp
+staging/spatial/GridRTree.cpp
+)
+
 set(STATIC_SOURCES_CPP
 Static/Deque.cpp
 Static/Set.cpp
@@ -40,7 +46,6 @@ Static/GeneralizedTrie.cpp
 Static/FlatGeneralizedTrie.cpp
 Static/GeoPoint.cpp
 Static/triestats.cpp
-Static/RTree.cpp
 Static/HuffmanDecoder.cpp
 Static/KeyValueObjectStore.cpp
 Static/DynamicKeyValueObjectStore.cpp
@@ -87,8 +92,6 @@ containers/GeneralizedTrie/SinglePassTrie.cpp
 set(SPATIAL_SOURCES_CPP
 spatial/GeoShape.cpp
 spatial/GeoPolygon.cpp
-spatial/RTree.cpp
-spatial/GridRTree.cpp
 spatial/GeoRect.cpp
 )
 
@@ -130,7 +133,8 @@ ${SPATIAL_SOURCES_CPP}
 ${ITEM_INDEX_SOURCES_CPP}
 ${UTILITY_SOURCES_CPP}
 ${OPTIONAL_SOURCES_CPP}
-${EXTERNAL_SOURCES_CPP})
+${EXTERNAL_SOURCES_CPP}
+${STAGING_SOURCES_CPP})
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
 

@@ -1,7 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/templated/GenericTrie.h>
+#include <staging/templated/GenericTrie.h>
 #include "datacreationfuncs.h"
 
 template<int NumberOfItems, int MaxNumberOfStringsPerItem>

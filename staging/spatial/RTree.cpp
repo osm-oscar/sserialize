@@ -1,4 +1,4 @@
-#include <sserialize/spatial/RTree.h>
+#include <staging/spatial/RTree.h>
 #include <unordered_map>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/spatial/GeoPoint.h>
@@ -17,7 +17,7 @@ std::vector<RTree::Node*> RTree::nodesInLevelOrder() const {
 	while ( i < nodes.size()) {
 		if (!nodes[i]->leafNode) {
 			InnerNode * n = static_cast<InnerNode*>(nodes[i]);
-			for(uint32_t j = 0; j < n->children.size(); ++j) {
+			for(uint32_t j = 0, s = n->children.size(); j < s; ++j) {
 				nodes.push_back(n->children[j]);
 			}
 		}
@@ -61,9 +61,9 @@ void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & i
 	std::unordered_map<Node*, NodeInfo> nodeToNodeInfo;
 	std::deque<uint8_t> sData;
 	
-	for(int i = nodes.size()-1; i >= 0; --i) {
+	for(; nodes.size(); nodes.pop_back()) {
 		SerializationInfo si;
-		Node * curNode = nodes[i];
+		Node * curNode = nodes.back();
 		if (curNode->leafNode) {
 			nodeToNodeInfo[curNode].items.swap(static_cast<LeafNode*>(curNode)->items);
 		}
@@ -71,7 +71,7 @@ void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & i
 			NodeInfo & curNodeInfo = nodeToNodeInfo[curNode];
 			InnerNode * in = static_cast<InnerNode*>(curNode);
 			si.reserve(in->children.size());
-			for(uint32_t i = 0; i < in->children.size(); ++i) {
+			for(uint32_t i = 0, s = in->children.size(); i < s; ++i) {
 				Node * curChildNode = in->children.at(i);
 				NodeInfo & childNodeInfo = nodeToNodeInfo[curChildNode];
 				
@@ -88,6 +88,8 @@ void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & i
 		nodeToNodeInfo[curNode].offset = sData.size();
 	}
 	std::cout << "RTree::sserialize: writing to dest..." <<  std::flush;
+	dest.putUint8(0);
+	dest << rootNode()->rect;
 	dest.put(sData);
 	std::cout << "done" << std::endl;
 }

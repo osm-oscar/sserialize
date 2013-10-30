@@ -1,4 +1,4 @@
-#include <sserialize/Static/RTree.h>
+#include <staging/Static/RTree.h>
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/utility/exceptions.h>
 
@@ -8,23 +8,26 @@ namespace Static {
 namespace spatial {
 
 RTree::Node::Node() : m_indexPtr(0), m_size(0) {}
-RTree::Node::Node(const UByteArrayAdapter & data) : m_data(data) {
-	m_indexPtr = m_data.getVlPackedUint32();
-	m_size = m_data.getVlPackedUint32();
+RTree::Node::Node(const UByteArrayAdapter & data) : m_childrenData(data) {
+	m_indexPtr = m_childrenData.getVlPackedUint32();
+	m_size = m_childrenData.getVlPackedUint32();
 	m_rects.resize(m_size);
 	m_childrenPtr.resize(m_size);
 	for(uint32_t i = 0; i < m_size; i++) {
-		m_data >> m_rects[i];
-		m_childrenPtr[i] = m_data.getVlPackedUint32();
+		m_childrenData >> m_rects[i];
+		m_childrenPtr[i] = m_childrenData.getVlPackedUint32();
 	}
+	m_childrenData.shrinkToGetPtr();
 }
 
 RTree::RTree() {}
 RTree::~RTree() {}
 
-RTree::RTree(const sserialize::UByteArrayAdapter & data, const Static::ItemIndexStore & indexStore) {
+RTree::RTree(const sserialize::UByteArrayAdapter & data, const Static::ItemIndexStore & indexStore) :
+m_indexStore(indexStore)
+{
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_RTREE_VERSION, data[0], "sserialize::Static::spatial::RTree");
-	UByteArrayAdapter d(data, 1);
+	UByteArrayAdapter d = data + 1;
 	d >> m_rootBoundary;
 	d.shrinkToGetPtr();
 	m_root = std::shared_ptr<Node>( new Node(d) );
@@ -78,6 +81,49 @@ void RTree::intersect(const sserialize::spatial::GeoRect & rect, DynamicBitSet &
 		intersectRecurse(m_root, rect, dest, intersecter);
 	}
 }
+
+void RTree::intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, ItemIndex & fullyContained, ItemIndex & intersected) {
+	if (node->size()) { // no leaf
+		uint32_t size = node->size();
+		for(uint32_t i = 0; i < size; ++i) {
+			if (rect.overlap(node->rectAt(i))) {
+				if (rect.contains(node->rectAt(i))) { //full overlap
+					fullyContained = fullyContained + m_indexStore.at(node->childIndexPtr(i));
+				}
+				else {
+					ItemIndex tmpFullyContained, tmpIntersected;
+					intersectRecurse(node->childAt(i), rect, tmpFullyContained, tmpIntersected);
+					fullyContained = fullyContained + tmpFullyContained;
+					intersected = intersected + tmpIntersected;
+				}
+			}
+		}
+	}
+	else { //leaf node, this means our boundary intersects with the search rect but does not contain it
+		intersected = m_indexStore.at(node->indexPtr());
+	}
+}
+
+ItemIndex RTree::intersect(const sserialize::spatial::GeoRect & rect, ElementIntersecter * intersecter) {
+	ItemIndex fullyContained, intersected;
+	intersectRecurse(m_root, rect, fullyContained, intersected);
+	if (intersecter) {
+		std::vector<uint32_t> intersectedIds;
+		for(uint32_t i = 0, s = intersected.size(); i < s; ++i) {
+			uint32_t id = intersected.at(i);
+			if (intersecter->operator()(id, rect)) {
+				intersectedIds.push_back(id);
+			}
+		}
+		if (intersectedIds.size()) {
+			UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, false));
+			return fullyContained + ItemIndex::create(intersectedIds, tmp, m_indexStore.indexType());
+		}
+		return fullyContained;
+	}
+	return fullyContained + intersected;
+}
+
 
 }}}
 

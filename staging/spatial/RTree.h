@@ -4,7 +4,7 @@
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 
-/** This is a simple implementation of RTree (not a real RTree as it doesn't use pages)
+/** This is a simple implementation of R-Tree like tree (not a real RTree as it doesn't use pages)
   *
   *
   *
@@ -17,6 +17,7 @@ namespace spatial {
 class RTree {
 public:
 	struct Node {
+		///This will destroy all children!
 		virtual ~Node() {}
 		bool leafNode;
 		spatial::GeoRect rect;

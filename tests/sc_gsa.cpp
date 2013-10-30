@@ -2,7 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/templated/StringsItemDB.h>
-#include <sserialize/containers/FlatGST.h>
+#include <staging/containers/FlatGST.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"

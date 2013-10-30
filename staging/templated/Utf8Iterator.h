@@ -19,6 +19,7 @@ public:
 	}
 	Utf8Iterator & operator++() {
 		utf8::next<octet_iterator>(m_it, m_end);
+		return *this;
 	}
 	Utf8Iterator operator++(int) {
 		Utf8Iterator copy = *this;
@@ -27,8 +28,9 @@ public:
 	}
 	Utf8Iterator & operator--() {
 		utf8::previous<octet_iterator>(m_it, m_begin);
+		return *this;
 	}
-	Utf8Iterator operator++(int) {
+	Utf8Iterator operator--(int) {
 		Utf8Iterator copy = *this;
 		this->operator--();
 		return copy;

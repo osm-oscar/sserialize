@@ -15,6 +15,7 @@
   *----------------------------------
   *IndexPtr|COUNT|(Rects|ChildPtrs)*
   *----------------------------------
+  * v32    | v32 |(GeoRect|v32)
   *
   *
   *
@@ -28,14 +29,14 @@ namespace spatial {
 class RTree {
 private:
 	class Node {
-		UByteArrayAdapter m_data;
+		UByteArrayAdapter m_childrenData;
 		uint32_t m_indexPtr;
 		uint32_t m_size;
 		std::vector<sserialize::spatial::GeoRect> m_rects;
 		std::vector<uint32_t> m_childrenPtr;
 	private:
 		inline UByteArrayAdapter childDataAt(uint32_t pos) const {
-			return m_data+m_childrenPtr[pos];
+			return m_childrenData+m_childrenPtr[pos];
 		}
 	public:
 		Node();
@@ -71,12 +72,17 @@ private:
 private:
 	inline void handleIndex(const sserialize::spatial::GeoRect & rect, uint32_t id, DynamicBitSet & dest, const ElementIntersecter * intersecter);
 	void intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, const ElementIntersecter * intersecter);
+	
+	void intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, ItemIndex & fullyContained, ItemIndex & intersected);
+	
 public:
 	RTree();
 	RTree(const sserialize::UByteArrayAdapter & data, const Static::ItemIndexStore & indexStore);
 	virtual ~RTree();
 	///@param intersecter: if this is not null, then this class is used to check the elements
 	void intersect(const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, ElementIntersecter * intersecter);
+	///@param intersecter: if this is not null, then this class is used to check the elements
+	ItemIndex intersect(const sserialize::spatial::GeoRect & rect, ElementIntersecter * intersecter);
 	const sserialize::Static::ItemIndexStore & indexStore() const { return m_indexStore; }
 	sserialize::Static::ItemIndexStore & indexStore() { return m_indexStore; }
 	const sserialize::spatial::GeoRect & boundary() const { return m_rootBoundary; }

@@ -1,4 +1,4 @@
-#include <sserialize/spatial/GridRTree.h>
+#include <staging/spatial/GridRTree.h>
 #include <sserialize/spatial/ItemGeoGrid.h>
 #include <iostream>
 
@@ -14,9 +14,10 @@ uint32_t smallest12PrimesDivisor(uint32_t num) {
 	return 1;
 }
 
+//xmin/ymin are inclusive, xmax/ymax exclusive
 RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint32_t xmax, uint32_t ymax) {
-	uint32_t xcount = xmax-xmin+1;
-	uint32_t ycount = ymax-ymin+1;
+	uint32_t xcount = xmax-xmin;
+	uint32_t ycount = ymax-ymin;
 	if (xcount == 1 && ycount == 1) { //we have reached the end, create leafNode) {
 		std::set<uint32_t>* &s = grid.storage().at(grid.selectBin(xmin,ymin));
 		if (s) {
@@ -33,16 +34,16 @@ RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint3
 		RTree::InnerNode * in = new RTree::InnerNode();
 		in->leafNode = false;
 		if (xcount >= 2 && ycount >= 2) { //for children
-			RTree::Node * node = createTree(grid, xmin, ymin, xmin+xcount/2, ymin+ymin/2); //bottom left
+			RTree::Node * node = createTree(grid, xmin, ymin, xmin+xcount/2, ymin+ycount/2); //bottom left
 			if (node)
 				in->children.push_back(node);
-			node = createTree(grid, xmin+xcount/2+1, ymin, xmax, ymin+ymin/2); //bottom right
+			node = createTree(grid, xmin+xcount/2, ymin, xmax, ymin+ycount/2); //bottom right
 			if (node)
 				in->children.push_back(node);
-			node = createTree(grid, xmin, ymin+ycount/2+1, xmin+xcount/2, ymax); //top left
+			node = createTree(grid, xmin, ymin+ycount/2, xmin+xcount/2, ymax); //top left
 			if (node)
 				in->children.push_back(node);
-			node = createTree(grid, xmin+xcount/2+1, ymin+ycount/2+1, xmax, ymax); //top right
+			node = createTree(grid, xmin+xcount/2, ymin+ycount/2, xmax, ymax); //top right
 			if (node)
 				in->children.push_back(node);
 		}
@@ -50,7 +51,7 @@ RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint3
 			RTree::Node * node = createTree(grid, xmin, ymin, xmin+xcount/2, ymax); //left child
 			if (node)
 				in->children.push_back(node);
-			node = createTree(grid, xmin+xcount/2+1, ymin, xmax, ymax); //right child
+			node = createTree(grid, xmin+xcount/2, ymin, xmax, ymax); //right child
 			if (node)
 				in->children.push_back(node);
 		}
@@ -58,7 +59,7 @@ RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint3
 			RTree::Node * node = createTree(grid, xmin, ymin, xmax, ymin+ycount/2); //bottom child
 			if (node)
 				in->children.push_back(node);
-			node = createTree(grid, xmin, ymin+ycount/2+1, xmax, ymax); //top child
+			node = createTree(grid, xmin, ymin+ycount/2, xmax, ymax); //top child
 			if (node)
 				in->children.push_back(node);
 		}
@@ -73,11 +74,13 @@ RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint3
 		}
 		else if (in->children.size() == 1) {
 			RTree::Node * n = in->children.front();
+			in->children.clear();
 			delete in;
 			return n;
 		}
-		else
+		else {
 			delete in;
+		}
 	}
 	return 0;
 }
@@ -89,7 +92,7 @@ void GridRTree::bulkLoad(const sserialize::spatial::GridRTree::BulkLoadType & id
 		grid.addItem(it->first, it->second);
 	}
 	std::cout << "done" << std::endl;
-	rootNode() = createTree(grid, 0, 0, m_latCount-1, m_lonCount-1);
+	rootNode() = createTree(grid, 0, 0, m_latCount, m_lonCount);
 }
 
 
