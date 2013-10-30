@@ -323,6 +323,7 @@ public:
 		put(pos, v);
 	}
 	
+	//BUG: WTF? This will horibly go wrong if put(v) does not exist. Who coded this shit? (you did!)
 	template<typename TValue>
 	void put(TValue v) {
 		put(v);
