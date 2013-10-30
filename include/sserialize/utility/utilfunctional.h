@@ -2,6 +2,7 @@
 #define SSERIALIZE_UTIL_FINCTIONAL_H
 #include <sserialize/utility/utilmemory.h>
 #include <algorithm>
+#include <assert.h>
 
 namespace sserialize {
 
@@ -50,15 +51,47 @@ namespace ReorderMappers {
 	};
 };
 
+namespace detail {
+
+///@param reorderMap maps new positions to old positions
+template<typename T_RANDOM_ACCESS_CONTAINER, typename T_REORDER_MAP, typename SizeType>
+void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderMap) {
+	std::vector<SizeType> itemToCurPos;
+	itemToCurPos.reserve(srcDest.size());
+	for(std::size_t i = 0, s = srcDest.size(); i < s; ++i) {
+		itemToCurPos.push_back(i);
+	}
+	std::vector<SizeType> posToItem(itemToCurPos);
+	for(SizeType i = 0, s = srcDest.size(); i < s; ++i) {
+		SizeType initialItemPos = reorderMap.at(i);
+		SizeType realSrcItemPos = itemToCurPos[initialItemPos];
+		SizeType itemInCurDest = posToItem[i];
+		std::swap(srcDest[i], srcDest[realSrcItemPos]);
+		//now update the information to our swapped items
+		itemToCurPos[initialItemPos] = i;
+		posToItem[i] = initialItemPos;
+		itemToCurPos[itemInCurDest] = realSrcItemPos;
+		posToItem[realSrcItemPos] = itemInCurDest;
+	}
+}
+
+}
+
 ///@param reorderMap maps new positions to old positions
 template<typename T_RANDOM_ACCESS_CONTAINER, typename T_REORDER_MAP>
 void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderMap) {
-	T_RANDOM_ACCESS_CONTAINER tmp(srcDest.size());
-	for(uint32_t i = 0, s = srcDest.size(); i < s; ++i) {
-		std::swap(srcDest[reorderMap.at(i)], tmp[i]);
+	//save some runtime space at the expense of codesize
+	if (srcDest.size() < std::numeric_limits<uint16_t>::max()) {
+		detail::reorder<T_RANDOM_ACCESS_CONTAINER, T_REORDER_MAP, uint16_t>(srcDest, reorderMap);
 	}
-	srcDest.swap(tmp);
+	else if (srcDest.size() < std::numeric_limits<uint32_t>::max()) {
+		detail::reorder<T_RANDOM_ACCESS_CONTAINER, T_REORDER_MAP, uint32_t>(srcDest, reorderMap);
+	}
+	else {
+		detail::reorder<T_RANDOM_ACCESS_CONTAINER, T_REORDER_MAP, uint64_t>(srcDest, reorderMap);
+	}
 }
+
 
 ///creates a range starting with begin and ending with end exclusive (if begin + m*inc < end)
 template<typename T_OUT_CONTAINER, typename T_TYPE, typename T_INC = T_TYPE>
