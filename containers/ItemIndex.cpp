@@ -326,6 +326,8 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 		return ItemIndex( ItemIndexPrivateSimple::fromBitSet(bitSet) );
 	case (ItemIndex::T_STL_VECTOR):
 		return ItemIndex( ItemIndexPrivateStlVector::fromBitSet(bitSet) );
+	case (ItemIndex::T_EMPTY):
+		return ItemIndex();
 	default:
 		throw UnimplementedFunctionException("ItemIndex::fromBitSet type not supported");
 	}
