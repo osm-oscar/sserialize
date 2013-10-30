@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_ITEM_INDEX_H
 #define SSERIALIZE_ITEM_INDEX_H
 #include <sserialize/utility/refcounting.h>
+#include <sserialize/utility/exceptions.h>
 #include <vector>
 #include <set>
 #include <deque>
@@ -110,8 +111,9 @@ public:
 	static ItemIndex fromIndexHierachy(const std::deque<uint32_t> & offsets, const UByteArrayAdapter & indexFile, Types type = T_REGLINE);
 	static ItemIndex fromFile(const std::string & fileName, bool deleteOnClose);
 	template<typename TCONTAINER>
-	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest, Types type) {
-		return false;
+	static ItemIndex create(const TCONTAINER & src, UByteArrayAdapter & dest, Types type) {
+		throw sserialize::UnimplementedFunctionException("ItemIndex::create");
+		return ItemIndex();
 	}
 	
 	template<typename T_INDEX_TYPE, typename ... T_INDEX_ARGS>
