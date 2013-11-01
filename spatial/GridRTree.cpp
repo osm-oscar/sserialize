@@ -1,5 +1,4 @@
-#include <staging/spatial/GridRTree.h>
-#include <sserialize/spatial/ItemGeoGrid.h>
+#include <sserialize/spatial/GridRTree.h>
 #include <iostream>
 
 namespace sserialize {
@@ -15,7 +14,7 @@ uint32_t smallest12PrimesDivisor(uint32_t num) {
 }
 
 //xmin/ymin are inclusive, xmax/ymax exclusive
-RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint32_t xmax, uint32_t ymax) {
+RTree::Node * GridRTree::createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint32_t xmax, uint32_t ymax) {
 	uint32_t xcount = xmax-xmin;
 	uint32_t ycount = ymax-ymin;
 	if (xcount == 1 && ycount == 1) { //we have reached the end, create leafNode) {
@@ -83,16 +82,6 @@ RTree::Node * createTree(ItemGeoGrid & grid, uint32_t xmin, uint32_t ymin, uint3
 		}
 	}
 	return 0;
-}
-
-void GridRTree::bulkLoad(const sserialize::spatial::GridRTree::BulkLoadType & idToRect) {
-	ItemGeoGrid grid(m_bbox, m_latCount, m_lonCount);
-	std::cout << "GridRTree::buildLoad: creating grid..." << std::flush;
-	for(BulkLoadType::const_iterator it(idToRect.begin()); it != idToRect.end(); ++it) {
-		grid.addItem(it->first, it->second);
-	}
-	std::cout << "done" << std::endl;
-	rootNode() = createTree(grid, 0, 0, m_latCount, m_lonCount);
 }
 
 

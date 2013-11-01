@@ -1,7 +1,8 @@
-#include <staging/spatial/RTree.h>
+#include <sserialize/spatial/RTree.h>
 #include <unordered_map>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/spatial/GeoPoint.h>
+#include <sserialize/utility/SerializationInfo.h>
 
 
 namespace sserialize {
@@ -58,8 +59,13 @@ bool prependSerializedNode(SerializationInfo & info, std::deque<uint8_t> & dest)
 
 void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & indexFactory) {
 	std::vector<Node*> nodes = nodesInLevelOrder();
+	
+	dest.reserveFromPutPtr(nodes.size()*(3* sserialize::SerializationInfo<uint32_t>::length+ sserialize::SerializationInfo<sserialize::spatial::GeoRect>::length) );
+	
 	std::unordered_map<Node*, NodeInfo> nodeToNodeInfo;
 	std::deque<uint8_t> sData;
+	
+	std::cout << "RTree::sserialize: serializing RTree with " << nodes.size() << " nodes" <<  std::endl;
 	
 	for(; nodes.size(); nodes.pop_back()) {
 		SerializationInfo si;

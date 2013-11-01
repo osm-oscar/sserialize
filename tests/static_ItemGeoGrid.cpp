@@ -35,8 +35,8 @@ public:
 		GeoStringsItemDB<TestItemData> srcDB = createDB();
 		m_srcGrid = spatial::ItemGeoGrid(spatial::GeoRect(0, 20, 0, 20), latcount, loncount);
 		for(size_t i = 0; i < srcDB.size(); i++) {
-			if (srcDB.geoShapeAt(i)) {
-				m_srcGrid.addItem(i, srcDB.geoShapeAt(i));
+			if (srcDB.geoShape(i)) {
+				m_srcGrid.addItem(i, srcDB.geoShape(i));
 			}
 		}
 		

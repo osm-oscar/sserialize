@@ -6,8 +6,18 @@
 #include <unordered_map>
 #include <vector>
 #include <deque>
+#include <algorithm>
 
 namespace sserialize {
+
+
+///uses std::is_sorted to check if the range is already sorted, if not uses std::sort to sort the range
+template<typename TIterator>
+void sort(TIterator begin, TIterator end) {
+	if (! std::is_sorted(begin, end) ) {
+		std::sort(begin, end);
+	}
+}
 
 template<typename T>
 void appendToDeque(const std::deque<T> & source, std::deque<T> & dest) {

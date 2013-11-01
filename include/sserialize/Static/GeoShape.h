@@ -9,7 +9,7 @@ namespace spatial {
 
 /** NOTE: corner-cases like point on line are not especially handeled and aer so undefined behavior */
 
-class GeoShape {
+class GeoShape: public sserialize::spatial::GeoShape {
 	sserialize::spatial::GeoShapeType m_type;
 	uint32_t m_size;
 	UByteArrayAdapter m_data;
@@ -17,7 +17,6 @@ public:
 	GeoShape() : m_type(sserialize::spatial::GS_NONE), m_size(0)  {}
 	GeoShape(const UByteArrayAdapter & data);
 	virtual ~GeoShape() {}
-	
 	inline uint32_t size() const { return m_size; }
 	
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
@@ -30,6 +29,9 @@ public:
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const;
 	
 	static sserialize::spatial::GeoRect rectFromData(const UByteArrayAdapter &  data);
+
+	UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const;
+	
 };
 
 }}}//end namespace

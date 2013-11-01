@@ -17,7 +17,7 @@ public:
 	/** This is only valid while the underlying DB and its content is valid */
 	const spatial::GeoShape * geoShape() const {
 		uint32_t id = StringsItem<DataBaseType>::id();
-		return StringsItem<DataBaseType>::db().geoShapeAt(id);
+		return StringsItem<DataBaseType>::db().geoShape(id);
 	}
 	
 	bool match(const sserialize::spatial::GeoRect & boundary) const {

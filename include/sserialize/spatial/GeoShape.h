@@ -14,7 +14,7 @@ public:
 	GeoShape() {};
 	virtual ~GeoShape() {};
 	virtual uint32_t size() const = 0;
-	virtual GeoRect boundaryRect() const = 0;
+	virtual GeoRect boundary() const = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;
 	virtual UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const = 0;
 };

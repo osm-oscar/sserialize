@@ -1,8 +1,8 @@
 #include "GeoCompleterTest.h"
-#include <staging/Static/RTreeGeoDBCompleter.h>
+#include <sserialize/Static/RTreeGeoDBCompleter.h>
 #include <sserialize/Static/GeoStringsItemDB.h>
-#include <staging/Static/RTree.h>
-#include <staging/spatial/GridRTree.h>
+#include <sserialize/Static/RTree.h>
+#include <sserialize/spatial/GridRTree.h>
 #include "utilalgos.h"
 #define EPS 0.000025
 
@@ -15,9 +15,25 @@ CPPUNIT_TEST( testGeoCompletion );
 CPPUNIT_TEST( testPartialGeoCompletion );
 CPPUNIT_TEST_SUITE_END();
 public:
+	typedef GeoStringsItemDB<TestItemData> MyDBType;
 	typedef Static::GeoStringsItemDB<TestItemData> MySDBType;
 	typedef Static::spatial::RTree MyStaticRTree;
 	typedef Static::spatial::RTreeGeoDBCompleter<MySDBType> MySGeoCompleterPrivateType;
+private:
+
+	struct ItemBoundaryGenerator {
+		MyDBType * c;
+		sserialize::spatial::GeoShape * g;
+		uint32_t p;
+		ItemBoundaryGenerator(MyDBType * c) : c(c), p(0) {}
+		inline bool valid() const { return p < c->size(); }
+		inline uint32_t id() const { return p; }
+		inline const sserialize::spatial::GeoShape * shape() {
+			return c->geoShape(p);
+		}
+		void next() { ++p; }
+	};
+
 private:
 	MySDBType m_sdb;
 	Static::ItemIndexStore m_indexStore;
@@ -34,13 +50,9 @@ public:
 		GeoStringsItemDB<TestItemData> srcDB = createDB();
 		m_rect = bbox(srcDB);
 		m_srcGridRTree = new spatial::GridRTree(spatial::GeoRect(0, 20, 0, 20), latcount, loncount);
-		spatial::GridRTree::BulkLoadType srcItemLoad;
-		for(size_t i = 0; i < srcDB.size(); i++) {
-			if (srcDB.geoShapeAt(i)) {
-				srcItemLoad[i] = srcDB.geoShapeAt(i);
-			}
-		}
-		m_srcGridRTree->bulkLoad(srcItemLoad);
+
+		ItemBoundaryGenerator generator(&srcDB);
+		m_srcGridRTree->bulkLoad(generator);
 		
 		ItemIndexFactory indexFactory(true);
 		indexFactory.setType(ItemIndex::T_WAH);

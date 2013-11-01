@@ -54,14 +54,14 @@ protected:
 		spatial::GeoRect rect;
 		uint32_t i = 0;
 		for(; i < db.size(); ++i) {
-			if (db.geoShapeAt(i)) {
-				rect = db.geoShapeAt(i)->boundaryRect();
+			if (db.geoShape(i)) {
+				rect = db.geoShape(i)->boundary();
 				break;
 			}
 		}
 		for(; i < db.size(); ++i) {
-			if (db.geoShapeAt(i))
-				rect.enlarge(db.geoShapeAt(i)->boundaryRect());
+			if (db.geoShape(i))
+				rect.enlarge(db.geoShape(i)->boundary());
 		}
 		return rect;
 	}

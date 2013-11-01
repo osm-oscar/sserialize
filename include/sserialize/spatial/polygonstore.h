@@ -209,9 +209,9 @@ public:
 		}
 		
 
-		GeoRect bbox( m_polyStore.front().boundaryRect() );
+		GeoRect bbox( m_polyStore.front().boundary() );
 		for(size_t i=0; i < m_polyStore.size(); i++) {
-			bbox.enlarge( m_polyStore[i].boundaryRect() );
+			bbox.enlarge( m_polyStore[i].boundary() );
 		}
 		
 		std::cout << "Creating PolyRaster with " << gridLatCount << "x" << gridLonCount << "bins. BBox: " << bbox << std::endl;

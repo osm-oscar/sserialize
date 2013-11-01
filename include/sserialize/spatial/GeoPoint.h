@@ -24,7 +24,7 @@ public:
 	}
 	virtual ~GeoPoint() {}
 	bool valid() const { return lat != 1337.0; }
-	virtual GeoRect boundaryRect() const {
+	virtual GeoRect boundary() const {
 		return GeoRect(lat, lat, lon, lon);
 	}
 	virtual uint32_t size() const { return 1;}

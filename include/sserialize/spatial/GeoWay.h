@@ -48,7 +48,7 @@ public:
 		m_boundary.lon()[1] = maxLon;
 	}
 	
-	virtual GeoRect boundaryRect() const {
+	virtual GeoRect boundary() const {
 		return m_boundary;
 	}
 
@@ -59,8 +59,8 @@ public:
 
 	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const {
 		destination.putVlPackedUint32(points().size());
-		sserialize::spatial::GeoPoint bottomLeft(boundaryRect().lat()[0], boundaryRect().lon()[0]);
-		sserialize::spatial::GeoPoint topRight(boundaryRect().lat()[1], boundaryRect().lon()[1]);
+		sserialize::spatial::GeoPoint bottomLeft(m_boundary.lat()[0], m_boundary.lon()[0]);
+		sserialize::spatial::GeoPoint topRight(m_boundary.lat()[1], m_boundary.lon()[1]);
 		destination << bottomLeft << topRight;
 		for(size_t i = 0; i < points().size(); ++i) {
 			destination << points().at(i);

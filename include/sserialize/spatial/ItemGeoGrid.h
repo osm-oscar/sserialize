@@ -29,7 +29,7 @@ public:
 	bool addItem(uint32_t itemId, const GeoShape * shape) {
 		if (!shape)
 			return false;
-		std::vector<GridBin> bins = select( shape->boundaryRect() );
+		std::vector<GridBin> bins = select( shape->boundary() );
 		bool allOk = bins.size();
 		for(size_t i = 0; i < bins.size(); ++i) {
 			allOk = bins[i].valid() && allOk;

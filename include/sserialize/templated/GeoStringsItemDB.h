@@ -35,13 +35,13 @@ public:
 		//find the first valid rect
 		for(; i < m_geoShapes.size(); i++) {
 			if (m_geoShapes[i]) {
-				rect = m_geoShapes[i]->boundaryRect();
+				rect = m_geoShapes[i]->boundary();
 				break;
 			}
 		}
 		for(; i < m_geoShapes.size(); i++) {
 			if (m_geoShapes[i])
-				rect.enlarge(m_geoShapes[i]->boundaryRect());
+				rect.enlarge(m_geoShapes[i]->boundary());
 		}
 		return rect;
 	}
@@ -76,7 +76,7 @@ public:
 		return true;
 	}
 	
-	spatial::GeoShape const * geoShapeAt(uint32_t itemPos) const {
+	spatial::GeoShape const * geoShape(uint32_t itemPos) const {
 		if (m_geoShapes.size() < itemPos)
 			return 0;
 		return m_geoShapes[itemPos];
@@ -153,8 +153,8 @@ public:
 		return priv()->setGeoShape(itemPos, shape);
 	}
 	
-	spatial::GeoShape const * geoShapeAt(uint32_t itemPos) const {
-		return priv()->geoShapeAt(itemPos);
+	spatial::GeoShape const * geoShape(uint32_t itemPos) const {
+		return priv()->geoShape(itemPos);
 	}
 	
 	bool match(uint32_t itemPos, const spatial::GeoRect & boundary) {
@@ -191,7 +191,7 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	sserialize::ProgressInfo info;
 	info.begin(db.items().size());
 	for(size_t i = 0; i < db.size(); ++i) {
-		creator.put( *(db.geoShapeAt(i)) );
+		creator.put( *(db.geoShape(i)) );
 		info(i, "GeoStringsItemDB<ItemType>::serialize::Shapes");
 	}
 	creator.flush();

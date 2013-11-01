@@ -24,7 +24,7 @@ UByteArrayAdapter & GeoPolygon::serialize(UByteArrayAdapter & destination) const
 
 //http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 bool GeoPolygon::test(const Point & p) const {
-	if (!points().size() || !boundaryRect().contains(p.lat, p.lon))
+	if (!points().size() || !boundary().contains(p.lat, p.lon))
 		return false;
 	int nvert = points().size();
 	double testx = p.lat;
@@ -63,14 +63,14 @@ bool GeoPolygon::test(const std::vector<Point> & ps) const {
 }
 
 bool GeoPolygon::collidesWithRect(const GeoRect & rect) const {
-	if (!boundaryRect().overlap(rect))
+	if (!boundary().overlap(rect))
 		return false;
 		
 	return collidesWithPolygon( fromRect(rect) );
 }
 
 bool GeoPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
-	if (!boundaryRect().overlap(poly.boundaryRect()))
+	if (!boundary().overlap(poly.boundary()))
 		return false;
 
 	if (test(poly.points())) { //check if at least one vertex poly lies within us

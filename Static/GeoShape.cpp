@@ -1,5 +1,6 @@
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
 namespace Static {
@@ -73,6 +74,12 @@ sserialize::spatial::GeoRect GeoShape::rectFromData(const UByteArrayAdapter &  d
 	sserialize::Static::spatial::GeoPoint bL(data);
 	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
 	return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+}
+
+
+UByteArrayAdapter & GeoShape::serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
+	throw sserialize::UnimplementedFunctionException("GeoShape::serializeWithTypeInfo");
+	return destination;
 }
 
 }}}//end namespace

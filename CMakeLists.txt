@@ -32,9 +32,6 @@ Static/TrieNodePrivates/LargeCompactTrieNodePrivate.cpp
 )
 
 set(STAGING_SOURCES_CPP
-staging/Static/RTree.cpp
-staging/spatial/RTree.cpp
-staging/spatial/GridRTree.cpp
 )
 
 set(STATIC_SOURCES_CPP
@@ -50,6 +47,7 @@ Static/HuffmanDecoder.cpp
 Static/KeyValueObjectStore.cpp
 Static/DynamicKeyValueObjectStore.cpp
 Static/GeoShape.cpp
+Static/RTree.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
@@ -93,6 +91,8 @@ set(SPATIAL_SOURCES_CPP
 spatial/GeoShape.cpp
 spatial/GeoPolygon.cpp
 spatial/GeoRect.cpp
+spatial/RTree.cpp
+spatial/GridRTree.cpp
 )
 
 set(COMPLETER_SOURCES_CPP
