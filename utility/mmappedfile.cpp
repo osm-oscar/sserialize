@@ -163,7 +163,7 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 
 MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & fileNameBase, sserialize::UByteArrayAdapter::OffsetType size) {
 	std::size_t fbSize = fileNameBase.size();
-	char * fileName = new char[fbSize+7];
+	char fileName[fbSize+7];
 	::memmove(fileName, fileNameBase.c_str(), sizeof(char)*fbSize);
 	::memset(fileName+fbSize, 'X', 6);
 	fileName[fbSize+6] = 0;
