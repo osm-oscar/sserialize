@@ -26,6 +26,7 @@ CPPUNIT_TEST( testNumbers );
 CPPUNIT_TEST( testStrings );
 CPPUNIT_TEST( testDequeInDeque );
 CPPUNIT_TEST( testStringsRawPut );
+CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -88,6 +89,22 @@ public:
 		}
 	}
 	
+	void testIterator() {
+		std::deque<uint32_t> realValues = createNumbers(TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		d << realValues;
+		d.resetPutPtr();
+		sserialize::Static::Deque<uint32_t> sd(d);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		{
+			sserialize::Static::Deque<uint32_t>::const_iterator it(sd.cbegin());
+			sserialize::Static::Deque<uint32_t>::const_iterator end(sd.cend());
+			for(uint32_t i = 0; it != end; ++it, ++i) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], *it);
+			}
+		}
+	}
 
 	
 };

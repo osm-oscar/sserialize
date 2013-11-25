@@ -6,6 +6,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/SerializationInfo.h>
 #include <sserialize/utility/mmappedfile.h>
+#include <sserialize/utility/AtStlInputIterator.h>
 #include <fstream>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
 
@@ -90,6 +91,10 @@ public:
 
 template<typename TValue>
 class Deque: public RefCountObject {
+public:
+	typedef TValue value_type;
+	typedef sserialize::ReadOnlyAtStlIterator< Deque<TValue>*, TValue > iterator;
+	typedef sserialize::ReadOnlyAtStlIterator< const Deque<TValue>*, TValue > const_iterator; 
 private:
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
@@ -100,6 +105,11 @@ public:
 	/** This does not copy the ref count, but inits it */
 	Deque(const Deque & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
 	virtual ~Deque() {}
+	
+	iterator begin() { return iterator(0, this); }
+	const_iterator cbegin() const { return const_iterator(0, this); }
+	iterator end() { return iterator(size(), this); }
+	const_iterator cend() const { return const_iterator(size(), this); }
 	
 	/** This does not copy the ref count, it leaves it intact */
 	Deque & operator=(const Deque & other) {
