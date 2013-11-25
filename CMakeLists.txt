@@ -93,6 +93,7 @@ spatial/GeoPolygon.cpp
 spatial/GeoRect.cpp
 spatial/RTree.cpp
 spatial/GridRTree.cpp
+spatial/GeoMultiPolygon.cpp
 )
 
 set(COMPLETER_SOURCES_CPP
