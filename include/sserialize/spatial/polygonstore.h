@@ -18,6 +18,7 @@ template<class TValue>
 class PolygonStore {
 public:
 	typedef GeoPoint Point;
+	typedef GeoPolygon SourceRegionShape;
 	typedef GeoPolygon Polygon;
 
 private:
@@ -85,12 +86,11 @@ private:
 			}
 		}
 		
-		bool addPolygon(Polygon & p, uint32_t polyId) {
+		bool addPolygon(SourceRegionShape & p, uint32_t polyId) {
 			//First, get the bbox, then test all rasterelements for inclusion
-			Point bboxBL = p.getBottomLeft();
-			Point bboxTR = p.getTopRight();
-			GeoGrid::GridBin blBin = GeoGrid::select(bboxBL.lat, bboxBL.lon);
-			GeoGrid::GridBin trBin = GeoGrid::select(bboxTR.lat, bboxTR.lon);
+			GeoRect b( p.boundary() );
+			GeoGrid::GridBin blBin = GeoGrid::select(b.minLat(), b.minLon());
+			GeoGrid::GridBin trBin = GeoGrid::select(b.maxLat(), b.maxLon());
 			if (!blBin.valid() || !trBin.valid())
 				return false;
 			unsigned int xbinStart = blBin.x;
@@ -126,7 +126,7 @@ private:
 					else {
 						Polygon cellPoly;
 						createCellPoly(cellRect, cellPoly);
-						if (cellPoly.collidesWithPolygon(p)) {
+						if (p.collidesWithPolygon(cellPoly)) {
 							if (!MyRWGeoGrid::binAt(i,j).colliding) {
 								MyRWGeoGrid::binAt(i,j).colliding = new PolyRasterElement;
 							}
@@ -181,21 +181,21 @@ private:
 	};
 
 private:
-	std::vector<Polygon> m_polyStore;
+	std::vector<SourceRegionShape> m_polyStore;
 	std::vector<TValue> m_values;
 	PolyRaster * m_polyRaster;
 	
 private:
-	inline bool pointInPolygon(const Point & p, const Polygon & pg) { return pg.test(p);}
+	inline bool pointInPolygon(const Point & p, const SourceRegionShape & pg) { return pg.test(p);}
 
 	
 public:
 	PolygonStore(): m_polyRaster(0) {}
 	~PolygonStore() {}
 	std::size_t size() const { return polygons().size(); }
-	const std::vector<Polygon> & polygons() const { return m_polyStore; }
+	const std::vector<SourceRegionShape> & polygons() const { return m_polyStore; }
 	const std::vector<TValue> & values() const { return m_values; }
-	inline void push_back(const Polygon & p, const TValue & value) {
+	inline void push_back(const SourceRegionShape & p, const TValue & value) {
 		m_polyStore.push_back(p);
 		m_values.push_back(value);
 	}

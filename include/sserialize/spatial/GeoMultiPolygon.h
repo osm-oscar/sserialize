@@ -24,6 +24,7 @@ public:
 	virtual uint32_t size() const;
 	virtual GeoRect boundary() const;
 	virtual bool intersects(const GeoRect & boundary) const;
+	bool collidesWithPolygon(const GeoPolygon & poly) const;
 	
 	
 	void recalculateBoundaries();

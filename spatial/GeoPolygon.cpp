@@ -47,7 +47,7 @@ bool GeoPolygon::test(const Point & p) const {
 }
 
 bool GeoPolygon::test(const std::deque<Point> & ps) const {
-	for(size_t i=0; i< ps.size(); i++)
+	for(std::size_t i=0, s = ps.size(); i< s; i++)
 		if (test(ps[i]))
 			return true;
 
@@ -55,7 +55,7 @@ bool GeoPolygon::test(const std::deque<Point> & ps) const {
 }
 
 bool GeoPolygon::test(const std::vector<Point> & ps) const {
-	for(size_t i=0; i< ps.size(); i++)
+	for(std::size_t i=0, s = ps.size(); i < s; i++)
 		if (test(ps[i]))
 			return true;
 
@@ -80,7 +80,7 @@ bool GeoPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
 		return true;
 	}
 	else { //check if any lines intersect
-		for(size_t i=0; i < poly.points().size(); i++) {
+		for(std::size_t i=0, s = poly.points().size(); i < s; i++) {
 			if (intersectsWithLineSegment(poly.points()[i], poly.points()[(i+1)%poly.points().size()]))
 				return true;
 		}
@@ -88,10 +88,28 @@ bool GeoPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
 	return false;
 }
 
+bool GeoPolygon::contains(const sserialize::spatial::GeoPolygon & other) const {
+	if (!other.boundary().overlap(this->boundary())) {
+		return false;
+	}
+	//if all points are within my self and nothing intersects, then the poly is fully contained
+	for (std::size_t i = 0, s = other.points().size(); i < s; ++i) {
+		if (!test(other.points()[i])) {
+			return false;
+		}
+	}
+	//all points are within, check for cut. TODO: improve this by haveing more info about the polygon, if this would be convex, then we would be done here
+	
+	for(std::size_t i=0, s = other.points().size(); i < s; i++) {
+		if (intersectsWithLineSegment(other.points()[i], other.points()[(i+1)%other.points().size()]))
+			return false;
+	}
+	return true;
+}
+
 inline bool GeoPolygon::intersectsWithLineSegment(const Point & p1, const Point & p2) const {
-	size_t pointSize = points().size();
-	for(size_t i = 0; i < pointSize; i++) {
-		if (intersectLineSegments(p1, p2, points()[i], points()[(i+1)%pointSize])) {
+	for(std::size_t i = 0, s = points().size(); i < s; i++) {
+		if (intersectLineSegments(p1, p2, points()[i], points()[(i+1)%s])) {
 			return true;
 		}
 	}

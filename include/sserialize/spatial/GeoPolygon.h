@@ -12,6 +12,7 @@ namespace spatial {
 class GeoPolygon: public GeoWay<GeoPoint, std::vector<GeoPoint> > {
 public:
 	typedef GeoPoint Point;
+	typedef GeoWay<GeoPoint, std::vector<GeoPoint> > MyBaseClass;
 public:
 	GeoPolygon();
 	GeoPolygon(const std::vector<Point> & points);
@@ -27,6 +28,7 @@ public:
 	bool collidesWithPolygon(const GeoPolygon & poly) const;
 	bool intersectsWithLineSegment(const Point & p1, const Point & p2) const;
 	bool intersectLineSegments(const Point & p , const Point & q, const Point & r, const Point & s) const;
+	bool contains(const GeoPolygon & other) const;
 	static GeoPolygon fromRect(const GeoRect & rect);
 };
 

@@ -40,6 +40,30 @@ bool GeoMultiPolygon::intersects(const GeoRect & boundary) const {
 	return false;
 }
 
+
+bool GeoMultiPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
+	if (!boundary().overlap(poly.boundary()))
+		return false;
+	
+	bool collides = false;
+	for(PolygonList::const_iterator it(m_innerPolygons.begin()), end(m_innerPolygons.end()); it != end; ++it) {
+		if (it->collidesWithPolygon(poly)) {
+			collides = true;
+			break;
+		}
+	}
+	//now check if the test polygon is fully contained in any of our outer polygons:
+	if (collides) {
+		for(PolygonList::const_iterator it(m_outerPolygons.begin()), end(m_outerPolygons.end()); it != end; ++it) {
+			if (it->contains(poly)) {
+				collides = false;
+				break;
+			}
+		}
+	}
+	return collides;
+}
+	
 template<typename TIterator>
 GeoRect calcBoundary(TIterator it,  TIterator end) {
 	if (it != end) {
