@@ -4,8 +4,9 @@
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include "Pair.h"
+#include <sserialize/Static/Pair.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/AtStlInputIterator.h>
 #define SSERIALIZE_STATIC_MAP_VERSION 2
 
 /** FileFormat
@@ -25,20 +26,44 @@ namespace Static {
 template<typename TKey, typename TValue>
 class Map {
 private:
+	struct IteratorDerefer {
+		Static::Pair<TKey, TValue> operator()(const Map<TKey, TValue> * map, uint32_t pos);
+	};
+public:
+	typedef Map<TKey, TValue> type;
+	typedef TKey key_type;
+	typedef TValue mapped_type;
+	typedef sserialize::Static::Pair<TKey, TValue> value_type;
+	typedef sserialize::ReadOnlyAtStlIterator< type *, value_type > iterator;
+	typedef sserialize::ReadOnlyAtStlIterator< const type *, value_type > const_iterator; 
+	typedef uint32_t size_type;
+	static const size_type npos = std::numeric_limits<size_type>::max();
+private:
 	UByteArrayAdapter m_data;
 	SortedOffsetIndex m_index;
 public:
 	Map();
 	Map(const UByteArrayAdapter & data);
 	~Map() {}
+	iterator begin() { return iterator(0, this); }
+	const_iterator cbegin() const { return const_iterator(0, this); }
+	iterator end() { return iterator(size(), this); }
+	const_iterator cend() const { return const_iterator(size(), this); }
+	
 	inline sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {  return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
-	inline uint32_t size() const { return m_index.size();}
-	bool contains(const TKey & key) const;
-	TValue at(const TKey & key) const;
-	Pair<TKey, TValue> atPosition(const uint32_t pos) const;
-	Pair<TKey, TValue> find(const TKey & key) const;
-	int32_t findPosition(const TKey & key) const;
+	inline size_type size() const { return m_index.size();}
+	bool contains(const key_type & key) const;
+	mapped_type at(const key_type & key) const;
+	value_type atPosition(const size_type pos) const;
+	value_type find(const key_type & key) const;
+	int32_t findPosition(const key_type & key) const;
 };
+
+template<typename TKey, typename TValue>
+typename Map<TKey, TValue>::value_type
+Map<TKey, TValue>::IteratorDerefer::operator()(const Map<TKey, TValue> * map, uint32_t pos) {
+	return map->atPosition(pos);
+}
 
 template<typename TKey, typename TValue>
 int32_t
@@ -85,7 +110,7 @@ Map<TKey, TValue>::contains(const TKey & key) const {
 }
 
 template<typename TKey, typename TValue>
-TValue
+typename Map<TKey, TValue>::mapped_type
 Map<TKey, TValue>::at(const TKey & key) const {
 	int32_t pos = findPosition(key);
 	if (pos < 0) {
@@ -98,7 +123,7 @@ Map<TKey, TValue>::at(const TKey & key) const {
 
 
 template<typename TKey, typename TValue>
-Pair<TKey, TValue>
+typename Map<TKey, TValue>::value_type
 Map<TKey, TValue>::atPosition(const uint32_t pos) const {
 	if (pos >= m_index.size()) {
 		return Pair<TKey, TValue>();
@@ -109,7 +134,7 @@ Map<TKey, TValue>::atPosition(const uint32_t pos) const {
 }
 
 template<typename TKey, typename TValue>
-Pair<TKey, TValue>
+typename Map<TKey, TValue>::value_type
 Map<TKey, TValue>::find(const TKey & key) const {
 	int32_t pos = findPosition(key);
 	if (pos < 0) {

@@ -5,7 +5,7 @@
 #include <string>
 #include <set>
 #include <sserialize/utility/exceptions.h>
-
+#include <sserialize/utility/AtStlInputIterator.h>
 #define SSERIALIZE_STATIC_SET_VERSION 1
 
 /** File format
@@ -26,6 +26,10 @@ namespace Static {
  
 template<typename TValue>
 class Set {
+public:
+	typedef TValue value_type;
+	typedef sserialize::ReadOnlyAtStlIterator< sserialize::Static::Set<TValue>*, TValue > iterator;
+	typedef sserialize::ReadOnlyAtStlIterator< const sserialize::Static::Set<TValue>*, TValue > const_iterator; 
 private:
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
@@ -33,6 +37,11 @@ public:
 	Set();
 	Set(const UByteArrayAdapter & data);
 	~Set() {}
+	iterator begin() { return iterator(0, this); }
+	const_iterator cbegin() const { return const_iterator(0, this); }
+	iterator end() { return iterator(size(), this); }
+	const_iterator cend() const { return const_iterator(size(), this); }
+	
 	inline UByteArrayAdapter::OffsetType getSizeInBytes() const {  return 5+m_index.getSizeInBytes()+m_data.size();}
 	uint32_t size() const;
 	int32_t find(const TValue & value) const;
