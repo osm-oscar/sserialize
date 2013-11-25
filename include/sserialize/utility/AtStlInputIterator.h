@@ -3,17 +3,20 @@
 #include <iterator>
 #include <limits>
 #include <functional>
+#include <type_traits>
 
 namespace sserialize {
 
 template<typename T_CONTAINER, typename T_RETURN_TYPE, typename T_SIZE_TYPE>
 struct ReadOnlyAtStlIteratorPassThroughDereference {
 
-	T_RETURN_TYPE operator()(const T_CONTAINER & c, std::enable_if<std::is_pointer<T_CONTAINER>::value, T_SIZE_TYPE>  pos) {
+	template<typename U = T_CONTAINER>
+	T_RETURN_TYPE operator()(const typename std::enable_if<std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c,  T_SIZE_TYPE pos) {
 		return c->at(pos);
 	}
 	
-	T_RETURN_TYPE operator()(const T_CONTAINER & c, std::enable_if<!std::is_pointer<T_CONTAINER>::value, T_SIZE_TYPE>  pos) {
+	template<typename U = T_CONTAINER>
+	T_RETURN_TYPE operator()(const typename std::enable_if<!std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c, T_SIZE_TYPE  pos) {
 		return c.at(pos);
 	}
 };
@@ -31,6 +34,7 @@ private:
 	T_DEREFERENCE m_derefer;
 public:
 	ReadOnlyAtStlIterator() : m_pos(), m_data() {}
+	ReadOnlyAtStlIterator(const ReadOnlyAtStlIterator & other) : m_pos(other.m_pos), m_data(other.m_data), m_derefer(other.m_derefer) {}
 	ReadOnlyAtStlIterator(T_SIZE_TYPE pos, T_CONTAINER data) : m_pos(pos), m_data(data) {}
 	ReadOnlyAtStlIterator(T_SIZE_TYPE pos, T_CONTAINER data, T_DEREFERENCE derefer) : m_pos(pos), m_data(data), m_derefer(derefer) {}
 	virtual ~ReadOnlyAtStlIterator() {}
@@ -41,6 +45,7 @@ public:
 	ReadOnlyAtStlIterator & operator=(const ReadOnlyAtStlIterator & other) {
 		m_pos = other.m_pos;
 		m_data = other.m_data;
+		m_derefer = other.m_derefer;
 	}
 	
 	bool operator==(const ReadOnlyAtStlIterator & other) {
