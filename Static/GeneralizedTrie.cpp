@@ -16,6 +16,22 @@
 namespace sserialize {
 namespace Static {
 
+GeneralizedTrie::HeaderInfo::HeaderInfo() :
+version(0xff)
+{}
+
+GeneralizedTrie::HeaderInfo::HeaderInfo(sserialize::UByteArrayAdapter d) : 
+version(d.getUint8()),
+trieOptions(d.getUint32()),
+nodeType(d.getUint32()),
+longestString(d.getUint32()),
+depth(d.getUint32()),
+numberOfNodes(d.getUint32()),
+nodeDataSize(d.getOffset())
+{}
+
+GeneralizedTrie::HeaderInfo::~HeaderInfo() {}
+
 GeneralizedTrie::ForwardIterator::ForwardIterator(const Node & node) :
 m_node(node),
 m_nodeString(m_node.str()),
@@ -83,41 +99,37 @@ GeneralizedTrie::GeneralizedTrie(const Static::GeneralizedTrie& other) :
 StringCompleterPrivate(),
 m_tree(other.m_tree),
 m_indexStore(other.m_indexStore),
-m_type(other.m_type),
-m_nodeType(other.m_nodeType),
-m_maxCompletionStrLen(other.m_maxCompletionStrLen),
-m_depth(other.m_depth),
+m_header(other.m_header),
 m_sq(other.m_sq)
-{
-
-}
+{}
 
 
 GeneralizedTrie::GeneralizedTrie(const UByteArrayAdapter& trieData, const Static::ItemIndexStore& indexStore) :
 StringCompleterPrivate(),
-m_indexStore(indexStore)
+m_tree(trieData),
+m_indexStore(indexStore),
+m_header(m_tree)
 {
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_GENERALIZED_TRIE_VERSION, trieData.at(0), "Static::GeneralizedTrie");
-	m_type = trieData.at(1);
-	m_nodeType = trieData.at(2); 
-	m_maxCompletionStrLen = trieData.getUint16(3);
-	m_depth = trieData.at(5);
-
-	m_tree = trieData+STATIC_TRIE_HEADER_SIZE;
+	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_GENERALIZED_TRIE_VERSION, m_header.version, "Static::GeneralizedTrie");
+	m_tree += SerializationInfo<HeaderInfo>::length;
 
 	m_sq = (sserialize::StringCompleter::SQ_EP | sserialize::StringCompleter::SQ_CASE_INSENSITIVE);
-	if (m_type & STO_CASE_SENSITIVE)
+	if (m_header.trieOptions & STO_CASE_SENSITIVE)
 		m_sq |= sserialize::StringCompleter::SQ_CASE_SENSITIVE;
 
-	if (m_type & STO_SUFFIX) {
+	if (m_header.trieOptions & STO_SUFFIX) {
 		m_sq |= (sserialize::StringCompleter::SQ_SSP);
 	}
 }
 
 GeneralizedTrie::~GeneralizedTrie() {}
 
+OffsetType GeneralizedTrie::getSizeInBytes() const {
+	return SerializationInfo<HeaderInfo>::length + m_header.nodeDataSize;
+}
+
 Static::TrieNode GeneralizedTrie::getRootNode() const {
-	switch (m_nodeType) {
+	switch (m_header.nodeType) {
 		case (Static::TrieNode::T_SIMPLE):
 			return TrieNode(new SimpleTrieNodePrivate(m_tree));
 		case (Static::TrieNode::T_COMPACT):
@@ -340,7 +352,7 @@ std::map< uint16_t, ItemIndex > GeneralizedTrie::getNextCharacters(const std::st
 	Static::TrieNode node = getRootNode();
 
 	std::string curStr;
-	if ( ! (m_type & STO_CASE_SENSITIVE) || qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE) {
+	if ( ! (m_header.trieOptions & STO_CASE_SENSITIVE) || qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE) {
 		curStr = unicode_to_lower(str);
 	}
 	else {
@@ -393,11 +405,11 @@ std::map< uint16_t, ItemIndex > GeneralizedTrie::getNextCharacters(const std::st
 
 ItemIndex GeneralizedTrie::complete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const {
 
-	if (qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE && m_type & STO_CASE_SENSITIVE) {
+	if (qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE && m_header.trieOptions & STO_CASE_SENSITIVE) {
 		return completeCISRecursive(str.begin(), str.end(), qtype, getRootNode());
 	}
 	else {
-		if (qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE || ! (m_type & STO_CASE_SENSITIVE) ) {
+		if (qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE || ! (m_header.trieOptions & STO_CASE_SENSITIVE) ) {
 			return completeCS(unicode_to_lower(str), qtype);
 		}
 		else {
@@ -538,26 +550,19 @@ sserialize::StringCompleter::SupportedQuerries GeneralizedTrie::getSupportedQuer
     return (sserialize::StringCompleter::SupportedQuerries) m_sq;
 }
 
-
-bool GeneralizedTrie::addHeader(uint8_t trieType, uint8_t nodeType, uint16_t longestString, uint8_t depth, std::deque<uint8_t> & destination) {
-	destination.push_back(SSERIALIZE_STATIC_GENERALIZED_TRIE_VERSION); //Version
-	destination.push_back(trieType);
-	destination.push_back(nodeType);
-	
-	uint8_t buf[4];
-	p_u16(longestString, buf);
-	for(size_t i = 0; i < 2; i++)
-		destination.push_back(buf[i]);
-
-	destination.push_back(depth);
-
-	for(size_t i = 0; i < STATIC_TRIE_HEADER_SIZE-6; i++)
-		destination.push_back(0);
-	return true;
-}
-
 uint8_t GeneralizedTrie::getType() {
 	return Static::StringCompleter::T_TRIE;
 }
 
 }}//end namespace
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::GeneralizedTrie::HeaderInfo & src) {
+	dest.putUint8(src.version); //Version
+	dest.putUint32(src.trieOptions);
+	dest.putUint32(src.nodeType);
+	dest.putUint32(src.longestString);
+	dest.putUint32(src.depth);
+	dest.putUint32(src.numberOfNodes);
+	dest.putOffset(src.nodeDataSize);
+	return dest;
+}

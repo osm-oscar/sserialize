@@ -21,23 +21,29 @@ void FlatTrie::createStaticFlatTrie(FlatGSTConfig & config) {
 	if (m_root)
 		compactify(m_root);
 
-	std::set<std::string> trieStrings;
+	std::vector<std::string> trieStrings;
 	
-	if (m_caseSensitive)
-		trieStrings.insert(m_strings.begin(), m_strings.end());
+	if (m_caseSensitive) {
+		trieStrings = m_strings;
+	}
 	else {
 		for(std::vector<std::string>::const_iterator it = m_strings.begin(); it != m_strings.end(); ++it) {
-			trieStrings.insert( unicode_to_lower(*it) );
+			trieStrings.push_back( unicode_to_lower(*it) );
 		}
 	}
+	{//normalize input
+		std::sort(trieStrings.begin(), trieStrings.end());
+		std::vector<std::string>::iterator last = std::unique(trieStrings.begin(), trieStrings.end());
+		trieStrings.erase(last, trieStrings.end());
+	}
 	
-	FlatTrieEntryConfig<ItemIdType> flatTrieConfig(config.indexFactory);
+	FlatTrieEntryConfig flatTrieConfig(config.indexFactory);
 	
 	
 	uint32_t nodeHitCount = 0;
 	ProgressInfo progressInfo;
 	progressInfo.begin(m_nodeCount);
-	for(std::set<std::string>::const_iterator it = trieStrings.begin(); it != trieStrings.end() && nodeHitCount < m_nodeCount; it++) {
+	for(std::vector<std::string>::const_iterator it(trieStrings.begin()), end(trieStrings.end()); it != end && nodeHitCount < m_nodeCount; it++) {
 		flatTrieConfig.curStrId = flatTrieConfig.flatTrieStrings.size();
 		flatTrieConfig.strIt = it->begin();
 		flatTrieConfig.strBegin = it->begin();
@@ -67,18 +73,16 @@ void FlatTrie::createStaticFlatTrie(FlatGSTConfig & config) {
 	if (m_isSuffixTrie)
 		sq |= StringCompleter::SQ_SSP;
 	
-	std::deque<uint8_t> header;
-	if (config.withStringIds)
-		Static::StringCompleter::addHeader(Static::StringCompleter::T_FLAT_TRIE_STRIDS, header);
-	else
-		Static::StringCompleter::addHeader(Static::StringCompleter::T_FLAT_TRIE, header);
-	config.destination << header[0];
-	config.destination << header[1];
+	
+	sserialize::UByteArrayAdapter header = config.destination;
+	config.destination << sserialize::Static::StringCompleter::HeaderInfo(sserialize::Static::StringCompleter::T_FLAT_TRIE, 0);
+
+	UByteArrayAdapter::OffsetType beginOffset = config.destination.tellPutPtr();
 	config.destination << static_cast<uint8_t>(0); //version
 	config.destination << sq;
 	config.destination << flatTrieConfig.flatTrieStrings; //string table
 
-	flatTrieConfig.flatTrieStrings = std::deque<std::string>(); //clear doesn't always free the memory
+	flatTrieConfig.flatTrieStrings = std::vector<std::string>(); //clear doesn't always free the memory
 
 
 	{//put string ids
@@ -112,16 +116,14 @@ void FlatTrie::createStaticFlatTrie(FlatGSTConfig & config) {
 		config.destination.put(stringEntriesCreator.flush());
 	}
 	
-	if (config.withStringIds) {
-		fillFlatTrieIndexEntriesWithStrIds(flatTrieConfig, config);
-	}
-	else {
-		fillFlatTrieIndexEntries(flatTrieConfig, config);
-	}
+	fillFlatTrieIndexEntries(flatTrieConfig, config);
+	
 	sserialize::Static::DequeCreator<IndexEntry> dc(config.destination);
 	FlatGSTIndexEntryMapper indexEntryMapper(dc);
 	m_root->mapDepthFirst(indexEntryMapper);
 	dc.flush();
+
+	header << sserialize::Static::StringCompleter::HeaderInfo(sserialize::Static::StringCompleter::T_FLAT_TRIE, config.destination.tellPutPtr() - beginOffset);
 	
 	if (config.deleteTrie)
 		clear();
@@ -129,11 +131,11 @@ void FlatTrie::createStaticFlatTrie(FlatGSTConfig & config) {
 }
 
 void FlatTrie::
-fillFlatTrieIndexEntries(FlatTrieEntryConfig<ItemIdType> & flatTrieConfig, const FlatGSTConfig & config) {
+fillFlatTrieIndexEntries(FlatTrieEntryConfig & flatTrieConfig, const FlatGSTConfig & config) {
 	
 	ProgressInfo progressInfo;
 	
-	std::deque< MultiTrieNode<ItemIdType>* > nodesInLevelOrder;
+	std::vector< Node * > nodesInLevelOrder;
 	m_root->addNodesSorted(nodesInLevelOrder);
 	
 	progressInfo.begin(m_nodeCount);
@@ -220,219 +222,8 @@ fillFlatTrieIndexEntries(FlatTrieEntryConfig<ItemIdType> & flatTrieConfig, const
 	progressInfo.end("BaseTrie::fillFlatTrieIndexEntries");
 }
 
-
-void FlatTrie::
-fillFlatTrieIndexEntriesWithStrIds(FlatTrieEntryConfig<ItemIdType> & flatTrieConfig, const FlatGSTConfig & config) {
-	std::cout << "BaseTrie::fillFlatTrieIndexEntriesWithStrIds: initFlatGSTStrIdNodes" << std::endl;
-	initFlatGSTStrIdNodes(m_root, config, 0, 0);
-	std::cout << "BaseTrie::fillFlatTrieIndexEntriesWithStrIds: initFlatGSTStrIdNodes completed!" << std::endl;
-	ProgressInfo progressInfo;
-	progressInfo.begin(m_strings.size());
-	uint32_t count = 0;
-	for(uint32_t i = 0; i< m_strings.size(); ++i) {
-		std::string str;
-		if (m_caseSensitive)
-			str = m_strings[i];
-		else
-			str =  unicode_to_lower(m_strings[i]);
-			
-		
-		{
-			Node * curNode = m_root;
-			std::string::const_iterator strIt = str.begin();
-			std::string::const_iterator strEnd = str.end();
-			while(strIt != strEnd) {
-				strIt += curNode->c.size();
-				if (strIt != strEnd)
-					curNode = curNode->children.at( utf8::peek_next(strIt, strEnd) );
-			}
-			FlatGSTStrIds_TPNS * curNodeTPNS = dynamic_cast<FlatGSTStrIds_TPNS*>(curNode->temporalPrivateStorage);
-			
-			curNodeTPNS->exactIndex.push_back(i);
-		
-			if (m_isSuffixTrie) {
-				for(std::string::const_iterator suffixIt = str.begin(); suffixIt != strEnd; nextSuffixString(suffixIt, strEnd)) {
-					curNode = m_root;
-					strIt = suffixIt;
-					while(strIt != strEnd) {
-						strIt += curNode->c.size();
-						if (strIt != strEnd)
-							curNode = curNode->children.at( utf8::peek_next(strIt, strEnd) );
-					}
-					FlatGSTStrIds_TPNS * curNodeTPNS = dynamic_cast<FlatGSTStrIds_TPNS*>(curNode->temporalPrivateStorage);
-					if (curNodeTPNS->suffixIndex.size() == 0 || curNodeTPNS->suffixIndex.back() != i)
-						curNodeTPNS->suffixIndex.push_back(i);
-				}
-			}
-		}
-		count++;
-		progressInfo(count, "BaseTrie::fillFlatTrieIndexEntriesWithStrIds::StrIdsIntoNodes");
-	}
-	progressInfo.end("BaseTrie::fillFlatTrieIndexEntriesWithStrIds::StrIdsIntoNodes");
-	
-	//Let's serialize our set in bottom-up fashion
-	std::deque<Node*> trieNodes;
-	m_root->addNodesSorted(trieNodes);
-	progressInfo.begin(trieNodes.size());
-	count = 0;
-	while(trieNodes.size() > 0) {
-		Node * curNode = trieNodes.back();
-		FlatGSTStrIds_TPNS * curNodeTPNS = dynamic_cast<FlatGSTStrIds_TPNS*>( curNode->temporalPrivateStorage );
-		FlatGSTStrIds_TPNS * parentNodeTPNS = (curNode->parent ? dynamic_cast<FlatGSTStrIds_TPNS*>(curNode->parent->temporalPrivateStorage) : 0);
-		
-		IndexEntry fe;
-		fe.itemIdIndex = curNodeTPNS->itemIdIndex;
-		fe.minId = curNodeTPNS->minId;
-		fe.maxId = curNodeTPNS->maxId;
-		fe.mergeIndex = config.mergeIndex;
-
-		if (fe.itemIdIndex)
-			fe.exactValues = flatTrieConfig.indexFactory.addIndex( curNode->exactValues );
-		else {
-			fe.exactValues = flatTrieConfig.indexFactory.addIndex(curNodeTPNS->exactIndex);
-		}
-		
-		if (m_isSuffixTrie) {
-			if (fe.itemIdIndex) {
-				std::vector<ItemIdType> s2;
-				if (config.mergeIndex)
-					diffSortedContainer(s2, curNode->subStrValues, curNode->exactValues);
-				else {
-					mergeSortedContainer(s2, s2, curNode->subStrValues);
-					mergeSortedContainer(s2, s2, curNode->exactValues);
-				}
-				fe.suffixValues = flatTrieConfig.indexFactory.addIndex( s2 );
-			}
-			else {
-				std::vector<ItemIdType> s;
-				if (config.mergeIndex)
-					diffSortedContainer(s, curNodeTPNS->suffixIndex, curNodeTPNS->exactIndex);
-				else {
-					mergeSortedContainer(s, s, curNodeTPNS->suffixIndex);
-					mergeSortedContainer(s, s, curNodeTPNS->exactIndex);
-				}
-				fe.suffixValues = flatTrieConfig.indexFactory.addIndex(s);
-			}
-		}
-		
-		//put in the prefix/suffix values. we can reuse the sets here and delete children-sets afterwards
-		if (curNode->children.size() > 0) {
-			if (fe.itemIdIndex) {
-				std::set<ItemIdType> pS, sS;
-				curNode->insertExactValuesRecursive(pS);
-				curNode->insertAllValuesRecursive(sS);
-				if (config.mergeIndex) {
-					inplaceDiffSortedContainer(sS, pS);
-					inplaceDiffSortedContainer(sS, curNode->subStrValues);
-					inplaceDiffSortedContainer(pS, curNode->exactValues);
-				}
-				fe.prefixValues = flatTrieConfig.indexFactory.addIndex(pS);
-				fe.suffixPrefixValues = flatTrieConfig.indexFactory.addIndex(sS);
-			}
-			else {
-				if (config.mergeIndex) {
-					inplaceDiffSortedContainer(curNodeTPNS->prefixIndex, curNodeTPNS->exactIndex);
-					inplaceDiffSortedContainer(curNodeTPNS->suffixPrefixIndex, curNodeTPNS->exactIndex);
-					inplaceDiffSortedContainer(curNodeTPNS->suffixPrefixIndex, curNodeTPNS->suffixIndex);
-					inplaceDiffSortedContainer(curNodeTPNS->suffixPrefixIndex, curNodeTPNS->prefixIndex);
-				}
-				else {
-					curNodeTPNS->prefixIndexInsert(curNodeTPNS->exactIndex);
-					curNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->exactIndex);
-					curNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->suffixIndex);
-					
-				}
-				fe.prefixValues = flatTrieConfig.indexFactory.addIndex(curNodeTPNS->prefixIndex);
-				fe.suffixPrefixValues = flatTrieConfig.indexFactory.addIndex(curNodeTPNS->suffixPrefixIndex);
-			}
-			if (parentNodeTPNS) {
-				parentNodeTPNS->prefixIndexInsert(curNodeTPNS->exactIndex);
-				parentNodeTPNS->prefixIndexInsert(curNodeTPNS->prefixIndex);
-				if (m_isSuffixTrie) {
-					parentNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->exactIndex);
-					parentNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->suffixIndex);
-					parentNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->suffixPrefixIndex);
-				}
-			}
-		}
-		else {
-			if (config.mergeIndex) {
-				fe.prefixValues = flatTrieConfig.indexFactory.addIndex(Node::ItemSetContainer());
-				fe.suffixPrefixValues = flatTrieConfig.indexFactory.addIndex(Node::ItemSetContainer());
-			}
-			else {
-				fe.prefixValues = fe.exactValues;
-				fe.suffixPrefixValues = fe.suffixValues;
-			}
-			
-			if (parentNodeTPNS) {
-				parentNodeTPNS->prefixIndexInsert(curNodeTPNS->prefixIndex);
-				parentNodeTPNS->prefixIndexInsert(curNodeTPNS->exactIndex);
-				if (m_isSuffixTrie) {
-					parentNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->exactIndex);
-					parentNodeTPNS->suffixPrefixIndexInsert(curNodeTPNS->suffixIndex);
-				}
-			}
-		}
-		
-		curNode->deleteTemporalPrivateStorage();
-		curNode->temporalPrivateStorage = new FlatGSTIndexEntry_TPNS(fe);
-		trieNodes.pop_back();
-		if (config.deleteTrie && !fe.itemIdIndex) {//TODO:Make this working.
-			curNode->exactValues = Node::ItemSetContainer();
-			curNode->subStrValues = Node::ItemSetContainer();
-			curNode->c = std::string();
-		}
-		progressInfo(++count, "BaseTrie::fillFlatTrieIndexEntriesWithStrIds::createIndexSet");
-	}
-	progressInfo.end("BaseTrie::fillFlatTrieIndexEntriesWithStrIds::createIndexSet");
-}
-
-void FlatTrie::initFlatGSTStrIdNodes(Node* node, const FlatGSTConfig& config, uint32_t prefixLen, std::set< ItemIdType >* destSet) {
-	if (node) {
-		if (node->c.size())
-			prefixLen += utf8CharCount(node->c.begin(), node->c.end());
-		FlatGSTStrIds_TPNS * nodeTPNS = new FlatGSTStrIds_TPNS();
-		node->temporalPrivateStorage = nodeTPNS;
-		if (node->exactValues.size()) {
-			nodeTPNS->minId = std::min<ItemIdType>(GST_ITEMID_MAX, *(node->exactValues.begin()));
-			nodeTPNS->maxId = std::max<ItemIdType>(0, *(node->exactValues.rbegin()));
-		}
-		if (node->subStrValues.size()) {
-			nodeTPNS->minId = std::min<ItemIdType>(GST_ITEMID_MAX, *(node->subStrValues.begin()));
-			nodeTPNS->maxId = std::max<ItemIdType>(0, *(node->subStrValues.rbegin()));
-		}
-		nodeTPNS->itemIdIndex = node->exactValues.size() < config.maxSizeForItemIdIndex && node->subStrValues.size() < config.maxSizeForItemIdIndex  && prefixLen >= config.minStrLenForItemIdIndex;
-		std::set<ItemIdType> mySet;
-		if (nodeTPNS->itemIdIndex) {
-			mySet.insert(node->exactValues.begin(), node->exactValues.end());
-			mySet.insert(node->subStrValues.begin(), node->subStrValues.end());
-			nodeTPNS->itemIdIndex = mySet.size() < config.maxSizeForItemIdIndex && prefixLen >= config.minStrLenForItemIdIndex;
-		}
-		for(Node::ChildNodeIterator it = node->children.begin(); it != node->children.end(); ++it) {
-			if (nodeTPNS->itemIdIndex) {
-				initFlatGSTStrIdNodes(it->second, config, prefixLen, &mySet);
-			}
-			else {
-				initFlatGSTStrIdNodes(it->second, config, prefixLen, &mySet);
-			}
-			FlatGSTStrIds_TPNS * childTPNS = dynamic_cast<FlatGSTStrIds_TPNS*>(it->second->temporalPrivateStorage);
-			if (nodeTPNS->itemIdIndex)
-				nodeTPNS->itemIdIndex =  nodeTPNS->itemIdIndex && childTPNS->itemIdIndex && mySet.size() < config.maxSizeForItemIdIndex  && prefixLen >= config.minStrLenForItemIdIndex;
-			nodeTPNS->minId = std::min<ItemIdType>(childTPNS->minId, nodeTPNS->minId);
-			nodeTPNS->maxId = std::max<ItemIdType>(childTPNS->maxId, nodeTPNS->maxId);
-		}
-		
-		if (destSet && nodeTPNS->itemIdIndex) {
-			destSet->insert(mySet.begin(), mySet.end());
-		}
-		
-	}
-}
-
-
 /** @param flatTrieConfig.strIt: the string has to be in the trie. correctnes is not checked! */
-uint32_t FlatTrie::createFlatTrieEntry(FlatTrieEntryConfig<ItemIdType> & flatTrieConfig) {
+uint32_t FlatTrie::createFlatTrieEntry(FlatTrieEntryConfig & flatTrieConfig) {
 	std::string::const_iterator strIt = flatTrieConfig.strIt;
 	
 	uint32_t nodeHitCount = 0;

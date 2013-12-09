@@ -3,6 +3,7 @@
 #include <sserialize/completers/StringCompleterPrivate.h>
 #include <sserialize/completers/StringCompleter.h>
 #include <sserialize/containers/ItemIndexIteratorDB.h>
+#include <unordered_set>
 
 namespace sserialize {
 

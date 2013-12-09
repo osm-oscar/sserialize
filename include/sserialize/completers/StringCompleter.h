@@ -9,6 +9,8 @@
 #include <mutex>
 #endif
 
+
+//TODO:Implement getSizeInBytes by fixing dependency on single file
 namespace sserialize {
 
 
@@ -73,6 +75,7 @@ public:
 	StringCompleter(const StringCompleter & other);
 	StringCompleter(StringCompleterPrivate * priv);
 	StringCompleter & operator=(const StringCompleter & strc);
+	
 	SupportedQuerries getSupportedQuerries();
 	bool supportsQuerry(QuerryType qt);
 

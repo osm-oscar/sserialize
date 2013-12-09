@@ -1,20 +1,19 @@
 #ifndef SSERIALIZE_STATIC_GENERALIZED_TRIE_H
 #define SSERIALIZE_STATIC_GENERALIZED_TRIE_H
-#include <sserialize/completers/StringCompleterPrivate.h>
-#include <sserialize/Static/ItemIndexStore.h>
+#include <sserialize/Static/StringCompleter.h>
 #include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 
 #define STATIC_TRIE_HEADER_SIZE 16
 #define PRIVATE_USE_CHAR_VALUE 0xF0F0
 
-#define SSERIALIZE_STATIC_GENERALIZED_TRIE_VERSION 0
+#define SSERIALIZE_STATIC_GENERALIZED_TRIE_VERSION 1
 
 /*
  * Static Trie Layout
  * --------------------------------------------------------------------------------------
- * vvvvvvvv|TTTTTTTT|NTNTNTNT|LSLSLSLS|DDDDDDDD|SCSCSCSC|NCNCNCNC|PADDING |NODES
+ * vvvvvvvv|TTTTTTTT|NTNTNTNT|LSLSLSLS|DDDDDDDD|NCNCNCNC| NODEDATASIZE   |NODES
  * --------------------------------------------------------------------------------------
- *  1 byte | 1 byte | 1 byte |2 byte | 2 byte | 4 byte | 4 byte  | 1 byte |multiple bytes
+ *  1 byte | 1 byte | 1 byte |2 byte | 2 byte  | 4 byte | UBA::FileOffset|multiple bytes
  * 
  * v = version number as uint8
  
@@ -41,10 +40,18 @@
 namespace sserialize {
 namespace Static {
 
-class GeneralizedTrie: public StringCompleterPrivate {
+class GeneralizedTrie: public Static::StringCompleterPrivate {
 public:
 	typedef StringCompleterPrivate MyBaseClass;
 	typedef sserialize::Static::TrieNode Node;
+	typedef enum {
+		STO_NORMALIZED=1,
+		STO_CASE_SENSITIVE=2,
+		STO_SUBTRIES=4,
+		STO_INDIRECT_INDEX=8,
+		STO_SUFFIX=16
+	} TrieOptions;
+	typedef enum {IT_NONE=0x0, IT_PREFIX=0x1, IT_SUFFIXPREFIX=0x2} IndexMergeType;
 	class ForwardIterator: public MyBaseClass::ForwardIterator {
 	private:
 		Node m_node;
@@ -60,23 +67,25 @@ public:
 		virtual bool next(uint32_t codepoint);
 		virtual MyBaseClass::ForwardIterator * copy() const;
 	};
+	
+	struct HeaderInfo {
+		HeaderInfo();
+		HeaderInfo(sserialize::UByteArrayAdapter d);
+		~HeaderInfo();
+		uint8_t version;
+		uint32_t trieOptions;
+		uint32_t nodeType;
+		uint32_t longestString;
+		uint32_t depth;
+		uint32_t numberOfNodes;
+		OffsetType nodeDataSize;
+	};
+	
 protected:
 	UByteArrayAdapter m_tree;
 	Static::ItemIndexStore m_indexStore;
-	uint8_t m_type;
-	uint8_t m_nodeType;
-	uint16_t m_maxCompletionStrLen;
-	uint8_t m_depth;
+	HeaderInfo m_header;
 	uint16_t m_sq;
-public:
-	typedef enum {
-		STO_NORMALIZED=1,
-		STO_CASE_SENSITIVE=2,
-		STO_SUBTRIES=4,
-		STO_INDIRECT_INDEX=8,
-		STO_SUFFIX=16
-	} TrieOptions;
-	typedef enum {IT_NONE=0x0, IT_PREFIX=0x1, IT_SUFFIXPREFIX=0x2} IndexMergeType;
 protected:
 	void insertIndexRecursive(const sserialize::Static::TrieNode& node, IndexMergeType type, DynamicBitSet & dest) const;
 
@@ -93,6 +102,8 @@ public:
 	GeneralizedTrie(const GeneralizedTrie & other);
 	GeneralizedTrie(const UByteArrayAdapter & trieData, const Static::ItemIndexStore & indexStore);
 	virtual ~GeneralizedTrie();
+	virtual OffsetType getSizeInBytes() const;
+	
 	Static::TrieNode getRootNode() const;
 	ItemIndex getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType type) const;
 	ItemIndex getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType qtype, const ItemIndex & indirectIndexParent) const;
@@ -113,13 +124,27 @@ public:
 	virtual ItemIndex indexFromId(uint32_t ptr) const;
 	virtual sserialize::StringCompleter::SupportedQuerries getSupportedQuerries() const;
 
-
 public:
-	static bool addHeader(uint8_t trieType, uint8_t nodeType, uint16_t longestString, uint8_t depth, std::deque<uint8_t> & destination);
 	static uint8_t getType();
-
 };
 
-}}//end namespace
+}
+
+template<>
+struct SerializationInfo<Static::GeneralizedTrie::HeaderInfo> {
+	static const bool is_fixed_length = true;
+	static const OffsetType length = SerializationInfo<uint8_t>::length + 5*SerializationInfo<uint32_t>::length + UByteArrayAdapter::S_OffsetTypeSerializedLength;
+	static const OffsetType max_length = length;
+	static const OffsetType min_length = length;
+	static OffsetType sizeInBytes(const Static::GeneralizedTrie::HeaderInfo  & value) {
+		return length;
+	}
+};
+
+}//end namespace
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::GeneralizedTrie::HeaderInfo & src);
+
+
 
 #endif

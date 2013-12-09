@@ -58,11 +58,10 @@ protected:
 		
 		m_config.indexFactory.flush();
 		UByteArrayAdapter idxAdap(m_config.indexFactory.getFlushedData());
-
+		Static::ItemIndexStore idxStore(idxAdap);
+		
 		UByteArrayAdapter trieAdap(&m_stTrieList);
-		trieAdap += STATIC_STRING_COMPLETER_HEADER_SIZE; //skip header
-		sserialize::Static::GeneralizedTrie * p = new sserialize::Static::GeneralizedTrie(trieAdap, idxAdap);
-		stringCompleter() = StringCompleter( p );
+		stringCompleter() = StringCompleter( new sserialize::Static::StringCompleter(trieAdap, idxStore) );
 		
 		return true;
 	}

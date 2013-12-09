@@ -101,15 +101,44 @@ uint32_t FlatGST::IndexEntry::maxId() const {
 	return 0;
 }
 
+FlatGST::ForwardIterator::ForwardIterator(const sserialize::Static::FlatGST * cmp) : m_cmp(cmp) {}
+
+FlatGST::ForwardIterator::ForwardIterator(const FlatGST::ForwardIterator & other) :
+m_string(other.m_string),
+m_cmp(other.m_cmp)
+{}
+
+
+FlatGST::ForwardIterator::~ForwardIterator() {}
+
+std::set<uint32_t> FlatGST::ForwardIterator::getNext() const {
+	return std::set<uint32_t>();
+}
+
+bool FlatGST::ForwardIterator::hasNext(uint32_t codepoint) const {
+	std::string testStr = m_string;
+	utf8::append(codepoint, std::back_insert_iterator<std::string>(testStr));
+	return m_cmp->lowerBound(testStr,  static_cast<sserialize::StringCompleter::QuerryType>(sserialize::StringCompleter::QT_SUFFIX_PREFIX | sserialize::StringCompleter::QT_CASE_INSENSITIVE)) >= 0;
+}
+
+bool FlatGST::ForwardIterator::next(uint32_t codepoint) {
+	utf8::append(codepoint, std::back_insert_iterator<std::string>(m_string));
+	return m_cmp->lowerBound(m_string, static_cast<sserialize::StringCompleter::QuerryType>(sserialize::StringCompleter::QT_SUFFIX_PREFIX | sserialize::StringCompleter::QT_CASE_INSENSITIVE)) >= 0;
+}
+
+FlatGST::MyBaseClass::ForwardIterator * FlatGST::ForwardIterator::copy() const {
+	return new FlatGST::ForwardIterator(*this);
+}
+
 FlatGST::FlatGST() :
 StringCompleterPrivate(),
-m_sq(StringCompleter::SQ_NONE)
+m_sq(sserialize::StringCompleter::SQ_NONE)
 {}
 
 
 FlatGST::FlatGST(const UByteArrayAdapter& data, const ItemIndexStore& idxStore) :
 StringCompleterPrivate(),
-m_sq( (StringCompleter::SupportedQuerries) data.at(1) ),
+m_sq( (sserialize::StringCompleter::SupportedQuerries) data.at(1) ),
 m_idxStore(idxStore),
 m_stable(data+2),
 m_strEntries(data + (2 + m_stable.getSizeInBytes()) ),
@@ -125,7 +154,7 @@ UByteArrayAdapter FlatGST::fgstStringAt(uint32_t pos) const {
 }
 
 int32_t
-FlatGST::lowerBound(const std::string& str, StringCompleter::QuerryType qt) const {
+FlatGST::lowerBound(const std::string& str, sserialize::StringCompleter::QuerryType qt) const {
 	if (m_strEntries.size() == 0)
 		return -1;
 
@@ -172,7 +201,7 @@ FlatGST::lowerBound(const std::string& str, StringCompleter::QuerryType qt) cons
 	}
 	
 	if (mLcp == str.size()) {
-		if (qt & StringCompleter::QT_PREFIX || qt & StringCompleter::QT_SUFFIX_PREFIX || fgstStringAt(mid).size() == str.size()) {
+		if (qt & sserialize::StringCompleter::QT_PREFIX || qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX || fgstStringAt(mid).size() == str.size()) {
 			return mid;
 		}
 	}
@@ -181,7 +210,7 @@ FlatGST::lowerBound(const std::string& str, StringCompleter::QuerryType qt) cons
 
 int32_t FlatGST::getStringEntryPos(const std::string& str, sserialize::StringCompleter::QuerryType qtype) const {
 	int32_t pos = -1;
-	if (qtype & StringCompleter::QT_CASE_INSENSITIVE) {
+	if (qtype & sserialize::StringCompleter::QT_CASE_INSENSITIVE) {
 		std::string lstr = unicode_to_lower(str);
 		pos = lowerBound(lstr, qtype);
 	}
@@ -216,7 +245,7 @@ ItemIndexIterator FlatGST::indexIteratorFromId(uint32_t idxId) const {
 	return ItemIndexIterator( indexFromId(idxId) );
 }
 
-StringCompleter::SupportedQuerries FlatGST::getSupportedQuerries() const {
+sserialize::StringCompleter::SupportedQuerries FlatGST::getSupportedQuerries() const {
 	return m_sq;
 }
 
@@ -253,7 +282,11 @@ std::string FlatGST::getName() const {
 }
 
 
-uint32_t FlatGST::getSizeInBytes() const {
+FlatGST::MyBaseClass::ForwardIterator * FlatGST::forwardIterator() const {
+	return new FlatGST::ForwardIterator(this);
+}
+
+OffsetType FlatGST::getSizeInBytes() const {
 	return 2 + m_stable.getSizeInBytes() + m_strEntries.getSizeInBytes() + m_indexEntries.getSizeInBytes();
 }
 
@@ -269,37 +302,37 @@ FlatGST::IndexEntry FlatGST::indexEntryAt(uint32_t pos) const {
 	return m_indexEntries.at(pos);
 }
 
-ItemIndex FlatGST::indexFromPosition(uint32_t pos, StringCompleter::QuerryType qtype) const {
+ItemIndex FlatGST::indexFromPosition(uint32_t pos, sserialize::StringCompleter::QuerryType qtype) const {
 	if (pos < size()) {
 		return indexFromEntry(m_indexEntries.at(pos), qtype);
 	}
 	return ItemIndex();
 }
 
-ItemIndexIterator FlatGST::indexIteratorFromPosition(uint32_t pos, StringCompleter::QuerryType qtype) const {
+ItemIndexIterator FlatGST::indexIteratorFromPosition(uint32_t pos, sserialize::StringCompleter::QuerryType qtype) const {
 	if (pos < size()) {
 		return indexIteratorFromEntry(m_indexEntries.at(pos), qtype);
 	}
 	return ItemIndexIterator();
 }
 
-ItemIndex FlatGST::indexFromEntry(const FlatGST::IndexEntry& e, StringCompleter::QuerryType qtype) const {
-	if (qtype & StringCompleter::QT_EXACT) {
+ItemIndex FlatGST::indexFromEntry(const FlatGST::IndexEntry& e, sserialize::StringCompleter::QuerryType qtype) const {
+	if (qtype & sserialize::StringCompleter::QT_EXACT) {
 		return indexFromId( e.exactPtr() );
 	}
-	if (qtype & StringCompleter::QT_SUFFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX) {
 		if (e.mergeIndex())
 			return indexFromId( e.exactPtr()) + indexFromId( e.suffixPtr() );
 		else
 			return indexFromId( e.suffixPtr() );
 	}
-	if (qtype & StringCompleter::QT_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_PREFIX) {
 		if (e.mergeIndex())
 			return indexFromId( e.exactPtr() ) + indexFromId( e.prefixPtr() );
 		else
 			return indexFromId( e.prefixPtr() );
 	}
-	if (qtype & StringCompleter::QT_SUFFIX_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
 		if (e.mergeIndex()) {
 			return (indexFromId( e.exactPtr() ) + indexFromId( e.suffixPtr() ) ) +
 					(indexFromId( e.prefixPtr() ) + indexFromId( e.suffixPrefixPtr() ) );
@@ -310,23 +343,23 @@ ItemIndex FlatGST::indexFromEntry(const FlatGST::IndexEntry& e, StringCompleter:
 	return ItemIndex();
 }
 
-ItemIndexIterator FlatGST::indexIteratorFromEntry(const FlatGST::IndexEntry& e, StringCompleter::QuerryType qtype) const {
-	if (qtype & StringCompleter::QT_EXACT) {
+ItemIndexIterator FlatGST::indexIteratorFromEntry(const FlatGST::IndexEntry& e, sserialize::StringCompleter::QuerryType qtype) const {
+	if (qtype & sserialize::StringCompleter::QT_EXACT) {
 		return  indexIteratorFromId( e.exactPtr() );
 	}
-	if (qtype & StringCompleter::QT_SUFFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX) {
 		if (e.mergeIndex())
 			return indexIteratorFromId( e.exactPtr()) + indexIteratorFromId( e.suffixPtr() );
 		else
 			return indexIteratorFromId( e.suffixPtr() );
 	}
-	if (qtype & StringCompleter::QT_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_PREFIX) {
 		if (e.mergeIndex())
 			return indexIteratorFromId( e.exactPtr() ) + indexIteratorFromId( e.prefixPtr() );
 		else
 			return indexIteratorFromId( e.prefixPtr() );
 	}
-	if (qtype & StringCompleter::QT_SUFFIX_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
 		if (e.mergeIndex()) {
 			return (indexIteratorFromId( e.exactPtr() ) + indexIteratorFromId( e.suffixPtr() ) ) +
 					(indexIteratorFromId( e.prefixPtr() ) + indexIteratorFromId( e.suffixPrefixPtr() ) );

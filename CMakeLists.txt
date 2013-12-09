@@ -39,6 +39,7 @@ Static/Deque.cpp
 Static/Set.cpp
 Static/StringTable.cpp
 Static/ItemIndexStore.cpp
+Static/StringCompleter.cpp
 Static/GeneralizedTrie.cpp
 Static/FlatGeneralizedTrie.cpp
 Static/GeoPoint.cpp
@@ -48,6 +49,7 @@ Static/KeyValueObjectStore.cpp
 Static/DynamicKeyValueObjectStore.cpp
 Static/GeoShape.cpp
 Static/RTree.cpp
+Static/HierarchyCompleter.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
@@ -89,11 +91,13 @@ containers/GeneralizedTrie/SinglePassTrie.cpp
 
 set(SPATIAL_SOURCES_CPP
 spatial/GeoShape.cpp
-spatial/GeoPolygon.cpp
+spatial/GeoPoint.cpp
+spatial/GeoWay.cpp
 spatial/GeoRect.cpp
+spatial/GeoPolygon.cpp
+spatial/GeoMultiPolygon.cpp
 spatial/RTree.cpp
 spatial/GridRTree.cpp
-spatial/GeoMultiPolygon.cpp
 )
 
 set(COMPLETER_SOURCES_CPP

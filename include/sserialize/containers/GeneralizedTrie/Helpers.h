@@ -87,7 +87,7 @@ public:
 	std::deque< MultiTrieNode<unsigned int>* > getSortedChildPtrs() {
 		std::deque< MultiTrieNode<unsigned int>* > tmp;
 		for(ChildNodeIterator i = children.begin(); i != children.end(); ++i) {
-				tmp.push_back(i->second);
+			tmp.push_back(i->second);
 		}
 		return tmp;
 	}
@@ -153,6 +153,20 @@ public:
 	}
 
 	void addNodesSorted(std::deque< MultiTrieNode* > & destination) {
+		if (this) {
+			size_t i = destination.size();
+			destination.push_back(this);
+			while (i < destination.size()) {
+				MultiTrieNode * curNode = destination[i];
+				for(ConstChildNodeIterator it = curNode->children.begin(); it != curNode->children.end(); ++it) {
+					destination.push_back(it->second);
+				}
+				i++;
+			}
+		}
+	}
+	
+	void addNodesSorted(std::vector< MultiTrieNode* > & destination) {
 		if (this) {
 			size_t i = destination.size();
 			destination.push_back(this);

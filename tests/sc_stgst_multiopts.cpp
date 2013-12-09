@@ -66,8 +66,10 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 
 	UByteArrayAdapter trieAdap(&staticTrieList);
 	UByteArrayAdapter dbAdap( (&staticDataBaseList) );
+	
+	Static::ItemIndexStore idxStore(indexAdap);
 
-	StringCompleter scompleter(new sserialize::Static::GeneralizedTrie(trieAdap+2, indexAdap) );
+	StringCompleter scompleter( new Static::StringCompleter(trieAdap, idxStore) );
 	Static::StringTable stable(stableAdap);
 	TestItemDataDB itemDataBase(dbAdap, stable);
 

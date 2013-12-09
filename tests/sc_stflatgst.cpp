@@ -45,17 +45,15 @@ protected:
 		UByteArrayAdapter data(new std::vector<uint8_t>, true);
 		ItemIndexFactory idxFactory;
 		
-		GeneralizedTrie::FlatGSTConfig config(data, idxFactory, false, 0, 0xFFFFFFFF, false, m_mergeIndex);
+		GeneralizedTrie::FlatGSTConfig config(data, idxFactory, false, m_mergeIndex);
 		
 		m_trie.createStaticFlatTrie(config);
 		
 		idxFactory.flush();
 		UByteArrayAdapter idxAdap( idxFactory.getFlushedData() );
+		sserialize::Static::ItemIndexStore idxStore(idxAdap);
 
-		data += STATIC_STRING_COMPLETER_HEADER_SIZE; //skip StringCompleter::header
-		
-		sserialize::Static::FlatGST * p = new sserialize::Static::FlatGST(data, idxAdap);
-		stringCompleter() = StringCompleter( p );
+		stringCompleter() = StringCompleter( new sserialize::Static::StringCompleter(data, idxStore) );
 		
 		return true;
 	}

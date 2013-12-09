@@ -32,7 +32,20 @@ void MultiPassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 			return;
 		}
 	}
-
+	
+	sserialize::Static::GeneralizedTrie::HeaderInfo headerInfo;
+	headerInfo.version = 1;
+	headerInfo.depth = getDepth();
+	headerInfo.trieOptions |= Static::GeneralizedTrie::STO_NORMALIZED;
+	if (m_caseSensitive)
+		headerInfo.trieOptions |= Static::GeneralizedTrie::STO_CASE_SENSITIVE;
+	if (m_isSuffixTrie)
+		headerInfo.trieOptions |= Static::GeneralizedTrie::STO_SUFFIX;
+	headerInfo.nodeType = config.nodeType;
+	headerInfo.longestString = 0;
+	headerInfo.numberOfNodes = m_nodeCount;
+	headerInfo.nodeDataSize = 0;
+	
 	if (config.nodeType == Static::TrieNode::T_SIMPLE) {
 		serializeTrieBottomUp<Static::SimpleStaticTrieCreationNode>(config);
 	}
@@ -47,24 +60,19 @@ void MultiPassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 		return;
 	}
 
-	//Add the stats
-	uint8_t trieType = 0;
-	trieType |= Static::GeneralizedTrie::STO_NORMALIZED;
-	if (m_caseSensitive)
-		trieType |= Static::GeneralizedTrie::STO_CASE_SENSITIVE;
-	if (m_isSuffixTrie)
-		trieType |= Static::GeneralizedTrie::STO_SUFFIX;
-		
-	uint8_t nodeType = config.nodeType;
-	uint16_t longestString = 0;
-	uint16_t depth = getDepth();
-	std::deque<uint8_t> header;
-	uint8_t strCompleterType = sserialize::Static::StringCompleter::T_TRIE;
-	
-	Static::StringCompleter::addHeader(strCompleterType, header);
-	
-	Static::GeneralizedTrie::addHeader(trieType, nodeType, longestString, depth, header);
-	prependToDeque(header, *(config.trieList));
+	{
+		std::deque<uint8_t> headerData;
+		sserialize::UByteArrayAdapter header(&headerData, false);
+		headerInfo.nodeDataSize = config.trieList->size();
+		header << headerInfo;
+		prependToDeque(headerData, *(config.trieList));
+	}
+	{
+		std::deque<uint8_t> headerData;
+		sserialize::UByteArrayAdapter header(&headerData, false);
+		header << sserialize::Static::StringCompleter::HeaderInfo(sserialize::Static::StringCompleter::T_TRIE, config.trieList->size());
+		prependToDeque(headerData, *(config.trieList));
+	}
 
 	if (config.deleteRootTrie) {
 		delete m_root;

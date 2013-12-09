@@ -1,8 +1,7 @@
 #ifndef STATIC_FLAT_GENERALIZED_TRIE_H
 #define STATIC_FLAT_GENERALIZED_TRIE_H
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/Static/StringCompleter.h>
 #include <sserialize/Static/StringTable.h>
-#include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 
 namespace sserialize {
@@ -29,8 +28,9 @@ namespace Static {
   * A = Select the indices present
   */
 
-class FlatGST: public StringCompleterPrivate {
+class FlatGST: public Static::StringCompleterPrivate {
 public:
+	typedef Static::StringCompleterPrivate MyBaseClass;
 	class StringEntry {
 		uint32_t m_strId;
 		uint16_t m_strBegin;
@@ -67,6 +67,21 @@ public:
 		uint32_t minId() const;
 		uint32_t maxId() const;
 	};
+	
+	class ForwardIterator: public MyBaseClass::ForwardIterator {
+	private:
+		std::string m_string;
+		const FlatGST * m_cmp;
+	public:
+		ForwardIterator(const FlatGST * cmp);
+		ForwardIterator(const FlatGST::ForwardIterator & other);
+		virtual ~ForwardIterator();
+		virtual std::set<uint32_t> getNext() const;
+		virtual bool hasNext(uint32_t codepoint) const;
+		virtual bool next(uint32_t codepoint);
+		virtual MyBaseClass::ForwardIterator * copy() const;
+	};
+	
 private:
 	sserialize::StringCompleter::SupportedQuerries m_sq;
 	ItemIndexStore m_idxStore;
@@ -81,6 +96,7 @@ public:
     FlatGST();
 	FlatGST(const UByteArrayAdapter & data, const ItemIndexStore & idxStore);
 	virtual ~FlatGST();
+	virtual OffsetType getSizeInBytes() const;
 	virtual ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const;
 	virtual ItemIndexIterator partialComplete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const;
 	
@@ -93,7 +109,7 @@ public:
 	
 	virtual std::string getName() const;
 	
-	uint32_t getSizeInBytes() const;
+	virtual sserialize::StringCompleterPrivate::ForwardIterator * forwardIterator() const;
 	
 	/** @return nodecount */
 	uint32_t size() const;

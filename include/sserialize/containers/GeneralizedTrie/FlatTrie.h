@@ -8,16 +8,12 @@ namespace GeneralizedTrie {
 struct FlatGSTConfig {
 	FlatGSTConfig(UByteArrayAdapter & destination, sserialize::ItemIndexFactory & indexFactory) :
 		destination(destination), indexFactory(indexFactory),
-		withStringIds(false), maxSizeForItemIdIndex(0), minStrLenForItemIdIndex(0),
 		deleteTrie(false), mergeIndex(true)  {}
-	FlatGSTConfig(UByteArrayAdapter & destination, sserialize::ItemIndexFactory & indexFactory, bool withStringIds, uint32_t maxSizeForItemIdIndex, uint32_t minStrLenForItemIdIndex, bool deleteTrie, bool mergeIndex) : 
-		destination(destination), indexFactory(indexFactory), withStringIds(withStringIds),
-		maxSizeForItemIdIndex(maxSizeForItemIdIndex), minStrLenForItemIdIndex(minStrLenForItemIdIndex), deleteTrie(deleteTrie), mergeIndex(mergeIndex)  {}
+	FlatGSTConfig(UByteArrayAdapter & destination, sserialize::ItemIndexFactory & indexFactory, bool deleteTrie, bool mergeIndex) : 
+		destination(destination), indexFactory(indexFactory),
+		deleteTrie(deleteTrie), mergeIndex(mergeIndex)  {}
 	UByteArrayAdapter & destination;
 	sserialize::ItemIndexFactory & indexFactory;
-	bool withStringIds;
-	uint32_t maxSizeForItemIdIndex;
-	uint32_t minStrLenForItemIdIndex;
 	bool deleteTrie;
 	bool mergeIndex;
 };
@@ -44,17 +40,15 @@ public:
 		uint32_t minId;
 		uint32_t maxId;
 	};
-	
-	template<typename ItemIdType>
+
 	class FlatTrieEntryConfig {
-	public:
 	private:
 // 		FlatTrieEntryConfig & operator=(const FlatTrieEntry & f);
 	public:
 		FlatTrieEntryConfig(ItemIndexFactory & indexFactory) : indexFactory(indexFactory) {}
 		 ~FlatTrieEntryConfig() {}
-		std::deque<std::string> flatTrieStrings;
-		std::unordered_map<MultiTrieNode<ItemIdType>*, StringEntry> stringEntries;
+		std::vector<std::string> flatTrieStrings;
+		std::unordered_map<Node*, StringEntry> stringEntries;
 		ItemIndexFactory & indexFactory;
 		uint32_t curStrId;
 		std::string::const_iterator strIt;
@@ -91,27 +85,6 @@ protected:
 		IndexEntry e;
 	};
 	
-	class FlatGSTStrIds_TPNS: public Node::TemporalPrivateStorage {
-	public:
-		FlatGSTStrIds_TPNS() : itemIdIndex(true), minId(GST_ITEMID_MAX), maxId(0) {}
-		virtual ~FlatGSTStrIds_TPNS() {}
-		bool itemIdIndex;
-		ItemIdType minId;
-		ItemIdType maxId;
-		Node::ItemSetContainer exactIndex;
-		Node::ItemSetContainer suffixIndex;
-		template<class TSortedContainer>
-		void prefixIndexInsert(const TSortedContainer & c) {
-			mergeSortedContainer(prefixIndex, prefixIndex, c);
-		}
-		template<class TSortedContainer>
-		void suffixPrefixIndexInsert(const TSortedContainer & c) {
-			mergeSortedContainer(suffixPrefixIndex, suffixPrefixIndex, c);
-		}
-		std::vector<ItemIdType> prefixIndex;
-		std::vector<ItemIdType> suffixPrefixIndex;
-	};
-	
 	struct FlatGSTIndexEntryMapper {
 		sserialize::Static::DequeCreator<IndexEntry> & dc;
 		FlatGSTIndexEntryMapper(sserialize::Static::DequeCreator<IndexEntry> & dc) : dc(dc) {}
@@ -122,10 +95,8 @@ protected:
 		}
 	};
 private: //flat trie creation functions
-	uint32_t createFlatTrieEntry(FlatTrieEntryConfig<ItemIdType> & flatTrieConfig);
-	void fillFlatTrieIndexEntries(FlatTrieEntryConfig< ItemIdType >& flatTrieConfig, const FlatGSTConfig& config);
-	void fillFlatTrieIndexEntriesWithStrIds(FlatTrieEntryConfig< ItemIdType >& flatTrieConfig, const FlatGSTConfig& config);
-	void initFlatGSTStrIdNodes(Node* node, const FlatGSTConfig & config, uint32_t prefixLen, std::set< ItemIdType >* destSet);
+	uint32_t createFlatTrieEntry(FlatTrieEntryConfig & flatTrieConfig);
+	void fillFlatTrieIndexEntries(FlatTrieEntryConfig & flatTrieConfig, const FlatGSTConfig& config);
 private:
 	bool checkFlatTrieEquality(Node* node, std::string prefix, uint32_t& posInFTrie, const sserialize::Static::FlatGST& trie, bool checkIndex);
 private:

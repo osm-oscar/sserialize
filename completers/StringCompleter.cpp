@@ -77,8 +77,7 @@ RCWrapper< sserialize::StringCompleterPrivate >(priv)
 	m_cache.setSize(INDEX_CACHE_SIZE);
 }
 
-StringCompleter& StringCompleter::operator=(const StringCompleter& strc)
-{
+StringCompleter& StringCompleter::operator=(const StringCompleter& strc) {
 	RCWrapper< sserialize::StringCompleterPrivate >::operator=(strc);
 	m_cache = strc.m_cache;
 	return *this;

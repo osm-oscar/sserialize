@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_STRING_COMPLETER_PRIVATE_H
 #define SSERIALIZE_STRING_COMPLETER_PRIVATE_H
 #include <sserialize/utility/refcounting.h>
+#include <sserialize/utility/types.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/completers/StringCompleter.h>
 
@@ -11,7 +12,7 @@ public:
 	typedef detail::types::StringCompleterPrivate::ForwardIterator ForwardIterator;
 public:
 	StringCompleterPrivate();
-	virtual ~StringCompleterPrivate();    
+	virtual ~StringCompleterPrivate();
 	
 	virtual ItemIndex complete(const std::string & str, StringCompleter::QuerryType qtype) const;
 	
