@@ -12,7 +12,7 @@
 namespace sserialize {
 
 
-typedef spatial::GeoWay<spatial::GeoPoint, std::vector<spatial::GeoPoint> > MyGeoWay;
+typedef spatial::GeoWay MyGeoWay;
 
 
 /** Items with a single Point should be a point, others a way */

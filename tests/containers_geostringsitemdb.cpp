@@ -9,7 +9,7 @@
 
 using namespace sserialize;
 
-typedef spatial::GeoWay<spatial::GeoPoint, std::vector<spatial::GeoPoint>> MyGeoWay;
+typedef spatial::GeoWay MyGeoWay;
 
 class GeoStringsItemDBTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( GeoStringsItemDBTest );

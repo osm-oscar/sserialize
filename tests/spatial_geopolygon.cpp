@@ -40,9 +40,9 @@ public:
 			for(size_t j = 0; j < m_data.polys.size(); ++j) {
 				std::string msg = brokenPolyIntersect(i, j);
 				bool shouldIntersect = (m_data.polyIntersects.count(std::pair<uint32_t, uint32_t>(i,j)) > 0 || i == j);
-				bool intersectResult = m_data.polys.at(i).first.collidesWithPolygon(m_data.polys.at(j).first);
+				bool intersectResult = m_data.polys.at(i).first.intersects(m_data.polys.at(j).first);
 				if (shouldIntersect != intersectResult)
-					intersectResult = m_data.polys.at(i).first.collidesWithPolygon(m_data.polys.at(j).first);
+					intersectResult = m_data.polys.at(i).first.intersects(m_data.polys.at(j).first);
 				
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(msg, shouldIntersect, intersectResult);
 			}
@@ -54,9 +54,9 @@ public:
 			for(size_t pointsIt = 0; pointsIt < m_data.points.size(); ++pointsIt) {
 				std::string msg = brokenPolyPointIntersect(polyIt, pointsIt);
 				bool shouldIntersect = m_data.pointPolyIntersects.count(std::pair<uint32_t, uint32_t>(pointsIt,polyIt)) > 0;
-				bool intersectResult = m_data.polys.at(polyIt).first.test( m_data.points.at(pointsIt) );
+				bool intersectResult = m_data.polys.at(polyIt).first.contains( m_data.points.at(pointsIt) );
 				if (intersectResult != shouldIntersect)
-					intersectResult = m_data.polys.at(polyIt).first.test( m_data.points.at(pointsIt) );
+					intersectResult = m_data.polys.at(polyIt).first.contains( m_data.points.at(pointsIt) );
 
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(msg, shouldIntersect, intersectResult);
 			}
