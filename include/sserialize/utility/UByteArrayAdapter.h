@@ -268,6 +268,7 @@ public:
 	static void setFastTempFilePrefix(const std::string & path);
 	
 	static inline OffsetType OffsetTypeSerializedLength() { return 5; }
+	enum {S_OffsetTypeSerializedLength=5};
 
 	//convinience functions
 	
