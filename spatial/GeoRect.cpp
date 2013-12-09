@@ -16,15 +16,15 @@ GeoRect::GeoRect() {
 
 GeoRect::GeoRect(const GeoRect & other) : m_lat({other.m_lat[0], other.m_lat[1]}), m_lon({other.m_lon[0], other.m_lon[1]}) {}
 
-GeoRect::GeoRect(double latLeft, double latRight, double lonLeft, double lonRight) {
-	if (latLeft > latRight)
-		std::swap(latLeft, latRight);
-	if (lonLeft > lonRight)
-		std::swap(lonLeft, lonRight);
-	m_lat[0] = latLeft;
-	m_lat[1] = latRight;
-	m_lon[0] = lonLeft;
-	m_lon[1] = lonRight;
+GeoRect::GeoRect(double lat1, double lat2, double lon1, double lon2) :
+m_lat({lat1, lat2}),
+m_lon({lon1, lon2})
+
+{
+	if (m_lat[0] > m_lat[1])
+		std::swap(m_lat[0], m_lat[1]);
+	if (m_lon[0] > m_lon[1])
+		std::swap(m_lon[0], m_lon[1]);
 }
 
 GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
