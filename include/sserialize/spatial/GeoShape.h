@@ -6,13 +6,14 @@
 namespace sserialize {
 namespace spatial {
 
-
-typedef enum { GS_NONE=0, GS_POINT=1, GS_WAY=2, GS_POLYGON=3 } GeoShapeType;
+///GeoShapes ordered with increasing complexity. GS_END is one beyond the last one => for(int i(GS_BEGIN); i != GS_END; ++i)
+typedef enum { GS_UNDEFINED=0, GS_NONE=0, GS_BEGIN=0, GS_FIRST_SPATIAL_OBJECT=1, GS_POINT=1, GS_WAY=2, GS_POLYGON=3, GS_MULTI_POLYGON=4, GS_LAST_SPATIAL_OBJECT=4, GS_END=5} GeoShapeType;
 
 class GeoShape {
 public:
 	GeoShape() {};
 	virtual ~GeoShape() {};
+	virtual GeoShapeType type() const = 0;
 	virtual uint32_t size() const = 0;
 	virtual GeoRect boundary() const = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;

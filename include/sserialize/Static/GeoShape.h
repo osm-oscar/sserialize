@@ -30,7 +30,7 @@ public:
 	
 	static sserialize::spatial::GeoRect rectFromData(const UByteArrayAdapter &  data);
 
-	UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const;
+	virtual UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const;
 	
 };
 

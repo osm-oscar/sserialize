@@ -6,24 +6,62 @@
 namespace sserialize {
 namespace spatial {
 
-GeoPolygon::GeoPolygon() : GeoWay<GeoPoint, std::vector<GeoPoint> >() {}
-GeoPolygon::GeoPolygon(const std::vector<Point> & points) : GeoWay<GeoPoint, std::vector<GeoPoint> >(points) {}
-GeoPolygon::~GeoPolygon() {}
-bool GeoPolygon::intersects(const GeoRect & boundary) const {
-	return collidesWithRect(boundary);
+bool GeoPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
+	if (!boundary().overlap(poly.boundary()))
+		return false;
+
+	if (contains(poly.points().begin(), poly.points().end())) { //check if at least one vertex poly lies within us
+		return true;
+	}
+	else if (poly.contains(points().begin(), points().end())) { //check if at least one own vertex lies within poly
+		return true;
+	}
+	else { //check if any lines intersect
+		for(std::size_t i=0, s = poly.points().size(); i < s; i++) {
+			if (intersects(poly.points()[i], poly.points()[(i+1)%s]))
+				return true;
+		}
+	}
+	return false;
 }
 
-UByteArrayAdapter & GeoPolygon::serializeWithTypeInfo(UByteArrayAdapter & destination) const {
-	destination << static_cast<uint8_t>( GS_POLYGON );
-	return serialize(destination);
+
+bool GeoPolygon::collidesWithWay(const GeoWay & way) const {
+	if (!boundary().overlap(way.boundary()))
+		return false;
+
+	if (contains(way.points().begin(), way.points().end())) { //check if at least one vertex poly lies within us
+		return true;
+	}
+	else if (way.size() > 1) { //check if any lines intersect
+		for(GeoWay::ConstPointsIterator it(way.cbegin()), jt(way.cbegin()+1), end(way.cend()); jt != end; ++it, ++jt) {
+			for(std::size_t i = 0, s = points().size(); i < s; ++i) {
+				if (sserialize::spatial::GeoPoint::intersect(*it, *jt, points()[i], points()[(i+1)%s])) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 
-UByteArrayAdapter & GeoPolygon::serialize(UByteArrayAdapter & destination) const {
-	return GeoWay<GeoPoint, std::vector<GeoPoint> >::serialize(destination);
+GeoPolygon::GeoPolygon() :
+GeoWay()
+{}
+
+GeoPolygon::GeoPolygon(const std::vector<Point> & points) :
+GeoWay(points)
+{}
+
+GeoPolygon::~GeoPolygon()
+{}
+
+GeoShapeType GeoPolygon::type() const {
+	return GS_POLYGON;
 }
 
 //http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-bool GeoPolygon::test(const Point & p) const {
+bool GeoPolygon::contains(const GeoPoint & p) const {
 	if (!points().size() || !boundary().contains(p.lat, p.lon))
 		return false;
 	int nvert = points().size();
@@ -46,90 +84,49 @@ bool GeoPolygon::test(const Point & p) const {
 	return c;
 }
 
-bool GeoPolygon::test(const std::deque<Point> & ps) const {
-	for(std::size_t i=0, s = ps.size(); i< s; i++)
-		if (test(ps[i]))
-			return true;
-
-	return false;
-}
-
-bool GeoPolygon::test(const std::vector<Point> & ps) const {
-	for(std::size_t i=0, s = ps.size(); i < s; i++)
-		if (test(ps[i]))
-			return true;
-
-	return false;
-}
-
-bool GeoPolygon::collidesWithRect(const GeoRect & rect) const {
+bool GeoPolygon::intersects(const sserialize::spatial::GeoRect & rect) const {
 	if (!boundary().overlap(rect))
 		return false;
 		
 	return collidesWithPolygon( fromRect(rect) );
 }
 
-bool GeoPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
-	if (!boundary().overlap(poly.boundary()))
-		return false;
-
-	if (test(poly.points())) { //check if at least one vertex poly lies within us
-		return true;
-	}
-	else if (poly.test(points())) { //check if at least one own vertex lies within poly
-		return true;
-	}
-	else { //check if any lines intersect
-		for(std::size_t i=0, s = poly.points().size(); i < s; i++) {
-			if (intersectsWithLineSegment(poly.points()[i], poly.points()[(i+1)%poly.points().size()]))
-				return true;
-		}
-	}
-	return false;
-}
-
-bool GeoPolygon::contains(const sserialize::spatial::GeoPolygon & other) const {
-	if (!other.boundary().overlap(this->boundary())) {
+bool GeoPolygon::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
+	if (!myBoundary().overlap( sserialize::spatial::GeoRect(p1.lat, p2.lat, p1.lon, p2.lon) ) ) {
 		return false;
 	}
-	//if all points are within my self and nothing intersects, then the poly is fully contained
-	for (std::size_t i = 0, s = other.points().size(); i < s; ++i) {
-		if (!test(other.points()[i])) {
-			return false;
-		}
-	}
-	//all points are within, check for cut. TODO: improve this by haveing more info about the polygon, if this would be convex, then we would be done here
-	
-	for(std::size_t i=0, s = other.points().size(); i < s; i++) {
-		if (intersectsWithLineSegment(other.points()[i], other.points()[(i+1)%other.points().size()]))
-			return false;
-	}
-	return true;
-}
 
-inline bool GeoPolygon::intersectsWithLineSegment(const Point & p1, const Point & p2) const {
+	if (contains(p1) || contains(p2)) {
+		return true;
+	}
+
 	for(std::size_t i = 0, s = points().size(); i < s; i++) {
-		if (intersectLineSegments(p1, p2, points()[i], points()[(i+1)%s])) {
+		if (sserialize::spatial::GeoPoint::intersect(p1, p2, points()[i], points()[(i+1)%s])) {
 			return true;
 		}
 	}
 	return false;
 }
 
-inline bool GeoPolygon::intersectLineSegments(const Point & p , const Point & q, const Point & r, const Point & s) const {
-	double tl1, tl2;
-	double t1_denom = (q.lon-p.lon)*(s.lat-r.lat)+(q.lat-p.lat)*(r.lon-s.lon);
-	if (std::abs(t1_denom) <= 0.000001)
-		return false;
-	double t1_nom = (r.lon-p.lon)*(s.lat-r.lat)+(r.lat-p.lat)*(r.lon-s.lon);
-	
-	if (sserialize::sgn(t1_nom)*sserialize::sgn(t1_denom) < 0)
-		return false;
-	tl1 = t1_nom/t1_denom;
-	if (tl1 > 1)
-		return false;
-	tl2 = (tl1*(q.lat-p.lat)-r.lat+p.lat)/(s.lat-r.lat);
-	return (0.0 <= tl2 && 1.0 >= tl2);
+bool GeoPolygon::intersects(const GeoRegion & other) const {
+	if (other.type() == sserialize::spatial::GS_POLYGON) {
+		return collidesWithPolygon( *static_cast<const sserialize::spatial::GeoPolygon*>(&other) );
+	}
+	else if (other.type() == sserialize::spatial::GS_WAY) {
+		return collidesWithWay( *static_cast<const sserialize::spatial::GeoWay*>(&other) );
+	}
+	else {
+		return other.intersects(*this);
+	}
+}
+
+UByteArrayAdapter & GeoPolygon::serializeWithTypeInfo(UByteArrayAdapter & destination) const {
+	destination << static_cast<uint8_t>( GS_POLYGON );
+	return serialize(destination);
+}
+
+UByteArrayAdapter & GeoPolygon::serialize(UByteArrayAdapter & destination) const {
+	return GeoWay::serialize(destination);
 }
 
 GeoPolygon GeoPolygon::fromRect(const GeoRect & rect) {
@@ -141,5 +138,24 @@ GeoPolygon GeoPolygon::fromRect(const GeoRect & rect) {
 	return GeoPolygon(points);
 }
 
+
+bool GeoPolygon::encloses(const sserialize::spatial::GeoPolygon & other) const {
+	if (!other.boundary().overlap(this->boundary())) {
+		return false;
+	}
+	//if all points are within my self and nothing intersects, then the poly is fully contained
+	for (std::size_t i = 0, s = other.points().size(); i < s; ++i) {
+		if (!contains(other.points()[i])) {
+			return false;
+		}
+	}
+	//all points are within, check for cut. TODO: improve this by haveing more info about the polygon, if this would be convex, then we would be done here
+	
+	for(std::size_t i=0, s = other.points().size(); i < s; i++) {
+		if (intersects(other.points()[i], other.points()[(i+1)%other.points().size()]))
+			return false;
+	}
+	return true;
+}
 
 }}

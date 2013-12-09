@@ -9,29 +9,43 @@ namespace spatial {
 
 
 
-class GeoPolygon: public GeoWay<GeoPoint, std::vector<GeoPoint> > {
+class GeoPolygon: public GeoWay {
 public:
 	typedef GeoPoint Point;
-	typedef GeoWay<GeoPoint, std::vector<GeoPoint> > MyBaseClass;
+	typedef GeoWay MyBaseClass;
+protected:
+	bool collidesWithPolygon(const GeoPolygon & poly) const;
+	bool collidesWithWay(const GeoWay & way) const;
 public:
 	GeoPolygon();
 	GeoPolygon(const std::vector<Point> & points);
 	virtual ~GeoPolygon();
-	virtual bool intersects(const GeoRect & boundary) const;
+	virtual GeoShapeType type() const;
+	virtual bool contains(const GeoPoint & p) const;
+	virtual bool intersects(const sserialize::spatial::GeoRect & rect) const;
+	///@return true if the line p1->p2 intersects this region
+	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
+	virtual bool intersects(const GeoRegion & other) const;
+	bool encloses(const GeoPolygon & other) const;
+	template<typename T_GEO_POINT_ITERATOR>
+	bool contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const;
+
 	virtual UByteArrayAdapter & serializeWithTypeInfo(UByteArrayAdapter & destination) const;
 	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const;
-	//http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-	bool test(const Point & p) const;
-	bool test(const std::deque<Point> & ps) const;
-	bool test(const std::vector<Point> & ps) const;
-	bool collidesWithRect(const GeoRect & rect) const;
-	bool collidesWithPolygon(const GeoPolygon & poly) const;
-	bool intersectsWithLineSegment(const Point & p1, const Point & p2) const;
-	bool intersectLineSegments(const Point & p , const Point & q, const Point & r, const Point & s) const;
-	bool contains(const GeoPolygon & other) const;
+
 	static GeoPolygon fromRect(const GeoRect & rect);
+	
 };
 
+
+template<typename T_GEO_POINT_ITERATOR>
+bool GeoPolygon::contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const {
+	for(; begin != end; ++begin) {
+		if (contains(*begin))
+			return true;
+	}
+	return false;
+}
 
 	
 }}//end namespace

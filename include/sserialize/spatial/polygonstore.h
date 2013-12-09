@@ -117,7 +117,7 @@ private:
 					unsigned int j = cells[k].second;
 					GeoRect cellRect( MyRGeoGrid::cellBoundary(i, j) );
 					//test enclosing
-					if (p.test( GeoPoint(cellRect.lat()[0], cellRect.lon()[0]) ) && p.test( GeoPoint(cellRect.lat()[1], cellRect.lon()[1]) ) ) {
+					if (p.contains( GeoPoint(cellRect.lat()[0], cellRect.lon()[0]) ) && p.contains( GeoPoint(cellRect.lat()[1], cellRect.lon()[1]) ) ) {
 						if (!MyRWGeoGrid::binAt(i,j).enclosing) {
 							MyRWGeoGrid::binAt(i,j).enclosing = new PolyRasterElement;
 						}
@@ -126,7 +126,7 @@ private:
 					else {
 						Polygon cellPoly;
 						createCellPoly(cellRect, cellPoly);
-						if (p.collidesWithPolygon(cellPoly)) {
+						if (p.intersects(cellPoly)) {
 							if (!MyRWGeoGrid::binAt(i,j).colliding) {
 								MyRWGeoGrid::binAt(i,j).colliding = new PolyRasterElement;
 							}
@@ -186,7 +186,7 @@ private:
 	PolyRaster * m_polyRaster;
 	
 private:
-	inline bool pointInPolygon(const Point & p, const SourceRegionShape & pg) { return pg.test(p);}
+	inline bool pointInPolygon(const Point & p, const SourceRegionShape & pg) { return pg.contains(p);}
 
 	
 public:
