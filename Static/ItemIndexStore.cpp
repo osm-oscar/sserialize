@@ -49,7 +49,7 @@ uint32_t ItemIndexStore::size() const {
 	return m_index.size();
 }
 
-uint32_t ItemIndexStore::getSizeInBytes() const {
+OffsetType ItemIndexStore::getSizeInBytes() const {
 	return 2 + (m_version == 2 ? 1 : 0) + UByteArrayAdapter::OffsetTypeSerializedLength() + m_index.getSizeInBytes() + m_data.size();
 }
 

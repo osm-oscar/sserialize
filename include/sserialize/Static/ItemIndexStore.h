@@ -37,13 +37,13 @@ public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);
 	~ItemIndexStore();
+	OffsetType getSizeInBytes() const;
 	uint32_t size() const;
 	ItemIndex::Types indexType() const { return m_type; }
 	IndexCompressionType compressionType() const { return m_compression; }
 	UByteArrayAdapter dataAt(uint32_t pos) const;
 	ItemIndex at(uint32_t pos) const;
 	ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const;
-	uint32_t getSizeInBytes() const;
 	ItemIndex hierachy(const std::deque< uint32_t >& offsets) const;
 	std::ostream& printStats(std::ostream& out) const;
 	std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const;
