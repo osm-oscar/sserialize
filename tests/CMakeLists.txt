@@ -94,7 +94,6 @@ ADD_TEST_TARGET_SINGLE(sc_gst_with_stitemdb)
 ADD_TEST_TARGET_SINGLE(sc_stgst)
 ADD_TEST_TARGET_SINGLE(sc_stgst_multiopts)
 ADD_TEST_TARGET_SINGLE(sc_stflatgst)
-ADD_TEST_TARGET_SINGLE(sc_stflatgst_strids)
 ADD_TEST_TARGET_SINGLE(sc_SinglePassTrie)
 # ADD_TEST_TARGET(sc_stgst_allopts)
 
