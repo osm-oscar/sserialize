@@ -1,5 +1,6 @@
 #include <sserialize/spatial/GeoMultiPolygon.h>
 #include <numeric>
+#include <sserialize/Static/Deque.h>
 
 
 namespace sserialize {
@@ -9,6 +10,9 @@ namespace spatial {
 GeoMultiPolygon::GeoMultiPolygon() {}
 GeoMultiPolygon::~GeoMultiPolygon() {}
 
+GeoShapeType GeoMultiPolygon::type() const {
+	return GS_MULTI_POLYGON;
+}
 
 uint32_t GeoMultiPolygon::size() const {
 	return m_size;
@@ -47,7 +51,7 @@ bool GeoMultiPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
 	
 	bool collides = false;
 	for(PolygonList::const_iterator it(m_innerPolygons.begin()), end(m_innerPolygons.end()); it != end; ++it) {
-		if (it->collidesWithPolygon(poly)) {
+		if (it->intersects(poly)) {
 			collides = true;
 			break;
 		}
@@ -55,7 +59,7 @@ bool GeoMultiPolygon::collidesWithPolygon(const GeoPolygon & poly) const {
 	//now check if the test polygon is fully contained in any of our outer polygons:
 	if (collides) {
 		for(PolygonList::const_iterator it(m_outerPolygons.begin()), end(m_outerPolygons.end()); it != end; ++it) {
-			if (it->contains(poly)) {
+			if (it->encloses(poly)) {
 				collides = false;
 				break;
 			}
@@ -98,14 +102,14 @@ bool GeoMultiPolygon::test(const GeoMultiPolygon::Point & p) const {
 		return false;
 	bool contained = false;
 	for(PolygonList::const_iterator it(m_innerPolygons.begin()), end(m_innerPolygons.end()); it != end; ++it) {
-		if (it->test(p)) {
+		if (it->contains(p)) {
 			contained = true;
 			break;
 		}
 	}
 	if (contained && m_outerBoundary.contains(p.lat, p.lon)) {
 		for(PolygonList::const_iterator it(m_outerPolygons.begin()), end(m_outerPolygons.end()); it != end; ++it) {
-			if (it->test(p)) {
+			if (it->contains(p)) {
 				contained = false;
 				break;
 			}
@@ -130,6 +134,15 @@ bool GeoMultiPolygon::test(const std::vector<GeoMultiPolygon::Point> & ps) const
 		}
 	}
 	return false;
+}
+
+UByteArrayAdapter & GeoMultiPolygon::serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
+	destination << static_cast<uint8_t>(GS_MULTI_POLYGON);
+	destination << m_innerBoundary;
+	destination << m_outerBoundary;
+	destination << m_innerPolygons;
+	destination << m_outerPolygons;
+	return destination;
 }
 
 }}

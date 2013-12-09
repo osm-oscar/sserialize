@@ -21,6 +21,7 @@ private:
 public:
 	GeoMultiPolygon();
 	virtual ~GeoMultiPolygon();
+	virtual GeoShapeType type() const;
 	virtual uint32_t size() const;
 	virtual GeoRect boundary() const;
 	virtual bool intersects(const GeoRect & boundary) const;
@@ -47,6 +48,9 @@ public:
 	bool test(const Point & p) const;
 	bool test(const std::deque<Point> & ps) const;
 	bool test(const std::vector<Point> & ps) const;
+	
+	virtual UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const;
+	
 };
 
 }}
