@@ -144,7 +144,7 @@ public:
 	void dump();
 
 	template<typename T_SOURCE_CONTAINER>
-	static bool create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
+	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
 	static bool createFromSet(const std::deque<uint32_t> & src, std::deque<uint8_t> & dest, uint8_t bpn);
 	/** @return returns the needed bits, 0 on failure */
 	static uint8_t createFromDeque(const std::deque< uint32_t >& src, std::deque< uint8_t >& dest);
@@ -156,21 +156,21 @@ public:
 };
 
 template<typename T_SOURCE_CONTAINER>
-bool CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest) {
+uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest) {
 	typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
 	uint8_t bits = minStorageBits64(maxElem);
 	UByteArrayAdapter::OffsetType spaceNeed = minStorageBytes(bits, src.size());
 	if (!dest.reserveFromPutPtr(spaceNeed))
-		return false;
+		return 0;
 	UByteArrayAdapter data(dest);
 	data.shrinkToPutPtr();
 	CompactUintArray carr(data, bits);
 	uint32_t pos = 0;
 	for(typename T_SOURCE_CONTAINER::const_iterator it(src.begin()), end(src.end()); it != end; ++it, ++pos) {
-		carr.set(pos, *it);
+		carr.set64(pos, *it);
 	}
 	dest.incPutPtr(spaceNeed);
-	return true;
+	return bits;
 }
 
 }
