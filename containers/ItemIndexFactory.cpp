@@ -55,12 +55,12 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 }
 
 void ItemIndexFactory::fromIndexStore(const sserialize::Static::ItemIndexStore & store) {
-	if (store.compressionType() == sserialize::Static::ItemIndexStore::IC_VARUINT32 || store.compressionType() == sserialize::Static::ItemIndexStore::IC_VARUINT32) {
+	if (store.compressionType() == sserialize::Static::ItemIndexStore::IC_NONE || store.compressionType() == sserialize::Static::ItemIndexStore::IC_VARUINT32) {
 		m_type = store.indexType();
 		m_compressionType = store.compressionType();
 		m_indexIdCounter = store.size();
 		for(uint32_t i = 0, s = store.size(); i < s; ++i) {
-			UByteArrayAdapter d = store.dataAt(i);
+			UByteArrayAdapter d = store.rawDataAt(i);
 			uint64_t h = hashFunc(d);
 			UByteArrayAdapter::OffsetType o = m_indexStore.tellPutPtr();
 			m_hash[h].push_front(o);
@@ -123,7 +123,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 	if (indexPos < 0) {
 		indexPos = m_indexStore.tellPutPtr();
 		m_offsetsToId[indexPos] = m_indexIdCounter;
-		m_indexIdCounter++;
+		++m_indexIdCounter;
 		m_indexStore.put(idx);
 		m_hash[hv].push_front(indexPos);
 	}
@@ -133,10 +133,6 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 	if (indexOffset)
 		*indexOffset = indexPos;
 	return m_offsetsToId[indexPos];
-}
-
-uint32_t ItemIndexFactory::addIndex(const std::unordered_set<uint32_t> & idx, bool * ok, OffsetType * indexOffset) {
-	return addIndex< std::set<uint32_t> >(std::set<uint32_t>(idx.begin(), idx.end()), ok, indexOffset);
 }
 
 UByteArrayAdapter ItemIndexFactory::getFlushedData() {
@@ -371,6 +367,11 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 }
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	if (store.compressionType() != Static::ItemIndexStore::IC_NONE) {
+		std::cerr << "Unsupported compression format detected" << std::endl;
+		return 0;
+	}
+
 	if (store.indexType() == ItemIndex::T_WAH) {
 		return compressWithHuffmanWAH(store, dest);
 	}
@@ -386,6 +387,11 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	if (store.indexType() != ItemIndex::T_WAH) {
 		std::cerr << "Unsupported index format" << std::endl;
+		return 0;
+	}
+	
+	if (store.compressionType() != Static::ItemIndexStore::IC_NONE) {
+		std::cerr << "Unsupported compression format detected" << std::endl;
 		return 0;
 	}
 	
@@ -429,12 +435,13 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
+	dest.putUint8(3);//version
 	dest.putUint8(store.indexType());
 	dest.putUint8(Static::ItemIndexStore::IC_LZO | store.compressionType());
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	std::vector<uint32_t> uncompressedSizes;
 	newOffsets.reserve(store.size());
 	
 	HEAP_ALLOC_MINI_LZO(wrkmem, LZO1X_1_MEM_COMPRESS);
@@ -450,7 +457,8 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	pinfo.begin(store.size(), "Recompressing index");
 	for(uint32_t i = 0; i < store.size(); ++i ) {
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
-		UByteArrayAdapter idxData( store.dataAt(i) );
+		UByteArrayAdapter idxData( store.rawDataAt(i) );
+		uncompressedSizes.push_back(idxData.size());
 		if (idxData.size() > bufferSize) {
 			delete[] inBuf;
 			delete[] outBuf;
@@ -490,6 +498,16 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		std::cout << "Adding huffman tree with size: " << htData.size() << std::endl;
 		dest.put(htData);
 	}
+	//now add the table with the uncompressedSizes
+	UByteArrayAdapter bitneed = dest;
+	bitneed.shrinkToPutPtr();
+	dest.putUint8(0);
+	uint8_t bitsForUncompressedSizes = CompactUintArray::create(uncompressedSizes, dest);
+	if (!bitsForUncompressedSizes) {
+		std::cout << "Failed to create the index for the uncompressed sizes" << std::endl;
+		return 0;
+	}
+	bitneed.putUint8(bitsForUncompressedSizes);
 	std::cout << "Total size: " << dest.tellPutPtr()-beginOffset << std::endl;
 	return dest.tellPutPtr()-beginOffset;
 }

@@ -163,7 +163,7 @@ UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemInde
 	return sserialize::ItemIndexFactory::compressWithVarUint(store, dest);
 }
 
-UByteArrayAdapter::OffsetType recompressIndexData(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+UByteArrayAdapter::OffsetType recompressIndexDataHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	return sserialize::ItemIndexFactory::compressWithHuffman(store, dest);
 }
 
@@ -334,7 +334,7 @@ int main(int argc, char ** argv) {
 		else
 			outFile = outFileName;
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFile));
-		UByteArrayAdapter::OffsetType size = recompressIndexData(store, outData);
+		UByteArrayAdapter::OffsetType size = recompressIndexDataHuffman(store, outData);
 		if (size > 0)
 			outData.shrinkStorage(outData.size()-size);
 		else
@@ -416,7 +416,7 @@ int main(int argc, char ** argv) {
 	if (dumpStats) {
 		std::cout <<  "#element count\tindex size" << std::endl;
 		for(uint32_t i = 0; i < store.size(); ++i) {
-			std::cout << store.at(i).size() << "\t" << store.dataAt(i).size() << std::endl;
+			std::cout << store.at(i).size() << "\t" << store.rawDataAt(i).size() << std::endl;
 		}
 	}
 	

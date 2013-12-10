@@ -41,6 +41,7 @@ private:
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint64_t offset);
+	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0);
 	
 public:
 	ItemIndexFactory(bool memoryBase = false);
@@ -60,100 +61,9 @@ public:
 	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
 	
 	inline ItemIndex getIndex(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
-	
-	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0);
 
 	template<class TSortedContainer>
-	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0) {
-		bool mok = false;
-		std::vector<uint8_t> s;
-		if (m_type == ItemIndex::T_REGLINE)
-			mok = ItemIndexPrivateRegLine::create(idx, s, m_bitWidth, m_useRegLine);
-		else if (m_type == ItemIndex::T_WAH) {
-			mok = true;
-			std::vector<uint8_t> mys;
-			UByteArrayAdapter dest(&mys);
-			ItemIndexPrivateWAH::create(idx, dest);
-			if (m_compressionType == Static::ItemIndexStore::IC_VARUINT32) {
-				UByteArrayAdapter nd(&s);
-				for(std::vector<uint8_t>::const_iterator it(mys.begin()), end(mys.end()); it != end; it += 4) {
-					uint32_t v = up_u32(&(*it));
-					nd.putVlPackedUint32(v);
-				}
-			}
-			else {
-				s.swap(mys);
-			}
-		}
-		else if (m_type == ItemIndex::T_DE) {
-			mok = true;
-			UByteArrayAdapter dest(&s);
-			ItemIndexPrivateDE::create(idx, dest);
-		}
-		else if (m_type == ItemIndex::T_RLE_DE) {
-			mok = true;
-			UByteArrayAdapter dest(&s);
-			ItemIndexPrivateRleDE::create(idx, dest);
-		}
-		else if (m_type == ItemIndex::T_SIMPLE) {
-			mok = true;
-			UByteArrayAdapter dest(&s);
-			ItemIndexPrivateSimple::create(idx, dest);
-		}
-		if (ok)
-			*ok = mok;
-#if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
-		if (mok) {
-			uint64_t idxOf;
-			uint32_t idxId = addIndex(s, &idxOf);
-			sserialize::ItemIndex sIdx = getIndex(idxOf);
-			if (sIdx != idx) {
-				std::cerr << "Broken index detected in ItemIndexFactory" << std::endl;
-			}
-			if (indexOffset)
-				*indexOffset = idxOf;
-			return idxId;
-		}
-#else
-		if (mok) {
-			return addIndex(s, indexOffset);
-		}
-#endif
-		else {
-			return 0;
-		}
-	}
-	
-	uint32_t addIndex(const std::unordered_set<uint32_t> & idx, bool * ok = 0, OffsetType * indexOffset = 0);
-	
-	
-	///This only works in conjunction with the IC_NONE
-	template<typename T_RANDOM_ACCESS_CONTAINER_ITERATOR>
-	uint32_t addMergedIndex(T_RANDOM_ACCESS_CONTAINER_ITERATOR begin, const T_RANDOM_ACCESS_CONTAINER_ITERATOR & end, OffsetType & indexOffset) {
-		std::vector<ItemIndex> indices;
-		indices.reserve(end-begin);
-		for(; begin != end; ++begin) {
-			ItemIndex idx = getIndex(*begin);
-			if (idx.size())
-				indices.push_back( idx );
-		}
-		std::vector<uint8_t> d;
-		UByteArrayAdapter dAdap(&d, false);
-		if (sserialize::ItemIndex::uniteSameResult(type()) && indices.size() < 32) {
-			std::vector<uint32_t> midx;
-			ItemIndex::unite(indices).insertInto(std::back_inserter(midx));
-			return addIndex(midx, 0, &indexOffset);
-		}
-		else {
-			sserialize::DynamicBitSet dbs(dAdap);
-			for(std::vector<ItemIndex>::const_iterator it(indices.begin()), end(indices.end()); it != end; ++it) {
-				it->putInto(dbs);
-			}
-			std::vector<uint32_t> midx;
-			dbs.putInto(std::back_inserter(midx));
-			return addIndex(midx, 0, &indexOffset);
-		}
-	}
+	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0);
 	
 	inline UByteArrayAdapter & getIndexStore() { return m_indexStore;}
 	inline uint32_t hitCount() { return m_hitCount; }
@@ -169,6 +79,68 @@ public:
 	static UByteArrayAdapter::OffsetType compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
 
 };
+
+template<class TSortedContainer>
+uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, OffsetType * indexOffset) {
+	bool mok = false;
+	std::vector<uint8_t> s;
+	if (m_type == ItemIndex::T_REGLINE) {
+		mok = ItemIndexPrivateRegLine::create(idx, s, m_bitWidth, m_useRegLine);
+	}
+	else if (m_type == ItemIndex::T_WAH) {
+		mok = true;
+		std::vector<uint8_t> mys;
+		UByteArrayAdapter dest(&mys);
+		ItemIndexPrivateWAH::create(idx, dest);
+		if (m_compressionType == Static::ItemIndexStore::IC_VARUINT32) {
+			UByteArrayAdapter nd(&s);
+			for(std::vector<uint8_t>::const_iterator it(mys.begin()), end(mys.end()); it != end; it += 4) {
+				uint32_t v = up_u32(&(*it));
+				nd.putVlPackedUint32(v);
+			}
+		}
+		else {
+			s.swap(mys);
+		}
+	}
+	else if (m_type == ItemIndex::T_DE) {
+		mok = true;
+		UByteArrayAdapter dest(&s);
+		ItemIndexPrivateDE::create(idx, dest);
+	}
+	else if (m_type == ItemIndex::T_RLE_DE) {
+		mok = true;
+		UByteArrayAdapter dest(&s);
+		ItemIndexPrivateRleDE::create(idx, dest);
+	}
+	else if (m_type == ItemIndex::T_SIMPLE) {
+		mok = true;
+		UByteArrayAdapter dest(&s);
+		ItemIndexPrivateSimple::create(idx, dest);
+	}
+	if (ok)
+		*ok = mok;
+#if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
+	if (mok) {
+		uint64_t idxOf;
+		uint32_t idxId = addIndex(s, &idxOf);
+		sserialize::ItemIndex sIdx = getIndex(idxOf);
+		if (sIdx != idx) {
+			std::cerr << "Broken index detected in ItemIndexFactory" << std::endl;
+		}
+		if (indexOffset)
+			*indexOffset = idxOf;
+		return idxId;
+	}
+#else
+	if (mok) {
+		return addIndex(s, indexOffset);
+	}
+#endif
+	else {
+		return 0;
+	}
+}
 
 }//end namespace
 
