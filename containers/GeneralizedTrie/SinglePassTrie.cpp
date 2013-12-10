@@ -173,7 +173,7 @@ void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 	sserialize::Static::GeneralizedTrie::HeaderInfo headerInfo;
 	headerInfo.version = 1;
 	headerInfo.depth = getDepth();
-	headerInfo.trieOptions |= Static::GeneralizedTrie::STO_NORMALIZED;
+	headerInfo.trieOptions = Static::GeneralizedTrie::STO_NONE;
 	if (m_caseSensitive)
 		headerInfo.trieOptions |= Static::GeneralizedTrie::STO_CASE_SENSITIVE;
 	if (m_isSuffixTrie)

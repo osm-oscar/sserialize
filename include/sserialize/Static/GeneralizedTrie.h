@@ -45,11 +45,10 @@ public:
 	typedef StringCompleterPrivate MyBaseClass;
 	typedef sserialize::Static::TrieNode Node;
 	typedef enum {
-		STO_NORMALIZED=1,
+		STO_NONE=0,
 		STO_CASE_SENSITIVE=2,
-		STO_SUBTRIES=4,
-		STO_INDIRECT_INDEX=8,
-		STO_SUFFIX=16
+		STO_INDIRECT_INDEX=4,
+		STO_SUFFIX=8
 	} TrieOptions;
 	typedef enum {IT_NONE=0x0, IT_PREFIX=0x1, IT_SUFFIXPREFIX=0x2} IndexMergeType;
 	class ForwardIterator: public MyBaseClass::ForwardIterator {

@@ -22,6 +22,7 @@ StringCompleter::StringCompleter(UByteArrayAdapter data, const sserialize::Stati
 	UByteArrayAdapter::OffsetType dataSize = data.getOffset();
 	data.shrinkToGetPtr();
 	SSERIALIZE_LENGTH_CHECK(dataSize, data.size(), "sserialize::Static::StringCompleter");
+	data = UByteArrayAdapter(data, 0, dataSize);
 	
 	switch (m_t) {
 	case (Static::StringCompleter::T_TRIE):

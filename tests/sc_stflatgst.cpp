@@ -89,14 +89,15 @@ public:
 	virtual void tearDown() {}
 
 	void testStringCompleterPrivateCast() {
-		Static::FlatGST * p = dynamic_cast<sserialize::Static::FlatGST*>(stringCompleter().getPrivate());
-		
+		Static::StringCompleter * p1 = dynamic_cast<sserialize::Static::StringCompleter*>(stringCompleter().getPrivate());
+		Static::FlatGST * p = dynamic_cast<sserialize::Static::FlatGST*>(p1->priv().get());
 		CPPUNIT_ASSERT( p != 0 );
 	}
 	
 	void testFlatGSTEquality() {
 		if (!m_deletTree) {
-			Static::FlatGST * p = dynamic_cast<sserialize::Static::FlatGST*>(stringCompleter().getPrivate());
+			Static::FlatGST * p = static_cast<Static::FlatGST *>(dynamic_cast<sserialize::Static::StringCompleter*>(stringCompleter().getPrivate())->priv().get());
+			CPPUNIT_ASSERT(p);
 			CPPUNIT_ASSERT( m_trie.checkFlatTrieEquality(*p) );
 		}
 	}

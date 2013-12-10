@@ -96,7 +96,7 @@ public:
 	virtual void tearDown() {}
 	
 	void testTrieEquality() {
-		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>( dynamic_cast<sserialize::Static::StringCompleter*>(stringCompleter().getPrivate())->priv().get());
 		
 		CPPUNIT_ASSERT( stTriePtr );
 		
@@ -104,7 +104,7 @@ public:
 	}
 	
 	void testIndexEquality() {
-		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>( dynamic_cast<sserialize::Static::StringCompleter*>(stringCompleter().getPrivate())->priv().get());
 		
 		CPPUNIT_ASSERT( stTriePtr );
 
@@ -112,9 +112,9 @@ public:
 	}
 	
 	void testStringCompleterPrivateCast() {
-		Static::GeneralizedTrie * p = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
-		
-		CPPUNIT_ASSERT( p != 0 );
+		sserialize::Static::StringCompleter * p1 = dynamic_cast<sserialize::Static::StringCompleter*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * p = dynamic_cast<sserialize::Static::GeneralizedTrie*>(p1->priv().get());
+ 		CPPUNIT_ASSERT( p != 0 );
 	}
 };
 

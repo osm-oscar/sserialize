@@ -83,6 +83,10 @@ protected:
 		return true;
 	}
 	
+	sserialize::Static::GeneralizedTrie * priv() {
+		return dynamic_cast<sserialize::Static::GeneralizedTrie*>(dynamic_cast<sserialize::Static::StringCompleter*>(stringCompleter().getPrivate())->priv().get());
+	}
+	
 public:
     StaticGeneralizedTrieTest() {
 		m_caseSensitive = T_BUILD_OPTS & BO_TREE_CASE_SENSITIVE;
@@ -96,7 +100,7 @@ public:
 	virtual void tearDown() {}
 	
 	void testSinglePassTrieEquality() {
-		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * stTriePtr = priv();
 		
 		CPPUNIT_ASSERT( stTriePtr );
 		
@@ -104,7 +108,7 @@ public:
 	}
 
 	void testMultiPassTrieEquality() {
-		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * stTriePtr = priv();
 		
 		CPPUNIT_ASSERT( stTriePtr );
 		
@@ -128,7 +132,7 @@ public:
 		tempTrie.setDB(db(), true);
 		tempTrie.trieSerializationProblemFixer();
 		
-		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * stTriePtr = priv();
 		
 		CPPUNIT_ASSERT( stTriePtr );
 
@@ -151,7 +155,7 @@ public:
 		tempTrie.setDB(db());
 		tempTrie.trieSerializationProblemFixer();
 		
-		Static::GeneralizedTrie * stTriePtr = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * stTriePtr = priv();
 		
 		CPPUNIT_ASSERT( stTriePtr );
 
@@ -166,7 +170,7 @@ public:
 	}
 	
 	void testStringCompleterPrivateCast() {
-		Static::GeneralizedTrie * p = dynamic_cast<sserialize::Static::GeneralizedTrie*>(stringCompleter().getPrivate());
+		Static::GeneralizedTrie * p = priv();
 		
 		CPPUNIT_ASSERT( p != 0 );
 	}
