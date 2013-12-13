@@ -1,7 +1,6 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/templated/StringsItemDB.h>
 #include <staging/containers/FlatGST.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -9,9 +8,9 @@
 
 using namespace sserialize;
 
-template<bool T_SUFFIX_TRIE, bool TCASE_SENSITIVE, bool T_WITH_STRING_IDS>
-class StringsGSACompleterTest: public StringCompleterTest {
-CPPUNIT_TEST_SUITE( StringsGSACompleterTest );
+template<bool T_SUFFIX_TRIE, bool TCASE_SENSITIVE>
+class FlatGSTCompleterTest: public StringCompleterTest {
+CPPUNIT_TEST_SUITE( FlatGSTCompleterTest );
 CPPUNIT_TEST( testCreateStringCompleter );
 CPPUNIT_TEST( testSupportedQuerries );
 CPPUNIT_TEST( testCompletionECS );
@@ -25,18 +24,14 @@ CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testStringCompleterPrivateCast );
 CPPUNIT_TEST_SUITE_END();
 private:
-	StringsItemDBWrapper<TestItemData> m_db;
-	std::map<unsigned int, unsigned int> m_dbIdRealIdMap;
 	StringCompleter m_strCompleter;
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
 protected:
 	bool setUpCompleter() {
-		for(size_t i = 0; i < items().size(); i++) {
-			m_dbIdRealIdMap[ m_db.insert(items()[i].strs, items()[i]) ] = items()[i].id;
-		}
-		
-		dynamic::FlatGST<TestItemData> * p = new dynamic::FlatGST<TestItemData>(m_db, T_SUFFIX_TRIE, TCASE_SENSITIVE, T_WITH_STRING_IDS);
-		p->create();
+		FlatGST * p = new FlatGST();
+		p->setCaseSensitivity(TCASE_SENSITIVE);
+		p->setSuffixTrie(T_SUFFIX_TRIE);
+// 		p->create();
 		stringCompleter() = StringCompleter(p);
 		
 		return true;
@@ -62,7 +57,7 @@ public:
 	virtual void tearDown() {}
 	
 	void testStringCompleterPrivateCast() {
-		dynamic::FlatGST<TestItemData> * p = dynamic_cast<dynamic::FlatGST<TestItemData>*>(stringCompleter().getPrivate());
+		FlatGST * p = dynamic_cast<FlatGST*>(stringCompleter().getPrivate());
 		
 		CPPUNIT_ASSERT( p != 0 );
 	}
@@ -70,14 +65,9 @@ public:
 
 int main() {
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest( StringsGSACompleterTest<false, false, false>::suite() );
-	runner.addTest( StringsGSACompleterTest<true, false, false>::suite() );
-	runner.addTest( StringsGSACompleterTest<false, true, false>::suite() );
-	runner.addTest( StringsGSACompleterTest<true, true, false>::suite() );
-	runner.addTest( StringsGSACompleterTest<false, false, true>::suite() );
-	runner.addTest( StringsGSACompleterTest<true, false, true>::suite() );
-	runner.addTest( StringsGSACompleterTest<false, true, true>::suite() );
-	runner.addTest( StringsGSACompleterTest<true, true, true>::suite() );
-	runner.run();
+	runner.addTest( FlatGSTCompleterTest<false, false>::suite() );
+	runner.addTest( FlatGSTCompleterTest<true, false>::suite() );
+	runner.addTest( FlatGSTCompleterTest<false, true>::suite() );
+	runner.addTest( FlatGSTCompleterTest<true, true>::suite() );
 	return 0;
 }

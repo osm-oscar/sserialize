@@ -1,200 +1,285 @@
-#ifndef SSERIALIZE_SUFFIX_ARRAY_H
-#define SSERIALIZE_SUFFIX_ARRAY_H
-#include <string>
-#include <deque>
-#include <set>
+#ifndef SSERIALIZE_FLAT_GST_H
+#define SSERIALIZE_FLAT_GST_H
 #include <sserialize/completers/StringCompleter.h>
-#include <sserialize/containers/StringsItemDBWrapper.h>
-#include <sserialize/containers/GeneralizedTrie/Helpers.h>
-#include <sserialize/containers/GeneralizedTrie/FlatTrie.h>
+#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/utility/DiacriticRemover.h>
+#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/utility/MmappedMemoy.h>
+#include <sserialize/templated/WindowedArray.h>
+#include <unordered_set>
+#include <algorithm>
 
-namespace sserialize { namespace dynamic {
+namespace sserialize {
 
 
 /** IDEA:
   *
   *
   *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
   */
 
-template<class ItemType>
 class FlatGST: public StringCompleterPrivate {
+public:
+	typedef std::vector<std::string> OrderedStringTable;
+	typedef uint32_t ItemIdType;
+	typedef uint32_t StrIdType;
+	static const uint32_t npos = 0xFFFFFFFF;
 private:
+
 	typedef enum {SC_SMALLER, SC_EQUAL, SC_LARGER} StringComparisonType;
-	struct FlatGSTEntry {
-		uint32_t strId;
+	struct Entry {
+		Entry(StrIdType strId, uint16_t pos, uint16_t len) : strId(strId), pos(pos), len(len) {}
+		StrIdType strId;
 		uint16_t pos;
 		uint16_t len;
-		uint16_t lcp;
-		std::deque<uint32_t> exactStrIds;
-		std::deque<uint32_t> subStrIds;
-		void swap(FlatGSTEntry & other) {
-			std::swap(strId, other.strId);
-			std::swap(pos, other.pos);
-			std::swap(len, other.len);
-			std::swap(lcp, other.lcp);
-			exactStrIds.swap(other.exactStrIds);
-			subStrIds.swap(other.subStrIds);
+		WindowedArray<ItemIdType> exactMatchedItems;
+		WindowedArray<ItemIdType> suffixMatchedItems;
+		inline std::string::const_iterator cbegin(const OrderedStringTable * strTable) const {return strTable->at(strId).cbegin() + pos;}
+		inline std::string::const_iterator cend(const OrderedStringTable * strTable) const {return strTable->at(strId).cbegin() + (pos+len);}
+	};
+	
+	class EntryLcpCalculator {
+		const OrderedStringTable * m_st;
+		typedef std::string::const_iterator StrIt;
+		inline bool calc(StrIt aIt, StrIt bIt, const StrIt & aEnd, const StrIt & bEnd) const {
+			uint32_t c = 0;
+			while (*aIt == *bIt && aIt != aEnd && bIt != bEnd) {
+				++aIt;
+				++bIt;
+				++c;
+			}
+			return c;
+		}
+	public:
+		EntryLcpCalculator(const OrderedStringTable * strTable) : m_st(strTable) {}
+		~EntryLcpCalculator() {}
+		inline uint32_t operator()(const Entry & a, const Entry & b) const {
+			return calc(a.cbegin(m_st), b.cbegin(m_st), a.cend(m_st), b.cend(m_st));
+		}
+		inline uint32_t operator()(const Entry & a, const std::string & str) const {
+			const std::string & bStr = str;
+			return calc(a.cbegin(m_st), bStr.begin(), a.cend(m_st), bStr.begin());
+		}
+		
+		inline uint32_t operator()(const std::string & str, const Entry & b) const {
+			return operator()(b, str);
 		}
 	};
 	
-	class FlatGSTEntryComparator {
-		const std::deque<std::string> & m_stringIdMap;
+	class EntryComparator {
+		const OrderedStringTable * m_st;
+		typedef std::string::const_iterator StrIt;
 	public:
-		FlatGSTEntryComparator(const std::deque<std::string> & stringIdMap) : m_stringIdMap(stringIdMap) {}
-		~FlatGSTEntryComparator() {}
-		bool operator()(const FlatGSTEntry & a, const FlatGSTEntry & b) {
-			const std::string & aStr = m_stringIdMap.at(a.strId);
-			const std::string & bStr = m_stringIdMap.at(b.strId);
-			std::string::const_iterator aIt = a.begin();
-			std::string::const_iterator aEnd = aIt + a.len;
-			std::string::const_iterator bIt = b.begin();
-			std::string::const_iterator bEnd = bIt + b.len;
-			
+		inline int cmp(StrIt aIt, StrIt bIt, const StrIt & aEnd, const StrIt & bEnd) const {
 			while (aIt != aEnd && bIt != bEnd) {
 				if (*aIt == *bIt) {
 					++aIt;
 					++bIt;
 				}
 				else if (*aIt < *bIt)
-					return true;
+					return -1;
 				else
-					return false;
+					return 1;
 			}
-			return !(bIt == bEnd);
+			if (bIt == bEnd) {
+				if (aIt != aEnd) {
+					return 1;
+				}
+				return 0;
+			}
+			else {
+				return -1;
+			}
+		}
+	public:
+		EntryComparator(const OrderedStringTable * strTable) : m_st(strTable) {}
+		~EntryComparator() {}
+		inline bool operator()(const Entry & a, const Entry & b, uint32_t lcp = 0) const {
+			return cmp(a.cbegin(m_st), b.cbegin(m_st), a.cend(m_st), b.cend(m_st));
+		}
+		inline bool operator()(const Entry & a, const std::string & str, uint32_t lcp = 0) const {
+			return cmp(a.cbegin(m_st)+lcp, str.begin(), a.cend(m_st), str.begin());
 		}
 		
+		inline bool operator()(const std::string & str, const Entry & b, uint32_t lcp = 0) const {
+			return cmp(str.cbegin()+lcp, b.cbegin(m_st)+lcp, str.cend(), b.cend(m_st));
+		}
 	};
 	
-	typedef std::set<FlatGST::FlatGSTEntry> FlatGSTConstructionSet;
-private:
-	StringsItemDBWrapper<ItemType> m_db;
-	bool m_suffixTrie;
-	bool m_caseSensitive;
-	bool m_stringIds;
-	std::deque<FlatGSTEntry> m_fgst;
-	std::deque<std::string> m_strings;
-private:
-	bool insertIntoCsSet(FlatGSTConstructionSet & cs);
-public:
-	FlatGST() : StringCompleterPrivate(), m_suffixTrie(false), m_caseSensitive(false), m_stringIds(false) {}
-	FlatGST(const StringsItemDBWrapper<ItemType> & db, bool suffixTrie, bool caseSensitive, bool stringIds);
-	virtual ~FlatGST();
-	bool create();
+	class EntrySmallerComparator {
+		EntryComparator m_cmp;
+	public:
+		EntrySmallerComparator(const OrderedStringTable * strTable) : m_cmp(strTable) {}
+		~EntrySmallerComparator() {}
+		inline bool operator()(const Entry & a, const Entry & b) const {
+			return m_cmp(a, b) < 0;
+		}
+		inline bool operator()(const Entry & a, const std::string & b) const {
+			return m_cmp(a, b) < 0;
+
+		}
+		
+		inline bool operator()(const std::string & a, const Entry & b) const {
+			return m_cmp(a, b) < 0;
+		}
+	};
 	
-	virtual ItemIndex complete(const std::string & str, StringCompleter::QuerryType qtype) const;
+	class EntryEqualityComparator {
+		EntryComparator m_cmp;
+	public:
+		EntryEqualityComparator(const OrderedStringTable * strTable) : m_cmp(strTable) {}
+		~EntryEqualityComparator() {}
+		inline bool operator()(const Entry & a, const Entry & b) const {
+			if (a.len != b.len) {
+				return false;
+			}
+			if (a.strId == b.strId) {
+				return a.pos == b.pos;
+			}
+			else {
+				return m_cmp(a, b) == 0;
+			}
+		}
+		inline bool operator()(const std::string & a, const Entry & b) const {
+			if (a.size() != b.len) {
+				return false;
+			}
+			else {
+				return m_cmp(a, b) == 0;
+			}
+		}
+		inline bool operator()(const Entry & a, const std::string & b) const {
+			return operator()(b, a);
+		}
+	};
+	
+	class EntryHasher {
+	private:
+		OrderedStringTable * m_data;
+	public:
+		EntryHasher(OrderedStringTable * data) : m_data(data) {}
+		inline std::size_t operator()(const Entry & e) const {
+			std::size_t s = 0;
+			const std::string & str = m_data->at(e.strId);
+			std::string::const_iterator it(str.begin()+e.pos);
+			std::string::const_iterator end(it+e.len);
+			for(; it != end; ++it) {
+				hash_combine(s, *it);
+			}
+			return s;
+		}
+	};
+	
+	typedef std::vector<Entry> TrieStorage;
+	
+	class Node {
+	private:
+		uint32_t m_begin;
+		uint32_t m_end;
+		///find the next theoretical child and returns the position of the beginning.
+		uint32_t findNextChild(sserialize::FlatGST::TrieStorage * trie, const sserialize::FlatGST::OrderedStringTable * strTable, uint32_t begin, uint32_t end, uint32_t strOffset, uint32_t prevChildCp) const;
+	public:
+		Node() {}
+		Node(uint32_t begin, uint32_t end);
+		~Node();
+		///very costly operation O(n) in the size of @trie
+		std::map<uint32_t, Node> children(sserialize::FlatGST::TrieStorage * trie, const sserialize::FlatGST::OrderedStringTable * strTable) const;
+	};
+	
+private:
+	bool m_isSuffixTrie;
+	bool m_caseSensitive;
+	bool m_addTransDiacs;
+	std::unordered_set<uint32_t> m_suffixDelimeters;
+	OrderedStringTable m_strTable;
+	TrieStorage m_trie;
+	MmappedMemory<ItemIdType> m_exactMatchedItemData;
+	MmappedMemory<ItemIdType> m_suffixMatchedItemData;
+	
+private:
+	uint32_t find(const std::string & qStr, sserialize::StringCompleter::QuerryType qt) const;
+	Node rootNode();
+	template<typename T_ITEM_FACTORY, typename T_ITEM>
+	bool populateStringTable(const T_ITEM_FACTORY & stringsFactory);
+	
+	void nextSuffixString(std::string::const_iterator & strIt, const std::string::const_iterator & strEnd);
+	void trieFromMyStringTable();
+public:
+	FlatGST();
+	virtual ~FlatGST();
+	inline void setCaseSensitivity(bool c) { m_caseSensitive = c; }
+	inline void setSuffixTrie(bool c) { m_isSuffixTrie = c; }
+	inline void setSuffixDelimeters(const std::unordered_set<uint32_t> & s) { m_suffixDelimeters = s; }
+	
+	/** If you set this to true, then transliterated versions of itemstrings are added as well
+	  * This is only compatible with the Static::Trie. The FlatGST does not support this!
+	  *
+	  */
+	inline void setAddTransliteratedDiacritics(bool c) { m_addTransDiacs = c; }
+	
+	inline bool isCaseSensitive() { return m_caseSensitive; }
+	inline bool isSuffixTrie() { return m_isSuffixTrie;}
+	inline std::unordered_set<uint32_t> getSuffixDelimeters() { return m_suffixDelimeters; }
+	
+	template<typename T_ITEM_FACTORY, typename T_ITEM>
+	bool create(const T_ITEM_FACTORY & stringsFactory);
+
+	virtual ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const;
 		
 	virtual StringCompleter::SupportedQuerries getSupportedQuerries() const;
 
 	virtual std::ostream& printStats(std::ostream& out) const;
 	
-	virtual std::string getName() const { return std::string("dynamic::FlatGST"); }
+	virtual std::string getName() const { return std::string("sserialize::FlatGST"); }
 	
-	void serialize(GeneralizedTrie::FlatGSTConfig & config);
+	///Serialize the trie with CompactLargeNode, no merge index, direct index
+	void serialize(sserialize::UByteArrayAdapter & dest);
 };
 
-template<class ItemType>
-FlatGST<ItemType>::FlatGST(const StringsItemDBWrapper< ItemType >& db, bool suffixTrie, bool caseSensitive, bool stringIds) :
-StringCompleterPrivate(),
-m_db(db),
-m_suffixTrie(suffixTrie),
-m_caseSensitive(caseSensitive),
-m_stringIds(stringIds)
-{}
 
-
-template<class ItemType>
-FlatGST<ItemType>::~FlatGST()
-{}
-
-
-/** This will insert all StringsIds from the db into cs */
-template<class ItemType>
-bool
-FlatGST<ItemType>::insertIntoCsSet(FlatGSTConstructionSet & cs) {
-	const std::map<unsigned int, std::string> & sourceStrings = m_db.strIdToStr();
-	FlatGSTEntryComparator cmp(m_strings);
-	for(std::map<unsigned int, std::string>::const_iterator srcIt = sourceStrings.begin(); srcIt != sourceStrings.end(); ++srcIt) {
-		std::string curSrcString;
-		if (m_caseSensitive)
-			curSrcString = srcIt->second;
-		else
-			curSrcString = unicode_to_lower(srcIt->second);
-		
-		uint32_t curSrcStringId = m_strings.size();
-		m_strings.push_back(curSrcString);
-		bool keepString = false;
-		
-		FlatGSTEntry e;
-		e.strId = curSrcStringId;
-		e.pos = 0;
-		e.len = curSrcString.length();
-		typename FlatGSTConstructionSet::iterator csIt;// = cs.find(e, cmp);
-		if (csIt != cs.end()) {
-// 			csIt->exactStrIds.push_back(srcIt->first);
+template<typename T_ITEM_FACTORY, typename T_ITEM>
+bool FlatGST::populateStringTable(const T_ITEM_FACTORY & stringsFactory) {
+	DiacriticRemover transLiterator;
+	if (m_addTransDiacs) {
+		UErrorCode status = transLiterator.init();
+		if (U_FAILURE(status)) {
+			std::cerr << "Failed to create translitorated on request: " << u_errorName(status) << std::endl;
+			return false;
 		}
-		if (m_suffixTrie) {
-			
-		}
-		
-		
-		if (!keepString)
-			m_strings.pop_back();
 	}
-	return false;
-}
 
-template<class ItemType>
-bool
-FlatGST<ItemType>::create() {
-	FlatGSTConstructionSet cs;
-	if (!insertIntoCsSet(cs))
-		return false;
-	
-	
-	typename FlatGSTConstructionSet::iterator csIt = cs.begin();
-	while(cs.size()) {
-		m_fgst.push_back(*csIt);
-// 		m_fgst.back().swap(*csIt);
-		cs.erase(csIt++);
+	ProgressInfo progressInfo;
+	uint32_t count = 0;
+	std::unordered_set<std::string> strings;
+	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::trieFromStringsFactory: Gathering strings");
+	for(typename T_ITEM_FACTORY::const_iterator itemsIt(stringsFactory.begin()), itemsEnd(stringsFactory.end()); itemsIt != itemsEnd; ++itemsIt) {
+		T_ITEM item = *itemsIt;
+		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
+			std::string str = *itemStrsIt;
+			if (m_caseSensitive) {
+				strings.insert(str);
+				if (m_addTransDiacs) {
+					transLiterator.transliterate(str); //ATTENTION: str should not be reused after this
+					strings.insert( str );
+				}
+			}
+			else {
+				str = unicode_to_lower(str);
+				if (m_addTransDiacs) {
+					transLiterator.transliterate(str); //ATTENTION: str should not be reused after this
+					strings.insert( str );
+				}
+			}
+		}
+		progressInfo(++count);
 	}
+	progressInfo.end();
+	m_strTable = OrderedStringTable(strings.begin(), strings.end());
+	std::sort(m_strTable.begin(), m_strTable.end());
 	return true;
 }
 
-template<class ItemType>
-ItemIndex
-FlatGST<ItemType>::complete(const std::string & str, StringCompleter::QuerryType qt) const {
-	return ItemIndex();
-}
 
-template<class ItemType>
-StringCompleter::SupportedQuerries
-FlatGST<ItemType>::getSupportedQuerries() const {
-	uint8_t sq = StringCompleter::SQ_EP;
-	if (m_caseSensitive)
-		sq |= StringCompleter::SQ_CASE_SENSITIVE;
-	else
-		sq |= StringCompleter::SQ_CASE_INSENSITIVE;
-	
-	if (m_suffixTrie)
-		sq |= StringCompleter::SQ_SSP;
-	return (StringCompleter::SupportedQuerries) sq;
-}
-
-template<class ItemType>
-std::ostream&
-FlatGST<ItemType>::printStats(std::ostream& out) const {
-	return out;
-}
-
-
-}}//end namespaces
+}//end namespaces
 
 #endif
