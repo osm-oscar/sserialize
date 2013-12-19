@@ -3,7 +3,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/spatial/polygonstore.h>
+#include <sserialize/spatial/PolygonStore.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
 
