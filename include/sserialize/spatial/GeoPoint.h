@@ -37,6 +37,8 @@ public:
 	
 	///Check if two lines given by p->q and r->s intersect each other
 	static bool intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s);
+	
+	virtual sserialize::spatial::GeoShape * copy() const;
 };
 
 }}

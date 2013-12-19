@@ -32,9 +32,10 @@ public:
 
 	virtual UByteArrayAdapter & serializeWithTypeInfo(UByteArrayAdapter & destination) const;
 	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const;
-
-	static GeoPolygon fromRect(const GeoRect & rect);
 	
+	virtual sserialize::spatial::GeoShape * copy() const;
+	
+	static GeoPolygon fromRect(const GeoRect & rect);
 };
 
 

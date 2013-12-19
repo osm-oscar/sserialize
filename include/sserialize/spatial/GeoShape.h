@@ -18,6 +18,7 @@ public:
 	virtual GeoRect boundary() const = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;
 	virtual UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const = 0;
+	virtual GeoShape * copy() const = 0;
 };
 
 }}//end namespace

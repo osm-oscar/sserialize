@@ -107,6 +107,9 @@ UByteArrayAdapter & GeoWay::serialize(UByteArrayAdapter & destination) const {
 	return destination;
 }
 
+sserialize::spatial::GeoShape * GeoWay::copy() const {
+	return new sserialize::spatial::GeoWay(*this);
+}
 
 }}//end namespace
 

@@ -89,4 +89,8 @@ bool GeoPoint::intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint
 	return (0.0 <= tl2 && 1.0 >= tl2);
 }
 
+sserialize::spatial::GeoShape * GeoPoint::copy() const {
+	return new sserialize::spatial::GeoPoint(*this);
+}
+
 }}//end namespace

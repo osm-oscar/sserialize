@@ -51,6 +51,8 @@ public:
 	
 	virtual UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const;
 	
+	virtual sserialize::spatial::GeoShape * copy() const;
+	
 };
 
 }}

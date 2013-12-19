@@ -129,6 +129,10 @@ UByteArrayAdapter & GeoPolygon::serialize(UByteArrayAdapter & destination) const
 	return GeoWay::serialize(destination);
 }
 
+sserialize::spatial::GeoShape * GeoPolygon::copy() const {
+	return new  sserialize::spatial::GeoPolygon(*this);
+}
+
 GeoPolygon GeoPolygon::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
 	points.push_back( Point(rect.lat()[0], rect.lon()[0]) );

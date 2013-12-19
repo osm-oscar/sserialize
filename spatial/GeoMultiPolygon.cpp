@@ -145,4 +145,8 @@ UByteArrayAdapter & GeoMultiPolygon::serializeWithTypeInfo(sserialize::UByteArra
 	return destination;
 }
 
+sserialize::spatial::GeoShape * GeoMultiPolygon::copy() const {
+	return new sserialize::spatial::GeoMultiPolygon(*this);
+}
+
 }}

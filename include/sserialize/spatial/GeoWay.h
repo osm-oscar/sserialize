@@ -44,6 +44,8 @@ public:
 	
 	virtual UByteArrayAdapter & serializeWithTypeInfo(UByteArrayAdapter & destination) const;
 	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const;
+	
+	virtual sserialize::spatial::GeoShape * copy() const;
 };
 
 }}//end namespace

@@ -82,6 +82,10 @@ UByteArrayAdapter & GeoShape::serializeWithTypeInfo(sserialize::UByteArrayAdapte
 	return destination;
 }
 
+sserialize::spatial::GeoShape * GeoShape::copy() const {
+	return new sserialize::Static::spatial::GeoShape(*this);
+}
+
 }}}//end namespace
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
