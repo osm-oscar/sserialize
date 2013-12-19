@@ -18,9 +18,6 @@ template<class TValue>
 class PolygonStore {
 public:
 	typedef GeoPoint Point;
-	typedef GeoPolygon SourceRegionShape;
-	typedef GeoPolygon Polygon;
-
 private:
 
 	typedef std::vector<uint32_t> PolyRasterElement;
@@ -63,14 +60,14 @@ private:
 		typedef RWGeoGrid< RasterElementPolygons, std::vector<RasterElementPolygons> > MyRWGeoGrid;
 		typedef RGeoGrid<RasterElementPolygons, std::vector<RasterElementPolygons> > MyRGeoGrid;
 	private:
-		void createCellPoly(const GeoRect & cellRect, Polygon & cellPoly) const {
+		void createCellPoly(const GeoRect & cellRect, GeoPolygon & cellPoly) const {
 			cellPoly.points().push_back( Point(cellRect.lat()[0], cellRect.lon()[0]) );
 			cellPoly.points().push_back( Point(cellRect.lat()[1], cellRect.lon()[0]) );
 			cellPoly.points().push_back( Point(cellRect.lat()[1], cellRect.lon()[1]) );
 			cellPoly.points().push_back( Point(cellRect.lat()[0], cellRect.lon()[1]) );
 			cellPoly.updateBoundaryRect();
 		}
-		void createCellPoly(Polygon & cellPoly, uint32_t i , uint32_t j) {
+		void createCellPoly(GeoPolygon & cellPoly, uint32_t i , uint32_t j) {
 			GeoRect cellRect(MyRWGeoGrid::cellBoundary(i,j));
 			createCellPoly(cellRect, cellPoly);
 		}
@@ -86,7 +83,7 @@ private:
 			}
 		}
 		
-		bool addPolygon(SourceRegionShape & p, uint32_t polyId) {
+		bool addRegion(GeoRegion & p, uint32_t polyId) {
 			//First, get the bbox, then test all rasterelements for inclusion
 			GeoRect b( p.boundary() );
 			GeoGrid::GridBin blBin = GeoGrid::select(b.minLat(), b.minLon());
@@ -124,7 +121,7 @@ private:
 						MyRWGeoGrid::binAt(i,j).enclosing->push_back(polyId);
 					}
 					else {
-						Polygon cellPoly;
+						GeoPolygon cellPoly;
 						createCellPoly(cellRect, cellPoly);
 						if (p.intersects(cellPoly)) {
 							if (!MyRWGeoGrid::binAt(i,j).colliding) {
@@ -181,27 +178,32 @@ private:
 	};
 
 private:
-	std::vector<SourceRegionShape> m_polyStore;
+	std::vector<GeoRegion*> m_regionStore;
 	std::vector<TValue> m_values;
 	PolyRaster * m_polyRaster;
 	
 private:
-	inline bool pointInPolygon(const Point & p, const SourceRegionShape & pg) { return pg.contains(p);}
+	inline bool pointInRegion(const Point & p, const GeoRegion & pg) { return pg.contains(p);}
 
 	
 public:
 	PolygonStore(): m_polyRaster(0) {}
-	~PolygonStore() {}
-	std::size_t size() const { return polygons().size(); }
-	const std::vector<SourceRegionShape> & polygons() const { return m_polyStore; }
+	~PolygonStore() {
+		for(std::vector<GeoRegion*>::iterator it(m_regionStore.begin()), end(m_regionStore.end()); it != end; ++it) {
+			delete *it;
+		}
+		delete m_polyRaster;
+	}
+	std::size_t size() const { return regions().size(); }
+	const std::vector<GeoRegion*> & regions() const { return m_regionStore; }
 	const std::vector<TValue> & values() const { return m_values; }
-	inline void push_back(const SourceRegionShape & p, const TValue & value) {
-		m_polyStore.push_back(p);
+	inline void push_back(const GeoRegion & p, const TValue & value) {
+		m_regionStore.push_back(static_cast<GeoRegion*>(p.copy()));
 		m_values.push_back(value);
 	}
 	
 	void addPolygonsToRaster(unsigned int gridLatCount, unsigned int gridLonCount) {
-		if (!m_polyStore.size())
+		if (!m_regionStore.size())
 			return;
 		if (m_polyRaster) {
 			delete m_polyRaster;
@@ -209,17 +211,17 @@ public:
 		}
 		
 
-		GeoRect bbox( m_polyStore.front().boundary() );
-		for(size_t i=0; i < m_polyStore.size(); i++) {
-			bbox.enlarge( m_polyStore[i].boundary() );
+		GeoRect bbox( m_regionStore.front()->boundary() );
+		for(size_t i=0; i < m_regionStore.size(); i++) {
+			bbox.enlarge( m_regionStore[i]->boundary() );
 		}
 		
 		std::cout << "Creating PolyRaster with " << gridLatCount << "x" << gridLonCount << "bins. BBox: " << bbox << std::endl;
 		m_polyRaster = new PolyRaster(bbox, gridLatCount, gridLonCount);
 		sserialize::ProgressInfo info;
-		info.begin(m_polyStore.size(), "Polyraster::addPolygon");
-		for(size_t i=0; i < m_polyStore.size(); i++) {
-			m_polyRaster->addPolygon(m_polyStore[i], i);
+		info.begin(m_regionStore.size(), "Polyraster::addPolygon");
+		for(size_t i=0; i < m_regionStore.size(); i++) {
+			m_polyRaster->addRegion(*m_regionStore[i], i);
 			info(i);
 		}
 		info.end("Polyraster::addPolygon");
@@ -233,8 +235,8 @@ public:
 	std::set<uint32_t> test(const Point & p) {
 		std::set<uint32_t> polys;
 		if (!m_polyRaster) {
-			for(size_t it = 0; it < m_polyStore.size(); it++) {
-				if ( pointInPolygon(p, m_polyStore[it]) ) {
+			for(std::size_t it(0), s(m_regionStore.size()); it < s; ++it) {
+				if ( pointInRegion(p, *m_regionStore[it]) ) {
 					polys.insert(it);
 				}
 			}
@@ -244,9 +246,8 @@ public:
 			if (rep.enclosing)
 				polys.insert(rep.enclosing->begin(), rep.enclosing->end());
 			if (rep.colliding) {
-				PolyRasterElement::const_iterator end( rep.colliding->end());
-				for(PolyRasterElement::const_iterator it = rep.colliding->begin(); it != end; ++it) {
-					if (pointInPolygon(p, m_polyStore[*it]) ) {
+				for(PolyRasterElement::const_iterator it(rep.colliding->begin()), end( rep.colliding->end()); it != end; ++it) {
+					if (pointInRegion(p, *m_regionStore[*it]) ) {
 						polys.insert(*it);
 					}
 				}
@@ -255,13 +256,13 @@ public:
 		return polys;
 	}
 	
-	std::set<uint32_t> test(const std::vector<Point> & p) {
+	template<typename TPOINT_ITERATOR>
+	std::set<uint32_t> test(TPOINT_ITERATOR begin, TPOINT_ITERATOR end) {
 		std::set<unsigned int> polyIds;
-		size_t polyStoreSize = m_polyStore.size();
 		if (!m_polyRaster) {
-			for(size_t it = 0; it < polyStoreSize; it++) {
-				for(size_t pit = 0; pit < p.size(); pit++) {
-					if ( pointInPolygon(p[pit], m_polyStore[it]) ) {
+			for(std::size_t it = 0, itEnd(m_regionStore.size()); it < itEnd; ++it) {
+				for(TPOINT_ITERATOR pit(begin); pit != end; ++pit) {
+					if ( pointInRegion(*pit, *m_regionStore[it]) ) {
 						polyIds.insert(it);
 						break; // at least one point is within the currently tested polygon
 					}
@@ -269,15 +270,13 @@ public:
 			}
 		}
 		else {
-			std::vector<Point>::const_iterator end( p.end() );
-			for(std::vector<Point>::const_iterator it = p.begin(); it != end; ++it) {
+			for(TPOINT_ITERATOR it(begin); it != end; ++it) {
 				RasterElementPolygons rep( m_polyRaster->checkedAt(*it) );
 				if (rep.enclosing)
 					polyIds.insert(rep.enclosing->begin(), rep.enclosing->end());
 				if (rep.colliding) {
-					PolyRasterElement::const_iterator pend( rep.colliding->end());
-					for(PolyRasterElement::const_iterator pit = rep.colliding->begin(); pit != pend; ++pit) {
-						if (!polyIds.count(*pit) && pointInPolygon(*it, m_polyStore[*pit]) ) {
+					for(PolyRasterElement::const_iterator pit(rep.colliding->begin()), pend( rep.colliding->end()); pit != pend; ++pit) {
+						if (!polyIds.count(*pit) && pointInRegion(*it, *m_regionStore[*pit]) ) {
 							polyIds.insert(*pit);
 						}
 					}
@@ -287,36 +286,9 @@ public:
 		return polyIds;
 	}
 	
-	std::set<uint32_t> test(const std::deque<Point> & p) {
-		return test(std::vector<Point>(p.begin(), p.end()));
+	std::set<uint32_t> test(const std::vector<Point> & p) {
+		return test(p.begin(), p.end());
 	}
-	
-	void dump(std::ostream & out) {
-		out.precision(100);
-		out << "POLYGONSTORE DUMP" << std::endl;
-		out << m_polyStore.size() << std::endl;
-		for(size_t i=0; i < m_polyStore.size(); i++) {
-			out << m_values[i] << std::endl;
-			out << i << std::endl;
-			out << m_polyStore[i].points().size() << std::endl;
-			size_t ppsize = m_polyStore[i].points().size();
-			for(size_t j=0; j < ppsize; j++) {
-				out << m_polyStore[i].points()[j].lat << std::endl;
-				out << m_polyStore[i].points()[j].lon << std::endl;
-			}
-		}
-		if (m_polyRaster) {
-			m_polyRaster->dump(out);
-		}
-	}
-	
-	void dumpToFile(const std::string & filename) {
-		std::ofstream file;
-		file.open(filename.c_str());
-		dump(file);
-		file.close();
-	}
-	
 };
 
 }}//end namespace
