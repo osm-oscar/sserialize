@@ -122,17 +122,27 @@ bool MmappedFilePrivate::read(uint8_t * buffer, uint32_t len, OffsetType displac
 	return false;
 }
 
-bool MmappedFilePrivate::resize(OffsetType size) {
-	if (!do_sync() ) {
-		::perror("MmappedFilePrivate::resize::sync");
-		return false;
-	}
+OffsetType roundToNextPage(OffsetType size) {
+	long int pageSize = sysconf(_SC_PAGESIZE);
+	if (size % pageSize == 0)
+		return size;
+	else
+		return ((size/pageSize)+1)*pageSize;
+}
 
-	//unmap
-	if (::munmap(m_data, m_size) == -1) {
-		::perror("MmappedFilePrivate::resize::munmap");
-		return false;
-	}
+bool MmappedFilePrivate::resize(OffsetType size) {
+// 	if (!do_sync() ) {
+// 		::perror("MmappedFilePrivate::resize::sync");
+// 		return false;
+// 	}
+// 
+// 	//unmap
+// 	if (::munmap(m_data, m_size) == -1) {
+// 		::perror("MmappedFilePrivate::resize::munmap");
+// 		return false;
+// 	}
+
+	OffsetType oldSize = m_size;
 
 	bool allOk = true;
 	int result = ::ftruncate(m_fd, size);
@@ -148,7 +158,21 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) ::mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	uint8_t * newData = (uint8_t*) ::mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	
+	if (newData == m_data) {
+		if (oldSize > size) {
+			OffsetType umapOffset = roundToNextPage(size);
+			if (umapOffset < oldSize) {
+				::munmap(m_data+umapOffset, oldSize-umapOffset);
+			}
+		}
+	}
+	else {
+		::munmap(m_data, oldSize);
+	}
+	m_data = newData;
+
 	
 	if (m_data == MAP_FAILED) {
 		std::cerr << "MmappedFilePrivate::resize::mmap: failed to mmap file while resizing from " << m_size << " to " << size << " bytes:";
