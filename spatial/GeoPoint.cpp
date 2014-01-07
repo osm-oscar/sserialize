@@ -62,15 +62,8 @@ bool GeoPoint::intersects(const GeoRect & boundary) const {
 	return boundary.contains(lat, lon);
 }
 
-UByteArrayAdapter & GeoPoint::serializeWithTypeInfo(UByteArrayAdapter & destination) const {
-	destination << static_cast<uint8_t>( GS_POINT );
-	return serialize(destination);
-}
-
-UByteArrayAdapter & GeoPoint::serialize(UByteArrayAdapter & destination) const {
-	destination.putUint24(sserialize::Static::spatial::GeoPoint::toIntLat(lat));
-	destination.putUint24(sserialize::Static::spatial::GeoPoint::toIntLon(lon));
-	return destination;
+UByteArrayAdapter & GeoPoint::append(UByteArrayAdapter & destination) const {
+	return destination << *this;
 }
 
 bool GeoPoint::intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s) {
@@ -94,3 +87,9 @@ sserialize::spatial::GeoShape * GeoPoint::copy() const {
 }
 
 }}//end namespace
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
+	destination.putUint24(sserialize::Static::spatial::GeoPoint::toIntLat(point.lat));
+	destination.putUint24(sserialize::Static::spatial::GeoPoint::toIntLon(point.lon));
+	return destination;
+}

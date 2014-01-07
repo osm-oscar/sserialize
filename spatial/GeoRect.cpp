@@ -1,5 +1,6 @@
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/Static/GeoPoint.h>
+#include <sserialize/spatial/GeoPoint.h>
 #include <sstream>
 #include <algorithm>
 
@@ -14,12 +15,14 @@ GeoRect::GeoRect() {
 	m_lon[1] = 0;
 }
 
-GeoRect::GeoRect(const GeoRect & other) : m_lat({other.m_lat[0], other.m_lat[1]}), m_lon({other.m_lon[0], other.m_lon[1]}) {}
+GeoRect::GeoRect(const GeoRect & other) :
+m_lat{other.m_lat[0], other.m_lat[1]},
+m_lon{other.m_lon[0], other.m_lon[1]}
+{}
 
 GeoRect::GeoRect(double lat1, double lat2, double lon1, double lon2) :
-m_lat({lat1, lat2}),
-m_lon({lon1, lon2})
-
+m_lat{lat1, lat2},
+m_lon{lon1, lon2}
 {
 	if (m_lat[0] > m_lat[1])
 		std::swap(m_lat[0], m_lat[1]);
@@ -125,4 +128,21 @@ void GeoRect::enlarge(const GeoRect & other) {
 
 std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoRect & rect) {
 	return out << "GeoRect[(" << rect.lat()[0] << ", " << rect.lon()[0] << "); (" << rect.lat()[1] << ", " << rect.lon()[1]  << ")]";
+}
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoRect & rect) {
+	sserialize::spatial::GeoPoint bottomLeft(rect.lat()[0], rect.lon()[0]);
+	sserialize::spatial::GeoPoint topRight(rect.lat()[1], rect.lon()[1]);
+	destination << bottomLeft << topRight;
+	return destination;
+}
+
+sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, sserialize::spatial::GeoRect & rect) {
+	sserialize::Static::spatial::GeoPoint bL, tR;
+	src >> bL >> tR;
+	rect.lat()[0] = bL.latD();
+	rect.lat()[1] = tR.latD();
+	rect.lon()[0] = bL.lonD();
+	rect.lon()[1] = tR.lonD();
+	return src;
 }

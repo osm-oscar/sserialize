@@ -3,7 +3,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/spatial/PolygonStore.h>
+#include <sserialize/spatial/GeoRegionStore.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
 
@@ -39,7 +39,7 @@ CPPUNIT_TEST( testOutOfBounds );
 CPPUNIT_TEST_SUITE_END();
 private:
 	SamplePolygonTestData m_data;
-	spatial::PolygonStore<uint32_t> m_polyStore;
+	spatial::GeoRegionStore<uint32_t> m_polyStore;
 private:
 	std::string brokenPolyPolyIntersect(uint32_t poly) {
 		std::stringstream ss;

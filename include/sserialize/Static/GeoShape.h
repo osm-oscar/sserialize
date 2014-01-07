@@ -30,15 +30,13 @@ public:
 	
 	static sserialize::spatial::GeoRect rectFromData(const UByteArrayAdapter &  data);
 
-	virtual UByteArrayAdapter & serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const;
+	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
 	
 };
 
 }}}//end namespace
-
-sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out);
 
 namespace sserialize {
 template<>

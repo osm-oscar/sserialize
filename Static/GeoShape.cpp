@@ -77,8 +77,8 @@ sserialize::spatial::GeoRect GeoShape::rectFromData(const UByteArrayAdapter &  d
 }
 
 
-UByteArrayAdapter & GeoShape::serializeWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
-	throw sserialize::UnimplementedFunctionException("GeoShape::serializeWithTypeInfo");
+UByteArrayAdapter & GeoShape::append(sserialize::UByteArrayAdapter & destination) const {
+	throw sserialize::UnimplementedFunctionException("GeoShape::appendWithTypeInfo");
 	return destination;
 }
 
@@ -87,13 +87,6 @@ sserialize::spatial::GeoShape * GeoShape::copy() const {
 }
 
 }}}//end namespace
-
-sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
-	sserialize::Static::spatial::GeoPoint bL, tR;
-	in >> bL >> tR;
-	out = sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
-	return in;
-}
 
 namespace sserialize {
 template<>

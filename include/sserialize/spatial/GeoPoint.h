@@ -32,8 +32,7 @@ public:
 	virtual uint32_t size() const;
 	virtual bool intersects(const GeoRect & boundary) const;
 	
-	virtual UByteArrayAdapter & serializeWithTypeInfo(UByteArrayAdapter & destination) const;
-	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const;
+	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
 	
 	///Check if two lines given by p->q and r->s intersect each other
 	static bool intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s);
@@ -43,15 +42,7 @@ public:
 
 }}
 
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
-	return point.serialize(destination);
-}
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & in, sserialize::spatial::GeoRect & out) {
-	sserialize::spatial::GeoPoint(out.lat()[0], out.lon()[0]).serialize(in);
-	sserialize::spatial::GeoPoint(out.lat()[1], out.lon()[1]).serialize(in);
-	return in;
-}
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point);
 
 inline bool operator==(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b) {
 	return (a.lat == b.lat && a.lon == b.lon);

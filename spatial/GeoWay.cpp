@@ -5,10 +5,48 @@ namespace spatial {
 
 
 GeoWay::GeoWay() {}
+
 GeoWay::GeoWay(const PointsContainer & points) : m_points(points) {
 	updateBoundaryRect();
 }
+
+GeoWay::GeoWay(const GeoWay & other) :
+m_points(other.m_points),
+m_boundary(other.m_boundary)
+{}
+
+
+GeoWay::GeoWay(PointsContainer && points) :
+m_points(points)
+{
+	updateBoundaryRect();
+}
+
+GeoWay::GeoWay(GeoWay && other) :
+m_points(other.m_points),
+m_boundary(other.m_boundary)
+{}
+
 GeoWay::~GeoWay() {}
+
+GeoWay & GeoWay::operator=(GeoWay && other) {
+	m_points.swap(other.m_points);
+	m_boundary = other.m_boundary;
+	return *this;
+}
+
+GeoWay & GeoWay::operator=(const sserialize::spatial::GeoWay& other) {
+	m_points = other.m_points;
+	m_boundary = other.m_boundary;
+	return *this;
+}
+
+void GeoWay::swap(GeoWay & other) {
+	std::swap(m_points, other.m_points);
+	std::swap(m_boundary, other.m_boundary);
+}
+
+
 GeoShapeType GeoWay::type() const { return GS_WAY; }
 
 uint32_t GeoWay::size() const { return m_points.size();}
@@ -91,20 +129,8 @@ GeoRect GeoWay::boundary() const {
 	return m_boundary;
 }
 
-UByteArrayAdapter & GeoWay::serializeWithTypeInfo(UByteArrayAdapter & destination) const {
-	destination << static_cast<uint8_t>( GS_WAY );
-	return serialize(destination);
-}
-
-UByteArrayAdapter & GeoWay::serialize(UByteArrayAdapter & destination) const {
-	destination.putVlPackedUint32(points().size());
-	sserialize::spatial::GeoPoint bottomLeft(m_boundary.lat()[0], m_boundary.lon()[0]);
-	sserialize::spatial::GeoPoint topRight(m_boundary.lat()[1], m_boundary.lon()[1]);
-	destination << bottomLeft << topRight;
-	for(size_t i = 0; i < points().size(); ++i) {
-		destination << points().at(i);
-	}
-	return destination;
+UByteArrayAdapter & GeoWay::append(UByteArrayAdapter & destination) const {
+	return destination << *this;
 }
 
 sserialize::spatial::GeoShape * GeoWay::copy() const {
@@ -114,5 +140,10 @@ sserialize::spatial::GeoShape * GeoWay::copy() const {
 }}//end namespace
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoWay & p) {
-	return p.serialize(destination);
+	destination.putVlPackedUint32(p.points().size());
+	destination << p.boundary();
+	for(std::size_t i(0), s(p.points().size()); i < s; ++i) {
+		destination << p.points().at(i);
+	}
+	return destination;
 }

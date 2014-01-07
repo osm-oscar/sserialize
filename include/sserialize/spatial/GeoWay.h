@@ -22,7 +22,13 @@ protected:
 public:
 	GeoWay();
 	GeoWay(const PointsContainer & points);
+	GeoWay(const GeoWay & other);
+	GeoWay(PointsContainer && points);
+	GeoWay(GeoWay && other);
 	virtual ~GeoWay();
+	GeoWay & operator=(GeoWay && other);
+	GeoWay & operator=(const GeoWay & other);
+	void swap(GeoWay & other);
 	void updateBoundaryRect();
 	/** you need to update the boundary rect if you changed anything here! */
 	inline PointsContainer & points() { return m_points; }
@@ -42,14 +48,19 @@ public:
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
 	
-	virtual UByteArrayAdapter & serializeWithTypeInfo(UByteArrayAdapter & destination) const;
-	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const;
+	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
 };
 
 }}//end namespace
 
+namespace std {
+template<>
+inline void swap<sserialize::spatial::GeoWay>(sserialize::spatial::GeoWay & a, sserialize::spatial::GeoWay & b) { a.swap(b);}
+}
+
+///serializes without type info
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoWay & p) ;
 
 

@@ -53,8 +53,34 @@ GeoPolygon::GeoPolygon(const std::vector<Point> & points) :
 GeoWay(points)
 {}
 
+GeoPolygon::GeoPolygon(std::vector<Point> && points) :
+GeoWay(points)
+{}
+
+GeoPolygon::GeoPolygon(GeoPolygon && other) :
+GeoWay(other)
+{}
+
+GeoPolygon::GeoPolygon(const GeoPolygon & other) :
+GeoWay(other)
+{}
+
 GeoPolygon::~GeoPolygon()
 {}
+
+GeoPolygon & GeoPolygon::operator=(GeoPolygon && other) {
+	swap(other);
+	return *this;
+}
+
+GeoPolygon & GeoPolygon::operator=(const sserialize::spatial::GeoPolygon & other) {
+	GeoWay::operator=(other);
+	return *this;
+}
+
+void GeoPolygon::swap(GeoPolygon & other) {
+	GeoWay::swap(other);
+}
 
 GeoShapeType GeoPolygon::type() const {
 	return GS_POLYGON;
@@ -120,17 +146,12 @@ bool GeoPolygon::intersects(const GeoRegion & other) const {
 	}
 }
 
-UByteArrayAdapter & GeoPolygon::serializeWithTypeInfo(UByteArrayAdapter & destination) const {
-	destination << static_cast<uint8_t>( GS_POLYGON );
-	return serialize(destination);
-}
-
-UByteArrayAdapter & GeoPolygon::serialize(UByteArrayAdapter & destination) const {
-	return GeoWay::serialize(destination);
+UByteArrayAdapter & GeoPolygon::append(UByteArrayAdapter & destination) const {
+	return destination << *this;
 }
 
 sserialize::spatial::GeoShape * GeoPolygon::copy() const {
-	return new  sserialize::spatial::GeoPolygon(*this);
+	return new sserialize::spatial::GeoPolygon(*this);
 }
 
 GeoPolygon GeoPolygon::fromRect(const GeoRect & rect) {
@@ -144,6 +165,10 @@ GeoPolygon GeoPolygon::fromRect(const GeoRect & rect) {
 
 
 bool GeoPolygon::encloses(const sserialize::spatial::GeoPolygon & other) const {
+	return encloses(*static_cast<const sserialize::spatial::GeoWay*>(&other) );
+}
+
+bool GeoPolygon::encloses(const sserialize::spatial::GeoWay & other) const {
 	if (!other.boundary().overlap(this->boundary())) {
 		return false;
 	}
@@ -155,11 +180,16 @@ bool GeoPolygon::encloses(const sserialize::spatial::GeoPolygon & other) const {
 	}
 	//all points are within, check for cut. TODO: improve this by haveing more info about the polygon, if this would be convex, then we would be done here
 	
-	for(std::size_t i=0, s = other.points().size(); i < s; i++) {
-		if (intersects(other.points()[i], other.points()[(i+1)%other.points().size()]))
+	for(GeoWay::PointsContainer::const_iterator prev(other.points().begin()), it(other.points().begin()+1), end(other.points().end()); it != end; ++it) {
+		if (intersects(*prev, *it))
 			return false;
 	}
 	return true;
 }
 
 }}
+
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p) {
+	const sserialize::spatial::GeoWay * gw = &p;
+	return destination << *gw;
+}

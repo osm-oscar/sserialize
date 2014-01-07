@@ -191,7 +191,11 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	sserialize::ProgressInfo info;
 	info.begin(db.items().size());
 	for(size_t i = 0; i < db.size(); ++i) {
-		creator.put( *(db.geoShape(i)) );
+		creator.beginRawPut();
+		const sserialize::spatial::GeoShape * shape = db.geoShape(i);
+		if (shape)
+			shape->appendWithTypeInfo( creator.rawPut() );
+		creator.endRawPut();
 		info(i, "GeoStringsItemDB<ItemType>::serialize::Shapes");
 	}
 	creator.flush();

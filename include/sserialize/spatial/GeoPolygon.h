@@ -8,7 +8,7 @@ namespace sserialize {
 namespace spatial {
 
 
-
+///GeoPolygon is just GeoWay where the last node equals the first
 class GeoPolygon: public GeoWay {
 public:
 	typedef GeoPoint Point;
@@ -19,7 +19,13 @@ protected:
 public:
 	GeoPolygon();
 	GeoPolygon(const std::vector<Point> & points);
+	GeoPolygon(const GeoPolygon & other);
+	GeoPolygon(std::vector<Point> && points);
+	GeoPolygon(GeoPolygon && other);
 	virtual ~GeoPolygon();
+	GeoPolygon & operator=(GeoPolygon && other);
+	GeoPolygon & operator=(const GeoPolygon & other);
+	void swap(GeoPolygon & other);
 	virtual GeoShapeType type() const;
 	virtual bool contains(const GeoPoint & p) const;
 	virtual bool intersects(const sserialize::spatial::GeoRect & rect) const;
@@ -27,11 +33,11 @@ public:
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
 	bool encloses(const GeoPolygon & other) const;
+	bool encloses(const GeoWay & other) const;
 	template<typename T_GEO_POINT_ITERATOR>
 	bool contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const;
 
-	virtual UByteArrayAdapter & serializeWithTypeInfo(UByteArrayAdapter & destination) const;
-	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const;
+	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
 	
@@ -51,8 +57,13 @@ bool GeoPolygon::contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) 
 	
 }}//end namespace
 
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p) {
-	return p.serialize(destination);
+namespace std {
+template<>
+inline void swap<sserialize::spatial::GeoPolygon>(sserialize::spatial::GeoPolygon & a, sserialize::spatial::GeoPolygon & b) { a.swap(b);}
 }
+
+///serializes without type info
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p);
+
 
 #endif

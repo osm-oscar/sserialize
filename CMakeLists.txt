@@ -91,7 +91,6 @@ containers/GeneralizedTrie/SinglePassTrie.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
-spatial/GeoShape.cpp
 spatial/GeoPoint.cpp
 spatial/GeoWay.cpp
 spatial/GeoRect.cpp
