@@ -145,7 +145,7 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 OffsetType ItemIndexFactory::flush() {
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	m_header.resetPtrs();
-	m_header << static_cast<uint8_t>(2); //Version
+	m_header << static_cast<uint8_t>(3); //Version
 	m_header << static_cast<uint8_t>(m_type);//type
 	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
@@ -242,7 +242,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanRLEDE(sserialize::Static::ItemI
 	
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
+	dest.putUint8(3);
 	dest.putUint8(ItemIndex::T_RLE_DE);
 	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
 	dest.putOffset(0);
@@ -313,7 +313,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 	
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
+	dest.putUint8(3); //version
 	dest.putUint8(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
 	dest.putOffset(0);
@@ -396,7 +396,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	}
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(2);
+	dest.putUint8(3);
 	dest.putUint8(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
 	dest.putOffset(0);
