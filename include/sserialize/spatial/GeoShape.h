@@ -13,12 +13,13 @@ class GeoShape {
 public:
 	GeoShape() {};
 	virtual ~GeoShape() {};
-	virtual GeoShapeType type() const = 0;
+	virtual GeoShapeType type() const { return GS_NONE; }
 	virtual uint32_t size() const = 0;
 	virtual GeoRect boundary() const = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const = 0;
 	virtual GeoShape * copy() const = 0;
+	///this can be Null
 	inline UByteArrayAdapter & appendWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
 		return append( destination << static_cast<uint8_t>( type() ) );
 	}
