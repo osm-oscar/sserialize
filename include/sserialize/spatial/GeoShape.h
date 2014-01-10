@@ -13,15 +13,22 @@ class GeoShape {
 public:
 	GeoShape() {};
 	virtual ~GeoShape() {};
-	virtual GeoShapeType type() const { return GS_NONE; }
+	virtual GeoShapeType type() const = 0;
 	virtual uint32_t size() const = 0;
 	virtual GeoRect boundary() const = 0;
+	virtual void recalculateBoundary() = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const = 0;
 	virtual GeoShape * copy() const = 0;
 	///this can be Null
 	inline UByteArrayAdapter & appendWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
-		return append( destination << static_cast<uint8_t>( type() ) );
+		if (this) {
+			destination << static_cast<uint8_t>( type() );
+			return append(destination);
+		}
+		else {
+			return destination << static_cast<uint8_t>(GS_NONE);
+		}
 	}
 };
 

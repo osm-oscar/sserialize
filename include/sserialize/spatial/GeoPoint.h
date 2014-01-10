@@ -32,6 +32,8 @@ public:
 	virtual uint32_t size() const;
 	virtual bool intersects(const GeoRect & boundary) const;
 	
+	virtual void recalculateBoundary();
+	
 	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
 	
 	///Check if two lines given by p->q and r->s intersect each other

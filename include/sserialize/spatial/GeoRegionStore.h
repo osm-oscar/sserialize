@@ -65,7 +65,7 @@ private:
 			cellPoly.points().push_back( Point(cellRect.lat()[1], cellRect.lon()[0]) );
 			cellPoly.points().push_back( Point(cellRect.lat()[1], cellRect.lon()[1]) );
 			cellPoly.points().push_back( Point(cellRect.lat()[0], cellRect.lon()[1]) );
-			cellPoly.updateBoundaryRect();
+			cellPoly.recalculateBoundary();
 		}
 		void createCellPoly(GeoPolygon & cellPoly, uint32_t i , uint32_t j) {
 			GeoRect cellRect(MyRWGeoGrid::cellBoundary(i,j));

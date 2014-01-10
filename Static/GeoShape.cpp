@@ -86,6 +86,8 @@ sserialize::spatial::GeoShape * GeoShape::copy() const {
 	return new sserialize::Static::spatial::GeoShape(*this);
 }
 
+void GeoShape::recalculateBoundary() {}
+
 }}}//end namespace
 
 namespace sserialize {

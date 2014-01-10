@@ -7,7 +7,7 @@ namespace spatial {
 GeoWay::GeoWay() {}
 
 GeoWay::GeoWay(const PointsContainer & points) : m_points(points) {
-	updateBoundaryRect();
+	recalculateBoundary();
 }
 
 GeoWay::GeoWay(const GeoWay & other) :
@@ -19,7 +19,7 @@ m_boundary(other.m_boundary)
 GeoWay::GeoWay(PointsContainer && points) :
 m_points(points)
 {
-	updateBoundaryRect();
+	recalculateBoundary();
 }
 
 GeoWay::GeoWay(GeoWay && other) :
@@ -102,7 +102,7 @@ bool GeoWay::intersects(const GeoRegion & other) const {
 }
 
 
-void GeoWay::updateBoundaryRect() {
+void GeoWay::recalculateBoundary() {
 	if (!points().size())
 		return;
 
@@ -130,7 +130,12 @@ GeoRect GeoWay::boundary() const {
 }
 
 UByteArrayAdapter & GeoWay::append(UByteArrayAdapter & destination) const {
-	return destination << *this;
+	destination.putVlPackedUint32(points().size());
+	destination << m_boundary;
+	for(std::size_t i(0), s(points().size()); i < s; ++i) {
+		destination << points().at(i);
+	}
+	return destination;
 }
 
 sserialize::spatial::GeoShape * GeoWay::copy() const {
@@ -140,10 +145,5 @@ sserialize::spatial::GeoShape * GeoWay::copy() const {
 }}//end namespace
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoWay & p) {
-	destination.putVlPackedUint32(p.points().size());
-	destination << p.boundary();
-	for(std::size_t i(0), s(p.points().size()); i < s; ++i) {
-		destination << p.points().at(i);
-	}
-	return destination;
+	return p.append(destination);
 }

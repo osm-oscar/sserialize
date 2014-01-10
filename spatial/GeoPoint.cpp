@@ -62,6 +62,8 @@ bool GeoPoint::intersects(const GeoRect & boundary) const {
 	return boundary.contains(lat, lon);
 }
 
+void GeoPoint::recalculateBoundary() {}
+
 UByteArrayAdapter & GeoPoint::append(UByteArrayAdapter & destination) const {
 	return destination << *this;
 }

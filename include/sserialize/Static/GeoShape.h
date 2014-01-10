@@ -25,6 +25,7 @@ public:
 	
 	sserialize::Static::spatial::GeoPoint at(uint32_t pos) const;
 	sserialize::spatial::GeoRect boundary() const;
+	virtual void recalculateBoundary();
 	
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const;
 	

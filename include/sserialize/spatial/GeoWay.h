@@ -29,7 +29,7 @@ public:
 	GeoWay & operator=(GeoWay && other);
 	GeoWay & operator=(const GeoWay & other);
 	void swap(GeoWay & other);
-	void updateBoundaryRect();
+	virtual void recalculateBoundary();
 	/** you need to update the boundary rect if you changed anything here! */
 	inline PointsContainer & points() { return m_points; }
 	inline const PointsContainer & points() const { return m_points; }

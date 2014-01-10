@@ -41,7 +41,7 @@ public:
 	virtual bool intersects(const GeoRegion & other) const;
 	
 	
-	void recalculateBoundaries();
+	virtual void recalculateBoundary();
 	
 	///boundary of the inner polygons that define holes
 	const GeoRect & innerPolygonsBoundary() const;

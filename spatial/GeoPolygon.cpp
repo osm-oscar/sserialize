@@ -147,7 +147,7 @@ bool GeoPolygon::intersects(const GeoRegion & other) const {
 }
 
 UByteArrayAdapter & GeoPolygon::append(UByteArrayAdapter & destination) const {
-	return destination << *this;
+	return GeoWay::append(destination);
 }
 
 sserialize::spatial::GeoShape * GeoPolygon::copy() const {
@@ -190,6 +190,5 @@ bool GeoPolygon::encloses(const sserialize::spatial::GeoWay & other) const {
 }}
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p) {
-	const sserialize::spatial::GeoWay * gw = &p;
-	return destination << *gw;
+	return p.append(destination);
 }

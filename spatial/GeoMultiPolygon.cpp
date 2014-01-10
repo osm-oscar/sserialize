@@ -195,8 +195,10 @@ bool GeoMultiPolygon::intersects(const GeoRegion & other) const {
 template<typename TIterator>
 GeoRect calcBoundary(TIterator it,  TIterator end) {
 	if (it != end) {
+		it->recalculateBoundary();
 		GeoRect b = it->boundary();
 		for(++it; it != end; ++it) {
+			it->recalculateBoundary();
 			b.enlarge(it->boundary());
 		}
 		return b;
@@ -204,12 +206,12 @@ GeoRect calcBoundary(TIterator it,  TIterator end) {
 	return GeoRect();
 }
 
-void GeoMultiPolygon::recalculateBoundaries() {
+void GeoMultiPolygon::recalculateBoundary() {
 	m_innerBoundary = calcBoundary(m_innerPolygons.begin(), m_innerPolygons.end());
 	m_outerBoundary = calcBoundary(m_outerPolygons.begin(), m_outerPolygons.end());
 	auto c = [](uint32_t v, const GeoPolygon & a) {return v+a.size();};
 	m_size = std::accumulate(m_innerPolygons.begin(), m_innerPolygons.end(), static_cast<uint32_t>(0), c);
-	m_size = std::accumulate(m_outerPolygons.begin(), m_outerPolygons.end(), m_size, c);
+	m_size += std::accumulate(m_outerPolygons.begin(), m_outerPolygons.end(), m_size, c);
 }
 	
 const GeoRect & GeoMultiPolygon::innerPolygonsBoundary() const { return m_innerBoundary; }
