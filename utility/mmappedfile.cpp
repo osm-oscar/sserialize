@@ -19,7 +19,8 @@ namespace sserialize {
 MmappedFilePrivate::MmappedFilePrivate(std::string filename) :
 RefCountObject(),
 m_fileName(filename),
-m_size(0),
+m_exposedSize(0),
+m_realSize(0),
 m_fd(-1),
 m_data(0),
 m_writable(false),
@@ -29,7 +30,8 @@ m_syncOnClose(false)
 
 MmappedFilePrivate::MmappedFilePrivate() :
 RefCountObject(),
-m_size(0),
+m_exposedSize(0),
+m_realSize(0),
 m_fd(-1),
 m_data(0),
 m_writable(false),
@@ -52,7 +54,8 @@ bool MmappedFilePrivate::do_open() {
 		return false;
 	struct ::stat stFileInfo;
 	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<OffsetType>(stFileInfo.st_size) < std::numeric_limits<OffsetType>::max()) {
-		m_size = stFileInfo.st_size;
+		m_realSize = stFileInfo.st_size;
+		m_exposedSize = m_realSize;
 	}
 	else {
 		return false;
@@ -63,7 +66,7 @@ bool MmappedFilePrivate::do_open() {
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) ::mmap(0, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	m_data = (uint8_t*) ::mmap(0, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
 		::close(m_fd);
@@ -80,10 +83,14 @@ bool MmappedFilePrivate::do_close() {
 	
 	bool allOk = true;
 	if (m_data) {
+		if (m_writable && m_realSize != m_exposedSize) {
+			resize(m_exposedSize);
+		}
+	
 		if (m_syncOnClose) {
 			allOk = do_sync() && allOk;
 		}
-		if (::munmap(m_data, m_size) < 0) {
+		if (::munmap(m_data, m_realSize) < 0) {
 			::perror("MmappedFilePrivate::do_close()");
 			allOk = false;
 		}
@@ -92,7 +99,8 @@ bool MmappedFilePrivate::do_close() {
 		::perror("MmappedFilePrivate::do_close()");
 	}
 	m_fd = -1;
-	m_size = 0;
+	m_exposedSize = 0;
+	m_realSize = 0;
 	m_data = 0;
 	
 	if (m_deleteOnClose) {
@@ -105,21 +113,40 @@ bool MmappedFilePrivate::do_close() {
 bool MmappedFilePrivate::do_sync() {
 	if ( !(m_data && m_fd > 0) )
 		return false;
-	int result = ::msync(m_data, m_size, MS_SYNC);
+	int result = ::msync(m_data, m_realSize, MS_SYNC);
 	return result == 0;
 }
 
 bool MmappedFilePrivate::valid() {
-	return (m_data && m_fd > 0 && m_size > 0 && m_fileName.size() > 0);
+	return (m_data && m_fd > 0 && m_realSize > 0 && m_fileName.size() > 0);
 }
 
 bool MmappedFilePrivate::read(uint8_t * buffer, uint32_t len, OffsetType displacement) {
-	if (m_data && m_size-displacement >= len) {
+	if (m_data && displacement < m_exposedSize && m_exposedSize-displacement >= len) {
 		for(size_t i = displacement; i < displacement+len; i++)
 			buffer[i-displacement] = m_data[i];
 		return true;
 	}
 	return false;
+}
+
+#define ROUND_VALUE_EXP 20
+//round to the next 1MB
+inline OffsetType roundSize(OffsetType size) {
+	return ((size >> ROUND_VALUE_EXP) << ROUND_VALUE_EXP) + (static_cast<OffsetType>(1) << ROUND_VALUE_EXP);
+}
+
+bool MmappedFilePrivate::resizeRounded(OffsetType size) {
+	if (size <= m_realSize || ((m_realSize >= (static_cast<OffsetType>(1) << ROUND_VALUE_EXP)) && m_realSize - (static_cast<OffsetType>(1) << ROUND_VALUE_EXP) <= size)) {
+		m_exposedSize = size;
+		return true;
+	}
+	OffsetType newRealSize = roundSize(size);
+	bool ok = resize(newRealSize);
+	if (ok) {
+		m_exposedSize = size;
+	}
+	return ok;
 }
 
 bool MmappedFilePrivate::resize(OffsetType size) {
@@ -129,7 +156,7 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	}
 
 	//unmap
-	if (::munmap(m_data, m_size) == -1) {
+	if (::munmap(m_data, m_realSize) == -1) {
 		::perror("MmappedFilePrivate::resize::munmap");
 		return false;
 	}
@@ -137,21 +164,22 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	bool allOk = true;
 	int result = ::ftruncate(m_fd, size);
 	if (result < 0) { 
-		std::cerr << "MmappedFilePrivate::resize::truncate: failed to truncate file from " << m_size << " to " << size << " bytes:";
+		std::cerr << "MmappedFilePrivate::resize::truncate: failed to truncate file from " << m_realSize << " to " << size << " bytes:";
 		::perror("");
 		allOk = false;
 	}
 	else {
-		m_size = size;
+		m_exposedSize = size;
+		m_realSize = size;
 	}
 	
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) ::mmap(m_data, m_size, mmap_proto, MAP_SHARED, m_fd, 0);
+	m_data = (uint8_t*) ::mmap(m_data, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
-		std::cerr << "MmappedFilePrivate::resize::mmap: failed to mmap file while resizing from " << m_size << " to " << size << " bytes:";
+		std::cerr << "MmappedFilePrivate::resize::mmap: failed to mmap file while resizing from " << m_realSize << " to " << size << " bytes:";
 		::perror("MmappedFilePrivate::resize::mmap");
 		m_data = 0;//this needs to come here (do_close() checks for it
 		do_close();
@@ -159,6 +187,21 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	}
 
 	return allOk;
+}
+
+void MmappedFilePrivate::setWriteableFlag(bool writable) {
+	if (m_writable && !writable && m_exposedSize != m_realSize) {
+		resize(m_exposedSize);
+	}
+	m_writable = writable;
+}
+
+void MmappedFilePrivate::setDeleteOnClose(bool deleteOnClose) {
+	m_deleteOnClose = deleteOnClose;
+}
+
+void MmappedFilePrivate::setSyncOnClose(bool syncOnClose) {
+	m_syncOnClose = syncOnClose;
 }
 
 MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & fileNameBase, sserialize::UByteArrayAdapter::OffsetType size) {
@@ -188,7 +231,8 @@ MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & file
 	}
 	MmappedFilePrivate * mf = new MmappedFilePrivate();
 	mf->m_fileName = std::string(fileName, fbSize+6);
-	mf->m_size = size;
+	mf->m_realSize = size;
+	mf->m_exposedSize = size;
 	mf->m_fd = fd;
 	mf->m_writable = true;
 	mf->m_deleteOnClose = true;

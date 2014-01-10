@@ -12,13 +12,13 @@ namespace sserialize {
 class MmappedFilePrivate: public RefCountObject {
 private:
 	std::string m_fileName;
-	OffsetType m_size;
+	OffsetType m_exposedSize;
+	OffsetType m_realSize;
 	int m_fd;
 	uint8_t * m_data;
 	bool m_writable;
 	bool m_deleteOnClose;
 	bool m_syncOnClose;
-		
 public:
 	MmappedFilePrivate(std::string filename);
 	MmappedFilePrivate();
@@ -27,16 +27,17 @@ public:
 	bool do_close();
 	bool do_sync();
 	bool valid();
+	bool resizeRounded(OffsetType size);
 	bool resize(OffsetType size);
-	inline OffsetType size() const { return m_size; }
+	inline OffsetType size() const { return m_exposedSize; }
 	inline const std::string & fileName() const { return m_fileName;}
-	inline uint8_t operator[](OffsetType pos) { return ( (pos < m_size) ? m_data[pos] : 0); }
+	inline uint8_t operator[](OffsetType pos) { return ( (pos < m_exposedSize) ? m_data[pos] : 0); }
 	bool read(uint8_t * buffer, uint32_t len, OffsetType displacement);
 	inline uint8_t * data() { return m_data; }
-	inline void setFileName(std::string fileName) { m_fileName = fileName; }
-	inline void setWriteableFlag(bool writable) { m_writable = writable; }
-	inline void setDeleteOnClose(bool deleteOnClose) { m_deleteOnClose = deleteOnClose; }
-	inline void setSyncOnClose(bool syncOnClose) { m_syncOnClose = syncOnClose; }
+	void setFileName(std::string fileName) { m_fileName = fileName; }
+	void setWriteableFlag(bool writable);
+	void setDeleteOnClose(bool deleteOnClose);
+	void setSyncOnClose(bool syncOnClose);
 	
 	///returns 0 on error and a instance of MmappedFilePrivate on success
 	static MmappedFilePrivate* createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size);
@@ -106,7 +107,7 @@ public:
 	inline void setDeleteOnClose(bool deleteOnClose) { priv()->setDeleteOnClose(deleteOnClose); }
 	inline void setSyncOnClose(bool syncOnClose) { return priv()->setSyncOnClose(syncOnClose);}
 	/** resizes the file to size bytes. All former data references are invalid after this */
-	inline bool resize(OffsetType size) { return priv()->resize(size);}
+	inline bool resize(OffsetType size) { return priv()->resizeRounded(size);}
 
 public:
 	/** creates a file with at least 1 byte */
