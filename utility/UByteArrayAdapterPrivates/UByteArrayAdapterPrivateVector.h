@@ -17,6 +17,7 @@ public:
 		if (m_deleteOnClose) {
 			delete m_data;
 			m_deleteOnClose = false;
+			this->data() = 0;
 		}
 	}
 
