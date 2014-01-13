@@ -122,7 +122,7 @@ bool MmappedFilePrivate::valid() {
 }
 
 bool MmappedFilePrivate::read(uint8_t * buffer, uint32_t len, OffsetType displacement) {
-	if (m_data && displacement < m_exposedSize && m_exposedSize-displacement >= len) {
+	if (m_data && displacement <= m_exposedSize && m_exposedSize-displacement >= len) {
 		for(size_t i = displacement; i < displacement+len; i++)
 			buffer[i-displacement] = m_data[i];
 		return true;
@@ -137,11 +137,11 @@ inline OffsetType roundSize(OffsetType size) {
 }
 
 bool MmappedFilePrivate::resizeRounded(OffsetType size) {
-	if (size <= m_realSize || ((m_realSize >= (static_cast<OffsetType>(1) << ROUND_VALUE_EXP)) && m_realSize - (static_cast<OffsetType>(1) << ROUND_VALUE_EXP) <= size)) {
+	OffsetType newRealSize = roundSize(size);
+	if (newRealSize == m_realSize) {
 		m_exposedSize = size;
 		return true;
 	}
-	OffsetType newRealSize = roundSize(size);
 	bool ok = resize(newRealSize);
 	if (ok) {
 		m_exposedSize = size;
