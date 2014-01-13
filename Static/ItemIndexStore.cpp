@@ -52,7 +52,7 @@ m_compression(IC_NONE)
 ItemIndexStore::ItemIndexStore(UByteArrayAdapter data) :
 m_version(data.getUint8(0)),
 m_type((ItemIndex::Types) data.getUint8(1) ),
-m_compression((IndexCompressionType) data.getUint8(1))
+m_compression((IndexCompressionType) data.getUint8(2))
 {
 	data.resetGetPtr();
 	data += 3;
