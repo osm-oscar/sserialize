@@ -133,7 +133,7 @@ bool GeoMultiPolygon::intersects(const GeoRect & boundary) const {
 }
 
 bool GeoMultiPolygon::contains(const GeoPoint & p) const {
-	if (!outerPolygonsBoundary().contains(p.lat, p.lon))
+	if (!outerPolygonsBoundary().contains(p.lat(), p.lon()))
 		return false;
 	bool contained = false;
 	for(PolygonList::const_iterator it(outerPolygons().begin()), end(outerPolygons().end()); it != end; ++it) {
@@ -142,7 +142,7 @@ bool GeoMultiPolygon::contains(const GeoPoint & p) const {
 			break;
 		}
 	}
-	if (contained && innerPolygonsBoundary().contains(p.lat, p.lon)) {
+	if (contained && innerPolygonsBoundary().contains(p.lat(), p.lon())) {
 		for(PolygonList::const_iterator it(innerPolygons().begin()), end(innerPolygons().end()); it != end; ++it) {
 			if (it->contains(p)) {
 				contained = false;
@@ -154,7 +154,7 @@ bool GeoMultiPolygon::contains(const GeoPoint & p) const {
 }
 
 bool GeoMultiPolygon::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
-	if (!outerPolygonsBoundary().contains(p1.lat, p1.lon) && !outerPolygonsBoundary().contains(p2.lat, p2.lon))
+	if (!outerPolygonsBoundary().contains(p1.lat(), p1.lon()) && !outerPolygonsBoundary().contains(p2.lat(), p2.lon()))
 		return false;
 	if (contains(p1) || contains(p2))
 		return true;

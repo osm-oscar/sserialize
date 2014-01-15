@@ -56,14 +56,14 @@ bool GeoWay::intersects(const GeoRect & rect) const {
 		return false;
 	for(size_t i = 0; i < points().size(); ++i) {
 		Point p (points().at(i));
-		if (rect.contains(p.lat, p.lon))
+		if (rect.contains(p.lat(), p.lon()))
 			return true;
 	}
 	return false;
 }
 
 bool GeoWay::contains(const GeoPoint & p) const {
-	if (m_boundary.contains(p.lat, p.lon)) {
+	if (m_boundary.contains(p.lat(), p.lon())) {
 		for(typename PointsContainer::const_iterator it(m_points.begin()), end(m_points.end()); it != end; ++it) {
 			if (p == *it)
 				return true;
@@ -74,7 +74,7 @@ bool GeoWay::contains(const GeoPoint & p) const {
 
 ///@return true if the line p1->p2 intersects this region
 bool GeoWay::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
-	if (m_boundary.contains(p1.lat, p1.lon) || m_boundary.contains(p2.lat, p2.lon)) {
+	if (m_boundary.contains(p1.lat(), p1.lon()) || m_boundary.contains(p2.lat(), p2.lon())) {
 		for(std::size_t i(0), j(1), end(m_points.size()); j < end; ++i, ++j) {
 			if (sserialize::spatial::GeoPoint::intersect(m_points[i], m_points[j], p1, p2)) {
 				return true;
@@ -106,16 +106,16 @@ void GeoWay::recalculateBoundary() {
 	if (!points().size())
 		return;
 
-	double minLat = points().at(0).lat;
-	double minLon = points().at(0).lon;
-	double maxLat = points().at(0).lat;
-	double maxLon = points().at(0).lon;
+	double minLat = points().at(0).lat();
+	double minLon = points().at(0).lon();
+	double maxLat = points().at(0).lat();
+	double maxLon = points().at(0).lon();
 
 	for(size_t i = 1; i < points().size(); i++) {
-		minLat = std::min(points().at(i).lat, minLat);
-		minLon = std::min(points().at(i).lon, minLon);
-		maxLat = std::max(points().at(i).lat, maxLat);
-		maxLon = std::max(points().at(i).lon, maxLon);
+		minLat = std::min(points().at(i).lat(), minLat);
+		minLon = std::min(points().at(i).lon(), minLon);
+		maxLat = std::max(points().at(i).lat(), maxLat);
+		maxLon = std::max(points().at(i).lon(), maxLon);
 	}
 	
 	m_boundary.lat()[0] = minLat;

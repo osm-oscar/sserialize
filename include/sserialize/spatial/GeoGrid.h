@@ -67,11 +67,11 @@ public:
 	}
 
 	bool contains(const GeoPoint & point) const {
-		return contains(point.lat, point.lon);
+		return contains(point.lat(), point.lon());
 	}
 
 	GridBin select(const spatial::GeoPoint & point) const {
-		return select(point.lat, point.lon);
+		return select(point.lat(), point.lon());
 	}
 	GridBin select(double lat, double lon) const {
 		if (!m_rect.contains(lat, lon))

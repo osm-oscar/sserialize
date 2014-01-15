@@ -42,19 +42,19 @@ sserialize::Static::spatial::GeoPoint GeoShape::at(uint32_t pos) const {
 sserialize::spatial::GeoRect GeoShape::boundary() const {
 	if (m_type == sserialize::spatial::GS_POINT) {
 		sserialize::Static::spatial::GeoPoint p(at(0));
-		return sserialize::spatial::GeoRect(p.latD(), p.latD(), p.lonD(), p.lonD());
+		return sserialize::spatial::GeoRect(p.lat(), p.lat(), p.lon(), p.lon());
 	}
 	else {
 		sserialize::Static::spatial::GeoPoint bL(m_data);
 		sserialize::Static::spatial::GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
-		return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+		return sserialize::spatial::GeoRect(bL.lat(), tR.lat(), bL.lon(), tR.lon());
 	}
 }
 	
 bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
 	if (type() == sserialize::spatial::GS_POINT) {
 		sserialize::Static::spatial::GeoPoint p(at(0));
-		return boundary.contains(p.latF(), p.lonF());
+		return boundary.contains(p.lat(), p.lon());
 	}
 	
 	if (!boundary.overlap( this->boundary()) )
@@ -64,7 +64,7 @@ bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
 	sserialize::Static::spatial::GeoPoint p;
 	for(size_t i = 0; i < s; ++i) {
 		tmp >> p;
-		if (boundary.contains(p.latF(), p.lonF()))
+		if (boundary.contains(p.lat(), p.lon()))
 			return true;
 	}
 	return false;
@@ -73,7 +73,7 @@ bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
 sserialize::spatial::GeoRect GeoShape::rectFromData(const UByteArrayAdapter &  data) {
 	sserialize::Static::spatial::GeoPoint bL(data);
 	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
-	return sserialize::spatial::GeoRect(bL.latD(), tR.latD(), bL.lonD(), tR.lonD());
+	return sserialize::spatial::GeoRect(bL.lat(), tR.lat(), bL.lon(), tR.lon());
 }
 
 

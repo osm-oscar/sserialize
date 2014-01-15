@@ -235,52 +235,52 @@ void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVaria
 void createHandSamplePolygons(SamplePolygonTestData & data) { 
 	using namespace spatial;
 	std::vector<spatial::GeoPoint> polyA(3);
-	polyA[0] = GeoPoint(1,1); polyA[1] = GeoPoint(1.5,3.5);
+	polyA[0] = GeoPoint(1.,1.); polyA[1] = GeoPoint(1.5,3.5);
 	polyA[2] = GeoPoint(2.5,2.5);
 	
 	std::vector<spatial::GeoPoint> polyB(6);
-	polyB[0] = GeoPoint(2,2.5); polyB[1] = GeoPoint(4,1);
-	polyB[2] = GeoPoint(7,1.5); polyB[3] = GeoPoint(7,4.5);
-	polyB[4] = GeoPoint(6,2); polyB[5] = GeoPoint(3,4);
+	polyB[0] = GeoPoint(2.,2.5); polyB[1] = GeoPoint(4.,1.);
+	polyB[2] = GeoPoint(7.,1.5); polyB[3] = GeoPoint(7.,4.5);
+	polyB[4] = GeoPoint(6.,2.); polyB[5] = GeoPoint(3.,4.);
 	
 	std::vector<spatial::GeoPoint> polyC(5);
-	polyC[0] = GeoPoint(6,2.5); polyC[1] = GeoPoint(6,4.5);
+	polyC[0] = GeoPoint(6.,2.5); polyC[1] = GeoPoint(6.,4.5);
 	polyC[2] = GeoPoint(6.5,4.5); polyC[3] = GeoPoint(6.5,6.5);
-	polyC[4] = GeoPoint(3.5,5);
+	polyC[4] = GeoPoint(3.5,5.);
 	
 	std::vector<spatial::GeoPoint> polyD(6);
-	polyD[0] = GeoPoint(10,7); polyD[1] = GeoPoint(11,4);
-	polyD[2] = GeoPoint(12,5); polyD[3] = GeoPoint(13,4.5);
-	polyD[4] = GeoPoint(12.5,8); polyD[5] = GeoPoint(11,8.5);
+	polyD[0] = GeoPoint(10.,7.); polyD[1] = GeoPoint(11.,4.);
+	polyD[2] = GeoPoint(12.,5.); polyD[3] = GeoPoint(13.,4.5);
+	polyD[4] = GeoPoint(12.5,8.); polyD[5] = GeoPoint(11.,8.5);
 	
 	std::vector<spatial::GeoPoint> polyE(4);
-	polyE[0] = GeoPoint(10.5,6.5); polyE[1] = GeoPoint(11.5,5);
-	polyE[2] = GeoPoint(12,6); polyE[3] = GeoPoint(11.5,7);
+	polyE[0] = GeoPoint(10.5,6.5); polyE[1] = GeoPoint(11.5,5.);
+	polyE[2] = GeoPoint(12.,6.); polyE[3] = GeoPoint(11.5,7.);
 	
 	std::vector<spatial::GeoPoint> polyF(3);
-	polyF[0] = GeoPoint(8.5, 2.5); polyF[1] = GeoPoint(10, 1);
-	polyF[2] = GeoPoint(10, 2.5);
+	polyF[0] = GeoPoint(8.5, 2.5); polyF[1] = GeoPoint(10., 1.);
+	polyF[2] = GeoPoint(10., 2.5);
 	
 	
 	std::vector<spatial::GeoPoint> polyG(7);
-	polyG[0] = GeoPoint(6, 8.5); polyG[1] = GeoPoint(8,8.5);
-	polyG[2] = GeoPoint(7, 9.5); polyG[3] = GeoPoint(8,10.5);
-	polyG[4] = GeoPoint(6.5, 10.5); polyG[5] = GeoPoint(6.5,9);
-	polyG[6] = GeoPoint(6,9);
+	polyG[0] = GeoPoint(6., 8.5); polyG[1] = GeoPoint(8.,8.5);
+	polyG[2] = GeoPoint(7., 9.5); polyG[3] = GeoPoint(8.,10.5);
+	polyG[4] = GeoPoint(6.5, 10.5); polyG[5] = GeoPoint(6.5,9.);
+	polyG[6] = GeoPoint(6.,9.);
 	
 	std::vector<spatial::GeoPoint> polyH(3);
-	polyH[0] = GeoPoint(7.5, 9.5); polyH[1] = GeoPoint(8.5, 9);
-	polyH[2] = GeoPoint(9.5, 10);
+	polyH[0] = GeoPoint(7.5, 9.5); polyH[1] = GeoPoint(8.5, 9.);
+	polyH[2] = GeoPoint(9.5, 10.);
 	
 	std::vector<spatial::GeoPoint > polyI(5);
-	polyI[0] = GeoPoint(8, 2); polyI[1] = GeoPoint(9, 2);
-	polyI[2] = GeoPoint(9, 5.5); polyI[3] = GeoPoint(6.5, 7.5);
-	polyI[4] = GeoPoint(4, 6.5);
+	polyI[0] = GeoPoint(8., 2.); polyI[1] = GeoPoint(9., 2.);
+	polyI[2] = GeoPoint(9., 5.5); polyI[3] = GeoPoint(6.5, 7.5);
+	polyI[4] = GeoPoint(4., 6.5);
 	
 	std::vector< spatial::GeoPoint > polyJ(5);
-	polyJ[0] = GeoPoint(7.5, 5); polyJ[1] = GeoPoint(9.5, 5);
-	polyJ[2] = GeoPoint(9.5, 6.5); polyJ[3] = GeoPoint(8, 7);
-	polyJ[4] = GeoPoint(8, 5.5);
+	polyJ[0] = GeoPoint(7.5, 5.); polyJ[1] = GeoPoint(9.5, 5.);
+	polyJ[2] = GeoPoint(9.5, 6.5); polyJ[3] = GeoPoint(8., 7.);
+	polyJ[4] = GeoPoint(8., 5.5);
 
 	data.polys.push_back( std::pair<spatial::GeoPolygon, uint32_t>(spatial::GeoPolygon(polyA), POLY_A) );
 	data.polys.push_back( std::pair<spatial::GeoPolygon, uint32_t>(spatial::GeoPolygon(polyB), POLY_B) );
@@ -319,15 +319,15 @@ void createHandSamplePolygons(SamplePolygonTestData & data) {
 	
 	data.points.resize(10);
 	data.points[0] = GeoPoint(3.5, 2.5);
-	data.points[1] = GeoPoint(4.5, 5);
-	data.points[2] = GeoPoint(7, 6);
-	data.points[3] = GeoPoint(7, 10);
-	data.points[4] = GeoPoint(12, 7.5);
-	data.points[5] = GeoPoint(11.5, 6);
-	data.points[6] = GeoPoint(9, 2);
-	data.points[7] = GeoPoint(7, 2.5);
-	data.points[8] = GeoPoint(6, 2);
-	data.points[9] = GeoPoint(4, 3.5);
+	data.points[1] = GeoPoint(4.5, 5.);
+	data.points[2] = GeoPoint(7., 6.);
+	data.points[3] = GeoPoint(7., 10.);
+	data.points[4] = GeoPoint(12., 7.5);
+	data.points[5] = GeoPoint(11.5, 6.);
+	data.points[6] = GeoPoint(9., 2.);
+	data.points[7] = GeoPoint(7., 2.5);
+	data.points[8] = GeoPoint(6., 2.);
+	data.points[9] = GeoPoint(4., 3.5);
 	
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(0, POLY_B) );
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(1, POLY_C) );
@@ -342,19 +342,19 @@ void createHandSamplePolygons(SamplePolygonTestData & data) {
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(8, POLY_B) );
 
 	//RECTS
-	data.rects.push_back( GeoRect(0.5, 3, 0.5, 9) );
+	data.rects.push_back( GeoRect(0.5, 3., 0.5, 9.) );
 	data.rectPolyIds.push_back( {POLY_A, POLY_B} ); data.rectPointIds.push_back( {} );
 
-	data.rects.push_back( GeoRect(0.5, 6.1, 3.75, 8) );
+	data.rects.push_back( GeoRect(0.5, 6.1, 3.75, 8.) );
 	data.rectPolyIds.push_back( {POLY_B, POLY_C, POLY_I} ); data.rectPointIds.push_back( {1} );
 	
-	data.rects.push_back( GeoRect(5.5, 9, 8, 40) );
+	data.rects.push_back( GeoRect(5.5, 9., 8., 40.) );
 	data.rectPolyIds.push_back( {POLY_G, POLY_H} ); data.rectPointIds.push_back( {3} );
 
-	data.rects.push_back( GeoRect(3, 9.75, -20, 100) );
+	data.rects.push_back( GeoRect(3., 9.75, -20., 100.) );
 	data.rectPolyIds.push_back( {POLY_B, POLY_C, POLY_F, POLY_G, POLY_H, POLY_I, POLY_J} ); data.rectPointIds.push_back( {0, 1, 2, 3, 6, 7, 8, 9} );
 	
-	data.rects.push_back( GeoRect(2, 3, 1, 1.4) );
+	data.rects.push_back( GeoRect(2., 3., 1., 1.4) );
 	data.rectPolyIds.push_back( {} ); data.rectPointIds.push_back( {} );
 	
 	

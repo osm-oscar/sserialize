@@ -88,19 +88,19 @@ GeoShapeType GeoPolygon::type() const {
 
 //http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 bool GeoPolygon::contains(const GeoPoint & p) const {
-	if (!points().size() || !boundary().contains(p.lat, p.lon))
+	if (!points().size() || !boundary().contains(p.lat(), p.lon()))
 		return false;
 	int nvert = points().size();
-	double testx = p.lat;
-	double testy = p.lon;
+	double testx = p.lat();
+	double testy = p.lon();
 	int i, j, c = 0;
 	for (i = 0, j = nvert-1; i < nvert; j = i++) {
 		const GeoPoint & iP = points()[i];
 		const GeoPoint & jP = points()[j];
-		double vertx_i = iP.lat;
-		double verty_i = iP.lon;
-		double vertx_j = jP.lat;
-		double verty_j = jP.lon;
+		double vertx_i = iP.lat();
+		double verty_i = iP.lon();
+		double vertx_j = jP.lat();
+		double verty_j = jP.lon();
 		
 		if ( ((verty_i>testy) != (verty_j>testy)) &&
 			(testx < (vertx_j-vertx_i) * (testy-verty_i) / (verty_j-verty_i) + vertx_i) ) {
@@ -118,7 +118,7 @@ bool GeoPolygon::intersects(const sserialize::spatial::GeoRect & rect) const {
 }
 
 bool GeoPolygon::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
-	if (!myBoundary().overlap( sserialize::spatial::GeoRect(p1.lat, p2.lat, p1.lon, p2.lon) ) ) {
+	if (!myBoundary().overlap( sserialize::spatial::GeoRect(p1.lat(), p2.lat(), p1.lon(), p2.lon()) ) ) {
 		return false;
 	}
 

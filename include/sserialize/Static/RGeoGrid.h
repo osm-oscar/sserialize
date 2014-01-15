@@ -32,10 +32,10 @@ public:
 		
 		//everythings alright here
 		sserialize::spatial::GeoRect rect;
-		rect.lat()[0] = bL.latD();
-		rect.lon()[0] = bL.lonD();
-		rect.lat()[1] = tR.latD();
-		rect.lon()[1] = tR.lonD();
+		rect.lat()[0] = bL.lat();
+		rect.lon()[0] = bL.lon();
+		rect.lat()[1] = tR.lat();
+		rect.lon()[1] = tR.lon();
 		MyParentClass::setGridInfo(rect, latcount, loncount);
 	}
 	uint32_t getSizeInBytes() const {

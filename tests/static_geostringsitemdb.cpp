@@ -84,17 +84,17 @@ public:
 			if (realPointCount == 1) {
 				const spatial::GeoPoint * gp = dynamic_cast<const spatial::GeoPoint*>( item.geoShape() );
 				CPPUNIT_ASSERT(gp);
-				std::stringstream ss2; ss2 << "[" << gp->lat << ", " << gp->lon << "]!=[" << sitem.geoPointAt(0).latD() << ", " << sitem.geoPointAt(0).lonD() << "]";
-				CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gp->lat, sitem.geoPointAt(0).latD(), EPS));
-				CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gp->lon, sitem.geoPointAt(0).lonD(), EPS));
+				std::stringstream ss2; ss2 << "[" << gp->lat() << ", " << gp->lon() << "]!=[" << sitem.geoPointAt(0).lat() << ", " << sitem.geoPointAt(0).lon() << "]";
+				CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gp->lat(), sitem.geoPointAt(0).lat(), EPS));
+				CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gp->lon(), sitem.geoPointAt(0).lon(), EPS));
 			}
 			else if (realPointCount > 1) {
 				const MyGeoWay * gw = dynamic_cast<const MyGeoWay*>( item.geoShape() );
 				CPPUNIT_ASSERT(gw);
 				for(size_t j = 0; j < realPointCount; j++) {
-					std::stringstream ss2; ss2 << "[" << gw->points().at(j).lat << ", " << gw->points().at(j).lon << "]!=[" << sitem.geoPointAt(j).latD() << ", " << sitem.geoPointAt(j).lonD() << "]";
-					CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gw->points().at(j).lat, sitem.geoPointAt(j).latD(), EPS));
-					CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gw->points().at(j).lon, sitem.geoPointAt(j).lonD(), EPS));
+					std::stringstream ss2; ss2 << "[" << gw->points().at(j).lat() << ", " << gw->points().at(j).lon() << "]!=[" << sitem.geoPointAt(j).lat() << ", " << sitem.geoPointAt(j).lon() << "]";
+					CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gw->points().at(j).lat(), sitem.geoPointAt(j).lat(), EPS));
+					CPPUNIT_ASSERT_MESSAGE(ss.str() + ":" + ss2.str(), doubleEq(gw->points().at(j).lon(), sitem.geoPointAt(j).lon(), EPS));
 				}
 			}
 			else {

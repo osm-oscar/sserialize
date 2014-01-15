@@ -26,7 +26,7 @@ std::ostream & operator<<(std::ostream & out, const std::set<uint32_t> & s) {
 }
 
 std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & p) {
-	out << "GeoPoint[" << p.lat << ", " << p.lon << "]";
+	out << "GeoPoint[" << p.lat() << ", " << p.lon() << "]";
 	return out;
 }
 

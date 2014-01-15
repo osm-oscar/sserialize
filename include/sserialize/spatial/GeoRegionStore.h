@@ -136,11 +136,11 @@ private:
 		}
 		
 		RasterElementPolygons checkedAt(const Point & p) const {
-			return MyRGeoGrid::at(p.lat, p.lon);
+			return MyRGeoGrid::at(p.lat(), p.lon());
 		}
 
 		void getPolygons(const Point & p, std::set<uint32_t> & definiteHits, std::set<uint32_t> & possibleHits) const {
-			RasterElementPolygons polys = MyRGeoGrid::at(p.lat, p.lon);
+			RasterElementPolygons polys = MyRGeoGrid::at(p.lat(), p.lon());
 			if (polys.enclosing)
 				definiteHits.insert(polys.enclosing->begin(), polys.enclosing->end());
 

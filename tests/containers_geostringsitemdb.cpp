@@ -68,15 +68,15 @@ public:
 			if (realPointCount == 1) {
 				const spatial::GeoPoint * gp = dynamic_cast<const spatial::GeoPoint*>( item.geoShape() );
 				CPPUNIT_ASSERT(gp);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lat-equality failed", realItem.points.front().lat, gp->lat);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lon-equality failed", realItem.points.front().lon, gp->lon);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lat-equality failed", realItem.points.front().lat(), gp->lat());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lon-equality failed", realItem.points.front().lon(), gp->lon());
 			}
 			else if (realPointCount > 1) {
 				const MyGeoWay * gw = dynamic_cast<const MyGeoWay*>( item.geoShape() );
 				CPPUNIT_ASSERT(gw);
 				for(size_t j = 0; j < realPointCount; j++) {
-					CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lat-equality failed", realItem.points.at(j).lat, gw->points().at(j).lat);
-					CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lon-equality failed", realItem.points.at(j).lon, gw->points().at(j).lon);
+					CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lat-equality failed", realItem.points.at(j).lat(), gw->points().at(j).lat());
+					CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-lon-equality failed", realItem.points.at(j).lon(), gw->points().at(j).lon());
 				}
 			}
 			else {

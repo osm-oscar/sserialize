@@ -43,7 +43,6 @@ Static/ItemIndexStore.cpp
 Static/StringCompleter.cpp
 Static/GeneralizedTrie.cpp
 Static/FlatGeneralizedTrie.cpp
-Static/GeoPoint.cpp
 Static/triestats.cpp
 Static/HuffmanDecoder.cpp
 Static/KeyValueObjectStore.cpp

@@ -46,10 +46,10 @@ GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
 GeoRect::GeoRect(const UByteArrayAdapter & data) {
 	sserialize::Static::spatial::GeoPoint bL(data);
 	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
-	m_lat[0] = bL.latD();
-	m_lat[1] = tR.latD();
-	m_lon[0] = bL.lonD();
-	m_lon[1] = tR.lonD();
+	m_lat[0] = bL.lat();
+	m_lat[1] = tR.lat();
+	m_lon[0] = bL.lon();
+	m_lon[1] = tR.lon();
 }
 
 GeoRect::~GeoRect() {}
@@ -140,9 +140,9 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, sserialize::spatial::GeoRect & rect) {
 	sserialize::Static::spatial::GeoPoint bL, tR;
 	src >> bL >> tR;
-	rect.lat()[0] = bL.latD();
-	rect.lat()[1] = tR.latD();
-	rect.lon()[0] = bL.lonD();
-	rect.lon()[1] = tR.lonD();
+	rect.lat()[0] = bL.lat();
+	rect.lat()[1] = tR.lat();
+	rect.lon()[0] = bL.lon();
+	rect.lon()[1] = tR.lon();
 	return src;
 }
