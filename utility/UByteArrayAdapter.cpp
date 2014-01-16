@@ -242,7 +242,7 @@ void UByteArrayAdapter::zero() {
 	for(OffsetType i = 0; i < m_len; i += bufLen) {
 		put(i, zeros, std::min<OffsetType>(m_len-i, bufLen));
 	}
-	delete zeros;
+	delete[] zeros;
 }
 
 bool UByteArrayAdapter::equal(const UByteArrayAdapter& b) const {
@@ -793,7 +793,7 @@ bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data
 		put(pos+i, buf, len);
 		i += len;
 	}
-	delete buf;
+	delete[] buf;
 	return true;
 }
 
