@@ -95,8 +95,9 @@ private:
 			unsigned int xbinEnd = trBin.x;
 			unsigned int ybinEnd = trBin.y;
 			if (xbinStart == xbinEnd && ybinStart == ybinEnd) { //one cell
-				if (!MyRWGeoGrid::binAt(xbinStart, ybinStart).colliding)
-					MyRWGeoGrid::binAt(xbinStart, ybinStart).colliding = new PolyRasterElement;
+				if (!MyRWGeoGrid::binAt(xbinStart, ybinStart).colliding) {
+					MyRWGeoGrid::binAt(xbinStart, ybinStart).colliding = new PolyRasterElement();
+				}
 				MyRWGeoGrid::binAt(xbinStart, ybinStart).colliding->push_back(polyId);
 			}
 			else { //polygon spans multiple cells
@@ -116,7 +117,7 @@ private:
 					//test enclosing
 					if (p.contains( GeoPoint(cellRect.lat()[0], cellRect.lon()[0]) ) && p.contains( GeoPoint(cellRect.lat()[1], cellRect.lon()[1]) ) ) {
 						if (!MyRWGeoGrid::binAt(i,j).enclosing) {
-							MyRWGeoGrid::binAt(i,j).enclosing = new PolyRasterElement;
+							MyRWGeoGrid::binAt(i,j).enclosing = new PolyRasterElement();
 						}
 						MyRWGeoGrid::binAt(i,j).enclosing->push_back(polyId);
 					}
@@ -125,7 +126,7 @@ private:
 						createCellPoly(cellRect, cellPoly);
 						if (p.intersects(cellPoly)) {
 							if (!MyRWGeoGrid::binAt(i,j).colliding) {
-								MyRWGeoGrid::binAt(i,j).colliding = new PolyRasterElement;
+								MyRWGeoGrid::binAt(i,j).colliding = new PolyRasterElement();
 							}
 							MyRWGeoGrid::binAt(i,j).colliding->push_back(polyId);
 						}
