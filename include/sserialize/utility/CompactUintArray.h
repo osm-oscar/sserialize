@@ -2,6 +2,7 @@
 #define CompactUintArray_H
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
+#include <sserialize/utility/utilcontainerfuncs.h>
 #include <set>
 #include <deque>
 #include <ostream>
@@ -118,8 +119,13 @@ public:
  *
  */
 class CompactUintArray: public RCWrapper<CompactUintArrayPrivate> {
+public:
+	typedef RCWrapper< sserialize::CompactUintArrayPrivate > MyBaseClass;
 private:
 	uint32_t m_maxCount;
+protected:
+	void setPrivate(const UByteArrayAdapter & array, uint8_t bitsPerNumber);
+	CompactUintArray(CompactUintArrayPrivate * priv);
 public:
 	CompactUintArray();
 	CompactUintArray(const UByteArrayAdapter & array, uint8_t bitsPerNumber);
@@ -143,11 +149,21 @@ public:
 	std::ostream& dump(std::ostream& out, uint32_t len);
 	void dump();
 
+	///Creates a new CompactUintArray beginning at dest.tellPutPtr()
+	template<typename T_SOURCE_CONTAINER>
+	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest, uint8_t bits);
+
+	/** @return returns the needed bits, 0 on failure */
+	template<typename T_SOURCE_CONTAINER>
+	static bool createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bits);
+
+	///Creates a new CompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
-	static bool createFromSet(const std::deque<uint32_t> & src, std::deque<uint8_t> & dest, uint8_t bpn);
-	/** @return returns the needed bits, 0 on failure */
-	static uint8_t createFromDeque(const std::deque< uint32_t >& src, std::deque< uint8_t >& dest);
+
+	template<typename T_SOURCE_CONTAINER>
+	static uint8_t createFromDeque(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest);
+
 	static uint8_t minStorageBits(const uint32_t number);
 	static uint8_t minStorageBitsFullBytes(uint32_t number);
 	static uint8_t minStorageBits64(const uint64_t number);
@@ -159,6 +175,11 @@ template<typename T_SOURCE_CONTAINER>
 uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest) {
 	typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
 	uint8_t bits = minStorageBits64(maxElem);
+	return create(src, dest, bits);
+}
+
+template<typename T_SOURCE_CONTAINER>
+uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest, uint8_t bits) {
 	UByteArrayAdapter::OffsetType spaceNeed = minStorageBytes(bits, src.size());
 	if (!dest.reserveFromPutPtr(spaceNeed))
 		return 0;
@@ -171,6 +192,58 @@ uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapt
 	}
 	dest.incPutPtr(spaceNeed);
 	return bits;
+}
+
+template<typename T_SOURCE_CONTAINER>
+bool CompactUintArray::createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bpn) {
+	std::deque<uint8_t> tmpDest;
+	UByteArrayAdapter adap(&tmpDest);
+	bool ok = bpn == create(src, adap, bpn);
+	if (ok)
+		appendToDeque(tmpDest, dest);
+	return ok;
+}
+
+template<typename T_SOURCE_CONTAINER>
+uint8_t CompactUintArray::createFromDeque(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest) {
+	std::deque<uint8_t> tmpDest;
+	UByteArrayAdapter adap(&tmpDest);
+	uint8_t bpn = create(src, adap);
+	if (bpn > 0)
+		appendToDeque(tmpDest, dest);
+	return bpn;
+}
+
+/** Storage Layout of BoundedCompactUintArray
+  *------------------------------------------
+  *Size/Bits|CompactUintArray
+  *------------------------------------------
+  *   vu64  |
+  * 
+  */
+
+class BoundedCompactUintArray: public CompactUintArray {
+private:
+	SizeType m_size;
+public:
+	BoundedCompactUintArray() : m_size(0) {}
+	BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d);
+	BoundedCompactUintArray(const BoundedCompactUintArray & other);
+	virtual ~BoundedCompactUintArray();
+	BoundedCompactUintArray & operator=(const BoundedCompactUintArray & other);
+	inline SizeType size() const { return m_size; }
+	OffsetType getSizeInBytes() const;
+	///Creates a new BoundedCompactUintArray beginning at dest.tellPutPtr()
+	template<typename T_SOURCE_CONTAINER>
+	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
+};
+
+template<typename T_SOURCE_CONTAINER>
+uint8_t BoundedCompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest) {
+	typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
+	uint8_t bits = minStorageBits64(maxElem);
+	dest.putVlPackedUint64(src.size() << 6 | (bits-1));
+	return CompactUintArray::create(src, dest, bits);
 }
 
 }

@@ -1,7 +1,7 @@
 #include <sserialize/utility/CompactUintArray.h>
 #include <stdint.h>
 #include <iostream>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/utility/pack_unpack_functions.h>
 
 namespace sserialize {
 
@@ -262,15 +262,11 @@ uint32_t CompactUintArrayPrivateU32::set(const uint32_t pos, uint32_t value) {
 	return value;
 }
 
-CompactUintArray::CompactUintArray() :
-RCWrapper< sserialize::CompactUintArrayPrivate > (new CompactUintArrayPrivateEmpty()),
-m_maxCount(0)
-{
-}
+CompactUintArray::CompactUintArray(CompactUintArrayPrivate * priv) :
+RCWrapper< sserialize::CompactUintArrayPrivate >(priv)
+{}
 
-CompactUintArray::CompactUintArray(const UByteArrayAdapter & array, uint8_t bitsPerNumber) :
-RCWrapper< sserialize::CompactUintArrayPrivate >(0)
-{
+void CompactUintArray::setPrivate(const UByteArrayAdapter & array, uint8_t bitsPerNumber) {
 	if (bitsPerNumber == 0)
 		bitsPerNumber = 1;
 	else if (bitsPerNumber > 64)
@@ -281,24 +277,36 @@ RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 
 	switch(bitsPerNumber) {
 	case (8):
-		setPrivate(new CompactUintArrayPrivateU8(array));
+		MyBaseClass::setPrivate(new CompactUintArrayPrivateU8(array));
 		break;
 	case (16):
-		setPrivate(new CompactUintArrayPrivateU16(array));
+		MyBaseClass::setPrivate(new CompactUintArrayPrivateU16(array));
 		break;
 	case (24):
-		setPrivate(new CompactUintArrayPrivateU24(array));
+		MyBaseClass::setPrivate(new CompactUintArrayPrivateU24(array));
 		break;
 	case (32):
-		setPrivate(new CompactUintArrayPrivateU32(array));
+		MyBaseClass::setPrivate(new CompactUintArrayPrivateU32(array));
 		break;
 	default:
 		if (bitsPerNumber <= 32)
-			setPrivate(new CompactUintArrayPrivateVarBits(array, bitsPerNumber));
+			MyBaseClass::setPrivate(new CompactUintArrayPrivateVarBits(array, bitsPerNumber));
 		else
-			setPrivate(new CompactUintArrayPrivateVarBits64(array, bitsPerNumber));
+			MyBaseClass::setPrivate(new CompactUintArrayPrivateVarBits64(array, bitsPerNumber));
 		break;
 	}
+}
+
+CompactUintArray::CompactUintArray() :
+RCWrapper< sserialize::CompactUintArrayPrivate > (new CompactUintArrayPrivateEmpty()),
+m_maxCount(0)
+{
+}
+
+CompactUintArray::CompactUintArray(const UByteArrayAdapter & array, uint8_t bitsPerNumber) :
+RCWrapper< sserialize::CompactUintArrayPrivate >(0)
+{
+	setPrivate(array, bitsPerNumber);
 }
 
 CompactUintArray::CompactUintArray(const CompactUintArray & other) :
@@ -408,34 +416,6 @@ void CompactUintArray::dump() {
 	dump(std::cout, maxCount());
 }
 
-
-bool CompactUintArray::createFromSet(const std::deque<uint32_t> & src, std::deque<uint8_t> & dest, uint8_t bpn) {
-	if (bpn > 32) return false;
-	std::deque<uint8_t> tmpDest(minStorageBytes(bpn, src.size()), static_cast<uint8_t>(0));
-	UByteArrayAdapter adap(&tmpDest);
-	CompactUintArray cArr(adap, bpn);
-	for(size_t i=0; i < src.size(); i++) {
-		cArr.set(i, src.at(i));
-	}
-	appendToDeque(tmpDest, dest);
-	return true;
-}
-
-uint8_t CompactUintArray::createFromDeque(const std::deque< uint32_t >& src, std::deque< uint8_t >& dest) {
-	uint8_t bpn = 1;
-	for(size_t i = 0; i < src.size(); i++) {
-		uint8_t tbpn = minStorageBits(src[i]);
-		if (tbpn > bpn)
-			bpn = tbpn;
-	}
-	bool ok = createFromSet(src, dest, bpn);
-	if (!ok)
-		return 0;
-	else
-		return bpn;
-}
-
-
 uint8_t CompactUintArray::minStorageBits(const uint32_t number) {
 	return std::max<uint8_t>(1, msb(number)+1);
 }
@@ -467,6 +447,36 @@ uint8_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
 UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint8_t bpn, uint32_t count) {
 	uint64_t bits = static_cast<uint64_t>(count)*bpn;
 	return bits/8 + (bits % 8 ? 1 : 0);
+}
+
+BoundedCompactUintArray::BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d) :
+CompactUintArray(0)
+{
+	int len;
+	m_size = d.getVlPackedUint64(0, &len);
+	uint8_t bits = (m_size & 0x3F) +1;
+	m_size >>= 6;
+	OffsetType dSize = minStorageBytes(bits, m_size);
+	CompactUintArray::setPrivate(UByteArrayAdapter(d, len, dSize), bits);
+}
+
+BoundedCompactUintArray::BoundedCompactUintArray(const BoundedCompactUintArray & other) :
+CompactUintArray(other),
+m_size(other.m_size)
+{}
+
+BoundedCompactUintArray::~BoundedCompactUintArray() {}
+
+BoundedCompactUintArray & BoundedCompactUintArray::operator=(const BoundedCompactUintArray & other) {
+	CompactUintArray::operator=(other);
+	m_size = other.m_size;
+	return *this;
+}
+
+OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
+	uint8_t bits = bpn();
+	SizeType sb = (m_size << 6) | (bits-1);
+	return psize_vu64(sb) + minStorageBytes(bits, m_size);
 }
 
 }//end namespace
