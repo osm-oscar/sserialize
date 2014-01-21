@@ -50,6 +50,7 @@ Static/DynamicKeyValueObjectStore.cpp
 Static/GeoShape.cpp
 Static/RTree.cpp
 Static/HierarchyCompleter.cpp
+Static/GeoHierarchy.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
@@ -97,6 +98,7 @@ spatial/GeoPolygon.cpp
 spatial/GeoMultiPolygon.cpp
 spatial/RTree.cpp
 spatial/GridRTree.cpp
+spatial/GeoHierarchy.cpp
 )
 
 set(COMPLETER_SOURCES_CPP
