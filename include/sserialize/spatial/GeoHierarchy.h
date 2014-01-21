@@ -16,10 +16,10 @@ public:
 	
 	struct Region {
 		std::vector<uint32_t> children;
+		std::vector<uint32_t> parents;
 		std::vector<uint32_t> cells;
 		sserialize::spatial::GeoShapeType type;
 		uint32_t id;
-		uint32_t parent;
 	};
 private:
 	std::vector<Cell> m_cells;
