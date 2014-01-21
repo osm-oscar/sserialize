@@ -233,8 +233,12 @@ public:
 			uint32_t itemId = *(ids.begin());
 			uint8_t bits = CompactUintArray::minStorageBits(itemId);
 			if (fixedBitWith > 0) {
-				if (fixedBitWith > bits) bits = fixedBitWith;
-				else return false;
+				if (fixedBitWith > bits) {
+					bits = fixedBitWith;
+				}
+				else {
+					return false;
+				}
 			}
 			uint8_t countType = 0x20 | (bits-1);
 			destination.putUint8(countType);
