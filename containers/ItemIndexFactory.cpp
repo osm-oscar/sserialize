@@ -55,22 +55,23 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 }
 
 void ItemIndexFactory::fromIndexStore(const sserialize::Static::ItemIndexStore & store) {
-	if (store.compressionType() == sserialize::Static::ItemIndexStore::IC_NONE || store.compressionType() == sserialize::Static::ItemIndexStore::IC_VARUINT32) {
-		m_type = store.indexType();
-		m_compressionType = store.compressionType();
-		m_indexIdCounter = store.size();
-		for(uint32_t i = 0, s = store.size(); i < s; ++i) {
-			UByteArrayAdapter d = store.rawDataAt(i);
-			uint64_t h = hashFunc(d);
-			UByteArrayAdapter::OffsetType o = m_indexStore.tellPutPtr();
-			m_hash[h].push_front(o);
-			m_offsetsToId[o] = i;
-			m_indexStore.put(d);
+	if (size()) {
+		std::cout << "ItemIndexFactory::fromIndexStore: Adding a store although there already are indices stored" << std::endl;
+	}
+	std::vector<uint32_t> tmp; 
+	ItemIndex tmpIdx;
+	sserialize::ProgressInfo info;
+	info.begin(store.size(), "Adding indices from store");
+	for(uint32_t i = 0, s = store.size(); i < s; ++i) {
+		tmpIdx = store.at(i);
+		tmp.reserve(tmpIdx.size());
+		for(uint32_t j = 0, sj = tmpIdx.size(); j < sj; ++j) {
+			tmp.push_back(tmpIdx.at(j));
 		}
+		addIndex(tmp);
+		info(i);
 	}
-	else {
-		throw sserialize::CreationException("ItemIndexFactory::fromIndexStore unsupported compression options");
-	}
+	info.end();
 }
 
 uint64_t ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
