@@ -184,7 +184,7 @@ private:
 	PolyRaster * m_polyRaster;
 	
 private:
-	inline bool pointInRegion(const Point & p, const GeoRegion & pg) { return pg.contains(p);}
+	inline bool pointInRegion(const Point & p, const GeoRegion & pg) const { return pg.contains(p);}
 
 	
 public:
@@ -229,11 +229,11 @@ public:
 		std::cout << std::endl;
 	}
 	
-	inline std::set<uint32_t> test(double lat, double lon) {
+	inline std::set<uint32_t> test(double lat, double lon) const {
 		return test(Point(lat, lon));
 	}
 	
-	std::set<uint32_t> test(const Point & p) {
+	std::set<uint32_t> test(const Point & p) const {
 		std::set<uint32_t> polys;
 		if (!m_polyRaster) {
 			for(std::size_t it(0), s(m_regionStore.size()); it < s; ++it) {
@@ -258,7 +258,7 @@ public:
 	}
 	
 	template<typename TPOINT_ITERATOR>
-	std::set<uint32_t> test(TPOINT_ITERATOR begin, TPOINT_ITERATOR end) {
+	std::set<uint32_t> test(TPOINT_ITERATOR begin, TPOINT_ITERATOR end) const {
 		std::set<unsigned int> polyIds;
 		if (!m_polyRaster) {
 			for(std::size_t it = 0, itEnd(m_regionStore.size()); it < itEnd; ++it) {
@@ -287,7 +287,7 @@ public:
 		return polyIds;
 	}
 	
-	std::set<uint32_t> test(const std::vector<Point> & p) {
+	std::set<uint32_t> test(const std::vector<Point> & p) const {
 		return test(p.begin(), p.end());
 	}
 };
