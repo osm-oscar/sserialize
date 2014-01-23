@@ -12,11 +12,13 @@ m_items(0, 0)
 DynamicKeyValueObjectStore::~DynamicKeyValueObjectStore() {}
 
 void DynamicKeyValueObjectStore::clear() {
-	m_items = ItemDataContainer(0, 0);
+	ItemDataContainer tmp(0, 0);
+	std::swap(m_items, tmp); 
 }
 
 void DynamicKeyValueObjectStore::reserve(uint32_t totalItemCount, uint64_t totalItemStrings) {
-	m_items = ItemDataContainer(totalItemCount, (uint64_t)totalItemCount*15+4*totalItemStrings);
+	ItemDataContainer tmp(totalItemCount, (uint64_t)totalItemCount*15+4*totalItemStrings);
+	std::swap(tmp, m_items);
 }
 
 uint32_t DynamicKeyValueObjectStore::keyId(const std::string & str) const {
