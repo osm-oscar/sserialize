@@ -173,9 +173,12 @@ public:
 
 template<typename T_SOURCE_CONTAINER>
 uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest) {
-	typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
-	uint8_t bits = minStorageBits64(maxElem);
-	return create(src, dest, bits);
+	if (src.size()) {
+		typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
+		uint8_t bits = minStorageBits64(maxElem);
+		return create(src, dest, bits);
+	}
+	return 0;
 }
 
 template<typename T_SOURCE_CONTAINER>
@@ -225,6 +228,10 @@ uint8_t CompactUintArray::createFromDeque(const T_SOURCE_CONTAINER & src, std::d
 class BoundedCompactUintArray: public CompactUintArray {
 private:
 	SizeType m_size;
+private:
+	uint32_t set(const uint32_t pos, const uint32_t value);
+	uint64_t set64(const uint32_t pos, const uint64_t value);
+	bool reserve(uint32_t newMaxCount);
 public:
 	BoundedCompactUintArray() : m_size(0) {}
 	BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d);
@@ -240,10 +247,16 @@ public:
 
 template<typename T_SOURCE_CONTAINER>
 uint8_t BoundedCompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest) {
-	typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
-	uint8_t bits = minStorageBits64(maxElem);
-	dest.putVlPackedUint64(src.size() << 6 | (bits-1));
-	return CompactUintArray::create(src, dest, bits);
+	if (src.size()) {
+		typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
+		uint8_t bits = minStorageBits64(maxElem);
+		dest.putVlPackedUint64(src.size() << 6 | (bits-1));
+		return CompactUintArray::create(src, dest, bits);
+	}
+	else {
+		dest.putVlPackedUint64(0);
+		return 1;
+	}
 }
 
 }
