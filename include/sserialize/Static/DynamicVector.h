@@ -12,10 +12,15 @@ public:
 	uint32_t m_size;
 	UByteArrayAdapter m_offsets;
 	UByteArrayAdapter m_data;
+private:
+	DynamicVector(const DynamicVector & other);
+	DynamicVector & operator=(const DynamicVector & other);
 public:
 	DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize);
 	virtual ~DynamicVector();
+	void swap(DynamicVector & other);
 	uint32_t size() const;
+	OffsetType reservedSize() const;
 	void reserve(uint32_t size) { std::cerr << "Reserving is not supported by sserialize::Static::DynamicVector" << std::endl; }
 	template<typename TStreamingSerializer = UByteArrayAdapter::StreamingSerializer<TPushValue> >
 	void push_back(const TPushValue & value, const TStreamingSerializer & serializer = TStreamingSerializer());
@@ -41,8 +46,20 @@ template<typename TPushValue, typename TGetValue>
 DynamicVector<TPushValue, TGetValue>::~DynamicVector() {}
 
 template<typename TPushValue, typename TGetValue>
+void DynamicVector<TPushValue, TGetValue>::swap(DynamicVector & other) {
+	std::swap(m_size, other.m_size);
+	std::swap(m_offsets, other.m_offsets);
+	std::swap(m_data, other.m_data);
+}
+
+template<typename TPushValue, typename TGetValue>
 uint32_t DynamicVector<TPushValue, TGetValue>::size() const {
 	return m_size;
+}
+
+template<typename TPushValue, typename TGetValue>
+OffsetType DynamicVector<TPushValue, TGetValue>::reservedSize() const {
+	return m_data.size();
 }
 
 template<typename TPushValue, typename TGetValue>
@@ -119,6 +136,13 @@ UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toDeque(UByteArrayAdap
 template<typename TPushValue, typename TGetValue>
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::DynamicVector<TPushValue, TGetValue> & src) {
 	return src.toDeque(dest);
+}
+
+namespace std {
+	template<typename TPushValue, typename TGetValue>
+	void swap(sserialize::Static::DynamicVector<TPushValue, TGetValue> & a, sserialize::Static::DynamicVector<TPushValue, TGetValue> & b) {
+		return a.swap(b);
+	}
 }
 
 #endif
