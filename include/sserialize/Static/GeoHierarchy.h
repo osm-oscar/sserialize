@@ -94,6 +94,7 @@ public:
 	GeoHierarchy();
 	GeoHierarchy(const UByteArrayAdapter & data);
 	virtual ~GeoHierarchy();
+	OffsetType getSizeInBytes() const;
 	
 	inline uint32_t cellSize() const { return m_cells.size(); }
 	inline Cell cell(uint32_t id) const { return m_cells.at(id); }
@@ -102,7 +103,7 @@ public:
 	Region region(uint32_t id) const;
 	
 	uint32_t regionPtrSize() const;
-	uint32_t regionPtr(uint32_t pos);
+	uint32_t regionPtr(uint32_t pos) const;
 };
 
 }}} //end namespace

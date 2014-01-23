@@ -89,6 +89,10 @@ m_regionPtrs(data + (1+m_regions.getSizeInBytes() + m_cells.getSizeInBytes()))
 
 GeoHierarchy::~GeoHierarchy() {}
 
+OffsetType GeoHierarchy::getSizeInBytes() const {
+	return 1+ m_cells.getSizeInBytes() + m_regionPtrs.getSizeInBytes() + m_regions.getSizeInBytes();
+}
+
 uint32_t GeoHierarchy::regionSize() const {
 	uint32_t rs  = m_regions.size();
 	return (rs > 0 ? rs-1 : 0);
@@ -103,7 +107,7 @@ uint32_t GeoHierarchy::regionPtrSize() const {
 	return m_regionPtrs.size();
 }
 
-uint32_t GeoHierarchy::regionPtr(uint32_t pos) {
+uint32_t GeoHierarchy::regionPtr(uint32_t pos) const {
 	return m_regionPtrs.at(pos);
 }
 
