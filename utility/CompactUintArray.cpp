@@ -457,7 +457,13 @@ CompactUintArray(0)
 	uint8_t bits = (m_size & 0x3F) +1;
 	m_size >>= 6;
 	OffsetType dSize = minStorageBytes(bits, m_size);
-	CompactUintArray::setPrivate(UByteArrayAdapter(d, len, dSize), bits);
+	if (m_size) {
+		CompactUintArray::setPrivate(UByteArrayAdapter(d, len, dSize), bits);
+	}
+	else {
+		CompactUintArray::MyBaseClass::setPrivate(new CompactUintArrayPrivateEmpty());
+	}
+	
 }
 
 BoundedCompactUintArray::BoundedCompactUintArray(const BoundedCompactUintArray & other) :
