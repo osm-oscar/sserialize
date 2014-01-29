@@ -7,10 +7,6 @@
 
 using namespace sserialize;
 
-inline uint32_t createMask(uint8_t bpn) {
-	return ((bpn == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << bpn) - 1));
-}
-
 template<uint32_t TValueCount, uint32_t TSubValueCount>
 class MultiVarBitArrayTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( MultiVarBitArrayTest );

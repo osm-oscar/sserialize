@@ -121,6 +121,7 @@ public:
 	uint32_t size() const { return m_index.size();}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const {return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
 	TValue at(uint32_t pos) const;
+	TValue operator[](uint32_t pos) const;
 	UByteArrayAdapter dataAt(uint32_t pos) const;
 	int32_t find(const TValue & value) const;
 	TValue front() const;
@@ -160,6 +161,12 @@ Deque<TValue>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return TValue();
 	}
+	return TValue(dataAt(pos));
+}
+
+template<typename TValue>
+TValue
+Deque<TValue>::operator[](uint32_t pos) const {
 	return TValue(dataAt(pos));
 }
 

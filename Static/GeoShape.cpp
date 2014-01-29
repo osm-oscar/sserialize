@@ -1,4 +1,5 @@
 #include <sserialize/Static/GeoShape.h>
+#include <sserialize/Static/GeoWay.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 
@@ -6,87 +7,26 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 
-GeoShape::GeoShape(const UByteArrayAdapter & data) : m_type(static_cast<sserialize::spatial::GeoShapeType>(data.at(0)) ), m_size(0), m_data(data) {
-	m_data += 1;
-	if (m_type == sserialize::spatial::GS_WAY || m_type == sserialize::spatial::GS_POLYGON) {
-		int len;
-		m_size = m_data.getVlPackedUint32(0, &len);
-		if (len > 0)
-			m_data += len;
-		else
-			m_type = sserialize::spatial::GS_NONE;
-	}
-	else if (m_type == sserialize::spatial::GS_POINT) {
-		m_size = 1;
+GeoShape::GeoShape(const UByteArrayAdapter & data) {
+	sserialize::spatial::GeoShapeType type = static_cast<sserialize::spatial::GeoShapeType>(data.at(0));
+	switch (type) {
+	case sserialize::spatial::GS_POINT:
+		m_priv.reset( new sserialize::spatial::GeoPoint(data+1) );
+		break;
+	case sserialize::spatial::GS_WAY:
+		m_priv.reset( new sserialize::Static::spatial::GeoWay(data+1) );
+		break;
+	case sserialize::spatial::GS_POLYGON:
+	case sserialize::spatial::GS_MULTI_POLYGON:
+	default:
+		break;
 	}
 }
 
 UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
-	if (m_type == sserialize::spatial::GS_WAY || sserialize::spatial::GS_POLYGON) {
-		return 1 +  psize_vu32(m_size) +  SerializationInfo<sserialize::spatial::GeoRect>::length + SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*m_size;
-	}
-	else if (m_data.size() || m_type == sserialize::spatial::GS_POINT) {
-		return 1;
-	}
-	return 0;
-}
-	
-	
-sserialize::Static::spatial::GeoPoint GeoShape::at(uint32_t pos) const {
-	if (type() == sserialize::spatial::GS_POINT)
-		return sserialize::Static::spatial::GeoPoint(m_data);
-	else
-		return sserialize::Static::spatial::GeoPoint(m_data + (sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length*(2+pos)));
-}
-	
-sserialize::spatial::GeoRect GeoShape::boundary() const {
-	if (m_type == sserialize::spatial::GS_POINT) {
-		sserialize::Static::spatial::GeoPoint p(at(0));
-		return sserialize::spatial::GeoRect(p.lat(), p.lat(), p.lon(), p.lon());
-	}
-	else {
-		sserialize::Static::spatial::GeoPoint bL(m_data);
-		sserialize::Static::spatial::GeoPoint tR(m_data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
-		return sserialize::spatial::GeoRect(bL.lat(), tR.lat(), bL.lon(), tR.lon());
-	}
-}
-	
-bool GeoShape::intersects(const sserialize::spatial::GeoRect & boundary) const {
-	if (type() == sserialize::spatial::GS_POINT) {
-		sserialize::Static::spatial::GeoPoint p(at(0));
-		return boundary.contains(p.lat(), p.lon());
-	}
-	
-	if (!boundary.overlap( this->boundary()) )
-		return false;
-	uint32_t s = size();
-	UByteArrayAdapter tmp(m_data+2*sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length); tmp.resetGetPtr();
-	sserialize::Static::spatial::GeoPoint p;
-	for(size_t i = 0; i < s; ++i) {
-		tmp >> p;
-		if (boundary.contains(p.lat(), p.lon()))
-			return true;
-	}
-	return false;
-}
-	
-sserialize::spatial::GeoRect GeoShape::rectFromData(const UByteArrayAdapter &  data) {
-	sserialize::Static::spatial::GeoPoint bL(data);
-	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
-	return sserialize::spatial::GeoRect(bL.lat(), tR.lat(), bL.lon(), tR.lon());
+	throw sserialize::UnimplementedFunctionException("sserialize::Static::GeoShape::getSizeInBytes");
 }
 
-
-UByteArrayAdapter & GeoShape::append(sserialize::UByteArrayAdapter & destination) const {
-	throw sserialize::UnimplementedFunctionException("GeoShape::appendWithTypeInfo");
-	return destination;
-}
-
-sserialize::spatial::GeoShape * GeoShape::copy() const {
-	return new sserialize::Static::spatial::GeoShape(*this);
-}
-
-void GeoShape::recalculateBoundary() {}
 
 }}}//end namespace
 

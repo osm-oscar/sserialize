@@ -51,6 +51,7 @@ Static/GeoShape.cpp
 Static/RTree.cpp
 Static/HierarchyCompleter.cpp
 Static/GeoHierarchy.cpp
+Static/GeoWay.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP

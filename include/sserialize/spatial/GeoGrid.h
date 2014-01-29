@@ -3,7 +3,6 @@
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/spatial/GeoPoint.h>
 #include <stdint.h>
-#define EPSILON 0.00000001
 
 namespace sserialize {
 namespace spatial {

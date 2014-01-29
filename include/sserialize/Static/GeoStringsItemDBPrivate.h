@@ -5,6 +5,7 @@
 #include <sserialize/Static/StringsItemDBPrivate.h>
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/Static/GeoShape.h>
+#include <sserialize/Static/GeoWay.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 
 #define SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_VERSION 0
@@ -67,7 +68,7 @@ public:
 		return m_shapes.at(itemPos).size();
 	}
 	sserialize::Static::spatial::GeoPoint geoPointAt(uint32_t itemPos, uint32_t pos) const {
-		return m_shapes.at(itemPos).at(pos);
+		return dynamic_cast<sserialize::Static::spatial::GeoWay*>( m_shapes.at(itemPos).priv().get())->points().at(pos);
 	}
 	
 	sserialize::Static::spatial::GeoShape geoShapeAt(uint32_t itemPos) const {

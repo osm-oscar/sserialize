@@ -1,40 +1,32 @@
 #ifndef SSERIALIZE_STATIC_GEO_SHAPE_H
 #define SSERIALIZE_STATIC_GEO_SHAPE_H
 #include <sserialize/spatial/GeoShape.h>
-#include <sserialize/Static/GeoPoint.h>
+#include <memory>
 
 namespace sserialize {
 namespace Static {
 namespace spatial {
 
-/** NOTE: corner-cases like point on line are not especially handeled and aer so undefined behavior */
-
-class GeoShape: public sserialize::spatial::GeoShape {
-	sserialize::spatial::GeoShapeType m_type;
-	uint32_t m_size;
-	UByteArrayAdapter m_data;
+class GeoShape {
+	std::shared_ptr<sserialize::spatial::GeoShape> m_priv;
 public:
-	GeoShape() : m_type(sserialize::spatial::GS_NONE), m_size(0)  {}
+	GeoShape() {}
 	GeoShape(const UByteArrayAdapter & data);
 	virtual ~GeoShape() {}
-	inline uint32_t size() const { return m_size; }
+	inline uint32_t size() const { return m_priv->size(); }
+	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
+	
+	template<typename TGeoShapeType>
+	const TGeoShapeType * get() const { return dynamic_cast<const TGeoShapeType*>(priv().get());}
+	
+	inline sserialize::spatial::GeoRect boundary() const { return m_priv->boundary(); }
 	
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	
-	inline sserialize::spatial::GeoShapeType type() const { return m_type; }
+	inline sserialize::spatial::GeoShapeType type() const { return m_priv->type(); }
 	
-	sserialize::Static::spatial::GeoPoint at(uint32_t pos) const;
-	sserialize::spatial::GeoRect boundary() const;
-	virtual void recalculateBoundary();
-	
-	bool intersects(const sserialize::spatial::GeoRect & boundary) const;
-	
-	static sserialize::spatial::GeoRect rectFromData(const UByteArrayAdapter &  data);
+	bool intersects(const sserialize::spatial::GeoRect & boundary) const { return m_priv->intersects(boundary); }
 
-	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const;
-	
-	virtual sserialize::spatial::GeoShape * copy() const;
-	
 };
 
 }}}//end namespace

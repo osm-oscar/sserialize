@@ -18,6 +18,7 @@ template<class TValue>
 class GeoRegionStore {
 public:
 	typedef GeoPoint Point;
+	typedef TValue value_type;
 private:
 
 	typedef std::vector<uint32_t> PolyRasterElement;
