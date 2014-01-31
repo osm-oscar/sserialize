@@ -199,6 +199,7 @@ public:
 	std::size_t size() const { return regions().size(); }
 	const std::vector<GeoRegion*> & regions() const { return m_regionStore; }
 	const std::vector<TValue> & values() const { return m_values; }
+	std::vector<TValue> & values() { return m_values; }
 	inline void push_back(const GeoRegion & p, const TValue & value) {
 		m_regionStore.push_back(static_cast<GeoRegion*>(p.copy()));
 		m_values.push_back(value);
