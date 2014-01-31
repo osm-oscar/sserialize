@@ -25,10 +25,6 @@ std::ostream & operator<<(std::ostream & out, const std::set<uint32_t> & s) {
 	return out;
 }
 
-std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & p) {
-	out << "GeoPoint[" << p.lat() << ", " << p.lon() << "]";
-	return out;
-}
 
 template<uint32_t T_RASTER_X, uint32_t T_RASTER_Y>
 class GeoPolygonStoreTest:public CppUnit::TestFixture {
