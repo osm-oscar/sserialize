@@ -964,7 +964,7 @@ UBA_STREAMING_GET_FUNC(getFloat, float, 4);
 
 uint64_t UByteArrayAdapter::getVlPackedUint64() {
 	int len;
-	uint32_t res = getVlPackedUint64(m_getPtr, &len);
+	uint64_t res = getVlPackedUint64(m_getPtr, &len);
 	if (len > 0)
 		m_getPtr += len;
 	return res;
@@ -972,7 +972,7 @@ uint64_t UByteArrayAdapter::getVlPackedUint64() {
 
 int64_t UByteArrayAdapter::getVlPackedInt64() {
 	int len;
-	uint32_t res = getVlPackedInt64(m_getPtr, &len);
+	int64_t res = getVlPackedInt64(m_getPtr, &len);
 	if (len > 0)
 		m_getPtr += len;
 	return res;
@@ -991,7 +991,7 @@ uint32_t UByteArrayAdapter::getVlPackedUint32() {
 
 int32_t UByteArrayAdapter::getVlPackedInt32() {
 	int len;
-	uint32_t res = getVlPackedInt32(m_getPtr, &len);
+	int32_t res = getVlPackedInt32(m_getPtr, &len);
 	if (len > 0)
 		m_getPtr += len;
 	return res;
