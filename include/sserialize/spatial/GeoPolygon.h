@@ -25,6 +25,7 @@ protected:
 	bool collidesWithWay(const MyGeoWay & way) const;
 public:
 	GeoPolygon();
+	GeoPolygon(const sserialize::spatial::GeoRect & boundary, const TPointsContainer & points);
 	GeoPolygon(const TPointsContainer & points);
 	GeoPolygon(const GeoPolygon & other);
 	GeoPolygon(TPointsContainer && points);
@@ -96,6 +97,11 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithWay(const GeoPol
 template<typename TPointsContainer, typename TPointsConstRef>
 GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon() :
 MyBaseClass()
+{}
+
+template<typename TPointsContainer, typename TPointsConstRef>
+GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(const sserialize::spatial::GeoRect & boundary, const TPointsContainer & points) :
+MyBaseClass(boundary, points)
 {}
 
 template<typename TPointsContainer, typename TPointsConstRef>

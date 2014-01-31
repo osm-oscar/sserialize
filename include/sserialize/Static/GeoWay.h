@@ -1,20 +1,35 @@
 #ifndef SSERIALIZE_STATIC_GEO_WAY_H
 #define SSERIALIZE_STATIC_GEO_WAY_H
 #include <sserialize/spatial/GeoWay.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/DenseGeoPointVector.h>
 
 namespace sserialize {
+
+namespace Static {
+namespace spatial {
+namespace detail {
+	typedef sserialize::Static::spatial::DenseGeoPointVector GeoWayPointsContainer;
+}}}
+
+
 namespace spatial {
 namespace detail {
 	template<>
-	UByteArrayAdapter & GeoWay< sserialize::Static::Deque< sserialize::spatial::GeoPoint > >::append(UByteArrayAdapter & destination) const;
+	UByteArrayAdapter & GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer >::append(UByteArrayAdapter & destination) const;
 }}}
 
 namespace sserialize {
 namespace Static {
 namespace spatial {
 
-typedef sserialize::spatial::detail::GeoWay< sserialize::Static::Deque< sserialize::spatial::GeoPoint > > GeoWay;
+/** Layout
+  *---------------------------------
+  *GeoRect|DenseGeoPointVector
+  *---------------------------------
+  *
+  */
+
+typedef sserialize::spatial::detail::GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer > GeoWay;
 
 }}
 

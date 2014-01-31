@@ -24,6 +24,7 @@ protected:
 	inline const GeoRect & myBoundary() const { return m_boundary; }
 public:
 	GeoWay();
+	GeoWay(const GeoRect & boundary, const TPointsContainer & points);
 	GeoWay(const TPointsContainer & points);
 	GeoWay(const GeoWay & other);
 	GeoWay(TPointsContainer && points);
@@ -60,6 +61,13 @@ public:
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay() {}
 
+template<typename TPointsContainer>
+GeoWay<TPointsContainer>::GeoWay(const GeoRect & boundary, const TPointsContainer & points) :
+m_points(points),
+m_boundary(boundary)
+{}
+
+	
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(const TPointsContainer & points) : m_points(points) {
 	recalculateBoundary();
