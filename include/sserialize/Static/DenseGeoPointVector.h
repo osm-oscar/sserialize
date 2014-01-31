@@ -49,6 +49,10 @@ public:
 			return m_pos < o.m_pos;
 		}
 		
+		inline int32_t operator-(const ForwardIterator & o) {
+			return m_pos - o.m_pos;
+		}
+		
 	};
 	
 	typedef ForwardIterator const_iterator;
@@ -90,7 +94,7 @@ public:
 	inline ForwardIterator end() const { return cend(); }
 
 	template<typename TGeoPointIterator>
-	static UByteArrayAdapter append(TGeoPointIterator begin, TGeoPointIterator end, sserialize::UByteArrayAdapter & dest);
+	static UByteArrayAdapter & append(TGeoPointIterator begin, TGeoPointIterator end, sserialize::UByteArrayAdapter & dest);
 };
 
 namespace detail {
@@ -105,7 +109,7 @@ typedef sserialize::AbstractArray<GeoPoint> DenseGeoPointAbstractArray;
 //---------Definitions---------------------
 
 template<typename TGeoPointIterator>
-UByteArrayAdapter DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPointIterator end, sserialize::UByteArrayAdapter & dest) {
+UByteArrayAdapter& DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPointIterator end, sserialize::UByteArrayAdapter& dest) {
 	uint32_t size = end-begin;
 	dest.putVlPackedUint32(size);
 	if (size) {
