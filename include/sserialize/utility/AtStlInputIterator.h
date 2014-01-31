@@ -48,32 +48,32 @@ public:
 		m_derefer = other.m_derefer;
 	}
 	
-	bool operator==(const ReadOnlyAtStlIterator & other) {
+	bool operator==(const ReadOnlyAtStlIterator & other) const {
 		return m_pos == other.m_pos && m_data == other.m_data;
 	}
 	
-	bool operator!=(const ReadOnlyAtStlIterator & other) {
+	bool operator!=(const ReadOnlyAtStlIterator & other) const {
 		return m_pos != other.m_pos || m_data != other.m_data;
 	}
 	
-	bool operator<(const ReadOnlyAtStlIterator & other) {
+	bool operator<(const ReadOnlyAtStlIterator & other) const {
 		return m_pos < other.m_pos && m_data == other.m_data;
 	}
 
-	bool operator<=(const ReadOnlyAtStlIterator & other) {
+	bool operator<=(const ReadOnlyAtStlIterator & other) const {
 		return m_pos <= other.m_pos && m_data == other.m_data;
 	}
 
-	bool operator>(const ReadOnlyAtStlIterator & other) {
+	bool operator>(const ReadOnlyAtStlIterator & other) const {
 		return m_pos > other.m_pos && m_data == other.m_data;
 	}
 
-	bool operator>=(const ReadOnlyAtStlIterator & other) {
+	bool operator>=(const ReadOnlyAtStlIterator & other) const {
 		return m_pos >= other.m_pos && m_data == other.m_data;
 	}
 		
 	ReadOnlyAtStlIterator operator++(int offset) {
-		return ReadOnlyAtStlIterator(m_pos++, m_data);
+		return ReadOnlyAtStlIterator(m_pos++, m_data, m_derefer);
 	}
 	
 	ReadOnlyAtStlIterator & operator++() {
@@ -82,7 +82,7 @@ public:
 	}
 	
 	ReadOnlyAtStlIterator operator--(int offset) {
-		return ReadOnlyAtStlIterator(m_pos--, m_data);
+		return ReadOnlyAtStlIterator(m_pos--, m_data, m_derefer);
 	}
 	
 	ReadOnlyAtStlIterator & operator--() {
@@ -99,8 +99,16 @@ public:
 		m_pos -= offset;
 		return *this;
 	}
+	
+	ReadOnlyAtStlIterator operator+(T_SIZE_TYPE offset) const {
+		return ReadOnlyAtStlIterator(m_pos+offset, m_data, m_derefer);
+	}
 
-	T_SIZE_TYPE operator-(const ReadOnlyAtStlIterator & other) {
+	ReadOnlyAtStlIterator operator-(T_SIZE_TYPE offset) const {
+		return ReadOnlyAtStlIterator(m_pos-offset, m_data, m_derefer);
+	}
+
+	T_SIZE_TYPE operator-(const ReadOnlyAtStlIterator & other) const {
 		return (m_data == other.m_data ? m_pos - other.m_pos : std::numeric_limits<T_SIZE_TYPE>::max());
 	}
 	
