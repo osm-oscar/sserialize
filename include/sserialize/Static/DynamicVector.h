@@ -115,7 +115,9 @@ UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) con
 	else {
 		len = m_offsets.getOffset(static_cast<sserialize::UByteArrayAdapter::OffsetType>(pos+1)*UByteArrayAdapter::OffsetTypeSerializedLength())-begin;
 	}
-	return UByteArrayAdapter(m_data, begin, len);
+	UByteArrayAdapter ret(m_data, begin, len);
+	ret.resetPtrs();
+	return ret;
 }
 
 template<typename TPushValue, typename TGetValue>
