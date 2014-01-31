@@ -328,8 +328,9 @@ void UByteArrayAdapter::setGetPtr(OffsetType pos) {
 	m_getPtr = pos;
 }
 
-void UByteArrayAdapter::resetGetPtr() {
+UByteArrayAdapter& UByteArrayAdapter::resetGetPtr() {
 	m_getPtr = 0;
+	return *this;
 }
 
 UByteArrayAdapter& UByteArrayAdapter::shrinkToGetPtr() {

@@ -112,7 +112,7 @@ public:
 	void incGetPtr(OffsetType num);
 	void decGetPtr(OffsetType num);
 	void setGetPtr(OffsetType pos);
-	void resetGetPtr();
+	UByteArrayAdapter& resetGetPtr();
 	/** Moves the offset to the getPtr */
 	UByteArrayAdapter& shrinkToGetPtr();
 
