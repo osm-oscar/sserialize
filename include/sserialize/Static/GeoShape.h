@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_GEO_SHAPE_H
 #define SSERIALIZE_STATIC_GEO_SHAPE_H
-#include <sserialize/spatial/GeoShape.h>
+#include <sserialize/spatial/GeoPoint.h>
 #include <memory>
 
 namespace sserialize {
@@ -18,6 +18,8 @@ public:
 	
 	template<typename TGeoShapeType>
 	const TGeoShapeType * get() const { return dynamic_cast<const TGeoShapeType*>(priv().get());}
+	
+	sserialize::spatial::GeoPoint first() const;
 	
 	inline sserialize::spatial::GeoRect boundary() const { return m_priv->boundary(); }
 	

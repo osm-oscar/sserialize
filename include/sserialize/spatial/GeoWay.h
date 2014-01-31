@@ -14,8 +14,8 @@ class GeoWay: public GeoRegion {
 public:
 	typedef sserialize::spatial::GeoPoint Point;
 	typedef TPointsContainer PointsContainer;
-	typedef typename TPointsContainer::iterator PointsIterator;
-	typedef typename TPointsContainer::const_iterator ConstPointsIterator;	
+	typedef typename TPointsContainer::const_iterator const_iterator;
+	typedef typename TPointsContainer::iterator iterator;
 	typedef GeoRegion MyBaseClass;
 private:
 	TPointsContainer m_points;
@@ -36,8 +36,8 @@ public:
 	/** you need to update the boundary rect if you changed anything here! */
 	inline TPointsContainer & points() { return m_points; }
 	inline const TPointsContainer & points() const { return m_points; }
-	inline ConstPointsIterator cbegin() const { return points().cbegin(); }
-	inline ConstPointsIterator cend() const { return points().cend(); }
+	inline const_iterator cbegin() const { return points().cbegin(); }
+	inline const_iterator cend() const { return points().cend(); }
 	
 	
 	virtual GeoShapeType type() const { return sserialize::spatial::GS_WAY; }
@@ -114,8 +114,8 @@ template<typename TPointsContainer>
 bool GeoWay<TPointsContainer>::intersects(const GeoRect & rect) const {
 	if (!m_boundary.overlap(rect))
 		return false;
-	for(size_t i = 0; i < points().size(); ++i) {
-		Point p (points().at(i));
+	for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+		Point p (*it);
 		if (rect.contains(p.lat(), p.lon()))
 			return true;
 	}
@@ -136,8 +136,10 @@ bool GeoWay<TPointsContainer>::contains(const GeoPoint & p) const {
 template<typename TPointsContainer>
 bool GeoWay<TPointsContainer>::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
 	if (m_boundary.contains(p1.lat(), p1.lon()) || m_boundary.contains(p2.lat(), p2.lon())) {
-		for(std::size_t i(0), j(1), end(m_points.size()); j < end; ++i, ++j) {
-			if (sserialize::spatial::GeoPoint::intersect(m_points[i], m_points[j], p1, p2)) {
+		const_iterator it(cbegin());
+		++it;
+		for(const_iterator prev(cbegin()), end(cend()); it != end; ++it, ++prev) {
+			if (sserialize::spatial::GeoPoint::intersect(*prev, *it, p1, p2)) {
 				return true;
 			}
 		}
@@ -158,9 +160,13 @@ bool GeoWay<TPointsContainer>::intersects(const GeoRegion & other) const {
 	}
 	
 	if (o->m_boundary.overlap(m_boundary)) {
-		for(std::size_t i(0), j(1), myEnd(m_points.size()); j < myEnd; ++i, ++j) {
-			for(std::size_t k(0), l(1), oEnd(o->m_points.size()); l < oEnd; ++k, ++l) {
-				if (sserialize::spatial::GeoPoint::intersect(m_points[i], m_points[j], o->m_points[k], o->m_points[l])) {
+		const_iterator it(cbegin());
+		++it;
+		for(const_iterator prev(cbegin()), end(cend()); it != end; ++it, ++prev) {
+			const_iterator oIt(o->cbegin());
+			++oIt;
+			for(const_iterator oPrev(cbegin()), end(cend()); it != end; ++it, ++prev) {
+				if (sserialize::spatial::GeoPoint::intersect(*prev, *it, *oPrev, *oIt)) {
 					return true;
 				}
 			}
@@ -174,16 +180,21 @@ void GeoWay<TPointsContainer>::recalculateBoundary() {
 	if (!points().size())
 		return;
 
-	double minLat = points().at(0).lat();
-	double minLon = points().at(0).lon();
-	double maxLat = points().at(0).lat();
-	double maxLon = points().at(0).lon();
+	const_iterator it(cbegin());
+	GeoPoint p = *it;
+	++it;
+		
+	double minLat = p.lat();
+	double minLon = p.lon();
+	double maxLat = p.lat();
+	double maxLon = p.lon();
 
-	for(size_t i = 1; i < points().size(); i++) {
-		minLat = std::min(points().at(i).lat(), minLat);
-		minLon = std::min(points().at(i).lon(), minLon);
-		maxLat = std::max(points().at(i).lat(), maxLat);
-		maxLon = std::max(points().at(i).lon(), maxLon);
+	for(const_iterator end(cend()); it != end; ++it) {
+		p = *it;
+		minLat = std::min(p.lat(), minLat);
+		minLon = std::min(p.lon(), minLon);
+		maxLat = std::max(p.lat(), maxLat);
+		maxLon = std::max(p.lon(), maxLon);
 	}
 	
 	m_boundary.lat()[0] = minLat;

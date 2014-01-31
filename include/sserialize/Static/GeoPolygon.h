@@ -14,7 +14,7 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 
-typedef sserialize::spatial::detail::GeoPolygon< sserialize::Static::Deque< sserialize::spatial::GeoPoint > > GeoPolygon;
+typedef sserialize::spatial::detail::GeoPolygon< sserialize::Static::Deque< sserialize::spatial::GeoPoint >,  sserialize::spatial::GeoPoint> GeoPolygon;
 
 }}}//end namespace
 

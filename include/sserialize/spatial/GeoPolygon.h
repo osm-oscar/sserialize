@@ -19,14 +19,15 @@ public:
 	typedef GeoPoint Point;
 	typedef sserialize::spatial::detail::GeoWay<TPointsContainer> MyBaseClass;
 	typedef MyBaseClass MyGeoWay;
+	typedef typename MyBaseClass::const_iterator const_iterator;
 protected:
 	bool collidesWithPolygon(const GeoPolygon & poly) const;
 	bool collidesWithWay(const MyGeoWay & way) const;
 public:
 	GeoPolygon();
-	GeoPolygon(const std::vector<Point> & points);
+	GeoPolygon(const TPointsContainer & points);
 	GeoPolygon(const GeoPolygon & other);
-	GeoPolygon(std::vector<Point> && points);
+	GeoPolygon(TPointsContainer && points);
 	GeoPolygon(GeoPolygon && other);
 	virtual ~GeoPolygon();
 	GeoPolygon & operator=(GeoPolygon && other);
@@ -55,15 +56,17 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithPolygon(const Ge
 	if (! MyBaseClass::myBoundary().overlap(poly.myBoundary()))
 		return false;
 
-	if (contains(poly.points().begin(), poly.points().end())) { //check if at least one vertex poly lies within us
+	if (contains(poly.points().cbegin(), poly.points().cend())) { //check if at least one vertex poly lies within us
 		return true;
 	}
-	else if (poly.contains(MyBaseClass::points().begin(), MyBaseClass::points().end())) { //check if at least one own vertex lies within poly
+	else if (poly.contains(MyBaseClass::points().cbegin(), MyBaseClass::points().cend())) { //check if at least one own vertex lies within poly
 		return true;
 	}
 	else { //check if any lines intersect
-		for(std::size_t i=0, s = poly.points().size(); i < s; i++) {
-			if (intersects(poly.points()[i], poly.points()[(i+1)%s]))
+		const_iterator it(MyBaseClass::cbegin());
+		++it;
+		for(const_iterator prev(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev) {
+			if (intersects(*prev, *it))
 				return true;
 		}
 	}
@@ -75,13 +78,13 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithWay(const GeoPol
 	if (!MyBaseClass::myBoundary().overlap(way.boundary()))
 		return false;
 
-	if (contains(way.points().begin(), way.points().end())) { //check if at least one vertex poly lies within us
+	if (contains(way.points().cbegin(), way.points().cend())) { //check if at least one vertex poly lies within us
 		return true;
 	}
 	else if (way.size() > 1) { //check if any lines intersect
-		for(typename MyGeoWay::ConstPointsIterator it(way.cbegin()), jt(way.cbegin()+1), end(way.cend()); jt != end; ++it, ++jt) {
-			for(std::size_t i = 0, s = MyBaseClass::points().size(); i < s; ++i) {
-				if (sserialize::spatial::GeoPoint::intersect(*it, *jt, MyBaseClass::points()[i], MyBaseClass::points()[(i+1)%s])) {
+		for(typename MyGeoWay::const_iterator prev(MyBaseClass::cbegin()), it(MyBaseClass::cbegin()+1), end(MyBaseClass::cend()); it != end; ++prev, ++it) {
+			for(typename MyGeoWay::const_iterator oPrev(way.cbegin()), oIt(way.cbegin()+1), oEnd(way.cend()); oIt != oEnd; ++oPrev, ++oIt) {
+				if (sserialize::spatial::GeoPoint::intersect(*prev, *it, *oPrev, *oIt)) {
 					return true;
 				}
 			}
@@ -96,12 +99,12 @@ MyBaseClass()
 {}
 
 template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(const std::vector<Point> & points) :
+GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(const TPointsContainer & points) :
 MyBaseClass(points)
 {}
 
 template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(std::vector<Point> && points) :
+GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(TPointsContainer && points) :
 MyBaseClass(points)
 {}
 
@@ -120,7 +123,7 @@ GeoPolygon<TPointsContainer, TPointsConstRef>::~GeoPolygon()
 {}
 
 template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef> & GeoPolygon<TPointsContainer, TPointsConstRef>::operator=(GeoPolygon && other) {
+GeoPolygon<TPointsContainer, TPointsConstRef> & GeoPolygon<TPointsContainer, TPointsConstRef>::operator=(GeoPolygon<TPointsContainer, TPointsConstRef> && other) {
 	swap(other);
 	return *this;
 }
@@ -146,13 +149,18 @@ template<typename TPointsContainer, typename TPointsConstRef>
 bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(const GeoPoint & p) const {
 	if (!MyBaseClass::points().size() || !MyBaseClass::myBoundary().contains(p.lat(), p.lon()))
 		return false;
-	int nvert = MyBaseClass::points().size();
 	double testx = p.lat();
 	double testy = p.lon();
-	int i, j, c = 0;
-	for (i = 0, j = nvert-1; i < nvert; j = i++) {
-		TPointsConstRef iP = MyBaseClass::points()[i];
-		TPointsConstRef jP = MyBaseClass::points()[j];
+	int c = 0;
+// 	int nvert = MyBaseClass::points().size();
+// 	int i, j = 0;
+// 	for (i = 0, j = nvert-1; i < nvert; j = i++) {
+// 		TPointsConstRef iP = MyBaseClass::points()[i];
+// 		TPointsConstRef jP = MyBaseClass::points()[j];
+
+	for(const_iterator prev(MyBaseClass::cbegin()+1), it(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev) {
+		TPointsConstRef iP = *it;
+		TPointsConstRef jP = *prev;
 		double vertx_i = iP.lat();
 		double verty_i = iP.lon();
 		double vertx_j = jP.lat();
@@ -184,8 +192,8 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::intersects(const GeoPoint & 
 		return true;
 	}
 
-	for(std::size_t i = 0, s = MyBaseClass::points().size(); i < s; i++) {
-		if (sserialize::spatial::GeoPoint::intersect(p1, p2, MyBaseClass::points()[i], MyBaseClass::points()[(i+1)%s])) {
+	for(const_iterator prev(MyBaseClass::cbegin()+1), it(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev)  {
+		if (sserialize::spatial::GeoPoint::intersect(p1, p2, *prev, *it)) {
 			return true;
 		}
 	}
@@ -217,12 +225,14 @@ sserialize::spatial::GeoShape * GeoPolygon<TPointsContainer, TPointsConstRef>::c
 
 template<typename TPointsContainer, typename TPointsConstRef>
 GeoPolygon<TPointsContainer, TPointsConstRef> GeoPolygon<TPointsContainer, TPointsConstRef>::fromRect(const GeoRect & rect) {
-	std::vector<GeoPoint> points;
-	points.push_back( Point(rect.lat()[0], rect.lon()[0]) );
-	points.push_back( Point(rect.lat()[1], rect.lon()[0]) );
-	points.push_back( Point(rect.lat()[1], rect.lon()[1]) );
-	points.push_back( Point(rect.lat()[0], rect.lon()[1]) );
-	return GeoPolygon(points);
+	throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoPolygon::fromRect");
+	return GeoPolygon();
+// 	std::vector<GeoPoint> points;
+// 	points.push_back( Point(rect.lat()[0], rect.lon()[0]) );
+// 	points.push_back( Point(rect.lat()[1], rect.lon()[0]) );
+// 	points.push_back( Point(rect.lat()[1], rect.lon()[1]) );
+// 	points.push_back( Point(rect.lat()[0], rect.lon()[1]) );
+// 	return GeoPolygon(points);
 }
 
 template<typename TPointsContainer, typename TPointsConstRef>
@@ -236,15 +246,15 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::encloses(const GeoPolygon<TP
 		return false;
 	}
 	//if all points are within my self and nothing intersects, then the poly is fully contained
-	for (std::size_t i = 0, s = other.points().size(); i < s; ++i) {
-		if (!contains(other.points()[i])) {
+	for(const_iterator oIt(other.cbegin()), oEnd(other.cend()); oIt != oEnd; ++oIt)  {
+		if (!contains(*oIt)) {
 			return false;
 		}
 	}
 	//all points are within, check for cut. TODO: improve this by haveing more info about the polygon, if this would be convex, then we would be done here
 	
-	for(typename MyGeoWay::PointsContainer::const_iterator prev(other.points().begin()), it(other.points().begin()+1), end(other.points().end()); it != end; ++it) {
-		if (intersects(*prev, *it))
+	for(const_iterator oPrev(other.cbegin()), oIt(other.cbegin()+1), oEnd(other.cend()); oIt != oEnd; ++oIt, ++oPrev) {
+		if (intersects(*oPrev, *oIt))
 			return false;
 	}
 	return true;
