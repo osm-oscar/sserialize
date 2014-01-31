@@ -97,13 +97,13 @@ sserialize::spatial::GeoShape * GeoPoint::copy() const {
 }}//end namespace
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
-	destination.putUint24(sserialize::spatial::GeoPoint::toIntLat(point.lat()));
-	destination.putUint24(sserialize::spatial::GeoPoint::toIntLon(point.lon()));
+	destination.putUint32(sserialize::spatial::GeoPoint::toIntLat(point.lat()));
+	destination.putUint32(sserialize::spatial::GeoPoint::toIntLon(point.lon()));
 	return destination;
 }
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & destination, sserialize::spatial::GeoPoint & p) {
-	p.lat() = destination.getUint24();
-	p.lon() = destination.getUint24();
+	p.lat() = destination.getUint32();
+	p.lon() = destination.getUint32();
 	return destination;
 }
