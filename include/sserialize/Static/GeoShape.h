@@ -11,7 +11,7 @@ class GeoShape {
 	std::shared_ptr<sserialize::spatial::GeoShape> m_priv;
 public:
 	GeoShape() {}
-	GeoShape(const UByteArrayAdapter & data);
+	GeoShape(sserialize::UByteArrayAdapter data);
 	virtual ~GeoShape() {}
 	inline uint32_t size() const { return m_priv->size(); }
 	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
