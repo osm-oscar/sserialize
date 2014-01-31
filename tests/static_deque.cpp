@@ -27,6 +27,8 @@ CPPUNIT_TEST( testStrings );
 CPPUNIT_TEST( testDequeInDeque );
 CPPUNIT_TEST( testStringsRawPut );
 CPPUNIT_TEST( testIterator );
+CPPUNIT_TEST( testAbstractArray );
+CPPUNIT_TEST( testAbstractArrayIterator );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -105,7 +107,40 @@ public:
 			}
 		}
 	}
+	
+	void testAbstractArray() {
+		std::deque<uint32_t> realValues = createNumbers(TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		d << realValues;
+		d.resetPutPtr();
+		sserialize::Static::Deque<uint32_t> sd(d);
+		
+		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
+		
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), asd.size());
+		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], asd.at(i));
+		}
+	}
+	
+	void testAbstractArrayIterator() {
+		std::deque<uint32_t> realValues = createNumbers(TestMask & rand());
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		d << realValues;
+		d.resetPutPtr();
+		sserialize::Static::Deque<uint32_t> sd(d);
 
+		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
+
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		{
+			sserialize::AbstractArray<uint32_t>::const_iterator it(asd.cbegin());
+			sserialize::AbstractArray<uint32_t>::const_iterator end(asd.cend());
+			for(uint32_t i = 0; it != end; ++it, ++i) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], *it);
+			}
+		}
+	}
 	
 };
 

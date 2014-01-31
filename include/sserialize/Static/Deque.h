@@ -7,6 +7,7 @@
 #include <sserialize/utility/SerializationInfo.h>
 #include <sserialize/utility/mmappedfile.h>
 #include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/templated/AbstractArray.h>
 #include <fstream>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
 
@@ -138,9 +139,49 @@ public:
 			dest.endRawPut();
 		}
 	}
-
 };
 
+namespace detail {
+
+template<typename TReturnType>
+class VectorAbstractArrayIterator: public sserialize::detail::AbstractArrayIterator<TReturnType> {
+	const Deque<TReturnType> * m_data;
+	uint32_t m_pos;
+public:
+	VectorAbstractArrayIterator() : m_data(0), m_pos(0) {}
+	VectorAbstractArrayIterator(const Deque<TReturnType> * data, uint32_t pos) : m_data(data), m_pos(pos) {}
+	VectorAbstractArrayIterator(const VectorAbstractArrayIterator & other) : m_data(other.m_data), m_pos(other.m_pos) {}
+	virtual ~VectorAbstractArrayIterator() {}
+	virtual TReturnType get() const { return m_data->at(m_pos);}
+	virtual void next() { m_pos += (m_data->size() > m_pos ? 1 : 0);}
+	virtual bool notEq(const sserialize::detail::AbstractArrayIterator<TReturnType> * other) const {
+		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
+		return !oIt || oIt->m_data != m_data || oIt->m_pos != m_pos;
+	}
+	virtual sserialize::detail::AbstractArrayIterator<TReturnType> * copy() const {
+		return new VectorAbstractArrayIterator(*this);
+	}
+};
+
+template<typename TValue>
+class VectorAbstractArray: public sserialize::detail::AbstractArray<TValue> {
+public:
+	typedef sserialize::detail::AbstractArray<TValue> MyBaseClass;
+	typedef typename MyBaseClass::const_iterator const_iterator;
+private:
+	Deque<TValue> m_data;
+public:
+	VectorAbstractArray() {}
+	VectorAbstractArray(const Deque<TValue> & d) : m_data(d) {}
+	virtual ~VectorAbstractArray() {}
+	virtual uint32_t size() const { return m_data.size(); }
+	virtual TValue at(uint32_t pos) const { return m_data.at(pos); }
+	virtual const_iterator cbegin() const { return new VectorAbstractArrayIterator<TValue>(&m_data, 0);}
+	virtual const_iterator cend() const { return new VectorAbstractArrayIterator<TValue>(&m_data, m_data.size());}
+};
+
+}//end namespace detail
+//----------Definitions-----------------------------------
 
 template<typename TValue>
 Deque<TValue>::Deque() : RefCountObject() {}
