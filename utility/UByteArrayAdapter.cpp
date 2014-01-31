@@ -347,9 +347,10 @@ UByteArrayAdapter& UByteArrayAdapter::shrinkToGetPtr() {
 	return *this;
 }
 
-void UByteArrayAdapter::resetPtrs() {
+UByteArrayAdapter& UByteArrayAdapter::resetPtrs() {
 	resetGetPtr();
 	resetPutPtr();
+	return *this;
 }
 
 

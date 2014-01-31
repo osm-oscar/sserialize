@@ -116,7 +116,7 @@ public:
 	/** Moves the offset to the getPtr */
 	UByteArrayAdapter& shrinkToGetPtr();
 
-	void resetPtrs();
+	UByteArrayAdapter & resetPtrs();
 
 
 	/** tries to shrink the underlying data source, use with caution, others Adapter are not notified of this change */
