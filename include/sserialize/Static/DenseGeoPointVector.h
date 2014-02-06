@@ -89,6 +89,14 @@ public:
 		}
 		return GeoPoint();
 	}
+	
+	inline GeoPoint front() const {
+		return at(0);
+	}
+	
+	inline GeoPoint back() const {
+		return at(m_size-1);
+	}
 
 	inline ForwardIterator begin() const { return cbegin(); }
 	inline ForwardIterator end() const { return cend(); }
