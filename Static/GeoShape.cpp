@@ -1,6 +1,9 @@
 #include <sserialize/Static/GeoShape.h>
+#include <sserialize/spatial/GeoRect.h>
 #include <sserialize/Static/GeoWay.h>
 #include <sserialize/Static/GeoPolygon.h>
+#include <sserialize/Static/GeoMultiPolygon.h>
+#include <sserialize/Static/Deque.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 
@@ -31,6 +34,14 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 			break;
 		}
 	case sserialize::spatial::GS_MULTI_POLYGON:
+		{
+			uint32_t size = data.getVlPackedUint32();
+			sserialize::spatial::GeoRect bo, bi;
+			sserialize::Static::Deque<sserialize::Static::spatial::GeoPolygon> op, ip;
+			data >> bo >> bi >> op >> ip;
+			m_priv.reset( new sserialize::Static::spatial::GeoMultiPolygon(size, op, ip, bo, bi) );
+			break;
+		}
 	default:
 		break;
 	}
@@ -46,8 +57,16 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 		case sserialize::spatial::GS_POLYGON:
 			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length + get<sserialize::Static::spatial::GeoPolygon>()->points().getSizeInBytes();
 		case sserialize::spatial::GS_MULTI_POLYGON:
+			{
+				OffsetType s = 1 + 2* SerializationInfo<sserialize::spatial::GeoRect>::length;
+				const sserialize::Static::spatial::GeoMultiPolygon * gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
+				s += gmpo->outerPolygons().getSizeInBytes();
+				s += gmpo->innerPolygons().getSizeInBytes();
+				s += gmpo->size();
+				return s;
+			}
 		default:
-			throw sserialize::UnimplementedFunctionException("sserialize::Static::GeoShape::getSizeInBytes for GeoMultiPolygon");			break;
+			throw sserialize::UnimplementedFunctionException("sserialize::Static::GeoShape::getSizeInBytes for ");
 			return 0;
 			break;
 	};
@@ -62,6 +81,12 @@ sserialize::spatial::GeoPoint GeoShape::first() const {
 		case sserialize::spatial::GS_POLYGON:
 			return * (get<sserialize::spatial::GeoPolygon>()->points().cbegin());
 		case sserialize::spatial::GS_MULTI_POLYGON:
+		{
+			const sserialize::Static::spatial::GeoMultiPolygon * gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
+			if (gmpo->size()) {
+				return gmpo->outerPolygons().front().points().front();
+			}
+		}
 		default:
 			return sserialize::spatial::GeoPoint();
 			break;
