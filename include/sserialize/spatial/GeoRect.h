@@ -68,10 +68,10 @@ namespace sserialize {
 	template<>
 	struct SerializationInfo<sserialize::spatial::GeoRect> {
 		static const bool is_fixed_length = true;
-		static const OffsetType length = 12;
-		static const OffsetType max_length = 12;
-		static const OffsetType min_length = 12;
-		static inline OffsetType sizeInBytes(const sserialize::spatial::GeoRect & value) { return 12; }
+		static const OffsetType length = 16; //equals 2 GeoPoint
+		static const OffsetType max_length = 16;
+		static const OffsetType min_length = 16;
+		static inline OffsetType sizeInBytes(const sserialize::spatial::GeoRect & value) { return 16; }
 	};
 }
 
