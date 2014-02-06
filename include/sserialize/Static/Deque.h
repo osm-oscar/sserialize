@@ -95,7 +95,9 @@ class Deque: public RefCountObject {
 public:
 	typedef TValue value_type;
 	typedef sserialize::ReadOnlyAtStlIterator< Deque<TValue>*, TValue > iterator;
-	typedef sserialize::ReadOnlyAtStlIterator< const Deque<TValue>*, TValue > const_iterator; 
+	typedef sserialize::ReadOnlyAtStlIterator< const Deque<TValue>*, TValue > const_iterator;
+	typedef value_type const_reference;
+	typedef value_type reference;
 private:
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
