@@ -277,9 +277,13 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(T_GEO_POINT_ITERATO
 	return false;
 }
 
-}
+template<>
+GeoPolygon<std::vector<sserialize::spatial::GeoPoint>, const sserialize::spatial::GeoPoint &> GeoPolygon<std::vector<sserialize::spatial::GeoPoint>, const sserialize::spatial::GeoPoint &>::fromRect(const GeoRect & rect);
+
+}//end namespace detail
 
 typedef detail::GeoPolygon< std::vector<sserialize::spatial::GeoPoint>, const sserialize::spatial::GeoPoint & > GeoPolygon;
+
 
 }}//end namespace
 
