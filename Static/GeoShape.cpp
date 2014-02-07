@@ -43,7 +43,7 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 			break;
 		}
 	default:
-		break;
+		throw sserialize::TypeMissMatchException("sserialize::Static::spatial::GeoShape::GeoShape()");
 	}
 }
 
@@ -62,7 +62,7 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 				const sserialize::Static::spatial::GeoMultiPolygon * gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
 				s += gmpo->outerPolygons().getSizeInBytes();
 				s += gmpo->innerPolygons().getSizeInBytes();
-				s += gmpo->size();
+				s += psize_vu32( gmpo->size() );
 				return s;
 			}
 		default:
