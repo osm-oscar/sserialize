@@ -21,25 +21,17 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 		break;
 	case sserialize::spatial::GS_WAY:
 		{
-			sserialize::spatial::GeoRect b(data);
-			data += SerializationInfo<sserialize::spatial::GeoRect>::length;
-			m_priv.reset( new sserialize::Static::spatial::GeoWay(b, sserialize::Static::spatial::detail::GeoWayPointsContainer(data)) );
+			m_priv.reset( new sserialize::Static::spatial::GeoWay(data) );
 		}
 		break;
 	case sserialize::spatial::GS_POLYGON:
 		{
-			sserialize::spatial::GeoRect b(data);
-			data += SerializationInfo<sserialize::spatial::GeoRect>::length;
-			m_priv.reset( new sserialize::Static::spatial::GeoPolygon(b, sserialize::Static::spatial::detail::GeoWayPointsContainer(data)) );
+			m_priv.reset( new sserialize::Static::spatial::GeoPolygon(data) );
 			break;
 		}
 	case sserialize::spatial::GS_MULTI_POLYGON:
 		{
-			uint32_t size = data.getVlPackedUint32();
-			sserialize::spatial::GeoRect bo, bi;
-			sserialize::Static::Deque<sserialize::Static::spatial::GeoPolygon> op, ip;
-			data >> bo >> bi >> op >> ip;
-			m_priv.reset( new sserialize::Static::spatial::GeoMultiPolygon(size, op, ip, bo, bi) );
+			m_priv.reset( new sserialize::Static::spatial::GeoMultiPolygon(data) );
 			break;
 		}
 	default:

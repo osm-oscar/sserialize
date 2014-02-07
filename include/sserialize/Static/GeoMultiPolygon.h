@@ -10,6 +10,9 @@ namespace spatial {
 namespace detail {
 
 template<>
+GeoMultiPolygon< sserialize::Static::Deque<sserialize::Static::spatial::GeoPolygon>, sserialize::Static::spatial::GeoPolygon >::GeoMultiPolygon(const sserialize::UByteArrayAdapter & d);
+
+template<>
 sserialize::UByteArrayAdapter &
 GeoMultiPolygon< sserialize::Static::Deque<sserialize::Static::spatial::GeoPolygon>, sserialize::Static::spatial::GeoPolygon >::append(sserialize::UByteArrayAdapter & destination) const;
 

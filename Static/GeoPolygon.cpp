@@ -5,6 +5,11 @@ namespace spatial {
 namespace detail {
 
 template<>
+GeoPolygon< sserialize::Static::spatial::detail::GeoWayPointsContainer,  sserialize::spatial::GeoPoint>::GeoPolygon(const sserialize::UByteArrayAdapter & d) :
+MyBaseClass(d)
+{}
+
+template<>
 GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer,  sserialize::spatial::GeoPoint> GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer,  sserialize::spatial::GeoPoint>::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
 	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );

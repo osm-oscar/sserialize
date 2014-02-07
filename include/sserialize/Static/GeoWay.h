@@ -15,6 +15,9 @@ namespace detail {
 namespace spatial {
 namespace detail {
 	template<>
+	GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer >::GeoWay(const sserialize::UByteArrayAdapter & d);
+
+	template<>
 	UByteArrayAdapter & GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer >::append(UByteArrayAdapter & destination) const;
 }}}
 

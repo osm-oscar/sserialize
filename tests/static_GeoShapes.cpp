@@ -185,7 +185,7 @@ public:
 			for(uint32_t j = 0, s = gmpo->outerPolygons().size(); j < s; ++j) {
 				const sserialize::spatial::GeoPolygon & gpoly = gmpo->outerPolygons().at(j);
 				sserialize::Static::spatial::GeoPolygon sgpoly = sgmpo->outerPolygons().at(j);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of run=", i, ", outerPolygons=", j), gpoly.size(), sgpoly.size());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of outerPolygon ", j, " in run=", i), gpoly.size(), sgpoly.size());
 				for(uint32_t k = 0, s = gpoly.size(); k < s; ++k) {
 					CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("GeoPoint at ", k," of run=", i, ", outerPolygons=", j), gpoly.points().at(k), sgpoly.points().at(k));
 				}
@@ -193,7 +193,7 @@ public:
 			for(uint32_t j = 0, s = gmpo->innerPolygons().size(); j < s; ++j) {
 				const sserialize::spatial::GeoPolygon & gpoly = gmpo->innerPolygons().at(j);
 				sserialize::Static::spatial::GeoPolygon sgpoly = sgmpo->innerPolygons().at(j);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of run=", i, ", innerPolygons=", j), gpoly.size(), sgpoly.size());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of innerPolygon ", j, " in run=", i), gpoly.size(), sgpoly.size());
 				for(uint32_t k = 0, s = gpoly.size(); k < s; ++k) {
 					CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("GeoPoint at ", k," of run=", i, ", outerPolygons=", j), gpoly.points().at(k), sgpoly.points().at(k));
 				}

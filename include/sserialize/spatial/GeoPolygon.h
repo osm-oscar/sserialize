@@ -25,6 +25,7 @@ protected:
 	bool collidesWithWay(const MyGeoWay & way) const;
 public:
 	GeoPolygon();
+	GeoPolygon(const sserialize::UByteArrayAdapter & d);
 	GeoPolygon(const sserialize::spatial::GeoRect & boundary, const TPointsContainer & points);
 	GeoPolygon(const TPointsContainer & points);
 	GeoPolygon(const GeoPolygon & other);

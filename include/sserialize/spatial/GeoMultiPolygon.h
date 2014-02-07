@@ -37,6 +37,7 @@ private:
 	
 public:
 	GeoMultiPolygon();
+	GeoMultiPolygon(const sserialize::UByteArrayAdapter & d);
 	GeoMultiPolygon(const PolygonList & outer, const PolygonList & inner);
 	GeoMultiPolygon(uint32_t size, const PolygonList & outer, const PolygonList & inner, const GeoRect & outerBoundary, const GeoRect & innerBoundary);
 	GeoMultiPolygon(GeoMultiPolygon && other);

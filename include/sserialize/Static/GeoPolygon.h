@@ -7,6 +7,13 @@ namespace sserialize {
 namespace spatial {
 namespace detail {
 
+template<>
+GeoPolygon< sserialize::Static::spatial::detail::GeoWayPointsContainer,  sserialize::spatial::GeoPoint>::GeoPolygon(const sserialize::UByteArrayAdapter & d);
+
+template<>
+GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer,  sserialize::spatial::GeoPoint>
+GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer,  sserialize::spatial::GeoPoint>::fromRect(const GeoRect & rect);
+
 }}}
 
 

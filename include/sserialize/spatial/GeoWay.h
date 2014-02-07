@@ -18,13 +18,14 @@ public:
 	typedef typename TPointsContainer::iterator iterator;
 	typedef GeoRegion MyBaseClass;
 private:
-	TPointsContainer m_points;
 	GeoRect m_boundary;
+	TPointsContainer m_points;
 protected:
 	inline const GeoRect & myBoundary() const { return m_boundary; }
 public:
 	GeoWay();
 	GeoWay(const GeoRect & boundary, const TPointsContainer & points);
+	GeoWay(const sserialize::UByteArrayAdapter & d);
 	GeoWay(const TPointsContainer & points);
 	GeoWay(const GeoWay & other);
 	GeoWay(TPointsContainer && points);
@@ -63,8 +64,8 @@ GeoWay<TPointsContainer>::GeoWay() {}
 
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(const GeoRect & boundary, const TPointsContainer & points) :
-m_points(points),
-m_boundary(boundary)
+m_boundary(boundary),
+m_points(points)
 {}
 
 	
@@ -75,8 +76,8 @@ GeoWay<TPointsContainer>::GeoWay(const TPointsContainer & points) : m_points(poi
 
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(const GeoWay & other) :
-m_points(other.m_points),
-m_boundary(other.m_boundary)
+m_boundary(other.m_boundary),
+m_points(other.m_points)
 {}
 
 template<typename TPointsContainer>
@@ -88,8 +89,8 @@ m_points(points)
 
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(GeoWay<TPointsContainer> && other) :
-m_points(other.m_points),
-m_boundary(other.m_boundary)
+m_boundary(other.m_boundary),
+m_points(other.m_points)
 {}
 
 template<typename TPointsContainer>
