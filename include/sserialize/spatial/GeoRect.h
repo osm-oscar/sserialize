@@ -47,7 +47,6 @@ public:
 	
 	bool contains(const GeoRect & other) const;
 	
-	bool operator==(const GeoRect & other) const;
 	/** clip this rect at other
 	  * @return: returns true if clipping worked => rects overlapped, false if they did not overlap */
 	bool clip(const GeoRect & other);
@@ -56,8 +55,10 @@ public:
 	void enlarge(const GeoRect & other);
 };
 
-}}//end namespace
+}}//end namespacec
 
+bool operator==(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b);
+bool operator!=(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b);
 std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoRect & rect);
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoRect & rect);

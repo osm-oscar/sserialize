@@ -3,6 +3,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sstream>
 #include <algorithm>
+#include <sserialize/utility/utilmath.h>
 
 namespace sserialize {
 namespace spatial {
@@ -46,10 +47,10 @@ GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
 GeoRect::GeoRect(const UByteArrayAdapter & data) {
 	sserialize::Static::spatial::GeoPoint bL(data);
 	sserialize::Static::spatial::GeoPoint tR(data+sserialize::SerializationInfo<sserialize::Static::spatial::GeoPoint>::length);
-	m_lat[0] = bL.lat();
-	m_lat[1] = tR.lat();
-	m_lon[0] = bL.lon();
-	m_lon[1] = tR.lon();
+	minLat() = bL.lat();
+	minLon() = bL.lon();
+	maxLat() = tR.lat();
+	maxLon() = tR.lon();
 }
 
 GeoRect::~GeoRect() {}
@@ -93,14 +94,6 @@ bool GeoRect::contains(const GeoRect & other) const {
 	return contains(other.m_lat[0], other.m_lon[0]) && contains(other.m_lat[1], other.m_lon[1]);
 }
 
-bool GeoRect::operator==(const GeoRect & other) const {
-	for(size_t i = 0; i < 2; i++) {
-		if (m_lat[i] != other.m_lat[i] || m_lon[i] != other.m_lon[i])
-			return false;
-	}
-	return true;
-}
-
 /** clip this rect at other
 	* @return: returns true if clipping worked => rects overlapped, false if they did not overlap */
 bool GeoRect::clip(const GeoRect & other) {
@@ -126,23 +119,33 @@ void GeoRect::enlarge(const GeoRect & other) {
 
 }}//end namespace
 
+
+bool operator==(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b) {
+	return sserialize::geoEq(a.minLat(), b.minLat()) && sserialize::geoEq(a.maxLat(), b.maxLat())
+				&& sserialize::geoEq(a.minLon(), b.minLon()) && sserialize::geoEq(a.maxLon(), b.maxLon());
+}
+
+bool operator!=(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b) {
+	return sserialize::geoNeq(a.minLat(), b.minLat()) || sserialize::geoNeq(a.maxLat(), b.maxLat())
+				|| sserialize::geoNeq(a.minLon(), b.minLon()) || sserialize::geoNeq(a.maxLon(), b.maxLon());
+}
+
+
 std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoRect & rect) {
-	return out << "GeoRect[(" << rect.lat()[0] << ", " << rect.lon()[0] << "); (" << rect.lat()[1] << ", " << rect.lon()[1]  << ")]";
+	return out << "GeoRect[(" << rect.minLat() << ", " << rect.minLon() << "); (" << rect.maxLat() << ", " << rect.maxLon()  << ")]";
 }
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoRect & rect) {
-	sserialize::spatial::GeoPoint bottomLeft(rect.lat()[0], rect.lon()[0]);
-	sserialize::spatial::GeoPoint topRight(rect.lat()[1], rect.lon()[1]);
-	destination << bottomLeft << topRight;
-	return destination;
+	return destination << sserialize::spatial::GeoPoint(rect.minLat(), rect.minLon())
+						<< sserialize::spatial::GeoPoint(rect.maxLat(), rect.maxLon());
 }
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, sserialize::spatial::GeoRect & rect) {
 	sserialize::Static::spatial::GeoPoint bL, tR;
 	src >> bL >> tR;
-	rect.lat()[0] = bL.lat();
-	rect.lat()[1] = tR.lat();
-	rect.lon()[0] = bL.lon();
-	rect.lon()[1] = tR.lon();
+	rect.minLat() = bL.lat();
+	rect.minLon() = bL.lon();
+	rect.maxLat() = tR.lat();
+	rect.maxLon() = tR.lon();
 	return src;
 }
