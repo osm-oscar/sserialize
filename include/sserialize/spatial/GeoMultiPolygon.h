@@ -37,8 +37,8 @@ private:
 	
 public:
 	GeoMultiPolygon();
-	GeoMultiPolygon(const PolygonList & inner, const PolygonList & outer);
-	GeoMultiPolygon(uint32_t size, const PolygonList & inner, const PolygonList & outer, const GeoRect & innerBoundary, const GeoRect & outerBoundary);
+	GeoMultiPolygon(const PolygonList & outer, const PolygonList & inner);
+	GeoMultiPolygon(uint32_t size, const PolygonList & outer, const PolygonList & inner, const GeoRect & outerBoundary, const GeoRect & innerBoundary);
 	GeoMultiPolygon(GeoMultiPolygon && other);
 	GeoMultiPolygon(const GeoMultiPolygon & other);
 	virtual ~GeoMultiPolygon();
@@ -135,7 +135,7 @@ template<typename TPolygonContainer, typename TPolygon>
 GeoMultiPolygon<TPolygonContainer, TPolygon>::GeoMultiPolygon() {}
 
 template<typename TPolygonContainer, typename TPolygon>
-GeoMultiPolygon<TPolygonContainer, TPolygon>::GeoMultiPolygon(const PolygonList & inner, const PolygonList & outer) :
+GeoMultiPolygon<TPolygonContainer, TPolygon>::GeoMultiPolygon(const PolygonList & outer, const PolygonList & inner) :
 m_outerPolygons(outer),
 m_innerPolygons(inner)
 {
@@ -143,7 +143,7 @@ m_innerPolygons(inner)
 }
 
 template<typename TPolygonContainer, typename TPolygon>
-GeoMultiPolygon<TPolygonContainer, TPolygon>::GeoMultiPolygon(uint32_t size, const PolygonList & inner, const PolygonList & outer, const GeoRect & innerBoundary, const GeoRect & outerBoundary) :
+GeoMultiPolygon<TPolygonContainer, TPolygon>::GeoMultiPolygon(uint32_t size, const PolygonList & outer, const PolygonList & inner, const GeoRect & outerBoundary, const GeoRect & innerBoundary) :
 m_size(size),
 m_outerPolygons(outer),
 m_innerPolygons(inner),
