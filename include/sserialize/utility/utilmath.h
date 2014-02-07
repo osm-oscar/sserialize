@@ -2,7 +2,9 @@
 #define SSERIALIZE_UTIL_MATH_H
 #include <cmath>
 #include <limits>
+#include <complex>
 #include <stdint.h>
+#include <sserialize/utility/types.h>
 
 namespace sserialize {
 
@@ -86,6 +88,14 @@ inline int8_t minStorageBytesOfValue(uint32_t v) {
 		v >>= 8;
 	}
 	return ret;
+}
+
+inline bool geoEq(const double a, const double b) {
+	return std::abs<double>(a-b) < EPSILON;
+}
+
+inline bool geoNeq(const double a, const double b) {
+	return std::abs<double>(a-b) >= EPSILON;
 }
 
 }//end namespace
