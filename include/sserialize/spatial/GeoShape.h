@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SPATIAL_GEOSHAPE_H
 #define SSERIALIZE_SPATIAL_GEOSHAPE_H
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include "GeoRect.h"
+#include <sserialize/spatial/GeoRect.h>
 
 namespace sserialize {
 namespace spatial {
