@@ -1,5 +1,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/utility/utilmath.h>
+#include <cmath>
+
 
 namespace sserialize {
 namespace spatial {
@@ -26,8 +28,8 @@ m_lon(p.second)
 
 
 GeoPoint::GeoPoint(const UByteArrayAdapter & data) :
-m_lat(toDoubleLat(data.getUint24(0))),
-m_lon(toDoubleLon(data.getUint24(3)))
+m_lat(toDoubleLat(data.getUint32(0))),
+m_lon(toDoubleLon(data.getUint32(4)))
 {}
 
 GeoPoint::GeoPoint(uint32_t lat, uint32_t lon) :
@@ -54,7 +56,15 @@ GeoShapeType GeoPoint::type() const {
 }
 
 bool GeoPoint::valid() const {
-	return -90.0 <= lat() && lat() <= 90.0 && 0.0 <= lon() && lon() <= 360.0;
+	return -90.0 <= lat() && lat() <= 90.0 && -180.0 <= lon() && lon() <= 180.0;
+}
+
+void GeoPoint::normalize() {
+	if (lat() < -90.0 || lat() > 90.0)
+		lat() = fmod(lat()+90.0, 180.0)-90.0;
+	if (lon() < -180.0 || lon() > 180.0) {
+		lon() = fmod(lon()+180.0, 360.0)-180.0;
+	}
 }
 
 GeoRect GeoPoint::boundary() const {
@@ -71,7 +81,9 @@ bool GeoPoint::intersects(const GeoRect & boundary) const {
 void GeoPoint::recalculateBoundary() {}
 
 UByteArrayAdapter & GeoPoint::append(UByteArrayAdapter & destination) const {
-	return destination << *this;
+	destination.putUint32(sserialize::spatial::GeoPoint::toIntLat(lat()));
+	destination.putUint32(sserialize::spatial::GeoPoint::toIntLon( lon()));
+	return destination;
 }
 
 bool GeoPoint::intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s) {
@@ -97,13 +109,11 @@ sserialize::spatial::GeoShape * GeoPoint::copy() const {
 }}//end namespace
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
-	destination.putUint32(sserialize::spatial::GeoPoint::toIntLat(point.lat()));
-	destination.putUint32(sserialize::spatial::GeoPoint::toIntLon(point.lon()));
-	return destination;
+	return point.append(destination);
 }
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & destination, sserialize::spatial::GeoPoint & p) {
-	p.lat() = destination.getUint32();
-	p.lon() = destination.getUint32();
+	p.lat() = sserialize::spatial::GeoPoint::toDoubleLat(destination.getUint32());
+	p.lon() = sserialize::spatial::GeoPoint::toDoubleLon(destination.getUint32());
 	return destination;
 }

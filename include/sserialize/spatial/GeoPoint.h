@@ -3,7 +3,7 @@
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/SerializationInfo.h>
 #include <complex>
-#include "GeoShape.h"
+#include <sserialize/spatial/GeoShape.h>
 
 namespace sserialize {
 namespace spatial {
@@ -25,6 +25,7 @@ public:
 	virtual ~GeoPoint();
 	GeoPoint& operator=(const GeoPoint & other);
 	bool valid() const;
+	void normalize();
 	inline const double & lat() const { return m_lat; }
 	inline const double & lon() const {return m_lon;}
 	///lat is betweern -90 and 90 degrees
