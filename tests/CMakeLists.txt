@@ -84,6 +84,7 @@ ADD_TEST_TARGET_SINGLE(templated_huffmancode)
 ADD_TEST_TARGET_SINGLE(static_DynamicVector)
 ADD_TEST_TARGET_SINGLE(DynamicKeyValueObjectStoreTest)
 ADD_TEST_TARGET_SINGLE(static_densegeopointvector)
+ADD_TEST_TARGET_SINGLE(static_GeoShapes)
 
 #completers
 ADD_TEST_TARGET_SINGLE(sc_gsa)
