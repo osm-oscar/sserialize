@@ -57,6 +57,7 @@ public:
 	
 	typedef ForwardIterator const_iterator;
 	typedef ForwardIterator iterator;
+	typedef sserialize::spatial::GeoPoint const_reference;
 public:
 	uint32_t m_size;
 	UByteArrayAdapter m_data;
