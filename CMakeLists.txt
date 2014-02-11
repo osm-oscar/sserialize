@@ -132,6 +132,7 @@ utility/utilfuncs.cpp)
 
 set(EXTERNAL_SOURCES_CPP
 vendor/libs/minilzo/minilzo.c
+vendor/libs/geographiclib/legacy/C/geodesic.c
 )
 
 set(SOURCES_CPP
