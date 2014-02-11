@@ -1,0 +1,3 @@
+[submodule "vendor/libs/geographiclib"]
+	path = vendor/libs/geographiclib
+	url = git://git.code.sf.net/p/geographiclib/code
