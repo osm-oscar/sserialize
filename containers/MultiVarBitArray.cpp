@@ -45,7 +45,9 @@ uint32_t MultiVarBitArrayPrivate::getSizeInBytes() const {
 }
 
 uint16_t MultiVarBitArrayPrivate::bitsPerEntry() const {
-	return m_bitSums.at(m_bitSums.size()-1);
+	if (m_bitSums.size())
+		return m_bitSums.at(m_bitSums.size()-1);
+	return 0;
 }
 
 uint8_t MultiVarBitArrayPrivate::bitCount(uint32_t pos) const {
