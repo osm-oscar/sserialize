@@ -54,7 +54,7 @@ public:
 	///create the index Store at the beginning of data
 	void setIndexFile(UByteArrayAdapter data);
 	///from IndexStore set after setIndexFile
-	void fromIndexStore(const sserialize::Static::ItemIndexStore & store);
+	std::vector<uint32_t> fromIndexStore(const sserialize::Static::ItemIndexStore & store);
 	
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }

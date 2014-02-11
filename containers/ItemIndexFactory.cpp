@@ -54,24 +54,25 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	addIndex(std::set<uint32_t>(), 0);
 }
 
-void ItemIndexFactory::fromIndexStore(const sserialize::Static::ItemIndexStore & store) {
-	if (size()) {
-		std::cout << "ItemIndexFactory::fromIndexStore: Adding a store although there already are indices stored" << std::endl;
-	}
+std::vector<uint32_t> ItemIndexFactory::fromIndexStore(const sserialize::Static::ItemIndexStore& store) {
+	std::vector<uint32_t> res;
+	res.reserve(store.size());
 	std::vector<uint32_t> tmp; 
 	ItemIndex tmpIdx;
 	sserialize::ProgressInfo info;
 	info.begin(store.size(), "Adding indices from store");
+	//skip the first index as that one is by definition empty and already added
 	for(uint32_t i = 0, s = store.size(); i < s; ++i) {
 		tmpIdx = store.at(i);
 		tmp.reserve(tmpIdx.size());
 		for(uint32_t j = 0, sj = tmpIdx.size(); j < sj; ++j) {
 			tmp.push_back(tmpIdx.at(j));
 		}
-		addIndex(tmp);
+		res.push_back(addIndex(tmp));
 		info(i);
 	}
 	info.end();
+	return res;
 }
 
 uint64_t ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
