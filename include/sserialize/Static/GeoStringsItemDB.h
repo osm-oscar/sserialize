@@ -92,7 +92,7 @@ public:
 		return priv()->geoPointAt(itemPos, pos);
 	}
 	sserialize::Static::spatial::GeoShape geoShape(uint32_t itemPos) const {
-		return priv()->geoShapeAt(itemPos);	
+		return priv()->geoShapeAt(itemPos);
 	}
 	
 	std::string getName() const { return "sserialize::Static::GeoStringsItemDB"; }
