@@ -19,8 +19,9 @@ CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
 CPPUNIT_TEST( testSerializedEquality );
 CPPUNIT_TEST( testSameId );
 CPPUNIT_TEST( testCompressionHuffman );
-// CPPUNIT_TEST( testCompressionLZO );
+CPPUNIT_TEST( testCompressionLZO );
 CPPUNIT_TEST( testCompressionVarUint );
+CPPUNIT_TEST( testInitFromStatic );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
@@ -150,6 +151,32 @@ public:
 	
 	void testVeryLargeItemIndexFactory() {
 	
+	}
+	
+	void testInitFromStatic() {
+		CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_idxFactory.flush());
+
+		Static::ItemIndexStore sdb(m_idxFactory.getFlushedData());
+		
+		sserialize::ItemIndexFactory idxFactory;
+		idxFactory.setRegline(true);
+		idxFactory.setBitWith(-1);
+		idxFactory.setType(T_IDX_TYPE);
+		idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, false) );
+		std::vector<uint32_t> remap = idxFactory.fromIndexStore(sdb);
+		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
+			sserialize::ItemIndex real = sdb.at(i);
+			sserialize::ItemIndex testIdx = idxFactory.getIndex(remap.at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("idx", real, testIdx);
+		}
+		
+		remap = idxFactory.fromIndexStore(sdb);
+		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
+			sserialize::ItemIndex real = sdb.at(i);
+			sserialize::ItemIndex testIdx = idxFactory.getIndex(remap.at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("idx second add", real, testIdx);
+		}
+		
 	}
 };
 
