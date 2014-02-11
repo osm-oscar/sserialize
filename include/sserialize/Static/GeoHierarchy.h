@@ -41,9 +41,16 @@ namespace spatial {
   *
   */
 
+  ///TODO:Boundingboxc wie in aktueller version, also alles mit allem verwuschrteln
+  ///so viel auf zellebene wie möglich
+  ///Schnitte et
+  
 class GeoHierarchy {
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
+	typedef sserialize::MultiVarBitArray RegionDescriptionType;
+	typedef sserialize::BoundedCompactUintArray RegionPtrListType;
+	
 
 	class Cell {
 		uint32_t m_itemPtr;
@@ -55,22 +62,23 @@ public:
 		inline uint32_t itemPtr() const { return m_itemPtr; }
 		const ItemIndex & parents() const { return m_parents; }
 	};
+	typedef sserialize::Static::Deque<Cell> CellListType;
+
 	
 	class Region {
 	public:
 		typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD__ENTRY_SIZE=5} RegionDescriptionAccessors;
 	private:
 		uint32_t m_pos;
-		MultiVarBitArray m_rdesc;
-		CompactUintArray m_ptrs;
+		const GeoHierarchy * m_db;
 	public:
 		Region();
 		///Only to be used data with getPtr = 0
-		Region(uint32_t pos, const MultiVarBitArray & rdesc, const CompactUintArray & ptrs);
+		Region(uint32_t pos, const GeoHierarchy * db);
 		virtual ~Region();
-		inline sserialize::spatial::GeoShapeType type() const { return  (sserialize::spatial::GeoShapeType) m_rdesc.at(m_pos, RD_TYPE); }
-		inline uint32_t id() const { return m_rdesc.at(m_pos, RD_ID); }
-		inline uint32_t cellIndexPtr() const { return m_rdesc.at(m_pos, RD_CELL_LIST_PTR); }
+		sserialize::spatial::GeoShapeType type() const;
+		uint32_t id() const;
+		uint32_t cellIndexPtr() const;
 		///Offset into PtrArray
 		uint32_t parentsBegin() const;
 		///Offset into PtrArray
@@ -86,10 +94,13 @@ public:
 		uint32_t childrenEnd() const;
 		uint32_t child(uint32_t pos) const;
 	};
+	friend class Region;
+	friend class Cell;
 private:
-	sserialize::Static::Deque<Cell> m_cells;
-	sserialize::MultiVarBitArray m_regions;
-	sserialize::BoundedCompactUintArray m_regionPtrs;
+	CellListType m_cells;
+	RegionDescriptionType m_regions;
+	RegionPtrListType m_regionPtrs;
+	
 public:
 	GeoHierarchy();
 	GeoHierarchy(const UByteArrayAdapter & data);
@@ -98,12 +109,17 @@ public:
 	
 	inline uint32_t cellSize() const { return m_cells.size(); }
 	inline Cell cell(uint32_t id) const { return m_cells.at(id); }
+	const CellListType & cells() const { return m_cells; }
 	
 	uint32_t regionSize() const;
 	Region region(uint32_t id) const;
+	const RegionDescriptionType & regions() const { return m_regions; }
 	
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
+	const RegionPtrListType regionPtrs() const { return m_regionPtrs; }
+	
+	std::ostream & printStats(std::ostream & out) const;
 };
 
 }}} //end namespace
