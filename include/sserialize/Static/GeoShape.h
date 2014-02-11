@@ -20,6 +20,7 @@ public:
 	const TGeoShapeType * get() const { return dynamic_cast<const TGeoShapeType*>(priv().get());}
 	
 	sserialize::spatial::GeoPoint first() const;
+	sserialize::spatial::GeoPoint at(uint32_t pos) const;
 	
 	inline sserialize::spatial::GeoRect boundary() const { return m_priv->boundary(); }
 	

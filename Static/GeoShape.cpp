@@ -16,6 +16,8 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 	sserialize::spatial::GeoShapeType type = static_cast<sserialize::spatial::GeoShapeType>(data.getUint8());
 	data.shrinkToGetPtr();
 	switch (type) {
+	case sserialize::spatial::GS_NONE:
+		break;
 	case sserialize::spatial::GS_POINT:
 		m_priv.reset( new sserialize::spatial::GeoPoint(data) );
 		break;
@@ -67,11 +69,11 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 sserialize::spatial::GeoPoint GeoShape::first() const {
 	switch (type()) {
 		case sserialize::spatial::GS_POINT:
-			return *get<sserialize::spatial::GeoPoint>();
+			return *get<sserialize::Static::spatial::GeoPoint>();
 		case sserialize::spatial::GS_WAY:
-			return * (get<sserialize::spatial::GeoWay>()->points().cbegin());
+			return * (get<sserialize::Static::spatial::GeoWay>()->points().cbegin());
 		case sserialize::spatial::GS_POLYGON:
-			return * (get<sserialize::spatial::GeoPolygon>()->points().cbegin());
+			return * (get<sserialize::Static::spatial::GeoPolygon>()->points().cbegin());
 		case sserialize::spatial::GS_MULTI_POLYGON:
 		{
 			const sserialize::Static::spatial::GeoMultiPolygon * gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
@@ -85,6 +87,20 @@ sserialize::spatial::GeoPoint GeoShape::first() const {
 	};
 }
 
+sserialize::spatial::GeoPoint GeoShape::at(uint32_t pos) const {
+	switch (type()) {
+		case sserialize::spatial::GS_POINT:
+			return *get<sserialize::Static::spatial::GeoPoint>();
+		case sserialize::spatial::GS_WAY:
+			return get<sserialize::Static::spatial::GeoWay>()->points().at(pos);
+		case sserialize::spatial::GS_POLYGON:
+			return get<sserialize::Static::spatial::GeoPolygon>()->points().at(pos);
+		case sserialize::spatial::GS_MULTI_POLYGON:
+			return get<sserialize::Static::spatial::GeoMultiPolygon>()->at(pos);
+		default:
+			return sserialize::spatial::GeoPoint();
+	};
+}
 }}}//end namespace
 
 namespace sserialize {

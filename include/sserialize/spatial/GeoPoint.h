@@ -38,6 +38,7 @@ public:
 	virtual GeoRect boundary() const;
 	virtual uint32_t size() const;
 	virtual bool intersects(const GeoRect & boundary) const;
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
 	
 	virtual void recalculateBoundary();
 	

@@ -13,7 +13,7 @@ namespace detail {
 
 ///GeoPolygon is just GeoWay where the last node equals the first
 
-template<typename TPointsContainer, typename TPointsConstRef>
+template<typename TPointsContainer>
 class GeoPolygon: public sserialize::spatial::detail::GeoWay<TPointsContainer> {
 public:
 	typedef GeoPoint Point;
@@ -35,12 +35,18 @@ public:
 	GeoPolygon & operator=(GeoPolygon && other);
 	GeoPolygon & operator=(const GeoPolygon & other);
 	void swap(GeoPolygon & other);
+	using MyBaseClass::cbegin;
+	using MyBaseClass::cend;
+	using MyBaseClass::begin;
+	using MyBaseClass::end;
+	
 	virtual GeoShapeType type() const;
 	virtual bool contains(const GeoPoint & p) const;
 	virtual bool intersects(const sserialize::spatial::GeoRect & rect) const;
 	///@return true if the line p1->p2 intersects this region
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
 	bool encloses(const GeoPolygon & other) const;
 	bool encloses(const MyGeoWay & other) const;
 	template<typename T_GEO_POINT_ITERATOR>
@@ -53,8 +59,8 @@ public:
 	static GeoPolygon fromRect(const GeoRect & rect);
 };
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithPolygon(const GeoPolygon & poly) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::collidesWithPolygon(const GeoPolygon & poly) const {
 	if (! MyBaseClass::myBoundary().overlap(poly.myBoundary()))
 		return false;
 
@@ -75,8 +81,8 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithPolygon(const Ge
 	return false;
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithWay(const GeoPolygon<TPointsContainer, TPointsConstRef>::MyGeoWay & way) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::collidesWithWay(const GeoPolygon<TPointsContainer>::MyGeoWay & way) const {
 	if (!MyBaseClass::myBoundary().overlap(way.boundary()))
 		return false;
 
@@ -95,65 +101,65 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::collidesWithWay(const GeoPol
 	return false;
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon() :
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon() :
 MyBaseClass()
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(const sserialize::spatial::GeoRect & boundary, const TPointsContainer & points) :
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon(const sserialize::spatial::GeoRect & boundary, const TPointsContainer & points) :
 MyBaseClass(boundary, points)
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(const TPointsContainer & points) :
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon(const TPointsContainer & points) :
 MyBaseClass(points)
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(TPointsContainer && points) :
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon(TPointsContainer && points) :
 MyBaseClass(points)
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(GeoPolygon && other) :
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon(GeoPolygon && other) :
 MyBaseClass(other)
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::GeoPolygon(const GeoPolygon & other) :
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon(const GeoPolygon & other) :
 MyBaseClass(other)
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef>::~GeoPolygon()
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::~GeoPolygon()
 {}
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef> & GeoPolygon<TPointsContainer, TPointsConstRef>::operator=(GeoPolygon<TPointsContainer, TPointsConstRef> && other) {
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer> & GeoPolygon<TPointsContainer>::operator=(GeoPolygon<TPointsContainer> && other) {
 	swap(other);
 	return *this;
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef> & GeoPolygon<TPointsContainer, TPointsConstRef>::operator=(const GeoPolygon<TPointsContainer, TPointsConstRef> & other) {
+template<typename TPointsContainer>
+GeoPolygon<TPointsContainer> & GeoPolygon<TPointsContainer>::operator=(const GeoPolygon<TPointsContainer> & other) {
 	MyGeoWay::operator=(other);
 	return *this;
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-void GeoPolygon<TPointsContainer, TPointsConstRef>::swap(GeoPolygon & other) {
+template<typename TPointsContainer>
+void GeoPolygon<TPointsContainer>::swap(GeoPolygon & other) {
 	MyGeoWay::swap(other);
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoShapeType GeoPolygon<TPointsContainer, TPointsConstRef>::type() const {
+template<typename TPointsContainer>
+GeoShapeType GeoPolygon<TPointsContainer>::type() const {
 	return GS_POLYGON;
 }
 
 //http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(const GeoPoint & p) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::contains(const GeoPoint & p) const {
 	if (!MyBaseClass::points().size() || !MyBaseClass::myBoundary().contains(p.lat(), p.lon()))
 		return false;
 	double testx = p.lat();
@@ -166,8 +172,8 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(const GeoPoint & p)
 // 		TPointsConstRef jP = MyBaseClass::points()[j];
 
 	for(const_iterator prev(MyBaseClass::cbegin()+1), it(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev) {
-		TPointsConstRef iP = *it;
-		TPointsConstRef jP = *prev;
+		typename TPointsContainer::const_reference iP = *it;
+		typename TPointsContainer::const_reference jP = *prev;
 		double vertx_i = iP.lat();
 		double verty_i = iP.lon();
 		double vertx_j = jP.lat();
@@ -181,16 +187,16 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(const GeoPoint & p)
 	return c;
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::intersects(const sserialize::spatial::GeoRect & rect) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::intersects(const sserialize::spatial::GeoRect & rect) const {
 	if (!MyBaseClass::myBoundary().overlap(rect))
 		return false;
 		
 	return collidesWithPolygon( fromRect(rect) );
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::intersects(const GeoPoint & p1, const GeoPoint & p2) const {
 	if (!MyBaseClass::myBoundary().overlap( sserialize::spatial::GeoRect(p1.lat(), p2.lat(), p1.lon(), p2.lon()) ) ) {
 		return false;
 	}
@@ -207,8 +213,8 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::intersects(const GeoPoint & 
 	return false;
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::intersects(const GeoRegion & other) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::intersects(const GeoRegion & other) const {
 	if (other.type() == sserialize::spatial::GS_POLYGON) {
 		return collidesWithPolygon( *static_cast<const GeoPolygon *>(&other) );
 	}
@@ -220,35 +226,67 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::intersects(const GeoRegion &
 	}
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-UByteArrayAdapter & GeoPolygon<TPointsContainer, TPointsConstRef>::append(UByteArrayAdapter & destination) const {
+template<typename TPointsContainer>
+double GeoPolygon<TPointsContainer>::distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const {
+	GeoShapeType gt = type();
+	if (gt <= GS_POLYGON) {
+		if (gt == GS_POINT) {
+			const sserialize::spatial::GeoPoint & op = *static_cast<const sserialize::spatial::GeoPoint*>(&other);
+			double d = std::numeric_limits<double>::max();
+			for(const_iterator it(this->cbegin()), end(this->cend()); it != end; ++it) {
+				typename TPointsContainer::const_reference itP = *it;
+				d = std::min<double>(d, distanceCalculator.calc(itP.lat(), itP.lon(), op.lat(), op.lon()));
+			}
+			return d;
+		}
+		else if (gt == GS_WAY || gt == GS_POLYGON) {
+			const MyBaseClass & ow = *static_cast<const MyBaseClass*>(&other);
+			double d = std::numeric_limits<double>::max();
+			for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+				typename TPointsContainer::const_reference itP = *it;
+				for (const_iterator oIt(ow.cbegin()), oEnd(ow.cend()); oIt != oEnd; ++oIt) {
+					typename TPointsContainer::const_reference oItP = *oIt; 
+					d = std::min<double>(d, distanceCalculator.calc(itP.lat(), itP.lon(), oItP.lat(), oItP.lon()));
+				}
+			}
+			return d;
+		}
+	}
+	else {
+		return other.distance(*this, distanceCalculator);
+	}
+	return std::numeric_limits<double>::quiet_NaN();
+}
+
+template<typename TPointsContainer>
+UByteArrayAdapter & GeoPolygon<TPointsContainer>::append(UByteArrayAdapter & destination) const {
 	return MyBaseClass::append(destination);
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-sserialize::spatial::GeoShape * GeoPolygon<TPointsContainer, TPointsConstRef>::copy() const {
+template<typename TPointsContainer>
+sserialize::spatial::GeoShape * GeoPolygon<TPointsContainer>::copy() const {
 	return new GeoPolygon(*this);
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-GeoPolygon<TPointsContainer, TPointsConstRef> GeoPolygon<TPointsContainer, TPointsConstRef>::fromRect(const GeoRect & rect) {
-	throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoPolygon::fromRect");
-	return GeoPolygon();
+// template<typename TPointsContainer, typename TPointsConstRef>
+// GeoPolygon<TPointsContainer, TPointsConstRef> GeoPolygon<TPointsContainer, TPointsConstRef>::fromRect(const GeoRect & rect) {
+// 	throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoPolygon::fromRect");
+// 	return GeoPolygon();
 // 	std::vector<GeoPoint> points;
 // 	points.push_back( Point(rect.lat()[0], rect.lon()[0]) );
 // 	points.push_back( Point(rect.lat()[1], rect.lon()[0]) );
 // 	points.push_back( Point(rect.lat()[1], rect.lon()[1]) );
 // 	points.push_back( Point(rect.lat()[0], rect.lon()[1]) );
 // 	return GeoPolygon(points);
-}
+// }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::encloses(const GeoPolygon<TPointsContainer, TPointsConstRef> & other) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::encloses(const GeoPolygon<TPointsContainer> & other) const {
 	return encloses(*static_cast<const MyGeoWay*>(&other) );
 }
 
-template<typename TPointsContainer, typename TPointsConstRef>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::encloses(const GeoPolygon<TPointsContainer, TPointsConstRef>::MyGeoWay & other) const {
+template<typename TPointsContainer>
+bool GeoPolygon<TPointsContainer>::encloses(const GeoPolygon<TPointsContainer>::MyGeoWay & other) const {
 	if (!other.boundary().overlap(this->myBoundary())) {
 		return false;
 	}
@@ -268,9 +306,9 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::encloses(const GeoPolygon<TP
 }
 
 
-template<typename TPointsContainer, typename TPointsConstRef>
+template<typename TPointsContainer>
 template<typename T_GEO_POINT_ITERATOR>
-bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const {
+bool GeoPolygon<TPointsContainer>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const {
 	for(; begin != end; ++begin) {
 		if (contains(*begin))
 			return true;
@@ -279,11 +317,11 @@ bool GeoPolygon<TPointsContainer, TPointsConstRef>::contains(T_GEO_POINT_ITERATO
 }
 
 template<>
-GeoPolygon<std::vector<sserialize::spatial::GeoPoint>, const sserialize::spatial::GeoPoint &> GeoPolygon<std::vector<sserialize::spatial::GeoPoint>, const sserialize::spatial::GeoPoint &>::fromRect(const GeoRect & rect);
+GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
 
 }//end namespace detail
 
-typedef detail::GeoPolygon< std::vector<sserialize::spatial::GeoPoint>, const sserialize::spatial::GeoPoint & > GeoPolygon;
+typedef detail::GeoPolygon< std::vector<sserialize::spatial::GeoPoint> > GeoPolygon;
 
 
 }}//end namespace

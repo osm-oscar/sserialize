@@ -1,7 +1,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/utility/utilmath.h>
 #include <cmath>
-
+#include <vendor/libs/geographiclib/legacy/C/geodesic.h>
 
 namespace sserialize {
 namespace spatial {
@@ -100,6 +100,17 @@ bool GeoPoint::intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint
 		return false;
 	tl2 = (tl1*(q.lat()-p.lat())-r.lat()+p.lat())/(s.lat()-r.lat());
 	return (0.0 <= tl2 && 1.0 >= tl2);
+}
+
+double GeoPoint::distance(const sserialize::spatial::GeoShape& other, const sserialize::spatial::DistanceCalculator& distanceCalculator) const {
+	if (other.type() == sserialize::spatial::GS_POINT) {
+		const sserialize::spatial::GeoPoint op = *static_cast<const sserialize::spatial::GeoPoint*>(&other);
+		return distanceCalculator.calc(m_lat, m_lon, op.m_lat, op.m_lon);
+	}
+	else if (other.type() > GS_POINT) {
+		return other.distance(*this, distanceCalculator);
+	}
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 sserialize::spatial::GeoShape * GeoPoint::copy() const {

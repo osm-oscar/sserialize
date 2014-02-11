@@ -53,9 +53,11 @@ public:
 	///@return true if the line p1->p2 intersects this region
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
-	
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
 	
 	virtual void recalculateBoundary();
+	
+	sserialize::spatial::GeoPoint at(uint32_t pos) const;
 	
 	///boundary of the inner polygons that define holes
 	const GeoRect & innerPolygonsBoundary() const;
@@ -302,6 +304,29 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::intersects(const GeoRegion & 
 }
 
 template<typename TPolygonContainer, typename TPolygon>
+double
+GeoMultiPolygon<TPolygonContainer, TPolygon>::distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const {
+	GeoShapeType gt = other.type();
+	if (gt <= GS_MULTI_POLYGON) {
+		if (gt >= GS_POINT) {
+			double d = std::numeric_limits<double>::max();
+			for(typename PolygonList::const_iterator it(m_outerPolygons.cbegin()), end(m_outerPolygons.cend()); it != end; ++it) {
+				d = std::min<double>(d, (*it).distance(other, distanceCalculator));
+			}
+			if (m_outerBoundary.overlap( other.boundary() )) {
+				for(typename PolygonList::const_iterator it(m_innerPolygons.cbegin()), end(m_innerPolygons.cend()); it != end; ++it) {
+					d = std::min<double>(d, (*it).distance(other, distanceCalculator));
+				}
+			}
+		}
+	}
+	else {
+		return other.distance(*this, distanceCalculator);
+	}
+	return std::numeric_limits<double>::quiet_NaN();
+}
+
+template<typename TPolygonContainer, typename TPolygon>
 template<typename TIterator>
 GeoRect GeoMultiPolygon<TPolygonContainer, TPolygon>::calcBoundary(TIterator it,  TIterator end) {
 	if (it != end) {
@@ -325,6 +350,31 @@ void GeoMultiPolygon<TPolygonContainer, TPolygon>::recalculateBoundary() {
 	auto c = [](uint32_t v, const GeoPolygon & a) {return v+a.size();};
 	m_size = std::accumulate(m_innerPolygons.cbegin(), m_innerPolygons.cend(), static_cast<uint32_t>(0), c);
 	m_size += std::accumulate(m_outerPolygons.cbegin(), m_outerPolygons.cend(), m_size, c);
+}
+
+template<typename TPolygonContainer, typename TPolygon>
+sserialize::spatial::GeoPoint GeoMultiPolygon<TPolygonContainer, TPolygon>::at(uint32_t pos) const {
+	if (pos <= m_size) {
+		for(uint32_t i = 0, s = m_outerPolygons.size(); i < s; ++i) {
+			typename TPolygonContainer::const_reference poly = m_outerPolygons.at(i);
+			if (poly.size() > pos) {
+				return poly.points().at(pos);
+			}
+			else {
+				pos -= poly.size();
+			}
+		}
+		for(uint32_t i = 0, s = m_innerPolygons.size(); i < s; ++i) {
+			typename TPolygonContainer::const_reference poly = m_innerPolygons.at(i);
+			if (poly.size() > pos) {
+				return poly.points().at(pos);
+			}
+			else {
+				pos -= poly.size();
+			}
+		}
+	}
+	return sserialize::spatial::GeoPoint();
 }
 
 template<typename TPolygonContainer, typename TPolygon>

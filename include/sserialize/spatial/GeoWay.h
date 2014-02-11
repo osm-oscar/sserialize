@@ -17,6 +17,7 @@ public:
 	typedef typename TPointsContainer::const_iterator const_iterator;
 	typedef typename TPointsContainer::iterator iterator;
 	typedef GeoRegion MyBaseClass;
+	typedef GeoWay<TPointsContainer> MyType;
 private:
 	GeoRect m_boundary;
 	TPointsContainer m_points;
@@ -40,7 +41,8 @@ public:
 	inline const TPointsContainer & points() const { return m_points; }
 	inline const_iterator cbegin() const { return points().cbegin(); }
 	inline const_iterator cend() const { return points().cend(); }
-	
+	inline iterator begin() { return points().begin(); }
+	inline iterator end() { return points().end(); }
 	
 	virtual GeoShapeType type() const { return sserialize::spatial::GS_WAY; }
 	virtual uint32_t size() const;
@@ -51,7 +53,7 @@ public:
 	///@return true if the line p1->p2 intersects this region
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
-	
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
 	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const {
 		throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoWay<PointsContainer>::append");
 	}
@@ -182,6 +184,38 @@ bool GeoWay<TPointsContainer>::intersects(const GeoRegion & other) const {
 		}
 	}
 	return false;
+}
+
+template<typename TPointsContainer>
+double GeoWay<TPointsContainer>::distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const {
+	GeoShapeType gt = type();
+	if (gt <= GS_WAY) {
+		if (gt == GS_POINT) {
+			const sserialize::spatial::GeoPoint & op = *static_cast<const sserialize::spatial::GeoPoint*>(&other);
+			double d = std::numeric_limits<double>::max();
+			for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+				typename TPointsContainer::const_reference itP = *it;
+				d = std::min<double>(d, distanceCalculator.calc(itP.lat(), itP.lon(), op.lat(), op.lon()));
+			}
+			return d;
+		}
+		else if (gt == GS_WAY) {
+			const MyType & ow = *static_cast<const MyType*>(&other);
+			double d = std::numeric_limits<double>::max();
+			for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+				typename TPointsContainer::const_reference itP = *it;
+				for (const_iterator oIt(ow.cbegin()), oEnd(ow.cend()); oIt != oEnd; ++oIt) {
+					typename TPointsContainer::const_reference oItP = *oIt; 
+					d = std::min<double>(d, distanceCalculator.calc(itP.lat(), itP.lon(), oItP.lat(), oItP.lon()));
+				}
+			}
+			return d;
+		}
+	}
+	else {
+		return other.distance(*this, distanceCalculator);
+	}
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 template<typename TPointsContainer>

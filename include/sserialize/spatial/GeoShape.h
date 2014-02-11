@@ -2,6 +2,7 @@
 #define SSERIALIZE_SPATIAL_GEOSHAPE_H
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/spatial/GeoRect.h>
+#include <sserialize/spatial/DistanceCalculator.h>
 
 namespace sserialize {
 namespace spatial {
@@ -24,9 +25,13 @@ public:
 	virtual GeoRect boundary() const = 0;
 	virtual void recalculateBoundary() = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;
+	///return the distance to each other (only consider the distance to the border of the object, use intersects for  collision testing)
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const  = 0;
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const = 0;
 	virtual GeoShape * copy() const = 0;
 	virtual std::ostream & asString(std::ostream & out) const { return out; }
+
+// 	virtual double realDistance(const sserialize::spatial::GeoShape & other) const;
 	
 	///this can be Null
 	inline UByteArrayAdapter & appendWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
