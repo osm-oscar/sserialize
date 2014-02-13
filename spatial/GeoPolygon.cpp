@@ -5,6 +5,17 @@ namespace spatial {
 namespace detail {
 
 template<>
+GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(const std::vector<sserialize::spatial::GeoPoint> & points) :
+MyBaseClass()
+{
+	this->points() = points;
+	if (points.front() != points.back()) {
+		this->points().push_back(points.front());
+		recalculateBoundary();
+	}
+
+}
+
 template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;

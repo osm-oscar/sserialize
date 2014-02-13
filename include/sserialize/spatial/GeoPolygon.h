@@ -114,7 +114,11 @@ MyBaseClass(boundary, points)
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(const TPointsContainer & points) :
 MyBaseClass(points)
-{}
+{
+	if (points.front() != points.back()) {
+		throw sserialize::CorruptDataException("GeoPolygon");
+	}
+}
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(TPointsContainer && points) :
@@ -268,18 +272,6 @@ sserialize::spatial::GeoShape * GeoPolygon<TPointsContainer>::copy() const {
 	return new GeoPolygon(*this);
 }
 
-// template<typename TPointsContainer, typename TPointsConstRef>
-// GeoPolygon<TPointsContainer, TPointsConstRef> GeoPolygon<TPointsContainer, TPointsConstRef>::fromRect(const GeoRect & rect) {
-// 	throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoPolygon::fromRect");
-// 	return GeoPolygon();
-// 	std::vector<GeoPoint> points;
-// 	points.push_back( Point(rect.lat()[0], rect.lon()[0]) );
-// 	points.push_back( Point(rect.lat()[1], rect.lon()[0]) );
-// 	points.push_back( Point(rect.lat()[1], rect.lon()[1]) );
-// 	points.push_back( Point(rect.lat()[0], rect.lon()[1]) );
-// 	return GeoPolygon(points);
-// }
-
 template<typename TPointsContainer>
 bool GeoPolygon<TPointsContainer>::encloses(const GeoPolygon<TPointsContainer> & other) const {
 	return encloses(*static_cast<const MyGeoWay*>(&other) );
@@ -315,6 +307,10 @@ bool GeoPolygon<TPointsContainer>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_PO
 	}
 	return false;
 }
+
+//specializations
+template<>
+GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(const std::vector<sserialize::spatial::GeoPoint> & points);
 
 template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
