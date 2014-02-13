@@ -136,7 +136,7 @@ bool GeoWay<TPointsContainer>::intersects(const GeoRect & rect) const {
 template<typename TPointsContainer>
 bool GeoWay<TPointsContainer>::contains(const GeoPoint & p) const {
 	if (m_boundary.contains(p.lat(), p.lon())) {
-		for(typename TPointsContainer::const_iterator it(m_points.cbegin()), end(m_points.cend()); it != end; ++it) {
+		for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
 			if (p == *it)
 				return true;
 		}
