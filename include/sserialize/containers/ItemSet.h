@@ -10,6 +10,9 @@ namespace sserialize {
 
 template<class DataBaseItemType, class DataBaseType>
 class ItemSet {
+public:
+	typedef DataBaseItemType value_type;
+	typedef value_type ItemType;
 private:
 	std::string m_queryString;
 	DataBaseType m_dataBase;
