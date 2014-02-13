@@ -12,7 +12,7 @@
 using namespace sserialize;
 
 
-int testLen = 0xFFFfF;
+uint32_t testLen = 0xFFFfF;
 
 class TestCompactUintArray: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( TestCompactUintArray );
