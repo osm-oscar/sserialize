@@ -35,9 +35,8 @@ CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {
 		srcRes() = createNumbersSet(T_ITEM_COUNT);
-		std::deque<uint32_t> d;
-		insertSetIntoDeque(srcRes(), d);
-		indexRes() = ItemIndexIterator(ItemIndex(d));
+		std::vector<uint32_t> d(srcRes().begin(), srcRes().end());
+		indexRes() = ItemIndexIterator(ItemIndex::absorb(d));
 	}
 	virtual void tearDown() {}
 };
@@ -50,16 +49,13 @@ CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {
 		std::set<uint32_t> setA, setB;
-		std::deque<uint32_t> dA, dB;
-
 		createOverLappingSets(setA, setB, T_ITEM_COUNT, T_ITEM_COUNT, T_ITEM_COUNT);
-
-		insertSetIntoDeque(setA, dA);
-		insertSetIntoDeque(setB, dB);
+		std::vector<uint32_t> dA(setA.begin(), setA.end());
+		std::vector<uint32_t> dB(setB.begin(), setB.end());
 		
 		
-		ItemIndexIterator idxItA = ItemIndexIterator(ItemIndex(dA));
-		ItemIndexIterator idxItB = ItemIndexIterator(ItemIndex(dB));
+		ItemIndexIterator idxItA = ItemIndexIterator(ItemIndex::absorb(dA));
+		ItemIndexIterator idxItB = ItemIndexIterator(ItemIndex::absorb(dB));
 		
 		
 		srcRes().clear();
@@ -93,11 +89,10 @@ public:
 		createOverLappingSets(T_SET_COUNT, T_ITEM_COUNT, T_ITEM_COUNT/2, sets);
 		srcRes() = intersectSets(sets);
 		
-		std::deque<ItemIndexIterator> its;
+		std::vector<ItemIndexIterator> its;
 		for(size_t i = 0; i < sets.size(); i++) {
-			std::deque<uint32_t> d;
-			insertSetIntoDeque(sets[i], d);
-			ItemIndexIterator idxIt = ItemIndexIterator( ItemIndex(d) );
+			std::vector<uint32_t> d(sets[i].begin(), sets[i].end());
+			ItemIndexIterator idxIt = ItemIndexIterator( ItemIndex::absorb(d) );
 			its.push_back(idxIt);
 		}
 		indexRes() = ItemIndexIterator(its);

@@ -79,7 +79,7 @@ ItemIndexIterator::ItemIndexIterator(const ItemIndex& idx) :
 RCWrapper< sserialize::ItemIndexIteratorPrivate >(new ItemIndexIteratorPrivateItemIndex(idx))
 {}
 
-ItemIndexIterator::ItemIndexIterator(const std::deque< ItemIndexIterator >& intersectIterators) :
+ItemIndexIterator::ItemIndexIterator(const std::vector< ItemIndexIterator >& intersectIterators) :
 RCWrapper< sserialize::ItemIndexIteratorPrivate >(new ItemIndexIteratorIntersecting(intersectIterators))
 {}
 /*

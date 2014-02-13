@@ -84,7 +84,7 @@ public:
 	ItemIndexIterator(const ItemIndexIterator & other);
 	ItemIndexIterator(ItemIndexIteratorPrivate * priv);
     ItemIndexIterator(const ItemIndex & idx);
-	ItemIndexIterator(const std::deque<ItemIndexIterator> & intersectIterators);
+	ItemIndexIterator(const std::vector< sserialize::ItemIndexIterator >& intersectIterators);
 // 	ItemIndexIterator(const std::vector<ItemIndexIterator> & intersectIterators);
 	virtual ~ItemIndexIterator();
 	uint32_t maxSize() const;

@@ -6,7 +6,7 @@
 namespace sserialize {
 
 class ItemIndexIteratorIntersecting: public ItemIndexIteratorPrivate {
-	std::deque<ItemIndexIterator> m_idx;
+	std::vector<ItemIndexIterator> m_idx;
 	uint32_t m_val;
 	uint32_t m_valid;
 private:
@@ -14,7 +14,7 @@ private:
 	void moveToNext();
 public:
 	ItemIndexIteratorIntersecting();
-	ItemIndexIteratorIntersecting(const std::deque<ItemIndexIterator> & intersect); 
+	ItemIndexIteratorIntersecting(const std::vector<ItemIndexIterator> & intersect); 
 	virtual ~ItemIndexIteratorIntersecting();
 	virtual uint32_t maxSize() const;
 	virtual uint32_t operator*() const;

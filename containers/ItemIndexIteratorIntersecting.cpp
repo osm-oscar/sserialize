@@ -7,7 +7,7 @@ m_val(0),
 m_valid(false)
 {}
 
-ItemIndexIteratorIntersecting::ItemIndexIteratorIntersecting(const std::deque< ItemIndexIterator >& intersect) :
+ItemIndexIteratorIntersecting::ItemIndexIteratorIntersecting(const std::vector< sserialize::ItemIndexIterator >& intersect) :
 m_idx(intersect),
 m_valid(true)
 {
