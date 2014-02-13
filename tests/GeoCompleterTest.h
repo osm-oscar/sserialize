@@ -4,6 +4,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/completers/GeoCompleter.h>
+#include <sserialize/templated/GeoStringsItemDB.h>
 #include "TestItemData.h"
 #include "datacreationfuncs.h"
 #include <sserialize/utility/printers.h>
@@ -35,6 +36,35 @@ private:
 protected:
 	virtual GeoCompleter & geoCompleter() = 0;
 	const std::deque<TestItemData> & items() { return m_items;}
+	
+	GeoStringsItemDB<TestItemData> createDB() const {
+		GeoStringsItemDB<TestItemData> db;
+		for(std::deque<TestItemData>::const_iterator it = m_items.begin(); it != m_items.end(); ++it) {
+			if (it->points.size() == 0)
+				db.insert(it->strs, *it, 0);
+			else if (it->points.size() == 1)
+				db.insert(it->strs, *it, new spatial::GeoPoint(it->points.front()));
+			else
+				db.insert(it->strs, *it, new MyGeoWay(it->points) );
+		}
+		return db;
+	}
+	
+	spatial::GeoRect bbox(const GeoStringsItemDB<TestItemData> & db) {
+		spatial::GeoRect rect;
+		uint32_t i = 0;
+		for(; i < db.size(); ++i) {
+			if (db.geoShape(i)) {
+				rect = db.geoShape(i)->boundary();
+				break;
+			}
+		}
+		for(; i < db.size(); ++i) {
+			if (db.geoShape(i))
+				rect.enlarge(db.geoShape(i)->boundary());
+		}
+		return rect;
+	}
 
 public:
 	GeoCompleterTest() : CppUnit::TestFixture() {
