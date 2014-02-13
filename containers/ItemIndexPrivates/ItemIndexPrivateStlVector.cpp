@@ -15,9 +15,10 @@ void ItemIndexPrivateStlVector::absorb(std::vector< uint32_t >& data) {
 }
 
 uint32_t ItemIndexPrivateStlVector::at(uint32_t pos) const {
-	if (pos >= size())
-		return 0;
-    return m_data.at( pos );
+	if (pos < size())
+		return m_data.at( pos );
+	sserialize::OutOfBoundsException("ItemIndexPrivateStlDeque");
+	return 0;
 }
 
 uint32_t ItemIndexPrivateStlVector::first() const {

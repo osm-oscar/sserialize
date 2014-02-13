@@ -12,7 +12,10 @@ ItemIndex::Types ItemIndexPrivateStlDeque::type() const {
 }
 
 uint32_t ItemIndexPrivateStlDeque::at(uint32_t pos) const {
-    return m_data.at( std::min(static_cast<uint32_t>(m_data.size()-1), pos) );
+	if (pos < size())
+		return m_data.at(pos);
+	sserialize::OutOfBoundsException("ItemIndexPrivateStlDeque");
+	return 0;
 }
 
 uint32_t ItemIndexPrivateStlDeque::first() const {
