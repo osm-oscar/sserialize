@@ -241,7 +241,7 @@ bool testFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 	adapter.resetPtrs();
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		uint32_t codedNum;
+		uint32_t codedNum = 0xFEFE;
 		switch (minStorageBytesOfValue(num)) {
 		case(1):
 			codedNum = adapter.getUint8();
