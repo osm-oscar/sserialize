@@ -16,6 +16,7 @@ GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer> GeoPolygo
 	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[0]) );
 	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[1]) );
 	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[1]) );
+	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
 	sserialize::UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 	sserialize::Static::spatial::detail::GeoWayPointsContainer::append(points.begin(), points.end(), d);
 	sserialize::Static::spatial::detail::GeoWayPointsContainer gwc(d);

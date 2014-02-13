@@ -5,12 +5,14 @@ namespace spatial {
 namespace detail {
 
 template<>
+template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
 	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
 	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[0]) );
 	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[1]) );
 	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[1]) );
+	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
 	return GeoPolygon(points);
 }
 
