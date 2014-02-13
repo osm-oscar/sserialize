@@ -12,7 +12,7 @@
 using namespace sserialize;
 
 
-uint32_t testLen = 0xFFFfF;
+uint32_t testLen = 0xFFFFF;
 
 class TestCompactUintArray: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( TestCompactUintArray );
@@ -29,6 +29,9 @@ public:
 		srand( 0 );
 		uint64_t rndNum;
 		uint64_t mask;
+		for(int j=0; j < 64; ++j) {
+			compSrcArrays[j].push_back(createMask64(j+1));
+		}
 		for(uint32_t i = 0; i < testLen; i++) {
 			rndNum = static_cast<uint64_t>(rand()) << 32 | rand();
 			for(int j=0; j < 64; j++) {
@@ -43,11 +46,12 @@ public:
 	void createAutoBitsTest() {
 		for(uint32_t bits = 0; bits < 64; ++bits) {
 			UByteArrayAdapter d(new std::vector<uint8_t>(), true);
-			CompactUintArray::create(compSrcArrays[bits], d);
+			uint8_t createBits = CompactUintArray::create(compSrcArrays[bits], d);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("create bits", bits+1,static_cast<uint32_t>(createBits));
 			d.resetPtrs();
-			CompactUintArray carr(d, bits+1);
+			CompactUintArray carr(d, createBits);
 			for(uint32_t i = 0, s = compSrcArrays[bits].size(); i < s; ++i) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), compSrcArrays[bits][i], carr.at64(i));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("bits=",bits," at ", i), compSrcArrays[bits][i], carr.at64(i));
 			}
 		}
 	}
