@@ -134,12 +134,13 @@ public:
 		UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
 		UByteArrayAdapter cmpDataAdap(new std::vector<uint8_t>(dataAdap.size(), 0), true);
 
-
 		Static::ItemIndexStore sdb(dataAdap);
-		sserialize::ItemIndexFactory::compressWithLZO(sdb, cmpDataAdap);
+		UByteArrayAdapter::OffsetType s = sserialize::ItemIndexFactory::compressWithLZO(sdb, cmpDataAdap);
+		cmpDataAdap.shrinkStorage(cmpDataAdap.size()-s);
 		Static::ItemIndexStore csdb(cmpDataAdap);
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), csdb.size());
+		CPPUNIT_ASSERT_MESSAGE("compression type not set", csdb.compressionType() & Static::ItemIndexStore::IC_LZO);
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
 			ItemIndex idx = csdb.at( m_setIds[i] );
