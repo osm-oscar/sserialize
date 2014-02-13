@@ -33,16 +33,16 @@ VL_PACK_32_TEST(0x00000000, 1);
 	p_vu64(should, array); \
 	is = up_vu64(array, &len); \
 	if (is != should) std::cout << __LEN << " byte: vl_pack/unpack64 wrong" << std::endl;\
-	if (psize_vu64(should) != __LEN) std::cout << __LEN << " byte: psize_vu64 wrong" << std::endl; \
+	if (psize_vu64(should) != __LEN) std::cout << __LEN << " byte: psize_vu64 wrong: " << psize_vu64(should) << std::endl; \
 	
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 62), 9);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 54), 8);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 47), 7);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 40), 6);
-VL_PACK_64_TEST((static_cast<uint64_t>(1) << 35), 5);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 34), 5);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 26), 4);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 19), 3);
-VL_PACK_64_TEST((static_cast<uint64_t>(1) << 14), 2);
+VL_PACK_64_TEST((static_cast<uint64_t>(1) << 13), 2);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 6), 1);
 VL_PACK_64_TEST(0x00000000, 1);
 
