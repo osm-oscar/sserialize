@@ -1,4 +1,5 @@
 #include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/TestResult.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/templated/StringsItemDB.h>
@@ -64,6 +65,7 @@ public:
 int main() {
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StringsItemDBTest::suite() );
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
