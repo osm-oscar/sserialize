@@ -2,9 +2,10 @@
 #define SSERIALIZE_SPATIAL_POLYGON_H
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/types.h>
+#include <sserialize/spatial/GeoWay.h>
+#include <sserialize/templated/AbstractArray.h>
 #include <vector>
 #include <cmath>
-#include "GeoWay.h"
 
 namespace sserialize {
 namespace spatial {
@@ -314,12 +315,17 @@ bool GeoPolygon<TPointsContainer>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_PO
 	return false;
 }
 
-//specializations
+//specializations for std::vector
 template<>
 GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(const std::vector<sserialize::spatial::GeoPoint> & points);
 
 template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
+
+//specializations for AbstractArray
+template<>
+GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
+
 
 }//end namespace detail
 

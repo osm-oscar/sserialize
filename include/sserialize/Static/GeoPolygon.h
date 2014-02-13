@@ -8,11 +8,16 @@ namespace spatial {
 namespace detail {
 
 template<>
-GeoPolygon< sserialize::Static::spatial::detail::GeoWayPointsContainer>::GeoPolygon(const sserialize::UByteArrayAdapter & d);
+GeoPolygon< sserialize::Static::spatial::DenseGeoPointVector >::GeoPolygon(const sserialize::UByteArrayAdapter & d);
 
 template<>
-GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer>
-GeoPolygon<sserialize::Static::spatial::detail::GeoWayPointsContainer>::fromRect(const GeoRect & rect);
+GeoPolygon<sserialize::Static::spatial::DenseGeoPointVector>
+GeoPolygon<sserialize::Static::spatial::DenseGeoPointVector>::fromRect(const GeoRect & rect);
+
+//specializations for AbstractArray
+template<>
+GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::GeoPolygon(const sserialize::UByteArrayAdapter & d);
+
 
 }}}
 
