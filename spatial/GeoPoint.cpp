@@ -89,7 +89,7 @@ UByteArrayAdapter & GeoPoint::append(UByteArrayAdapter & destination) const {
 bool GeoPoint::intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s) {
 	double tl1, tl2;
 	double t1_denom = (q.lon()-p.lon())*(s.lat()-r.lat())+(q.lat()-p.lat())*(r.lon()-s.lon());
-	if (std::abs(t1_denom) <= 0.000001)
+	if (std::abs(t1_denom) <= EPSILON)
 		return false;
 	double t1_nom = (r.lon()-p.lon())*(s.lat()-r.lat())+(r.lat()-p.lat())*(r.lon()-s.lon());
 	
