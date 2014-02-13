@@ -402,7 +402,7 @@ bool UByteArrayAdapter::reserveFromPutPtr(OffsetType bytes) {
 	if (m_putPtr < m_len && (m_len - m_putPtr) >= bytes) {
 		return true;
 	}
-	OffsetType storageNeed = m_putPtr - m_len + 1;
+	OffsetType storageNeed = (m_putPtr+bytes) - m_len;
 	return growStorage(storageNeed);
 }
 
