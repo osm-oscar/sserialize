@@ -11,7 +11,7 @@ namespace spatial {
 
 namespace detail {
 
-///GeoPolygon is just GeoWay where the last node equals the first
+///GeoPolygon is just a closed GeoWay where the last node equals the first
 
 template<typename TPointsContainer>
 class GeoPolygon: public sserialize::spatial::detail::GeoWay<TPointsContainer> {
@@ -39,6 +39,7 @@ public:
 	using MyBaseClass::cend;
 	using MyBaseClass::begin;
 	using MyBaseClass::end;
+	using MyBaseClass::points;
 	
 	virtual GeoShapeType type() const;
 	virtual bool contains(const GeoPoint & p) const;
@@ -71,11 +72,16 @@ bool GeoPolygon<TPointsContainer>::collidesWithPolygon(const GeoPolygon & poly) 
 		return true;
 	}
 	else { //check if any lines intersect
-		const_iterator it(MyBaseClass::cbegin());
-		++it;
-		for(const_iterator prev(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev) {
-			if (intersects(*prev, *it))
-				return true;
+		const_iterator oIt(poly.cbegin());
+		++oIt;
+		for(const_iterator oPrev(poly.cbegin()), oEnd(poly.cend()); oIt != oEnd; ++oIt, ++oPrev) {
+			const_iterator it(cbegin());
+			++it;
+			for(const_iterator prev(cbegin()), end(cend()); it != end; ++prev, ++it) {
+				if (sserialize::spatial::GeoPoint::intersect(*prev, *it, *oPrev, *oIt)) {
+					return true;
+				}
+			}
 		}
 	}
 	return false;
@@ -170,12 +176,11 @@ bool GeoPolygon<TPointsContainer>::contains(const GeoPoint & p) const {
 	double testy = p.lon();
 	int c = 0;
 // 	int nvert = MyBaseClass::points().size();
-// 	int i, j = 0;
-// 	for (i = 0, j = nvert-1; i < nvert; j = i++) {
-// 		TPointsConstRef iP = MyBaseClass::points()[i];
-// 		TPointsConstRef jP = MyBaseClass::points()[j];
+// 	for (int i = 0, j = nvert-1; i < nvert; j = i++) {
+// 		typename TPointsContainer::const_reference iP = MyBaseClass::points().at(i);
+// 		typename TPointsContainer::const_reference jP = MyBaseClass::points().at(j);
 
-	for(const_iterator prev(MyBaseClass::cbegin()+1), it(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev) {
+	for(const_iterator prev(MyBaseClass::cbegin()), it(MyBaseClass::cbegin()+1), end(MyBaseClass::cend()); it != end; ++it, ++prev) {
 		typename TPointsContainer::const_reference iP = *it;
 		typename TPointsContainer::const_reference jP = *prev;
 		double vertx_i = iP.lat();
@@ -209,7 +214,7 @@ bool GeoPolygon<TPointsContainer>::intersects(const GeoPoint & p1, const GeoPoin
 		return true;
 	}
 
-	for(const_iterator prev(MyBaseClass::cbegin()+1), it(MyBaseClass::cbegin()), end(MyBaseClass::cend()); it != end; ++it, ++prev)  {
+	for(const_iterator prev(MyBaseClass::cbegin()), it(MyBaseClass::cbegin()+1), end(MyBaseClass::cend()); it != end; ++it, ++prev)  {
 		if (sserialize::spatial::GeoPoint::intersect(p1, p2, *prev, *it)) {
 			return true;
 		}
@@ -225,9 +230,10 @@ bool GeoPolygon<TPointsContainer>::intersects(const GeoRegion & other) const {
 	else if (other.type() == sserialize::spatial::GS_WAY) {
 		return collidesWithWay( *static_cast<const MyGeoWay*>(&other) );
 	}
-	else {
+	else if (other.type() > type()) {
 		return other.intersects(*this);
 	}
+	return false;
 }
 
 template<typename TPointsContainer>
