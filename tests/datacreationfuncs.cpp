@@ -121,6 +121,8 @@ std::set< uint16_t > createNumbers16Set(uint32_t count) {
 }
 
 void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand) {
+	if (minEqual == 0 && maxUnEqual == 0 && secondAddRand == 0)
+		return;
 	uint32_t rndNum;
 	uint32_t rndMask;
 	uint32_t mask;
