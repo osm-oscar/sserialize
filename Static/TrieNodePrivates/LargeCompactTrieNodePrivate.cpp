@@ -342,8 +342,12 @@ bool LargeCompactTrieNodeCreator::isError(unsigned int error) {
 
 std::string LargeCompactTrieNodeCreator::errorString(unsigned int error) {
 	std::string estr = "";
-	if (error & LargeCompactTrieNodeCreator::TOO_MANY_CHILDREN) estr += "Too many children! ";
-	if (error & INDEX_PTR_FAILED) estr += "Could not create index ptr set!";
+	if (error & LargeCompactTrieNodeCreator::TOO_MANY_CHILDREN) {
+		estr += "Too many children! ";
+	}
+	if (error & INDEX_PTR_FAILED) {
+		estr += "Could not create index ptr set!";
+	}
 	return estr;
 }
 

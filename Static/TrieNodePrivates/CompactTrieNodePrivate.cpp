@@ -75,26 +75,46 @@ uint32_t CompactTrieNodePrivate::childCharAt(uint32_t pos) const {
 }
 
 uint32_t CompactTrieNodePrivate::getExactIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-	return arr.at(0);
+	if (hasExactIndex()) {
+		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
+		return arr.at(0);
+	}
+	else {
+		return 0;
+	}
 }
 
 uint32_t CompactTrieNodePrivate::getPrefixIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-	uint32_t offSet = popCount( (indexTypes() & 0x1) );
-	return arr.at(offSet);
+	if (hasPrefixIndex()) {
+		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
+		uint32_t offSet = popCount( (indexTypes() & 0x1) );
+		return arr.at(offSet);
+	}
+	else {
+		return 0;
+	}
 }
 
 uint32_t CompactTrieNodePrivate::getSuffixIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-	uint32_t offSet = popCount( (indexTypes() & 0x3) );
-	return arr.at(offSet);
+	if (hasSuffixIndex()) {
+		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
+		uint32_t offSet = popCount( (indexTypes() & 0x3) );
+		return arr.at(offSet);
+	}
+	else {
+		return 0;
+	}
 }
 
 uint32_t CompactTrieNodePrivate::getSuffixPrefixIndexPtr() const {
-	CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-	uint32_t offSet = popCount( (indexTypes() & 0x7) );
-	return arr.at(offSet);
+	if (hasSuffixPrefixIndex()) {
+		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
+		uint32_t offSet = popCount( (indexTypes() & 0x7) );
+		return arr.at(offSet);
+	}
+	else {
+		return 0;
+	}
 }
 
 uint32_t CompactTrieNodePrivate::getChildPtr(uint32_t pos) const {
@@ -315,8 +335,10 @@ CompactStaticTrieCreationNode::createNewNode(
 	}
 
 	std::deque<uint8_t> indexPtrsData;
-	uint8_t bpn = CompactUintArray::createFromDeque(idxPtrs, indexPtrsData);
-	
+	uint8_t bpn = 1;
+	if (nodeInfo.indexTypes & TrieNodePrivate::IT_ALL) {
+		bpn = CompactUintArray::createFromDeque(idxPtrs, indexPtrsData);
+	}
 	if (!bpn) {
 		return CompactStaticTrieCreationNode::INDEX_PTR_FAILED;
 	}
@@ -362,8 +384,12 @@ bool CompactStaticTrieCreationNode::isError(unsigned int error) {
 
 std::string CompactStaticTrieCreationNode::errorString(unsigned int error) {
 	std::string estr = "";
-	if (error & CompactStaticTrieCreationNode::TOO_MANY_CHILDREN) estr += "Too many children! ";
-	if (error & INDEX_PTR_FAILED) estr += "Could not create index ptr set!";
+	if (error & CompactStaticTrieCreationNode::TOO_MANY_CHILDREN) {
+		estr += "Too many children! ";
+	}
+	if (error & INDEX_PTR_FAILED) {
+		estr += "Could not create index ptr set!";
+	}
 	return estr;
 }
 
