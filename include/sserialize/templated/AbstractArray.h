@@ -77,18 +77,31 @@ public:
 	AbstractArrayIterator(detail::AbstractArrayIterator<TReturnType> * it) : m_priv(it) {}
 	AbstractArrayIterator(const AbstractArrayIterator & other) : m_priv((other.m_priv.get() ? other.m_priv->copy() : 0)) {}
 	virtual ~AbstractArrayIterator() {}
+	
 	TReturnType operator*() const {
 		return m_priv->get();
 	}
+	
 	AbstractArrayIterator & operator++() {
 		m_priv->next();
 		return *this;
 	}
-	AbstractArrayIterator operator+() {
+	
+	AbstractArrayIterator operator++(int) {
 		AbstractArrayIterator t(*this);
 		++t;
 		return t;
 	}
+	
+	AbstractArrayIterator operator+(uint32_t amount) {
+		AbstractArrayIterator t(*this);
+		while (amount) {
+			m_priv->next();
+			--amount;
+		}
+		return t;
+	}
+	
 	bool operator!=(const AbstractArrayIterator & other) {
 		return m_priv->notEq(other.m_priv.get());
 	}
@@ -98,6 +111,8 @@ template<typename TReturnType>
 class AbstractArray {
 public:
 	typedef AbstractArrayIterator<TReturnType> const_iterator;
+	typedef const_iterator iterator;
+	typedef TReturnType const_reference;
 	typedef std::shared_ptr< detail::AbstractArray<TReturnType> > ImpRefType;
 private:
 	ImpRefType m_priv;
@@ -106,8 +121,13 @@ public:
 	AbstractArray(detail::AbstractArray<TReturnType> * ptr) : m_priv(ptr) {}
 	AbstractArray(const ImpRefType & d) : m_priv(d) {}
 	virtual ~AbstractArray() {}
+	const ImpRefType & priv() const { return m_priv; }
+	template<typename TAbstractArrayType>
+	TAbstractArrayType * get() const { return static_cast<TAbstractArrayType*>(m_priv.get()); }
 	uint32_t size() const { return m_priv->size();}
 	TReturnType at(uint32_t pos) const { return m_priv->at(pos); }
+	TReturnType front() const { return m_priv->at(0); }
+	TReturnType back() const { return m_priv->at(size()-1);}
 	const_iterator cbegin() const { return const_iterator(m_priv->cbegin()); }
 	const_iterator cend() const { return const_iterator(m_priv->cend()); }
 };
