@@ -5,7 +5,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/spatial/GeoShape.h>
 
-#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 2
+#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 3
 
 namespace sserialize {
 namespace Static {
@@ -14,11 +14,12 @@ namespace spatial {
 /**
   *Version 1: initial draft
   *Version 2: use offset array for child/parent ptrs, use MVBitArray for node description
+  *Version 3: use offset array for cell parents, use MVBitArray for cell description
   *
-  *--------------------------------------------------------
-  *VERSION|Cells |RegionDesc||RegionPtrs   
-  *--------------------------------------------------------
-  *  1Byte|Vector|MVBitArray|BoundedCompactUintArray
+  *-----------------------------------------------------
+  *VERSION|RegionDesc|RegionPtrs |CellDesc  |CellPtrs
+  *-----------------------------------------------------
+  *  1Byte|MVBitArray|BCUintArray|MVBitArray|BCUintArray
   *
   * There has to be one Region more than used. The last one defines the end for the RegionPtrs
   *
@@ -34,10 +35,10 @@ namespace spatial {
   *
   *
   *Cell
-  *-----------------------------------------------------
-  *ItemPtrs|Parents
-  *-----------------------------------------------------
-  *   vu32 |ItemIndexPrivateRegLine
+  *---------------------
+  *ItemPtrs|ParentsBegin
+  *---------------------
+  *
   *
   */
 
@@ -51,20 +52,29 @@ public:
 	typedef sserialize::MultiVarBitArray RegionDescriptionType;
 	typedef sserialize::BoundedCompactUintArray RegionPtrListType;
 	
+	typedef sserialize::MultiVarBitArray CellDescriptionType;
+	typedef sserialize::BoundedCompactUintArray CellPtrListType;
 
 	class Cell {
-		uint32_t m_itemPtr;
-		ItemIndex m_parents;
+	public:
+		typedef enum {CD_ITEM_PTR=0, CD_PARENTS_BEGIN=1, CD__ENTRY_SIZE=2} CellDescriptionAccessors;
+	private:
+		uint32_t m_pos;
+		const GeoHierarchy * m_db;;
 	public:
 		Cell();
-		Cell(const UByteArrayAdapter & data);
+		Cell(uint32_t pos, const GeoHierarchy * db);
 		virtual ~Cell();
-		inline uint32_t itemPtr() const { return m_itemPtr; }
-		const ItemIndex & parents() const { return m_parents; }
+		uint32_t itemPtr() const;
+		///Offset into PtrArray
+		uint32_t parentsBegin() const;
+		///Offset into PtrArray
+		uint32_t parentsEnd() const;
+		uint32_t parentsSize() const;
+		///@return pos of the parent
+		uint32_t parent(uint32_t pos) const;
 	};
-	typedef sserialize::Static::Deque<Cell> CellListType;
 
-	
 	class Region {
 	public:
 		typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD__ENTRY_SIZE=5} RegionDescriptionAccessors;
@@ -97,9 +107,10 @@ public:
 	friend class Region;
 	friend class Cell;
 private:
-	CellListType m_cells;
 	RegionDescriptionType m_regions;
 	RegionPtrListType m_regionPtrs;
+	CellDescriptionType m_cells;
+	CellPtrListType m_cellPtrs;
 	
 public:
 	GeoHierarchy();
@@ -107,9 +118,13 @@ public:
 	virtual ~GeoHierarchy();
 	OffsetType getSizeInBytes() const;
 	
-	inline uint32_t cellSize() const { return m_cells.size(); }
-	inline Cell cell(uint32_t id) const { return m_cells.at(id); }
-	const CellListType & cells() const { return m_cells; }
+	uint32_t cellSize() const;
+	Cell cell(uint32_t id) const;
+	const CellDescriptionType & cells() const { return m_cells; }
+	
+	uint32_t cellPtrSize() const;
+	uint32_t cellPtr(uint32_t pos) const;
+	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
 	
 	uint32_t regionSize() const;
 	Region region(uint32_t id) const;
@@ -117,7 +132,7 @@ public:
 	
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
-	const RegionPtrListType regionPtrs() const { return m_regionPtrs; }
+	const RegionPtrListType & regionPtrs() const { return m_regionPtrs; }
 	
 	std::ostream & printStats(std::ostream & out) const;
 };

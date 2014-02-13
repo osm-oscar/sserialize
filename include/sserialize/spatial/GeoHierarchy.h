@@ -9,17 +9,23 @@ namespace spatial {
 
 class GeoHierarchy {
 public:
-	struct Cell {
-		std::vector<uint32_t> parents;
-		std::vector<uint32_t> items;
-	};
-	
+
 	struct Region {
 		std::vector<uint32_t> children;
 		std::vector<uint32_t> parents;
 		std::vector<uint32_t> cells;
 		sserialize::spatial::GeoShapeType type;
 		uint32_t id;
+	};
+
+	struct Cell {
+		std::vector<uint32_t> parents;
+		std::vector<uint32_t> items;
+	};
+	
+	struct Way {
+		std::vector<uint32_t> parents;
+		std::vector<uint32_t> items;
 	};
 private:
 	std::vector<Cell> m_cells;
