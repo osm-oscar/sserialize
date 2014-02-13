@@ -21,7 +21,8 @@ m_index(idx),
 m_pos(0),
 m_cur(0)
 {
-	next();
+	if (idx.size())
+		next();
 }
 
 ItemIndexIteratorPrivateItemIndex::~ItemIndexIteratorPrivateItemIndex() {}
