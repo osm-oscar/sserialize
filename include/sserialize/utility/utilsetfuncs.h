@@ -25,9 +25,9 @@ std::size_t set_intersection_size(TIter1 begin1, TIter1 end1, TIter2 begin2, TIt
 	return size;
 }
 
-///Check if begin1->end1 is a subset of begin2->end2
+///Check if begin1->end1 is a subseteq of begin2->end2
 template<typename TIter1, typename TIter2>
-bool subset_of(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
+bool subseteq_of(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
 	while(begin1 != end1 && begin2 != end2) {
 		if (*begin1 < *begin2) {
 			return false;
