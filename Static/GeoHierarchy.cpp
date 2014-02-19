@@ -65,7 +65,7 @@ uint32_t GeoHierarchy::Region::cellIndexPtr() const {
 }
 
 uint32_t GeoHierarchy::Region::parentsBegin() const {
-	return (m_db->regions().at(m_pos, RD_CHILDREN_BEGIN) + m_db->regions().at(m_pos, RD_PARENTS_OFFSET));
+	return childrenBegin() + m_db->regions().at(m_pos, RD_PARENTS_OFFSET);
 }
 
 uint32_t GeoHierarchy::Region::parentsEnd() const {
@@ -94,7 +94,7 @@ uint32_t GeoHierarchy::Region::childrenEnd() const {
 }
 
 uint32_t GeoHierarchy::Region::childrenSize() const {
-	return childrenEnd() - childrenBegin();
+	return m_db->regions().at(m_pos, RD_PARENTS_OFFSET);
 }
 
 uint32_t GeoHierarchy::Region::child(uint32_t pos) const {
