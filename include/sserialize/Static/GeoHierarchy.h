@@ -40,9 +40,14 @@ namespace spatial {
   *---------------------
   *
   *
+  * The last region is the root of the dag. it has no representation in a db and is not directly accessible
+  * If a Region has no parent and is not the root region, then it is a child of the root region
+  * In essence, the root region is just the entrypoint to the graph
+  *
+  *
   */
 
-  ///TODO:Boundingboxc wie in aktueller version, also alles mit allem verwuschrteln
+  ///TODO:Boundingbox wie in aktueller version, also alles mit allem verwuschrteln
   ///so viel auf zellebene wie möglich
   ///Schnitte et
   
@@ -111,7 +116,10 @@ private:
 	RegionPtrListType m_regionPtrs;
 	CellDescriptionType m_cells;
 	CellPtrListType m_cellPtrs;
-	
+protected:
+	const RegionDescriptionType & regions() const { return m_regions; }
+	const CellDescriptionType & cells() const { return m_cells; }
+	const RegionPtrListType & regionPtrs() const { return m_regionPtrs; }
 public:
 	GeoHierarchy();
 	GeoHierarchy(const UByteArrayAdapter & data);
@@ -120,7 +128,6 @@ public:
 	
 	uint32_t cellSize() const;
 	Cell cell(uint32_t id) const;
-	const CellDescriptionType & cells() const { return m_cells; }
 	
 	uint32_t cellPtrSize() const;
 	uint32_t cellPtr(uint32_t pos) const;
@@ -128,11 +135,10 @@ public:
 	
 	uint32_t regionSize() const;
 	Region region(uint32_t id) const;
-	const RegionDescriptionType & regions() const { return m_regions; }
+	Region rootRegion() const;
 	
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
-	const RegionPtrListType & regionPtrs() const { return m_regionPtrs; }
 	
 	std::ostream & printStats(std::ostream & out) const;
 };

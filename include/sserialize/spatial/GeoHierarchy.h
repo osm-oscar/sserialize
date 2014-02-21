@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_GEO_HIERARCHY_H
 #define SSERIALIZE_GEO_HIERARCHY_H
-#include <sserialize/Static/Deque.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/spatial/GeoShape.h>
+#include <sserialize/Static/GeoHierarchy.h>
 
 namespace sserialize {
 namespace spatial {
@@ -30,16 +30,21 @@ public:
 private:
 	std::vector<Cell> m_cells;
 	std::vector<Region> m_regions;
+	Region m_rootRegion;
 public:
 	GeoHierarchy() {}
 	virtual ~GeoHierarchy() {}
+	///This sets the root region which has every node without a parent as child
+	void createRootRegion();
 	inline std::vector<Cell> & cells() { return m_cells; }
 	inline std::vector<Region> & regions() { return m_regions;}
 	inline const std::vector<Cell> & cells() const { return m_cells; }
 	inline const std::vector<Region> & regions() const { return m_regions;}
-	bool make_consistend();
+	bool checkConsistency();
 	///data structure has to be consistent before using this
-	bool append(UByteArrayAdapter & dest, ItemIndexFactory & idxFactory) const;
+	UByteArrayAdapter append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory) const;
+	void printStats(std::ostream & out) const;
+	bool testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh) const;
 };
 
 }} //end namespace
