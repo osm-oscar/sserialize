@@ -15,11 +15,12 @@ namespace spatial {
   *Version 1: initial draft
   *Version 2: use offset array for child/parent ptrs, use MVBitArray for node description
   *Version 3: use offset array for cell parents, use MVBitArray for cell description
+  *Version 4: add boundary to regions
   *
-  *-----------------------------------------------------
-  *VERSION|RegionDesc|RegionPtrs |CellDesc  |CellPtrs
-  *-----------------------------------------------------
-  *  1Byte|MVBitArray|BCUintArray|MVBitArray|BCUintArray
+  *-------------------------------------------------------------------------------
+  *VERSION|RegionDesc|RegionPtrs |RegionBoundaries       |CellDesc  |CellPtrs
+  *-------------------------------------------------------------------------------
+  *  1Byte|MVBitArray|BCUintArray|(region.size+1)*GeoRect|MVBitArray|BCUintArray
   *
   * There has to be one Region more than used. The last one defines the end for the RegionPtrs
   *
@@ -93,6 +94,7 @@ public:
 		virtual ~Region();
 		sserialize::spatial::GeoShapeType type() const;
 		uint32_t id() const;
+		sserialize::spatial::GeoRect boundary() const;
 		uint32_t cellIndexPtr() const;
 		///Offset into PtrArray
 		uint32_t parentsBegin() const;
@@ -114,6 +116,7 @@ public:
 private:
 	RegionDescriptionType m_regions;
 	RegionPtrListType m_regionPtrs;
+	sserialize::Static::Deque<sserialize::spatial::GeoRect> m_regionBoundaries;
 	CellDescriptionType m_cells;
 	CellPtrListType m_cellPtrs;
 protected:
@@ -139,6 +142,8 @@ public:
 	
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
+	
+	sserialize::spatial::GeoRect boundary(uint32_t id) const;
 	
 	std::ostream & printStats(std::ostream & out) const;
 };

@@ -60,6 +60,10 @@ uint32_t GeoHierarchy::Region::id() const {
 	return m_db->regions().at(m_pos, RD_ID);
 }
 
+sserialize::spatial::GeoRect GeoHierarchy::Region::boundary() const {
+	return m_db->boundary(m_pos);
+}
+
 uint32_t GeoHierarchy::Region::cellIndexPtr() const {
 	return m_db->regions().at(m_pos, RD_CELL_LIST_PTR);
 }
@@ -111,8 +115,9 @@ GeoHierarchy::GeoHierarchy() {}
 GeoHierarchy::GeoHierarchy(const UByteArrayAdapter & data) :
 m_regions(data + 1),
 m_regionPtrs(data + (1+m_regions.getSizeInBytes())),
-m_cells(data + (1+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes())),
-m_cellPtrs(data + (1+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_cells.getSizeInBytes()))
+m_regionBoundaries(data + (1+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes())),
+m_cells(data + (1+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_regionBoundaries.getSizeInBytes())),
+m_cellPtrs(data + (1+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_regionBoundaries.getSizeInBytes()+m_cells.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION, data.at(0), "sserialize::Static::GeoHierarchy");
 }
@@ -159,6 +164,10 @@ uint32_t GeoHierarchy::regionPtrSize() const {
 
 uint32_t GeoHierarchy::regionPtr(uint32_t pos) const {
 	return m_regionPtrs.at(pos);
+}
+
+sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
+	return m_regionBoundaries.at(pos);
 }
 
 std::ostream & GeoHierarchy::printStats(std::ostream & out) const {

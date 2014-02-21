@@ -16,6 +16,7 @@ public:
 		std::vector<uint32_t> cells;
 		sserialize::spatial::GeoShapeType type;
 		uint32_t id;
+		GeoRect boundary;
 	};
 
 	struct Cell {

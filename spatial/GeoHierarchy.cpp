@@ -77,6 +77,16 @@ bool GeoHierarchy::checkConsistency() {
 			}
 		}
 	}
+	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+		const Region & r = m_regions.at(i);
+		for(const auto x : r.children) {
+			const Region & cr = m_regions.at(x);
+			if (!r.boundary.contains(cr.boundary)) {
+				std::cout << "Region " << i << " does not span child " << x << std::endl;
+				return false;
+			}
+		}
+	}
 	
 	//cells
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
@@ -207,7 +217,15 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	ptrOffsetArray.insert(ptrOffsetArray.end(), m_rootRegion.children.cbegin(), m_rootRegion.children.cend());
 	
 	allOk = allOk && (BoundedCompactUintArray::create(ptrOffsetArray, dest) > 0);
-	
+	//append the RegionRects
+	{
+		sserialize::Static::DequeCreator<sserialize::spatial::GeoRect> bCreator(dest);
+		for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+			bCreator.put(m_regions.at(i).boundary);
+		}
+		bCreator.put(m_rootRegion.boundary);
+		bCreator.flush();
+	}
 	//and do the same for the cells
 	
 	maxValues.resize(sserialize::Static::spatial::GeoHierarchy::Cell::CD__ENTRY_SIZE, 0);
