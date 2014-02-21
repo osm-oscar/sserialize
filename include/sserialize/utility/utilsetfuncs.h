@@ -43,6 +43,26 @@ bool subseteq_of(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
 	return (begin1 == end1);
 }
 
+///Check if begin1->end1 is a subset of begin2->end2
+template<typename TIter1, typename TIter2>
+bool subset_of(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
+	bool set2lg = false;
+	while(begin1 != end1 && begin2 != end2) {
+		if (*begin1 < *begin2) {
+			return false;
+		}
+		else if (*begin2 < *begin1) {
+			++begin2;
+			set2lg = true;
+		}
+		else {
+			++begin1;
+			++begin2;
+		}
+	}
+	return (begin1 == end1) && (set2lg || begin2 != end2);
+}
+
 template<typename T>
 void diffSortedContainer(std::set<T> & out, const std::set<T> & a, const std::set<T> & b) {
 	std::set<T> result;
