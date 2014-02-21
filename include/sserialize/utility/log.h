@@ -41,7 +41,7 @@ extern Log err;
 template<typename T>
 std::string nameOfType();
 
-#define __NAME_OF_TYPE_SPECIALICATION(__TYPE) template<> inline std::string nameOfType<__TYPE>() { return std::string("__TYPE"); }
+#define __NAME_OF_TYPE_SPECIALICATION(__TYPE) template<> inline std::string nameOfType<__TYPE>() { return std::string(#__TYPE); }
 
 __NAME_OF_TYPE_SPECIALICATION(uint8_t);
 __NAME_OF_TYPE_SPECIALICATION(uint16_t);
@@ -79,7 +79,7 @@ std::string toString(PrintTypeList ... args) {
 }
 
 template<typename T>
-void putInto(std::ostream & out, const std::vector<T> & vec) {
+void print(std::ostream & out, const std::vector<T> & vec) {
 	out << "std::vector<" << nameOfType<T>() << ">[";
 	typename std::vector<T>::const_iterator it(vec.begin());
 	typename std::vector<T>::const_iterator end(vec.end());
