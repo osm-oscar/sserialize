@@ -240,24 +240,27 @@ bool invert(const std::unordered_map<T1, T2> & source, std::unordered_map<T2, T1
 }
 
 
-template<typename T>
-bool haveCommonValue(const std::set<T> & a, const std::set<T> & b) {
-	if (a.size() == 0 || b.size() == 0) {
+template<typename TContainer>
+bool haveCommonValueOrdered(const TContainer & orderedContainerA, const TContainer & orderedContainerB) {
+	if (orderedContainerA.size() == 0 || orderedContainerB.size() == 0) {
 		return false;
 	}
-	typename std::set<T>::const_iterator aIndexIt(a.begin());
-	typename std::set<T>::const_iterator bIndexIt(b.begin());
-	while (aIndexIt != a.end() && bIndexIt != b.end()) {
-		T aItemId = *aIndexIt;
-		T bItemId = *bIndexIt;
+	typename TContainer::const_iterator aIt(orderedContainerA.cbegin());
+	typename TContainer::const_iterator bIt(orderedContainerB.cbegin());
+	typename TContainer::const_iterator aEnd(orderedContainerA.cend());
+	typename TContainer::const_iterator bEnd(orderedContainerB.cend());
+
+	while (aIt != aEnd && bIt != bEnd) {
+		typename TContainer::const_reference aItemId = *aIt;
+		typename TContainer::const_reference bItemId = *bIt;
 		if (aItemId == bItemId) {
 			return true;
 		}
 		else if (aItemId < bItemId) {
-			aIndexIt++;
+			++aIt;
 		}
 		else { //bItemId is smaller
-			bIndexIt++;
+			++bIt;
 		}
 	}
 	return false;
@@ -276,6 +279,11 @@ bool haveCommonValue(const T_CONTAINER & a, const T_CONTAINER_B & b) {
 			return true;
 	}
 	return false;
+}
+
+template<typename T>
+bool haveCommonValue(const std::set<T> & a, const std::set<T> & b) {
+	return haveCommonValueOrdered(a, b);
 }
 
 template<typename T>
