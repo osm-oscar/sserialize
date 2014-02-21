@@ -258,7 +258,7 @@ bool MultiVarBitArrayCreator::set(uint32_t pos, uint32_t subPos, uint32_t value)
 	if (m_arr.size() <= pos)
 		if( !reserve(pos+1) )
 			return false;
-	return value != m_arr.set(pos, subPos, value);
+	return value == m_arr.set(pos, subPos, value);
 }
 
 UByteArrayAdapter MultiVarBitArrayCreator::flush() {
