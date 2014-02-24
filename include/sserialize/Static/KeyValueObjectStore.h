@@ -57,6 +57,7 @@ public:
 
 class KeyValueObjectStoreItem: public KeyValueObjectStoreItemBase {
 public:
+	typedef KeyValueObjectStoreItemBase MyBaseClass;
 	typedef ReadOnlyAtStlIterator<const KeyValueObjectStoreItem*, std::pair<std::string, std::string> > const_iterator;
 	typedef const_iterator iterator;
 private:
@@ -68,6 +69,8 @@ public:
 	std::pair<std::string, std::string> at(uint32_t pos) const;
 	std::string key(uint32_t pos) const;
 	std::string value(uint32_t pos) const;
+	using MyBaseClass::findKey;
+	using MyBaseClass::findValue;
 	uint32_t findKey(const std::string & str, uint32_t start = 0) const;
 	uint32_t findValue(const std::string & str, uint32_t start = 0) const;
 	uint32_t countKey(const std::string & str) const;
@@ -85,6 +88,9 @@ public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
 	typedef ReadOnlyAtStlIterator<KeyValueObjectStore, KeyValueObjectStoreItem > iterator;
 	typedef ReadOnlyAtStlIterator<KeyValueObjectStore, KeyValueObjectStoreItem > const_iterator;
+	
+	typedef sserialize::Static::SortedStringTable KeyStringTable;
+	typedef sserialize::Static::SortedStringTable ValueStringTable;
 private:
 	std::shared_ptr<KeyValueObjectStorePrivate> m_priv;
 	inline std::shared_ptr<KeyValueObjectStorePrivate> & priv() { return m_priv; }
@@ -94,8 +100,8 @@ public:
 	KeyValueObjectStore(const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStore();
 	uint32_t size() const;
-	const Static::StringTable & keyStringTable() const;
-	const Static::StringTable & valueStringTable() const;
+	const KeyStringTable & keyStringTable() const;
+	const ValueStringTable & valueStringTable() const;
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t findKeyId(const std::string & str) const;
 	uint32_t findValueId(const std::string & str) const;
@@ -113,17 +119,20 @@ public:
 };
 
 class KeyValueObjectStorePrivate {
+public:
+	typedef sserialize::Static::KeyValueObjectStore::ValueStringTable ValueStringTable;
+	typedef sserialize::Static::KeyValueObjectStore::KeyStringTable KeyStringTable;
 private:
-	Static::SortedStringTable m_keyStringTable;
-	Static::SortedStringTable m_valueStringTable;
+	KeyStringTable m_keyStringTable;
+	ValueStringTable m_valueStringTable;
 	Static::Deque<UByteArrayAdapter> m_items;
 public:
 	KeyValueObjectStorePrivate();
 	KeyValueObjectStorePrivate(const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStorePrivate();
 	uint32_t size() const;
-	inline const Static::StringTable & keyStringTable() const { return m_keyStringTable; }
-	inline const Static::StringTable & valueStringTable() const { return m_valueStringTable; }
+	inline const KeyStringTable & keyStringTable() const { return m_keyStringTable; }
+	inline const ValueStringTable & valueStringTable() const { return m_valueStringTable; }
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t findKeyId(const std::string & str) const;
 	uint32_t findValueId(const std::string & str) const;

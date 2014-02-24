@@ -149,11 +149,11 @@ uint32_t KeyValueObjectStore::size() const {
 	return priv()->size();
 }
 
-const Static::StringTable & KeyValueObjectStore::keyStringTable() const {
+const KeyValueObjectStore::KeyStringTable & KeyValueObjectStore::keyStringTable() const {
 	return m_priv->keyStringTable();
 }
 
-const Static::StringTable & KeyValueObjectStore::valueStringTable() const {
+const KeyValueObjectStore::ValueStringTable & KeyValueObjectStore::valueStringTable() const {
 	return m_priv->valueStringTable();
 }
 
