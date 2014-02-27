@@ -249,6 +249,7 @@ bool SetOpTreePrivateSimple::registerSelectableOpFilter(SetOpTree::SelectableOpF
 }
 
 SetOpTreePrivateSimple::SetOpTreePrivateSimple(const SetOpTreePrivateSimple & other) : 
+	SetOpTreePrivate(),
 	m_strCompleter(other.m_strCompleter),
 	m_intersectStrings(other.m_intersectStrings),
 	m_diffStrings(other.m_diffStrings),
