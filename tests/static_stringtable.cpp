@@ -49,6 +49,7 @@ public:
 		strs().insert(strs().end(), myStrs.cbegin(), myStrs.cend());
 		m_stableData = sserialize::UByteArrayAdapter(new std::vector<uint8_t>(), true);
 		sserialize::Static::SortedStringTable::create(strs().cbegin(), strs().cend(), m_stableData);
+		m_stable = sserialize::Static::SortedStringTable(m_stableData);
 	}
 	
 	void testFind() {
@@ -64,7 +65,9 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest( TestSortedStringTable::suite() );
+	for(uint32_t i = 0; i < 10; ++i) {
+		runner.addTest( TestSortedStringTable::suite() );
+	}
 	bool ok = runner.run();
 	return (ok ? 0 : 1);
 }
