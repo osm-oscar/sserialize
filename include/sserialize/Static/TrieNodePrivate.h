@@ -71,12 +71,12 @@ public:
 
 
 	/** @return: Returns a pointer to the subclass, destruction will be handled by the outer non-private class **/
-	virtual TrieNodePrivate* childAt(uint32_t pos) const { return new EmptyTrieNodePrivate();}
+	virtual TrieNodePrivate* childAt(uint32_t /*pos*/) const { return new EmptyTrieNodePrivate();}
 
-	virtual uint32_t childCharAt(uint32_t pos) const { return 0;} 
+	virtual uint32_t childCharAt(uint32_t /*pos*/) const { return 0;} 
 	virtual UByteArrayAdapter strData() const { return UByteArrayAdapter();}
 	virtual std::string str() const { return std::string();}
-	virtual int32_t posOfChar(uint32_t ucode) const { return -1;}
+	virtual int32_t posOfChar(uint32_t /*ucode*/) const { return -1;}
 	virtual void dump() const {}
 	virtual uint32_t getStorageSize() const { return 0;}
 	virtual uint32_t getHeaderStorageSize() const { return 0;}
@@ -88,7 +88,7 @@ public:
 	virtual uint32_t getPrefixIndexPtr() const { return 0;}
 	virtual uint32_t getSuffixIndexPtr() const { return 0;}
 	virtual uint32_t getSuffixPrefixIndexPtr() const { return 0;}
-	virtual uint32_t getChildPtr(uint32_t pos) const { return 0;}
+	virtual uint32_t getChildPtr(uint32_t /*pos*/) const { return 0;}
 };
 
 struct TrieNodeCreationInfo {

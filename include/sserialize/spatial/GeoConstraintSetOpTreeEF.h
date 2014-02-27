@@ -39,7 +39,7 @@ public:
 	TCompleter & completer() { return m_completer; }
 	virtual SupportedOps supportedOps() const { return sserialize::SetOpTree::SelectableOpFilter::OP_INTERSECT;}
 	/** This should invoke the faster routine */
-	virtual ItemIndex operator()(SupportedOps op, const std::string & str, const ItemIndex & partner) {
+	virtual ItemIndex operator()(SupportedOps /*op*/, const std::string & str, const ItemIndex & partner) {
 		GeoRect rect;
 		bool approximate;
 		if (!parse(str, rect, approximate))
@@ -53,7 +53,7 @@ public:
 			return ItemIndex();
 		return m_completer.complete(rect, approximate);
 	}
-	virtual ItemIndexIterator operator()(SupportedOps op, const std::string & str, const ItemIndexIterator & partner) {
+	virtual ItemIndexIterator operator()(SupportedOps /*op*/, const std::string & str, const ItemIndexIterator & partner) {
 		GeoRect rect;
 		bool approximate;
 		if (!parse(str, rect, approximate))

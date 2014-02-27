@@ -1,67 +1,70 @@
-#include <iostream>
-#include <fstream>
+#include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/Asserter.h>
 #include <sserialize/Static/StringTable.h>
+#include <sserialize/utility/log.h>
+#include "datacreationfuncs.h"
 
-using namespace std;
 using namespace sserialize;
 
-int main(int argc, char **argv) {
-	std::string inFileName = "";
-	if (argc > 1) {
-		inFileName = std::string(argv[1]);
-	}
-	else {
-		cout << "Arguments given: " << endl;
-		for (int i=0; i < argc; i++) {
-			cout << argv[i];
-		}
-		cout << endl << "Need in filename" << endl;
-		return 1;
-	}
+uint32_t strTableSize = 1024;
 
-	ifstream file;
-	file.open(inFileName.c_str());
-	if (!file.is_open()) {
-		std::cout <<  "Failed to open file: " << inFileName << std::endl;
-		return 1;
-	}
-	
-	std::map<uint32_t, std::string> strings;
-	std::string tempstr;
-	uint32_t count = 0;
-	while(!file.eof()) {
-		std::getline(file, tempstr, ' ');
-		strings.insert(std::pair<uint32_t, std::string>(count, tempstr));
-		count++;
-	}
-	std::cout << "Read file. Testing table" << std::endl;
+class TestStringTable: public CppUnit::TestFixture {
+private:
+	std::vector<std::string> m_strs;
+public:
+	std::vector<std::string> & strs() { return m_strs; }
+	virtual const sserialize::Static::StringTable & stable() = 0;
+	virtual const sserialize::UByteArrayAdapter & stableData() = 0;
+public:
+	virtual void setUp() {}
+	virtual void tearDown() {}
 
-	UByteArrayAdapter stableDataAdapter(new std::deque<uint8_t>(), true);
-	if (Static::StringTable::create< std::map<unsigned int, std::string>, std::string >(stableDataAdapter, strings) ) {
-		std::cout << "Created string table with size:  " << stableDataAdapter.size() << std::endl;
-	}
-	else {
-		std::cout << "Failed to create string table" <<  std::endl;
-		return 1;
-	}
-
-
-	Static::StringTable stable(stableDataAdapter);
-	
-	if (stable.getSizeInBytes() != stableDataAdapter.size()) {
-		std::cerr << "Static::StringTable::getSizeInBytes() wrong" << std::endl;
-	}
-	
-	if (stable.size() != strings.size()) {
-		std::cout << "Static::StringTable.count() is invalid. Should: " << strings.size() << " is: " << stable.size() << std::endl;
-	}
-	for(size_t i = 0; i < strings.size(); i++) {
-		if (strings.at(i) != stable.at(i)) {
-			std::cout << "Strings at position " << i << " are unequal. Should: " << strings.at(i) << ";; is: " << stable.at(i) << std::endl;
-			return 1; 
+	void testEq() {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", stableData().size(), stable().getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)strs().size(), stable().size());
+		for(uint32_t i = 0, s = strs().size(); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("string at", i), stable().at(i), strs().at(i));
 		}
 	}
-	std::cout << "Passed all tests." << std::endl;
+};
 
-	return 0;
+class TestSortedStringTable: public TestStringTable {
+CPPUNIT_TEST_SUITE( TestSortedStringTable );
+CPPUNIT_TEST( testEq );
+CPPUNIT_TEST( testFind );
+CPPUNIT_TEST_SUITE_END();
+private:
+	sserialize::UByteArrayAdapter m_stableData;
+	sserialize::Static::SortedStringTable m_stable;
+public:
+	virtual const sserialize::Static::StringTable & stable() { return m_stable; }
+	virtual const sserialize::UByteArrayAdapter & stableData() { return m_stableData; }
+public:
+	virtual void setUp() {
+		std::set<std::string> myStrs;
+		for(uint32_t i = 0; i < strTableSize; ++i) {
+			myStrs.insert(createString(100));
+		}
+		strs().insert(strs().end(), myStrs.cbegin(), myStrs.cend());
+		m_stableData = sserialize::UByteArrayAdapter(new std::vector<uint8_t>(), true);
+		sserialize::Static::SortedStringTable::create(strs().cbegin(), strs().cend(), m_stableData);
+	}
+	
+	void testFind() {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", stableData().size(), stable().getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)strs().size(), stable().size());
+		for(uint32_t i = 0, s = strs().size(); i < s; ++i) {
+			int32_t pos = m_stable.find(strs().at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("string at", i), i, (uint32_t) pos);
+		}
+	}
+};
+
+int main() {
+	srand( 0 );
+	CppUnit::TextUi::TestRunner runner;
+	runner.addTest( TestSortedStringTable::suite() );
+	bool ok = runner.run();
+	return (ok ? 0 : 1);
 }

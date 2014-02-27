@@ -56,7 +56,7 @@ __NAME_OF_TYPE_SPECIALICATION(double);
 __NAME_OF_TYPE_SPECIALICATION(std::string);
 #undef __NAME_OF_TYPE_SPECIALICATION
 
-inline void toString(std::stringstream & ss) {}
+inline void toString(std::stringstream & /*ss*/) {}
 
 std::string toString(bool value);
 

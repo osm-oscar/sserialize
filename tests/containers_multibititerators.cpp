@@ -8,7 +8,7 @@
 
 using namespace sserialize;
 
-void print(std::stringstream & dest) {}
+void print(std::stringstream & /*dest*/) {}
 
 template<typename T, typename ... Args>
 void print(std::stringstream & dest, T t, Args ... args) {

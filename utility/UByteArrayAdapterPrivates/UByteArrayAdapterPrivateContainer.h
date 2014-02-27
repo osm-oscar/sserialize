@@ -270,7 +270,7 @@ void UByteArrayAdapterPrivateContainer<T_CONTAINER>::putNegativeOffset(UByteArra
 }
 
 template<typename T_CONTAINER>
-int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[9];
 	int len = p_vu64(value, buf);
 	if (len > 0) {
@@ -282,7 +282,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArray
 }
 
 template<typename T_CONTAINER>
-int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[9];
 	int len = p_vs64(value, buf);
 	if (len > 0) {
@@ -294,7 +294,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayA
 }
 
 template<typename T_CONTAINER>
-int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vu32(value, buf);
 	if (len > 0) {
@@ -306,7 +306,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint32(UByteArray
 }
 
 template<typename T_CONTAINER>
-int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vu32pad4(value, buf);
 	if (len > 0) {
@@ -318,7 +318,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedPad4Uint32(UByteA
 }
 
 template<typename T_CONTAINER>
-int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vs32(value, buf);
 	if (len > 0) {
@@ -330,7 +330,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt32(UByteArrayA
 }
 
 template<typename T_CONTAINER>
-int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vs32pad4(value, buf);
 	if (len > 0) {

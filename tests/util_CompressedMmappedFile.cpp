@@ -97,7 +97,7 @@ public:
 	}
 };
 
-int main(int argc, char ** argv) {
+int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( CompressedMmappedFileTest<182137657, 20, 0>::suite() ); //about 173 MebiBytes, 1 megbyte chunk size

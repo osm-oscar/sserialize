@@ -114,36 +114,36 @@ struct TestResult {
 	long int indexDETime;
 	long int indexRleDETime;
 	void print(std::ostream & out) {
-		std::cout << "bucketFill: " << bucketFill << std::endl;
-		std::cout << "setSize: " << setSize << std::endl;
-		std::cout << "comparisonCount: " << comparisonCount << std::endl;
-		std::cout << "setTime: " << setTime << std::endl;
-		std::cout << "vecTime: " << vecTime << std::endl;
-		std::cout << "indexTime: " << indexTime << std::endl;
-		std::cout << "indexVecTime: " << indexVecTime << std::endl;
-		std::cout << "indexWahTime: " << indexWahTime << std::endl;
-		std::cout << "indexRegLineTime: " << indexWahTime << std::endl;
-		std::cout << "indexDETime: " << indexWahTime << std::endl;
-		std::cout << "vecTime/setTime: " << (double)vecTime/setTime << std::endl;
-		std::cout << "indexTime/setTime: " << (double)indexTime/setTime << std::endl;
-		std::cout << "indexVecTime/setTime: " << (double)indexVecTime/setTime << std::endl;
-		std::cout << "indexWahTime/setTime: " << (double)indexWahTime/setTime << std::endl;
-		std::cout << "indexRegLineTime/setTime: " << (double)indexReglineTime/setTime << std::endl;
-		std::cout << "indexDETime/setTime: " << (double)indexDETime/setTime << std::endl;
-		std::cout << "indexRLeDETime/setTime: " << (double)indexRleDETime/setTime << std::endl;
+		out << "bucketFill: " << bucketFill << std::endl;
+		out << "setSize: " << setSize << std::endl;
+		out << "comparisonCount: " << comparisonCount << std::endl;
+		out << "setTime: " << setTime << std::endl;
+		out << "vecTime: " << vecTime << std::endl;
+		out << "indexTime: " << indexTime << std::endl;
+		out << "indexVecTime: " << indexVecTime << std::endl;
+		out << "indexWahTime: " << indexWahTime << std::endl;
+		out << "indexRegLineTime: " << indexWahTime << std::endl;
+		out << "indexDETime: " << indexWahTime << std::endl;
+		out << "vecTime/setTime: " << (double)vecTime/setTime << std::endl;
+		out << "indexTime/setTime: " << (double)indexTime/setTime << std::endl;
+		out << "indexVecTime/setTime: " << (double)indexVecTime/setTime << std::endl;
+		out << "indexWahTime/setTime: " << (double)indexWahTime/setTime << std::endl;
+		out << "indexRegLineTime/setTime: " << (double)indexReglineTime/setTime << std::endl;
+		out << "indexDETime/setTime: " << (double)indexDETime/setTime << std::endl;
+		out << "indexRLeDETime/setTime: " << (double)indexRleDETime/setTime << std::endl;
 	}
 	void printPlotFriendly(std::ostream & out) {
-		std::cout << bucketFill << ";"; //0
-		std::cout << setSize << ";"; //1
-		std::cout << comparisonCount << ";"; //2
-		std::cout << setTime << ";"; //3
-		std::cout << vecTime << ";"; //4 (vector => vector)
-		std::cout << indexTime << ";"; //5 (vector => simple with ItemIndex)
-		std::cout << indexVecTime << ";"; //6 (vector => vector with ItemIndex)
-		std::cout << indexWahTime << ";"; //7
-		std::cout << indexReglineTime << ";"; //8
-		std::cout << indexDETime << ";"; //9
-		std::cout << indexRleDETime << ";"; // 10
+		out << bucketFill << ";"; //0
+		out << setSize << ";"; //1
+		out << comparisonCount << ";"; //2
+		out << setTime << ";"; //3
+		out << vecTime << ";"; //4 (vector => vector)
+		out << indexTime << ";"; //5 (vector => simple with ItemIndex)
+		out << indexVecTime << ";"; //6 (vector => vector with ItemIndex)
+		out << indexWahTime << ";"; //7
+		out << indexReglineTime << ";"; //8
+		out << indexDETime << ";"; //9
+		out << indexRleDETime << ";"; // 10
 	}
 };
 

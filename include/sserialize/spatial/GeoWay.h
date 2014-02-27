@@ -54,7 +54,7 @@ public:
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
 	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
-	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const {
+	virtual UByteArrayAdapter & append(UByteArrayAdapter & /*destination*/) const {
 		throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoWay<PointsContainer>::append");
 	}
 	

@@ -21,7 +21,7 @@ public:
 	virtual bool addStringsToItem(unsigned int itemId, const std::deque<std::string> & itemStrs) = 0;
 	virtual std::vector<unsigned int> itemStringIDs(uint32_t itemPos) const = 0;
 	virtual const ItemType & at(uint32_t itemPos) const = 0;
-	virtual const std::map<unsigned int, std::string> & strIdToStr() const = 0;
+	virtual const std::vector<std::string> & strIdToStr() const = 0;
 	virtual ItemIndex select(const ItemIndex & idx) const = 0;
 	virtual ItemIndex select(const std::unordered_set<uint32_t> & strIds) const = 0;
 	virtual bool match(uint32_t pos, const ItemIndex & idx) const = 0;
@@ -69,7 +69,7 @@ public:
 		return RCWrapper< StringsItemDBWrapperPrivate< ItemType > >::priv()->at(itemPos);
 	}
 	
-	const std::map<unsigned int, std::string> & strIdToStr() const {
+	const std::vector<std::string> & strIdToStr() const {
 		return RCWrapper< StringsItemDBWrapperPrivate< ItemType > >::priv()->strIdToStr();
 	}
 	StringsItemDBWrapperPrivate<ItemType> * getPrivate() const {

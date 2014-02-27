@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream & out, const std::vector<uint32_t> & vec) 
 }
 
 
-int main(int argc, char ** argv) {
+int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( UtilFuncsTest<10, 10000>::suite() );

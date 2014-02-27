@@ -135,7 +135,7 @@ struct SerializationInfo<Static::GeneralizedTrie::HeaderInfo> {
 	static const OffsetType length = SerializationInfo<uint8_t>::length + 5*SerializationInfo<uint32_t>::length + UByteArrayAdapter::S_OffsetTypeSerializedLength;
 	static const OffsetType max_length = length;
 	static const OffsetType min_length = length;
-	static OffsetType sizeInBytes(const Static::GeneralizedTrie::HeaderInfo  & value) {
+	static OffsetType sizeInBytes(const Static::GeneralizedTrie::HeaderInfo  & /*value*/) {
 		return length;
 	}
 };

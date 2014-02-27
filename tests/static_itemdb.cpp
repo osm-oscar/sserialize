@@ -20,7 +20,7 @@ printDebugShouldIs(std::string what, A a, B b, std::ostream & out = std::cout) {
 template<typename A, typename B>
 bool checkAndDebugPrint(std::string what, A a, B b, std::ostream & out = std::cout) {
 	if (a != b) {
-		printDebugShouldIs(what, a, b);
+		printDebugShouldIs(what, a, b, out);
 		return false;
 	}
 	return true;
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 		UByteArrayAdapter dbAdap(new std::deque<uint8_t>, true);
 		UByteArrayAdapter stableAdap(new std::deque<uint8_t>, true);
 		dbAdap << dataBase;
-		Static::StringTable::create<std::map<unsigned int, std::string>, std::string >(stableAdap, dataBase.strIdToStr());
+		Static::StringTable::create(stableAdap, dataBase.strIdToStr());
 
 		if (dbAdap.size() > 0) {
 			std::cout << "Serialization successfull?" << std::endl;

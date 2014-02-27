@@ -489,7 +489,7 @@ double variance(std::deque<long> & values) {
 	return var/values.size();
 }
 
-std::ostream& printTrieStats(const GeneralizedTrie& trie, std::ostream& out, std::string fnprefix) {
+std::ostream& printTrieStats(const GeneralizedTrie& trie, std::ostream& out, std::string /*fnprefix*/) {
 	TrieStats stats(trie.getRootNode(), trie.getIndexStore());
 	stats.fill();
 	stats.print(out);

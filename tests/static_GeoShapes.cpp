@@ -203,7 +203,7 @@ public:
 };
 
 
-int main(int argc, char ** argv) {
+int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	for(uint32_t i = 0; i < 10; ++i) {

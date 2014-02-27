@@ -130,11 +130,11 @@ void GeoHierarchy::printStats(std::ostream & out) const {
 	std::vector<Region>::const_iterator maxCellSplitIt = std::max_element(m_regions.cbegin(), m_regions.cend(), [] (const Region & x, const Region & y) {return x.cells.size() < y.cells.size();});
 	std::vector<Region>::const_iterator maxChildrenIt = std::max_element(m_regions.cbegin(), m_regions.cend(), [] (const Region & x, const Region & y) {return x.children.size() < y.children.size();});
 	std::vector<Region>::const_iterator maxParentsIt = std::max_element(m_regions.cbegin(), m_regions.cend(), [] (const Region & x, const Region & y) {return x.parents.size() < y.parents.size();});
-	std::cout << "sserialize::spatial::GeoHierarchy--stats-BEGIN" << std::endl;
-	std::cout << "max cellsplit at " << maxCellSplitIt-m_regions.cbegin() << " with " << maxCellSplitIt->cells.size() << std::endl;
-	std::cout << "max children at " << maxChildrenIt-m_regions.cbegin() << " with " << maxChildrenIt->children.size() << std::endl;
-	std::cout << "max parents at " << maxParentsIt-m_regions.cbegin() << " with " << maxParentsIt->parents.size() << std::endl;
-	std::cout << "sserialize::spatial::GeoHierarchy--stats-END" << std::endl;
+	out << "sserialize::spatial::GeoHierarchy--stats-BEGIN" << std::endl;
+	out << "max cellsplit at " << maxCellSplitIt-m_regions.cbegin() << " with " << maxCellSplitIt->cells.size() << std::endl;
+	out << "max children at " << maxChildrenIt-m_regions.cbegin() << " with " << maxChildrenIt->children.size() << std::endl;
+	out << "max parents at " << maxParentsIt-m_regions.cbegin() << " with " << maxParentsIt->parents.size() << std::endl;
+	out << "sserialize::spatial::GeoHierarchy--stats-END" << std::endl;
 }
 
 UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory) const {

@@ -13,7 +13,7 @@ StringCompleter::SupportedQuerries StringCompleterPrivate::getSupportedQuerries(
 	return StringCompleter::SQ_NONE;
 }
 
-ItemIndex StringCompleterPrivate::complete(const std::string& str, sserialize::StringCompleter::QuerryType qtype) const {
+ItemIndex StringCompleterPrivate::complete(const std::string& /*str*/, sserialize::StringCompleter::QuerryType /*qtype*/) const {
 	return ItemIndex();
 }
 
@@ -22,11 +22,11 @@ ItemIndexIterator StringCompleterPrivate::partialComplete(const std::string& str
 }
 
 
-std::map< uint16_t, ItemIndex > StringCompleterPrivate::getNextCharacters(const std::string& str, sserialize::StringCompleter::QuerryType qtype, bool withIndex) const {
+std::map< uint16_t, ItemIndex > StringCompleterPrivate::getNextCharacters(const std::string& /*str*/, sserialize::StringCompleter::QuerryType /*qtype*/, bool /*withIndex*/) const {
 	return std::map< uint16_t, ItemIndex >();
 }
 
-ItemIndex StringCompleterPrivate::indexFromId(uint32_t idxId) const {
+ItemIndex StringCompleterPrivate::indexFromId(uint32_t /*idxId*/) const {
 	return ItemIndex();
 }
 

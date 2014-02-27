@@ -95,7 +95,7 @@ private:
 		EntryComparator(const OrderedStringTable * strTable) : m_st(strTable) {}
 		~EntryComparator() {}
 		inline bool operator()(const Entry & a, const Entry & b, uint32_t lcp = 0) const {
-			return cmp(a.cbegin(m_st), b.cbegin(m_st), a.cend(m_st), b.cend(m_st));
+			return cmp(a.cbegin(m_st)+lcp, b.cbegin(m_st)+lcp, a.cend(m_st), b.cend(m_st));
 		}
 		inline bool operator()(const Entry & a, const std::string & str, uint32_t lcp = 0) const {
 			return cmp(a.cbegin(m_st)+lcp, str.begin(), a.cend(m_st), str.begin());

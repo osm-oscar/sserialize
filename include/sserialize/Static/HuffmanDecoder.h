@@ -140,7 +140,7 @@ namespace sserialize {
 		static const OffsetType length = 8;
 		static const OffsetType max_length = 8;
 		static const OffsetType min_length = 8;
-		static inline OffsetType sizeInBytes(const sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo & value) { return 8; }
+		static inline OffsetType sizeInBytes(const sserialize::Static::HuffmanDecoder::HuffmanCodePointInfo & /*value*/) { return 8; }
 	};
 }
 

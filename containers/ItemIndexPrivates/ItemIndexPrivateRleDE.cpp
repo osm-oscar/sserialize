@@ -19,7 +19,7 @@ m_cache(UByteArrayAdapter::createCache(m_size*4, false) ),
 m_cacheOffset(0)
 {}
 
-ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UDWIterator & data) {
+ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UDWIterator & /*data*/) {
 	throw sserialize::CorruptDataException("ItemIndexPrivateRleDE with UDWIterator is unsupported as of now!");
 }
 

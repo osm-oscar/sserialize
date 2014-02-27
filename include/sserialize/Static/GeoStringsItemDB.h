@@ -62,7 +62,7 @@ public:
 
 	using MyParentClass::partialComplete; //import partialComplete(*) functions from base, as those are hidden by the one above
 	
-	ItemIndex filter(const sserialize::spatial::GeoRect & rect, bool approximate, const ItemIndex & partner) const {
+	ItemIndex filter(const sserialize::spatial::GeoRect & rect, bool /*approximate*/, const ItemIndex & partner) const {
 		if (!partner.size())
 			return partner;
 		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, false) );
@@ -76,7 +76,7 @@ public:
 		return creator.getIndex();
 	}
 	
-	ItemIndexIterator filter(const sserialize::spatial::GeoRect & rect, bool approximate, const ItemIndexIterator & partner) const {
+	ItemIndexIterator filter(const sserialize::spatial::GeoRect & rect, bool /*approximate*/, const ItemIndexIterator & partner) const {
 		ItemIndexIteratorGeoDB< GeoStringsItemDB<MetaDataDeSerializable> > * dbIt = new ItemIndexIteratorGeoDB< GeoStringsItemDB<MetaDataDeSerializable> >(*this, rect, partner);
 		return ItemIndexIterator( dbIt );
 	}

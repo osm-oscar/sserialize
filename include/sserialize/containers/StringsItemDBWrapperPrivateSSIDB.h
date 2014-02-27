@@ -9,12 +9,13 @@ namespace sserialize {
 template<typename ItemType>
 class StringsItemDBWrapperPrivateSSIDB: public StringsItemDBWrapperPrivate<ItemType> {
 	Static::StringsItemDB<ItemType> m_db;
-	std::map<unsigned int, std::string> m_strIdToStr;
+	std::vector<std::string> m_strIdToStr;
 	ItemType m_dummy;
 public:
 	StringsItemDBWrapperPrivateSSIDB(const Static::StringsItemDB<ItemType> & db) : 
 		StringsItemDBWrapperPrivate<ItemType>(), m_db(db) {
 			Static::StringTable stable = m_db.stringTable();
+			m_strIdToStr.resize(stable.size());
 			for(size_t i = 0; i < stable.size(); i++) {
 				m_strIdToStr[i] = stable.at(i);
 			}
@@ -24,10 +25,10 @@ public:
 		return m_db.size();
 	}
 	virtual void clear() {}
-	virtual unsigned int insert(const std::deque<std::string> & strs, const ItemType & value) {
+	virtual unsigned int insert(const std::deque<std::string> & /*strs*/, const ItemType & /*value*/) {
 		return 0;
 	}
-	virtual bool addStringsToItem(unsigned int itemId, const std::deque<std::string> & itemStrs) {
+	virtual bool addStringsToItem(unsigned int /*itemId*/, const std::deque<std::string> & /*itemStrs*/) {
 		return false;
 	}
 	virtual std::vector<unsigned int> itemStringIDs(uint32_t itemPos) const {
@@ -39,12 +40,12 @@ public:
 		}
 		return strs;
 	}
-	virtual const std::map<unsigned int, std::string> & strIdToStr() const {
+	virtual const std::vector<std::string> & strIdToStr() const {
 		return m_strIdToStr;
 	}
 	
 	/** @return returns a dumym value, don't use it! **/
-	virtual const ItemType & at(uint32_t itemPos) const {
+	virtual const ItemType & at(uint32_t /*itemPos*/) const {
 		return m_dummy;
 	}
 

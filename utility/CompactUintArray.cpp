@@ -34,12 +34,12 @@ uint8_t CompactUintArrayPrivateEmpty::bpn() const {
 	return 0;
 }
 
-uint32_t CompactUintArrayPrivateEmpty::at(uint32_t pos) const {
+uint32_t CompactUintArrayPrivateEmpty::at(uint32_t /*pos*/) const {
 	return 0;
 }
 
 
-uint32_t CompactUintArrayPrivateEmpty::set(const uint32_t pos, uint32_t value) {
+uint32_t CompactUintArrayPrivateEmpty::set(const uint32_t /*pos*/, uint32_t value) {
 	return ~value;
 }
 

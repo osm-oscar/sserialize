@@ -8,7 +8,7 @@ GeoStringCompleterPrivate::~GeoStringCompleterPrivate() {}
 GeoStringCompleterPrivateEmpty::GeoStringCompleterPrivateEmpty() : MyParentClass() {}
 GeoStringCompleterPrivateEmpty::~GeoStringCompleterPrivateEmpty() {}
 
-ItemIndex GeoStringCompleterPrivateEmpty::complete(const spatial::GeoRect& rect, bool approximate) {
+ItemIndex GeoStringCompleterPrivateEmpty::complete(const spatial::GeoRect& /*rect*/, bool /*approximate*/) {
 	return ItemIndex();
 }
 

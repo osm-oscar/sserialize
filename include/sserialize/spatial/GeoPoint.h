@@ -63,7 +63,7 @@ struct SerializationInfo<sserialize::spatial::GeoPoint> {
 	static const OffsetType length = 8;
 	static const OffsetType max_length = 8;
 	static const OffsetType min_length = 8;
-	static inline OffsetType sizeInBytes(const sserialize::spatial::GeoPoint & value) { return 8; }
+	static inline OffsetType sizeInBytes(const sserialize::spatial::GeoPoint & /*value*/) { return 8; }
 };
 
 }//end namespace sserialize

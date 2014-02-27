@@ -26,9 +26,9 @@ class GeoCompleterPrivateEmpty: public GeoCompleterPrivate {
 public:
 	GeoCompleterPrivateEmpty() : GeoCompleterPrivate() {}
 	virtual ~GeoCompleterPrivateEmpty() {}
-	virtual ItemIndex complete(const spatial::GeoRect & rect, bool approximate) { return ItemIndex(); }
-	virtual ItemIndex filter(const spatial::GeoRect& rect, bool approximate, const ItemIndex& partner) { return ItemIndex(); }
-	virtual ItemIndexIterator filter(const spatial::GeoRect& rect, bool approximate, const ItemIndexIterator& partner) { return ItemIndexIterator(); }
+	virtual ItemIndex complete(const spatial::GeoRect & /*rect*/, bool /*approximate*/) { return ItemIndex(); }
+	virtual ItemIndex filter(const spatial::GeoRect& /*rect*/, bool /*approximate*/, const ItemIndex& /*partner*/) { return ItemIndex(); }
+	virtual ItemIndexIterator filter(const spatial::GeoRect& /*rect*/, bool /*approximate*/, const ItemIndexIterator& /*partner*/) { return ItemIndexIterator(); }
 	virtual std::ostream & printStats(std::ostream & out) const { return out; }
 	virtual std::string getName() const { return "GeoCompleterPrivateEmpty"; }
 };

@@ -177,7 +177,7 @@ ItemIndex::Types ItemIndexPrivateEmpty::type() const {
 	return ItemIndex::T_EMPTY;
 }
 
-int ItemIndexPrivateEmpty::find(uint32_t id) const {
+int ItemIndexPrivateEmpty::find(uint32_t /*id*/) const {
     return -1;
 }
 
@@ -191,7 +191,7 @@ uint32_t ItemIndexPrivateEmpty::last() const {
 	return 0;
 }
 
-uint32_t ItemIndexPrivateEmpty::at(uint32_t pos) const {
+uint32_t ItemIndexPrivateEmpty::at(uint32_t /*pos*/) const {
 	return 0;
 }
 

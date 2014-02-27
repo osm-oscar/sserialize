@@ -321,7 +321,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putNegativeOffset(UByteArrayAda
 
 
 /** @return: Length of the number, -1 on failure **/
-int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[9];
 	int len = p_vu64(value, buf);
 	if (len > 0) {
@@ -334,7 +334,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint64(UByteArrayAdap
 	return len;
 }
 
-int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[9];
 	int len = p_vs64(value, buf);
 	if (len > 0) {
@@ -347,7 +347,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt64(UByteArrayAdapt
 	return len;
 }
 
-int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vu32(value, buf);
 	if (len > 0) {
@@ -360,7 +360,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint32(UByteArrayAdap
 	return len;
 }
 
-int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vu32pad4(value, buf);
 	if (len > 0) {
@@ -373,7 +373,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Uint32(UByteArray
 	return len;
 }
 
-int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vs32(value, buf);
 	if (len > 0) {
@@ -386,7 +386,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt32(UByteArrayAdapt
 	return len;
 }
 
-int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
 	int len = p_vs32pad4(value, buf);
 	if (len > 0) {

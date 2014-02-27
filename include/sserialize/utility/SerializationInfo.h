@@ -24,7 +24,7 @@ struct SerializationInfo<__TYPE> { \
 	static const OffsetType length = __LENGTH; \
 	static const OffsetType max_length = __LENGTH; \
 	static const OffsetType min_length = __LENGTH; \
-	static inline OffsetType sizeInBytes(const __TYPE & value) { return __LENGTH; } \
+	static inline OffsetType sizeInBytes(const __TYPE & /*value*/) { return __LENGTH; } \
 };
 
 SERIALIZATION_INFO_FIXED_LENGTH_SPECIALICATIONS_FUNC(uint8_t, 1);

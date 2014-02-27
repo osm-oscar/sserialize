@@ -44,7 +44,7 @@ checkTrie(std::deque< std::deque<std::string> > & compStrs, GeneralizedTrie::Mul
 	return true;
 }
 
-bool testTrieOptions(bool suffixTrie, bool caseSensitiveTrie, bool caseSensitiveSearch, bool reAssignItemIds, bool reAssignStrIds) {
+bool testTrieOptions(bool suffixTrie, bool caseSensitiveTrie, bool caseSensitiveSearch, bool /*reAssignItemIds*/, bool /*reAssignStrIds*/) {
 
 	std::deque<sserialize::StringCompleter::QuerryType> testRuns;
 	testRuns.push_back(sserialize::StringCompleter::QT_EXACT);

@@ -229,7 +229,7 @@ public:
 	
 	//SymbolProbIterator->first points to the Symbol ->second the symbolprobability or symbolcount
 	template<typename SymbolProbIterator, typename TFreq>
-	void create(const SymbolProbIterator & begin, const SymbolProbIterator & end, TFreq total) {
+	void create(const SymbolProbIterator & begin, const SymbolProbIterator & end, TFreq /*total*/) {
 		typedef std::unordered_map<const Node*, std::pair<TFreq, uint32_t> > MyFreqTableType;
 		typedef NodePtrComparator<MyFreqTableType> MyNodePtrComparator;
 		typedef std::set<Node*, MyNodePtrComparator> MySortContainer;
@@ -276,7 +276,7 @@ public:
 
 	
 	///It's up to the user to set correct bitsPerLevel depending on the alphabetBitLength (i.e. everylevel has to have n*alphabetBitLength where n is a natural number)
-	bool serialize(sserialize::UByteArrayAdapter & dest, ValueSerializer valueSerializer, const std::vector<uint8_t> & bitsPerLevel) {
+	bool serialize(sserialize::UByteArrayAdapter & dest, ValueSerializer /*valueSerializer*/, const std::vector<uint8_t> & bitsPerLevel) {
 		{
 			uint8_t myDepth = depth();
 			uint32_t maxDepth = std::accumulate(bitsPerLevel.begin(), bitsPerLevel.end(), static_cast<uint32_t>(0));

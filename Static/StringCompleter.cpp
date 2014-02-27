@@ -10,7 +10,7 @@ ItemIndexIterator StringCompleterPrivate::partialComplete(const std::string & st
 	return ItemIndexIterator( complete(str, qtype) );
 }
 
-std::map<uint16_t, ItemIndex> StringCompleterPrivate::getNextCharacters(const std::string& str, sserialize::StringCompleter::QuerryType qtype, bool withIndex) const {
+std::map<uint16_t, ItemIndex> StringCompleterPrivate::getNextCharacters(const std::string& /*str*/, sserialize::StringCompleter::QuerryType /*qtype*/, bool /*withIndex*/) const {
 	return std::map<uint16_t, ItemIndex>();
 }
 

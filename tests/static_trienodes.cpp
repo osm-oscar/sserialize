@@ -126,7 +126,7 @@ printDebugShouldIs(std::string what, A a, B b, std::ostream & out = std::cout) {
 template<typename A, typename B>
 bool checkAndDebugPrint(std::string what, A a, B b, std::ostream & out = std::cout) {
 	if (a != b) {
-		printDebugShouldIs(what, a, b);
+		printDebugShouldIs(what, a, b, out);
 		return false;
 	}
 	return true;
@@ -248,7 +248,7 @@ bool createAndTestNodePrivateBottomUp(NodeConfig & config) {
 
 
 template<class StaticTrieCreationNodeT, class StaticTrieNodeT>
-bool testNodeImplementationPrivateBottumUp(uint8_t minCharWidth, uint8_t maxCharWidth, int minIndexType, int maxIndexType, int nodeType) {
+bool testNodeImplementationPrivateBottumUp(uint8_t minCharWidth, uint8_t maxCharWidth, int minIndexType, int maxIndexType, int /*nodeType*/) {
 	bool allOk = true;
 	for(uint8_t charWidth = minCharWidth; charWidth <= maxCharWidth; ++charWidth) {
 		for(int indexTypeIt = minIndexType; indexTypeIt <= maxIndexType; indexTypeIt++) {

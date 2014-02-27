@@ -15,9 +15,9 @@ public:
 	virtual UByteArrayAdapter::OffsetType size() const;
 	
 	/** Shrink data to size bytes */
-	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) { return false; }
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType /*size*/) { return false; }
 	/** grow data to at least! size bytes */
-	virtual bool growStorage(UByteArrayAdapter::OffsetType size) { return false; }
+	virtual bool growStorage(UByteArrayAdapter::OffsetType /*size*/) { return false; }
 	
 
 	virtual uint8_t & operator[](UByteArrayAdapter::OffsetType pos);

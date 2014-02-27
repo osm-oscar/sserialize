@@ -206,7 +206,7 @@ bool testFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 	uint32_t curPos = 0;
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		uint32_t codedNum;
+		uint32_t codedNum = 0;
 		switch (minStorageBytesOfValue(num)) {
 		case(1):
 			codedNum = adapter.getUint8(curPos);
@@ -484,7 +484,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 	}
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		uint32_t codedNum;
+		uint32_t codedNum = 0;
 		switch (minStorageBytesOfValue(num)) {
 		case(1):
 			codedNum = testAdapter.getUint8(0);

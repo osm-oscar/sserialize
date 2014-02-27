@@ -15,16 +15,16 @@ UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateCompressedMmappedFile::siz
 
 
 /** Shrink data to size bytes */
-bool UByteArrayAdapterPrivateCompressedMmappedFile::shrinkStorage(UByteArrayAdapter::OffsetType size) {
+bool UByteArrayAdapterPrivateCompressedMmappedFile::shrinkStorage(UByteArrayAdapter::OffsetType /*size*/) {
 	return false;
 }
 
 /** grow data to at least! size bytes */
-bool UByteArrayAdapterPrivateCompressedMmappedFile::growStorage(UByteArrayAdapter::OffsetType size) {
+bool UByteArrayAdapterPrivateCompressedMmappedFile::growStorage(UByteArrayAdapter::OffsetType /*size*/) {
 	return false;
 }
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::setDeleteOnClose(bool del) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::setDeleteOnClose(bool /*del*/) {}
 
 //Access functions
 uint8_t & UByteArrayAdapterPrivateCompressedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) {
@@ -217,52 +217,52 @@ void UByteArrayAdapterPrivateCompressedMmappedFile::get(UByteArrayAdapter::Offse
 
 /** If the supplied memory is not writable then you're on your own! **/
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putInt64(UByteArrayAdapter::OffsetType pos, int64_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putInt64(UByteArrayAdapter::OffsetType /*pos*/, int64_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putUint64(UByteArrayAdapter::OffsetType pos, uint64_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putUint64(UByteArrayAdapter::OffsetType /*pos*/, uint64_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putInt32(UByteArrayAdapter::OffsetType pos, int32_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putInt32(UByteArrayAdapter::OffsetType /*pos*/, int32_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putUint32(UByteArrayAdapter::OffsetType pos, uint32_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putUint32(UByteArrayAdapter::OffsetType /*pos*/, uint32_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putUint24(UByteArrayAdapter::OffsetType pos, uint32_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putUint24(UByteArrayAdapter::OffsetType /*pos*/, uint32_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putUint16(UByteArrayAdapter::OffsetType pos, uint16_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putUint16(UByteArrayAdapter::OffsetType /*pos*/, uint16_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putUint8(UByteArrayAdapter::OffsetType pos, uint8_t value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putUint8(UByteArrayAdapter::OffsetType /*pos*/, uint8_t /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putNegativeOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::NegativeOffsetType value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putNegativeOffset(UByteArrayAdapter::OffsetType /*pos*/, UByteArrayAdapter::NegativeOffsetType /*value*/) {}
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::putOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType value) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::putOffset(UByteArrayAdapter::OffsetType /*pos*/, UByteArrayAdapter::OffsetType /*value*/) {}
 
 
 /** @return: Length of the number, -1 on failure **/
-int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedInt64(UByteArrayAdapter::OffsetType /*pos*/, int64_t /*value*/, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return -1;
 }
 
-int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedUint64(UByteArrayAdapter::OffsetType /*pos*/, uint64_t /*value*/, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return -1;
 }
 
 
-int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedUint32(UByteArrayAdapter::OffsetType /*pos*/, uint32_t /*value*/, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return -1;
 }
 
-int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType /*pos*/, uint32_t /*value*/, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return -1;
 }
 
-int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedInt32(UByteArrayAdapter::OffsetType /*pos*/, int32_t /*value*/, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return -1;
 }
 
-int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateCompressedMmappedFile::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType /*pos*/, int32_t /*value*/, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return -1;
 }
 
-void UByteArrayAdapterPrivateCompressedMmappedFile::put(sserialize::UByteArrayAdapter::OffsetType pos, const uint8_t * src, sserialize::UByteArrayAdapter::OffsetType len) {}
+void UByteArrayAdapterPrivateCompressedMmappedFile::put(sserialize::UByteArrayAdapter::OffsetType /*pos*/, const uint8_t * /*src*/, sserialize::UByteArrayAdapter::OffsetType /*len*/) {}
 
 
 

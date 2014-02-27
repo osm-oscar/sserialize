@@ -16,13 +16,11 @@ GeneralizedTrieCreatorConfig() :
 		{};
 	GeneralizedTrieCreatorConfig(
 		std::deque<uint8_t>* trieList,
-		bool indirectIndex,
 		bool mergeIndex,
 		std::set<uint8_t> levelsWithoutFullIndex,
 		int32_t maxPrefixMergeCount,
 		int32_t maxSuffixMergeCount,
 		bool deleteRootTrie,
-		int8_t fixedBitWidth,
 		Static::TrieNode::Types nodeType) :
 			trieList(trieList),
 			mergeIndex(mergeIndex),
@@ -71,7 +69,7 @@ public:
 	virtual ~SerializableTrie() {}
 	void swap(MyBaseClass & other) { MyBaseClass::swap(other); }
 	
-	bool checkTrieEquality(GeneralizedTrieCreatorConfig config, sserialize::Static::GeneralizedTrie staticTrie) {
+	bool checkTrieEquality(GeneralizedTrieCreatorConfig /*config*/, sserialize::Static::GeneralizedTrie staticTrie) {
 		return checkTrieEqualityRecurse(MyBaseClass::rootNode(), staticTrie.getRootNode(), "");
 	}
 	bool checkIndexEquality(GeneralizedTrieCreatorConfig config, Static::GeneralizedTrie staticTrie, StringCompleter::SupportedQuerries sqtype);
@@ -186,7 +184,7 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 template<typename IndexStorageContainer>
 bool
 SerializableTrie<IndexStorageContainer>::
-checkIndexEquality(GeneralizedTrieCreatorConfig config, sserialize::Static::GeneralizedTrie staticTrie, sserialize::StringCompleter::SupportedQuerries sqtype) {
+checkIndexEquality(GeneralizedTrieCreatorConfig /*config*/, sserialize::Static::GeneralizedTrie staticTrie, sserialize::StringCompleter::SupportedQuerries sqtype) {
 	Node * rootNode = MyBaseClass::m_root;
 	return checkIndexEqualityRecurse(rootNode, staticTrie.getRootNode(), staticTrie, sqtype);
 }

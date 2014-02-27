@@ -19,11 +19,11 @@ std::set<uint32_t> EmptyForwardIterator::EmptyForwardIterator::getNext() const {
 	return std::set<uint32_t>();
 }
 
-bool EmptyForwardIterator::hasNext(uint32_t codepoint) const {
+bool EmptyForwardIterator::hasNext(uint32_t /*codepoint*/) const {
 	return false;
 }
 
-bool EmptyForwardIterator::next(uint32_t codepoint) {
+bool EmptyForwardIterator::next(uint32_t /*codepoint*/) {
 	return false;
 }
 

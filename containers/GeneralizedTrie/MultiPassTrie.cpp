@@ -197,7 +197,7 @@ bool MultiPassTrie::getItemIdsForNode(
 
 /** Creates all necessary item indices, put them into the ItemFactory, sets the index pointers in nodeInfo and sets the IndexTypes in nodeInfo */
 bool MultiPassTrie::handleNodeIndices(
-    Node* curNode, uint8_t curLevel, bool delStorage, GeneralizedTrieCreatorConfig& config, sserialize::Static::TrieNodeCreationInfo& nodeInfo) {
+    Node* curNode, uint8_t curLevel, bool /*delStorage*/, GeneralizedTrieCreatorConfig& config, sserialize::Static::TrieNodeCreationInfo& nodeInfo) {
     
     nodeInfo.mergeIndex = config.mergeIndex;
 

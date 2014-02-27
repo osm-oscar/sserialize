@@ -121,27 +121,27 @@ void UByteArrayAdapterPrivateArray::putNegativeOffset(UByteArrayAdapter::OffsetT
 	p_s40(value, &(m_data[pos]));
 }
 
-int UByteArrayAdapterPrivateArray::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateArray::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return p_vu64(value, &(m_data[pos]));
 }
 
-int UByteArrayAdapterPrivateArray::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateArray::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return p_vs64(value, &(m_data[pos]));
 }
 
-int UByteArrayAdapterPrivateArray::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateArray::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return p_vu32(value, &(m_data[pos]));
 }
 
-int UByteArrayAdapterPrivateArray::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateArray::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return p_vu32pad4(value, &(m_data[pos]));
 }
 
-int UByteArrayAdapterPrivateArray::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateArray::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return p_vs32(value, &(m_data[pos]));
 }
 
-int UByteArrayAdapterPrivateArray::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+int UByteArrayAdapterPrivateArray::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	return p_vs32pad4(value, &(m_data[pos]));
 }
 

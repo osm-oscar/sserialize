@@ -28,7 +28,7 @@ public:
 	};
 	
 	struct ItemFilterIdentity: ItemFilter {
-		virtual bool operator()(uint32_t id) const { return true; }
+		virtual bool operator()(uint32_t /*id*/) const { return true; }
 	};
 	
 private:
@@ -111,7 +111,7 @@ public:
 	static ItemIndex fromIndexHierachy(const std::deque<uint32_t> & offsets, const UByteArrayAdapter & indexFile, Types type = T_REGLINE);
 	static ItemIndex fromFile(const std::string & fileName, bool deleteOnClose);
 	template<typename TCONTAINER>
-	static ItemIndex create(const TCONTAINER & src, UByteArrayAdapter & dest, Types type) {
+	static ItemIndex create(const TCONTAINER & /*src*/, UByteArrayAdapter & /*dest*/, Types /*type*/) {
 		throw sserialize::UnimplementedFunctionException("ItemIndex::create");
 		return ItemIndex();
 	}

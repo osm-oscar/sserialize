@@ -1,6 +1,7 @@
 #include "FlatGST.h"
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/vendor/utf8/checked.h>
+#include <sserialize/templated/EdgeList.h>
 #include <unordered_set>
 #include <algorithm>
 
@@ -216,8 +217,8 @@ void FlatGST::trieFromMyStringTable() {
 	//in the next phase we have to add our inner nodes that do not have a node
 }
 
-void FlatGST::serialize(UByteArrayAdapter & dest) {
-	
+void FlatGST::serialize(UByteArrayAdapter & /*dest*/) {
+	EdgeList<uint32_t> edgeList;
 }
 
 
