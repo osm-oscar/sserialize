@@ -500,19 +500,19 @@ bool BaseTrie<IndexStorageContainer>::setDB(const StringsItemDBWrapper< ItemType
 		}
 	}
 	{
-		insertSecondIntoContainer(db.strIdToStr().cbegin(), db.strIdToStr().cend(), m_strings);
+		m_strings.insert(m_strings.end(), db.strIdToStr().cbegin(), db.strIdToStr().cend());
 		std::sort(m_strings.begin(), m_strings.end());
 	}
 	
 	//This is the first part (create the trie)
 	progressInfo.begin(db.strIdToStr().size());
 	uint32_t count = 0;
-	for(std::map<unsigned int, std::string>::const_iterator strsIt = db.strIdToStr().begin(); strsIt != db.strIdToStr().end(); ++strsIt) {
+	for(std::vector<std::string>::const_iterator strsIt = db.strIdToStr().begin(); strsIt != db.strIdToStr().end(); ++strsIt) {
 		std::vector<std::string> strs;
 		if (m_caseSensitive)
-			strs.push_back(strsIt->second);
+			strs.push_back(*strsIt);
 		else
-			strs.push_back( unicode_to_lower(strsIt->second) );
+			strs.push_back( unicode_to_lower(*strsIt) );
 		
 		if (m_addTransDiacs) {
 			strs.push_back( strs.back() );
@@ -540,19 +540,16 @@ bool BaseTrie<IndexStorageContainer>::setDB(const StringsItemDBWrapper< ItemType
 	std::unordered_map<unsigned int, std::set<Node*> > strIdToSubStrNodes; strIdToSubStrNodes.reserve(db.strIdToStr().size());
 	std::unordered_map<unsigned int, std::set<Node*> > strIdToExactNodes; strIdToExactNodes.reserve(db.strIdToStr().size());
 	
-	std::vector<unsigned int> strIds;
-	insertMapKeysIntoVector(db.strIdToStr(), strIds);
-	
 	progressInfo.begin(db.strIdToStr().size());
 	count = 0;
 	#pragma omp parallel for 
-	for(size_t i = 0; i <  strIds.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
-		std::map<unsigned int, std::string>::const_iterator dbStrIt = db.strIdToStr().find(strIds[i]);
+	for(size_t i = 0; i <  db.strIdToStr().size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
+		const std::string & dbStr = db.strIdToStr().at(i);
 		std::vector<std::string> strs;
 		if (m_caseSensitive)
-			strs.push_back(dbStrIt->second);
+			strs.push_back(dbStr);
 		else
-			strs.push_back( unicode_to_lower(dbStrIt->second) );
+			strs.push_back( unicode_to_lower(dbStr) );
 		
 		if (m_addTransDiacs) {
 			strs.push_back( strs.back() );
@@ -564,12 +561,12 @@ bool BaseTrie<IndexStorageContainer>::setDB(const StringsItemDBWrapper< ItemType
 			std::string::const_iterator strIt(insStrIt->begin());
 			std::string::const_iterator strEnd(insStrIt->end());
 			#pragma omp critical
-			{strIdToExactNodes[dbStrIt->first].insert( at(strIt, strEnd) );}
+			{strIdToExactNodes[i].insert( at(strIt, strEnd) );}
 			if (m_isSuffixTrie) {
 				while (strIt != strEnd) {
 					Node * node = nextSuffixNode(strIt, strEnd);
 					#pragma omp critical
-					{strIdToSubStrNodes[dbStrIt->first].insert( node );}
+					{strIdToSubStrNodes[i].insert( node );}
 				}
 			}
 		}

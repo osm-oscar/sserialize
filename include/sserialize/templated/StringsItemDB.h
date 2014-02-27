@@ -96,7 +96,7 @@ public:
 	}
 
 	
-	const std::map<unsigned int, std::string> & strIdToStr() const {
+	const std::vector<std::string> & strIdToStr() const {
 		return priv()->strIdToStr();
 	}
 

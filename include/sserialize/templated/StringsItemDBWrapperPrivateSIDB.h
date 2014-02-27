@@ -32,7 +32,7 @@ public:
 		return m_db.items().at(itemPos);
 	}
 	
-	virtual const std::map<unsigned int, std::string> & strIdToStr() const {
+	virtual const std::vector<std::string> & strIdToStr() const {
 		return m_db.strIdToStr();
 	}
 	

@@ -24,13 +24,13 @@ public:
 	typedef std::vector< std::vector<uint32_t> > ItemStringsContainer;
 	typedef std::map<std::string, std::pair<unsigned int, unsigned int> >::iterator StrToStrIdCountIterator;
 	typedef std::map<std::string, std::pair<unsigned int, unsigned int> >::const_iterator ConstStrToStrIdCountIterator;
-	typedef std::map<unsigned int, std::string>::iterator StrIdToStrIterator;
+	typedef std::vector<std::string>::iterator StrIdToStrIterator;
 
 
 private:
 	unsigned int m_curMaxStrId;
 	std::map<std::string, std::pair<unsigned int, unsigned int> > m_strToStrIdCount;
-	std::map<unsigned int, std::string> m_strIdToStr;
+	std::vector<std::string> m_strIdToStr;
 	ItemStringsContainer m_itemStrings;
 	ItemContainer m_items;
 private:
@@ -60,7 +60,7 @@ public:
 	ItemStringsContainer & itemStrings() { return m_itemStrings; }
 	const ItemStringsContainer & itemStrings() const { return m_itemStrings;}
 
-	const std::map<unsigned int, std::string> & strIdToStr() const { return m_strIdToStr; }
+	const std::vector<std::string> & strIdToStr() const { return m_strIdToStr; }
 
 	std::string toString(uint32_t strId);
 
@@ -72,7 +72,7 @@ public:
 
 	/**create a static stringtable, you should call reAssignStringIds before **/
 	void createStaticStringTable(UByteArrayAdapter & destination) {
-		Static::StringTable::create<std::map<unsigned int, std::string>, std::string >(destination, m_strIdToStr);
+		Static::StringTable::create(m_strIdToStr.cbegin(), m_strIdToStr.cend(), destination);
 	}
 	
 	void absorb(StringsItemDBPrivate<ItemType> & db);
@@ -197,7 +197,7 @@ StringsItemDBPrivate<ItemType>::complete(const std::string & str, sserialize::St
 template<typename ItemType>
 std::string
 StringsItemDBPrivate<ItemType>::toString(uint32_t strId) {
-	if (m_strIdToStr.count(strId) > 0) {
+	if (strId < m_strIdToStr.size()) {
 		return m_strIdToStr.at(strId);
 	}
 	return std::string();
@@ -281,11 +281,10 @@ StringsItemDBPrivate<ItemType>::reAssignStringIds() {
 		}
 	}
 	usageToStrIds.clear();
-	m_strIdToStr.clear(); //has to be reconstructed while remapping
 	//Let's do the remapping
 	for(StrToStrIdCountIterator it = m_strToStrIdCount.begin(); it != m_strToStrIdCount.end(); it++) {
 		it->second.first = oldStrsToNewStrs.at(it->second.first);
-		m_strIdToStr.insert(std::pair<unsigned int, std::string>(it->second.first, it->first));
+		m_strIdToStr.at(it->second.first) = it->first;
 	}
 	for(ItemIterator it = m_items.begin(); it != m_items.end(); it++) {
 		for(std::deque<uint32_t>::iterator jt = it->strs.begin(); jt != it->strs.end(); jt++) {

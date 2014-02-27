@@ -12,6 +12,9 @@ namespace Static {
  * so that the smallest ids are most frequently used
  */
 class StringTable: public RCWrapper< sserialize::Static::Deque<std::string> > {
+public:
+	typedef sserialize::Static::Deque<std::string>::const_iterator const_iterator;
+	typedef sserialize::Static::Deque<std::string>::const_reference const_reference;
 protected:
 	inline UByteArrayAdapter & data() { return priv()->data();}
 	inline const UByteArrayAdapter & data() const { return priv()->data(); }
@@ -29,22 +32,32 @@ public:
 	std::ostream& printStats(std::ostream & out) const;
 	
 	inline uint32_t size() const { return priv()->size();}
-	inline uint32_t getSizeInBytes() const { return priv()->getSizeInBytes();}
+	inline UByteArrayAdapter::OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
 	inline std::string at(uint32_t pos) const { return priv()->at(pos); }
 	inline UByteArrayAdapter dataAt(uint32_t pos) const { return priv()->dataAt(pos);}
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
+	inline const_iterator cbegin() { return priv()->cbegin();}
+	inline const_iterator cend() { return priv()->cend();}
 
-	///The order of the strings impacts the type
-	template<typename T_RANDOM_ACCESS_CONTAINER, typename T_VALUE_TYPE = typename T_RANDOM_ACCESS_CONTAINER::value_type>
-	static bool create(UByteArrayAdapter & destination, const T_RANDOM_ACCESS_CONTAINER & src) {
+	///The order of the strings impacts the type	
+	template<typename T_RANDOM_ACCESS_ITERATOR, typename T_VALUE_TYPE = typename T_RANDOM_ACCESS_ITERATOR::value_type>
+	static bool create(T_RANDOM_ACCESS_ITERATOR begin, T_RANDOM_ACCESS_ITERATOR end, UByteArrayAdapter & destination) {
 		Static::DequeCreator<T_VALUE_TYPE> creator(destination);
-		for(uint32_t i = 0, s = src.size(); i < s; ++i) {
-			creator.put( src.at(i) );
+		for(;begin != end; ++begin) {
+			creator.put( *begin );
 		}
 		creator.flush();
 		return true;
 	}
+	
+	///The order of the strings impacts the type
+	template<typename T_RANDOM_ACCESS_CONTAINER, typename T_VALUE_TYPE = typename T_RANDOM_ACCESS_CONTAINER::value_type>
+	static bool create(UByteArrayAdapter & destination, const T_RANDOM_ACCESS_CONTAINER & src) {
+		return create<typename T_RANDOM_ACCESS_CONTAINER::const_iterator, T_VALUE_TYPE>(src.cbegin(), src.cend(), destination);
+	}
+	
+
 };
 
 class FrequencyStringTable: public StringTable {
