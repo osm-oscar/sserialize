@@ -38,6 +38,7 @@ private:
 	std::deque<uint8_t> m_stTrieList;
 	sserialize::GeneralizedTrie::GeneralizedTrieCreatorConfig m_config;
 	StringCompleter m_strCompleter;
+	ItemIndexFactory m_indexFactory;
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
 
 protected:
@@ -58,8 +59,8 @@ protected:
 		m_trie.createStaticTrie(m_config);
 		
 		
-		m_config.indexFactory.flush();
-		UByteArrayAdapter idxAdap(m_config.indexFactory.getFlushedData());
+		m_config.indexFactory->flush();
+		UByteArrayAdapter idxAdap(m_config.indexFactory->getFlushedData());
 		sserialize::Static::ItemIndexStore idxStore(idxAdap);
 
 		UByteArrayAdapter trieAdap(&m_stTrieList);
@@ -91,7 +92,8 @@ public:
     StaticGeneralizedTrieTest() {
 		m_caseSensitive = T_BUILD_OPTS & BO_TREE_CASE_SENSITIVE;
 		m_suffixTrie = T_BUILD_OPTS & BO_SUFFIX_TREE;
-		m_config.indexFactory.setIndexFile(UByteArrayAdapter(new std::vector<uint8_t>(1024*1024,0), true));
+		m_config.indexFactory = &m_indexFactory;
+		m_config.indexFactory->setIndexFile(UByteArrayAdapter(new std::vector<uint8_t>(1024*1024,0), true));
     }
 
 	virtual void setUp() {

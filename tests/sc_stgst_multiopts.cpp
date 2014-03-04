@@ -42,9 +42,11 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 	std::deque<uint8_t> staticDataBaseList;
 
 	UByteArrayAdapter stableAdap(&staticStringList);
-
+	
+	sserialize::ItemIndexFactory indexFactory;
 	sserialize::GeneralizedTrie::GeneralizedTrieCreatorConfig config;
 	config.trieList = &staticTrieList;
+	config.indexFactory = &indexFactory;
 	config.levelsWithoutFullIndex = levelsWithoutFullIndex;
 	config.nodeType = Static::TrieNode::T_SIMPLE;
 	mtrie.createStaticTrie(config);
@@ -54,7 +56,7 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 
 
 	std::cout << "Serializing ItemFactory...";
-	if (config.indexFactory.flush()) {
+	if (config.indexFactory->flush()) {
 		std::cout << "OK";
 	}
 	else {
@@ -62,7 +64,7 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 	}
 	std::cout  << std::endl;
 
-	UByteArrayAdapter indexAdap(config.indexFactory.getFlushedData());
+	UByteArrayAdapter indexAdap(config.indexFactory->getFlushedData());
 
 	UByteArrayAdapter trieAdap(&staticTrieList);
 	UByteArrayAdapter dbAdap( (&staticDataBaseList) );

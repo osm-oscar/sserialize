@@ -208,7 +208,7 @@ bool MultiPassTrie::handleNodeIndices(
 	bool ok;
 	uint8_t indexTypes = 0;
 	if (nodeIdcs.hasExactValues) {
-		nodeInfo.exactIndexPtr = config.indexFactory.addIndex(nodeIdcs.exactValues, &ok);
+		nodeInfo.exactIndexPtr = config.indexFactory->addIndex(nodeIdcs.exactValues, &ok);
 		if (!ok) {
 			std::cerr << "FATAL: Failed to add Index to index factory" << std::endl;
 			nodeInfo.exactIndexPtr = 0xFFFFFFFF;
@@ -217,7 +217,7 @@ bool MultiPassTrie::handleNodeIndices(
 			indexTypes |= Static::TrieNodePrivate::IT_EXACT;
 	}
 	if (nodeIdcs.hasPrefixValues) {
-		nodeInfo.prefixIndexPtr = config.indexFactory.addIndex(nodeIdcs.prefixValues, &ok);
+		nodeInfo.prefixIndexPtr = config.indexFactory->addIndex(nodeIdcs.prefixValues, &ok);
 		if (!ok) {
 			std::cerr << "FATAL: Failed to add Index to index factory" << std::endl;
 			nodeInfo.prefixIndexPtr = 0xFFFFFFFF;
@@ -226,7 +226,7 @@ bool MultiPassTrie::handleNodeIndices(
 			indexTypes |= Static::TrieNodePrivate::IT_PREFIX;
 	}
 	if (nodeIdcs.hasSuffixValues) {
-		nodeInfo.suffixIndexPtr = config.indexFactory.addIndex(nodeIdcs.suffixValues, &ok);
+		nodeInfo.suffixIndexPtr = config.indexFactory->addIndex(nodeIdcs.suffixValues, &ok);
 		if (!ok) {
 			std::cerr << "FATAL: Failed to add Index to index factory" << std::endl;
 			nodeInfo.suffixIndexPtr = 0xFFFFFFFF;
@@ -235,7 +235,7 @@ bool MultiPassTrie::handleNodeIndices(
 			indexTypes |= Static::TrieNodePrivate::IT_SUFFIX;
 	}
 	if (nodeIdcs.hasSuffixPrefixValues) {
-		nodeInfo.suffixPrefixIndexPtr = config.indexFactory.addIndex(nodeIdcs.suffixPrefixValues, &ok);
+		nodeInfo.suffixPrefixIndexPtr = config.indexFactory->addIndex(nodeIdcs.suffixPrefixValues, &ok);
 		if (!ok) {
 			std::cerr << "FATAL: Failed to add Index to index factory" << std::endl;
 			nodeInfo.suffixPrefixIndexPtr = 0xFFFFFFFF;

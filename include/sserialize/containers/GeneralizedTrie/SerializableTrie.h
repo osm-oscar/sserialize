@@ -30,8 +30,8 @@ GeneralizedTrieCreatorConfig() :
 			deleteRootTrie(deleteRootTrie),
 			nodeType(nodeType)
 			{};
-	std::deque<uint8_t>* trieList;
-	ItemIndexFactory indexFactory;
+	std::deque<uint8_t> * trieList;
+	ItemIndexFactory * indexFactory;
 	bool mergeIndex;
 	std::set<uint8_t> levelsWithoutFullIndex;
 	//if the cumulated count of children itemindices is smaller than this threshold, then don't create a full index
@@ -112,13 +112,6 @@ checkTrieEqualityRecurse(Node * curNode, Static::TrieNode curStaticNode, std::st
 	}
 	return true;
 }
-
-// template<typename IndexStorageContainer>
-// bool
-// SerializableTrie<IndexStorageContainer>::
-// checkTrieEquality(GeneralizedTrieCreatorConfig config, Static::GeneralizedTrie staticTrie) {
-// 	return checkTrieEqualityRecurse(rootNode(), staticTrie.getRootNode(), "");
-// }
 
 template<typename IndexStorageContainer>
 bool
