@@ -54,7 +54,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	addIndex(std::set<uint32_t>(), 0);
 }
 
-std::vector<uint32_t> ItemIndexFactory::fromIndexStore(const sserialize::Static::ItemIndexStore& store) {
+std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemIndexStore& store) {
 	std::vector<uint32_t> res;
 	res.reserve(store.size());
 	std::vector<uint32_t> tmp; 

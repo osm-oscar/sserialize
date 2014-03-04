@@ -164,14 +164,14 @@ public:
 		idxFactory.setBitWith(-1);
 		idxFactory.setType(T_IDX_TYPE);
 		idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, false) );
-		std::vector<uint32_t> remap = idxFactory.fromIndexStore(sdb);
+		std::vector<uint32_t> remap = idxFactory.insert(sdb);
 		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);
 			sserialize::ItemIndex testIdx = idxFactory.getIndex(remap.at(i));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("idx", real, testIdx);
 		}
 		
-		remap = idxFactory.fromIndexStore(sdb);
+		remap = idxFactory.insert(sdb);
 		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);
 			sserialize::ItemIndex testIdx = idxFactory.getIndex(remap.at(i));

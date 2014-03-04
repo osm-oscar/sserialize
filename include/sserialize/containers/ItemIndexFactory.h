@@ -53,8 +53,8 @@ public:
 	void setType(ItemIndex::Types type) { m_type = type;}
 	///create the index Store at the beginning of data
 	void setIndexFile(UByteArrayAdapter data);
-	///from IndexStore set after setIndexFile
-	std::vector<uint32_t> fromIndexStore(const sserialize::Static::ItemIndexStore & store);
+	///insert IndexStore
+	std::vector<uint32_t> insert(const sserialize::Static::ItemIndexStore & store);
 	
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }
