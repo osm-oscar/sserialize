@@ -94,6 +94,51 @@ std::vector<std::string> splitLineVec(const std::string & str) {
 	return splits;
 }
 
+template<typename T_RETURN_CONTAINER, typename T_SEPARATOR_SET, typename T_ESCAPES_SET>
+T_RETURN_CONTAINER split(const std::string & str, const T_SEPARATOR_SET & separators, const T_ESCAPES_SET & escapes) {
+	T_RETURN_CONTAINER splits;
+	std::string curStr;
+	for(std::string::const_iterator it(str.cbegin()), end(str.cend()); it != end; ++it) {
+		if (escapes.count( *it ) > 0) {
+			++it;
+			if (it != end) {
+				curStr.push_back(*it);
+			}
+		}
+		else if (separators.count( *it ) > 0) {
+			splits.insert(splits.end(), curStr);
+			curStr.clear();
+		}
+		else {
+			curStr.push_back(*it);
+		}
+	}
+	if(curStr.length())
+		splits.push_back(curStr);
+	return splits;
+}
+
+namespace detail {
+template<typename TVALUE>
+class OneValueSet {
+public:
+	TVALUE m_value;
+public:
+	OneValueSet() {}
+	OneValueSet(const TVALUE & v) : m_value(v) {}
+	virtual ~OneValueSet() {}
+	int count(const TVALUE & v) { return (v == m_value ? 1 : 0); }
+	TVALUE & value() { return m_value; }
+	const TVALUE & value() const { return m_value; }
+};
+}//end namespace detail
+
+template<typename T_RETURN_CONTAINER>
+T_RETURN_CONTAINER split(const std::string & str, const char & separators, const char & escapes) {
+	detail::OneValueSet<char> sep(separators), esc(escapes);
+	return split<T_RETURN_CONTAINER, detail::OneValueSet<char>, detail::OneValueSet<char>>(str, sep, esc);
+}
+
 /** splits the string at the given spearator */
 std::deque<std::string> splitLine(const std::string & str, const std::set<char> & seps);
 
