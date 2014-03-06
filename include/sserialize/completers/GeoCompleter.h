@@ -4,10 +4,9 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIterator.h>
 #include <sserialize/spatial/GeoRect.h>
+#include <sserialize/completers/GeoCompleterPrivate.h>
 
 namespace sserialize {
-
-class GeoCompleterPrivate;
 
 class GeoCompleter: public RCWrapper<GeoCompleterPrivate> {
 protected:
