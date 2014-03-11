@@ -32,6 +32,8 @@ private:
 	std::vector<Cell> m_cells;
 	std::vector<Region> m_regions;
 	Region m_rootRegion;
+private:
+	void depths(std::vector<uint32_t> & d, uint32_t me) const;
 public:
 	GeoHierarchy() {}
 	virtual ~GeoHierarchy() {}
@@ -46,6 +48,8 @@ public:
 	UByteArrayAdapter append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory) const;
 	void printStats(std::ostream & out) const;
 	bool testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh) const;
+	///get the regions in level order, where the level of a region is defined by the longest path from root to it self
+	std::vector<uint32_t> getRegionsInLevelOrder() const;
 };
 
 }} //end namespace

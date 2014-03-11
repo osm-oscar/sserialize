@@ -5,6 +5,15 @@
 namespace sserialize {
 namespace spatial {
 
+void GeoHierarchy::depths(std::vector<uint32_t> & d, uint32_t me) const {
+	for(uint32_t child : m_regions.at(me).children) {
+		if (d[child] <= d[me]) {
+			d[child] = d[me] + 1;
+			depths(d, child);
+		}
+	}
+}
+
 void GeoHierarchy::createRootRegion() {
 	m_rootRegion.children.clear();
 	m_rootRegion.type = sserialize::spatial::GS_NONE;
@@ -49,12 +58,23 @@ bool GeoHierarchy::checkConsistency() {
 			return false;
 		}
 	}
-	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
-		const Region & r = m_regions.at(i);
-		if (r.parents.size() == 0 && r.children.size() == 0) {
-			std::cout << "Region " << i << " has no children and no parents" << std::endl;
-			return false;
+	{
+		std::vector<uint32_t> regionsWithoutParentChildren;
+		for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+			const Region & r = m_regions.at(i);
+			if (r.parents.size() == 0 && r.children.size() == 0) {
+				regionsWithoutParentChildren.push_back(i);
+			}
 		}
+		std::vector<uint32_t> invalidRegions;
+		std::set_difference(regionsWithoutParentChildren.cbegin(), regionsWithoutParentChildren.cend(),
+							m_rootRegion.children.cbegin(), m_rootRegion.children.cend(),
+							std::back_insert_iterator< std::vector<uint32_t> >(invalidRegions));
+		for(uint32_t i : invalidRegions) {
+			std::cout << "Region " << i << " has no children and no parents" << std::endl;
+		}
+		if (invalidRegions.size())
+			return false;
 	}
 
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
@@ -82,8 +102,13 @@ bool GeoHierarchy::checkConsistency() {
 		for(const auto x : r.children) {
 			const Region & cr = m_regions.at(x);
 			if (!r.boundary.contains(cr.boundary)) {
-				std::cout << "Region " << i << " does not span child " << x << std::endl;
-				return false;
+				if (!sserialize::subset_of(cr.cells.cbegin(), cr.cells.cend(), r.cells.cbegin(), r.cells.cend())) {
+					std::cout << "Region " << i << " does not span child " << x << std::endl;
+					return false;
+				}
+				else {
+					std::cout << "Region " << i << " with child " << x << " were not correctly sampled" << std::endl;
+				}
 			}
 		}
 	}
@@ -365,5 +390,29 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy 
 	}
 	return true;
 }
+
+std::vector<uint32_t> GeoHierarchy::getRegionsInLevelOrder() const {
+	if (!m_regions.size()) {
+		return std::vector<uint32_t>();
+	}
+	std::vector<uint32_t> d(m_regions.size(), 0);
+	for(uint32_t child : m_rootRegion.children) {
+		d[child] = 1;
+	}
+	for(uint32_t child : m_rootRegion.children) {
+		depths(d, child);
+	}
+	std::vector<uint32_t>::const_iterator maxElem = std::max_element(d.cbegin(), d.cend());
+	std::vector< std::vector<uint32_t> > regionsInLevels(*maxElem+1);
+	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+		regionsInLevels.at(d[i]).push_back(i);
+	}
+	d.clear();
+	for(std::vector< std::vector<uint32_t> >::iterator it(regionsInLevels.begin()), end(regionsInLevels.end()); it != end; ++it) {
+		d.insert(d.end(), it->cbegin(), it->cend());
+	}
+	return d;
+}
+
 
 }} //end namespace
