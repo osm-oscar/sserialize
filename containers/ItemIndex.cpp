@@ -119,6 +119,10 @@ void ItemIndex::putInto(DynamicBitSet & bitSet) const {
 	priv()->putInto(bitSet);
 }
 
+void ItemIndex::putInto(std::vector<uint32_t> & dest) const {
+	priv()->putInto(dest);
+}
+
 uint32_t ItemIndex::size() const { return priv()->size();}
 uint8_t ItemIndex::bpn() const { return priv()->bpn();}
 

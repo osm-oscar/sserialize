@@ -76,6 +76,19 @@ void ItemIndexPrivateDE::putInto(DynamicBitSet & bitSet) const {
 	}
 }
 
+void ItemIndexPrivateDE::putInto(std::vector<uint32_t> & bitSet) const {
+	UByteArrayAdapter tmpData(m_data);
+	uint32_t mySize = size();
+	bitSet.resize(mySize);
+	uint32_t count = 0;
+	uint32_t prev = 0;
+	while(count < mySize) {
+		prev += tmpData.getVlPackedUint32();
+		bitSet[count] = prev;
+		++count;
+	}
+}
+
 ItemIndexPrivate * ItemIndexPrivateDE::fromBitSet(const DynamicBitSet & bitSet) {
 	const UByteArrayAdapter & bitSetData(bitSet.data());
 	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), false));

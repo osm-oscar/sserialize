@@ -118,6 +118,34 @@ void ItemIndexPrivateRleDE::putInto(DynamicBitSet & bitSet) const {
 	}
 }
 
+void ItemIndexPrivateRleDE::putInto(std::vector<uint32_t> & bitSet) const {
+	UByteArrayAdapter tmpData(m_data);
+	uint32_t mySize = size();
+	bitSet.resize(mySize);
+	uint32_t count = 0;
+	uint32_t prev = 0;
+	while(count < mySize) {
+		uint32_t val = tmpData.getVlPackedUint32();
+		if (val & 0x1) {
+			uint32_t rle = (val >> 1);
+			val = tmpData.getVlPackedUint32();
+			val >>= 1;
+
+			while(rle) {
+				prev += val;
+				bitSet[count] = prev;
+				--rle;
+				++count;
+			}
+		}
+		else {
+			prev += (val >> 1);
+			bitSet[count] = prev;
+			++count;
+		}
+	}
+}
+
 ItemIndexPrivate *  ItemIndexPrivateRleDE::fromBitSet(const DynamicBitSet & bitSet) {
 	const UByteArrayAdapter & bitSetData(bitSet.data());
 	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), false));

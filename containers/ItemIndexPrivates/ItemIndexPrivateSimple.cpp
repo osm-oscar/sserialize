@@ -135,6 +135,13 @@ uint32_t ItemIndexPrivateSimple::getIdBytes() const {
 	return m_bpn/8*m_size;
 }
 
+void ItemIndexPrivateSimple::putInto(std::vector<uint32_t> & dest) const {
+	dest.resize(m_size);
+	for(uint32_t i = 0; i < m_size; ++i) {
+		dest[i] = m_idStore.at(i) + m_yintercept;
+	}
+}
+
 
 bool ItemIndexPrivateSimple::addItemIndexFromIds(const std::set<uint32_t> & ids, UByteArrayAdapter & adap) {
 	uint32_t lowestId = *(ids.begin());

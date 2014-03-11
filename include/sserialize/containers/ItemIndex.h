@@ -62,6 +62,7 @@ public:
 	int find(uint32_t id) const;
 
 	void putInto(DynamicBitSet & bitSet) const;
+	void putInto(std::vector<uint32_t> & dest) const;
 	
 	uint32_t at(uint32_t pos) const;
 	uint32_t first() const;

@@ -78,6 +78,9 @@ public:
 	virtual uint32_t getHeaderbytes() const;
 	virtual uint32_t getRegressionLineBytes() const;
 	virtual uint32_t getIdBytes() const;
+
+	virtual void putInto(std::vector<uint32_t> & dest) const;
+
 public:
 	static bool addItemIndexFromIds(const std::set<uint32_t> & ids, UByteArrayAdapter & adap);
 	/** adds the header to the beginning of adap */

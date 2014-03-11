@@ -148,9 +148,19 @@ void ItemIndexPrivate::doPutInto(DynamicBitSet & bitSet) const {
 		bitSet.set(at(i));
 }
 
+void ItemIndexPrivate::doPutInto(std::vector<uint32_t> & dest) const {
+	dest.resize(size());
+	for(uint32_t i = 0, s = size(); i < s; ++i) {
+		dest[i] = at(i);
+	}
+}
 
 void ItemIndexPrivate::putInto(DynamicBitSet & bitSet) const {
 	doPutInto(bitSet);
+}
+
+void ItemIndexPrivate::putInto(std::vector<uint32_t> & dest) const {
+	doPutInto(dest);
 }
 
 ItemIndexPrivate * ItemIndexPrivate::unite(const ItemIndexPrivate * other) const {

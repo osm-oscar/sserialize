@@ -46,6 +46,7 @@ public:
 	virtual uint32_t getSizeInBytes() const;
 	
 	virtual void putInto(DynamicBitSet & bitSet) const;
+	virtual void putInto(std::vector<uint32_t> & bitSet) const override;
 	
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 

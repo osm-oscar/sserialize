@@ -30,6 +30,7 @@ protected:
 	ItemIndexPrivate * doSymmetricDifference(const sserialize::ItemIndexPrivate * other) const;
 	
 	void doPutInto(DynamicBitSet & bitSet) const;
+	void doPutInto(std::vector<uint32_t> & bitSet) const;
 	
 public:
 	///uses at(pos) by default
@@ -47,6 +48,7 @@ public:
 	virtual uint32_t getSizeInBytes() const = 0;
 
 	virtual void putInto(DynamicBitSet & bitSet) const;
+	virtual void putInto(std::vector<uint32_t> & dest) const;
 	
 	///Default intersect which uses a ItemIndexPrivateSimple as storage backend
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const;
