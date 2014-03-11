@@ -115,6 +115,10 @@ public:
 	T_RETURN_TYPE operator*() {
 		return m_derefer(m_data, m_pos);
 	}
+	
+	T_RETURN_TYPE operator->() {
+		return operator*();
+	}
 };
 
 }//end namespace
