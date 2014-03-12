@@ -116,6 +116,12 @@ bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint64_t of
 	return true;
 }
 
+uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType * indexOffset) {
+	std::vector<uint32_t> tmp;
+	idx.putInto(tmp);
+	return addIndex(tmp, ok, indexOffset);
+}
+
 uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserialize::OffsetType * indexOffset) {
 	uint64_t hv;
 	int64_t indexPos = getIndex(idx, hv);

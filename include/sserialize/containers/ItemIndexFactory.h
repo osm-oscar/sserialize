@@ -65,6 +65,8 @@ public:
 	template<class TSortedContainer>
 	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0);
 	
+	uint32_t addIndex(const ItemIndex & idx, bool * ok = 0, OffsetType * indexOffset = 0);
+	
 	inline UByteArrayAdapter & getIndexStore() { return m_indexStore;}
 	inline uint32_t hitCount() { return m_hitCount; }
 	
