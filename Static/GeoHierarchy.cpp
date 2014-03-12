@@ -110,6 +110,10 @@ uint32_t GeoHierarchy::Region::child(uint32_t pos) const {
 	return GeoHierarchy::npos;
 }
 
+uint32_t GeoHierarchy::Region::itemsPtr() const {
+	return m_db->regions().at(m_pos, RD_ITEMS_PTR);
+}
+
 GeoHierarchy::GeoHierarchy() {}
 
 GeoHierarchy::GeoHierarchy(const UByteArrayAdapter & data) :

@@ -45,11 +45,13 @@ public:
 	inline const std::vector<Region> & regions() const { return m_regions;}
 	bool checkConsistency();
 	///data structure has to be consistent before using this
-	UByteArrayAdapter append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory) const;
+	UByteArrayAdapter append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory, bool fullItemsIndex = true) const;
 	void printStats(std::ostream & out) const;
 	bool testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh) const;
 	///get the regions in level order, where the level of a region is defined by the longest path from root to it self
 	std::vector<uint32_t> getRegionsInLevelOrder() const;
+
+	std::vector<uint32_t> createFullRegionItemIndex(sserialize::ItemIndexFactory & idxFactory) const;
 };
 
 }} //end namespace

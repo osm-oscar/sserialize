@@ -16,7 +16,7 @@ namespace spatial {
   *Version 2: use offset array for child/parent ptrs, use MVBitArray for node description
   *Version 3: use offset array for cell parents, use MVBitArray for cell description
   *Version 4: add boundary to regions
-  *
+  *Version 5: add items pointer to regions
   *-------------------------------------------------------------------------------
   *VERSION|RegionDesc|RegionPtrs |RegionBoundaries       |CellDesc  |CellPtrs
   *-------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ public:
 
 	class Region {
 	public:
-		typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD__ENTRY_SIZE=5} RegionDescriptionAccessors;
+		typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD_ITEMS_PTR=5, RD__ENTRY_SIZE=6} RegionDescriptionAccessors;
 	private:
 		uint32_t m_pos;
 		const GeoHierarchy * m_db;
@@ -110,6 +110,9 @@ public:
 		///Offset into PtrArray
 		uint32_t childrenEnd() const;
 		uint32_t child(uint32_t pos) const;
+		
+		///return the items in this region
+		uint32_t itemsPtr() const;
 	};
 	friend class Region;
 	friend class Cell;
@@ -146,6 +149,7 @@ public:
 	sserialize::spatial::GeoRect boundary(uint32_t id) const;
 	
 	std::ostream & printStats(std::ostream & out) const;
+
 };
 
 }}} //end namespace
