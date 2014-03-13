@@ -111,6 +111,7 @@ completers/StringCompleterPrivate.cpp
 completers/GeoCompleter.cpp
 completers/GeoStringCompleter.cpp
 completers/StringCompleterPrivateMulti.cpp
+completers/StringCompleterPrivateGeoHierarchyUnclustered.cpp
 )
 
 set(UTILITY_SOURCES_CPP
