@@ -46,6 +46,8 @@ public:
 	virtual int32_t getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const = 0;
 	
 	virtual void get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const = 0;
+	
+	virtual std::string getString(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const;
 
 	/** If the supplied memory is not writable then you're on your own! **/
 

@@ -614,15 +614,9 @@ std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) con
 			*length = -1;
 		return std::string();
 	}
-	std::string res;
-	res.resize(strLen);
-
-	for(size_t i = 0; i < strLen; i++) {
-		res[i] = getUint8(pos+len+i);
-	}
 	if (length)
 		*length = strLen+len;
-	return res;
+	return m_priv->getString(pos, strLen);
 }
 
 UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * length) const {

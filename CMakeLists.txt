@@ -122,6 +122,7 @@ utility/stringfunctions.cpp
 utility/unicode_case_functions.cpp
 utility/CompactUintArray.cpp
 utility/UByteArrayAdapter.cpp
+utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivate.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateArray.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateMmappedFile.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp
