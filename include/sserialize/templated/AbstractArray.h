@@ -80,6 +80,7 @@ public:
 	
 	AbstractArrayIterator & operator=(const AbstractArrayIterator & other) {
 		m_priv.reset((other.m_priv.get() ? other.m_priv->copy() : 0));
+		return *this;
 	}
 	
 	TReturnType operator*() const {
