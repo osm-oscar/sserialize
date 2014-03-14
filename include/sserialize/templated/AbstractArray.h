@@ -78,6 +78,10 @@ public:
 	AbstractArrayIterator(const AbstractArrayIterator & other) : m_priv((other.m_priv.get() ? other.m_priv->copy() : 0)) {}
 	virtual ~AbstractArrayIterator() {}
 	
+	AbstractArrayIterator & operator=(const AbstractArrayIterator & other) {
+		m_priv.reset((other.m_priv.get() ? other.m_priv->copy() : 0));
+	}
+	
 	TReturnType operator*() const {
 		return m_priv->get();
 	}
