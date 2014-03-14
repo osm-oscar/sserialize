@@ -88,7 +88,6 @@ std::string UByteArrayAdapterPrivateArray::getString(UByteArrayAdapter::OffsetTy
     return std::string(m_data+pos, m_data+pos+len);
 }
 
-
 void UByteArrayAdapterPrivateArray::putUint64(UByteArrayAdapter::OffsetType pos, uint64_t value) {
 	p_u64(value, &(m_data[pos]));
 }
