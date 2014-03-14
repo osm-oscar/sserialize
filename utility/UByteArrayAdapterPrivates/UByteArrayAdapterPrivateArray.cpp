@@ -84,10 +84,6 @@ void UByteArrayAdapterPrivateArray::get(UByteArrayAdapter::OffsetType pos, uint8
 	memmove(dest, start, sizeof(uint8_t)*len);
 }
 
-std::string UByteArrayAdapterPrivateArray::getString(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const {
-    return std::string(m_data+pos, m_data+pos+len);
-}
-
 
 void UByteArrayAdapterPrivateArray::putUint64(UByteArrayAdapter::OffsetType pos, uint64_t value) {
 	p_u64(value, &(m_data[pos]));

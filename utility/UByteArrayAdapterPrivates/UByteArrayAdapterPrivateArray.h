@@ -39,10 +39,7 @@ public:
 	virtual uint32_t getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const;
 	virtual int32_t getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const;
 	
-	virtual void get(sserialize::UByteArrayAdapter::OffsetType pos, uint8_t * dest, sserialize::UByteArrayAdapter::OffsetType len) const override;
-
-	virtual std::string getString(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const override;
-
+	void get(sserialize::UByteArrayAdapter::OffsetType pos, uint8_t * dest, sserialize::UByteArrayAdapter::OffsetType len) const;
 
 	/** If the supplied memory is not writable then you're on your own! **/
 	
