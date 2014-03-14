@@ -37,8 +37,8 @@ public:
 	inline UByteArrayAdapter dataAt(uint32_t pos) const { return priv()->dataAt(pos);}
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
-	inline const_iterator cbegin() { return priv()->cbegin();}
-	inline const_iterator cend() { return priv()->cend();}
+	inline const_iterator cbegin() const { return priv()->cbegin();}
+	inline const_iterator cend() const { return priv()->cend();}
 
 	///The order of the strings impacts the type	
 	template<typename T_RANDOM_ACCESS_ITERATOR, typename T_VALUE_TYPE = typename T_RANDOM_ACCESS_ITERATOR::value_type>
