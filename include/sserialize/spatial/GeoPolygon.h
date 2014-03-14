@@ -201,8 +201,40 @@ template<typename TPointsContainer>
 bool GeoPolygon<TPointsContainer>::intersects(const sserialize::spatial::GeoRect & rect) const {
 	if (!MyBaseClass::myBoundary().overlap(rect))
 		return false;
-		
-	return collidesWithPolygon( fromRect(rect) );
+
+	//check if any of our own lie within the poly
+	const_iterator it(cbegin());
+	++it; //skip the first since first == last
+	for(const_iterator end(cend()); it != end; ++it) {
+		typename TPointsContainer::const_reference gp = *it;
+		if (rect.contains(gp.lat(), gp.lon())) {
+			return true;
+		}
+	}
+	//now check if any of the rect points fall within ourself
+	std::vector<sserialize::spatial::GeoPoint> poly;
+	poly.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
+	poly.push_back( GeoPoint(rect.lat()[1], rect.lon()[0]) );
+	poly.push_back( GeoPoint(rect.lat()[1], rect.lon()[1]) );
+	poly.push_back( GeoPoint(rect.lat()[0], rect.lon()[1]) );
+	if (contains(poly.cbegin(), poly.cend())) { //check if at least one vertex poly lies within us
+		return true;
+	}
+	else { //check if any lines intersect
+		poly.push_back(poly.back());//put the last back in
+		const_iterator it(cbegin());
+		++it;
+		for(const_iterator prev(cbegin()), end(cend()); it != end; ++prev, ++it) {
+			std::vector<sserialize::spatial::GeoPoint>::const_iterator oIt(poly.cbegin());
+			++oIt;
+			for(std::vector<sserialize::spatial::GeoPoint>::const_iterator oPrev(poly.cbegin()), oEnd(poly.cend()); oIt != oEnd; ++oIt, ++oPrev) {
+				if (sserialize::spatial::GeoPoint::intersect(*prev, *it, *oPrev, *oIt)) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 
 template<typename TPointsContainer>
