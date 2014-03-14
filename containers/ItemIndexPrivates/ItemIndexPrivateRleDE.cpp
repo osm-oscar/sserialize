@@ -447,8 +447,8 @@ struct IndexStates {
 			}
 		}
 		
-		inline void moveTillLargerOrEqual(uint32_t id) {
-			while (this->valid && this->id < id) {
+		inline void moveTillLargerOrEqual(uint32_t inid) {
+			while (this->valid && this->id < inid) {
 				next();
 			}
 		}
@@ -552,7 +552,7 @@ ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< Ite
 	std::vector<uint32_t> resultSet;
 	resultSet.reserve(count);
 	
-	uint32_t id;
+	uint32_t id = 0;
 	bool allEqual;
 	bool oneEqual;
 	while (intersectStates.allValid() && resultSet.size() < count) {
@@ -575,7 +575,7 @@ ItemIndex ItemIndexPrivateRleDE::constrainedIntersect(const std::vector< ItemInd
 	std::vector<uint32_t> resultSet;
 	resultSet.reserve(count);
 	
-	uint32_t id;
+	uint32_t id = 0;
 	while (states.allValid() && resultSet.size() < count) {
 		if (states.moveToNextEqual(id)) {
 			resultSet.push_back(id);
