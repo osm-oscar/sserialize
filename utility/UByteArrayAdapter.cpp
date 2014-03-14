@@ -616,7 +616,7 @@ std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) con
 	}
 	if (length)
 		*length = strLen+len;
-	return m_priv->getString(pos, strLen);
+	return m_priv->getString(pos+len, strLen);
 }
 
 UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * length) const {
