@@ -43,7 +43,7 @@ public:
 		return allOk;
 	}
 
-	bool addItem(uint32_t itemId, const sserialize::Static::spatial::GeoShape & shape) {
+	inline bool addItem(uint32_t itemId, const sserialize::Static::spatial::GeoShape & shape) {
 		std::vector<GridBin> bins = select( shape.boundary() );
 		bool allOk = bins.size();
 		size_t binsSize = bins.size();
