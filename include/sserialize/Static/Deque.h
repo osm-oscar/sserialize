@@ -11,12 +11,12 @@
 #include <fstream>
 #define SSERIALIZE_STATIC_DEQUE_VERSION 3
 
-/** FileFormat: v3
+/** FileFormat: v4
  *
  *-------------------------------
- *Version|DataLen|Data|DataIndex|
+ *Version| |DataLen|Data|DataIndex|
  *-------------------------------
- *  1    |  5    |  * |   *     |
+ *  1    | |5    |  * |   *     |
  * SIZE = Size of Data
  */
 
@@ -30,6 +30,7 @@ class DequeCreator {
 	OffsetType m_dataLenPtr;
 	OffsetType m_beginOffSet;
 public:
+	///create a new Deque at tellPutPtr()
 	DequeCreator(UByteArrayAdapter & destination) : m_dest(destination) {
 		m_dest.putUint8(SSERIALIZE_STATIC_DEQUE_VERSION);
 		m_dataLenPtr = m_dest.tellPutPtr();
@@ -98,6 +99,7 @@ public:
 	typedef sserialize::ReadOnlyAtStlIterator< const Deque<TValue>*, TValue > const_iterator;
 	typedef value_type const_reference;
 	typedef value_type reference;
+	typedef enum {TI_FIXED_LENGTH=1} TypeInfo;
 private:
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
