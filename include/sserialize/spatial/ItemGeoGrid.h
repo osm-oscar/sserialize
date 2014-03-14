@@ -46,13 +46,18 @@ public:
 	bool addItem(uint32_t itemId, const sserialize::Static::spatial::GeoShape & shape) {
 		std::vector<GridBin> bins = select( shape.boundary() );
 		bool allOk = bins.size();
-		for(size_t i = 0; i < bins.size(); ++i) {
+		size_t binsSize = bins.size();
+		#pragma omp parallel for
+		for(size_t i = 0; i < binsSize; ++i) {
 			allOk = bins[i].valid() && allOk;
 			if (bins[i].valid() && shape.intersects( cellBoundary(bins[i].x, bins[i].y) ) ) {
-				std::set<uint32_t>* & tile = binAt(bins[i].x, bins[i].y);
-				if ( ! tile )
-					tile = new std::set<uint32_t>();
-				tile->insert(itemId);
+				#pragma omp critical
+				{
+					std::set<uint32_t>* & tile = binAt(bins[i].x, bins[i].y);
+					if ( ! tile )
+						tile = new std::set<uint32_t>();
+					tile->insert(itemId);
+				}
 			}
 		}
 		return allOk;
