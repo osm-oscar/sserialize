@@ -29,6 +29,7 @@ CPPUNIT_TEST( testStaticSize );
 CPPUNIT_TEST( testStaticEquality );
 CPPUNIT_TEST( testStaticFindKey );
 CPPUNIT_TEST( testStaticFindValue );
+CPPUNIT_TEST( testItemEquality );
 CPPUNIT_TEST_SUITE_END();
 private:
 	typedef std::pair<std::string, std::string> KeyValuePair;
@@ -182,6 +183,25 @@ public:
 		}
 	}
 	
+	void testItemEquality() {
+		sserialize::UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+		for(uint32_t startValues = 0; startValues < 1024*1024; startValues = (1+startValues)*2) {
+			for(uint32_t keyId = startValues; keyId < 256*1024*1024; keyId = (1+keyId)*2) {
+				KeyValueObjectStore::ItemData itemData;
+				for(uint32_t valueId = startValues; valueId < 256*1024*1024; valueId = (1+valueId)*2) {
+					itemData.push_back( KeyValueObjectStore::KeyValue(keyId, valueId) );
+				}
+				d.resetPtrs();
+				KeyValueObjectStore::serialize(itemData, d);
+				Static::KeyValueObjectStoreItemBase sitem(d);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("item.size()",(uint32_t)itemData.size(), sitem.size());
+				for(uint32_t i = 0, s = itemData.size(); i < s; ++i) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("item keyid", itemData[i].key, sitem.keyId(i));
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("item valueid", itemData[i].value, sitem.valueId(i));
+				}
+			}
+		}
+	}
 };
 
 
