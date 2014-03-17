@@ -37,7 +37,7 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 			break;
 		}
 	default:
-		throw sserialize::TypeMissMatchException("sserialize::Static::spatial::GeoShape::GeoShape()");
+		throw sserialize::TypeMissMatchException("sserialize::Static::spatial::GeoShape::GeoShape(UByteArrayAdapter) invalid type: ");
 	}
 }
 

@@ -15,7 +15,9 @@ m_sizeBPKV(data.getVlPackedUint32()),
 m_keyBegin(data.getVlPackedUint32()),
 m_valueBegin(data.getVlPackedUint32()),
 m_kv(data.shrinkToGetPtr(), keyBits() + valueBits())
-{}
+{
+	SSERIALIZE_LENGTH_CHECK(size(), m_kv.maxCount(), "sserialize::KeyValueObjectStoreItemBase");
+}
 
 KeyValueObjectStoreItemBase::~KeyValueObjectStoreItemBase() {}
 
