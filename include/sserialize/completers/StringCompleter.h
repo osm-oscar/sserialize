@@ -8,6 +8,9 @@
 #ifdef SSERIALIZE_WITH_THREADS
 #include <mutex>
 #endif
+#ifndef SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE
+#define SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE 8
+#endif
 
 
 //TODO:Implement getSizeInBytes by fixing dependency on single file
@@ -66,7 +69,9 @@ public:
 	};
 	
 private:
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
 	sserialize::LFUCache< std::pair<std::string, uint16_t>, ItemIndex> m_cache;
+#endif
 #ifdef SSERIALIZE_WITH_THREADS
 	std::mutex m_cacheLock;
 #endif

@@ -4,7 +4,6 @@
 #include <sserialize/utility/MutexLocker.h>
 #endif
 
-#define INDEX_CACHE_SIZE 8
 
 
 namespace sserialize {
@@ -61,25 +60,33 @@ bool StringCompleter::ForwardIterator::next(uint32_t codepoint) {
 StringCompleter::StringCompleter() :
 RCWrapper<StringCompleterPrivate>(new StringCompleterPrivate())
 {
-	m_cache.setSize(INDEX_CACHE_SIZE);
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
+	m_cache.setSize(SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE);
+#endif
 }
 
 StringCompleter::StringCompleter(const StringCompleter& other) :
 RCWrapper<StringCompleterPrivate>(other)
 {
-	m_cache.setSize(INDEX_CACHE_SIZE);
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
+	m_cache.setSize(SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE);
+#endif
 }
 
 
 StringCompleter::StringCompleter(StringCompleterPrivate * priv) :
 RCWrapper< sserialize::StringCompleterPrivate >(priv)
 {
-	m_cache.setSize(INDEX_CACHE_SIZE);
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
+	m_cache.setSize(SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE);
+#endif
 }
 
 StringCompleter& StringCompleter::operator=(const StringCompleter& strc) {
 	RCWrapper< sserialize::StringCompleterPrivate >::operator=(strc);
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
 	m_cache = strc.m_cache;
+#endif
 	return *this;
 }
 
@@ -98,12 +105,15 @@ bool StringCompleter::supportsQuerry(StringCompleter::QuerryType qt) {
 }
 
 void StringCompleter::clearCache() {
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
 #ifdef SSERIALIZE_WITH_THREADS
 	MutexLocker locker(m_cacheLock);
 #endif
 	m_cache.clear();
+#endif
 }
 
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
 void StringCompleter::setCacheSize(uint32_t s) {
 #ifdef SSERIALIZE_WITH_THREADS
 	MutexLocker locker(m_cacheLock);
@@ -111,9 +121,13 @@ void StringCompleter::setCacheSize(uint32_t s) {
 	m_cache.clear();
 	m_cache.setSize(s);
 }
+#else
+void StringCompleter::setCacheSize(uint32_t) {}
+#endif
 
 ItemIndex StringCompleter::complete(const std::string & str, StringCompleter::QuerryType qtype) {
 	std::pair<std::string, sserialize::StringCompleter::QuerryType> q(str, qtype);
+#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
 #ifdef SSERIALIZE_WITH_THREADS
 	MutexLocker locker(m_cacheLock);
 #endif
@@ -125,13 +139,15 @@ ItemIndex StringCompleter::complete(const std::string & str, StringCompleter::Qu
 		m_cacheLock.unlock();
 #endif
 		ItemIndex idx(priv()->complete(str, qtype));
-		//TODO:write index to file
 #ifdef SSERIALIZE_WITH_THREADS
 		m_cacheLock.lock();
 #endif
 		m_cache.insert(q, idx);
 		return idx;
 	}
+#else
+	return priv()->complete(str, qtype);
+#endif
 }
 
 ItemIndexIterator StringCompleter::partialComplete(const std::string& str, StringCompleter::QuerryType qtype) {
