@@ -141,6 +141,9 @@ public:
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);
 
 bool operator==(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx);
+inline bool operator!=(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx) {
+	return !operator==(set, idx);
+}
 
 template<class TCONTAINER>
 bool operator==(const sserialize::ItemIndex & idx, const TCONTAINER & set) {
@@ -169,10 +172,6 @@ bool operator!=(const sserialize::ItemIndex & idx, const TCONTAINER & set) {
 template<class TCONTAINER>
 bool operator!=(const TCONTAINER & set, const sserialize::ItemIndex & idx) {
 	return !( idx == set);
-}
-
-inline bool operator!=(const sserialize::ItemIndex & idxA, const sserialize::ItemIndex & idxB) {
-	return !(idxA == idxB);
 }
 
 std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & idx);
