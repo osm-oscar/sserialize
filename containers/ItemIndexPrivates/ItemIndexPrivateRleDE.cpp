@@ -83,7 +83,12 @@ uint32_t ItemIndexPrivateRleDE::size() const {
 	return m_size;
 }
 
-uint8_t ItemIndexPrivateRleDE::bpn() const { return m_data.size()*8/m_size; } //This shouldn't cause an overflow here
+uint8_t ItemIndexPrivateRleDE::bpn() const {
+	if (m_size)
+		return m_data.size()*8/m_size;
+	else
+		return m_data.size()*8;
+}
 
 
 uint32_t ItemIndexPrivateRleDE::getSizeInBytes() const { return m_data.size() + 8; }
