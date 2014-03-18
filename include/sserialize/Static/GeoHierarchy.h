@@ -149,10 +149,15 @@ public:
 	
 	sserialize::spatial::GeoRect boundary(uint32_t id) const;
 	
+	bool consistencyCheck(const sserialize::Static::ItemIndexStore& store) const;
+	
 	std::ostream & printStats(std::ostream & out) const;
 
 };
 
 }}} //end namespace
+
+std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Cell & r);
+std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Region & r);
 
 #endif

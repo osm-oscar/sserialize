@@ -181,6 +181,23 @@ sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
 	return m_regionBoundaries.at(pos);
 }
 
+bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & store) const {
+	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+		Region r = region(i);
+		std::vector<ItemIndex> idcs;
+		ItemIndex cellIdx = store.at(r.cellIndexPtr());
+		for(uint32_t j = 0, sj = cellIdx.size(); j < sj; ++j) {
+			idcs.push_back( store.at( this->cell(cellIdx.at(j)).itemPtr() ) );
+		}
+		ItemIndex mergedIdx = ItemIndex::unite(idcs);
+		if (mergedIdx != store.at( r.itemsPtr() )) {
+			std::cout << "Merged cell idx does not match region index for region " << i << std::endl;
+			return false;
+		}
+	}
+	return true;
+}
+
 std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
 	out << "regions.size()=" << regionSize() << std::endl;
@@ -198,3 +215,21 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 
 
 }}} //end namespace
+
+std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Cell & c) {
+	out << "sserialize::Static::spatial::GeoHierarchy::Cell[";
+	out << ", itemPtr=" << c.itemPtr();
+	out << "]";
+	return out;
+}
+
+
+std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Region & r) {
+	out << "sserialize::Static::spatial::GeoHierarchy::Region[";
+	out << r.boundary();
+	out << ", cellIndexPtr=" << r.cellIndexPtr();
+	out << ", childrenSize=" << r.childrenSize();
+	out << ", itemsPtr=" << r.itemsPtr();
+	out << "]";
+	return out;
+}
