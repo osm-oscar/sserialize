@@ -112,7 +112,7 @@ private:
 				}
 				size_t cellsSize = cells.size();
 #pragma omp parallel for schedule(dynamic, 5)
-				for(size_t k=0; k < cellsSize; k++) {
+				for(size_t k=0; k < cellsSize; ++k) {
 					unsigned int i = cells[k].first;
 					unsigned int j = cells[k].second;
 					GeoPolygon cellPoly(sserialize::spatial::GeoPolygon::fromRect(MyRGeoGrid::cellBoundary(i, j)));
