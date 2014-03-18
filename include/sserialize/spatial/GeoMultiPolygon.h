@@ -57,6 +57,7 @@ public:
 	
 	virtual void recalculateBoundary();
 	
+	
 	sserialize::spatial::GeoPoint at(uint32_t pos) const;
 	
 	///boundary of the inner polygons that define holes
@@ -94,8 +95,7 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::collidesWithPolygon(const Geo
 	
 	bool collides = false;
 	for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
-		typename PolygonList::const_reference itP = *it;
-		if (itP.intersects(poly)) {
+		if ((*it).intersects(poly)) {
 			collides = true;
 			break;
 		}
@@ -103,8 +103,7 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::collidesWithPolygon(const Geo
 	//now check if the test polygon is fully contained in any of our outer polygons:
 	if (collides) {
 		for(typename PolygonList::const_iterator it(innerPolygons().cbegin()), end(innerPolygons().cend()); it != end; ++it) {
-			typename PolygonList::const_reference itP = *it;
-			if (itP.encloses(poly)) {
+			if ((*it).encloses(poly)) {
 				collides = false;
 				break;
 			}
@@ -215,8 +214,7 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::intersects(const GeoRect & bo
 	if (this->outerPolygonsBoundary().overlap(boundary)) {
 		bool intersects = false;
 		for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
-			typename PolygonList::const_reference poly = *it;
-			if (poly.intersects(boundary)) {
+			if ((*it).intersects(boundary)) {
 				intersects = true;
 				break;
 			}
@@ -224,8 +222,7 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::intersects(const GeoRect & bo
 		if (intersects && this->innerPolygonsBoundary().overlap(boundary)) {
 			GeoPolygon boundaryPoly(GeoPolygon::fromRect(boundary));
 			for(typename PolygonList::const_iterator it(innerPolygons().cbegin()), end(innerPolygons().cend()); it != end; ++it) {
-				typename PolygonList::const_reference poly = *it;
-				if (poly.encloses(boundaryPoly)) {
+				if ((*it).encloses(boundaryPoly)) {
 					intersects = false;
 					break;
 				}
@@ -242,16 +239,14 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::contains(const GeoPoint & p) 
 		return false;
 	bool contained = false;
 	for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
-		typename PolygonList::const_reference itP = *it;
-		if (itP.contains(p)) {
+		if ((*it).contains(p)) {
 			contained = true;
 			break;
 		}
 	}
 	if (contained && innerPolygonsBoundary().contains(p.lat(), p.lon())) {
 		for(typename PolygonList::const_iterator it(innerPolygons().cbegin()), end(innerPolygons().cend()); it != end; ++it) {
-			typename PolygonList::const_reference itP = *it;
-			if (itP.contains(p)) {
+			if ((*it).contains(p)) {
 				contained = false;
 				break;
 			}
@@ -268,15 +263,13 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::intersects(const GeoPoint & p
 		return true;
 	//check for intersection with any polygon
 	for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
-		typename PolygonList::const_reference itP = *it;
-		if (itP.intersects(p1, p2)) {
+		if ((*it).intersects(p1, p2)) {
 			return true;
 		}
 	}
 	//Check for intersection with inner polygons. i.e. if both points lie within a star-shaped inner polygon
 	for(typename PolygonList::const_iterator it(innerPolygons().cbegin()), end(innerPolygons().cend()); it != end; ++it) {
-		typename PolygonList::const_reference itP = *it;
-		if (itP.intersects(p1, p2)) {
+		if ((*it).intersects(p1, p2)) {
 			return true;
 		}
 	}
