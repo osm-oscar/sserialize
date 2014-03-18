@@ -18,6 +18,10 @@ m_db(db)
 
 GeoHierarchy::Cell::~Cell() {}
 
+uint32_t GeoHierarchy::Cell::itemPtr() const {
+	return (m_db->cells().at(m_pos, CD_ITEM_PTR));
+}
+
 uint32_t GeoHierarchy::Cell::parentsBegin() const {
 	return (m_db->cells().at(m_pos, CD_PARENTS_BEGIN));
 }
@@ -159,6 +163,10 @@ GeoHierarchy::Region GeoHierarchy::region(uint32_t id) const {
 
 GeoHierarchy::Region GeoHierarchy::rootRegion() const {
 	return region(regionSize());
+}
+
+uint32_t GeoHierarchy::regionItemsPtr(uint32_t pos) const {
+	return m_regions.at(pos, Region::RD_ITEMS_PTR);
 }
 
 uint32_t GeoHierarchy::regionPtrSize() const {

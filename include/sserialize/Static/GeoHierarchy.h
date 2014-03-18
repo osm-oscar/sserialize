@@ -142,6 +142,7 @@ public:
 	uint32_t regionSize() const;
 	Region region(uint32_t id) const;
 	Region rootRegion() const;
+	uint32_t regionItemsPtr(uint32_t pos) const;
 	
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
