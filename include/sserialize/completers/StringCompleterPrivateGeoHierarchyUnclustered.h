@@ -12,14 +12,16 @@ namespace StringCompleter {
 class GeoHierarchyUnclustered: public sserialize::StringCompleterPrivate {
 public:
 	typedef sserialize::RCPtrWrapper<sserialize::StringCompleterPrivate> MyStringCompleter;
+	typedef sserialize::Static::spatial::GeoHierarchy MyGeoHierarchy;
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
+	sserialize::Static::ItemIndexStore m_store;
 	sserialize::RCPtrWrapper<sserialize::StringCompleterPrivate> m_ghCompleter;
 	sserialize::RCPtrWrapper<sserialize::StringCompleterPrivate> m_directCompleter;
 	
 public:
 	GeoHierarchyUnclustered();
-	GeoHierarchyUnclustered(const sserialize::Static::spatial::GeoHierarchy & gh, const MyStringCompleter & ghCompleter, const MyStringCompleter & itemsCompleter);
+	GeoHierarchyUnclustered(const MyGeoHierarchy & gh, const sserialize::Static::ItemIndexStore & store, const MyStringCompleter & ghCompleter, const MyStringCompleter & itemsCompleter);
 	virtual ~GeoHierarchyUnclustered();
 	
 	virtual ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const;

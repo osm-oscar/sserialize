@@ -8,8 +8,9 @@ namespace StringCompleter {
 
 GeoHierarchyUnclustered::GeoHierarchyUnclustered() {}
 
-GeoHierarchyUnclustered::GeoHierarchyUnclustered(const sserialize::Static::spatial::GeoHierarchy& gh, const MyStringCompleter & ghCompleter, const MyStringCompleter & itemsCompleter) :
+GeoHierarchyUnclustered::GeoHierarchyUnclustered(const sserialize::Static::spatial::GeoHierarchy& gh, const sserialize::Static::ItemIndexStore & store, const MyStringCompleter & ghCompleter, const MyStringCompleter & itemsCompleter) :
 m_gh(gh),
+m_store(store),
 m_ghCompleter(ghCompleter),
 m_directCompleter(itemsCompleter)
 {}
@@ -23,7 +24,7 @@ ItemIndex GeoHierarchyUnclustered::complete(const std::string & str, sserialize:
 		std::vector<ItemIndex> mergeIdcs(ghIdx.size()+1);
 		uint32_t i = 0;
 		for(uint32_t s = ghIdx.size(); i < s; ++i) {
-			mergeIdcs[i] = indexFromId(ghIdx.at(i));
+			mergeIdcs[i] = m_store.at(m_gh.regionItemsPtr(ghIdx.at(i)));
 		}
 		mergeIdcs[i] = itemIdx;
 		return ItemIndex::unite(mergeIdcs);
