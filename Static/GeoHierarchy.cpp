@@ -1,6 +1,5 @@
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/exceptions.h>
-#include <vendor/libs/minilzo/lzoconf.h>
 
 
 namespace sserialize {
