@@ -205,7 +205,7 @@ void printHelp() {
 int main(int argc, char ** argv) {
 	std::string inFileName;
 	std::string outFileName;
-	int64_t dumpIndexId = -1;
+	std::vector<int64_t> dumpIndexId;
 	bool dumpIndexStoreIndex = false;
 	bool dumpDataHisto = false;
 	bool dumpStats = false;
@@ -221,7 +221,7 @@ int main(int argc, char ** argv) {
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
 		if (curArg == "-d" && i+1 < argc) {
-			dumpIndexId = atoi(argv[i+1]);
+			dumpIndexId.push_back(atoi(argv[i+1]));
 			i++;
 		}
 		else if (curArg == "-di")
@@ -295,33 +295,35 @@ int main(int argc, char ** argv) {
 	std::cout << "ItemIndexStore Information:" << std::endl;
 	std::cout << "size=" << store.size() << std::endl;
 	
-	if ((dumpIndexId >= 0 && dumpIndexId < store.size()) || dumpIndexStoreIndex) {
-		std::cout << "Dumping Index with id " << dumpIndexId << std::endl;
-		if (outFileName.empty())
-			store.at(dumpIndexId).dump();
+	if ((dumpIndexId.size()) || dumpIndexStoreIndex) {
+		std::ostream * out;
+		std::ofstream fout;
+		if (outFileName.empty()) {
+			out = &std::cout;
+		}
 		else {
-			std::ofstream out;
-			out.open(outFileName);
-			if (!out.is_open()) {
+			fout.open(outFileName);
+			if (!fout.is_open()) {
 				std::cerr << "Could not open " << outFileName << std::endl;
 				return 1;
 			}
-			if (dumpIndexStoreIndex) {
-				Static::SortedOffsetIndex idx = store.getIndex();
-				std::cout << "size=" << idx.size() << ";";
-				std::cout << "; sizeInBytes=" << idx.getSizeInBytes();
-				std::cout << std::endl;
-				dumpIndex(out, idx);
-			}
-			else {
-				ItemIndex idx = store.at(dumpIndexId);
-				std::cout << "size=" << idx.size() << "; bpn=" << static_cast<uint32_t>( idx.bpn() );
-				std::cout << "; sizeInBytes=" << idx.getSizeInBytes();
-				std::cout << std::endl;
-				dumpIndex(out, idx);
-			}
-			out.close();
+			out = &fout;
 		}
+		if (dumpIndexStoreIndex) {
+			Static::SortedOffsetIndex idx = store.getIndex();
+			*out << "size=" << idx.size() << ";";
+			*out << "; sizeInBytes=" << idx.getSizeInBytes();
+			*out << std::endl;
+			dumpIndex(*out, idx);
+		}
+		for(uint32_t i = 0, s = dumpIndexId.size(); i < s; ++i) {
+			if (dumpIndexId[i] >= store.size())
+				continue;
+			std::cout << "ItemIndex with id " << dumpIndexId[i] << ": " << std::endl;
+			store.at(dumpIndexId[i]).dump(*out);
+		}
+		if (fout.is_open())
+			fout.close();
 	}
 	if (dumpDataHisto) {
 		dumpDataHistoFunc(store, alphabetBitLength);
