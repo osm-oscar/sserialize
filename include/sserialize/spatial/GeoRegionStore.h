@@ -4,6 +4,7 @@
 #include <set>
 #include <sserialize/spatial/RWGeoGrid.h>
 #include <sserialize/spatial/GeoPolygon.h>
+#include <sserialize/spatial/GeoMultiPolygon.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include <iostream>
 #include <fstream>
@@ -114,23 +115,30 @@ private:
 				for(size_t k=0; k < cellsSize; k++) {
 					unsigned int i = cells[k].first;
 					unsigned int j = cells[k].second;
-					GeoRect cellRect( MyRGeoGrid::cellBoundary(i, j) );
+					GeoRect cellRect(  );
+					GeoPolygon cellPoly = sserialize::spatial::GeoPolygon::fromRect(MyRGeoGrid::cellBoundary(i, j));
 					//test enclosing
-					if (p.contains( GeoPoint(cellRect.lat()[0], cellRect.lon()[0]) ) && p.contains( GeoPoint(cellRect.lat()[1], cellRect.lon()[1]) ) ) {
-						if (!MyRWGeoGrid::binAt(i,j).enclosing) {
-							MyRWGeoGrid::binAt(i,j).enclosing = new PolyRasterElement();
-						}
-						MyRWGeoGrid::binAt(i,j).enclosing->push_back(polyId);
+					bool enclosing = false;
+					if (p.type() == sserialize::spatial::GS_POLYGON) {
+						enclosing = static_cast<const sserialize::spatial::GeoPolygon&>(p).encloses(cellPoly);
 					}
-					else {
-						GeoPolygon cellPoly;
-						createCellPoly(cellRect, cellPoly);
+					else if (p.type() == sserialize::spatial::GS_MULTI_POLYGON) {
+						//approximat enclosing
+						enclosing = static_cast<const sserialize::spatial::GeoMultiPolygon&>(p).encloses(cellPoly);
+					}
+					if (!enclosing) {
 						if (p.intersects(cellPoly)) {
 							if (!MyRWGeoGrid::binAt(i,j).colliding) {
 								MyRWGeoGrid::binAt(i,j).colliding = new PolyRasterElement();
 							}
 							MyRWGeoGrid::binAt(i,j).colliding->push_back(polyId);
 						}
+					}
+					else {
+						if (!MyRWGeoGrid::binAt(i,j).enclosing) {
+							MyRWGeoGrid::binAt(i,j).enclosing = new PolyRasterElement();
+						}
+						MyRWGeoGrid::binAt(i,j).enclosing->push_back(polyId);
 					}
 				}
 			}
