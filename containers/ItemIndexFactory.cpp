@@ -152,7 +152,7 @@ OffsetType ItemIndexFactory::flush() {
 	m_header.resetPtrs();
 	m_header << static_cast<uint8_t>(3); //Version
 	m_header << static_cast<uint8_t>(m_type);//type
-	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IC_NONE);
+	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IndexCompressionType::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
 	
 	std::cout << "Gathering offsets...";
@@ -249,7 +249,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanRLEDE(sserialize::Static::ItemI
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(3);
 	dest.putUint8(ItemIndex::T_RLE_DE);
-	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
+	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN);
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -320,7 +320,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(3); //version
 	dest.putUint8(ItemIndex::T_WAH);
-	dest.putUint8(Static::ItemIndexStore::IC_HUFFMAN);
+	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN);
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -372,7 +372,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 }
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	if (store.compressionType() != Static::ItemIndexStore::IC_NONE) {
+	if (store.compressionType() != Static::ItemIndexStore::IndexCompressionType::IC_NONE) {
 		std::cerr << "Unsupported compression format detected" << std::endl;
 		return 0;
 	}
@@ -395,7 +395,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 		return 0;
 	}
 	
-	if (store.compressionType() != Static::ItemIndexStore::IC_NONE) {
+	if (store.compressionType() != Static::ItemIndexStore::IndexCompressionType::IC_NONE) {
 		std::cerr << "Unsupported compression format detected" << std::endl;
 		return 0;
 	}
@@ -403,7 +403,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(3);
 	dest.putUint8(ItemIndex::T_WAH);
-	dest.putUint8(Static::ItemIndexStore::IC_VARUINT32);
+	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_VARUINT32);
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -442,7 +442,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(3);//version
 	dest.putUint8(store.indexType());
-	dest.putUint8(Static::ItemIndexStore::IC_LZO | store.compressionType());
+	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_LZO | store.compressionType());
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
@@ -498,7 +498,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Current size:" << dest.tellPutPtr()-beginOffset << std::endl;
-	if (store.compressionType() == Static::ItemIndexStore::IC_HUFFMAN) {
+	if (store.compressionType() == Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN) {
 		UByteArrayAdapter htData = store.getHuffmanTreeData();
 		std::cout << "Adding huffman tree with size: " << htData.size() << std::endl;
 		dest.put(htData);

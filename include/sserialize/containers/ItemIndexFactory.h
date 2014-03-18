@@ -94,7 +94,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 		std::vector<uint8_t> mys;
 		UByteArrayAdapter dest(&mys);
 		ItemIndexPrivateWAH::create(idx, dest);
-		if (m_compressionType == Static::ItemIndexStore::IC_VARUINT32) {
+		if (m_compressionType == Static::ItemIndexStore::IndexCompressionType::IC_VARUINT32) {
 			UByteArrayAdapter nd(&s);
 			for(std::vector<uint8_t>::const_iterator it(mys.begin()), end(mys.end()); it != end; it += 4) {
 				uint32_t v = up_u32(&(*it));

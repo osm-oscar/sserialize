@@ -140,7 +140,7 @@ public:
 		Static::ItemIndexStore csdb(cmpDataAdap);
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), csdb.size());
-		CPPUNIT_ASSERT_MESSAGE("compression type not set", csdb.compressionType() & Static::ItemIndexStore::IC_LZO);
+		CPPUNIT_ASSERT_MESSAGE("compression type not set", csdb.compressionType() & Static::ItemIndexStore::IndexCompressionType::IC_LZO);
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
 			ItemIndex idx = csdb.at( m_setIds[i] );
