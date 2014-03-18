@@ -176,7 +176,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	
 	uint32_t curPtrOffset = 0;
 
-	std::vector<uint32_t> indexPtrs(m_regions.size(), 0);
+	std::vector<uint32_t> cellListIndexPtrs(m_regions.size(), 0);
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions[i];
 		bool ok = true;
@@ -186,7 +186,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mrdId = std::max<uint32_t>(mrdId, r.id);
 		mrdParentsOffset = std::max<uint32_t>(mrdParentsOffset, r.children.size());
 		curPtrOffset += r.children.size() + r.parents.size();
-		indexPtrs[i] = cellListIndexPtr;
+		cellListIndexPtrs[i] = cellListIndexPtr;
 		allOk = allOk && ok;
 	}
 	curPtrOffset += m_rootRegion.children.size();
@@ -217,7 +217,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mvaCreator.reserve(m_regions.size()+2);
 		for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 			const Region & r = m_regions[i];
-			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, indexPtrs[i]);
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, cellListIndexPtrs[i]);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE, r.type);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, r.id);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN, curPtrOffset);
@@ -266,8 +266,10 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	//and do the same for the cells
 	
 	maxValues.resize(sserialize::Static::spatial::GeoHierarchy::Cell::CD__ENTRY_SIZE, 0);
-	indexPtrs.clear();
-	indexPtrs.resize(m_cells.size(), 0);
+	cellListIndexPtrs.clear();
+	cellListIndexPtrs.resize(m_cells.size(), 0);
+	std::vector<uint32_t> & cellItemsIndexPtrs = cellListIndexPtrs;
+	
 	uint32_t & mcdItemPtr = maxValues[sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR];
 	uint32_t & mcdParentBegin = maxValues[sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN];
 	
@@ -278,7 +280,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		uint32_t itemPtr = idxFactory.addIndex(c.items, &ok);
 		mcdItemPtr = std::max<uint32_t>(mcdItemPtr, itemPtr);
 		curPtrOffset += c.parents.size();
-		indexPtrs[i] = itemPtr;
+		cellItemsIndexPtrs[i] = itemPtr;
 		allOk = allOk && ok;
 	}
 	mcdParentBegin = curPtrOffset;
@@ -296,7 +298,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mvaCreator.reserve(m_cells.size()+1);
 		for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
 			const Cell & c = m_cells[i];
-			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, indexPtrs[i]);
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, cellItemsIndexPtrs[i]);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN, curPtrOffset);
 			curPtrOffset += c.parents.size();
 		}
