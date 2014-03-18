@@ -115,8 +115,7 @@ private:
 				for(size_t k=0; k < cellsSize; k++) {
 					unsigned int i = cells[k].first;
 					unsigned int j = cells[k].second;
-					GeoRect cellRect(  );
-					GeoPolygon cellPoly = sserialize::spatial::GeoPolygon::fromRect(MyRGeoGrid::cellBoundary(i, j));
+					GeoPolygon cellPoly(sserialize::spatial::GeoPolygon::fromRect(MyRGeoGrid::cellBoundary(i, j)));
 					//test enclosing
 					bool enclosing = false;
 					if (p.type() == sserialize::spatial::GS_POLYGON) {
