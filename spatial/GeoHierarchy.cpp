@@ -443,19 +443,19 @@ std::vector<uint32_t> treeMerge(const std::vector< const std::vector<uint32_t>* 
 
 std::vector<uint32_t> GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const {
 	std::vector<uint32_t> res;
-	res.reserve(m_regions.size());
+	res.resize(m_regions.size(), 0);
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions[i];
-		std::vector< const std::vector<uint32_t> * > tmp(r.cells.size(), 0);
-		for(uint32_t c = 0, cs = r.cells.size(); c < cs; ++c) {
-			const Cell & cell = m_cells[c];
-			tmp[c] = (&cell.items);
+		std::vector< const std::vector<uint32_t> * > tmp;
+		tmp.reserve(r.cells.size());
+		for(uint32_t c : r.cells) {
+			tmp.push_back(&cell(c).items);
 		}
 		std::vector<uint32_t> items;
 		if (tmp.size()) {
 			items = treeMerge(tmp, 0, tmp.size()-1);
 		}
-		res.push_back( idxFactory.addIndex(items) );
+		res.at(i) = idxFactory.addIndex(items);
 	}
 	return res;
 }

@@ -43,6 +43,10 @@ public:
 	inline std::vector<Region> & regions() { return m_regions;}
 	inline const std::vector<Cell> & cells() const { return m_cells; }
 	inline const std::vector<Region> & regions() const { return m_regions;}
+	inline const Cell & cell(uint32_t pos) const { return m_cells.at(pos);}
+	inline Cell & cell(uint32_t pos) { return m_cells.at(pos);}
+	inline const Region & region(uint32_t pos) const { return m_regions.at(pos);}
+	inline Region & region(uint32_t pos) { return m_regions.at(pos);}
 	bool checkConsistency();
 	///data structure has to be consistent before using this
 	UByteArrayAdapter append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory, bool fullItemsIndex = true) const;
