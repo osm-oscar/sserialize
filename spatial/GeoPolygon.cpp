@@ -11,9 +11,8 @@ MyBaseClass()
 	this->points() = points;
 	if (points.front() != points.back()) {
 		this->points().push_back(points.front());
-		recalculateBoundary();
 	}
-
+	recalculateBoundary();
 }
 
 template<>
