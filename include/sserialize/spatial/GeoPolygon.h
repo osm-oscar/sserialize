@@ -57,6 +57,7 @@ public:
 	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
+	virtual std::ostream & asString(std::ostream & out) const;
 	
 	static GeoPolygon fromRect(const GeoRect & rect);
 };
@@ -311,6 +312,17 @@ UByteArrayAdapter & GeoPolygon<TPointsContainer>::append(UByteArrayAdapter & des
 template<typename TPointsContainer>
 sserialize::spatial::GeoShape * GeoPolygon<TPointsContainer>::copy() const {
 	return new GeoPolygon(*this);
+}
+
+template<typename TPointsContainer>
+std::ostream & GeoPolygon<TPointsContainer>::asString(std::ostream & out) const {
+	out << "GeoPolygon[" << MyBaseClass::myBoundary() << "{";
+	for(typename TPointsContainer::const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+		typename TPointsContainer::const_reference gp = *it;
+		out << "(" << gp.lat() << ", " << gp.lon() << ")";
+	}
+	out << "}]";
+	return out;
 }
 
 template<typename TPointsContainer>

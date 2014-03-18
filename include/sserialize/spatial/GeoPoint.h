@@ -45,6 +45,7 @@ public:
 	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
+	virtual std::ostream & asString(std::ostream & out) const;
 	
 	///Check if two lines given by p->q and r->s intersect each other
 	static bool intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s);
@@ -82,7 +83,7 @@ inline bool operator!=(const sserialize::spatial::GeoPoint & a, const sserialize
 }
 
 inline std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp) {
-	return out << "GeoPoint(" << gp.lat() << ", " << gp.lon() << ")";
+	return gp.asString(out);
 }
 
 #endif

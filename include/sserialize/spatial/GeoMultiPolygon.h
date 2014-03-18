@@ -79,6 +79,7 @@ public:
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
+	virtual std::ostream & asString(std::ostream & out);
 };
 
 template<typename TPolygonContainer, typename TPolygon>
@@ -415,6 +416,19 @@ typename GeoMultiPolygon<TPolygonContainer, TPolygon>::PolygonList & GeoMultiPol
 template<typename TPolygonContainer, typename TPolygon>
 sserialize::spatial::GeoShape * GeoMultiPolygon<TPolygonContainer, TPolygon>::copy() const {
 	return new GeoMultiPolygon<TPolygonContainer, TPolygon>(*this);
+}
+
+template<typename TPolygonContainer, typename TPolygon>
+std::ostream & GeoMultiPolygon<TPolygonContainer, TPolygon>::asString(std::ostream & out) {
+	out << "GeoMultiPolygon[" << m_outerBoundary << m_innerBoundary << "{";
+	for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
+		(*it).asString(out);
+	}
+	for(typename PolygonList::const_iterator it(innerPolygons().cbegin()), end(innerPolygons().cend()); it != end; ++it) {
+		(*it).asString(out);
+	}
+	out << "}]";
+	return out;
 }
 
 }//end namespace detail

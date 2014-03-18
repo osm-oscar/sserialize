@@ -59,6 +59,7 @@ public:
 	}
 	
 	virtual sserialize::spatial::GeoShape * copy() const { return new GeoWay(*this); }
+	virtual std::ostream & asString(std::ostream & out) const;
 };
 
 template<typename TPointsContainer>
@@ -245,6 +246,17 @@ void GeoWay<TPointsContainer>::recalculateBoundary() {
 	
 	m_boundary.lon()[0] = minLon;
 	m_boundary.lon()[1] = maxLon;
+}
+
+template<typename TPointsContainer>
+std::ostream & GeoWay<TPointsContainer>::asString(std::ostream & out) const {
+	out << "GeoWay[" << m_boundary << "{";
+	for(typename TPointsContainer::const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+		typename TPointsContainer::const_reference gp = *it;
+		out << "(" << gp.lat() << ", " << gp.lon() << ")";
+	}
+	out << "}]";
+	return out;
 }
 
 template<typename TPointsContainer>
