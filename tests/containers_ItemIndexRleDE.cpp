@@ -44,6 +44,7 @@ CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
 CPPUNIT_TEST( testDynamicBitSet );
+CPPUNIT_TEST( testPutIntoVector );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -194,6 +195,26 @@ public:
 			
 			idx.putInto(bitSet);
 			CPPUNIT_ASSERT_MESSAGE("index from DynamicBitSet unequal", idx == bitSet.toIndex(ItemIndex::T_RLE_DE));
+			
+		}
+	}
+	
+	void testPutIntoVector() {
+		srand(0);
+		uint32_t setCount = 16;
+
+		for(size_t i = 0; i < setCount; i++) {
+			std::vector<uint32_t> vec;
+			std::set<uint32_t> realValues( myCreateNumbers(rand() % 16395, 0xFFFFF) );
+			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
+			ItemIndexPrivateRleDE::create(realValues, dest);
+			ItemIndex idx(dest, ItemIndex::T_RLE_DE);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_MESSAGE("test index unequal", realValues == idx);
+			
+			idx.putInto(vec);
+			CPPUNIT_ASSERT_MESSAGE("vector from index unequal", idx == vec);
 			
 		}
 	}
