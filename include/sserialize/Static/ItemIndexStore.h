@@ -23,6 +23,7 @@
 
 namespace sserialize {
 namespace Static {
+namespace detail {
 
 /** The first index id is ALWAY the empty index*/
 class ItemIndexStore {
@@ -64,6 +65,35 @@ public:
 	const UByteArrayAdapter & getData() const { return m_data; }
 	std::shared_ptr<HuffmanDecoder> getHuffmanTree() const { return m_hd; }
 	UByteArrayAdapter getHuffmanTreeData() const;
+};
+}
+
+class ItemIndexStore {
+public:
+	typedef detail::ItemIndexStore::IndexCompressionType IndexCompressionType;
+private:
+	std::shared_ptr<detail::ItemIndexStore> m_priv;
+protected:
+	const std::shared_ptr<detail::ItemIndexStore> & priv() const { return m_priv; }
+	std::shared_ptr<detail::ItemIndexStore> & priv() { return m_priv; }
+public:
+	ItemIndexStore() : m_priv(new detail::ItemIndexStore()) {}
+	ItemIndexStore(sserialize::UByteArrayAdapter data) : m_priv(new detail::ItemIndexStore(data)) {}
+	~ItemIndexStore() {}
+	inline OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
+	inline uint32_t size() const { return priv()->size(); }
+	inline ItemIndex::Types indexType() const { return priv()->indexType(); }
+	inline IndexCompressionType compressionType() const { return priv()->compressionType(); }
+	inline UByteArrayAdapter rawDataAt(uint32_t pos) const { return priv()->rawDataAt(pos); }
+	inline ItemIndex at(uint32_t pos) const { return priv()->at(pos);}
+	inline ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const { return priv()->at(pos, realIdIndex);}
+	inline ItemIndex hierachy(const std::deque< uint32_t >& offsets) const { return priv()->hierachy(offsets); }
+	inline std::ostream& printStats(std::ostream& out) const { return priv()->printStats(out); }
+	inline std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const { return priv()->printStats(out, indexIds);}
+	inline SortedOffsetIndex & getIndex() { return priv()->getIndex();}
+	inline const UByteArrayAdapter & getData() const { return priv()->getData(); }
+	inline std::shared_ptr<HuffmanDecoder> getHuffmanTree() const { return priv()->getHuffmanTree(); }
+	inline UByteArrayAdapter getHuffmanTreeData() const { return priv()->getHuffmanTreeData();}
 };
 
 }}//end namespace

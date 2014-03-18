@@ -9,6 +9,7 @@
 
 namespace sserialize {
 namespace Static {
+namespace detail {
 
 ItemIndexStore::LZODecompressor::LZODecompressor() {}
 
@@ -243,4 +244,4 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 }
 
 
-}}//end namespace
+}}}//end namespace
