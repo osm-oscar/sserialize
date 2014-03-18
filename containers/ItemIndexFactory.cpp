@@ -63,8 +63,9 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	info.begin(store.size(), "Adding indices from store");
 	//skip the first index as that one is by definition empty and already added
 	for(uint32_t i = 0, s = store.size(); i < s; ++i) {
+		tmp.clear();
 		tmpIdx = store.at(i);
-		tmpIdx.putInto(res);
+		tmpIdx.putInto(tmp);
 		res.push_back(addIndex(tmp));
 		info(i);
 	}
