@@ -457,18 +457,8 @@ int main(int argc, char ** argv) {
 		ItemIndexFactory factory;
 		factory.setType(transform);
 		factory.setIndexFile(outData);
-		ProgressInfo info;
-		ItemIndex idx;
-		std::vector<uint32_t> tmpData;
-		info.begin(store.size(), "Transforming IndexStore");
-		for(uint32_t i = 0; i < store.size(); ++i) {
-			idx = store.at(i);
-			idx.insertInto(std::back_insert_iterator< std::vector<uint32_t> >(tmpData));
-			factory.addIndex(tmpData);
-			tmpData.clear();
-			info(i);
-		}
-		info.end("Transformed IndexStore");
+		std::cout << "Transforming index" << std::endl;
+		factory.insert(store);
 		std::cout << "Serializing IndexStore" << std::endl;
 		UByteArrayAdapter::OffsetType s = factory.flush();
 		outData = factory.getFlushedData();
