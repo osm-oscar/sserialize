@@ -127,6 +127,7 @@ public:
 	static bool isDirectory(const std::string & fileName);
 	///Tries to create a directory at fileName. Alsoreturns true if the dir already existed
 	static bool createDirectory(const std::string & fileName, __mode_t mode = S_IRWXU);
+	static bool createSymlink(const std::string & src, const std::string & destination);
 };
 
 }//end namespace

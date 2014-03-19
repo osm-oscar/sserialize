@@ -363,5 +363,9 @@ bool MmappedFile::createDirectory(const std::string & fileName, __mode_t mode) {
 	}
 }
 
+bool MmappedFile::createSymlink(const std::string & src, const std::string & destination) {
+	return (0 == symlink(src.c_str(), destination.c_str()));
+}
+
 
 }//end namespace
