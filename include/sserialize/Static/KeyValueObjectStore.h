@@ -69,6 +69,7 @@ public:
 	std::pair<std::string, std::string> at(uint32_t pos) const;
 	std::string key(uint32_t pos) const;
 	std::string value(uint32_t pos) const;
+	std::string value(const std::string & key) const;
 	using MyBaseClass::findKey;
 	using MyBaseClass::findValue;
 	uint32_t findKey(const std::string & str, uint32_t start = 0) const;

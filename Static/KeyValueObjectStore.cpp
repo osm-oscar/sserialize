@@ -88,6 +88,13 @@ std::string KeyValueObjectStoreItem::value(uint32_t pos) const {
 	return m_db->value( valueId(pos) );
 }
 
+std::string KeyValueObjectStoreItem::value(const std::string & key) const {
+	uint32_t keyPos = findKey(key, 0);
+	if (keyPos != npos) {
+		return value(keyPos);
+	}
+	return std::string();
+}
 
 uint32_t KeyValueObjectStoreItem::findKey(const std::string & str, uint32_t start) const {
 	uint32_t keyId = m_db->findKeyId(str);
