@@ -344,8 +344,11 @@ bool GeoPolygon<TPointsContainer>::encloses(const GeoPolygon<TPointsContainer>::
 	//all points are within, check for cut. TODO: improve this by haveing more info about the polygon, if this would be convex, then we would be done here
 	
 	for(const_iterator oPrev(other.cbegin()), oIt(other.cbegin()+1), oEnd(other.cend()); oIt != oEnd; ++oIt, ++oPrev) {
-		if (intersects(*oPrev, *oIt))
-			return false;
+		for(const_iterator prev(MyBaseClass::cbegin()), it(MyBaseClass::cbegin()+1), end(MyBaseClass::cend()); it != end; ++it, ++prev)  {
+			if (sserialize::spatial::GeoPoint::intersect(*oPrev, *oIt, *prev, *it)) {
+				return true;
+			}
+		}
 	}
 	return true;
 }
