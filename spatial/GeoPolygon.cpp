@@ -18,22 +18,24 @@ MyBaseClass()
 template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
-	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
-	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[0]) );
-	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[1]) );
-	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[1]) );
-	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
+	points.reserve(5);
+	points.push_back( GeoPoint(rect.minLat(), rect.minLon()) );
+	points.push_back( GeoPoint(rect.minLat(), rect.maxLon()) );
+	points.push_back( GeoPoint(rect.maxLat(), rect.maxLon()) );
+	points.push_back( GeoPoint(rect.maxLat(), rect.minLon()) );
+	points.push_back( points.front() );
 	return GeoPolygon(rect, points);
 }
 
 template<>
 GeoPolygon<sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoPolygon<sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
-	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
-	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[0]) );
-	points.push_back( GeoPoint(rect.lat()[1], rect.lon()[1]) );
-	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[1]) );
-	points.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
+	points.reserve(5);
+	points.push_back( GeoPoint(rect.minLat(), rect.minLon()) );
+	points.push_back( GeoPoint(rect.minLat(), rect.maxLon()) );
+	points.push_back( GeoPoint(rect.maxLat(), rect.maxLon()) );
+	points.push_back( GeoPoint(rect.maxLat(), rect.minLon()) );
+	points.push_back( points.front() );
 	
 	typedef sserialize::detail::AbstractArrayDefaultImp<std::vector<sserialize::spatial::GeoPoint>, sserialize::spatial::GeoPoint > AAPType;
 	
