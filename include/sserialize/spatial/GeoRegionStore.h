@@ -61,18 +61,6 @@ private:
 		friend class GeoRegionStore;
 		typedef RWGeoGrid< RasterElementPolygons, std::vector<RasterElementPolygons> > MyRWGeoGrid;
 		typedef RGeoGrid<RasterElementPolygons, std::vector<RasterElementPolygons> > MyRGeoGrid;
-	private:
-		void createCellPoly(const GeoRect & cellRect, GeoPolygon & cellPoly) const {
-			cellPoly.points().push_back( Point(cellRect.lat()[0], cellRect.lon()[0]) );
-			cellPoly.points().push_back( Point(cellRect.lat()[1], cellRect.lon()[0]) );
-			cellPoly.points().push_back( Point(cellRect.lat()[1], cellRect.lon()[1]) );
-			cellPoly.points().push_back( Point(cellRect.lat()[0], cellRect.lon()[1]) );
-			cellPoly.recalculateBoundary();
-		}
-		void createCellPoly(GeoPolygon & cellPoly, uint32_t i , uint32_t j) {
-			GeoRect cellRect(MyRWGeoGrid::cellBoundary(i,j));
-			createCellPoly(cellRect, cellPoly);
-		}
 	public:
 		PolyRaster(const GeoRect & bounds, uint32_t latcount, uint32_t loncount) :
 		RWGeoGrid<RasterElementPolygons>(bounds, latcount, loncount)
@@ -122,7 +110,6 @@ private:
 						enclosing = static_cast<const sserialize::spatial::GeoPolygon&>(p).encloses(cellPoly);
 					}
 					else if (p.type() == sserialize::spatial::GS_MULTI_POLYGON) {
-						//approximat enclosing
 						enclosing = static_cast<const sserialize::spatial::GeoMultiPolygon&>(p).encloses(cellPoly);
 					}
 					if (!enclosing) {
@@ -242,8 +229,9 @@ public:
 		return test(Point(lat, lon));
 	}
 	
-	std::set<uint32_t> test(const Point & p) const {
-		std::set<uint32_t> polys;
+	template<typename T_SET_TYPE = std::set<uint32_t> >
+	T_SET_TYPE test(const Point & p) const {
+		T_SET_TYPE polys;
 		if (!m_polyRaster) {
 			for(std::size_t it(0), s(m_regionStore.size()); it < s; ++it) {
 				if ( pointInRegion(p, *m_regionStore[it]) ) {
