@@ -53,6 +53,9 @@ public:
 	
 	/** Enlarge this rect so that other will fit into it */
 	void enlarge(const GeoRect & other);
+	
+	///Resize this Rect by lat in latitude and lon in longitude
+	void resize(double latFactor, double lonFactor);
 };
 
 }}//end namespacec

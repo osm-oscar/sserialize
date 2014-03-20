@@ -117,6 +117,20 @@ void GeoRect::enlarge(const GeoRect & other) {
 	m_lon[1] = std::max(m_lon[1], other.m_lon[1]);
 }
 
+void GeoRect::resize(double latFactor, double lonFactor) {
+	double latLen = (maxLat()-minLat())/2.0;
+	double lonLen = (maxLon()-minLon())/2.0;
+	
+	double latMid  = minLat() + latLen;
+	double lonMid = minLon() + lonLen;
+	
+	minLat() = latMid - latLen*latFactor;
+	maxLat() = latMid + latLen*latFactor;
+	
+	minLon() = lonMid - lonLen*lonFactor;
+	maxLon() = lonMid + lonLen*lonFactor;
+}
+
 }}//end namespace
 
 
