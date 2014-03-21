@@ -55,12 +55,14 @@ class AbstractArrayDefaultImp: public AbstractArray<TReturnType> {
 public:
 	typedef AbstractArray<TReturnType> MyBaseClass;
 	typedef TAbstractArrayIteratorType const_iterator;
+	typedef TContainerType ContainerType;
 private:
 	TContainerType m_data;
 public:
 	AbstractArrayDefaultImp() {}
 	AbstractArrayDefaultImp(const TContainerType & d) : m_data(d) {}
 	virtual ~AbstractArrayDefaultImp() {}
+	const TContainerType & container() const { return m_data; }
 	virtual uint32_t size() const { return m_data.size(); }
 	virtual TReturnType at(uint32_t pos) const { return m_data.at(pos); }
 	///function should return a pointer to a AbstractArrayIterator which is then owned by a shared_ptr
