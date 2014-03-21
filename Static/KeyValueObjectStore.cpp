@@ -1,5 +1,6 @@
 #include <sserialize/Static/KeyValueObjectStore.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/log.h>
 
 namespace sserialize {
 namespace Static {
@@ -16,7 +17,7 @@ m_keyBegin(data.getVlPackedUint32()),
 m_valueBegin(data.getVlPackedUint32()),
 m_kv(data.shrinkToGetPtr(), keyBits() + valueBits())
 {
-	SSERIALIZE_LENGTH_CHECK(size(), m_kv.maxCount(), "sserialize::KeyValueObjectStoreItemBase");
+	SSERIALIZE_LENGTH_CHECK(size(), m_kv.maxCount(), sserialize::toString("sserialize::KeyValueObjectStoreItemBase size()=", size(), " >= m_kv.maxCount()=", m_kv.maxCount()));
 }
 
 KeyValueObjectStoreItemBase::~KeyValueObjectStoreItemBase() {}
