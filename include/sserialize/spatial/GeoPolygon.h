@@ -21,6 +21,7 @@ public:
 	typedef sserialize::spatial::detail::GeoWay<TPointsContainer> MyBaseClass;
 	typedef MyBaseClass MyGeoWay;
 	typedef typename MyBaseClass::const_iterator const_iterator;
+	typedef TPointsContainer PointsContainer;
 protected:
 	bool collidesWithPolygon(const GeoPolygon & poly) const;
 	bool collidesWithWay(const MyGeoWay & way) const;
