@@ -123,12 +123,12 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::collidesWithWay(const GeoWay 
 		return contains(way.points().front());
 	}
 	//check if any point of the way is contained
-	for(typename GeoWay::PointsContainer::const_iterator it(way.points().begin()), end(way.points().end()); it != end; ++it) {
+	for(typename GeoWay::PointsContainer::const_iterator it(way.points().cbegin()), end(way.points().cend()); it != end; ++it) {
 		if (contains(*it))
 			return true;
 	}
 	//check for an intersection with any way segment
-	for(typename GeoWay::PointsContainer::const_iterator prev(way.points().begin()), it(way.points().begin()+1), end(way.points().end()); it != end; ++prev, ++it) {
+	for(typename GeoWay::PointsContainer::const_iterator prev(way.points().cbegin()), it(way.points().cbegin()+1), end(way.points().cend()); it != end; ++prev, ++it) {
 		if (intersects(*prev, *it))
 			return true;
 	}
