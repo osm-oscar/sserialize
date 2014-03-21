@@ -42,14 +42,39 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 }
 
 
+template<typename T_POINTS_CONTAINER>
+struct PointsArraySizeGetter {
+	static sserialize::UByteArrayAdapter::OffsetType getSizeInBytes(const T_POINTS_CONTAINER & c);
+};
+
+template<>
+sserialize::UByteArrayAdapter::OffsetType
+PointsArraySizeGetter< sserialize::Static::spatial::DenseGeoPointVector >
+::getSizeInBytes(const sserialize::Static::spatial::DenseGeoPointVector & c) {
+	return c.getSizeInBytes();
+}
+
+template<>
+sserialize::UByteArrayAdapter::OffsetType
+PointsArraySizeGetter< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >
+::getSizeInBytes(const sserialize::AbstractArray<sserialize::spatial::GeoPoint> & c) {
+	typedef sserialize::Static::spatial::detail::DenseGeoPointVectorAbstractArray MyArrayType;
+	MyArrayType * tmp = c.get< MyArrayType >();
+	if (tmp)
+		return tmp->container().getSizeInBytes();
+	return 0;
+}
+
 UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 	switch (type()) {
 		case sserialize::spatial::GS_POINT:
 			return 1+SerializationInfo<sserialize::spatial::GeoPoint>::length;
 		case sserialize::spatial::GS_WAY:
-			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length + get<sserialize::Static::spatial::GeoWay>()->points().getSizeInBytes();
+			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length +
+					PointsArraySizeGetter<sserialize::Static::spatial::GeoPolygon::PointsContainer>::getSizeInBytes( get<sserialize::Static::spatial::GeoWay>()->points());
 		case sserialize::spatial::GS_POLYGON:
-			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length + get<sserialize::Static::spatial::GeoPolygon>()->points().getSizeInBytes();
+			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length +
+					PointsArraySizeGetter<sserialize::Static::spatial::GeoPolygon::PointsContainer>::getSizeInBytes( get<sserialize::Static::spatial::GeoPolygon>()->points());
 		case sserialize::spatial::GS_MULTI_POLYGON:
 			{
 				OffsetType s = 1 + 2* SerializationInfo<sserialize::spatial::GeoRect>::length;
