@@ -8,17 +8,22 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 namespace detail {
+	///The type of the on-disk PointsContainer
 	typedef sserialize::Static::spatial::DenseGeoPointVector GeoWayPointsContainer;
+	typedef sserialize::Static::spatial::detail::DenseGeoPointVectorAbstractArray GeoWayAbstractArrayPointsContainer;
 }}}
 
 
 namespace spatial {
 namespace detail {
 	template<>
-	GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer >::GeoWay(const sserialize::UByteArrayAdapter & d);
+	GeoWay< sserialize::Static::spatial::DenseGeoPointVector >::GeoWay(const sserialize::UByteArrayAdapter & d);
+	
+	template<>
+	GeoWay< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::GeoWay(const sserialize::UByteArrayAdapter & d);
 
 	template<>
-	UByteArrayAdapter & GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer >::append(UByteArrayAdapter & destination) const;
+	UByteArrayAdapter & GeoWay< sserialize::Static::spatial::DenseGeoPointVector >::append(UByteArrayAdapter & destination) const;
 }}}
 
 namespace sserialize {
@@ -32,7 +37,8 @@ namespace spatial {
   *
   */
 
-typedef sserialize::spatial::detail::GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer > GeoWay;
+// typedef sserialize::spatial::detail::GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer > GeoWay;
+typedef sserialize::spatial::detail::GeoWay< sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoWay;
 
 }}
 
