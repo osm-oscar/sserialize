@@ -1,6 +1,7 @@
 #include <sserialize/containers/KeyValueObjectStore.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Deque.h>
+#include <sserialize/Static/KeyValueObjectStore.h>
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/utilfuncs.h>
@@ -64,6 +65,9 @@ std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
 }
 
 void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) {
+#if defined(DEBUG_CHECK_KVSTORE_SERIALIZE) || defined(DEBUG_CHECK_ALL)
+	sserialize::OffsetType putPtr = dest.tellPutPtr();
+#endif
 	if(item.size() > (std::numeric_limits<uint32_t>::max() >> 10)) {
 		throw sserialize::CreationException("Out of bounds in KeyValueObjectStore::serialize(item)");
 	}
@@ -97,6 +101,20 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 		carr.set64(i, pv);
 	}
 	dest.put(carr.data());
+#if defined(DEBUG_CHECK_KVSTORE_SERIALIZE) || defined(DEBUG_CHECK_ALL)
+	UByteArrayAdapter tmp(dest);
+	tmp.setPutPtr(putPtr);
+	tmp.shrinkToPutPtr();
+	tmp.resetPtrs();
+	sserialize::Static::KeyValueObjectStoreItemBase sitem(tmp);
+	SSERIALIZE_ASSERT_EQUAL_CREATION(item.size(), sitem.size(), "sserialize::KeyValueObjectStore::serialize: item.size()");
+	for(uint32_t i = 0, s = item.size(); i < s; ++i) {
+		SSERIALIZE_ASSERT_EQUAL_CREATION(item.at(i).key, sitem.keyId(i), "sserialize::KeyValueObjectStore::serialize: keyId");
+		SSERIALIZE_ASSERT_EQUAL_CREATION(item.at(i).value, sitem.valueId(i), "sserialize::KeyValueObjectStore::serialize: valueId");
+	}
+	
+#endif
+
 }
 
 void KeyValueObjectStore::sort() {
