@@ -26,7 +26,7 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 
-typedef sserialize::spatial::detail::GeoPolygon< sserialize::Static::spatial::detail::GeoWayPointsContainer > GeoPolygon;
+typedef sserialize::spatial::detail::GeoPolygon< sserialize::Static::spatial::GeoWay::PointsContainer> GeoPolygon;
 
 }}}//end namespace
 
