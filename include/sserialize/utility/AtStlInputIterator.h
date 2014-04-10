@@ -11,12 +11,12 @@ template<typename T_CONTAINER, typename T_RETURN_TYPE, typename T_SIZE_TYPE>
 struct ReadOnlyAtStlIteratorPassThroughDereference {
 
 	template<typename U = T_CONTAINER>
-	T_RETURN_TYPE operator()(const typename std::enable_if<std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c,  T_SIZE_TYPE pos) {
+	T_RETURN_TYPE operator()(const typename std::enable_if<std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c,  T_SIZE_TYPE pos) const {
 		return c->at(pos);
 	}
 	
 	template<typename U = T_CONTAINER>
-	T_RETURN_TYPE operator()(const typename std::enable_if<!std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c, T_SIZE_TYPE  pos) {
+	T_RETURN_TYPE operator()(const typename std::enable_if<!std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c, T_SIZE_TYPE  pos) const {
 		return c.at(pos);
 	}
 };
@@ -112,11 +112,11 @@ public:
 		return (m_data == other.m_data ? m_pos - other.m_pos : std::numeric_limits<T_SIZE_TYPE>::max());
 	}
 	
-	T_RETURN_TYPE operator*() {
+	T_RETURN_TYPE operator*() const {
 		return m_derefer(m_data, m_pos);
 	}
 	
-	T_RETURN_TYPE operator->() {
+	T_RETURN_TYPE operator->() const {
 		return operator*();
 	}
 };
