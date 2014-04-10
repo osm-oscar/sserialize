@@ -109,11 +109,33 @@ UByteArrayAdapter ItemIndex::data() const {
 	return priv()->data();
 }
 
-uint32_t ItemIndex::at(uint32_t pos) const { return priv()->at(pos);}
-uint32_t ItemIndex::first() const { return priv()->first(); }
-uint32_t ItemIndex::last() const { return priv()->last(); }
-int ItemIndex::find(uint32_t id) const {  return priv()->find(id); }
-int ItemIndex::count(uint32_t id) const { return (find(id) < 0 ? 0 : 1);}
+uint32_t ItemIndex::at(uint32_t pos) const {
+	return priv()->at(pos);
+}
+
+uint32_t ItemIndex::first() const {
+	return priv()->first();
+}
+
+uint32_t ItemIndex::last() const {
+	return priv()->last();
+}
+
+ItemIndex::const_iterator ItemIndex::cbegin() const {
+	return const_iterator(priv()->cbegin());
+}
+
+ItemIndex::const_iterator ItemIndex::cend() const {
+	return const_iterator(priv()->cend());
+}
+
+int ItemIndex::find(uint32_t id) const {
+	return priv()->find(id);
+}
+
+int ItemIndex::count(uint32_t id) const {
+	return (find(id) < 0 ? 0 : 1);
+}
 
 void ItemIndex::putInto(DynamicBitSet & bitSet) const {
 	priv()->putInto(bitSet);
@@ -123,11 +145,17 @@ void ItemIndex::putInto(std::vector<uint32_t> & dest) const {
 	priv()->putInto(dest);
 }
 
-uint32_t ItemIndex::size() const { return priv()->size();}
-uint8_t ItemIndex::bpn() const { return priv()->bpn();}
+uint32_t ItemIndex::size() const {
+	return priv()->size();
+}
 
+uint8_t ItemIndex::bpn() const {
+	return priv()->bpn();
+}
 
-uint32_t ItemIndex::getSizeInBytes() const { return priv()->getSizeInBytes();}
+uint32_t ItemIndex::getSizeInBytes() const {
+	return priv()->getSizeInBytes();
+}
 
 ItemIndex::Types ItemIndex::type() const {
 	return priv()->type();

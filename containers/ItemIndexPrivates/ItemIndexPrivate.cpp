@@ -10,10 +10,20 @@ namespace sserialize {
 ItemIndexPrivate::ItemIndexPrivate() {}
 ItemIndexPrivate::~ItemIndexPrivate() {}
 
+
+ItemIndexPrivate::const_iterator ItemIndexPrivate::cbegin() const {
+	typedef ReadOnlyAtStlIterator<const ItemIndexPrivate*, uint32_t, uint32_t> MyIt;
+	return new detail::AbstractArrayIteratorDefaultImp<MyIt , uint32_t >(MyIt(0, this));
+}
+
+ItemIndexPrivate::const_iterator ItemIndexPrivate::cend() const {
+	typedef ReadOnlyAtStlIterator<const ItemIndexPrivate*, uint32_t, uint32_t> MyIt;
+	return new detail::AbstractArrayIteratorDefaultImp<MyIt , uint32_t >(MyIt(size(), this));
+}
+
 uint32_t ItemIndexPrivate::uncheckedAt(uint32_t pos) const {
 	return at(pos);
 }
-
 
 ItemIndexPrivate * ItemIndexPrivate::doUnite(const ItemIndexPrivate * other) const {
 	if (!this || !other)

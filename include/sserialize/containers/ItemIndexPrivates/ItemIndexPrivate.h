@@ -9,8 +9,8 @@ namespace sserialize {
 
 class ItemIndexPrivate: public RefCountObject {
 public:
-	typedef ReadOnlyAtStlIterator<ItemIndexPrivate, uint32_t, uint32_t> iterator;
-	typedef ReadOnlyAtStlIterator<const ItemIndexPrivate, uint32_t, uint32_t> const_iterator;
+	typedef detail::AbstractArrayIterator<uint32_t> * const_iterator;
+	typedef const_iterator iterator;
 public:
 	ItemIndexPrivate();
 	virtual ~ItemIndexPrivate();
@@ -39,6 +39,9 @@ public:
 	virtual uint32_t at(uint32_t pos) const = 0;
 	virtual uint32_t first() const = 0;
 	virtual uint32_t last() const = 0;
+	
+	virtual const_iterator cbegin() const;
+	virtual const_iterator cend() const;
 
 	virtual uint32_t size() const = 0;
 

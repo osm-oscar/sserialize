@@ -2,6 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_H
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/templated/AbstractArray.h>
 #include <vector>
 #include <set>
 #include <deque>
@@ -30,6 +31,9 @@ public:
 	struct ItemFilterIdentity: ItemFilter {
 		virtual bool operator()(uint32_t /*id*/) const { return true; }
 	};
+	
+	typedef sserialize::AbstractArrayIterator<uint32_t> const_iterator;
+	typedef const_iterator iterator;
 	
 private:
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex::Types type);
@@ -68,6 +72,8 @@ public:
 	uint32_t first() const;
 	uint32_t last() const;
 
+	const_iterator cbegin() const;
+	const_iterator cend() const;
 	
 	
 	void dump(const char * fileName);
