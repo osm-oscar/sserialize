@@ -73,7 +73,7 @@ public:
 }//end namespace detail
 
 template<typename TReturnType>
-class AbstractArrayIterator {
+class AbstractArrayIterator: public std::iterator<std::input_iterator_tag, TReturnType, std::size_t> {
 	std::unique_ptr< detail::AbstractArrayIterator<TReturnType> > m_priv;
 public:
 	AbstractArrayIterator(detail::AbstractArrayIterator<TReturnType> * it) : m_priv(it) {}
