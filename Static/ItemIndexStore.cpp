@@ -194,15 +194,28 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out) const {
 std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const {
 	out << "Static::ItemIndexStore::Stats->BEGIN (info depends on selected indices)" << std::endl;
 	out << "Storage size  of ItemIndexStore: " << getSizeInBytes() << std::endl;
-
 	out << "size: " << indexIds.size() << std::endl;
 
-	std::unordered_set<uint32_t> wabSet;
-	uint64_t sizeOfSelectedIndices = 0;
 	uint64_t totalElementCount = 0;
-	uint64_t wordAlignedBitSetSize = 0;
-	std::unordered_map<uint32_t, uint32_t> idFreqs;
+	uint64_t sizeOfSelectedIndices = 0;
 	long double meanBitsPerId = 0;
+	for(std::unordered_set<uint32_t>::const_iterator idIt = indexIds.begin(); idIt != indexIds.end(); ++idIt) {
+		size_t i = *idIt;
+		ItemIndex idx(at(i));
+		totalElementCount += idx.size();
+		meanBitsPerId += idx.size()*idx.bpn();
+		sizeOfSelectedIndices += idx.getSizeInBytes();
+	}
+	meanBitsPerId /= totalElementCount;
+	
+	out << "Total element count (sum idx.size()):" << totalElementCount << std::endl;
+	out << "Size of selected indices: " << sizeOfSelectedIndices << std::endl;
+	out << "Mean bits per id: " << meanBitsPerId << std::endl;
+	out << "Mean bits per id (headers included): " << (long double)sizeOfSelectedIndices/totalElementCount*8 << std::endl;
+
+	uint64_t wordAlignedBitSetSize = 0;
+	std::unordered_set<uint32_t> wabSet;
+	std::unordered_map<uint32_t, uint32_t> idFreqs;
 	for(std::unordered_set<uint32_t>::const_iterator idIt = indexIds.begin(); idIt != indexIds.end(); ++idIt) {
 		size_t i = *idIt;
 		ItemIndex idx(at(i));
@@ -215,14 +228,10 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 				idFreqs[id] = 0;
 			idFreqs[id] += 1;
 		}
-		totalElementCount += idx.size();
-		meanBitsPerId += idx.size()*idx.bpn();
-		sizeOfSelectedIndices += idx.getSizeInBytes();
 		wordAlignedBitSetSize += wabSet.size();
 		wabSet.clear();
 	}
-	meanBitsPerId /= totalElementCount;
-	
+	out << "Minimum storage need for word aligned bit set (compression-ratio 100%): " << wordAlignedBitSetSize << std::endl;
 	
 	long double idEntropy = 0;
 	long double idDiscreteEntropy = 0;
@@ -233,12 +242,8 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 		idDiscreteEntropy += wn * ceil( - log2res );
 	}
 	idEntropy = - idEntropy;
-	out << "Size of selected indices: " << sizeOfSelectedIndices << std::endl;
 	out << "Id entropy: " << idEntropy << std::endl;
 	out << "Id discrete entropy: " << idDiscreteEntropy << std::endl;
-	out << "Mean bits per id: " << meanBitsPerId << std::endl;
-	out << "Mean bits per id (headers included): " << (long double)sizeOfSelectedIndices/totalElementCount*8 << std::endl;
-	out << "Minimum storage need for word aligned bit set (compression-ratio 100%): " << wordAlignedBitSetSize << std::endl;
 	out << "Static::ItemIndexStore::Stats->END" << std::endl;
 	return out;
 }
