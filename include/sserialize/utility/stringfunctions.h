@@ -135,6 +135,7 @@ T_RETURN_CONTAINER split(const std::string & str, const T_SEPARATOR_SET & separa
 			splits.insert(splits.end(), curStr);
 			curStr.clear();
 		}
+		
 		else {
 			curStr.push_back(*it);
 		}
@@ -161,6 +162,32 @@ public:
 
 /** splits the string at the given spearator */
 std::deque<std::string> splitLine(const std::string & str, const std::set<char> & seps);
+
+///move strIt to the beginning of the next suffix string
+template<typename T_RETURN_CONTAINER, typename T_SEPARATOR_SET>
+void nextSuffixString(std::string::const_iterator & strIt, const std::string::const_iterator & strEnd, const T_SEPARATOR_SET & separators) {
+	if (separators.size()) {
+		while (strIt != strEnd) {
+			if (separators.count( utf8::next(strIt, strEnd) ) > 0)
+				break;
+		}
+	}
+	else if (strIt != strEnd) {
+		utf8::next(strIt, strEnd);
+	}
+}
+
+///Return all suffixes of @str including @str itself
+template<typename T_RETURN_CONTAINER, typename T_SEPARATOR_SET>
+T_RETURN_CONTAINER suffixStrings(const std::string & str, const T_SEPARATOR_SET & separators) {
+	T_RETURN_CONTAINER ss;
+	std::string::const_iterator strIt(str.cbegin()), strEnd(str.cend());
+	while(strIt != strEnd) {
+		ss.insert(strIt, strEnd);
+		nextSuffixString(strIt, strEnd, separators);
+	}
+	return ss;
+}
 
 }//end namespace
 #endif
