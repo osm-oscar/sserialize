@@ -39,4 +39,23 @@ CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o)
 	return r;
 }
 
+CellQueryResult CellQueryResult::operator+(const sserialize::CellQueryResult & o) const {
+	CellQueryResult r;
+	r.fullMatches() = fullMatches() + o.fullMatches();
+	r.partialMatches() = (partialMatches() + o.partialMatches()) - r.fullMatches();
+	for(uint32_t i (0), s(r.partialMatches().size()); i < s; ++i) {
+		uint32_t idxId = r.partialMatches().at(i);
+		if (partialMatchesItems().count(idxId)) {
+			if (o.partialMatchesItems().count(idxId))
+				r.partialMatchesItems()[idxId] = partialMatchesItems().at(idxId) + o.partialMatchesItems().at(idxId);
+			else
+				r.partialMatchesItems()[idxId] = partialMatchesItems().at(idxId);
+		}
+		else {
+			r.partialMatchesItems()[idxId] = o.partialMatchesItems().at(idxId);
+		}
+	}
+	return r;
+}
+
 }

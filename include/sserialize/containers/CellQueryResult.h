@@ -29,6 +29,7 @@ public:
 	{}
 	virtual ~CellQueryResult() {}
 	CellQueryResult operator/(const CellQueryResult & other) const;
+	CellQueryResult operator+(const CellQueryResult & other) const;
 	
 	inline const ItemIndex & fullMatches() const { return m_fullMatches; }
 	inline ItemIndex & fullMatches() { return m_fullMatches; }
