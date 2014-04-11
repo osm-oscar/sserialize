@@ -163,4 +163,3 @@ IF(NOT CMAKE_CROSSCOMPILING)
 ENDIF(NOT CMAKE_CROSSCOMPILING)
 
 add_subdirectory(benchmarks ${PROJECT_NAME}benchmarks)
-
