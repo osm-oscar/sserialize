@@ -13,8 +13,8 @@ namespace sserialize {
   *--------------------------------------------------------------------------------------
   *uint32|uint32|*
   *--------------------------------------------------------------------------------------
-  *SIZE is the size of the DATA section
-  *COUNT is the number of elements
+  * SIZE is the size of the DATA section
+  * COUNT is the number of elements
   * Data is delta encoded with rle. Type of word is selected by the least significant bit.
   * If data[i] & 0x1 then data is a rle and the next varuint32 tells the difference between the (data[i] >> 1) elements
   *
@@ -105,8 +105,7 @@ private:
 	uint32_t m_size;
 	mutable uint32_t m_dataOffset;
 	mutable uint32_t m_curId;
-	mutable UByteArrayAdapter m_cache;
-	mutable uint32_t m_cacheOffset;
+	mutable std::vector<uint32_t> m_cache;
 protected:
 	
 public:

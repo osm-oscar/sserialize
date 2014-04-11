@@ -14,16 +14,14 @@ ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UByteArrayAdapter & data) :
 m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
 m_size(data.getUint32(4)),
 m_dataOffset(0),
-m_curId(0),
-m_cache(UByteArrayAdapter::createCache(m_size*4, false) ),
-m_cacheOffset(0)
+m_curId(0)
 {}
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UDWIterator & /*data*/) {
 	throw sserialize::UnimplementedFunctionException("ItemIndexPrivateRleDE with UDWIterator is unsupported as of now!");
 }
 
-ItemIndexPrivateRleDE::ItemIndexPrivateRleDE() : m_size(0),  m_dataOffset(0), m_curId(0), m_cacheOffset(0) {}
+ItemIndexPrivateRleDE::ItemIndexPrivateRleDE() : m_size(0),  m_dataOffset(0), m_curId(0) {}
 
 ItemIndexPrivateRleDE::~ItemIndexPrivateRleDE() {}
 
@@ -39,19 +37,16 @@ uint32_t ItemIndexPrivateRleDE::at(uint32_t pos) const {
 	if (!size() || size() <= pos)
 		return 0;
 	int len;
-	for(;m_cacheOffset <= pos;) {
+	for(; m_cache.size() <= pos;) {
 		uint32_t value = m_data.getVlPackedUint32(m_dataOffset, &len);
 		if (value & 0x1) { //rle
 			uint32_t rle = value >> 1;
 			m_dataOffset += len;
 			value = m_data.getVlPackedUint32(m_dataOffset, &len);
 			value >>= 1;
-			if (m_cache.size() - m_cache.tellPutPtr() < 4*rle)
-				m_cache.growStorage( 4*rle - (m_cache.size() - m_cache.tellPutPtr()) );
 			while(rle) {
 				m_curId += value;
-				m_cache.putUint32(m_cacheOffset*4, m_curId);
-				++m_cacheOffset;
+				m_cache.push_back(m_curId);
 				--rle;
 			}
 			m_dataOffset += len;
@@ -59,12 +54,11 @@ uint32_t ItemIndexPrivateRleDE::at(uint32_t pos) const {
 		else {
 			value >>= 1;
 			m_curId += value;
-			m_cache.putUint32(m_cacheOffset*4, m_curId);
+			m_cache.push_back(m_curId);
 			m_dataOffset += len;
-			++m_cacheOffset;
 		}
 	}
-	return m_cache.getUint32(pos*4);
+	return m_cache[pos];
 }
 
 uint32_t ItemIndexPrivateRleDE::first() const {
