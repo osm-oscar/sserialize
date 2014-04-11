@@ -21,14 +21,14 @@ void sort(TIterator begin, TIterator end) {
 
 template<typename T>
 void appendToDeque(const std::deque<T> & source, std::deque<T> & dest) {
-	for(typename std::deque<T>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::deque<T>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		dest.push_back(*it);
 	}
 }
 
 template<typename T, typename T_CONTAINER>
 void prependToDeque(const T_CONTAINER & source, std::deque<T> & dest) {
-	for(typename T_CONTAINER::const_reverse_iterator it = source.rbegin(); it != source.rend(); it++) {
+	for(typename T_CONTAINER::const_reverse_iterator it = source.rbegin(); it != source.rend(); ++it) {
 		dest.push_front(*it);
 	}
 }
@@ -77,7 +77,7 @@ void insertMapKeysIntoVector(const std::map<T, DN> & source, std::vector<T> & de
 
 template<typename TKEY, typename TVALUE>
 void insertMapValuesIntoSet(const std::map<TKEY, TVALUE> & source, std::set<TVALUE> & dest) {
-	for(typename std::map<TKEY, TVALUE>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::map<TKEY, TVALUE>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		dest.insert(it->second);
 	}
 }
@@ -123,7 +123,7 @@ template<typename T1, typename T2>
 bool remapSorted(const std::deque<T1> & source, std::deque<T2> & dest, const std::map<T1, T2> & map) {
 	std::set<T2> newValues;
 	bool allOK = true;
-	for(typename std::deque<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::deque<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		if (map.count(*it)) {
 			newValues.insert(map.at(*it));
 		}
@@ -138,7 +138,7 @@ template<typename T1, typename T2>
 bool remapSorted(const std::vector<T1> & source, std::vector<T2> & dest, const std::map<T1, T2> & map) {
 	std::set<T2> newValues;
 	bool allOK = true;
-	for(typename std::vector<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::vector<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		if (map.count(*it)) {
 			newValues.insert(map.at(*it));
 		}
@@ -154,7 +154,7 @@ template<typename T1, typename T2>
 bool remapSet(const std::set<T1> & source, std::set<T2> & dest, const std::unordered_map<T1, T2> & map) {
 	std::set<T2> newValues;
 	bool allOK = true;
-	for(typename std::set<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::set<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		if (map.count(*it)) {
 			newValues.insert(map.at(*it));
 		}
@@ -186,7 +186,7 @@ template<typename T1, typename T2, template <typename> class SourceDestContainer
 bool remap(const SourceDestContainer<T1> & source, SourceDestContainer<T2> & dest, const std::unordered_map<T1, T2> & map) {
 	SourceDestContainer<T2> newValues;
 	bool allOK = true;
-	for(typename SourceDestContainer<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename SourceDestContainer<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		if (map.count(*it)) {
 			newValues.insert(map.at(*it));
 		}
@@ -202,7 +202,7 @@ bool remap(const std::vector<T1> & source, std::vector<T2> & dest, const std::un
 	std::vector<T2> newValues;
 	newValues.reserve(source.size());
 	bool allOK = true;
-	for(typename std::vector<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::vector<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		if (map.count(*it)) {
 			newValues.push_back(map.at(*it));
 		}
@@ -218,7 +218,7 @@ template<typename T1, typename T2>
 bool invert(const std::map<T1, T2> & source, std::map<T2, T1> & dest) {
 	std::map<T2, T1> newValues;
 	bool allOk = true;
-	for(typename std::map<T1, T2>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::map<T1, T2>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		allOk = (allOk && (newValues.count(it->second) == 0));
 		newValues[it->second] = it->first;
 	}
@@ -231,7 +231,7 @@ template<typename T1, typename T2>
 bool invert(const std::unordered_map<T1, T2> & source, std::unordered_map<T2, T1> & dest) {
 	std::unordered_map<T2, T1> newValues;
 	bool allOk = true;
-	for(typename std::unordered_map<T1, T2>::const_iterator it = source.begin(); it != source.end(); it++) {
+	for(typename std::unordered_map<T1, T2>::const_iterator it = source.begin(); it != source.end(); ++it) {
 		allOk = (allOk && (newValues.count(it->second) == 0));
 		newValues[it->second] = it->first;
 	}
@@ -298,7 +298,7 @@ int find(const std::deque< T > & src, const T & k) {
 template<typename T_OUT_CONTAINER, typename T, typename TCONTAINER>
 T_OUT_CONTAINER toMapTable(const TCONTAINER & s) {
 	T_OUT_CONTAINER r;
-	for(size_t i = 0; i < s.size(); i++) {
+	for(size_t i = 0; i < s.size(); ++i) {
 		r[ s[i] ] = i;
 	}
 	return r;
@@ -308,7 +308,7 @@ T_OUT_CONTAINER toMapTable(const TCONTAINER & s) {
 template<typename T, typename TCONTAINER>
 std::unordered_map<T, uint32_t> unordered_mapTableFromLinearContainer(const TCONTAINER & s) {
 	std::unordered_map<T, uint32_t> r;
-	for(size_t i = 0; i < s.size(); i++) {
+	for(size_t i = 0; i < s.size(); ++i) {
 		r[ s[i] ] = i;
 	}
 	return r;
@@ -318,7 +318,7 @@ std::unordered_map<T, uint32_t> unordered_mapTableFromLinearContainer(const TCON
 template<typename T, typename TCONTAINER>
 std::map<T, uint32_t> mapTableFromLinearContainer(const TCONTAINER & s) {
 	std::map<T, uint32_t> r;
-	for(size_t i = 0; i < s.size(); i++) {
+	for(size_t i = 0; i < s.size(); ++i) {
 		r[ s[i] ] = i;
 	}
 	return r;
