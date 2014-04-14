@@ -221,8 +221,9 @@ public:
 	///@return number of uint8_t read, @param len: maxnumber of uint8_t to read
 	OffsetType get(uint8_t * dest, OffsetType len);
 	
-	std::string getString();
+	inline uint32_t getStringLength() { return getVlPackedUint32();}
 	UByteArrayAdapter getStringData();
+	std::string getString();
 
 	bool putOffset(const OffsetType value);
 	bool putNegativeOffset(const NegativeOffsetType value);

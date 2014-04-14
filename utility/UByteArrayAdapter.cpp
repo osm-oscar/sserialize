@@ -999,17 +999,16 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::get(uint8_t * dest, UByteArrayA
 }
 
 std::string UByteArrayAdapter::getString() {
-	int len;
-	uint32_t strLen = getVlPackedUint32(m_getPtr, &len);
-	if (len < 0 || m_getPtr+len+strLen > m_len)
+	uint32_t strLen = getStringLength();
+	if (!strLen || m_getPtr+strLen > m_len)
 		return std::string();
 	std::string res;
 	res.resize(strLen);
 
 	for(size_t i = 0; i < strLen; i++) {
-		res[i] = getUint8(m_getPtr+len+i);
+		res[i] = getUint8(m_getPtr+i);
 	}
-	m_getPtr += len + res.size();
+	m_getPtr += res.size();
 	return res;
 }
 
@@ -1156,12 +1155,11 @@ bool UByteArrayAdapter::put(const UByteArrayAdapter & data) {
 std::string UByteArrayAdapter::toString() const {
 	std::string str;
 	str.resize(size());
-	for(uint32_t i = 0; i < size(); i++) {
+	for(OffsetType i(0), s(size()); i < s; ++i) {
 		str[i] = at(i);
 	}
 	return str;
 }
-
 
 void UByteArrayAdapter::dump(uint32_t byteCount) const {
 	uint32_t dumpLen = byteCount;
