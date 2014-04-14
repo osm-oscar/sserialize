@@ -28,7 +28,6 @@ public:
 
 
 private:
-	unsigned int m_curMaxStrId;
 	std::map<std::string, std::pair<unsigned int, unsigned int> > m_strToStrIdCount;
 	std::vector<std::string> m_strIdToStr;
 	ItemStringsContainer m_itemStrings;
@@ -37,7 +36,7 @@ private:
 	unsigned int insert(const std::string& str, unsigned int addCount);
 	
 public:
-	StringsItemDBPrivate() : m_curMaxStrId(0) {}
+	StringsItemDBPrivate() {}
 	virtual ~StringsItemDBPrivate() {}
 	virtual void clear();
 	size_t size() const { return m_items.size();}
@@ -99,9 +98,8 @@ StringsItemDBPrivate<ItemType>::insert(const std::string & str, unsigned int add
 		return it->second.first;
 	}
 	else {
-		unsigned int newStrId = m_curMaxStrId;
-		m_curMaxStrId++;
-		m_strIdToStr[newStrId] = str;
+		unsigned int newStrId = m_strIdToStr.size();
+		m_strIdToStr.push_back(str);
 		m_strToStrIdCount[str] = std::pair<unsigned int, unsigned int>(newStrId, addCount);
 		return newStrId;
 	}
@@ -112,7 +110,6 @@ StringsItemDBPrivate<ItemType>::insert(const std::string & str, unsigned int add
 template<typename ItemType>
 void
 StringsItemDBPrivate<ItemType>::clear() {
-	m_curMaxStrId = 0;
 	m_strToStrIdCount.clear();
 	m_strIdToStr.clear();
 	m_items = ItemContainer();
@@ -217,9 +214,8 @@ StringsItemDBPrivate<ItemType>::push_back(const std::vector<std::string> & strs,
 	for(std::vector<std::string>::const_iterator it = strs.begin(); it != strs.end(); it++) {
 		unsigned int strId;
 		if (m_strToStrIdCount.count(*it) == 0) {
-			strId = m_curMaxStrId;
-			m_curMaxStrId++;
-			m_strIdToStr[strId] = *it;
+			strId = m_strIdToStr.size();
+			m_strIdToStr.push_back(*it);
 			m_strToStrIdCount[*it] = std::pair<unsigned int, unsigned int>(strId, 0);
 		}
 		else {
@@ -250,9 +246,8 @@ bool StringsItemDBPrivate<ItemType>::addStringsToItem(uint32_t itemPos, std::deq
 	for(std::deque<std::string>::iterator it = strs.begin(); it != strs.end(); it++) {
 		unsigned int strId;
 		if (m_strToStrIdCount.count(*it) == 0) {
-			strId = m_curMaxStrId;
-			m_curMaxStrId++;
-			m_strIdToStr[strId] = *it;
+			strId = m_strIdToStr.size();
+			m_strIdToStr.push_back(*it);
 			m_strToStrIdCount[*it] = std::pair<unsigned int, unsigned int>(strId, 0);
 		}
 		else {
@@ -319,7 +314,6 @@ template<typename ItemType>
 void
 StringsItemDBPrivate<ItemType>::absorb(StringsItemDBPrivate< ItemType >& db) {
 	if (size() == 0 && m_strIdToStr.size() == 0 && m_strToStrIdCount.size()) {
-		m_curMaxStrId = db.m_curMaxStrId;
 		m_items.swap(db.m_items);
 		m_itemStrings.swap(db.m_itemStrings);
 		m_strIdToStr.swap(db.m_strIdToStr);
