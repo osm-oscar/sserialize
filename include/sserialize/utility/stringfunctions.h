@@ -164,8 +164,8 @@ public:
 std::deque<std::string> splitLine(const std::string & str, const std::set<char> & seps);
 
 ///move strIt to the beginning of the next suffix string
-template<typename T_RETURN_CONTAINER, typename T_SEPARATOR_SET>
-void nextSuffixString(std::string::const_iterator & strIt, const std::string::const_iterator & strEnd, const T_SEPARATOR_SET & separators) {
+template<typename T_OCTET_ITERATOR, typename T_SEPARATOR_SET>
+void nextSuffixString(T_OCTET_ITERATOR & strIt, const T_OCTET_ITERATOR & strEnd, const T_SEPARATOR_SET & separators) {
 	if (separators.size()) {
 		while (strIt != strEnd) {
 			if (separators.count( utf8::next(strIt, strEnd) ) > 0)
@@ -178,10 +178,10 @@ void nextSuffixString(std::string::const_iterator & strIt, const std::string::co
 }
 
 ///Return all suffixes of @str including @str itself
-template<typename T_RETURN_CONTAINER, typename T_SEPARATOR_SET>
-T_RETURN_CONTAINER suffixStrings(const std::string & str, const T_SEPARATOR_SET & separators) {
+template<typename T_RETURN_CONTAINER, typename T_STRING_TYPE, typename T_SEPARATOR_SET>
+T_RETURN_CONTAINER suffixStrings(const T_STRING_TYPE & str, const T_SEPARATOR_SET & separators) {
 	T_RETURN_CONTAINER ss;
-	std::string::const_iterator strIt(str.cbegin()), strEnd(str.cend());
+	typename T_STRING_TYPE::const_iterator strIt(str.cbegin()), strEnd(str.cend());
 	while(strIt != strEnd) {
 		ss.insert(strIt, strEnd);
 		nextSuffixString(strIt, strEnd, separators);
