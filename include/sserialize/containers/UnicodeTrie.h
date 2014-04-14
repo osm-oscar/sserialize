@@ -1,5 +1,5 @@
-#ifndef SSERIALIZE_GENERALIZED_TRIE_NEW_TRIE_H
-#define SSERIALIZE_GENERALIZED_TRIE_NEW_TRIE_H
+#ifndef SSERIALIZE_UNICODE_TRIE_H
+#define SSERIALIZE_UNICODE_TRIE_H
 #include <string>
 #include <unordered_map>
 #include <sserialize/vendor/utf8.h>
@@ -16,9 +16,9 @@ public:
 	typedef TValue value_type;
 	typedef uint32_t key_type;
 	typedef Node* map_type;
-	typedef std::unordered_map<key_type, map_type> ChildrenContainer;
-	typedef ChildrenContainer::iterator iterator;
-	typedef ChildrenContainer::const_iterator const_iterator;
+	typedef typename std::unordered_map<key_type, map_type> ChildrenContainer;
+	typedef typename ChildrenContainer::iterator iterator;
+	typedef typename ChildrenContainer::const_iterator const_iterator;
 private:
 	std::string m_str;
 	Node * m_parent;
@@ -50,7 +50,8 @@ template<typename TValue>
 class Trie {
 public:
 	typedef sserialize::UnicodeTrie::Node<TValue> Node;
-	typedef std::shared_ptr< sserialize::Static::UnicodeTrie::detail::NodeCreator > NodeCreatorPtr;
+	typedef TValue value_type;
+	typedef std::shared_ptr< sserialize::Static::UnicodeTrie::NodeCreator > NodeCreatorPtr;
 	struct DefaultPayloadHandler {
 		///@param node the currently handled node
 		TValue operator()(Node * node);
@@ -59,23 +60,23 @@ private:
 	Node * m_root;
 protected:
 	template<typename T_OCTET_ITERATOR>
-	Node nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR end);
+	Node* nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 
 public:
 	Trie() : m_root(0) {}
-	virtual Trie() { delete m_root;}
+	virtual ~Trie() { delete m_root;}
 	template<typename T_OCTET_ITERATOR>
-	TValue & at(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR end) {
+	TValue & at(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
 		return nodeAt(begin, end)->value();
 	}
 	
-	template<typename T_PH>
-	UByteArrayAdapter serialize(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const;
+	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
+	UByteArrayAdapter append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const;
 };
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR end) {
+typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
 	uint32_t strItUCode;
 	
 	if (!m_root) {
@@ -86,8 +87,8 @@ Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_
 
 	while(begin != end) {
 		//Find the first different character
-		std::string::const_iterator cIt(current->str().cbegin());
-		std::string::const_iterator cEnd(current->str().cend());
+		std::string::iterator cIt(current->str().begin());
+		std::string::iterator cEnd(current->str().end());
 		uint32_t cItUCode;
 		strItUCode = ((begin != end) ? utf8::peek_next(begin, end) : 0);
 		cItUCode = ((current->str().size() > 0) ? utf8::peek_next(cIt, cEnd) : 0);
@@ -122,23 +123,23 @@ Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_
 		else if (cIt != cEnd && begin == end) { //str is prefix of node->c
 			cItUCode = utf8::peek_next(cIt, cEnd);
 
-			Node * oldStrNode = new Node;
+			Node * oldStrNode = new Node(0);
 			oldStrNode->str() = std::string(cIt, cEnd);
 			std::swap(oldStrNode->children(), current->children());
 			std::swap(oldStrNode->value(), current->value());
 
 			//fix parent ptrs
-			for(Node::iterator nit(oldStrNode->begin()), nend(oldStrNode->end()); nit != nend; ++nit) {
+			for(typename Node::iterator nit(oldStrNode->begin()), nend(oldStrNode->end()); nit != nend; ++nit) {
 				nit->second->parent() = oldStrNode;
 			}
 			
 			//save char for children
 			uint32_t c = cItUCode;
-			current->c.erase(cIt, current->c.end());
+			current->str().erase(cIt, cEnd);
 			
 			//insert old node and add value
 			(current->children())[c] = oldStrNode;
-			oldStrNode->parent = current;
+			oldStrNode->parent() = current;
 			break;
 		}
 		else if (cIt != cEnd && begin != end) { //possible common prefix, iterator at the different char
@@ -154,18 +155,18 @@ Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_
 			std::swap(oldStrNode->children(), current->children());
 			std::swap(oldStrNode->value(), current->value());
 			//fix parent ptrs
-			for(Node::iterator nit(oldStrNode->begin()), nend(oldStrNode->end()); nit != nend; ++nit) {
+			for(typename Node::iterator nit(oldStrNode->begin()), nend(oldStrNode->end()); nit != nend; ++nit) {
 				nit->second->parent() = oldStrNode;
 			}
 
 			current->str().erase(cIt, cEnd);
 
 			//add pointer to node with the rest of the old node string
-			(current->children)[strItUCode] = newNode;
-			newNode->parent = current;
+			current->children()[strItUCode] = newNode;
+			newNode->parent() = current;
 			//add pointer the node with the rest of the new string
-			(current->children)[cItUCode] = oldStrNode;
-			oldStrNode->parent = current;
+			current->children()[cItUCode] = oldStrNode;
+			oldStrNode->parent() = current;
 			current = newNode;
 			break;
 		}
@@ -175,14 +176,15 @@ Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_
 
 
 template<typename TValue>
-template<typename T_PH>
-UByteArrayAdapter Trie<TValue>::serialize(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const {
-	sserialize::Static::DequeCreator<TValue> payloadContainerCreator(d);
+template<typename T_PH, typename T_STATIC_PAYLOAD>
+UByteArrayAdapter Trie<TValue>::append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const {
+	d.putUint8(1);
+	sserialize::Static::DequeCreator<T_STATIC_PAYLOAD> payloadContainerCreator(d);
 	
 	std::vector<Node*> nodesInLevelOrder(1, m_root);
 	for(uint32_t i(0); i < nodesInLevelOrder.size(); ++i) {
 		Node * n = nodesInLevelOrder[i];
-		for(Node::const_iterator cIt(n->cbegin()), cEnd(n->cend()); cIt != cEnd; ++cIt) {
+		for(typename Node::const_iterator cIt(n->cbegin()), cEnd(n->cend()); cIt != cEnd; ++cIt) {
 			nodesInLevelOrder.push_back(cIt->second);
 		}
 	}
@@ -199,25 +201,26 @@ UByteArrayAdapter Trie<TValue>::serialize(UByteArrayAdapter& d, T_PH payloadHand
 		nodeInfo.strBegin = n->str().cbegin();
 		nodeInfo.strEnd = n->str().cend();
 		if (n->str().size()) { //skip the first char as it is already stored in parent
-			utf8::next(nodeInfo.strBegin, nodeInfo);
+			utf8::next(nodeInfo.strBegin, nodeInfo.strEnd);
 		}
 		
 		nodeInfo.childKeyPtrOffsets.reserve(n->children().size());
-		for(Node::const_iterator cIt(n->cbegin()), cEnd(n->cend()); cIt != cEnd; ++cIt) {
-			nodeInfo.childKeyPtrOffsets.push_back(std::pair(cIt->first, trieData.size()-nodeOffsets.at(cIt->second)));
+		for(typename Node::const_iterator cIt(n->cbegin()), cEnd(n->cend()); cIt != cEnd; ++cIt) {
+			nodeInfo.childKeyPtrOffsets.push_back(std::pair<uint32_t, uint32_t>(cIt->first, trieData.size()-nodeOffsets.at(cIt->second)));
 		}
 		
 		nodeInfo.payloadPtr =  payloadContainerCreator.size();
-		payloadContainerCreator.push_back( payloadHandler(n) );
+		payloadContainerCreator.put( payloadHandler(n) );
 		
 		tmpData.clear();
 		UByteArrayAdapter d(&tmpData, false);
-		nodeCreator->serialize(nodeInfo, d);
+		nodeCreator->append(nodeInfo, d);
 		
 		prependToDeque(tmpData, trieData);
 		nodeOffsets[n] = trieData.size();
 	}
 	payloadContainerCreator.flush();
+	d.putUint32(nodeCreator->type());
 	d.put(trieData);
 	return d;
 }

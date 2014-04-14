@@ -9,10 +9,10 @@ namespace detail {
 
 class Node {
 public:
-	Node();
-	virtual ~Node();
+	Node() {}
+	virtual ~Node() {}
 
-	virtual uint8_t strLen() const = 0;
+	virtual uint32_t strLen() const = 0;
 	virtual UByteArrayAdapter strData() const = 0;
 	virtual std::string str() const = 0;
 
@@ -34,15 +34,17 @@ struct NodeSerializationInfo {
 	uint32_t payloadPtr;
 };
 
-struct NodeCreator {
-	virtual bool serialize(const NodeSerializationInfo & src, sserialize::UByteArrayAdapter & dest) = 0;
-};
-
 }
+
+struct NodeCreator {
+	virtual uint32_t type() const = 0;
+	virtual bool append(const detail::NodeSerializationInfo & src, sserialize::UByteArrayAdapter & dest) = 0;
+};
 
 class Node {
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
+	typedef enum {NT_SIMPLE=1} NodeTypes;
 private:
 	std::shared_ptr<detail::Node> m_priv;
 protected:
@@ -67,6 +69,10 @@ public:
 
 	inline uint32_t payloadPtr() const { return priv()->payloadPtr();}
 	
+};
+
+struct RootNodeAllocator {
+	Node operator()(uint32_t nodeType, const sserialize::UByteArrayAdapter & src) const;
 };
 
 }}}//end namespace

@@ -1,11 +1,22 @@
 #ifndef SSERIALIZE_UNICODE_TRIE_TRIE_H
 #define SSERIALIZE_UNICODE_TRIE_TRIE_H
 #include <sserialize/Static/UnicodeTrie/Node.h>
+#include <sserialize/Static/Deque.h>
 #include <sserialize/vendor/utf8.h>
+#define SSERIALIZE_STATIC_UNICODE_TRIE_TRIE_VERSION 1
 
 namespace sserialize {
 namespace Static {
 namespace UnicodeTrie {
+
+/** Trie-Layout
+  * ---------------------------------------
+  * VERSION|Payload|NodeType|TrieNodes*
+  * ---------------------------------------
+  *  uint8 |Deque  |uint32_t|
+  *
+  *
+  */
 
 template<typename TValue>
 class Trie {
@@ -13,8 +24,11 @@ private:
 	Node m_root;
 	sserialize::Static::Deque<TValue> m_values;
 public:
-	Trie();
-	Trie(sserialize::UByteArrayAdapter & d);
+	Trie() {}
+	Trie(const sserialize::UByteArrayAdapter & d);
+	///@param rootNodeAllocator allocator for the root node: Node rootNodeAllocator(uint32_t nodeType, const UByteArrayAdapter & src), used once, not stored
+	template<typename T_ROOT_NODE_ALLOCATOR>
+	Trie(const sserialize::UByteArrayAdapter & d, T_ROOT_NODE_ALLOCATOR rootNodeAllocator);
 	Node getRootNode() const { return m_root; }
 	
 	template<typename T_OCTET_ITERATOR>
@@ -23,8 +37,33 @@ public:
 };
 
 template<typename TValue>
+Trie<TValue>::Trie(const UByteArrayAdapter & d) :
+m_values(d+1)
+{
+	UByteArrayAdapter::OffsetType off = m_values.getSizeInBytes()+1;
+	uint32_t rootNodeType = d.getUint32(off);
+	off += sserialize::SerializationInfo< uint32_t >::length;
+	m_root = sserialize::Static::UnicodeTrie::RootNodeAllocator()(rootNodeType, d+off);
+	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_UNICODE_TRIE_TRIE_VERSION, d.at(0), "sserialize::Static::UnicodeTrie::Trie");
+}
+
+
+
+template<typename TValue>
+template<typename T_ROOT_NODE_ALLOCATOR>
+Trie<TValue>::Trie(const UByteArrayAdapter & d, T_ROOT_NODE_ALLOCATOR rootNodeAllocator) :
+m_values(d+1)
+{
+	UByteArrayAdapter::OffsetType off = m_values.getSizeInBytes()+1;
+	uint32_t rootNodeType = d.getUint32(off);
+	off += sserialize::SerializationInfo< uint32_t >::length;
+	m_root = rootNodeAllocator(rootNodeType, d+off);
+	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_UNICODE_TRIE_TRIE_VERSION, d.at(0), "sserialize::Static::UnicodeTrie::Trie");
+}
+
+template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-TValue Trie::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd) const {
+TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd) const {
 	Node node(getRootNode());
 
 	std::string nodeStr(node.str());
@@ -39,7 +78,7 @@ TValue Trie::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd) const {
 				++nStrIt;
 			}
 			else { //no common prefix
-				throw std::out_of_range();
+				throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
 			}
 		}
 
@@ -54,7 +93,7 @@ TValue Trie::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd) const {
 				nStrEnd = nodeStr.cend();
 			}
 			else {
-				throw std::out_of_range();
+				throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
 			}
 		}
 	}
