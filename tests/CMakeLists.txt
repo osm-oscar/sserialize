@@ -97,6 +97,7 @@ ADD_TEST_TARGET_SINGLE(sc_stgst)
 ADD_TEST_TARGET_SINGLE(sc_stgst_multiopts)
 ADD_TEST_TARGET_SINGLE(sc_stflatgst)
 ADD_TEST_TARGET_SINGLE(sc_SinglePassTrie)
+ADD_TEST_TARGET_SINGLE(UnicodeTrie)
 # ADD_TEST_TARGET(sc_stgst_allopts)
 
 #spatial
