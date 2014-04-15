@@ -30,72 +30,72 @@ UByteArrayAdapter & operator>>(UByteArrayAdapter & d, TriePayload & src) {
 	return d >> src.exact >> src.prefix >> src.suffix >> src.substr;
 }
 
+struct TrieStorageData {
+	std::vector<uint32_t> exact;
+	std::vector<uint32_t> suffix;
+};
+
+struct TrieNodeSerializationData {
+	std::vector<uint32_t> prefix;
+	std::vector<uint32_t> substr;
+	void merge(const std::vector<uint32_t> & prefix, const std::vector<uint32_t> & substr) {
+		mergeSortedContainer(this->prefix, this->prefix, prefix);
+		mergeSortedContainer(this->substr, this->substr, substr);
+	}
+};
+
+typedef UnicodeTrie::Trie<TrieStorageData> MyTrie;
+typedef Static::UnicodeTrie::Trie<TriePayload> MyStaticTrie;
+
+struct PayloadHandler {
+	PayloadHandler(std::shared_ptr<sserialize::ItemIndexFactory> store) :
+	store(store),
+	nodeData(new std::unordered_map<MyTrie::Node*, TrieNodeSerializationData >() )
+	{}
+	std::shared_ptr<sserialize::ItemIndexFactory> store;
+	std::shared_ptr< std::unordered_map<MyTrie::Node *, TrieNodeSerializationData> > nodeData;
+	TriePayload operator()(MyTrie::Node * node) {
+		TriePayload tp;
+		tp.exact = store->addIndex(node->value().exact);
+		tp.suffix = store->addIndex(node->value().suffix);
+		if (nodeData->count(node)) {
+			TrieNodeSerializationData & nd = (*nodeData)[node];
+			nd.merge(node->value().exact, node->value().suffix);
+			tp.prefix = store->addIndex(nd.prefix);
+			tp.substr = store->addIndex(nd.substr);
+			if (node->parent())
+				(*nodeData)[node->parent()].merge(nd.prefix, nd.substr);
+		}
+		else {
+			tp.prefix = tp.exact;
+			tp.substr = tp.suffix;
+			if (node->parent()) {
+				(*nodeData)[node->parent()].merge(node->value().exact, node->value().suffix);
+			}
+		}
+		nodeData->erase(node);
+		return tp;
+	}
+};
+
+template<bool T_CASE_IN_SENSITIVE>
 class StaticUnicodeTrieTest: public StringCompleterTest {
 CPPUNIT_TEST_SUITE( StaticUnicodeTrieTest );
-CPPUNIT_TEST( testCreateStringCompleter );
-CPPUNIT_TEST( testSupportedQuerries );
-CPPUNIT_TEST( testCompletionECS );
+// CPPUNIT_TEST( testCreateStringCompleter );
+// CPPUNIT_TEST( testSupportedQuerries );
+// CPPUNIT_TEST( testCompletionECS );
 // CPPUNIT_TEST( testCompletionECI );
-CPPUNIT_TEST( testCompletionPCS );
+// CPPUNIT_TEST( testCompletionPCS );
 // CPPUNIT_TEST( testCompletionPCI );
-CPPUNIT_TEST( testCompletionSCS );
+// CPPUNIT_TEST( testCompletionSCS );
 // CPPUNIT_TEST( testCompletionSCI );
-CPPUNIT_TEST( testCompletionSPCS );
+// CPPUNIT_TEST( testCompletionSPCS );
 // CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testTrieEquality );
 // CPPUNIT_TEST( testIndexEquality );
 CPPUNIT_TEST_SUITE_END();
 private:
-	struct TrieStorageData {
-		std::vector<uint32_t> exact;
-		std::vector<uint32_t> suffix;
-	};
-	
-	struct TrieNodeSerializationData {
-		std::vector<uint32_t> prefix;
-		std::vector<uint32_t> substr;
-		void merge(const std::vector<uint32_t> & prefix, const std::vector<uint32_t> & substr) {
-			mergeSortedContainer(this->prefix, this->prefix, prefix);
-			mergeSortedContainer(this->substr, this->substr, substr);
-		}
-	};
-	
-	typedef UnicodeTrie::Trie<TrieStorageData> MyTrie;
-	typedef Static::UnicodeTrie::Trie<TriePayload> MyStaticTrie;
-	
 
-	
-	struct PayloadHandler {
-		PayloadHandler(std::shared_ptr<sserialize::ItemIndexFactory> store) :
-		store(store),
-		nodeData(new std::unordered_map<MyTrie::Node*, TrieNodeSerializationData >() )
-		{}
-		std::shared_ptr<sserialize::ItemIndexFactory> store;
-		std::shared_ptr<std::unordered_map<MyTrie::Node*, TrieNodeSerializationData > > nodeData;
-		TriePayload operator()(MyTrie::Node * node) {
-			TriePayload tp;
-			tp.exact = store->addIndex(node->value().exact);
-			tp.suffix = store->addIndex(node->value().suffix);
-			if (nodeData->count(node)) {
-				TrieNodeSerializationData & nd = (*nodeData)[node];
-				nd.merge(node->value().exact, node->value().suffix);
-				tp.prefix = store->addIndex(nd.prefix);
-				tp.substr = store->addIndex(nd.substr);
-				if (node->parent())
-					(*nodeData)[node->parent()].merge(nd.prefix, nd.substr);
-			}
-			else {
-				tp.prefix = tp.exact;
-				tp.substr = tp.suffix;
-				if (node->parent()) {
-					(*nodeData)[node->parent()].merge(node->value().exact, node->value().suffix);
-				}
-			}
-			nodeData->erase(node);
-			return tp;
-		}
-	};
-	
 	class MyStringCompleterPrivate: public StringCompleterPrivate {
 	private:
 		MyStaticTrie m_sTrie;
@@ -106,7 +106,12 @@ private:
 		virtual ItemIndex complete(const std::string & str, StringCompleter::QuerryType qtype) const {
 			TriePayload rd;
 			try {
-				rd = m_sTrie.at(str, (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
+				if (T_CASE_IN_SENSITIVE) {
+					rd = m_sTrie.at(unicode_to_lower(str), (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
+				}
+				else {
+					rd = m_sTrie.at(str, (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
+				}
 			}
 			catch (const OutOfBoundsException & c) {
 				return ItemIndex();
@@ -154,8 +159,12 @@ protected:
 		for(uint32_t i(0), s(items().size()); i < s; ++i) {
 			const TestItemData & item = items()[i];
 			for(const std::string & itemStr : item.strs) {
-				m_trie.at(itemStr.cbegin(), itemStr.cend()).exact.push_back(i);
-				for(std::string::const_iterator it(itemStr.cbegin()), end(itemStr.cend()); it != end; sserialize::nextSuffixString(it, end, separators)) {
+				std::string putStr = itemStr;
+				if (T_CASE_IN_SENSITIVE) {
+					putStr = sserialize::unicode_to_lower(putStr);
+				}
+				m_trie.at(putStr.cbegin(), putStr.cend()).exact.push_back(i);
+				for(std::string::const_iterator it(putStr.cbegin()), end(putStr.cend()); it != end; sserialize::nextSuffixString(it, end, separators)) {
 					MyTrie::value_type & v = m_trie.at(it, end);
 					if ( !v.suffix.size() || v.suffix.back() != i) {
 						v.suffix.push_back(i);
@@ -176,7 +185,14 @@ protected:
 	}
 	
 	virtual StringCompleter::SupportedQuerries supportedQuerries() {
-		uint8_t sq = StringCompleter::SQ_EP | StringCompleter::SQ_CASE_SENSITIVE | StringCompleter::SQ_SSP;
+		uint8_t sq = StringCompleter::SQ_EP | StringCompleter::SQ_SSP;
+		if (T_CASE_IN_SENSITIVE) {
+			sq |= StringCompleter::SQ_CASE_INSENSITIVE;
+		}
+		else {
+			sq |= StringCompleter::SQ_CASE_SENSITIVE;
+		}
+			
 		return (StringCompleter::SupportedQuerries) sq;
 	}
 
@@ -204,8 +220,9 @@ public:
 
 int main() {
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest( StaticUnicodeTrieTest::suite() );
-	runner.eventManager().popProtector();
+	runner.addTest( StaticUnicodeTrieTest<false>::suite() );
+	runner.addTest( StaticUnicodeTrieTest<true>::suite() );
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }

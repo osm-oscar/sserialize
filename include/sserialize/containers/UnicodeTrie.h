@@ -64,6 +64,10 @@ protected:
 	Node* nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 
 	bool checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const;
+	Trie(const Trie & o);
+	Trie(const Trie && o);
+	Trie & operator=(const Trie & o);
+	Trie & operator=(const Trie && o);
 public:
 	Trie() : m_root(0) {}
 	virtual ~Trie() { delete m_root;}
@@ -194,9 +198,8 @@ template<typename T_OCTET_ITERATOR>
 const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
 	Node * node = m_root;
 
-	std::string nodeStr(node->str());
-	std::string::const_iterator nStrIt(nodeStr.cbegin());
-	std::string::const_iterator nStrEnd(nodeStr.cend());
+	std::string::const_iterator nStrIt(node->str().cbegin());
+	std::string::const_iterator nStrEnd(node->str().cend());
 	
 	//Find the end-node
 	while(strIt != strEnd) {
@@ -214,9 +217,8 @@ const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR
 			uint32_t key = utf8::peek_next(strIt, strEnd);
 			if (node->children().count(key)) {
 				node = node->children().at(key);
-				nodeStr = node.str();
-				nStrIt = nodeStr.cbegin();
-				nStrEnd = nodeStr.cend();
+				nStrIt = node->str().cbegin();
+				nStrEnd = node->str().cend();
 			}
 			else {
 				throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
