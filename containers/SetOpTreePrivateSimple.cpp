@@ -36,7 +36,7 @@ StringCompleter::QuerryType qtfghFromString(std::string & str) {
 		return StringCompleter::QT_SUFFIX;
 	case (8):
 	default:
-		return StringCompleter::QT_SUFFIX_PREFIX;
+		return StringCompleter::QT_SUBSTRING;
 	}
 }
 
@@ -312,14 +312,14 @@ std::ostream & SetOpTreePrivateSimple::printStructure(std::ostream & out) const 
 			out << "$" << it->ef()->cmdString() << "[" << it->str() << "]";
 		}
 		else {
-			if (it->qt() & (sserialize::StringCompleter::QT_SUFFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+			if (it->qt() & (sserialize::StringCompleter::QT_SUFFIX | sserialize::StringCompleter::QT_SUBSTRING)) {
 				out << "*";
 			}
 			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
 				out << "\"";
 			}
 			out << it->str();
-			if (it->qt() & (sserialize::StringCompleter::QT_PREFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+			if (it->qt() & (sserialize::StringCompleter::QT_PREFIX | sserialize::StringCompleter::QT_SUBSTRING)) {
 				out << "*";
 			}
 			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
@@ -340,7 +340,7 @@ std::ostream & SetOpTreePrivateSimple::printStructure(std::ostream & out) const 
 			out << "$" << it->ef()->cmdString() << "[" << it->str() << "]";
 		}
 		else {
-			if (it->qt() & (sserialize::StringCompleter::QT_SUFFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+			if (it->qt() & (sserialize::StringCompleter::QT_SUFFIX | sserialize::StringCompleter::QT_SUBSTRING)) {
 				out << "*";
 			}
 			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {
@@ -348,7 +348,7 @@ std::ostream & SetOpTreePrivateSimple::printStructure(std::ostream & out) const 
 			}
 			
 			out << it->str();
-			if (it->qt() & (sserialize::StringCompleter::QT_PREFIX | sserialize::StringCompleter::QT_SUFFIX_PREFIX)) {
+			if (it->qt() & (sserialize::StringCompleter::QT_PREFIX | sserialize::StringCompleter::QT_SUBSTRING)) {
 				out << "*";
 			}
 			else if (it->qt() & sserialize::StringCompleter::QT_EXACT) {

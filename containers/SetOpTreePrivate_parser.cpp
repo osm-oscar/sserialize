@@ -283,7 +283,7 @@ SetOpTreePrivateComplex::Node* SetOpTreePrivateComplex::TreeBuilder::createStrin
 		break;
 	case (8):
 	default:
-		n->cqtype = StringCompleter::QT_SUFFIX_PREFIX;
+		n->cqtype = StringCompleter::QT_SUBSTRING;
 		break;
 	}
 	n->cqtype = (StringCompleter::QuerryType) (n->cqtype | StringCompleter::QT_CASE_INSENSITIVE);

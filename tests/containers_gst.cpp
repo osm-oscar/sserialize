@@ -51,7 +51,7 @@ bool testTrieOptions(bool suffixTrie, bool caseSensitiveTrie, bool caseSensitive
 	testRuns.push_back(sserialize::StringCompleter::QT_PREFIX);
 	if (suffixTrie) {
 		testRuns.push_back(sserialize::StringCompleter::QT_SUFFIX);
-		testRuns.push_back(sserialize::StringCompleter::QT_SUFFIX_PREFIX);
+		testRuns.push_back(sserialize::StringCompleter::QT_SUBSTRING);
 	}
 	
 	

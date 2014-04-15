@@ -104,7 +104,7 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 		else {
 			std::cout << "SUFFIX=Failed. ";
 		}
-		if (mtrie.checkIndexEquality(config, staticTrie, sserialize::StringCompleter::SQ_SUFFIX_PREFIX)) {
+		if (mtrie.checkIndexEquality(config, staticTrie, sserialize::StringCompleter::SQ_SUBSTRING)) {
 			std::cout << "SUFFIX_PREFIX=OK. ";
 		}
 		else {
@@ -116,7 +116,7 @@ bool createAndCheckTries(std::set<uint8_t> levelsWithoutFullIndex) {
 
 	std::deque< std::deque<std::string> > compStrs = createSampleCompletionStrings();
 
-	sserialize::StringCompleter::QuerryType strMatchType = (sserialize::StringCompleter::QuerryType) (sserialize::StringCompleter::QT_SUFFIX_PREFIX | sserialize::StringCompleter::QT_CASE_INSENSITIVE);
+	sserialize::StringCompleter::QuerryType strMatchType = (sserialize::StringCompleter::QuerryType) (sserialize::StringCompleter::QT_SUBSTRING | sserialize::StringCompleter::QT_CASE_INSENSITIVE);
 
 	//Check completionsets for equality
 	bool allOk = true;

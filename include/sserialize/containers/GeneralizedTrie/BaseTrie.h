@@ -101,8 +101,8 @@ public: //Fill functions
 	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactor);
 
 public://Completion
-	ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUFFIX_PREFIX) const;
-	ItemIndex complete(const std::deque< std::string > & strs, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUFFIX_PREFIX) const;
+	ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUBSTRING) const;
+	ItemIndex complete(const std::deque< std::string > & strs, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUBSTRING) const;
 
 public: //Access functions
 	Node * rootNode() { return m_root;}
@@ -700,7 +700,7 @@ completionRecurse(Node * node, std::string::const_iterator strBegin, const std::
 		if (qt & sserialize::StringCompleter::QT_PREFIX) {
 			current->insertExactValuesRecursive(destination);
 		}
-		if (qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+		if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
 			current->insertAllValuesRecursive(destination);
 		}
 	}

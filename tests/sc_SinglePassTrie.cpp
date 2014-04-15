@@ -143,8 +143,8 @@ public:
 			CPPUNIT_ASSERT_MESSAGE("Suffix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX));
 
 		CPPUNIT_ASSERT_MESSAGE("Prefix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_PREFIX));
-		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUFFIX_PREFIX)
-			CPPUNIT_ASSERT_MESSAGE("Substring indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX_PREFIX));
+		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUBSTRING)
+			CPPUNIT_ASSERT_MESSAGE("Substring indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUBSTRING));
 		
 	}
 	
@@ -166,8 +166,8 @@ public:
 			CPPUNIT_ASSERT_MESSAGE("Suffix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX));
 
 		CPPUNIT_ASSERT_MESSAGE("Prefix indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_PREFIX));
-		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUFFIX_PREFIX)
-			CPPUNIT_ASSERT_MESSAGE("Substring indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUFFIX_PREFIX));
+		if (stringCompleter().getSupportedQuerries() & StringCompleter::SQ_SUBSTRING)
+			CPPUNIT_ASSERT_MESSAGE("Substring indices", tempTrie.checkIndexEquality(m_config, *stTriePtr, StringCompleter::SQ_SUBSTRING));
 		
 	}
 	

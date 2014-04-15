@@ -118,12 +118,12 @@ std::set<uint32_t> FlatGST::ForwardIterator::getNext() const {
 bool FlatGST::ForwardIterator::hasNext(uint32_t codepoint) const {
 	std::string testStr = m_string;
 	utf8::append(codepoint, std::back_insert_iterator<std::string>(testStr));
-	return m_cmp->lowerBound(testStr,  static_cast<sserialize::StringCompleter::QuerryType>(sserialize::StringCompleter::QT_SUFFIX_PREFIX | sserialize::StringCompleter::QT_CASE_INSENSITIVE)) >= 0;
+	return m_cmp->lowerBound(testStr,  static_cast<sserialize::StringCompleter::QuerryType>(sserialize::StringCompleter::QT_SUBSTRING | sserialize::StringCompleter::QT_CASE_INSENSITIVE)) >= 0;
 }
 
 bool FlatGST::ForwardIterator::next(uint32_t codepoint) {
 	utf8::append(codepoint, std::back_insert_iterator<std::string>(m_string));
-	return m_cmp->lowerBound(m_string, static_cast<sserialize::StringCompleter::QuerryType>(sserialize::StringCompleter::QT_SUFFIX_PREFIX | sserialize::StringCompleter::QT_CASE_INSENSITIVE)) >= 0;
+	return m_cmp->lowerBound(m_string, static_cast<sserialize::StringCompleter::QuerryType>(sserialize::StringCompleter::QT_SUBSTRING | sserialize::StringCompleter::QT_CASE_INSENSITIVE)) >= 0;
 }
 
 FlatGST::MyBaseClass::ForwardIterator * FlatGST::ForwardIterator::copy() const {
@@ -201,7 +201,7 @@ FlatGST::lowerBound(const std::string& str, sserialize::StringCompleter::QuerryT
 	}
 	
 	if (mLcp == str.size()) {
-		if (qt & sserialize::StringCompleter::QT_PREFIX || qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX || fgstStringAt(mid).size() == str.size()) {
+		if (qt & sserialize::StringCompleter::QT_PREFIX || qt & sserialize::StringCompleter::QT_SUBSTRING || fgstStringAt(mid).size() == str.size()) {
 			return mid;
 		}
 	}
@@ -332,7 +332,7 @@ ItemIndex FlatGST::indexFromEntry(const FlatGST::IndexEntry& e, sserialize::Stri
 		else
 			return indexFromId( e.prefixPtr() );
 	}
-	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUBSTRING) {
 		if (e.mergeIndex()) {
 			return (indexFromId( e.exactPtr() ) + indexFromId( e.suffixPtr() ) ) +
 					(indexFromId( e.prefixPtr() ) + indexFromId( e.suffixPrefixPtr() ) );
@@ -359,7 +359,7 @@ ItemIndexIterator FlatGST::indexIteratorFromEntry(const FlatGST::IndexEntry& e, 
 		else
 			return indexIteratorFromId( e.prefixPtr() );
 	}
-	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUBSTRING) {
 		if (e.mergeIndex()) {
 			return (indexIteratorFromId( e.exactPtr() ) + indexIteratorFromId( e.suffixPtr() ) ) +
 					(indexIteratorFromId( e.prefixPtr() ) + indexIteratorFromId( e.suffixPrefixPtr() ) );

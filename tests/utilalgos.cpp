@@ -31,7 +31,7 @@ std::set<size_t> match(const std::deque< std::string >& strs, std::string str, u
 		else {
 			size_t lastPos = testString.rfind(str);
 			if (lastPos < std::string::npos) {
-				if (qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+				if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
 					ret.insert(i);
 				}
 				else if (qt & sserialize::StringCompleter::QT_SUFFIX && str.size() + lastPos == strs[i].size()) {

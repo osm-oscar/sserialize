@@ -295,7 +295,7 @@ checkFlatTrieEquality(Node * node, std::string prefix, uint32_t & posInFTrie, co
 				}
 				if (m_isSuffixTrie) {
 					node->insertAllValuesRecursive(s);
-					if (s != trie.indexFromPosition(posInFTrie, StringCompleter::QT_SUFFIX_PREFIX)) {
+					if (s != trie.indexFromPosition(posInFTrie, StringCompleter::QT_SUBSTRING)) {
 						std::cout << "FlatTrie broken (exactIndex):" << posInFTrie << std::endl;
 						node->dump();
 						return false;

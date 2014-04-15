@@ -111,13 +111,13 @@ public:
 	}
 	
 	void testCompletionSPCS() {
-		CPPUNIT_ASSERT( completionTest(StringCompleter::QT_SUFFIX_PREFIX) );
-		CPPUNIT_ASSERT( partialCompletionTest(StringCompleter::QT_SUFFIX_PREFIX) );
+		CPPUNIT_ASSERT( completionTest(StringCompleter::QT_SUBSTRING) );
+		CPPUNIT_ASSERT( partialCompletionTest(StringCompleter::QT_SUBSTRING) );
 	}
 
 	void testCompletionSPCI() {
-		CPPUNIT_ASSERT( completionTest(StringCompleter::QT_SUFFIX_PREFIX | StringCompleter::QT_CASE_INSENSITIVE) );
-		CPPUNIT_ASSERT( partialCompletionTest(StringCompleter::QT_SUFFIX_PREFIX | StringCompleter::QT_CASE_INSENSITIVE) );
+		CPPUNIT_ASSERT( completionTest(StringCompleter::QT_SUBSTRING | StringCompleter::QT_CASE_INSENSITIVE) );
+		CPPUNIT_ASSERT( partialCompletionTest(StringCompleter::QT_SUBSTRING | StringCompleter::QT_CASE_INSENSITIVE) );
 	}
 };
 

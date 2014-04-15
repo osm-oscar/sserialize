@@ -106,12 +106,12 @@ private:
 		virtual ItemIndex complete(const std::string & str, StringCompleter::QuerryType qtype) const {
 			TriePayload rd;
 			try {
-				rd = m_sTrie.at(str, (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUFFIX_PREFIX));
+				rd = m_sTrie.at(str, (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
 			}
 			catch (const OutOfBoundsException & c) {
 				return ItemIndex();
 			}
-			if (qtype & StringCompleter::QT_SUFFIX_PREFIX) {
+			if (qtype & StringCompleter::QT_SUBSTRING) {
 				return m_store.at(rd.substr);
 			}
 			if (qtype & StringCompleter::QT_PREFIX) {

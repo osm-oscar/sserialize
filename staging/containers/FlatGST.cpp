@@ -118,7 +118,7 @@ uint32_t FlatGST::find(const std::string & str, StringCompleter::QuerryType qt) 
 	}
 	
 	if (mLcp == str.size()) {
-		if (qt & sserialize::StringCompleter::QT_PREFIX || qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX || m_trie.at(mid).len == str.size()) {
+		if (qt & sserialize::StringCompleter::QT_PREFIX || qt & sserialize::StringCompleter::QT_SUBSTRING || m_trie.at(mid).len == str.size()) {
 			return mid;
 		}
 	}

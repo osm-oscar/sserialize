@@ -235,7 +235,7 @@ void GeneralizedTrie::addSuffixPrefixIndexPtrsRecursive(const Static::TrieNode &
 }
 
 ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType type) const {
-	if (type & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+	if (type & sserialize::StringCompleter::QT_SUBSTRING) {
 		if (node.hasSuffixPrefixIndex()) {
 			if (node.hasMergeIndex()) {
 				ItemIndex tmp;
@@ -303,7 +303,7 @@ ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNo
 }
 
 ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType qtype, const ItemIndex& indirectIndexParent) const {
-	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+	if (qtype & sserialize::StringCompleter::QT_SUBSTRING) {
 		if (node.hasSuffixPrefixIndex()) {
 			return m_indexStore.at(node.getSuffixPrefixIndexPtr(), indirectIndexParent);
 		}
@@ -467,7 +467,7 @@ completeCISRecursive(std::string::const_iterator strIt, const std::string::const
 	}
 	//Check if we're at the end of the string
 	
-	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX)
+	if (qtype & sserialize::StringCompleter::QT_SUBSTRING)
 		return getItemIndexFromNode(node, qtype);
 	
 	if ((qtype & sserialize::StringCompleter::QT_EXACT || qtype & sserialize::StringCompleter::QT_SUFFIX) && (strIt != strEnd || nStrIt != nStrEnd))
@@ -516,7 +516,7 @@ ItemIndex GeneralizedTrie::completeCS(const std::string & str, sserialize::Strin
 		}
 	}
 	
-	if (qtype & sserialize::StringCompleter::QT_SUFFIX_PREFIX)
+	if (qtype & sserialize::StringCompleter::QT_SUBSTRING)
 		return getItemIndexFromNode(node, qtype);
 	
 	//Check if we're at the end of the string

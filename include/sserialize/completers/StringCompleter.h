@@ -48,11 +48,11 @@ namespace StringCompleterPrivate {
 class StringCompleter: public RCWrapper<StringCompleterPrivate> {
 public:
 	enum QuerryType {
-		QT_NONE=0, QT_EXACT=1, QT_PREFIX=2, QT_SUFFIX=4, QT_SUFFIX_PREFIX=8, QT_CASE_INSENSITIVE=16, QT_CASE_SENSTIVE=32
+		QT_NONE=0, QT_EXACT=1, QT_PREFIX=2, QT_SUFFIX=4, QT_SUBSTRING=8, QT_CASE_INSENSITIVE=16, QT_CASE_SENSTIVE=32
 	};
 	
 	enum SupportedQuerries {
-		SQ_NONE=0, SQ_EXACT=1, SQ_PREFIX=2, SQ_EP=3, SQ_SUFFIX=4, SQ_SUFFIX_PREFIX=8, SQ_SSP=12, SQ_EPSP=15, SQ_CASE_INSENSITIVE=16, SQ_CASE_SENSITIVE=32, SQ_ALL=63
+		SQ_NONE=0, SQ_EXACT=1, SQ_PREFIX=2, SQ_EP=3, SQ_SUFFIX=4, SQ_SUBSTRING=8, SQ_SSP=12, SQ_EPSP=15, SQ_CASE_INSENSITIVE=16, SQ_CASE_SENSITIVE=32, SQ_ALL=63
 	};
 	
 	class ForwardIterator: public RCWrapper<detail::types::StringCompleterPrivate::ForwardIterator> {

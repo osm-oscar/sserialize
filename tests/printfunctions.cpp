@@ -94,7 +94,7 @@ std::string toString(sserialize::StringCompleter::QuerryType qt) {
 	if (qt & sserialize::StringCompleter::QT_SUFFIX) {
 		str += "suffix,";
 	}
-	if (qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+	if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
 		str += "suffix_prefix,";
 	}
 	if (qt & sserialize::StringCompleter::QT_CASE_INSENSITIVE) {

@@ -144,7 +144,7 @@ StringsItemDBPrivate<ItemType>::match(std::string str, sserialize::StringComplet
 		else {
 			size_t lastPos = testString.rfind(str);
 			if (lastPos < std::string::npos) {
-				if (qt & sserialize::StringCompleter::QT_SUFFIX_PREFIX) {
+				if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
 					strIds.insert(it->second.first);
 				}
 				if (qt & sserialize::StringCompleter::QT_SUFFIX && str.size() + lastPos == testString.size()) {

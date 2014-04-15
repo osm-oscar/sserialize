@@ -55,7 +55,7 @@ StringCompleterTestErrors testStringCompleter( sserialize::StringCompleter& strC
 			err |= SCTE_PREFIX;
 		if (sq & StringCompleter::SQ_SUFFIX && !testStringCompleterQuerry(testStrings, strCmp, data, StringCompleter::QT_SUFFIX))
 			err |= SCTE_SUFFIX;
-		if (sq & StringCompleter::SQ_SUFFIX_PREFIX && !testStringCompleterQuerry(testStrings, strCmp, data, StringCompleter::QT_SUFFIX_PREFIX))
+		if (sq & StringCompleter::SQ_SUBSTRING && !testStringCompleterQuerry(testStrings, strCmp, data, StringCompleter::QT_SUBSTRING))
 			err |= SCTE_SUFFIX_PREFIX;
 	}
 	if (sq & StringCompleter::SQ_CASE_INSENSITIVE) {
@@ -65,7 +65,7 @@ StringCompleterTestErrors testStringCompleter( sserialize::StringCompleter& strC
 			err |= SCTE_PREFIX_CI;
 		if (sq & StringCompleter::SQ_SUFFIX && !testStringCompleterQuerry(testStrings, strCmp, data, StringCompleter::QT_SUFFIX | StringCompleter::QT_CASE_INSENSITIVE))
 			err |= SCTE_SUFFIX_CI;
-		if (sq & StringCompleter::SQ_SUFFIX_PREFIX && !testStringCompleterQuerry(testStrings, strCmp, data, StringCompleter::QT_SUFFIX_PREFIX | StringCompleter::QT_CASE_INSENSITIVE))
+		if (sq & StringCompleter::SQ_SUBSTRING && !testStringCompleterQuerry(testStrings, strCmp, data, StringCompleter::QT_SUBSTRING | StringCompleter::QT_CASE_INSENSITIVE))
 			err |= SCTE_SUFFIX_PREFIX_CI;
 	}
 	return (StringCompleterTestErrors) err;

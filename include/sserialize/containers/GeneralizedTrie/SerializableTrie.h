@@ -149,11 +149,11 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 			return false;
 		}
 	}
-	if (sqtype & sserialize::StringCompleter::SQ_SUFFIX_PREFIX) {
+	if (sqtype & sserialize::StringCompleter::SQ_SUBSTRING) {
 		std::set<ItemIdType> destination;
 		curNode->insertAllValuesRecursive(destination);
 
-		ItemIndex idx(staticTrie.getItemIndexFromNode(curStaticNode, sserialize::StringCompleter::QT_SUFFIX_PREFIX));
+		ItemIndex idx(staticTrie.getItemIndexFromNode(curStaticNode, sserialize::StringCompleter::QT_SUBSTRING));
 		if (idx != destination) {
 			std::cout << "FATAL: SuffixPrefixIndex broken at:" << std::endl;
 			curNode->dump();
