@@ -31,9 +31,10 @@ public:
 	Trie(const sserialize::UByteArrayAdapter & d, T_ROOT_NODE_ALLOCATOR rootNodeAllocator);
 	Node getRootNode() const { return m_root; }
 	
+	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
-	TValue at(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) const;
-	inline TValue at(const std::string & str) const { return at(str.cbegin(), str.cend());}
+	TValue at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	inline TValue at(const std::string & str, bool prefixMatch) const { return at(str.cbegin(), str.cend(), prefixMatch);}
 };
 
 template<typename TValue>
@@ -63,7 +64,7 @@ m_values(d+1)
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd) const {
+TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
 	Node node(getRootNode());
 
 	std::string nodeStr(node.str());
@@ -83,10 +84,9 @@ TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd)
 		}
 
 		if (nStrIt == nStrEnd && strIt != strEnd) { //node->c is real prefix, strIt points to new element
-			uint32_t key = utf8::peek_next(strIt, strEnd);
+			uint32_t key = utf8::next(strIt, strEnd);
 			uint32_t pos = node.find(key);
 			if (pos != Node::npos) {
-				utf8::next(strIt, strEnd);
 				node = node.child(pos);
 				nodeStr = node.str();
 				nStrIt = nodeStr.cbegin();
@@ -96,6 +96,10 @@ TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd)
 				throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
 			}
 		}
+	}
+	
+	if (nStrIt != nStrEnd && !prefixMatch) {
+		throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
 	}
 	
 	return m_values.at( node.payloadPtr() );

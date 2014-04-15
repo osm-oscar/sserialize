@@ -5,7 +5,7 @@
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/Static/UnicodeTrie/Node.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/UnicodeTrie/Trie.h>
 
 namespace sserialize {
 namespace UnicodeTrie {
@@ -16,7 +16,8 @@ public:
 	typedef TValue value_type;
 	typedef uint32_t key_type;
 	typedef Node* map_type;
-	typedef typename std::unordered_map<key_type, map_type> ChildrenContainer;
+	//currenty, ChildrenContainer has to be sorted my key_type
+	typedef typename std::map<key_type, map_type> ChildrenContainer;
 	typedef typename ChildrenContainer::iterator iterator;
 	typedef typename ChildrenContainer::const_iterator const_iterator;
 private:
@@ -62,6 +63,7 @@ protected:
 	template<typename T_OCTET_ITERATOR>
 	Node* nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 
+	bool checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const;
 public:
 	Trie() : m_root(0) {}
 	virtual ~Trie() { delete m_root;}
@@ -70,8 +72,21 @@ public:
 		return nodeAt(begin, end)->value();
 	}
 	
+	///@param prefixMatch strIt->strEnd can be a prefix of the path
+	template<typename T_OCTET_ITERATOR>
+	bool count(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	
+	///@param prefixMatch strIt->strEnd can be a prefix of the path
+	template<typename T_OCTET_ITERATOR>
+	const TValue & find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
 	UByteArrayAdapter append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const;
+	
+	bool checkTrieEquality(const sserialize::Static::UnicodeTrie::Node & rootNode) const {
+		return checkTrieEqualityRec(m_root, rootNode);
+	}
+// 	bool checkPayloadEquality();
 };
 
 template<typename TValue>
@@ -174,6 +189,59 @@ typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const
 	return current;
 }
 
+template<typename TValue>
+template<typename T_OCTET_ITERATOR>
+const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+	Node * node = m_root;
+
+	std::string nodeStr(node->str());
+	std::string::const_iterator nStrIt(nodeStr.cbegin());
+	std::string::const_iterator nStrEnd(nodeStr.cend());
+	
+	//Find the end-node
+	while(strIt != strEnd) {
+		while(strIt != strEnd && nStrIt != nStrEnd) {
+			if (*strIt == *nStrIt) {
+				++strIt;
+				++nStrIt;
+			}
+			else { //no common prefix
+				throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+			}
+		}
+
+		if (nStrIt == nStrEnd && strIt != strEnd) { //node->c is real prefix, strIt points to new element
+			uint32_t key = utf8::peek_next(strIt, strEnd);
+			if (node->children().count(key)) {
+				node = node->children().at(key);
+				nodeStr = node.str();
+				nStrIt = nodeStr.cbegin();
+				nStrEnd = nodeStr.cend();
+			}
+			else {
+				throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+			}
+		}
+	}
+	
+	if (nStrIt != nStrEnd && !prefixMatch) {
+		throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+	}
+	return node->value();
+}
+
+template<typename TValue>
+template<typename T_OCTET_ITERATOR>
+bool Trie<TValue>::count(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+	try {
+		find(strIt, strEnd, prefixMatch);
+	}
+	catch (const sserialize::OutOfBoundsException & e) {
+		return false;
+	}
+	return true;
+}
+
 
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
@@ -223,6 +291,38 @@ UByteArrayAdapter Trie<TValue>::append(UByteArrayAdapter& d, T_PH payloadHandler
 	d.putUint32(nodeCreator->type());
 	d.put(trieData);
 	return d;
+}
+
+
+template<typename TValue>
+bool
+Trie<TValue>::checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const {
+	if (node) {
+		std::string sstr(snode.str());
+		if (node->str().size()) {
+			std::string::const_iterator nstrIt(node->str().cbegin());
+			std::string::const_iterator nstrEnd(node->str().cend());
+			utf8::next(nstrIt, nstrEnd);
+			if( sstr != std::string(nstrIt, nstrEnd) )
+				return false;
+		}
+		else if (!sstr.size()) {
+			return false;
+		}
+		if (node->children().size() == snode.childSize()) {
+			uint32_t schild = 0;
+			for(typename Node::const_iterator cIt(node->cbegin()), cEnd(node->cend()); cIt != cEnd; ++cIt, ++schild) {
+				if (cIt->first != snode.childKey(schild) || !checkTrieEqualityRec(cIt->second, snode.child(schild))) {
+					return false;
+				}
+			}
+		}
+		else {
+			return false;
+		}
+		return true;
+	}
+	return false;
 }
 
 }} //end namespace
