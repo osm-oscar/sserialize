@@ -41,8 +41,6 @@ public:
 	virtual uint32_t find(uint32_t unicode_point) const override;
 	virtual Node* child(uint32_t pos) const override;
 	virtual uint32_t childPtr(uint32_t pos) const override;
-
-	virtual void dump() const override;
 	
 	virtual uint32_t payloadPtr() const override;
 };

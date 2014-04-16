@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_UNICODE_TRIE_NODE_H
 #define SSERIALIZE_UNICODE_TRIE_NODE_H
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <iostream>
 
 namespace sserialize {
 namespace Static {
@@ -22,7 +23,7 @@ public:
 	virtual Node* child(uint32_t pos) const = 0;
 	virtual uint32_t childPtr(uint32_t pos) const = 0;
 
-	virtual void dump() const = 0;
+	virtual void dump(std::ostream & out) const;
 	
 	virtual uint32_t payloadPtr() const = 0;
 };
@@ -65,7 +66,7 @@ public:
 	inline uint32_t childPtr(const uint32_t pos) const { return priv()->childPtr(pos); }
 	inline Node child(const uint32_t pos) const { return Node( priv()->child(pos) );}
 
-	inline void dump() const { priv()->dump();}
+	inline void dump() const { priv()->dump(std::cout);}
 
 	inline uint32_t payloadPtr() const { return priv()->payloadPtr();}
 	

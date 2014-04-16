@@ -49,12 +49,14 @@ uint32_t SimpleNode::childKey(uint32_t pos) const {
 }
 
 uint32_t SimpleNode::find(uint32_t unicode_point) const {
+	if (!m_children.size()) {
+		return sserialize::Static::UnicodeTrie::Node::npos;
+	}
 	ChildrenContainer::const_iterator it(
 		std::lower_bound(m_children.cbegin(), m_children.cend(), std::pair<uint32_t, uint32_t>(unicode_point, 0)
-// 			[](const ChildrenContainer::value_type & a, const ChildrenContainer::value_type & b) {return a.first < b.first;}
 		)
 	);
-	if (it != m_children.cend()) {
+	if (it->first == unicode_point) {
 		return it-m_children.cbegin();
 	}
 	else {
@@ -70,9 +72,6 @@ uint32_t SimpleNode::childPtr(uint32_t pos) const {
 	return m_children.at(pos).second;
 }
 
-void SimpleNode::dump() const {
-	
-}
 
 uint32_t SimpleNode::payloadPtr() const {
 	return m_payloadPtr;

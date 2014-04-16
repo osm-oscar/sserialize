@@ -21,8 +21,6 @@ uint32_t EmptyNode::find(uint32_t) const { return sserialize::Static::UnicodeTri
 Node* EmptyNode::child(uint32_t) const { return new EmptyNode(); }
 uint32_t EmptyNode::childPtr(uint32_t) const {return 0;}
 
-void EmptyNode::dump() const {}
-	
 uint32_t EmptyNode::payloadPtr() const {
 	return 0;
 }
