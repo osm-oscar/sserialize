@@ -60,10 +60,6 @@ public:
 private:
 	Node * m_root;
 protected:
-	template<typename T_OCTET_ITERATOR>
-	Node * nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
-
-
 	bool checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const;
 	
 	///T_PAYLOAD_COMPARATOR: bool operator()(Trie::Node * srcNode, const Node & staticNode)
@@ -77,6 +73,10 @@ protected:
 public:
 	Trie() : m_root(0) {}
 	virtual ~Trie() { delete m_root;}
+	
+	///create a new node if needed
+	template<typename T_OCTET_ITERATOR>
+	Node * nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 	
 	///create a new node if needed
 	template<typename T_OCTET_ITERATOR>
