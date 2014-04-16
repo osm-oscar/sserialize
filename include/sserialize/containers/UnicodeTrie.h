@@ -61,9 +61,15 @@ private:
 	Node * m_root;
 protected:
 	template<typename T_OCTET_ITERATOR>
-	Node* nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
+	Node * nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
+
 
 	bool checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const;
+	
+	///T_PAYLOAD_COMPARATOR: bool operator()(Trie::Node * srcNode, const Node & staticNode)
+	template<typename T_PAYLOAD_COMPARATOR>
+	bool checkPayloadEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & rootNode, const T_PAYLOAD_COMPARATOR & payloadComparator) const;
+	
 	Trie(const Trie & o);
 	Trie(const Trie && o);
 	Trie & operator=(const Trie & o);
@@ -71,6 +77,8 @@ protected:
 public:
 	Trie() : m_root(0) {}
 	virtual ~Trie() { delete m_root;}
+	
+	///create a new node if needed
 	template<typename T_OCTET_ITERATOR>
 	TValue & at(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
 		return nodeAt(begin, end)->value();
@@ -82,6 +90,10 @@ public:
 	
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
+	const Node * findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	
+	///@param prefixMatch strIt->strEnd can be a prefix of the path
+	template<typename T_OCTET_ITERATOR>
 	const TValue & find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
 	
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
@@ -90,7 +102,11 @@ public:
 	bool checkTrieEquality(const sserialize::Static::UnicodeTrie::Node & rootNode) const {
 		return checkTrieEqualityRec(m_root, rootNode);
 	}
-// 	bool checkPayloadEquality();
+	///T_PAYLOAD_COMPARATOR: bool operator()(UnicodeTrie::Trie::Node * srcNode, const Static::UnicodeTrie::Trie::Node & staticNode) const
+	template<typename T_PAYLOAD_COMPARATOR>
+	bool checkPayloadEquality(const sserialize::Static::UnicodeTrie::Node & rootNode, T_PAYLOAD_COMPARATOR payloadComparator) const {
+		return checkPayloadEqualityRec(m_root, rootNode, payloadComparator);
+	}
 };
 
 template<typename TValue>
@@ -195,7 +211,10 @@ typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+const typename Trie<TValue>::Node * Trie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+	if (!m_root)
+		return 0;
+
 	Node * node = m_root;
 
 	std::string::const_iterator nStrIt(node->str().cbegin());
@@ -209,7 +228,7 @@ const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR
 				++nStrIt;
 			}
 			else { //no common prefix
-				throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+				return 0;
 			}
 		}
 
@@ -221,27 +240,30 @@ const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR
 				nStrEnd = node->str().cend();
 			}
 			else {
-				throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+				return 0;
 			}
 		}
 	}
 	
 	if (nStrIt != nStrEnd && !prefixMatch) {
-		throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+		return 0;
 	}
-	return node->value();
+	return node;
+}
+
+template<typename TValue>
+template<typename T_OCTET_ITERATOR>
+const TValue & Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+	Node * n = findNode(strIt, strEnd, prefixMatch);
+	if (!n)
+		throw sserialize::OutOfBoundsException("sserialize::UnicodeTrie::Trie::find");
+	return n->value();
 }
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
 bool Trie<TValue>::count(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
-	try {
-		find(strIt, strEnd, prefixMatch);
-	}
-	catch (const sserialize::OutOfBoundsException & e) {
-		return false;
-	}
-	return true;
+	return findNode(strIt, strEnd, prefixMatch);
 }
 
 
@@ -308,7 +330,7 @@ Trie<TValue>::checkTrieEqualityRec(const Node * node, const sserialize::Static::
 			if( sstr != std::string(nstrIt, nstrEnd) )
 				return false;
 		}
-		else if (!sstr.size()) {
+		else if (sstr.size()) {
 			return false;
 		}
 		if (node->children().size() == snode.childSize()) {
@@ -326,6 +348,31 @@ Trie<TValue>::checkTrieEqualityRec(const Node * node, const sserialize::Static::
 	}
 	return false;
 }
+
+template<typename TValue>
+template<typename T_PAYLOAD_COMPARATOR>
+bool Trie<TValue>::checkPayloadEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode, const T_PAYLOAD_COMPARATOR & payloadComparator) const {
+	if (node) {
+		if (!payloadComparator(node, snode)) {
+			return false;
+		}
+		if (node->children().size() == snode.childSize()) {
+			uint32_t schild = 0;
+			for(typename Node::const_iterator cIt(node->cbegin()), cEnd(node->cend()); cIt != cEnd; ++cIt, ++schild) {
+				if (cIt->first != snode.childKey(schild) || ! checkPayloadEqualityRec(cIt->second, snode.child(schild), payloadComparator)) {
+					return false;
+				}
+			}
+		}
+		else {
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+
 
 }} //end namespace
 

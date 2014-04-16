@@ -20,6 +20,8 @@ namespace UnicodeTrie {
 
 template<typename TValue>
 class Trie {
+public:
+	typedef sserialize::Static::UnicodeTrie::Node Node;
 private:
 	Node m_root;
 	sserialize::Static::Deque<TValue> m_values;
@@ -35,6 +37,7 @@ public:
 	template<typename T_OCTET_ITERATOR>
 	TValue at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
 	inline TValue at(const std::string & str, bool prefixMatch) const { return at(str.cbegin(), str.cend(), prefixMatch);}
+	inline TValue payload(uint32_t id) const { return m_values.at(id);}
 };
 
 template<typename TValue>

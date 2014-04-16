@@ -1,8 +1,5 @@
 #include <sserialize/containers/UnicodeTrie.h>
 #include <sserialize/containers/ItemIndexFactory.h>
-#include <sserialize/Static/ItemIndexStore.h>
-#include <sserialize/Static/UnicodeTrie/Trie.h>
-#include <sserialize/Static/UnicodeTrie/detail/SimpleNode.h>
 #include <sserialize/utility/stringfunctions.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -11,58 +8,90 @@
 
 using namespace sserialize;
 
-class StaticUnicodeTrieTest: public StringCompleterTest {
-CPPUNIT_TEST_SUITE( StaticUnicodeTrieTest );
+struct TrieStorageData {
+	std::vector<uint32_t> exact;
+	std::vector<uint32_t> suffix;
+};
+
+typedef UnicodeTrie::Trie<TrieStorageData> MyTrie;
+
+template<bool T_CASE_INSENSITIVE>
+class UnicodeTrieTest: public StringCompleterTest {
+CPPUNIT_TEST_SUITE( UnicodeTrieTest );
 CPPUNIT_TEST( testCreateStringCompleter );
 CPPUNIT_TEST( testSupportedQuerries );
 CPPUNIT_TEST( testCompletionECS );
-// CPPUNIT_TEST( testCompletionECI );
-// CPPUNIT_TEST( testCompletionPCS );
-// CPPUNIT_TEST( testCompletionPCI );
+CPPUNIT_TEST( testCompletionECI );
+CPPUNIT_TEST( testCompletionPCS );
+CPPUNIT_TEST( testCompletionPCI );
 CPPUNIT_TEST( testCompletionSCS );
-// CPPUNIT_TEST( testCompletionSCI );
-// CPPUNIT_TEST( testCompletionSPCS );
-// CPPUNIT_TEST( testCompletionSPCI );
+CPPUNIT_TEST( testCompletionSCI );
+CPPUNIT_TEST( testCompletionSPCS );
+CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST_SUITE_END();
 private:
-	struct TrieStorageData {
-		std::vector<uint32_t> exact;
-		std::vector<uint32_t> suffix;
-	};
-
-	typedef UnicodeTrie::Trie<TrieStorageData> MyTrie;
-
 	class MyStringCompleterPrivate: public StringCompleterPrivate {
 	private:
 		const MyTrie * m_Trie;
 		Static::ItemIndexStore m_store;
+	protected:
+		void uniteSuffix(const MyTrie::Node * node, std::set<uint32_t> & substr) const {
+			if (node) {
+				substr.insert(node->value().suffix.cbegin(), node->value().suffix.cend());
+				for(const auto & x: node->children()) {
+					uniteSuffix(x.second, substr);
+				}
+			}
+		}
+		void uniteExact(const MyTrie::Node * node, std::set<uint32_t> & prefix) const {
+			if (node) {
+				prefix.insert(node->value().exact.cbegin(), node->value().exact.cend());
+				for(const auto & x: node->children()) {
+					uniteExact(x.second, prefix);
+				}
+			}
+		}
 	public:
 		MyStringCompleterPrivate(const MyTrie * trie) : m_Trie(trie) {}
 		virtual ~MyStringCompleterPrivate() {}
 		virtual ItemIndex complete(const std::string & str, StringCompleter::QuerryType qtype) const {
-			TrieStorageData rd;
-			try {
-				rd = m_Trie->find(str.cbegin(), str.cend(), (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
+			const MyTrie::Node * node = 0;
+			if (T_CASE_INSENSITIVE) {
+				std::string tmp(unicode_to_lower(str));
+				node = m_Trie->findNode(tmp.cbegin(), tmp.cend(), (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
 			}
-			catch (const OutOfBoundsException & c) {
+			else {
+				node = m_Trie->findNode(str.cbegin(), str.cend(), (qtype & StringCompleter::QT_PREFIX || qtype & StringCompleter::QT_SUBSTRING));
+			}
+			if (!node)
 				return ItemIndex();
-			}
 			if (qtype & StringCompleter::QT_SUBSTRING) {
-				return ItemIndex(rd.suffix);
+				std::set<uint32_t> tmp;
+				uniteSuffix(node, tmp);
+				return ItemIndex(std::vector<uint32_t>(tmp.cbegin(), tmp.cend()));
 			}
 			if (qtype & StringCompleter::QT_PREFIX) {
-				return ItemIndex(rd.exact);
+				std::set<uint32_t> tmp;
+				uniteExact(node, tmp);
+				return ItemIndex(std::vector<uint32_t>(tmp.cbegin(), tmp.cend()));
 			}
 			if (qtype & StringCompleter::QT_SUFFIX) {
-				return ItemIndex(rd.suffix);
+				return ItemIndex(node->value().suffix);
 			}
 			if (qtype & StringCompleter::QT_EXACT) {
-				return ItemIndex(rd.exact);
+				return ItemIndex(node->value().exact);
 			}
 			return ItemIndex();
 		}
 		virtual StringCompleter::SupportedQuerries getSupportedQuerries() const {
-			return (StringCompleter::SupportedQuerries) (StringCompleter::SQ_EXACT | StringCompleter::SQ_SUFFIX | StringCompleter::SQ_CASE_SENSITIVE);
+			uint8_t msq = (StringCompleter::SQ_EPSP | StringCompleter::SQ_SSP);
+			if (T_CASE_INSENSITIVE) {
+				msq |= StringCompleter::SQ_CASE_INSENSITIVE;
+			}
+			else {
+				msq |= StringCompleter::SQ_CASE_SENSITIVE;
+			}
+			return (StringCompleter::SupportedQuerries) msq;
 		}
 		virtual std::string getName() const {
 			return std::string("MyStringCompleterPrivate");
@@ -83,10 +112,20 @@ protected:
 		for(uint32_t i(0), s(items().size()); i < s; ++i) {
 			const TestItemData & item = items()[i];
 			for(const std::string & itemStr : item.strs) {
-				m_trie.at(itemStr.cbegin(), itemStr.cend()).exact.push_back(i);
-				for(std::string::const_iterator it(itemStr.cbegin()), end(itemStr.cend()); it != end; sserialize::nextSuffixString(it, end, separators)) {
+				std::string putStr = itemStr;
+				if (T_CASE_INSENSITIVE) {
+					putStr = sserialize::unicode_to_lower(putStr);
+				}
+				std::string::const_iterator it(putStr.cbegin()), end(putStr.cend());
+				{
+					MyTrie::value_type & v = m_trie.at(putStr.cbegin(), putStr.cend());
+					v.exact.push_back(i);
+					v.suffix.push_back(i);
+					sserialize::nextSuffixString(it, end, separators);
+				}
+				for(;it != end; sserialize::nextSuffixString(it, end, separators)) {
 					MyTrie::value_type & v = m_trie.at(it, end);
-					if ( !v.suffix.size() || v.suffix.back() != i) {
+					if ( v.suffix.size() == 0 || v.suffix.back() != i) {
 						v.suffix.push_back(i);
 					}
 				}
@@ -99,7 +138,14 @@ protected:
 	}
 	
 	virtual StringCompleter::SupportedQuerries supportedQuerries() {
-		uint8_t sq = StringCompleter::SQ_EXACT | StringCompleter::SQ_CASE_SENSITIVE | StringCompleter::SQ_SUFFIX;
+		uint8_t sq = StringCompleter::SQ_EP | StringCompleter::SQ_SSP;
+		if (T_CASE_INSENSITIVE) {
+			sq |= StringCompleter::SQ_CASE_INSENSITIVE;
+		}
+		else {
+			sq |= StringCompleter::SQ_CASE_SENSITIVE;
+		}
+			
 		return (StringCompleter::SupportedQuerries) sq;
 	}
 
@@ -108,7 +154,7 @@ protected:
 	}
 	
 public:
-    StaticUnicodeTrieTest() {}
+    UnicodeTrieTest() {}
 
 	virtual void setUp() {
 		setUpCompleter();
@@ -119,8 +165,9 @@ public:
 
 int main() {
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest( StaticUnicodeTrieTest::suite() );
-	runner.eventManager().popProtector();
+	runner.addTest( UnicodeTrieTest<false>::suite() );
+	runner.addTest( UnicodeTrieTest<true>::suite() );
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }

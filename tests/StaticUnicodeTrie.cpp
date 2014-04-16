@@ -78,21 +78,50 @@ struct PayloadHandler {
 	}
 };
 
+struct PayloadComparator {
+	MyStaticTrie * strie;
+	Static::ItemIndexStore store;
+	bool operator()(const MyTrie::Node * node, const MyStaticTrie::Node & snode) const {
+		std::set<uint32_t> prefix, substr;
+		uniteSubTree(node, prefix, substr);
+		TriePayload sp = strie->payload( snode.payloadPtr() );
+		ItemIndex siE(store.at(sp.exact)), siS(store.at(sp.suffix)), siP(store.at(sp.prefix)), siSS(store.at(sp.substr));
+		
+		bool ok = siE == node->value().exact;
+		ok = ok && siS == node->value().suffix;
+		ok = ok && siP == prefix;
+		ok = ok && siSS == substr;
+		if (ok) {//just for the debugger
+			return ok;
+		}
+		return ok;
+	}
+	void uniteSubTree(const MyTrie::Node * node, std::set<uint32_t> & prefix, std::set<uint32_t> & substr) const {
+		if (node) {
+			prefix.insert(node->value().exact.cbegin(), node->value().exact.cend());
+			substr.insert(node->value().suffix.cbegin(), node->value().suffix.cend());
+			for(const auto & x: node->children()) {
+				uniteSubTree(x.second, prefix, substr);
+			}
+		}
+	}
+};
+
 template<bool T_CASE_IN_SENSITIVE>
 class StaticUnicodeTrieTest: public StringCompleterTest {
 CPPUNIT_TEST_SUITE( StaticUnicodeTrieTest );
-// CPPUNIT_TEST( testCreateStringCompleter );
-// CPPUNIT_TEST( testSupportedQuerries );
-// CPPUNIT_TEST( testCompletionECS );
-// CPPUNIT_TEST( testCompletionECI );
-// CPPUNIT_TEST( testCompletionPCS );
-// CPPUNIT_TEST( testCompletionPCI );
-// CPPUNIT_TEST( testCompletionSCS );
-// CPPUNIT_TEST( testCompletionSCI );
-// CPPUNIT_TEST( testCompletionSPCS );
-// CPPUNIT_TEST( testCompletionSPCI );
+CPPUNIT_TEST( testCreateStringCompleter );
+CPPUNIT_TEST( testSupportedQuerries );
+CPPUNIT_TEST( testCompletionECS );
+CPPUNIT_TEST( testCompletionECI );
+CPPUNIT_TEST( testCompletionPCS );
+CPPUNIT_TEST( testCompletionPCI );
+CPPUNIT_TEST( testCompletionSCS );
+CPPUNIT_TEST( testCompletionSCI );
+CPPUNIT_TEST( testCompletionSPCS );
+CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testTrieEquality );
-// CPPUNIT_TEST( testIndexEquality );
+CPPUNIT_TEST( testIndexEquality );
 CPPUNIT_TEST_SUITE_END();
 private:
 
@@ -131,7 +160,14 @@ private:
 			return ItemIndex();
 		}
 		virtual StringCompleter::SupportedQuerries getSupportedQuerries() const {
-			return (StringCompleter::SupportedQuerries) (StringCompleter::SQ_EPSP | StringCompleter::SQ_SSP | StringCompleter::SQ_CASE_SENSITIVE);
+			uint8_t msq = (StringCompleter::SQ_EPSP | StringCompleter::SQ_SSP);
+			if (T_CASE_IN_SENSITIVE) {
+				msq |= StringCompleter::SQ_CASE_INSENSITIVE;
+			}
+			else {
+				msq |= StringCompleter::SQ_CASE_SENSITIVE;
+			}
+			return (StringCompleter::SupportedQuerries) msq;
 		}
 		virtual std::string getName() const {
 			return std::string("MyStringCompleterPrivate");
@@ -163,10 +199,16 @@ protected:
 				if (T_CASE_IN_SENSITIVE) {
 					putStr = sserialize::unicode_to_lower(putStr);
 				}
-				m_trie.at(putStr.cbegin(), putStr.cend()).exact.push_back(i);
-				for(std::string::const_iterator it(putStr.cbegin()), end(putStr.cend()); it != end; sserialize::nextSuffixString(it, end, separators)) {
+				std::string::const_iterator it(putStr.cbegin()), end(putStr.cend());
+				{
+					MyTrie::value_type & v = m_trie.at(putStr.cbegin(), putStr.cend());
+					v.exact.push_back(i);
+					v.suffix.push_back(i);
+					sserialize::nextSuffixString(it, end, separators);
+				}
+				for(;it != end; sserialize::nextSuffixString(it, end, separators)) {
 					MyTrie::value_type & v = m_trie.at(it, end);
-					if ( !v.suffix.size() || v.suffix.back() != i) {
+					if ( v.suffix.size() == 0 || v.suffix.back() != i) {
 						v.suffix.push_back(i);
 					}
 				}
@@ -214,7 +256,10 @@ public:
 	}
 	
 	void testIndexEquality() {
-
+		PayloadComparator pc;
+		pc.strie = &m_sTrie;
+		pc.store = m_indexStore;
+		CPPUNIT_ASSERT(m_trie.checkPayloadEquality(m_sTrie.getRootNode(), pc));
 	}
 };
 
@@ -222,7 +267,7 @@ int main() {
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticUnicodeTrieTest<false>::suite() );
 	runner.addTest( StaticUnicodeTrieTest<true>::suite() );
-// 	runner.eventManager().popProtector();
+	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
