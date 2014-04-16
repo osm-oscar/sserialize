@@ -1,7 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
 #include <deque>
@@ -20,11 +20,11 @@ std::deque< std::deque<uint32_t> > createDequeOfDequeNumbers(uint32_t maxCountPe
 int TestCount = 10;
 uint32_t TestMask = 0xFFF;
 
-class TestDeque: public CppUnit::TestFixture {
-CPPUNIT_TEST_SUITE( TestDeque );
+class TestArray: public CppUnit::TestFixture {
+CPPUNIT_TEST_SUITE( TestArray );
 CPPUNIT_TEST( testNumbers );
 CPPUNIT_TEST( testStrings );
-CPPUNIT_TEST( testDequeInDeque );
+CPPUNIT_TEST( testArrayInArray );
 CPPUNIT_TEST( testStringsRawPut );
 CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST( testAbstractArray );
@@ -38,7 +38,7 @@ public:
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		d << realValues;
 		d.resetPutPtr();
-		sserialize::Static::Deque<uint32_t> sd(d);
+		sserialize::Static::Array<uint32_t> sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
 		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
@@ -50,7 +50,7 @@ public:
 		std::deque<std::string> realValues = createStrings(33, TestMask & rand());
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		d << realValues;
-		sserialize::Static::Deque<std::string> sd(d);
+		sserialize::Static::Array<std::string> sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
 		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
@@ -61,13 +61,13 @@ public:
 	void testStringsRawPut() {
 		std::deque<std::string> realValues = createStrings(33, TestMask & rand());
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
-		Static::DequeCreator<std::string> creator(d);
+		Static::ArrayCreator<std::string> creator(d);
 		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
 			creator.beginRawPut();
 			creator.rawPut() << realValues[i];
 			creator.endRawPut();
 		}
-		sserialize::Static::Deque<std::string> sd(creator.flush());
+		sserialize::Static::Array<std::string> sd(creator.flush());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
 		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
@@ -75,15 +75,15 @@ public:
 		}
 	}
 	
-	void testDequeInDeque() {
+	void testArrayInArray() {
 		std::deque< std::deque<uint32_t> > realValues = createDequeOfDequeNumbers(TestMask & rand(), TestMask & rand());
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		d << realValues;
-		sserialize::Static::Deque< Static::Deque<uint32_t>  > sd(d);
+		sserialize::Static::Array< Static::Array<uint32_t>  > sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
 		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
-			Static::Deque<uint32_t> t = sd.at(i);
+			Static::Array<uint32_t> t = sd.at(i);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(toString("size at ", i), (uint32_t)realValues[i].size(), t.size());
 			for(uint32_t j = 0, sj = realValues[i].size(); j < sj; ++j) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at [", i,":",j,"]"), realValues[i][j], t.at(j));
@@ -96,12 +96,12 @@ public:
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		d << realValues;
 		d.resetPutPtr();
-		sserialize::Static::Deque<uint32_t> sd(d);
+		sserialize::Static::Array<uint32_t> sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
 		{
-			sserialize::Static::Deque<uint32_t>::const_iterator it(sd.cbegin());
-			sserialize::Static::Deque<uint32_t>::const_iterator end(sd.cend());
+			sserialize::Static::Array<uint32_t>::const_iterator it(sd.cbegin());
+			sserialize::Static::Array<uint32_t>::const_iterator end(sd.cend());
 			for(uint32_t i = 0; it != end; ++it, ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], *it);
 			}
@@ -113,7 +113,7 @@ public:
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		d << realValues;
 		d.resetPutPtr();
-		sserialize::Static::Deque<uint32_t> sd(d);
+		sserialize::Static::Array<uint32_t> sd(d);
 		
 		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
 		
@@ -128,7 +128,7 @@ public:
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		d << realValues;
 		d.resetPutPtr();
-		sserialize::Static::Deque<uint32_t> sd(d);
+		sserialize::Static::Array<uint32_t> sd(d);
 
 		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
 
@@ -147,7 +147,7 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  TestDeque::suite() );
+	runner.addTest(  TestArray::suite() );
 	runner.run();
 	return 0;
 }

@@ -5,7 +5,7 @@
 #include <vector>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/hashspecializations.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/utility/utilfuncs.h>
 
 //TODO:serialization is currently depth first, switch to breadth first

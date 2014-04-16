@@ -8,23 +8,23 @@ namespace sserialize {
 namespace Static {
 
 StringTable::StringTable() :
-RCWrapper< sserialize::Static::Deque<std::string> >(new sserialize::Static::Deque< std::string >())
+RCWrapper< sserialize::Static::Array<std::string> >(new sserialize::Static::Array< std::string >())
 {}
 
 StringTable::StringTable(const UByteArrayAdapter& data) :
-RCWrapper< sserialize::Static::Deque<std::string> >(new sserialize::Static::Deque< std::string >(data) )
+RCWrapper< sserialize::Static::Array<std::string> >(new sserialize::Static::Array< std::string >(data) )
 {}
 
 StringTable::~StringTable() {}
 
-StringTable::StringTable(Deque< std::string >* data): RCWrapper< sserialize::Static::Deque< std::string > >(data)
+StringTable::StringTable(Array< std::string >* data): RCWrapper< sserialize::Static::Array< std::string > >(data)
 {}
 
-StringTable::StringTable(const StringTable& other) : RCWrapper< sserialize::Static::Deque<std::string> >(other)
+StringTable::StringTable(const StringTable& other) : RCWrapper< sserialize::Static::Array<std::string> >(other)
 {}
 
 StringTable& StringTable::operator=(const StringTable& other) {
-	RCWrapper< sserialize::Static::Deque<std::string> >::operator=(other);
+	RCWrapper< sserialize::Static::Array<std::string> >::operator=(other);
 	return *this;
 }
 

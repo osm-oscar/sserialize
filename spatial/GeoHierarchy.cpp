@@ -256,7 +256,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	allOk = allOk && (BoundedCompactUintArray::create(ptrOffsetArray, dest) > 0);
 	//append the RegionRects
 	{
-		sserialize::Static::DequeCreator<sserialize::spatial::GeoRect> bCreator(dest);
+		sserialize::Static::ArrayCreator<sserialize::spatial::GeoRect> bCreator(dest);
 		for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 			bCreator.put(m_regions.at(i).boundary);
 		}

@@ -6,7 +6,7 @@
 #include <sserialize/containers/ItemIndexIteratorDB.h>
 #include <sserialize/utility/TimeMeasuerer.h>
 #include <sserialize/utility/unicode_case_functions.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/utility/refcounting.h>
 #include "StringsItemDBItem.h"
 #include <iostream>
@@ -17,7 +17,7 @@
  *
  * DataBase
  * ---------------------------------------------------
- * VERSION|Deque<<ItemStrings>|Deque<ItemPayload>
+ * VERSION|Array<<ItemStrings>|Array<ItemPayload>
  *----------------------------------------------------
  *  1     |    ItemStrings    |     *
  *
@@ -37,8 +37,8 @@ template<class MetaDataDeSerializable>
 class StringsItemDBPrivate: public RefCountObject {
 private:
 	StringTable m_stringTable;
-	Static::Deque< UByteArrayAdapter > m_itemStrings;
-	Static::Deque< UByteArrayAdapter > m_payloads;
+	Static::Array< UByteArrayAdapter > m_itemStrings;
+	Static::Array< UByteArrayAdapter > m_payloads;
 public:
 	StringsItemDBPrivate();
 	StringsItemDBPrivate(const UByteArrayAdapter & db, const StringTable & stable);

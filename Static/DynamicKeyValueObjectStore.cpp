@@ -64,7 +64,7 @@ UByteArrayAdapter::OffsetType DynamicKeyValueObjectStore::serialize(sserialize::
 	tm.end();
 	std::cout << "took " << tm.elapsedSeconds() << " seconds" << std::endl;
 
-	Static::DequeCreator<UByteArrayAdapter> creator(dest);
+	Static::ArrayCreator<UByteArrayAdapter> creator(dest);
 	
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(m_items.size(), "KeyValueObjectStore::serialize: items");

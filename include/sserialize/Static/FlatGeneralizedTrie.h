@@ -87,9 +87,9 @@ private:
 	ItemIndexStore m_idxStore;
 	StringTable m_stable;
 	MultiVarBitArray m_strEntries;
-	Static::Deque<IndexEntry> m_indexEntries;
+	Static::Array<IndexEntry> m_indexEntries;
 protected:
-	const Static::Deque<IndexEntry> & indexEntries() const { return m_indexEntries; }
+	const Static::Array<IndexEntry> & indexEntries() const { return m_indexEntries; }
 	int32_t lowerBound(const std::string& str, sserialize::StringCompleter::QuerryType qt) const;
 	int32_t getStringEntryPos(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const;
 public:

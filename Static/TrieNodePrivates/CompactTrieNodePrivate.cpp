@@ -337,7 +337,7 @@ CompactStaticTrieCreationNode::createNewNode(
 	std::deque<uint8_t> indexPtrsData;
 	uint8_t bpn = 1;
 	if (nodeInfo.indexTypes & TrieNodePrivate::IT_ALL) {
-		bpn = CompactUintArray::createFromDeque(idxPtrs, indexPtrsData);
+		bpn = CompactUintArray::create(idxPtrs, indexPtrsData);
 	}
 	if (!bpn) {
 		return CompactStaticTrieCreationNode::INDEX_PTR_FAILED;

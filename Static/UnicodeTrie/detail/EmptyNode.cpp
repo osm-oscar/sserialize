@@ -1,5 +1,5 @@
 #include <sserialize/Static/UnicodeTrie/detail/EmptyNode.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 
 
 namespace sserialize {

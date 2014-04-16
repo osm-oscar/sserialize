@@ -271,7 +271,7 @@ template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
 UByteArrayAdapter Trie<TValue>::append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const {
 	d.putUint8(1);
-	sserialize::Static::DequeCreator<T_STATIC_PAYLOAD> payloadContainerCreator(d);
+	sserialize::Static::ArrayCreator<T_STATIC_PAYLOAD> payloadContainerCreator(d);
 	
 	std::vector<Node*> nodesInLevelOrder(1, m_root);
 	for(uint32_t i(0); i < nodesInLevelOrder.size(); ++i) {

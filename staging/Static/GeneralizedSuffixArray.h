@@ -30,8 +30,8 @@ class GeneralizedSuffixArray {
 public:
 	enum Flags {F_NONE=0, F_CASE_SENSITIVE=1, F_SUFFIX_ARRAY=2};
 private:
-	typedef Deque< Pair<ItemIndex, ItemIndex>  > ValueStore;
-	typedef Deque< Pair<uint32_t, uint16_t> > GSAStore;
+	typedef Array< Pair<ItemIndex, ItemIndex>  > ValueStore;
+	typedef Array< Pair<uint32_t, uint16_t> > GSAStore;
 private:
 	Flags m_flags;
 	StringTable m_stable;

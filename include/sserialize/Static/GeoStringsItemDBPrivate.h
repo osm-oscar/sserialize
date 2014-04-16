@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_PRIVATE_H
 #define SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_PRIVATE_H
 #include <sserialize/spatial/GeoRect.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/Static/StringsItemDBPrivate.h>
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/Static/GeoShape.h>
@@ -16,7 +16,7 @@ namespace Static {
 /** File format
   *
   *--------------------------------------------
-  *VERSION|StringsItemDB|Deque<GeoShapes>
+  *VERSION|StringsItemDB|Array<GeoShapes>
   *--------------------------------------------
   *
   *
@@ -27,7 +27,7 @@ class GeoStringsItemDBPrivate: public StringsItemDBPrivate<MetaDataDeSerializabl
 protected:
 	typedef sserialize::Static::StringsItemDBPrivate<MetaDataDeSerializable> MyParentClass;
 private:
-	Static::Deque< sserialize::Static::spatial::GeoShape > m_shapes;
+	Static::Array< sserialize::Static::spatial::GeoShape > m_shapes;
 public:
 	GeoStringsItemDBPrivate() : MyParentClass() {}
 	GeoStringsItemDBPrivate(const UByteArrayAdapter & db, const StringTable & stable) :

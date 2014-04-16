@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_GEO_HIERARCHY_H
 #define SSERIALIZE_STATIC_GEO_HIERARCHY_H
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/spatial/GeoShape.h>
@@ -119,7 +119,7 @@ public:
 private:
 	RegionDescriptionType m_regions;
 	RegionPtrListType m_regionPtrs;
-	sserialize::Static::Deque<sserialize::spatial::GeoRect> m_regionBoundaries;
+	sserialize::Static::Array<sserialize::spatial::GeoRect> m_regionBoundaries;
 	CellDescriptionType m_cells;
 	CellPtrListType m_cellPtrs;
 protected:

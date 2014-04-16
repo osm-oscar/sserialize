@@ -153,16 +153,16 @@ public:
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest, uint8_t bits);
 
-	/** @return returns the needed bits, 0 on failure */
 	template<typename T_SOURCE_CONTAINER>
 	static bool createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bits);
 
 	///Creates a new CompactUintArray beginning at dest.tellPutPtr()
+	///@return returns the needed bits, 0 on failure
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
 
 	template<typename T_SOURCE_CONTAINER>
-	static uint8_t createFromDeque(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest);
+	static uint8_t create(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest);
 
 	static uint8_t minStorageBits(const uint32_t number);
 	static uint8_t minStorageBitsFullBytes(uint32_t number);
@@ -208,7 +208,7 @@ bool CompactUintArray::createFromSet(const T_SOURCE_CONTAINER & src, std::deque<
 }
 
 template<typename T_SOURCE_CONTAINER>
-uint8_t CompactUintArray::createFromDeque(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest) {
+uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest) {
 	std::deque<uint8_t> tmpDest;
 	UByteArrayAdapter adap(&tmpDest);
 	uint8_t bpn = create(src, adap);

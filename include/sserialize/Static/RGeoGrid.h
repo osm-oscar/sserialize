@@ -2,16 +2,16 @@
 #define SSERIALIZE_STATIC_RGEO_GRID_H
 #include <sserialize/utility/log.h>
 #include <sserialize/spatial/RWGeoGrid.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 
 namespace sserialize {
 namespace Static{
 namespace spatial {
 
 template<typename TValue>
-class RGeoGrid: public sserialize::spatial::RGeoGrid<TValue, sserialize::Static::Deque<TValue> > {
+class RGeoGrid: public sserialize::spatial::RGeoGrid<TValue, sserialize::Static::Array<TValue> > {
 protected:
-	typedef sserialize::spatial::RGeoGrid<TValue, sserialize::Static::Deque<TValue> > MyParentClass;
+	typedef sserialize::spatial::RGeoGrid<TValue, sserialize::Static::Array<TValue> > MyParentClass;
 	uint16_t m_headerSize;
 public:
 	RGeoGrid() : MyParentClass() {}
@@ -21,7 +21,7 @@ public:
 		data += 1; //header
 		data >> bL >> tR >> latcount >> loncount;
 		m_headerSize = 1 + data.tellGetPtr();
-		MyParentClass::storage() = Static::Deque<uint32_t>( data.shrinkToGetPtr() );
+		MyParentClass::storage() = Static::Array<uint32_t>( data.shrinkToGetPtr() );
 		
 		if (latcount*loncount > MyParentClass::storage().size()) {
 			sserialize::err("RGeoGrid", "Broken Grid detected");

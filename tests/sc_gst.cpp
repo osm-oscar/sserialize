@@ -1,5 +1,7 @@
 #include <sserialize/containers//GeneralizedTrie.h>
 #include <sserialize/completers/StringCompleterPrivateGST.h>
+#include <cppunit/TestRunner.h>
+#include <cppunit/TestResult.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"
@@ -78,6 +80,7 @@ int main() {
 	runner.addTest( GeneralizedTrieTest<true, true>::suite() );
 	runner.addTest( GeneralizedTrieTest<false, true>::suite() );
 	runner.addTest( GeneralizedTrieTest<true, false>::suite() );
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }

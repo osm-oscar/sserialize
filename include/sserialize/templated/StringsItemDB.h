@@ -2,7 +2,7 @@
 #define STRINGS_ITEM_DB_H
 #include "StringsItemDBPrivate.h"
 #include "StringsItemDBItem.h"
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 
 namespace sserialize {
 
@@ -163,7 +163,7 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	sserialize::ProgressInfo progressInfo;
 	progressInfo.begin(db.items().size());
 	uint32_t count = 0;
-	sserialize::Static::DequeCreator<sserialize::UByteArrayAdapter> creator(destination);
+	sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> creator(destination);
 	for(typename sserialize::StringsItemDB<ItemType>::ItemStringsContainer::const_iterator it = db.itemStrings().begin(); it != db.itemStrings().end(); ++it) {
 		creator.beginRawPut();
 		creator.rawPut().putUint8(it->size());

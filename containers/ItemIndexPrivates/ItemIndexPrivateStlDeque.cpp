@@ -14,7 +14,7 @@ ItemIndex::Types ItemIndexPrivateStlDeque::type() const {
 uint32_t ItemIndexPrivateStlDeque::at(uint32_t pos) const {
 	if (pos < size())
 		return m_data.at(pos);
-	sserialize::OutOfBoundsException("ItemIndexPrivateStlDeque");
+	throw sserialize::OutOfBoundsException("ItemIndexPrivateStlDeque");
 	return 0;
 }
 

@@ -118,7 +118,7 @@ void FlatTrie::createStaticFlatTrie(FlatGSTConfig & config) {
 	
 	fillFlatTrieIndexEntries(flatTrieConfig, config);
 	
-	sserialize::Static::DequeCreator<IndexEntry> dc(config.destination);
+	sserialize::Static::ArrayCreator<IndexEntry> dc(config.destination);
 	FlatGSTIndexEntryMapper indexEntryMapper(dc);
 	m_root->mapDepthFirst(indexEntryMapper);
 	dc.flush();

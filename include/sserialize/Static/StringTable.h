@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_STRING_TABLE_H
 #define SSERIALIZE_STATIC_STRING_TABLE_H
 #include <unordered_set>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/completers/StringCompleter.h>
 
 namespace sserialize {
@@ -11,17 +11,17 @@ namespace Static {
  * strings should be in the order of most usage,
  * so that the smallest ids are most frequently used
  */
-class StringTable: public RCWrapper< sserialize::Static::Deque<std::string> > {
+class StringTable: public RCWrapper< sserialize::Static::Array<std::string> > {
 public:
-	typedef sserialize::Static::Deque<std::string>::const_iterator const_iterator;
-	typedef sserialize::Static::Deque<std::string>::const_reference const_reference;
+	typedef sserialize::Static::Array<std::string>::const_iterator const_iterator;
+	typedef sserialize::Static::Array<std::string>::const_reference const_reference;
 protected:
 	inline UByteArrayAdapter & data() { return priv()->data();}
 	inline const UByteArrayAdapter & data() const { return priv()->data(); }
 public:
     StringTable();
     StringTable(const UByteArrayAdapter& data);
-    StringTable(Static::Deque< std::string > * data);
+    StringTable(Static::Array< std::string > * data);
     StringTable(const StringTable & other);
 	virtual ~StringTable();
 	StringTable & operator=(const StringTable & other);
@@ -43,7 +43,7 @@ public:
 	///The order of the strings impacts the type	
 	template<typename T_RANDOM_ACCESS_ITERATOR, typename T_VALUE_TYPE = typename T_RANDOM_ACCESS_ITERATOR::value_type>
 	static bool create(T_RANDOM_ACCESS_ITERATOR begin, T_RANDOM_ACCESS_ITERATOR end, UByteArrayAdapter & destination) {
-		Static::DequeCreator<T_VALUE_TYPE> creator(destination);
+		Static::ArrayCreator<T_VALUE_TYPE> creator(destination);
 		for(;begin != end; ++begin) {
 			creator.put( *begin );
 		}

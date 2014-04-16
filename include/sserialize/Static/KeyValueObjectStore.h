@@ -126,7 +126,7 @@ public:
 private:
 	KeyStringTable m_keyStringTable;
 	ValueStringTable m_valueStringTable;
-	Static::Deque<UByteArrayAdapter> m_items;
+	Static::Array<UByteArrayAdapter> m_items;
 public:
 	KeyValueObjectStorePrivate();
 	KeyValueObjectStorePrivate(const sserialize::UByteArrayAdapter & data);

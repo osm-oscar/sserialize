@@ -3,7 +3,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/templated/GeoStringsItem.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include "StringsItemDB.h"
 #include <sserialize/utility/ProgressInfo.h>
 
@@ -187,7 +187,7 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	sserialize::UByteArrayAdapter::OffsetType dO = destination.tellPutPtr();
 	destination << static_cast<uint8_t>(0);
 	destination << static_cast< const sserialize::StringsItemDB<ItemType>& >(db);
-	sserialize::Static::DequeCreator<sserialize::spatial::GeoShape> creator(destination);
+	sserialize::Static::ArrayCreator<sserialize::spatial::GeoShape> creator(destination);
 	sserialize::ProgressInfo info;
 	info.begin(db.items().size());
 	for(size_t i = 0; i < db.size(); ++i) {

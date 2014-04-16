@@ -142,7 +142,7 @@ public:
 			UByteArrayAdapter dest(new std::deque<uint8_t>(), true);
 			dest << entries;
 			dest.resetPtrs();
-			Static::Deque<Static::FlatGST::IndexEntry> staticEntries(dest);
+			Static::Array<Static::FlatGST::IndexEntry> staticEntries(dest);
 			for(size_t i = 0; i < count; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("exactValues", entries[i].exactValues, staticEntries.at(i).exactPtr());
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("suffixValues", entries[i].suffixValues, staticEntries.at(i).suffixPtr());
@@ -164,7 +164,7 @@ public:
 			UByteArrayAdapter dest(new std::deque<uint8_t>(), true);
 			dest << entries;
 			dest.resetPtrs();
-			Static::Deque<Static::FlatGST::IndexEntry> staticEntries(dest);
+			Static::Array<Static::FlatGST::IndexEntry> staticEntries(dest);
 			for(size_t i = 0; i < count; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("exactValuesItemId", entries[i].exactValues, staticEntries.at(i).exactPtr());
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("suffixValuesItemId", entries[i].suffixValues, staticEntries.at(i).suffixPtr());

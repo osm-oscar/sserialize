@@ -1,6 +1,6 @@
 #include <sserialize/containers/KeyValueObjectStore.h>
 #include <sserialize/containers/MultiVarBitArray.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/Static/KeyValueObjectStore.h>
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
@@ -143,7 +143,7 @@ UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(sserialize::UByteAr
 	tm.end();
 	std::cout << "took " << tm.elapsedSeconds() << " seconds" << std::endl;
 
-	Static::DequeCreator<UByteArrayAdapter> creator(dest);
+	Static::ArrayCreator<UByteArrayAdapter> creator(dest);
 	
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(m_items.size(), "KeyValueObjectStore::serialize: items");

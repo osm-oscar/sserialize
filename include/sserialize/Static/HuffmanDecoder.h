@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_CONTAINERS_HUFFMAN_DECODER_H
 #define SSERIALIZE_CONTAINERS_HUFFMAN_DECODER_H
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/utility/SerializationInfo.h>
 
 /** This is a tablebased huffman decoder.
@@ -66,7 +66,7 @@ private:
 		bool valid() const { return m_data.size(); }
 	};
 	
-	Static::Deque<StaticNode> m_nodes;
+	Static::Array<StaticNode> m_nodes;
 	StaticNode m_root;
 private:
 

@@ -35,7 +35,6 @@ uint32_t ItemIndexIteratorPrivateItemIndex::maxSize() const {
 	return m_index.size();
 }
 
-
 uint32_t ItemIndexIteratorPrivateItemIndex::operator*() const {
 	return m_cur;
 }

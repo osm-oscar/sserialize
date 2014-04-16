@@ -1,6 +1,6 @@
 #include <sserialize/spatial/GeoMultiPolygon.h>
 #include <numeric>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/spatial/GeoRect.h>
 
 

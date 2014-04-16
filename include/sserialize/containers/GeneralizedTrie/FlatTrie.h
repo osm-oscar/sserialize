@@ -86,8 +86,8 @@ protected:
 	};
 	
 	struct FlatGSTIndexEntryMapper {
-		sserialize::Static::DequeCreator<IndexEntry> & dc;
-		FlatGSTIndexEntryMapper(sserialize::Static::DequeCreator<IndexEntry> & dc) : dc(dc) {}
+		sserialize::Static::ArrayCreator<IndexEntry> & dc;
+		FlatGSTIndexEntryMapper(sserialize::Static::ArrayCreator<IndexEntry> & dc) : dc(dc) {}
 		void operator()(Node * node) {
 			FlatGSTIndexEntry_TPNS * p = dynamic_cast<FlatGSTIndexEntry_TPNS*>(node->temporalPrivateStorage);
 			dc.put(p->e);

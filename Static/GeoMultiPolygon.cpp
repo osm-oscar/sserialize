@@ -7,7 +7,7 @@ namespace detail {
 
 
 template<>
-GeoMultiPolygon< sserialize::Static::Deque<sserialize::Static::spatial::GeoPolygon>, sserialize::Static::spatial::GeoPolygon >::GeoMultiPolygon(const sserialize::UByteArrayAdapter & d) {
+GeoMultiPolygon< sserialize::Static::Array<sserialize::Static::spatial::GeoPolygon>, sserialize::Static::spatial::GeoPolygon >::GeoMultiPolygon(const sserialize::UByteArrayAdapter & d) {
 	UByteArrayAdapter data(d);
 	data.resetGetPtr();
 	m_size = data.getVlPackedUint32();
@@ -17,7 +17,7 @@ GeoMultiPolygon< sserialize::Static::Deque<sserialize::Static::spatial::GeoPolyg
 
 template<>
 sserialize::UByteArrayAdapter &
-GeoMultiPolygon< sserialize::Static::Deque<sserialize::Static::spatial::GeoPolygon>, sserialize::Static::spatial::GeoPolygon >::append(sserialize::UByteArrayAdapter & /*destination*/) const {
+GeoMultiPolygon< sserialize::Static::Array<sserialize::Static::spatial::GeoPolygon>, sserialize::Static::spatial::GeoPolygon >::append(sserialize::UByteArrayAdapter & /*destination*/) const {
 	throw sserialize::UnimplementedFunctionException("sserialize::Static::spatial::GeoMultiPolygon::append");
 }
 

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_UNICODE_TRIE_TRIE_H
 #define SSERIALIZE_UNICODE_TRIE_TRIE_H
 #include <sserialize/Static/UnicodeTrie/Node.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/vendor/utf8.h>
 #define SSERIALIZE_STATIC_UNICODE_TRIE_TRIE_VERSION 1
 
@@ -13,7 +13,7 @@ namespace UnicodeTrie {
   * ---------------------------------------
   * VERSION|Payload|NodeType|TrieNodes*
   * ---------------------------------------
-  *  uint8 |Deque  |uint32_t|
+  *  uint8 |Array  |uint32_t|
   *
   *
   */
@@ -24,7 +24,7 @@ public:
 	typedef sserialize::Static::UnicodeTrie::Node Node;
 private:
 	Node m_root;
-	sserialize::Static::Deque<TValue> m_values;
+	sserialize::Static::Array<TValue> m_values;
 public:
 	Trie() {}
 	Trie(const sserialize::UByteArrayAdapter & d);

@@ -1,8 +1,8 @@
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 
 template<>
 int32_t
-sserialize::Static::Deque<int32_t>::at(uint32_t pos) const {
+sserialize::Static::Array<int32_t>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return 0;
 	}
@@ -11,7 +11,7 @@ sserialize::Static::Deque<int32_t>::at(uint32_t pos) const {
 
 template<>
 uint32_t
-sserialize::Static::Deque<uint32_t>::at(uint32_t pos) const {
+sserialize::Static::Array<uint32_t>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return 0;
 	}
@@ -21,7 +21,7 @@ sserialize::Static::Deque<uint32_t>::at(uint32_t pos) const {
 
 template<>
 uint16_t
-sserialize::Static::Deque<uint16_t>::at(uint32_t pos) const {
+sserialize::Static::Array<uint16_t>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return 0;
 	}
@@ -30,7 +30,7 @@ sserialize::Static::Deque<uint16_t>::at(uint32_t pos) const {
 
 template<>
 uint8_t
-sserialize::Static::Deque<uint8_t>::at(uint32_t pos) const {
+sserialize::Static::Array<uint8_t>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return 0;
 	}
@@ -39,7 +39,7 @@ sserialize::Static::Deque<uint8_t>::at(uint32_t pos) const {
 
 template<>
 std::string
-sserialize::Static::Deque<std::string>::at(uint32_t pos) const {
+sserialize::Static::Array<std::string>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return std::string();
 	}
@@ -48,6 +48,6 @@ sserialize::Static::Deque<std::string>::at(uint32_t pos) const {
 
 template<>
 sserialize::UByteArrayAdapter
-sserialize::Static::Deque<sserialize::UByteArrayAdapter>::at(uint32_t pos) const {
+sserialize::Static::Array<sserialize::UByteArrayAdapter>::at(uint32_t pos) const {
 	return dataAt(pos);
 }

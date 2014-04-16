@@ -2,7 +2,7 @@
 #define SSERIALIZE_ITEM_GEO_GRID_H
 #include <set>
 #include <sserialize/containers/ItemIndexFactory.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include "RWGeoGrid.h"
@@ -70,7 +70,7 @@ public:
 		serialize(destination);
 		ProgressInfo info;
 		info.begin(storage().size());
-		Static::DequeCreator<uint32_t> dc(destination);
+		Static::ArrayCreator<uint32_t> dc(destination);
 		for(size_t i = 0; i < storage().size(); ++i) {
 			if (!storage().at(i))
 				dc.put( indexFactory.addIndex(std::set<uint32_t>()) );
