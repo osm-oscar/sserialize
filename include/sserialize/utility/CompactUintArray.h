@@ -236,6 +236,7 @@ public:
 	BoundedCompactUintArray() : m_size(0) {}
 	BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d);
 	BoundedCompactUintArray(const BoundedCompactUintArray & other);
+	BoundedCompactUintArray(const CompactUintArray & arr, SizeType size);
 	virtual ~BoundedCompactUintArray();
 	BoundedCompactUintArray & operator=(const BoundedCompactUintArray & other);
 	inline SizeType size() const { return m_size; }

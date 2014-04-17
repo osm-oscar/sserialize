@@ -471,6 +471,11 @@ CompactUintArray(other),
 m_size(other.m_size)
 {}
 
+BoundedCompactUintArray::BoundedCompactUintArray(const CompactUintArray & arr, SizeType size) :
+CompactUintArray(arr),
+m_size(size)
+{}
+
 BoundedCompactUintArray::~BoundedCompactUintArray() {}
 
 BoundedCompactUintArray & BoundedCompactUintArray::operator=(const BoundedCompactUintArray & other) {
