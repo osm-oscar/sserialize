@@ -16,6 +16,7 @@ public:
 	typedef TValue value_type;
 	typedef uint32_t key_type;
 	typedef Node* map_type;
+	typedef const Node* const_node_type;
 	//currenty, ChildrenContainer has to be sorted my key_type
 	typedef typename std::map<key_type, map_type> ChildrenContainer;
 	typedef typename ChildrenContainer::iterator iterator;
@@ -32,7 +33,7 @@ public:
 			delete x.second;
 		}
 	}
-	const Node* & parent() const { return m_parent; }
+	const Node* parent() const { return m_parent; }
 	Node* & parent() { return m_parent; }
 	const std::string & str() const { return m_str; }
 	std::string & str() { return m_str; }
@@ -97,7 +98,7 @@ public:
 	const TValue & find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
 	
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
-	UByteArrayAdapter append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const;
+	UByteArrayAdapter & append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const;
 	
 	bool checkTrieEquality(const sserialize::Static::UnicodeTrie::Node & rootNode) const {
 		return checkTrieEqualityRec(m_root, rootNode);
@@ -269,7 +270,7 @@ bool Trie<TValue>::count(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd
 
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
-UByteArrayAdapter Trie<TValue>::append(UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const {
+UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH payloadHandler, NodeCreatorPtr nodeCreator) const {
 	d.putUint8(1);
 	sserialize::Static::ArrayCreator<T_STATIC_PAYLOAD> payloadContainerCreator(d);
 	

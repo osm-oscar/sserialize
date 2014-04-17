@@ -34,8 +34,10 @@ public:
 	Node getRootNode() const { return m_root; }
 	
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
+	///throws sserialize::OutOfBoundsException on miss
 	template<typename T_OCTET_ITERATOR>
 	TValue at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	///throws sserialize::OutOfBoundsException on miss
 	inline TValue at(const std::string & str, bool prefixMatch) const { return at(str.cbegin(), str.cend(), prefixMatch);}
 	inline TValue payload(uint32_t id) const { return m_values.at(id);}
 };
