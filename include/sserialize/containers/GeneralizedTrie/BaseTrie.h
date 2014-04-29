@@ -46,10 +46,10 @@ protected: //completion functions
 
 protected: //check functions
 	/** This compactifies stl-containers to decrease their size-overhead and removes all exactIndices from suffixIndices
-		It calls at least std::swap, ItemSetContainer() and diffSortedContainer<ItemSetContainer>()
+		It calls at least swap, ItemSetContainer() and diffSortedContainer<ItemSetContainer>()
 	*/
 	void compactify(Node * node);
-	/** Fixes Problems in the trie before serialization. Current Problems: Nodes with a string length > 255, calls std::swap on the IndexStorageContainer */
+	/** Fixes Problems in the trie before serialization. Current Problems: Nodes with a string length > 255, calls swap on the IndexStorageContainer */
 	void trieSerializationProblemFixer(Node * node);
 	bool consistencyCheckRecurse(Node * node) const;
 
@@ -156,14 +156,15 @@ BaseTrie<IndexStorageContainer>::clear() {
 template<typename IndexStorageContainer>
 void
 BaseTrie<IndexStorageContainer>::swap( BaseTrie & other) {
-	std::swap(m_count, other.m_count);
-	std::swap(m_nodeCount, other.m_nodeCount);
-	std::swap(m_root, other.m_root);
-	std::swap(m_strings, other.m_strings);
-	std::swap(m_caseSensitive, other.m_caseSensitive);
-	std::swap(m_addTransDiacs, other.m_addTransDiacs);
-	std::swap(m_isSuffixTrie, other.m_isSuffixTrie);
-	std::swap(m_suffixDelimeters, other.m_suffixDelimeters);
+	using std::swap;
+	swap(m_count, other.m_count);
+	swap(m_nodeCount, other.m_nodeCount);
+	swap(m_root, other.m_root);
+	swap(m_strings, other.m_strings);
+	swap(m_caseSensitive, other.m_caseSensitive);
+	swap(m_addTransDiacs, other.m_addTransDiacs);
+	swap(m_isSuffixTrie, other.m_isSuffixTrie);
+	swap(m_suffixDelimeters, other.m_suffixDelimeters);
 }
 
 //------------------------Insertion functions-------------------------------->
@@ -177,6 +178,8 @@ BaseTrie<IndexStorageContainer>::operator[](const std::string & str) {
 template<typename IndexStorageContainer>
 typename BaseTrie<IndexStorageContainer>::Node *
 BaseTrie<IndexStorageContainer>::at(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd) {
+	using std::swap;
+
 	std::string::const_iterator strIt = strBegin;
 	uint32_t strItUCode;
 	
@@ -232,9 +235,9 @@ BaseTrie<IndexStorageContainer>::at(const std::string::const_iterator & strBegin
 			m_nodeCount++;
 			oldStrNode->c = "";
 			oldStrNode->c.append(cIt, current->c.end());
-			std::swap(oldStrNode->children, current->children);
-			std::swap(oldStrNode->exactValues, current->exactValues);
-			std::swap(oldStrNode->subStrValues, current->subStrValues);
+			swap(oldStrNode->children, current->children);
+			swap(oldStrNode->exactValues, current->exactValues);
+			swap(oldStrNode->subStrValues, current->subStrValues);
 
 			oldStrNode->fixChildParentPtrRelation();
 			
@@ -266,9 +269,9 @@ BaseTrie<IndexStorageContainer>::at(const std::string::const_iterator & strBegin
 			m_nodeCount++;
 			oldStrNode->c = "";
 			oldStrNode->c.append(cIt, current->c.end());
-			std::swap(oldStrNode->children, current->children);
-			std::swap(oldStrNode->exactValues, current->exactValues);
-			std::swap(oldStrNode->subStrValues, current->subStrValues);
+			swap(oldStrNode->children, current->children);
+			swap(oldStrNode->exactValues, current->exactValues);
+			swap(oldStrNode->subStrValues, current->subStrValues);
 			oldStrNode->fixChildParentPtrRelation();
 			
 			current->children.clear();
@@ -745,6 +748,7 @@ void BaseTrie<IndexStorageContainer>::compactify(Node* node) {
 
 template <class IndexStorageContainer>
 void BaseTrie<IndexStorageContainer>::trieSerializationProblemFixer(Node* node) {
+	using std::swap;
 	if (node) {
 		if (node->c.size() > 0xFF) {
 			std::string oldStr;
@@ -752,8 +756,8 @@ void BaseTrie<IndexStorageContainer>::trieSerializationProblemFixer(Node* node) 
 			Node * newNode = new Node();
 			newNode->parent = node;
 			newNode->children.swap(node->children);
-			std::swap(newNode->exactValues, node->exactValues);
-			std::swap(newNode->subStrValues, node->subStrValues);
+			swap(newNode->exactValues, node->exactValues);
+			swap(newNode->subStrValues, node->subStrValues);
 			newNode->fixChildParentPtrRelation();
 			
 			std::string::iterator oldStrBegin = oldStr.begin();

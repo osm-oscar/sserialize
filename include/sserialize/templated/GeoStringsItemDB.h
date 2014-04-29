@@ -70,7 +70,8 @@ public:
 			m_geoShapes[itemPos] = shape;
 		}
 		else {
-			std::swap(shape, m_geoShapes[itemPos]);
+			using std::swap;
+			swap(shape, m_geoShapes[itemPos]);
 			delete shape;
 		}
 		return true;

@@ -113,6 +113,7 @@ public:
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
 typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
+	using std::swap;
 	uint32_t strItUCode;
 	
 	if (!m_root) {
@@ -161,8 +162,8 @@ typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const
 
 			Node * oldStrNode = new Node(0);
 			oldStrNode->str() = std::string(cIt, cEnd);
-			std::swap(oldStrNode->children(), current->children());
-			std::swap(oldStrNode->value(), current->value());
+			swap(oldStrNode->children(), current->children());
+			swap(oldStrNode->value(), current->value());
 
 			//fix parent ptrs
 			for(typename Node::iterator nit(oldStrNode->begin()), nend(oldStrNode->end()); nit != nend; ++nit) {
@@ -188,8 +189,8 @@ typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const
 			
 			Node * oldStrNode = new Node(0);
 			oldStrNode->str() = std::string(cIt, cEnd);
-			std::swap(oldStrNode->children(), current->children());
-			std::swap(oldStrNode->value(), current->value());
+			swap(oldStrNode->children(), current->children());
+			swap(oldStrNode->value(), current->value());
 			//fix parent ptrs
 			for(typename Node::iterator nit(oldStrNode->begin()), nend(oldStrNode->end()); nit != nend; ++nit) {
 				nit->second->parent() = oldStrNode;

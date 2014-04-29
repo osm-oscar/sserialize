@@ -35,6 +35,11 @@ public:
 };
 
 template<typename TPushValue, typename TGetValue>
+void swap(sserialize::Static::DynamicVector<TPushValue, TGetValue> & a, sserialize::Static::DynamicVector<TPushValue, TGetValue> & b) {
+	return a.swap(b);
+}
+
+template<typename TPushValue, typename TGetValue>
 DynamicVector<TPushValue, TGetValue>::DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize) :
 m_size(0),
 m_offsets(UByteArrayAdapter::createCache(static_cast<OffsetType>(approxItemCount)*UByteArrayAdapter::OffsetTypeSerializedLength(), true)),
@@ -47,9 +52,10 @@ DynamicVector<TPushValue, TGetValue>::~DynamicVector() {}
 
 template<typename TPushValue, typename TGetValue>
 void DynamicVector<TPushValue, TGetValue>::swap(DynamicVector & other) {
-	std::swap(m_size, other.m_size);
-	std::swap(m_offsets, other.m_offsets);
-	std::swap(m_data, other.m_data);
+	using std::swap;
+	swap(m_size, other.m_size);
+	swap(m_offsets, other.m_offsets);
+	swap(m_data, other.m_data);
 }
 
 template<typename TPushValue, typename TGetValue>
@@ -138,13 +144,6 @@ UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toArray(UByteArrayAdap
 template<typename TPushValue, typename TGetValue>
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::DynamicVector<TPushValue, TGetValue> & src) {
 	return src.toArray(dest);
-}
-
-namespace std {
-	template<typename TPushValue, typename TGetValue>
-	void swap(sserialize::Static::DynamicVector<TPushValue, TGetValue> & a, sserialize::Static::DynamicVector<TPushValue, TGetValue> & b) {
-		return a.swap(b);
-	}
 }
 
 #endif

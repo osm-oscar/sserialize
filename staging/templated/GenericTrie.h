@@ -55,6 +55,7 @@ public:
 	virtual ~GenericTrie() { delete m_root; }
 	template<typename AlphabetIterator>
 	TValue & at(const AlphabetIterator & strBegin, const AlphabetIterator & strEnd) {
+		using std::swap;
 		AlphabetIterator strIt = strBegin;
 		AlphabetType strItUCode;
 		
@@ -104,7 +105,7 @@ public:
 				cItUCode = *cIt;
 				Node * oldStrNode = new Node;
 				oldStrNode->string() = AlphabetStorage(cIt, current->string().end());
-				std::swap(oldStrNode->children(), current->children());
+				swap(oldStrNode->children(), current->children());
 
 				oldStrNode->fixChildParentPtrRelation();
 				
@@ -131,8 +132,8 @@ public:
 				
 				Node * oldStrNode = new Node;
 				oldStrNode->string() = AlphabetStorage(cIt, current->string().end());
-				std::swap(oldStrNode->children(), current->children());
-				std::swap(oldStrNode->value(), current->value());
+				swap(oldStrNode->children(), current->children());
+				swap(oldStrNode->value(), current->value());
 				oldStrNode->fixChildParentPtrRelation();
 				
 				current->children().clear();

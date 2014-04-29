@@ -45,14 +45,5 @@ typedef sserialize::spatial::detail::GeoWay< sserialize::AbstractArray<sserializ
 
 }//end namespace
 
-
-namespace std {
-template<>
-inline void swap<sserialize::Static::spatial::GeoWay>(sserialize::Static::spatial::GeoWay & a, sserialize::Static::spatial::GeoWay & b) { a.swap(b);}
-}
-
-// namespace sserialize {
-// template<>
-// sserialize::Static::spatial::GeoWay sserialize::UByteArrayAdapter::get<sserialize::Static::spatial::GeoWay>();
-// }//end namespace
+inline void swap(sserialize::Static::spatial::GeoWay & a, sserialize::Static::spatial::GeoWay & b) { a.swap(b);}
 #endif

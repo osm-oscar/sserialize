@@ -25,10 +25,11 @@ GeoRect::GeoRect(double lat1, double lat2, double lon1, double lon2) :
 m_lat{lat1, lat2},
 m_lon{lon1, lon2}
 {
+	using std::swap;
 	if (m_lat[0] > m_lat[1])
-		std::swap(m_lat[0], m_lat[1]);
+		swap(m_lat[0], m_lat[1]);
 	if (m_lon[0] > m_lon[1])
-		std::swap(m_lon[0], m_lon[1]);
+		swap(m_lon[0], m_lon[1]);
 }
 
 GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {

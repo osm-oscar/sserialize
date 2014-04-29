@@ -23,7 +23,8 @@ public:
 	bool operator==(const DelegateWrapper & other) { return m_Private == other.m_Private; }
 	
 	void swap(DelegateWrapper & other) {
-		std::swap(other.m_Private, m_Private);
+		using std::swap;
+		swap(other.m_Private, m_Private);
 	}
 
 protected:
@@ -40,11 +41,9 @@ private:
 
 }
 
-namespace std {
-	template<typename _T>
-	void swap(sserialize::DelegateWrapper<_T> & a, sserialize::DelegateWrapper<_T> & b) {
-		a.swap(b);
-	}
+template<typename _T>
+void swap(sserialize::DelegateWrapper<_T> & a, sserialize::DelegateWrapper<_T> & b) {
+	a.swap(b);
 }
 
 #endif

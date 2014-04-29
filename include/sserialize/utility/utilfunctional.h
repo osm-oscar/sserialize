@@ -56,6 +56,7 @@ namespace detail {
 ///@param reorderMap maps new positions to old positions
 template<typename T_RANDOM_ACCESS_CONTAINER, typename T_REORDER_MAP, typename SizeType>
 void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderMap) {
+	using std::swap;
 	std::vector<SizeType> itemToCurPos;
 	itemToCurPos.reserve(srcDest.size());
 	for(std::size_t i = 0, s = srcDest.size(); i < s; ++i) {
@@ -66,7 +67,7 @@ void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderM
 		SizeType initialItemPos = reorderMap.at(i);
 		SizeType realSrcItemPos = itemToCurPos[initialItemPos];
 		SizeType itemInCurDest = posToItem[i];
-		std::swap(srcDest[i], srcDest[realSrcItemPos]);
+		swap(srcDest[i], srcDest[realSrcItemPos]);
 		//now update the information to our swapped items
 		itemToCurPos[initialItemPos] = i;
 		posToItem[i] = initialItemPos;

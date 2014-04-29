@@ -178,9 +178,10 @@ GeoMultiPolygon<TPolygonContainer, TPolygon>::~GeoMultiPolygon() {}
 
 template<typename TPolygonContainer, typename TPolygon>
 GeoMultiPolygon<TPolygonContainer, TPolygon> & GeoMultiPolygon<TPolygonContainer, TPolygon>::operator=(GeoMultiPolygon && other) {
+	using std::swap;
 	m_size = other.m_size;
-	std::swap(m_outerPolygons, other.m_outerPolygons);
-	std::swap(m_innerPolygons, other.m_innerPolygons);
+	swap(m_outerPolygons, other.m_outerPolygons);
+	swap(m_innerPolygons, other.m_innerPolygons);
 	m_outerBoundary = other.m_outerBoundary;
 	m_innerBoundary = other.m_innerBoundary;
 	return *this;

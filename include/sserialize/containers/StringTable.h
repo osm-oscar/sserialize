@@ -65,19 +65,16 @@ public:
 	};
 	
 	void swap(StringTable & other) {
-		std::swap(m_map, other.m_map);
-		std::swap(m_strings, other.m_strings);
+		using std::swap;
+		swap(m_map, other.m_map);
+		swap(m_strings, other.m_strings);
 	}
 };
 
 }//end namespace
 
-namespace std {
-
-template<>
-inline void swap<sserialize::StringTable>(sserialize::StringTable & a, sserialize::StringTable & b) {
+inline void swap(sserialize::StringTable & a, sserialize::StringTable & b) {
 	a.swap(b);
-}
 
 }
 #endif

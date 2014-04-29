@@ -384,10 +384,7 @@ typedef detail::GeoPolygon< std::vector<sserialize::spatial::GeoPoint> > GeoPoly
 
 }}//end namespace
 
-namespace std {
-template<>
-inline void swap<sserialize::spatial::GeoPolygon>(sserialize::spatial::GeoPolygon & a, sserialize::spatial::GeoPolygon & b) { a.swap(b);}
-}
+inline void swap(sserialize::spatial::GeoPolygon & a, sserialize::spatial::GeoPolygon & b) { a.swap(b);}
 
 ///serializes without type info
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p);

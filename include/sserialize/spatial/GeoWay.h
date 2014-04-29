@@ -115,8 +115,9 @@ GeoWay<TPointsContainer> & GeoWay<TPointsContainer>::operator=(const sserialize:
 
 template<typename TPointsContainer>
 void GeoWay<TPointsContainer>::swap(GeoWay<TPointsContainer> & other) {
-	std::swap(m_points, other.m_points);
-	std::swap(m_boundary, other.m_boundary);
+	using std::swap;
+	swap(m_points, other.m_points);
+	swap(m_boundary, other.m_boundary);
 }
 
 template<typename TPointsContainer>
@@ -276,10 +277,7 @@ typedef detail::GeoWay< std::vector<GeoPoint> > GeoWay;
 
 }}//end namespace
 
-namespace std {
-template<>
-inline void swap<sserialize::spatial::GeoWay>(sserialize::spatial::GeoWay & a, sserialize::spatial::GeoWay & b) { a.swap(b);}
-}
+inline void swap(sserialize::spatial::GeoWay & a, sserialize::spatial::GeoWay & b) { a.swap(b);}
 
 ///serializes without type info
 template<typename TPointsContainer>

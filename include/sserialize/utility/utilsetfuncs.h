@@ -65,9 +65,10 @@ bool subset_of(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
 
 template<typename T>
 void diffSortedContainer(std::set<T> & out, const std::set<T> & a, const std::set<T> & b) {
+	using std::swap;
 	std::set<T> result;
 	std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator< std::set<T> >(result, result.end()));
-	std::swap(out, result);
+	swap(out, result);
 }
 
 template<typename T, typename T_CONTAINER_A, typename T_CONTAINER_B>
@@ -95,8 +96,8 @@ void diffSortedContainer(std::set<T> & out, const T_CONTAINER_A & a, const T_CON
 		rIt = result.insert(rIt, *aIt);
 		++aIt;
 	}
-	
-	std::swap(out, result);
+	using std::swap;
+	swap(out, result);
 }
 
 template<typename T_CONTAINER_DEST, typename T_CONTAINER_A, typename T_CONTAINER_B>
@@ -123,7 +124,8 @@ void diffSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const 
 		result.push_back(*aIt);
 		++aIt;
 	}
-	std::swap(out, result);
+	using std::swap;
+	swap(out, result);
 }
 
 template<typename T, typename T_CONTAINER>
@@ -204,7 +206,8 @@ void mergeSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const
 		++bIndexIt;
 		++mergeComparisonCount;
 	}
-	std::swap(result, out);
+	using std::swap;
+	swap(result, out);
 }
 
 template<typename T_CONTAINER_DEST, typename T_CONTAINER_A, typename T_CONTAINER_B>
@@ -251,7 +254,8 @@ void mergeSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const
 		appendOrInsert(*bIndexIt, result);
 		++bIndexIt;
 	}
-	std::swap(result, out);
+	using std::swap;
+	swap(result, out);
 }
 
 void mergeSortedContainer(std::vector<uint32_t> & out, const std::vector<uint32_t> & a, const std::vector<uint32_t> & b);
