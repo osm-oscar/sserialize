@@ -152,6 +152,10 @@ uint32_t GeoHierarchy::cellPtr(uint32_t pos) const {
 	return m_cellPtrs.at(pos);
 }
 
+uint32_t GeoHierarchy::cellItemsPtr(uint32_t pos) const {
+	return m_cells.at(pos, Cell::CD_ITEM_PTR);
+}
+
 uint32_t GeoHierarchy::regionSize() const {
 	uint32_t rs  = m_regions.size();
 	return (rs > 0 ? rs-2 : 0); //we have to subtract 2 because of the rootRegion and the dummy region

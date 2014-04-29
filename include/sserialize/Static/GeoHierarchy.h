@@ -138,6 +138,7 @@ public:
 	uint32_t cellPtrSize() const;
 	uint32_t cellPtr(uint32_t pos) const;
 	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
+	uint32_t cellItemsPtr(uint32_t pos) const;
 	
 	uint32_t regionSize() const;
 	Region region(uint32_t id) const;
