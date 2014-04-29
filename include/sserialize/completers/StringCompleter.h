@@ -52,7 +52,11 @@ public:
 	};
 	
 	enum SupportedQuerries {
-		SQ_NONE=0, SQ_EXACT=1, SQ_PREFIX=2, SQ_EP=3, SQ_SUFFIX=4, SQ_SUBSTRING=8, SQ_SSP=12, SQ_EPSP=15, SQ_CASE_INSENSITIVE=16, SQ_CASE_SENSITIVE=32, SQ_ALL=63
+		SQ_NONE=0,
+		SQ_EXACT=1, SQ_PREFIX=2, SQ_SUFFIX=4, SQ_SUBSTRING=8,
+		SQ_EP=3, SQ_SSP=12, SQ_EPSP=15,
+		SQ_CASE_INSENSITIVE=16, SQ_CASE_SENSITIVE=32,
+		SQ_ALL_INSENSITIVE=31, SQ_ALL_SENSITIVE=47, SQ_ALL=63
 	};
 	
 	class ForwardIterator: public RCWrapper<detail::types::StringCompleterPrivate::ForwardIterator> {
