@@ -40,6 +40,7 @@ public:
 	///throws sserialize::OutOfBoundsException on miss
 	inline TValue at(const std::string & str, bool prefixMatch) const { return at(str.cbegin(), str.cend(), prefixMatch);}
 	inline TValue payload(uint32_t id) const { return m_values.at(id);}
+	const sserialize::Static::Array<TValue> & payloads() const { return m_values;}
 };
 
 template<typename TValue>
