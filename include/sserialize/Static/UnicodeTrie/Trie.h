@@ -3,6 +3,7 @@
 #include <sserialize/Static/UnicodeTrie/Node.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/vendor/utf8.h>
+#include <queue>
 #define SSERIALIZE_STATIC_UNICODE_TRIE_TRIE_VERSION 1
 
 namespace sserialize {
@@ -41,6 +42,10 @@ public:
 	inline TValue at(const std::string & str, bool prefixMatch) const { return at(str.cbegin(), str.cend(), prefixMatch);}
 	inline TValue payload(uint32_t id) const { return m_values.at(id);}
 	const sserialize::Static::Array<TValue> & payloads() const { return m_values;}
+	std::ostream & printStats(std::ostream & out) const;
+	///Apply @fn to every node in level-order, it gets a @Node as parameter
+	template<typename T_FUNC>
+	void apply(T_FUNC fn) const;
 };
 
 template<typename TValue>
@@ -111,6 +116,26 @@ TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd,
 	return m_values.at( node.payloadPtr() );
 }
 
+template<typename TValue>
+template<typename T_FUNC>
+void Trie<TValue>::apply(T_FUNC fn) const {
+	std::queue<Node> nodes;
+	nodes.push(m_root);
+	while (nodes.size()) {
+		fn(nodes.front());
+		nodes.pop();
+	}
+}
+
+template<typename TValue>
+std::ostream & Trie<TValue>::printStats(std::ostream & out) const {
+	out << "sserialize::Static::UnicodeTrie::Trie--BEGIN_STATS" << std::endl;
+	out << "Payload size=" << payloads().size() << std::endl;
+	out << "Payload storage size=" << payloads().getSizeInBytes() << std::endl;
+	out << "Average storage size per payload item=" << (double)payloads().getSizeInBytes()/payloads().size() << std::endl;
+	out << "sserialize::Static::UnicodeTrie::Trie--END_STATS" << std::endl;
+	return out;
+}
 
 }}}//end namespace
 
