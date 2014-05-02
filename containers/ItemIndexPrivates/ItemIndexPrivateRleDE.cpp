@@ -9,6 +9,68 @@ ItemIndexPrivate * ItemIndexPrivateRleDECreator::getPrivateIndex() {
 	return new ItemIndexPrivateRleDE(UByteArrayAdapter(m_data, m_beginning));
 }
 
+///ITERATOR
+
+ItemIndexPrivateRleDE::MyIterator::MyIterator(const sserialize::ItemIndexPrivateRleDE::MyIterator & other) :
+m_parent(other.m_parent),
+m_dataOffset(other.m_dataOffset),
+m_curRleCount(other.m_curRleCount),
+m_curRleDiff(other.m_curRleDiff),
+m_curId(other.m_curId)
+{}
+
+ItemIndexPrivateRleDE::MyIterator::MyIterator(const ItemIndexPrivateRleDE * parent, UByteArrayAdapter::OffsetType dataOffset) :
+m_parent(parent),
+m_dataOffset(dataOffset),
+m_curRleCount(0),
+m_curRleDiff(0),
+m_curId(0)
+{
+	if (m_parent->m_data.size() > dataOffset) {
+		next();
+	}
+}
+
+ItemIndexPrivateRleDE::MyIterator::~MyIterator() {}
+
+uint32_t ItemIndexPrivateRleDE::MyIterator::get() const {
+	return m_curId;
+}
+
+void ItemIndexPrivateRleDE::MyIterator::next() {
+	if (m_parent->m_data.size() > m_dataOffset) {
+		if (!m_curRleCount) {
+			int len;
+			uint32_t tmp = m_parent->m_data.getVlPackedUint32(m_dataOffset, &len);
+			m_dataOffset += len;//TODO:Check len for error code? very unlikeley, but "huge" performance costs
+			if (tmp & 0x1) { //this is an rle
+				m_curRleCount = tmp >> 1;
+				m_curRleDiff = (m_parent->m_data.getVlPackedUint32(m_dataOffset, &len)) >> 1;
+				m_dataOffset += len;
+			}
+			else {
+				m_curRleDiff = tmp >> 1;
+			}
+		}
+		if (m_curRleCount) {
+			--m_curRleCount;
+		}
+		m_curId += m_curRleDiff;
+	}
+	else {
+		m_curId = std::numeric_limits<uint32_t>::max();
+	}
+}
+
+bool ItemIndexPrivateRleDE::MyIterator::notEq(const ItemIndexPrivate::const_iterator_base_type * other) const {
+	const ItemIndexPrivateRleDE::MyIterator * oIt = static_cast<const ItemIndexPrivateRleDE::MyIterator*>(other);
+	return (oIt->m_dataOffset != m_dataOffset) || (oIt->m_parent != m_parent);
+}
+
+ItemIndexPrivate::const_iterator_base_type * ItemIndexPrivateRleDE::MyIterator::copy() const {
+	return new MyIterator(*this);
+}
+
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UByteArrayAdapter & data) :
 m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
@@ -71,6 +133,15 @@ uint32_t ItemIndexPrivateRleDE::last() const {
 	if (size())
 		return at(size()-1);
 	return 0;
+}
+
+
+ItemIndexPrivateRleDE::MyBaseClass::const_iterator ItemIndexPrivateRleDE::cbegin() const {
+	return new MyIterator(this, 0);
+}
+
+ItemIndexPrivateRleDE::MyBaseClass::const_iterator ItemIndexPrivateRleDE::cend() const {
+	return new MyIterator(this, m_data.size());
 }
 
 uint32_t ItemIndexPrivateRleDE::size() const {

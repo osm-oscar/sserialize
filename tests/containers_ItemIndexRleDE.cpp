@@ -3,6 +3,7 @@
 #include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/utility/utilfuncs.h>
+#include <sserialize/utility/log.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <sserialize/containers/ItemIndex.h>
 #include "datacreationfuncs.h"
@@ -45,6 +46,7 @@ CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST( testPutIntoVector );
+CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -216,6 +218,28 @@ public:
 			idx.putInto(vec);
 			CPPUNIT_ASSERT_MESSAGE("vector from index unequal", idx == vec);
 			
+		}
+	}
+	
+	void testIterator() {
+		srand(0);
+		uint32_t setCount = 10000;
+
+		for(size_t i = 0; i < 256; i++) {
+			std::set<uint32_t> realValues( myCreateNumbers(rand() % setCount) );
+			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
+			ItemIndexPrivateRleDE::create(realValues, dest);
+			ItemIndex idx(dest, ItemIndex::T_RLE_DE);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+		
+			std::set<uint32_t>::iterator it = realValues.begin();
+			ItemIndex::const_iterator sit = idx.cbegin();
+			for(uint32_t j = 0, s = realValues.size(); j < s; ++j, ++it, ++sit) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("direct access at ", j), *it, idx.at(j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("iterator access at ", j), *it, *sit);
+			}
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("sit != idx.cend() in run ", i),! (sit != idx.cend()));
 		}
 	}
 };

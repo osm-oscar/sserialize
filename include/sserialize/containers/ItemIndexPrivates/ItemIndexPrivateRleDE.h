@@ -100,14 +100,33 @@ public:
 };
 
 class ItemIndexPrivateRleDE: public ItemIndexPrivate {
+public:
+	typedef ItemIndexPrivate MyBaseClass;
+private:
+	class MyIterator: public ItemIndexPrivate::const_iterator_base_type {
+	private:
+		const ItemIndexPrivateRleDE * m_parent;
+		UByteArrayAdapter::OffsetType m_dataOffset;
+		uint32_t m_curRleCount;
+		uint32_t m_curRleDiff;
+		uint32_t m_curId;
+	private:
+		MyIterator(const MyIterator & other);
+		void fetchNext();
+	public:
+		MyIterator(const ItemIndexPrivateRleDE * parent, UByteArrayAdapter::OffsetType dataOffset);
+		virtual ~MyIterator();
+		virtual uint32_t get() const override;
+		virtual void next() override;
+		virtual bool notEq(const ItemIndexPrivate::const_iterator_base_type * other) const override;
+		virtual ItemIndexPrivate::const_iterator_base_type * copy() const override;
+	};
 private:
 	UByteArrayAdapter m_data;
 	uint32_t m_size;
 	mutable uint32_t m_dataOffset;
 	mutable uint32_t m_curId;
 	mutable std::vector<uint32_t> m_cache;
-protected:
-	
 public:
 	ItemIndexPrivateRleDE();
 	ItemIndexPrivateRleDE(const UByteArrayAdapter & data);
@@ -121,6 +140,9 @@ public:
 	virtual uint32_t at(uint32_t pos) const;
 	virtual uint32_t first() const;
 	virtual uint32_t last() const;
+
+	virtual MyBaseClass::const_iterator cbegin() const override;
+	virtual MyBaseClass::const_iterator cend() const override;
 
 	virtual uint32_t size() const;
 

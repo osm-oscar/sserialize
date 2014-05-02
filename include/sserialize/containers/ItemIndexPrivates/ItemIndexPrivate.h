@@ -9,6 +9,7 @@ namespace sserialize {
 
 class ItemIndexPrivate: public RefCountObject {
 public:
+	typedef detail::AbstractArrayIterator<uint32_t> const_iterator_base_type;
 	typedef detail::AbstractArrayIterator<uint32_t> * const_iterator;
 	typedef const_iterator iterator;
 public:
