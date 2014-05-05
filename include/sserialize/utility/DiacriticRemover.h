@@ -11,7 +11,7 @@ public:
 	virtual ~DiacriticRemover() { delete m_transLiterator; }
 	UErrorCode init();
 
-	void transliterate(std::string & str);
+	void transliterate(std::string & str) const;
 
 };
 

@@ -8,7 +8,7 @@ UErrorCode DiacriticRemover::init() {
 	return status;
 }
 
-void DiacriticRemover::transliterate(std::string & str) {
+void DiacriticRemover::transliterate(std::string& str) const {
 	UnicodeString ustr( UnicodeString::fromUTF8(str));
 	m_transLiterator->transliterate(ustr);
 	str = std::string();
