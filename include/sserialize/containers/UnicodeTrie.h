@@ -46,6 +46,15 @@ public:
 	const_iterator cbegin() const { return children().cbegin();}
 	iterator end() { return children().end();}
 	const_iterator cend() const { return children().cend();}
+	
+	///Apply functoid fn to all nodes in-order
+	template<typename TFunc>
+	void apply(TFunc & fn) const {
+		fn(*this);
+		for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+			it->second->apply(fn);
+		}
+	}
 };
 
 template<typename TValue>
@@ -75,6 +84,8 @@ public:
 	Trie() : m_root(0) {}
 	virtual ~Trie() { delete m_root;}
 	
+	const Node * root() const { return m_root;}
+	
 	///create a new node if needed
 	template<typename T_OCTET_ITERATOR>
 	Node * nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
@@ -91,7 +102,7 @@ public:
 	
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
-	const Node * findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	Node * findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
 	
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
@@ -213,7 +224,7 @@ typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-const typename Trie<TValue>::Node * Trie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+typename Trie<TValue>::Node * Trie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
 	if (!m_root)
 		return 0;
 
