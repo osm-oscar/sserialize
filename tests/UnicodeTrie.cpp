@@ -5,6 +5,7 @@
 #include "TestItemData.h"
 #include "StringCompleterTest.h"
 #include <cppunit/TestResult.h>
+#include <boost/concept_check.hpp>
 
 using namespace sserialize;
 
@@ -28,6 +29,7 @@ CPPUNIT_TEST( testCompletionSCS );
 CPPUNIT_TEST( testCompletionSCI );
 CPPUNIT_TEST( testCompletionSPCS );
 CPPUNIT_TEST( testCompletionSPCI );
+CPPUNIT_TEST( testConsistency );
 CPPUNIT_TEST_SUITE_END();
 private:
 	class MyStringCompleterPrivate: public StringCompleterPrivate {
@@ -104,7 +106,6 @@ private:
 private:
 	StringCompleter m_strCompleter;
 	virtual StringCompleter& stringCompleter() { return m_strCompleter; }
-
 protected:
 	bool setUpCompleter() {
 		std::unordered_set<uint32_t> separators;
@@ -161,6 +162,20 @@ public:
 	}
 	
 	virtual void tearDown() {}
+	
+	void testConsistency() {
+		bool ok = true;
+		auto consistenyChecker = [&ok](const MyTrie::Node & n) {
+			for(const auto & x : n.children()) {
+				if (x.second->parent() != &n) {
+					ok = false;
+					return;
+				}
+			}
+		};
+		m_trie.root()->apply(consistenyChecker);
+		CPPUNIT_ASSERT(ok);
+	}
 };
 
 int main() {

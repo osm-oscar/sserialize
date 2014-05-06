@@ -122,6 +122,7 @@ CPPUNIT_TEST( testCompletionSPCS );
 CPPUNIT_TEST( testCompletionSPCI );
 CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST( testIndexEquality );
+CPPUNIT_TEST( testConsistency );
 CPPUNIT_TEST_SUITE_END();
 private:
 
@@ -260,6 +261,20 @@ public:
 		pc.strie = &m_sTrie;
 		pc.store = m_indexStore;
 		CPPUNIT_ASSERT(m_trie.checkPayloadEquality(m_sTrie.getRootNode(), pc));
+	}
+	
+	void testConsistency() {
+		bool ok = true;
+		auto consistenyChecker = [&ok](const MyTrie::Node & n) {
+			for(const auto & x : n.children()) {
+				if (x.second->parent() != &n) {
+					ok = false;
+					return;
+				}
+			}
+		};
+		m_trie.root()->apply(consistenyChecker);
+		CPPUNIT_ASSERT(ok);
 	}
 };
 
