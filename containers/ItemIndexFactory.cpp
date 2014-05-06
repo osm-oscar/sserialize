@@ -132,6 +132,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 		++m_indexIdCounter;
 		m_indexStore.put(idx);
 		m_hash[hv].push_front(indexPos);
+		m_idToOffsets.push_back(indexPos);
 	}
 	else {
 		m_hitCount++;

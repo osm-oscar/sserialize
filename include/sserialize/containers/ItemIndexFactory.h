@@ -24,12 +24,14 @@ public:
 	typedef std::forward_list<OffsetType> DataOffsetContainer;
 	typedef std::unordered_map< uint64_t, std::forward_list<OffsetType> > DataHashType;
 	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
+	typedef std::vector<uint64_t > IdToOffsetsType;
 private:
 	uint32_t m_indexIdCounter;
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
 	DataHashType m_hash;
 	OffsetToIdHashType m_offsetsToId;
+	IdToOffsetsType m_idToOffsets;
 	uint32_t m_hitCount;
 	bool m_checkIndex;
 	int8_t m_bitWidth;
@@ -61,6 +63,8 @@ public:
 	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
 	
 	inline ItemIndex getIndex(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
+	
+	inline ItemIndex indexAt(uint32_t id) const { return getIndex(m_idToOffsets.at(id));}
 
 	template<class TSortedContainer>
 	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0);
