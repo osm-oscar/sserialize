@@ -366,6 +366,18 @@ template<typename TValue>
 template<typename T_PAYLOAD_COMPARATOR>
 bool Trie<TValue>::checkPayloadEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode, const T_PAYLOAD_COMPARATOR & payloadComparator) const {
 	if (node) {
+		std::string sstr(snode.str());
+		if (node->str().size()) {
+			std::string::const_iterator nstrIt(node->str().cbegin());
+			std::string::const_iterator nstrEnd(node->str().cend());
+			utf8::next(nstrIt, nstrEnd);
+			if( sstr != std::string(nstrIt, nstrEnd) )
+				return false;
+		}
+		else if (sstr.size()) {
+			return false;
+		}
+		
 		if (!payloadComparator(node, snode)) {
 			return false;
 		}
