@@ -309,12 +309,24 @@ RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 	setPrivate(array, bitsPerNumber);
 }
 
+CompactUintArray::CompactUintArray(const UByteArrayAdapter & array, uint8_t bitsPerNumber, uint32_t max_count) :
+RCWrapper< sserialize::CompactUintArrayPrivate >(0)
+{
+	setPrivate(array, bitsPerNumber);
+	m_maxCount = max_count;
+}
+
 CompactUintArray::CompactUintArray(const CompactUintArray & other) :
 RCWrapper< sserialize::CompactUintArrayPrivate >(other),
 m_maxCount(other.m_maxCount)
 {}
 
 CompactUintArray::~CompactUintArray() {}
+
+UByteArrayAdapter::OffsetType CompactUintArray::getSizeInBytes() const {
+	uint64_t tmp = (uint64_t)m_maxCount*bpn();
+	return tmp/8 + (tmp%8 ? 1 : 0);
+}
 
 CompactUintArray& CompactUintArray::operator=(const CompactUintArray & other) {
 	RCWrapper< sserialize::CompactUintArrayPrivate >::operator=(other);
@@ -469,11 +481,6 @@ CompactUintArray(0)
 BoundedCompactUintArray::BoundedCompactUintArray(const BoundedCompactUintArray & other) :
 CompactUintArray(other),
 m_size(other.m_size)
-{}
-
-BoundedCompactUintArray::BoundedCompactUintArray(const CompactUintArray & arr, SizeType size) :
-CompactUintArray(arr),
-m_size(size)
 {}
 
 BoundedCompactUintArray::~BoundedCompactUintArray() {}
