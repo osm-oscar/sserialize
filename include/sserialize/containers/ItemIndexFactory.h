@@ -1,5 +1,5 @@
-#ifndef ITEM_INDEX_FACTORY_H
-#define ITEM_INDEX_FACTORY_H
+#ifndef SSERIALIZE_ITEM_INDEX_FACTORY_H
+#define SSERIALIZE_ITEM_INDEX_FACTORY_H
 #include <forward_list>
 #include <unordered_set>
 #include <unordered_map>
@@ -26,7 +26,6 @@ public:
 	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
 	typedef std::vector<uint64_t > IdToOffsetsType;
 private:
-	uint32_t m_indexIdCounter;
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
 	DataHashType m_hash;
@@ -48,7 +47,7 @@ private:
 public:
 	ItemIndexFactory(bool memoryBase = false);
 	~ItemIndexFactory();
-	uint32_t size() { return m_indexIdCounter;}
+	uint32_t size() { return m_idToOffsets.size();}
 	ItemIndex::Types type() const { return m_type; }
 	UByteArrayAdapter at(OffsetType offset) const;
 	///Sets the type. should not be called after having added indices

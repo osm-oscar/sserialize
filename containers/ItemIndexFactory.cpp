@@ -16,7 +16,6 @@
 namespace sserialize {
 
 ItemIndexFactory::ItemIndexFactory(bool memoryBased) :
-m_indexIdCounter(0),
 m_hitCount(0),
 m_checkIndex(true),
 m_bitWidth(-1),
@@ -36,11 +35,11 @@ UByteArrayAdapter ItemIndexFactory::at(sserialize::OffsetType offset) const {
 }
 
 void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
-	if (m_indexIdCounter > 0) { //clear eversthing
-		m_indexIdCounter = 0;
+	if (size()) { //clear eversthing
 		m_hitCount = 0;
 		m_hash.clear();
 		m_offsetsToId.clear();
+		m_idToOffsets.clear();
 	}
 
 	m_header = data;
@@ -128,14 +127,13 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 	int64_t indexPos = getIndex(idx, hv);
 	if (indexPos < 0) {
 		indexPos = m_indexStore.tellPutPtr();
-		m_offsetsToId[indexPos] = m_indexIdCounter;
-		++m_indexIdCounter;
+		m_offsetsToId[indexPos] = size();
+		m_idToOffsets.push_back(indexPos);
 		m_indexStore.put(idx);
 		m_hash[hv].push_front(indexPos);
-		m_idToOffsets.push_back(indexPos);
 	}
 	else {
-		m_hitCount++;
+		++m_hitCount;
 	}
 	if (indexOffset)
 		*indexOffset = indexPos;

@@ -22,6 +22,7 @@ CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
 CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST( testInitFromStatic );
+CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
@@ -56,6 +57,13 @@ public:
 		for(uint32_t i = 0; i < m_sets.size(); ++i) {
 			uint32_t id = m_idxFactory.addIndex(m_sets[i]);
 			CPPUNIT_ASSERT_EQUAL(m_setIds[i], id);
+		}
+	}
+	
+	void testIdxFromId() {
+		for(uint32_t i = 0; i < m_sets.size(); ++i) {
+			ItemIndex idx = m_idxFactory.indexAt(m_setIds[i]);
+			CPPUNIT_ASSERT(m_sets[i] == idx);
 		}
 	}
 	
