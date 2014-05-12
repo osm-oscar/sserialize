@@ -59,6 +59,7 @@ void ItemIndexPrivateRleDE::MyIterator::next() {
 	}
 	else {
 		m_curId = std::numeric_limits<uint32_t>::max();
+		m_dataOffset = m_curId;
 	}
 }
 
@@ -141,7 +142,7 @@ ItemIndexPrivateRleDE::MyBaseClass::const_iterator ItemIndexPrivateRleDE::cbegin
 }
 
 ItemIndexPrivateRleDE::MyBaseClass::const_iterator ItemIndexPrivateRleDE::cend() const {
-	return new MyIterator(this, m_data.size());
+	return new MyIterator(this, std::numeric_limits<uint32_t>::max());
 }
 
 uint32_t ItemIndexPrivateRleDE::size() const {
