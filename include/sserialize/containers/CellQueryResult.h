@@ -21,7 +21,7 @@ private:
 	PartialMatchesMap m_partialMatchesItems;
 	ItemIndex::Types m_indexType;
 public:
-	CellQueryResult() : m_indexType(ItemIndex::Types::T_NULL) {}
+	CellQueryResult(ItemIndex::Types idxType = ItemIndex::Types::T_NULL) : m_indexType(idxType) {}
 	CellQueryResult(const ItemIndex & fullMatches, const ItemIndex & partialMatches, ItemIndex::Types idxTypes) :
 	m_fullMatches(fullMatches),
 	m_partialMatches(partialMatches),
