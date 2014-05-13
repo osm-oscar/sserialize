@@ -26,9 +26,7 @@ m_curRleCount(0),
 m_curRleDiff(0),
 m_curId(0)
 {
-	if (m_parent->m_data.size() > dataOffset) {
-		next();
-	}
+	next();
 }
 
 ItemIndexPrivateRleDE::MyIterator::~MyIterator() {}
@@ -38,7 +36,7 @@ uint32_t ItemIndexPrivateRleDE::MyIterator::get() const {
 }
 
 void ItemIndexPrivateRleDE::MyIterator::next() {
-	if (m_parent->m_data.size() > m_dataOffset) {
+	if (m_curRleCount || m_parent->m_data.size() > m_dataOffset) {
 		if (!m_curRleCount) {
 			int len;
 			uint32_t tmp = m_parent->m_data.getVlPackedUint32(m_dataOffset, &len);
