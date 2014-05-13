@@ -72,10 +72,12 @@ public:
 	uint32_t at(uint32_t pos) const;
 	uint32_t first() const;
 	uint32_t last() const;
-
+	
 	const_iterator cbegin() const;
 	const_iterator cend() const;
 	
+	inline iterator begin() const { return cbegin(); }
+	inline iterator end() const { return cend(); }
 	
 	void dump(const char * fileName);
 	void dump(std::ostream & out);
