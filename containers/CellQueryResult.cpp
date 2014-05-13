@@ -1,19 +1,18 @@
 #include <sserialize/containers/CellQueryResult.h>
+#include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 
 namespace sserialize {
 
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
 	ItemIndex nFM = m_fullMatches / o.m_fullMatches;
-	ItemIndex dMy = m_fullMatches - nFM;
-	ItemIndex dO = o.m_fullMatches - nFM;
 	
+	ItemIndex oPM = (m_fullMatches - nFM) / o.m_partialMatches;
+	ItemIndex myPM = (o.m_fullMatches - nFM)  / m_partialMatches;
+
+	ItemIndex allFmPM = oPM + myPM;
 	
-	ItemIndex nP1 = dMy / o.m_partialMatches;
-	ItemIndex nP2 = dO / m_partialMatches;
-	ItemIndex nP12 = nP1 + nP2;
-	
-	ItemIndex itemItemCandidates = (m_partialMatches - nP12) / (o.m_partialMatches - nP12);
+	ItemIndex itemItemCandidates = (m_partialMatches / o.m_partialMatches) - allFmPM;
 	
 	//we can now assemble the result
 	CellQueryResult r;
@@ -21,20 +20,25 @@ CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o)
 
 	{
 		std::vector<uint32_t> itemItemMatchesRaw;
-		for(uint32_t i(0), s(itemItemCandidates.size()); i < s; ++i) {
-			uint32_t idxId = itemItemCandidates.at(i);
+		for(ItemIndex::const_iterator it(itemItemCandidates.cbegin()), end(itemItemCandidates.cend()); it != end; ++it) {
+			uint32_t idxId = *it;
 			ItemIndex idx = m_partialMatchesItems.at(idxId) / o.m_partialMatchesItems.at(idxId);
 			if (idx.size()) {
-				itemItemMatchesRaw.push_back(i);
+				itemItemMatchesRaw.push_back(idxId);
 				r.m_partialMatchesItems[idxId] = idx; 
 			}
 		}
-		UByteArrayAdapter itemItemMatchesData(UByteArrayAdapter::createCache(1, false));
-		r.m_partialMatches = nP12 + ItemIndex::create(itemItemMatchesRaw, itemItemMatchesData, indexType());
+		r.m_partialMatches = allFmPM + ItemIndexFactory::create(itemItemMatchesRaw, indexType());
 	}
-	for(uint32_t i(0), s(nP12.size()); i < s; ++i) {
-		uint32_t idxId = nP12.at(i);
+	
+	for(ItemIndex::const_iterator it(myPM.cbegin()), end(myPM.cend()); it != end; ++it) {
+		uint32_t idxId = *it;
 		r.m_partialMatchesItems[idxId] = m_partialMatchesItems.at(idxId);
+	}
+	
+	for(ItemIndex::const_iterator it(oPM.cbegin()), end(oPM.cend()); it != end; ++it) {
+		uint32_t idxId = *it;
+		r.m_partialMatchesItems[idxId] = o.m_partialMatchesItems.at(idxId);
 	}
 	return r;
 }
