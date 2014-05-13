@@ -27,7 +27,21 @@ public:
 	m_partialMatches(partialMatches),
 	m_indexType(idxTypes)
 	{}
+	CellQueryResult(const CellQueryResult & other) :
+	m_fullMatches(other.m_fullMatches),
+	m_partialMatches(other.m_partialMatches),
+	m_partialMatchesItems(other.m_partialMatchesItems),
+	m_indexType(other.m_indexType)
+	{}
+	CellQueryResult(CellQueryResult && other) :
+	m_fullMatches(other.m_fullMatches),
+	m_partialMatches(other.m_partialMatches),
+	m_indexType(other.m_indexType)
+	{
+		m_partialMatchesItems.swap(other.m_partialMatchesItems);
+	}
 	virtual ~CellQueryResult() {}
+	
 	CellQueryResult operator/(const CellQueryResult & other) const;
 	CellQueryResult operator+(const CellQueryResult & other) const;
 	
