@@ -42,7 +42,24 @@ public:
 
 	inline const ItemIndex::Types & indexType() const { return m_indexType; }
 	inline ItemIndex::Types & indexType() { return m_indexType; }
+	
+	template<typename T_INDEX_DEREFER>
+	ItemIndex flaten(T_INDEX_DEREFER derefer) const;
 };
+
+template<typename T_INDEX_DEREFER>
+ItemIndex CellQueryResult::flaten(T_INDEX_DEREFER derefer) const {
+	std::vector<sserialize::ItemIndex> idcs;
+	idcs.reserve(fullMatches().size() + partialMatches().size());
+	for(ItemIndex::const_iterator it(fullMatches().cbegin()), end(fullMatches().cend()); it != end; ++it) {
+		idcs.push_back( derefer(*it) );
+	}
+	for(PartialMatchesMap::const_iterator it(partialMatchesItems().cbegin()), end(partialMatchesItems().cend()); it != end; ++it) {
+		idcs.push_back( it->second );
+	}
+	return ItemIndex::unite(idcs);
+}
+
 
 }
 
