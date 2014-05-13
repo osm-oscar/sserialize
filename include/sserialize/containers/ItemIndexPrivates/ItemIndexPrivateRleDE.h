@@ -175,13 +175,15 @@ public:
 
 public:
 	template<typename TCONTAINER>
-	static void create(const TCONTAINER & src, UByteArrayAdapter & dest) {
+	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest) {
 		ItemIndexPrivateRleDECreator creator(dest);
 		typename TCONTAINER::const_iterator srcIt = src.begin();
 		typename TCONTAINER::const_iterator srcEnd = src.end();
-		for(; srcIt != srcEnd; ++srcIt)
+		for(; srcIt != srcEnd; ++srcIt) {
 			creator.push_back(*srcIt);
+		}
 		creator.flush();
+		return true;
 	}
 };
 

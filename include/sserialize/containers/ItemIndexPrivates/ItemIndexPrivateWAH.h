@@ -71,12 +71,12 @@ public:
 public:
 
 	template<typename TCONTAINER>
-	static void create(const TCONTAINER & src, UByteArrayAdapter & dest) {
+	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest) {
 		uint32_t beginning = dest.tellPutPtr();
 		dest.putUint32(0);
 		dest.putUint32(src.size());
 		if (!src.size())
-			return;
+			return true;
 		if (src.size() == 1) {
 			uint32_t leadingZeros = *src.begin()/31;
 			uint32_t valueBit = (static_cast<uint32_t>(0x1) << (*src.begin()%31));
@@ -86,7 +86,7 @@ public:
 			dest.putUint32(valueBit<<1);
 			dest.putUint32(beginning, 8);
 			
-			return;
+			return true;
 		}
 		uint32_t prev = *src.begin();
 		uint32_t curRleEncWord = 0;
@@ -182,6 +182,7 @@ public:
 		
 		uint32_t dataSize =  dest.tellPutPtr() - beginning - 8;
 		dest.putUint32(beginning, dataSize);
+		return true;
 	}
 };
 

@@ -82,6 +82,12 @@ public:
 	static UByteArrayAdapter::OffsetType compressWithHuffman(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
 	static UByteArrayAdapter::OffsetType compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
 	static UByteArrayAdapter::OffsetType compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
+	
+	template<typename TSortedContainer>
+	static bool create(const TSortedContainer& idx, sserialize::UByteArrayAdapter& dest, sserialize::ItemIndex::Types type);
+	
+	template<typename TSortedContainer>
+	static ItemIndex create(const TSortedContainer& idx, sserialize::ItemIndex::Types type);
 
 };
 
@@ -146,6 +152,33 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 		return 0;
 	}
 }
+
+template<typename TSortedContainer>
+bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, ItemIndex::Types type) {
+	switch(type) {
+	case ItemIndex::T_REGLINE:
+		return ItemIndexPrivateRegLine::create(idx, dest, -1, true);
+	case ItemIndex::T_WAH:
+		return ItemIndexPrivateWAH::create(idx, dest);
+	case ItemIndex::T_DE:
+		return ItemIndexPrivateDE::create(idx, dest);
+	case ItemIndex::T_RLE_DE:
+		return ItemIndexPrivateRleDE::create(idx ,dest);
+	default:
+		return false;
+	}
+}
+
+template<typename TSortedContainer>
+ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, ItemIndex::Types type) {
+	UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, false));
+	if (create(idx, tmp, type)) {
+		tmp.resetPtrs();
+		return ItemIndex(tmp, type);
+	}
+	return ItemIndex();
+}
+
 
 }//end namespace
 

@@ -1,6 +1,7 @@
 #include <sserialize/Static/RTree.h>
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/containers/ItemIndexFactory.h>
 
 
 namespace sserialize {
@@ -116,8 +117,7 @@ ItemIndex RTree::intersect(const sserialize::spatial::GeoRect & rect, ElementInt
 			}
 		}
 		if (intersectedIds.size()) {
-			UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, false));
-			return fullyContained + ItemIndex::create(intersectedIds, tmp, m_indexStore.indexType());
+			return fullyContained + ItemIndexFactory::create(intersectedIds, m_indexStore.indexType());
 		}
 		return fullyContained;
 	}

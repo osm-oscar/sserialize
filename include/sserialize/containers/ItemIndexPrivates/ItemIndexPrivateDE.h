@@ -58,16 +58,16 @@ public:
 
 public:
 	template<typename TCONTAINER>
-	static void create(const TCONTAINER & src, UByteArrayAdapter & dest) {
+	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest) {
 		uint32_t beginning = dest.tellPutPtr();
 		dest.putUint32(0);
 		dest.putUint32(src.size());
 		if (!src.size())
-			return;
+			return true;
 		if (src.size() == 1) {
 			dest.putVlPackedUint32(*src.begin());
 			dest.putUint32(beginning, dest.tellPutPtr()-(beginning+8));
-			return;
+			return true;
 		}
 		uint32_t prevDest = *src.begin();
 		dest.putVlPackedUint32(prevDest);
@@ -80,6 +80,7 @@ public:
 		}
 		uint32_t dataSize =  dest.tellPutPtr() - beginning - 8;
 		dest.putUint32(beginning, dataSize);
+		return true;
 	}
 };
 
