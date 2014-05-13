@@ -224,8 +224,9 @@ ItemIndexPrivate *  ItemIndexPrivateRleDE::fromBitSet(const DynamicBitSet & bitS
 	for(uint32_t dataOffset = 0; dataOffset < myDataSize; ++dataOffset, curId += 8) {
 		uint8_t data = bitSetData.at(dataOffset);
 		for(uint32_t i = 0; data; ++i) {
-			if (data & 0x1)
+			if (data & 0x1) {
 				creator.push_back(curId+i);
+			}
 			data >>= 1;
 		}
 	}
@@ -271,8 +272,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 		if (aId == bId) {
 			creator.push_back(aId);
 			
-			if (aRle)
+			if (aRle) {
 				--aRle;
+			}
 				
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
@@ -285,8 +287,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 			aId += aVal;
 			++aIndexIt;
 
-			if (bRle)
+			if (bRle) {
 				--bRle;
+			}
 				
 			if (!bRle) {
 				bVal = bData.getVlPackedUint32();
@@ -300,8 +303,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 			++bIndexIt;
 		}
 		else if (aId < bId) {
-			if (aRle)
+			if (aRle) {
 				--aRle;
+			}
 				
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
@@ -315,8 +319,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 			++aIndexIt;
 		}
 		else {
-			if (bRle)
+			if (bRle) {
 				--bRle;
+			}
 				
 			if (!bRle) {
 				bVal = bData.getVlPackedUint32();
@@ -339,8 +344,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 
 ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateRleDE * cother = dynamic_cast<const ItemIndexPrivateRleDE*>(other);
-	if (!cother)
+	if (!cother) {
 		return ItemIndexPrivate::doIntersect(other);
+	}
 
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
@@ -375,8 +381,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 		if (aId == bId) {
 			creator.push_back(aId);
 			
-			if (aRle)
+			if (aRle) {
 				--aRle;
+			}
 				
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
@@ -389,8 +396,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 			aId += aVal;
 			++aIndexIt;
 
-			if (bRle)
+			if (bRle) {
 				--bRle;
+			}
 				
 			if (!bRle) {
 				bVal = bData.getVlPackedUint32();
@@ -406,8 +414,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 		else if (aId < bId) {
 			creator.push_back(aId);
 		
-			if (aRle)
+			if (aRle) {
 				--aRle;
+			}
 				
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
@@ -423,8 +432,9 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 		else {
 			creator.push_back(bId);
 		
-			if (bRle)
+			if (bRle) {
 				--bRle;
+			}
 				
 			if (!bRle) {
 				bVal = bData.getVlPackedUint32();
@@ -540,8 +550,9 @@ struct IndexStates {
 	void next(uint32_t pos) {
 		SingleState & s = states[pos];
 		s.next();
-		if (!s.valid)
+		if (!s.valid) {
 			--validCounter;
+		}
 	}
 	
 	int findMin(uint32_t & minId) {
