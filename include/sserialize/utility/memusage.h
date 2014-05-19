@@ -23,15 +23,18 @@ public:
 		fclose(f);
 	}
 	unsigned long size,resident,share,text,lib,data,dt;
-	inline void print() const {
-		std::cout << "Memory usage: " << std::endl;
+	inline void print(const std::string & header, const std::string & footer) const {
+		std::cout << "BEGIN Memory usage -- " << header << std::endl;
 		std::cout << "Size: " << size << std::endl;
 		std::cout << "Resident: " << resident << std::endl;
 		std::cout << "Share: " << share << std::endl;
 		std::cout << "Text: " << text << std::endl;
 		std::cout << "Lib: " << lib << std::endl;
 		std::cout << "Data: " << data << std::endl;
-		std::cout << "End Memory usage" << std::endl;
+		std::cout << "END Memory usage -- " << footer << std::endl;
+	}
+	inline void print() {
+		print(std::string(), std::string());
 	}
 };
 
