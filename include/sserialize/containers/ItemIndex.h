@@ -68,6 +68,7 @@ public:
 
 	void putInto(DynamicBitSet & bitSet) const;
 	void putInto(std::vector<uint32_t> & dest) const;
+	void putInto(uint32_t * dest) const;
 	
 	uint32_t at(uint32_t pos) const;
 	uint32_t first() const;
@@ -138,7 +139,6 @@ public:
 
 	static inline bool uniteSameResult(ItemIndex::Types t) { return (t & (T_DE | T_RLE_DE | T_WAH | T_SIMPLE)); }
 };
-
 
 }//end namespace
 
