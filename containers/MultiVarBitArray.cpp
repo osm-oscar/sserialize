@@ -203,26 +203,6 @@ uint32_t MultiVarBitArray::minStorageBytes(const uint32_t sum, const uint32_t co
 	return (sum/8)*count + ( (sum%8)*count )/8 + + ( ( (sum%8)*count )%8 > 0 ? 1 : 0);
 }
 
-// MultiVarBitArray MultiVarBitArray::create(const std::vector<uint8_t> & bitConfig, sserialize::UByteArrayAdapter& destination, uint32_t initCount) {
-// 	uint32_t storageNeed = HEADER_SIZE +
-// 			CompactUintArray::minStorageBytes(5, bitConfig.size()) +
-// 			MultiVarBitArray::minStorageBytes(bitConfig, initCount);
-// 	if (destination.size() < storageNeed)
-// 		if ( !destination.growStorage( storageNeed - destination.size() ) )
-// 			return MultiVarBitArray();
-// 		
-// 	destination.putUint32(1, initCount);
-// 	destination.putUint8(5, bitConfig.size());
-// 	CompactUintArray carr(destination+HEADER_SIZE, 5);
-// 	for(size_t i = 0; i < bitConfig.size(); i++) {
-// 		if (bitConfig[i]  == 0 || bitConfig[i] > 32)
-// 			carr.set(i, 31);
-// 		else
-// 			carr.set(i, bitConfig[i]-1);
-// 	}
-// 	return MultiVarBitArray(destination);
-// }
-
 MultiVarBitArrayCreator::MultiVarBitArrayCreator(const std::vector<uint8_t> & bitConfig, UByteArrayAdapter& data) : m_data(data), m_header(m_data) {
 	m_header.shrinkToPutPtr();
 	m_headerSize = MultiVarBitArray::HEADER_SIZE + CompactUintArray::minStorageBytes(5, bitConfig.size());
