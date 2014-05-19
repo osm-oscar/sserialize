@@ -37,8 +37,8 @@ namespace spatial {
   *
   */
 
-// typedef sserialize::spatial::detail::GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer > GeoWay;
-typedef sserialize::spatial::detail::GeoWay< sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoWay;
+typedef sserialize::spatial::detail::GeoWay< sserialize::Static::spatial::detail::GeoWayPointsContainer > GeoWay;
+// typedef sserialize::spatial::detail::GeoWay< sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoWay;
 
 }}
 
