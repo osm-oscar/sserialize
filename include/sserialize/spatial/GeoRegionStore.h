@@ -8,6 +8,8 @@
 #include <sserialize/utility/ProgressInfo.h>
 #include <iostream>
 #include <fstream>
+#include <atomic>
+#include <boost/concept_check.hpp>
 
 //TODO: look into sweep line algo
 
@@ -177,18 +179,30 @@ private:
 	std::vector<GeoRegion*> m_regionStore;
 	std::vector<TValue> m_values;
 	PolyRaster * m_polyRaster;
-	
+	//Stats
+	bool m_gatherStats;
+	mutable std::atomic<uint64_t> m_iAnswerCount;
+	mutable std::atomic<uint64_t> m_cAnswerCount; //checkedAnswer
+	mutable std::atomic<uint64_t> m_cAnswerPolyCheckCount;
 private:
 	inline bool pointInRegion(const Point & p, const GeoRegion & pg) const { return pg.contains(p);}
 
 	
 public:
-	GeoRegionStore(): m_polyRaster(0) {}
+	GeoRegionStore(): m_polyRaster(0), m_gatherStats(false), m_iAnswerCount(0), m_cAnswerCount(0), m_cAnswerPolyCheckCount(0) {}
 	~GeoRegionStore() {
 		for(std::vector<GeoRegion*>::iterator it(m_regionStore.begin()), end(m_regionStore.end()); it != end; ++it) {
 			delete *it;
 		}
 		delete m_polyRaster;
+	}
+	void printStats(std::ostream & out) {
+		out << "BEGIN--GeoRegionStore--STATS" << std::endl;
+		out << "size: " << size() << std::endl;
+		out << "instant answers: " << m_iAnswerCount << std::endl;
+		out << "checked answers: " << m_cAnswerCount << std::endl;
+		out << "checked polygons: " << m_cAnswerPolyCheckCount << std::endl;
+		out << "END--GeoRegionStore--STATS" << std::endl;
 	}
 	std::size_t size() const { return regions().size(); }
 	const std::vector<GeoRegion*> & regions() const { return m_regionStore; }
@@ -241,9 +255,13 @@ public:
 		}
 		else {
 			RasterElementPolygons rep( m_polyRaster->checkedAt(p) );
-			if (rep.enclosing)
+			if (rep.enclosing) {
 				polys.insert(rep.enclosing->begin(), rep.enclosing->end());
+				m_iAnswerCount += 1;
+			}
 			if (rep.colliding) {
+				m_cAnswerCount += 1;
+				m_cAnswerPolyCheckCount += rep.colliding->size();
 				for(PolyRasterElement::const_iterator it(rep.colliding->begin()), end( rep.colliding->end()); it != end; ++it) {
 					if (pointInRegion(p, *m_regionStore[*it]) ) {
 						polys.insert(*it);
@@ -254,9 +272,9 @@ public:
 		return polys;
 	}
 	
-	template<typename TPOINT_ITERATOR>
-	std::set<uint32_t> test(TPOINT_ITERATOR begin, TPOINT_ITERATOR end) const {
-		std::set<unsigned int> polyIds;
+	template<typename TPOINT_ITERATOR, typename T_SET_TYPE = std::set<uint32_t> >
+	T_SET_TYPE test(TPOINT_ITERATOR begin, TPOINT_ITERATOR end) const {
+		T_SET_TYPE polyIds;
 		if (!m_polyRaster) {
 			for(std::size_t it = 0, itEnd(m_regionStore.size()); it < itEnd; ++it) {
 				for(TPOINT_ITERATOR pit(begin); pit != end; ++pit) {
