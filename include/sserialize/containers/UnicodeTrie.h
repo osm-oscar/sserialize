@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/Static/UnicodeTrie/Node.h>
 #include <sserialize/Static/UnicodeTrie/Trie.h>
 
@@ -298,6 +299,8 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 	std::deque<uint8_t> trieData;
 	std::vector<uint8_t> tmpData;
 	
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(nodesInLevelOrder.size(), "sserialize::UnicodeTrie::append");
 	while (nodesInLevelOrder.size()) {
 		Node * n = nodesInLevelOrder.back();
 		nodesInLevelOrder.pop_back();
@@ -323,7 +326,9 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 		
 		prependToDeque(tmpData, trieData);
 		nodeOffsets[n] = trieData.size();
+		pinfo(pinfo.targetCount - nodesInLevelOrder.size());
 	}
+	pinfo.end();
 	payloadContainerCreator.flush();
 	d.putUint32(nodeCreator->type());
 	d.put(trieData);
