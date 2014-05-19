@@ -10,9 +10,9 @@ namespace sserialize {
   * The difference is, that here it's possible to define multiple bit-lengths.
   * Suppose you have a struct:
   * struct {
-  *      uint32_t bits3;
-  *      uint32_t bits7;
-  *      uint32_t bits17;
+  *      uint32_t bits:3;
+  *      uint32_t bits:7;
+  *      uint32_t bits:17;
   * }
   * And now you want to have an array out of these structs.
   * 
