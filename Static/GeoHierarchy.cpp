@@ -144,6 +144,14 @@ GeoHierarchy::Cell GeoHierarchy::cell(uint32_t id) const {
 	return Cell(id, this);
 }
 
+uint32_t GeoHierarchy::cellParentsBegin(uint32_t id) const {
+	return cells().at(id, Cell::CD_PARENTS_BEGIN);
+}
+
+uint32_t GeoHierarchy::cellParentsEnd(uint32_t id) const {
+	return cells().at(id+1, Cell::CD_PARENTS_BEGIN);
+}
+
 uint32_t GeoHierarchy::cellPtrSize() const {
 	return m_cellPtrs.size();
 }

@@ -48,10 +48,6 @@ namespace spatial {
   *
   */
 
-  ///TODO:Boundingbox wie in aktueller version, also alles mit allem verwuschrteln
-  ///so viel auf zellebene wie möglich
-  ///Schnitte et
-  
 class GeoHierarchy {
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
@@ -135,6 +131,8 @@ public:
 	uint32_t cellSize() const;
 	Cell cell(uint32_t id) const;
 	
+	uint32_t cellParentsBegin(uint32_t id) const;
+	uint32_t cellParentsEnd(uint32_t id) const;
 	uint32_t cellPtrSize() const;
 	uint32_t cellPtr(uint32_t pos) const;
 	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
