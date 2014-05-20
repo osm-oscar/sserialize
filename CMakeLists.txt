@@ -96,6 +96,7 @@ containers/GeneralizedTrie/FlatTrie.cpp
 containers/GeneralizedTrie/MultiPassTrie.cpp
 containers/GeneralizedTrie/SinglePassTrie.cpp
 containers/CellQueryResult.cpp
+containers/OpTree.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
