@@ -12,6 +12,7 @@ public:
 	UByteArrayAdapterPrivate() : m_deleteOnClose(false) {}
 	virtual ~UByteArrayAdapterPrivate() {}
 	virtual UByteArrayAdapter::OffsetType size() const = 0;
+	virtual bool isContiguous() const { return false; }
 
 //support opertions
 

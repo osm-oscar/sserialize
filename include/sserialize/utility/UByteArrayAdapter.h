@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #include <sserialize/utility/types.h>
+#include <sserialize/utility/refcounting.h>
 #include <stdint.h>
 #include <iterator>
 #include <deque>
@@ -38,6 +39,41 @@ public:
 	typedef sserialize::OffsetType OffsetType;
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
+	
+	class MemoryView final {
+	private:
+		class MemoryViewImp final: public sserialize::RefCountObject {
+			uint8_t * m_d;
+			OffsetType m_size;
+			bool m_isCopy;
+		public:
+			MemoryViewImp(uint8_t * ptr, OffsetType size, bool deleteOnClose) :
+			m_d(ptr),
+			m_size(size),
+			m_isCopy(deleteOnClose) {}
+			~MemoryViewImp() {
+				if (m_isCopy) {
+					delete[] m_d;
+				}
+			}
+			uint8_t * get() { return m_d; }
+			const uint8_t * get() const { return m_d; }
+			OffsetType size() const { return m_size; }
+			bool isCopy() const { return m_isCopy; }
+		};
+	private:
+		RCPtrWrapper<MemoryViewImp> m_priv;
+	public:
+		///@param isCopy: if true, then ptr gets deleted by delete[]
+		MemoryView(uint8_t * ptr, OffsetType size, bool isCopy) : m_priv(new MemoryViewImp(ptr, size, isCopy)) {}
+		~MemoryView() {}
+		uint8_t * get() { return m_priv->get();}
+		const uint8_t * get() const { return m_priv->get();}
+		OffsetType size() const { return m_priv->size();}
+		///If this is true, then writes are not passed through to the UBA
+		bool isCopy() const { return m_priv->isCopy();}
+	};
+	
 private:
 	/** Data is at offset, not at base address **/
 	std::shared_ptr<UByteArrayAdapterPrivate> m_priv;
@@ -140,6 +176,8 @@ public:
 	inline OffsetType size() const { return m_len;};
 	inline OffsetType offset() const { return m_offSet;}
 	inline bool isEmpty() const { return (m_len == 0);}
+	
+	MemoryView getMemView(const OffsetType pos, OffsetType size);
 
 	int64_t getInt64(const OffsetType pos) const;
 	uint64_t getUint64(const OffsetType pos) const;
@@ -194,10 +232,11 @@ public:
 	//complex objects
 	/** @return number of bytes added, -1 if failed */
 	int put(const OffsetType pos, const std::string & str);
-	bool put(OffsetType pos, const uint8_t * data, uint32_t len);
+	bool put(const OffsetType pos, const uint8_t* data, OffsetType len);
 	bool put(const OffsetType pos, const std::deque<uint8_t> & data);
 	bool put(const OffsetType pos, const std::vector<uint8_t> & data);
 	bool put(const OffsetType pos, const UByteArrayAdapter & data);
+	bool put(const OffsetType pos, const MemoryView & data);
 
 //streaming api
 	OffsetType getOffset();

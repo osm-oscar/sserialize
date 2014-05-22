@@ -13,6 +13,7 @@ public:
     UByteArrayAdapterPrivateArray(uint8_t * data) : UByteArrayAdapterPrivate(), m_data(data) {}
 	virtual ~UByteArrayAdapterPrivateArray();
 	virtual UByteArrayAdapter::OffsetType size() const;
+	virtual bool isContiguous() const { return true; }
 	
 	/** Shrink data to size bytes */
 	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType /*size*/) { return false; }

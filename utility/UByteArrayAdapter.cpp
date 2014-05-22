@@ -502,6 +502,20 @@ UByteArrayAdapter UByteArrayAdapter::end() const {
 	return UByteArrayAdapter(*this, m_len);
 }
 
+UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos, OffsetType size) {
+	if (pos+size > m_len) {
+		return MemoryView(0, 0, 0);
+	}
+	if (m_priv->isContiguous()) {
+		return MemoryView(&operator[](pos), size, false);
+	}
+	else {
+		uint8_t * tmp = new uint8_t[size];
+		get(pos, tmp, size);
+		return MemoryView(tmp, size, true);
+	}
+}
+
 int64_t UByteArrayAdapter::getInt64(const OffsetType pos) const {
 	if (m_len < pos+8) return 0;
 	return m_priv->getInt64(m_offSet+pos);
@@ -756,7 +770,7 @@ int UByteArrayAdapter::put(const OffsetType pos, const std::string & str) {
 	return needSize;
 }
 
-bool UByteArrayAdapter::put(OffsetType pos, const uint8_t * data, uint32_t len) {
+bool UByteArrayAdapter::put(OffsetType pos, const uint8_t * data, OffsetType len) {
 	if (m_len < pos+len)
 		return false;
 	m_priv->put(m_offSet+pos, data, len);
@@ -781,6 +795,11 @@ bool UByteArrayAdapter::put(const OffsetType pos, const std::vector< uint8_t >& 
 bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data) {
 	if (m_len < pos+data.size())
 		return false;
+
+	if (m_priv->isContiguous()) {
+		return put(pos, &data[0], data.size());
+	}
+
 	uint32_t bufLen = std::min<OffsetType>(data.size(), 1024*1024);
 	uint8_t * buf = new uint8_t[bufLen];
 	for(OffsetType i = 0, s = data.size(); i < s;) {
@@ -793,6 +812,9 @@ bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data
 	return true;
 }
 
+bool UByteArrayAdapter::put(const OffsetType pos, const MemoryView & data) {
+	return put(pos, data.get(), data.size());
+}
 
 UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool deleteOnClose) {
 	if (fileName.empty()) {
