@@ -182,10 +182,10 @@ void SetOpsOpTreeParser::sanitize() {
 	int braceCount = 0;
 	bool beforeWasOp = false;
 	std::string ostr = "";
-	for(std::string::const_iterator it = m_parseString.begin(); it != m_parseString.end(); ++it) {
+	for(std::string::const_iterator it(m_parseString.cbegin()), end(m_parseString.cend()); it != end; ++it) {
 		if (*it == '\\') {
 			++it;
-			if (it != m_parseString.end()) {
+			if (it != end) {
 				ostr += '\\';
 				ostr += *it;
 			}
@@ -260,6 +260,7 @@ void SetOpsOpTreeParser::initTokenizer(const std::string & parseString) {
 	m_parseString = parseString;
 	sanitize();
 	m_strIt = m_parseString.cbegin();
+	m_strEnd = m_parseString.cend();
 }
 
 SetOpsOpTreeParser::Token SetOpsOpTreeParser::nextToken() {
