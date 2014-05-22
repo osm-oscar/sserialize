@@ -2,7 +2,6 @@
 #define SSERIALIZE_KEY_VALUE_STORE_H
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/containers/StringTable.h>
-#define DEBUG_CHECK_KVSTORE_SERIALIZE
 
 namespace sserialize {
 

@@ -53,14 +53,14 @@ public:
 	void endRawPut() {}
 	///@return data to create the deque (NOT dest data)
 	UByteArrayAdapter flush() {
-#if defined(DEBUG_DEQUE_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
 		OffsetType oiBegin = m_dest.tellPutPtr();
 #endif
 		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
 		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest)) {
 			throw sserialize::CreationException("Array::flush: Creating the offset");
 		}
-#if defined(DEBUG_DEQUE_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
 		sserialize::UByteArrayAdapter tmp = m_dest;
 		tmp.setPutPtr(oiBegin);
 		tmp.shrinkToPutPtr();
