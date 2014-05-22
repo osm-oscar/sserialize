@@ -178,6 +178,34 @@ std::string StringCompleter::getName() const {
 	return priv()->getName();
 }
 
+StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
+	uint32_t qt = sserialize::StringCompleter::QT_NONE;
+	if (!q.size()) {
+		return sserialize::StringCompleter::QT_NONE;
+	}
+	if (q.front() == '*') {
+		if (q.size() > 2 && q[1] == '*') {
+			q = std::string(q.cbegin()+1, q.cend()-1);
+			qt = sserialize::StringCompleter::QT_SUBSTRING;
+		}
+		else {
+			q = std::string(q.cbegin()+1, q.cend());
+			qt = sserialize::StringCompleter::QT_PREFIX;
+		}
+	}
+	else if (q.back() == '*') {
+		q.pop_back();
+		qt = sserialize::StringCompleter::QT_SUFFIX;
+	}
+	else if (q.size() == 2 && q.back() == '"' && q.front() == '"') {
+		q = std::string(q.cbegin()+1, q.cend()-1);
+		qt = sserialize::StringCompleter::QT_EXACT;
+	}
+	else {
+		qt = sserialize::StringCompleter::QT_SUBSTRING;
+	}
+	return (StringCompleter::QuerryType)qt;
+}
 
 
 }//end namespace

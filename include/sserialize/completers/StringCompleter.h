@@ -105,6 +105,8 @@ public:
 	std::ostream& printStats(std::ostream& out) const;
 	
 	std::string getName() const;
+	
+	static QuerryType normalize(std::string & qstr);
 };
 }//end namespace
 
