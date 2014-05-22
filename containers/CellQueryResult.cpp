@@ -62,4 +62,14 @@ CellQueryResult CellQueryResult::operator+(const sserialize::CellQueryResult & o
 	return r;
 }
 
+CellQueryResult CellQueryResult::operator-(const CellQueryResult & o) const {
+	throw sserialize::UnimplementedFunctionException("sserialize::CellQueryResult::operator-");
+	return CellQueryResult();
+}
+
+CellQueryResult CellQueryResult::operator^(const CellQueryResult & other) const {
+	throw sserialize::UnimplementedFunctionException("sserialize::CellQueryResult::operator^");
+	return CellQueryResult();
+}
+
 }
