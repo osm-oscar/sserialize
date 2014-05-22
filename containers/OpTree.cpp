@@ -5,18 +5,18 @@ namespace sserialize {
 namespace OpTree {
 namespace detail {
 
-Node * OpTreeParser::parse(const std::string & parseString) const {
-	enum {PS_INIT=0, PS_BRACE_OPENED=1, PS_TERMINAL=2, PS_BEFORE_OP_OR_DONE=3, PS_BEFORE_OP_OR_BRACE=4, PS_AFTER_OP=5, PS_BRACE_CLOSED=6, PS_OP_COMPLETED_OR_BEFORE_OP=7} StateTypes;
+Node * OpTreeParser::parse(const std::string & parseString) {
+	enum {PS_INIT=0, PS_BRACE_OPENED=1, PS_TERMINAL=2, PS_BEFORE_OP_OR_DONE=3, PS_BEFORE_OP_OR_BRACE=4, PS_AFTER_OP=5, PS_BRACE_CLOSED=6, PS_OP_COMPLETED_OR_BEFORE_OP=7};
 
 	initTokenizer(parseString);
 	
-	if (!hasNextToken)
+	if (!hasNextToken())
 		return 0;
 	std::vector<uint32_t> stateStack;
 	std::vector<Token> parseStack;
 	std::vector<Node*> nodeStack;
 	stateStack.push_back(PS_INIT);
-	Token token(nextToken);
+	Token token(nextToken());
 	bool done = false;
 	while (stateStack.size() && !done) {
 		switch (stateStack.back()) {
@@ -40,7 +40,7 @@ Node * OpTreeParser::parse(const std::string & parseString) const {
 		case (PS_TERMINAL)://reduce
 		{
 			LeafNode * node = new LeafNode();
-			node->q = parseStack.back();
+			node->q = parseStack.back().tokenString;
 			parseStack.back().type = Token::NT_SA;
 			stateStack.pop_back();
 			nodeStack.push_back(node);
@@ -222,7 +222,7 @@ void SetOpsOpTreeParser::sanitize() {
 	if (braceCount > 0) { //append missing braces
 		ostr += std::string(braceCount, ')');
 	}
-	return ostr;
+	m_parseString = ostr;
 }
 
 void SetOpsOpTreeParser::readString(Token & token) {
@@ -273,7 +273,7 @@ SetOpsOpTreeParser::Token SetOpsOpTreeParser::nextToken() {
 			token.begin = m_strIt - m_parseString.begin();
 			token.tokenString += *m_strIt;
 			token.type = Token::OPERATOR;
-			token.op = m_opMap.at(*m_strIt);
+			token.op = m_opMap.at(*m_strIt).type;
 			++m_strIt;
 			token.end = m_strIt - m_parseString.begin();
 			m_beforeWasTerminal = false;
@@ -329,4 +329,6 @@ SetOpsOpTreeParser::SetOpsOpTreeParser() {
 	m_opMap['^'] = OpDesc(OT_SYM_DIFF, 2);
 }
 
-}}}
+}//end namespace detail
+
+}}//end namespace

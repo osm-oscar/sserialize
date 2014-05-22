@@ -13,15 +13,17 @@ namespace detail {
 template<typename T_OPERAND>
 class OpTree {
 public:
+	typedef T_OPERAND value_type;
+public:
 	OpTree() {}
 	virtual ~OpTree() {}
 	virtual bool parse(const std::string & query) = 0;
-	virtual T_OPERAND calc() = 0;
+	virtual value_type calc() = 0;
 	virtual OpTree * copy() const = 0;
 };
 
 template<typename T_OPERAND>
-class EmptyOpTree {
+class EmptyOpTree: public OpTree<T_OPERAND> {
 public:
 	EmptyOpTree() {}
 	virtual ~EmptyOpTree() {}
@@ -29,7 +31,7 @@ public:
 		return false;
 	}
 	virtual T_OPERAND calc() { return T_OPERAND();}
-	virtual OpTree * copy() const { return new EmptyOpTree(); }
+	virtual OpTree<T_OPERAND> * copy() const { return new EmptyOpTree(); }
 };
 
 struct Node {
@@ -70,7 +72,7 @@ struct LeafNode: public Node {
 class OpTreeParser {
 protected:
 	struct Token {
-		Token() : begin(0xFEFE), end(0xFEFF), type(INVALID), op(0xFFFFFFFF)  {}
+		Token() : begin(0xFEFE), end(0xFFFF), type(INVALID), op(0xFF)  {}
 		enum Type {STRING, OPERATOR, BRACE_OPEN, BRACE_CLOSE, ENDOFINPUT, NT_SA, INVALID}; ///NT_SA is internal
 		uint16_t begin;
 		uint16_t end;
@@ -85,16 +87,17 @@ protected:
 public:
 	OpTreeParser() {}
 	virtual ~OpTreeParser() {}
-	Node * parse(const std::string & query) const;
+	Node * parse(const std::string& parseString);
 };
 
 class SetOpsOpTreeParser: public OpTreeParser {
 public:
 	typedef enum {OT_INVALID=0, OT_UNITE=1, OT_INTERSECT=2, OT_DIFF=3, OT_SYM_DIFF=4} OpTypes;
 	struct OpDesc {
-		uint16_t type:10;
-		uint16_t children:2;
-		OpDesc(uint16_t type, uint16_t children) : type(type), children(children) {}
+		uint8_t type;
+		uint8_t children;
+		OpDesc(uint8_t type, uint8_t children) : type(type), children(children) {}
+		OpDesc() : type(OT_INVALID), children(0) {}
 	};
 private:
 	std::unordered_map<char, OpDesc> m_opMap;
@@ -122,7 +125,8 @@ public:
 template<typename T_OPERAND>
 class OpTree {
 public:
-	typedef OpTree<T_OPERAND> MyImpClass;
+	typedef T_OPERAND value_type;
+	typedef detail::OpTree<value_type> MyImpClass;
 private:
 	std::unique_ptr<MyImpClass> m_priv;
 protected:
@@ -132,16 +136,16 @@ protected:
 		return priv()->copy();
 	}
 public:
-	OpTree();
-	OpTree(MyImpClass * priv);
-	OpTree(std::unique_ptr<MyImpClass> && priv);
+	OpTree() : m_priv(new detail::EmptyOpTree<T_OPERAND>()) {}
+	OpTree(MyImpClass * priv) : m_priv(priv) {}
+	OpTree(std::unique_ptr<MyImpClass> && priv) {m_priv.swap(priv);}
 	OpTree(const OpTree & other) : m_priv(other.copy()) {}
-	OpTree(OpTree && other) : m_priv(other.m_priv) {}
-	virtual ~OpTree();
+	OpTree(OpTree && other) {m_priv.swap(other.m_priv);}
+	virtual ~OpTree() {}
 	inline bool parse(const std::string & query) {
-		return priv()->parse();
+		return priv()->parse(query);
 	}
-	inline T_OPERAND calc() {
+	inline value_type calc() {
 		return priv()->calc();
 	}
 };
