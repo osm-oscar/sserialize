@@ -28,6 +28,10 @@ public:
 		mtime = ((seconds) * 1000*1000 + useconds) + 0.5;
 		return mtime;
 	}
+	
+	long elapsedUseconds() const {
+		return elapsedTime();
+	}
 
 	long elapsedMilliSeconds() const {
 		return elapsedTime()/1000;
