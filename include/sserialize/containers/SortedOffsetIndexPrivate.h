@@ -33,7 +33,7 @@ private:
 	uint32_t m_size;
 	uint64_t m_slopenom;
 	int64_t m_yintercept; 
-	uint64_t m_idOffset;//negative id-offset
+	int64_t m_idOffset;//negative id-offset
 	
 private:
 	template<class TSortedContainer>
