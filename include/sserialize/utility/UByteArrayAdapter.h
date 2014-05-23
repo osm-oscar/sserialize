@@ -84,6 +84,7 @@ private:
 
 	static std::string m_tempFilePrefix;
 	static std::string m_fastTempFilePrefix;
+	static std::string m_logFilePrefix;
 	
 private:
 	explicit UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv);
@@ -304,8 +305,10 @@ public:
 	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
 	static std::string getTempFilePrefix();
 	static std::string getFastTempFilePrefix();
+	static std::string getLogFilePrefix();
 	static void setTempFilePrefix(const std::string & path);
 	static void setFastTempFilePrefix(const std::string & path);
+	static void setLogFilePrefix(const std::string & path);
 	
 	static inline OffsetType OffsetTypeSerializedLength() { return 5; }
 	enum {S_OffsetTypeSerializedLength=5};
