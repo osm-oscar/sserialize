@@ -63,8 +63,8 @@ uint8_t CompactUintArrayPrivateVarBits::bpn() const {
 
 //BUG:possible overflow in posStart
 uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
-	uint32_t posStart = pos*m_bpn / 8;
-	uint8_t initShift = (pos == 0 ? 0 : (pos*m_bpn) % 8);
+	uint32_t posStart = sserialize::multiplyDiv(pos, m_bpn, 8);
+	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
 	uint32_t res = static_cast<uint32_t>(m_data.at(posStart)) >> initShift;
 
 	uint8_t byteShift = 8 - initShift;
@@ -83,8 +83,8 @@ uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
 uint32_t CompactUintArrayPrivateVarBits::set(const uint32_t pos, uint32_t value) {
 	value = value & m_mask;
 	
-	uint32_t startPos = (pos*m_bpn) / 8; 
-	uint8_t initShift = (pos == 0 ? 0 : (pos*m_bpn) % 8);
+	uint32_t startPos = sserialize::multiplyDiv(pos, m_bpn, 8); 
+	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
 
 	if (initShift+m_bpn <= 8) { //everything is within the first
 		uint8_t mask = createMask(initShift); //sets the lower bits
@@ -141,8 +141,8 @@ uint32_t CompactUintArrayPrivateVarBits64::set(const uint32_t pos, uint32_t valu
 }
 
 uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
-	uint32_t posStart = pos*m_bpn / 8;
-	uint8_t initShift = (pos == 0 ? 0 : (pos*m_bpn) % 8);
+	uint32_t posStart = sserialize::multiplyDiv(pos, m_bpn, 8);
+	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
 	uint64_t res = static_cast<uint64_t>(m_data.at(posStart)) >> initShift;
 
 	uint8_t byteShift = 8 - initShift;
@@ -158,8 +158,8 @@ uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
 uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t value) {
 	value = value & m_mask;
 	
-	uint32_t startPos = (pos*m_bpn) / 8; 
-	uint8_t initShift = (pos == 0 ? 0 : (pos*m_bpn) % 8);
+	uint32_t startPos = sserialize::multiplyDiv(pos, m_bpn, 8); 
+	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
 
 	if (initShift+m_bpn <= 8) { //everything is within the first
 		uint8_t mask = createMask(initShift); //sets the lower bits
