@@ -8,6 +8,16 @@
 
 namespace sserialize {
 
+///does a*b/c correctly if the result is smaller thant uint32_t
+inline uint32_t multiplyDiv(uint32_t a, uint32_t b, uint32_t c) {
+	return (static_cast<uint64_t>(a)*b)/c;
+}
+
+///does (a*b)%c correctly if the result is smaller than uint32_t
+inline uint32_t multiplyMod(uint32_t a, uint32_t b, uint32_t c) {
+	return (static_cast<uint64_t>(a)*b)%c;
+}
+
 /** @return [-1, 0, 1]
    * @src http://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
    */
