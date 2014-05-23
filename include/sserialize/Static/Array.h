@@ -79,7 +79,7 @@ public:
 	
 	void writeOutOffset() {
 		std::ofstream of;
-		std::string str = MmappedFile::findLockFilePath(UByteArrayAdapter::getTempFilePrefix(), 1024);
+		std::string str = MmappedFile::findLockFilePath(UByteArrayAdapter::getLogFilePrefix() + "Array_broken_OffsetIndex", 1024);
 		of.open(str);
 		if (of.is_open()) {
 			for(uint64_t x : offsets()) {
