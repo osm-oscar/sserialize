@@ -47,6 +47,7 @@ namespace StringCompleterPrivate {
 
 class StringCompleter: public RCWrapper<StringCompleterPrivate> {
 public:
+	///QuerryType, can be used in conjunction with SupportedQuerries (they are the same)
 	enum QuerryType {
 		QT_NONE=0, QT_EXACT=1, QT_PREFIX=2, QT_SUFFIX=4, QT_SUBSTRING=8, QT_EPSS=15, QT_CASE_INSENSITIVE=16, QT_CASE_SENSTIVE=32
 	};
