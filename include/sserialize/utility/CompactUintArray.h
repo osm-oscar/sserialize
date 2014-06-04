@@ -17,6 +17,8 @@ namespace sserialize {
 class CompactUintArrayPrivate: public RefCountObject {
 protected:
 	UByteArrayAdapter m_data;
+protected:
+	void calcBegin(const uint32_t pos, UByteArrayAdapter::OffsetType & posStart, uint8_t & initShift, uint8_t bpn) const;
 public:
 	CompactUintArrayPrivate();
 	CompactUintArrayPrivate(const UByteArrayAdapter & adap);

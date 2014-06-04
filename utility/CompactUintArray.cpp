@@ -2,8 +2,14 @@
 #include <stdint.h>
 #include <iostream>
 #include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/utility/SerializationInfo.h>
 
 namespace sserialize {
+
+void CompactUintArrayPrivate::calcBegin(const uint32_t pos, UByteArrayAdapter::OffsetType & posStart, uint8_t & initShift, uint8_t bpn) const {
+	posStart = sserialize::multiplyDiv32(pos, bpn, 8);
+	initShift = (pos == 0 ? 0 : sserialize::multiplyMod32(pos, bpn, 8));
+}
 
 CompactUintArrayPrivate::CompactUintArrayPrivate() : RefCountObject() {}
 
@@ -63,8 +69,9 @@ uint8_t CompactUintArrayPrivateVarBits::bpn() const {
 
 //BUG:possible overflow in posStart
 uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
-	uint32_t posStart = sserialize::multiplyDiv(pos, m_bpn, 8);
-	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
+	UByteArrayAdapter::OffsetType posStart;
+	uint8_t initShift;
+	calcBegin(pos, posStart, initShift, m_bpn);
 	uint32_t res = static_cast<uint32_t>(m_data.at(posStart)) >> initShift;
 
 	uint8_t byteShift = 8 - initShift;
@@ -83,8 +90,9 @@ uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
 uint32_t CompactUintArrayPrivateVarBits::set(const uint32_t pos, uint32_t value) {
 	value = value & m_mask;
 	
-	uint32_t startPos = sserialize::multiplyDiv(pos, m_bpn, 8); 
-	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
+	UByteArrayAdapter::OffsetType startPos;
+	uint8_t initShift;
+	calcBegin(pos, startPos, initShift, m_bpn);
 
 	if (initShift+m_bpn <= 8) { //everything is within the first
 		uint8_t mask = createMask(initShift); //sets the lower bits
@@ -141,8 +149,9 @@ uint32_t CompactUintArrayPrivateVarBits64::set(const uint32_t pos, uint32_t valu
 }
 
 uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
-	uint32_t posStart = sserialize::multiplyDiv(pos, m_bpn, 8);
-	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
+	UByteArrayAdapter::OffsetType posStart;
+	uint8_t initShift;
+	calcBegin(pos, posStart, initShift, m_bpn);
 	uint64_t res = static_cast<uint64_t>(m_data.at(posStart)) >> initShift;
 
 	uint8_t byteShift = 8 - initShift;
@@ -158,8 +167,9 @@ uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
 uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t value) {
 	value = value & m_mask;
 	
-	uint32_t startPos = sserialize::multiplyDiv(pos, m_bpn, 8); 
-	uint8_t initShift = (pos == 0 ? 0 : sserialize::multiplyMod(pos, m_bpn, 8));
+	UByteArrayAdapter::OffsetType startPos;
+	uint8_t initShift;
+	calcBegin(pos, startPos, initShift, m_bpn);
 
 	if (initShift+m_bpn <= 8) { //everything is within the first
 		uint8_t mask = createMask(initShift); //sets the lower bits
@@ -219,11 +229,11 @@ uint8_t CompactUintArrayPrivateU16::bpn() const {
 
 
 uint32_t CompactUintArrayPrivateU16::at(uint32_t pos) const {
-    return m_data.getUint16(2*pos);
+    return m_data.getUint16( SerializationInfo<uint16_t>::length*pos);
 }
 
 uint32_t CompactUintArrayPrivateU16::set(const uint32_t pos, uint32_t value) {
-    m_data.putUint16(2*pos, value);
+    m_data.putUint16(SerializationInfo<uint16_t>::length*pos, value);
 	return value;
 }
 
@@ -237,11 +247,11 @@ uint8_t CompactUintArrayPrivateU24::bpn() const {
 
 uint32_t CompactUintArrayPrivateU24::at(uint32_t pos) const
 {
-    return m_data.getUint24(3*pos);
+    return m_data.getUint24(static_cast<UByteArrayAdapter::OffsetType>(3)*pos);
 }
 
 uint32_t CompactUintArrayPrivateU24::set(const uint32_t pos, uint32_t value) {
-	m_data.putUint24(3*pos, value);
+	m_data.putUint24(static_cast<UByteArrayAdapter::OffsetType>(3)*pos, value);
 	return value;
 }
 
@@ -254,11 +264,11 @@ uint8_t CompactUintArrayPrivateU32::bpn() const {
 
 
 uint32_t CompactUintArrayPrivateU32::at(uint32_t pos) const {
-    return m_data.getUint32(4*pos);
+    return m_data.getUint32(SerializationInfo<uint32_t>::length*pos);
 }
 
 uint32_t CompactUintArrayPrivateU32::set(const uint32_t pos, uint32_t value) {
-    m_data.putUint32(4*pos, value);
+    m_data.putUint32(SerializationInfo<uint32_t>::length*pos, value);
 	return value;
 }
 
