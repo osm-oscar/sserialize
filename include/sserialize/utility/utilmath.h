@@ -9,13 +9,28 @@
 namespace sserialize {
 
 ///does a*b/c correctly if the result is smaller thant uint32_t
-inline uint32_t multiplyDiv(uint32_t a, uint32_t b, uint32_t c) {
+inline uint32_t multiplyDiv32(uint32_t a, uint32_t b, uint32_t c) {
 	return (static_cast<uint64_t>(a)*b)/c;
 }
 
 ///does (a*b)%c correctly if the result is smaller than uint32_t
-inline uint32_t multiplyMod(uint32_t a, uint32_t b, uint32_t c) {
+inline uint32_t multiplyMod32(uint32_t a, uint32_t b, uint32_t c) {
 	return (static_cast<uint64_t>(a)*b)%c;
+}
+
+inline uint64_t multiplyDiv64(uint64_t a, uint64_t b, uint32_t c) {
+	uint64_t a_c = a/c;
+	uint64_t r_a = a%c;
+	uint64_t b_c = b/c;
+	uint64_t r_b = b%c;
+	return a_c*b_c*c+a_c*r_b+b_c*r_a+(r_a*r_b)/c;
+}
+
+///correct if log2(a%c * b%c) <= 64
+inline uint64_t multiplyMod64(uint64_t a, uint64_t b, uint32_t c) {
+	uint64_t r_a = a%c;
+	uint64_t r_b = b%c;
+	return (r_a*r_b)%c;
 }
 
 /** @return [-1, 0, 1]
