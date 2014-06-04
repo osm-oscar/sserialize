@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/mman.h> 
 #include <stdlib.h>
+#include <sys/param.h>
 #include <errno.h>
 #include <string.h>
 #include <limits>
@@ -367,5 +368,11 @@ bool MmappedFile::createSymlink(const std::string & src, const std::string & des
 	return (0 == symlink(src.c_str(), destination.c_str()));
 }
 
+std::string MmappedFile::realPath(const std::string & path) {
+	char buf[PATH_MAX];
+	buf[0] = 0;
+	::realpath(path.c_str(), buf);
+	return std::string(buf);
+}
 
 }//end namespace
