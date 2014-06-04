@@ -6,6 +6,12 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 
+GeoHierarchy::SubSet::Node::~Node() {
+	for(auto n : m_children) {
+		delete n;
+	}
+}
+
 GeoHierarchy::Cell::Cell() : 
 m_pos(0),
 m_db(0)
@@ -20,6 +26,10 @@ GeoHierarchy::Cell::~Cell() {}
 
 uint32_t GeoHierarchy::Cell::itemPtr() const {
 	return (m_db->cells().at(m_pos, CD_ITEM_PTR));
+}
+
+uint32_t GeoHierarchy::Cell::itemCount() const {
+	return m_db->cellItemsCount(m_pos);
 }
 
 uint32_t GeoHierarchy::Cell::parentsBegin() const {
@@ -72,11 +82,11 @@ uint32_t GeoHierarchy::Region::cellIndexPtr() const {
 }
 
 uint32_t GeoHierarchy::Region::parentsBegin() const {
-	return childrenBegin() + m_db->regions().at(m_pos, RD_PARENTS_OFFSET);
+	return m_db->regionParentsBegin(m_pos);
 }
 
 uint32_t GeoHierarchy::Region::parentsEnd() const {
-	return  m_db->regions().at(m_pos+1, RD_CHILDREN_BEGIN);
+	return  m_db->regionParentsEnd(m_pos);
 }
 
 uint32_t GeoHierarchy::Region::parentsSize() const {
@@ -115,6 +125,10 @@ uint32_t GeoHierarchy::Region::child(uint32_t pos) const {
 
 uint32_t GeoHierarchy::Region::itemsPtr() const {
 	return m_db->regions().at(m_pos, RD_ITEMS_PTR);
+}
+
+uint32_t GeoHierarchy::Region::itemsCount() const {
+	return m_db->regionItemsCount(m_pos);
 }
 
 GeoHierarchy::GeoHierarchy() {}
@@ -164,6 +178,10 @@ uint32_t GeoHierarchy::cellItemsPtr(uint32_t pos) const {
 	return m_cells.at(pos, Cell::CD_ITEM_PTR);
 }
 
+uint32_t GeoHierarchy::cellItemsCount(uint32_t pos) const {
+	return m_cells.at(pos, Cell::CD_ITEM_COUNT);
+}
+
 uint32_t GeoHierarchy::regionSize() const {
 	uint32_t rs  = m_regions.size();
 	return (rs > 0 ? rs-2 : 0); //we have to subtract 2 because of the rootRegion and the dummy region
@@ -179,6 +197,18 @@ GeoHierarchy::Region GeoHierarchy::rootRegion() const {
 
 uint32_t GeoHierarchy::regionItemsPtr(uint32_t pos) const {
 	return m_regions.at(pos, Region::RD_ITEMS_PTR);
+}
+
+uint32_t GeoHierarchy::regionItemsCount(uint32_t pos) const {
+	return m_regions.at(pos, Region::RD_ITEMS_COUNT);
+}
+
+uint32_t GeoHierarchy::regionParentsBegin(uint32_t id) const {
+	return m_regions.at(id, Region::RD_CHILDREN_BEGIN) + m_regions.at(id, Region::RD_PARENTS_OFFSET);
+}
+
+uint32_t GeoHierarchy::regionParentsEnd(uint32_t id) const {
+	return m_regions.at(id+1, Region::RD_CHILDREN_BEGIN);
 }
 
 uint32_t GeoHierarchy::regionPtrSize() const {
@@ -223,6 +253,53 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	out << "cell ptr data size=" << m_cellPtrs.getSizeInBytes() << std::endl;
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
+}
+
+GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
+	typedef sserialize::CellQueryResult::PartialMatchesMap::const_iterator PMIterator;
+	typedef sserialize::ItemIndex::const_iterator FMIterator;
+	std::unordered_map<uint32_t, SubSet::Node*> nodes;
+	for(PMIterator it(cqr.partialMatchesItems().cbegin()), end(cqr.partialMatchesItems().cend()); it != end; ++it) {
+		uint32_t cellId = it->first;
+		uint32_t itemsInCell = it->second.size();
+		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
+			uint32_t cP = cellPtr(cPIt);
+			SubSet::Node * n;
+			if (!nodes.count(cP)) {
+				n = nodes[cP] = new SubSet::Node(SubSet::Node::T_REGION, cP);
+			}
+			else {
+				n = nodes[cP];
+			}
+			n->itemSize() += itemsInCell;
+		}
+	}
+	for(FMIterator it(cqr.fullMatches().cbegin()), end(cqr.fullMatches().cend()); it != end; ++it) {
+		uint32_t cellId = *it;
+		uint32_t itemsInCell = cellItemsCount(cellId);
+		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
+			uint32_t cP = cellPtr(cPIt);
+			SubSet::Node * n;
+			if (!nodes.count(cP)) {
+				n = nodes[cP] = new SubSet::Node(SubSet::Node::T_REGION, cP);
+			}
+			else {
+				n = nodes[cP];
+			}
+			n->itemSize() += itemsInCell;
+		}
+	}
+	for(std::unordered_map<uint32_t, SubSet::Node*>::iterator it(nodes.begin()), end(nodes.end()); it != end; ++it) {
+		uint32_t regionId = it->first;
+		for(uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId)); rPIt != rPEnd; ++rPIt) {
+			uint32_t rp = regionPtr(rPIt);
+			nodes[rp]->push_back(it->second);
+		}
+	}
+	if (nodes.count(regionSize())) {
+		return SubSet(nodes[regionSize()]);
+	}
+	return SubSet();
 }
 
 

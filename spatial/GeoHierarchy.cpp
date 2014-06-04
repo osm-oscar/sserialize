@@ -165,7 +165,7 @@ void GeoHierarchy::printStats(std::ostream & out) const {
 UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory, bool fullItemsIndex) const {
 	bool allOk = true;
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(3); //version
+	dest.putUint8(7); //version
 
 	std::vector<uint32_t> maxValues(sserialize::Static::spatial::GeoHierarchy::Region::RD__ENTRY_SIZE, 0);
 	uint32_t & mrdCellListIndexPtr = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR];
@@ -193,15 +193,19 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	mrdParentsOffset = std::max<uint32_t>(mrdParentsOffset, m_rootRegion.children.size());
 	mrdChildrenBegin = curPtrOffset;
 
-	std::vector<uint32_t> fullItemIndexPtrIds;
+	std::vector< std::pair<uint32_t, uint32_t> > fullItemIndexInfo;
 	//check for fullItemsPtr
 	if (fullItemsIndex) {
-		fullItemIndexPtrIds = createFullRegionItemIndex(idxFactory);
-		std::vector<uint32_t>::const_iterator maxElem = std::max_element(fullItemIndexPtrIds.cbegin(), fullItemIndexPtrIds.cend());
-		maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR] = *maxElem;
+		fullItemIndexInfo = createFullRegionItemIndex(idxFactory);
+		uint32_t & mrdFullItemsPtr = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR];
+		uint32_t & mrdFullItemsCount = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT];
+		for(std::vector< std::pair<uint32_t, uint32_t> >::const_iterator it(fullItemIndexInfo.cbegin()), end(fullItemIndexInfo.cend()); it != end; ++it) {
+			mrdFullItemsPtr = std::max(mrdFullItemsPtr, it->second);
+			mrdFullItemsCount = std::max(mrdFullItemsCount, it->second);
+		}
 	}
 	else {
-		fullItemIndexPtrIds.resize(m_regions.size(), 0);
+		fullItemIndexInfo.resize(m_regions.size(), std::pair<uint32_t, uint32_t>(0,0));
 	}
 	
 	std::vector<uint8_t> bitConfig;
@@ -222,7 +226,8 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, r.id);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN, curPtrOffset);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_PARENTS_OFFSET, r.children.size());
-			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR, fullItemIndexPtrIds[i]);
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR, fullItemIndexInfo[i].first);
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT, fullItemIndexInfo[i].second);
 			curPtrOffset += r.children.size() + r.parents.size();
 		}
 		//append the root region region
@@ -234,6 +239,8 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		curPtrOffset += m_rootRegion.children.size();
 		
 		//append the dummy region which is needed for the offset array
+		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR, 0);
+		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT, 0);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, 0);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE, sserialize::spatial::GS_NONE);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, 0);
@@ -271,6 +278,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	std::vector<uint32_t> & cellItemsIndexPtrs = cellListIndexPtrs;
 	
 	uint32_t & mcdItemPtr = maxValues[sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR];
+	uint32_t & mcdItemCount = maxValues[sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_COUNT];
 	uint32_t & mcdParentBegin = maxValues[sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN];
 	
 	curPtrOffset = 0;
@@ -279,6 +287,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		bool ok = true;
 		uint32_t itemPtr = idxFactory.addIndex(c.items, &ok);
 		mcdItemPtr = std::max<uint32_t>(mcdItemPtr, itemPtr);
+		mcdItemCount = std::max<uint32_t>(mcdItemCount, c.items.size());
 		curPtrOffset += c.parents.size();
 		cellItemsIndexPtrs[i] = itemPtr;
 		allOk = allOk && ok;
@@ -299,10 +308,12 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
 			const Cell & c = m_cells[i];
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, cellItemsIndexPtrs[i]);
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, c.items.size());
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN, curPtrOffset);
 			curPtrOffset += c.parents.size();
 		}
 		mvaCreator.set(m_cells.size(), sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, 0);
+		mvaCreator.set(m_cells.size(), sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_COUNT, 0);
 		mvaCreator.set(m_cells.size(), sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN, curPtrOffset);
 		
 		mvaCreator.flush();
@@ -443,9 +454,9 @@ std::vector<uint32_t> treeMerge(const std::vector< const std::vector<uint32_t>* 
 	}
 }
 
-std::vector<uint32_t> GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const {
-	std::vector<uint32_t> res;
-	res.resize(m_regions.size(), 0);
+std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const {
+	std::vector< std::pair<uint32_t, uint32_t> > res;
+	res.resize(m_regions.size(), std::pair<uint32_t, uint32_t>(0,0));
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions[i];
 		std::vector< const std::vector<uint32_t> * > tmp;
@@ -457,7 +468,7 @@ std::vector<uint32_t> GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIn
 		if (tmp.size()) {
 			items = treeMerge(tmp, 0, tmp.size()-1);
 		}
-		res.at(i) = idxFactory.addIndex(items);
+		res.at(i) = std::pair<uint32_t, uint32_t>(idxFactory.addIndex(items), items.size());
 	}
 	return res;
 }

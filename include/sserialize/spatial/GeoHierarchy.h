@@ -54,8 +54,8 @@ public:
 	bool testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh) const;
 	///get the regions in level order, where the level of a region is defined by the longest path from root to it self
 	std::vector<uint32_t> getRegionsInLevelOrder() const;
-
-	std::vector<uint32_t> createFullRegionItemIndex(sserialize::ItemIndexFactory & idxFactory) const;
+	///@return first = id, second = size
+	std::vector< std::pair< uint32_t, uint32_t > > createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const;
 };
 
 }} //end namespace
