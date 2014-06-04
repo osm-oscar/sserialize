@@ -622,7 +622,7 @@ UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset(const
 }
 
 std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) const {
-	int len;
+	int len = -1;
 	uint32_t strLen = getVlPackedUint32(pos, &len);
 	if (len < 0 || pos+len+strLen > m_len) {
 		if (length)
@@ -635,7 +635,7 @@ std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) con
 }
 
 UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * length) const {
-	int len;
+	int len = -1;
 	uint32_t strLen = getVlPackedUint32(pos, &len);
 	if (len < 0 || pos+len+strLen > m_len) {
 		if (length)
@@ -988,7 +988,7 @@ UBA_STREAMING_GET_FUNC(getFloat, float, 4);
 #undef UBA_STREAMING_GET_FUNC
 
 uint64_t UByteArrayAdapter::getVlPackedUint64() {
-	int len;
+	int len = -1;
 	uint64_t res = getVlPackedUint64(m_getPtr, &len);
 	if (len > 0)
 		m_getPtr += len;
@@ -996,7 +996,7 @@ uint64_t UByteArrayAdapter::getVlPackedUint64() {
 }
 
 int64_t UByteArrayAdapter::getVlPackedInt64() {
-	int len;
+	int len = -1;
 	int64_t res = getVlPackedInt64(m_getPtr, &len);
 	if (len > 0)
 		m_getPtr += len;
@@ -1015,7 +1015,7 @@ uint32_t UByteArrayAdapter::getVlPackedUint32() {
 }
 
 int32_t UByteArrayAdapter::getVlPackedInt32() {
-	int len;
+	int len = -1;
 	int32_t res = getVlPackedInt32(m_getPtr, &len);
 	if (len > 0)
 		m_getPtr += len;
@@ -1043,7 +1043,7 @@ std::string UByteArrayAdapter::getString() {
 }
 
 UByteArrayAdapter UByteArrayAdapter::getStringData() {
-	int len;
+	int len = -1;
 	UByteArrayAdapter s(getStringData(m_getPtr, &len));
 	if (len > 0)
 		m_getPtr += len;
