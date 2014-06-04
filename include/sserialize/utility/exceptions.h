@@ -25,7 +25,7 @@ public:
 	VersionMissMatchException(const std::string & what, uint32_t want, uint32_t have) :
 	Exception(what), m_wantVersion(want), m_haveVersion(have) {
 		std::stringstream ss;
-		ss << what << "; want version " << want << " but have version " << have;
+		ss << what << ": want version " << want << " but have version " << have;
 		setMsg(ss.str());
 	}
 	uint32_t wantVersion() const { return m_wantVersion; }
