@@ -63,8 +63,27 @@ CellQueryResult CellQueryResult::operator+(const sserialize::CellQueryResult & o
 }
 
 CellQueryResult CellQueryResult::operator-(const CellQueryResult & o) const {
-	throw sserialize::UnimplementedFunctionException("sserialize::CellQueryResult::operator-");
-	return CellQueryResult();
+	CellQueryResult r;
+	r.fullMatches() = fullMatches() - o.fullMatches();
+	ItemIndex pMCandidates = partialMatches() - o.fullMatches();
+	ItemIndex pMEqCell = pMCandidates / o.partialMatches();
+	
+	std::vector<uint32_t> tmp;
+	for(const uint32_t cellId : pMEqCell) {
+		ItemIndex tI = partialMatchesItems().at(cellId) - o.partialMatchesItems().at(cellId);
+		if (tI.size()) {
+			tmp.push_back(cellId);
+			r.partialMatchesItems()[cellId] = tI;
+		}
+	}
+
+	r.partialMatches() = (pMCandidates - pMEqCell);
+	for(const uint32_t cellId : r.partialMatches()) {
+		r.partialMatchesItems()[cellId] = m_partialMatchesItems.at(cellId);
+	}
+	r.partialMatches() = r.partialMatches() + ItemIndexFactory::create(tmp, indexType());
+	
+	return r;
 }
 
 CellQueryResult CellQueryResult::operator^(const CellQueryResult & other) const {
