@@ -6,12 +6,6 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 
-GeoHierarchy::SubSet::Node::~Node() {
-	for(auto n : m_children) {
-		delete n;
-	}
-}
-
 GeoHierarchy::Cell::Cell() : 
 m_pos(0),
 m_db(0)
@@ -289,17 +283,23 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			n->itemSize() += itemsInCell;
 		}
 	}
+	SubSet::Node * rootNode = new SubSet::Node(SubSet::Node::T_REGION, npos);
 	for(std::unordered_map<uint32_t, SubSet::Node*>::iterator it(nodes.begin()), end(nodes.end()); it != end; ++it) {
 		uint32_t regionId = it->first;
-		for(uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId)); rPIt != rPEnd; ++rPIt) {
-			uint32_t rp = regionPtr(rPIt);
+		uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId));
+		if (rPIt != rPEnd) {
+			for(; rPIt != rPEnd; ++rPIt) {
+				uint32_t rp = regionPtr(rPIt);
 			nodes[rp]->push_back(it->second);
+			}
 		}
+		else {
+			rootNode->push_back(it->second);
+			it->second->parent = rootNode;
+		}
+		
 	}
-	if (nodes.count(regionSize())) {
-		return SubSet(nodes[regionSize()]);
-	}
-	return SubSet();
+	return SubSet(rootNode);
 }
 
 
@@ -308,6 +308,7 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Cell & c) {
 	out << "sserialize::Static::spatial::GeoHierarchy::Cell[";
 	out << ", itemPtr=" << c.itemPtr();
+	out << ", itemsCount=" << c.itemCount();
 	out << "]";
 	return out;
 }
@@ -319,6 +320,7 @@ std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial:
 	out << ", cellIndexPtr=" << r.cellIndexPtr();
 	out << ", childrenSize=" << r.childrenSize();
 	out << ", itemsPtr=" << r.itemsPtr();
+	out << ", itemsCount=" << r.itemsCount();
 	out << "]";
 	return out;
 }
