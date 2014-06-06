@@ -295,7 +295,6 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 		}
 		else {
 			rootNode->push_back(it->second);
-			it->second->parent = rootNode;
 		}
 		
 	}
