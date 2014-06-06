@@ -121,33 +121,35 @@ public:
 
 	class SubSet {
 	public:
-		class Node {
+		class Node: public RefCountObject {
 		public:
 			typedef enum {T_CELL, T_REGION} Type;
 			typedef std::vector<Node*> ChildrenStorageContainer;
 		private:
-			Type m_type;
+			std::vector< RCPtrWrapper<Node> > m_children;
 			uint32_t m_id;
-			std::vector<Node*> m_children;
 			uint32_t m_itemSize;
+			Type m_type;
 		public:
-			Node(Type t, uint32_t id, uint32_t itemSize = 0) : m_type(t), m_id(id), m_itemSize(itemSize) {}
-			virtual ~Node();
+			Node(Type t, uint32_t id, uint32_t itemSize = 0) : m_id(id), m_itemSize(itemSize), m_type(t) {}
+			virtual ~Node() {}
 			inline uint32_t id() const { return m_id; }
 			inline uint32_t size() const { return m_children.size(); }
-			inline Node * operator[](uint32_t pos) { return m_children[pos]; }
-			inline Node * at(uint32_t pos) { return m_children.at(pos);}
-			inline void push_back(Node * child) { m_children.push_back(child);}
+			inline Node * operator[](uint32_t pos) { return m_children[pos].priv(); }
+			inline Node * at(uint32_t pos) { return m_children.at(pos).priv();}
+			inline const Node * operator[](uint32_t pos) const { return m_children[pos].priv(); }
+			inline const Node * at(uint32_t pos) const { return m_children.at(pos).priv();}
+			inline void push_back(Node * child) { m_children.push_back( RCPtrWrapper<Node>(child) );}
 			inline uint32_t itemSize() const { return m_itemSize; }
 			inline uint32_t & itemSize() { return m_itemSize; }
 		};
 	private:
-		std::shared_ptr<Node> m_root;
+		RCPtrWrapper<Node> m_root;
 	public:
 		SubSet() {}
 		SubSet(Node * root) : m_root(root) {}
 		virtual ~SubSet()  {}
-		inline Node* root() const { return m_root.get();}
+		inline const Node* root() const { return m_root.priv();}
 	};
 
 private:
