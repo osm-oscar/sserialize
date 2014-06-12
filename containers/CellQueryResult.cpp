@@ -4,6 +4,25 @@
 
 namespace sserialize {
 
+
+CellQueryResult & CellQueryResult::operator=(const CellQueryResult & other) {
+	m_fullMatches = other.fullMatches();
+	m_partialMatches = other.partialMatches();
+	m_partialMatchesItems = other.partialMatchesItems();
+	m_indexType = other.indexType();
+	return *this;
+}
+
+CellQueryResult & CellQueryResult::operator=(CellQueryResult && other) {
+	m_fullMatches = other.fullMatches();
+	m_partialMatches = other.partialMatches();
+	m_partialMatchesItems.clear();
+	using std::swap;
+	swap(m_partialMatchesItems, other.m_partialMatchesItems);
+	m_indexType = other.indexType();
+	return *this;
+}
+
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
 	ItemIndex nFM = m_fullMatches / o.m_fullMatches;
 	

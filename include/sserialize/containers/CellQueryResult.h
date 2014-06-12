@@ -43,6 +43,8 @@ public:
 		m_partialMatchesItems.swap(other.m_partialMatchesItems);
 	}
 	virtual ~CellQueryResult() {}
+	CellQueryResult & operator=(const CellQueryResult & other);
+	CellQueryResult & operator=(CellQueryResult && other);
 	
 	CellQueryResult operator/(const CellQueryResult & other) const;
 	CellQueryResult operator+(const CellQueryResult & other) const;
