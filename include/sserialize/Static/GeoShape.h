@@ -10,9 +10,10 @@ namespace spatial {
 class GeoShape {
 	std::shared_ptr<sserialize::spatial::GeoShape> m_priv;
 public:
-	GeoShape() {}
+	GeoShape() : m_priv(0) {}
 	GeoShape(sserialize::UByteArrayAdapter data);
 	virtual ~GeoShape() {}
+	inline bool valid() const { return m_priv.get() && type() != sserialize::spatial::GS_INVALID;}
 	inline uint32_t size() const { return m_priv->size(); }
 	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
 	
