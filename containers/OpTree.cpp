@@ -322,7 +322,9 @@ bool SetOpsOpTreeParser::hasNextToken() {
 	return m_strIt != m_parseString.cend();
 }
 
-SetOpsOpTreeParser::SetOpsOpTreeParser() {
+SetOpsOpTreeParser::SetOpsOpTreeParser() :
+m_beforeWasTerminal(false)
+{
 	m_opMap['+'] = OpDesc(OT_UNITE, 2);
 	m_opMap['-'] = OpDesc(OT_DIFF, 2);
 	m_opMap['/'] = OpDesc(OT_INTERSECT, 2);
