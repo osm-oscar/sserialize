@@ -14,6 +14,7 @@ public:
 	///@return true if the line p1->p2 intersects this region
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const = 0;
 	virtual bool intersects(const GeoRegion & other) const = 0;
+	using GeoShape::intersects;
 };
 
 
