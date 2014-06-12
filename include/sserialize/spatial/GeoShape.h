@@ -9,7 +9,7 @@ namespace spatial {
 
 ///GeoShapes ordered with increasing complexity. GS_END is one beyond the last one => for(int i(GS_BEGIN); i != GS_END; ++i)
 typedef enum {
-	GS_UNDEFINED=0, GS_NONE=0,
+	GS_UNDEFINED=0, GS_NONE=0, GS_INVALID=0,
 	GS_BEGIN=0,
 	GS_FIRST_SPATIAL_OBJECT=1, GS_POINT=1, GS_WAY=2, GS_POLYGON=3, GS_MULTI_POLYGON=4, GS_LAST_SPATIAL_OBJECT=4,
 	GS_FIRST_STATIC_SPATIAL_OBJECT=5, GS_STATIC_POINT=5, GS_STATIC_WAY=6, GS_STATIC_POLYGON=7, GS_STATIC_MULTI_POLYGON=8,
@@ -43,7 +43,23 @@ public:
 			return destination << static_cast<uint8_t>(GS_NONE);
 		}
 	}
+	template<typename T_GEO_SHAPE_ITERATOR>
+	static GeoRect bounds(T_GEO_SHAPE_ITERATOR begin, T_GEO_SHAPE_ITERATOR end);
+	
 };
+
+template<typename T_GEO_SHAPE_ITERATOR>
+GeoRect GeoShape::bounds(T_GEO_SHAPE_ITERATOR begin, T_GEO_SHAPE_ITERATOR end) {
+	if (begin != end) {
+		GeoRect r((*begin)->boundary());
+		for(++begin; begin != end; ++begin) {
+			r.enlarge((*begin)->boundary());
+		}
+		return r;
+	}
+	return GeoRect();
+}
+
 
 }}//end namespace
 
