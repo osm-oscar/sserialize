@@ -56,6 +56,8 @@ public:
 	
 	///Resize this Rect by lat in latitude and lon in longitude
 	void resize(double latFactor, double lonFactor);
+	
+	GeoRect operator/(const GeoRect & other) const;
 };
 
 }}//end namespacec

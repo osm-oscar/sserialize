@@ -132,6 +132,19 @@ void GeoRect::resize(double latFactor, double lonFactor) {
 	maxLon() = lonMid + lonLen*lonFactor;
 }
 
+
+GeoRect GeoRect::operator/(const GeoRect & other) const {
+	double myMinLat = std::max(minLat(), other.minLat());
+	double myMaxLat = std::min(maxLat(), other.maxLat());
+	if (myMinLat >= myMaxLat)
+		return GeoRect();
+	double myMinLon = std::max(minLon(), other.minLon());
+	double myMaxLon = std::min(maxLon(), other.maxLon());
+	if (myMinLon >= myMaxLon)
+		return GeoRect();
+	return GeoRect(myMinLat, myMaxLat, myMinLon, myMaxLon);
+}
+
 }}//end namespace
 
 
