@@ -15,7 +15,7 @@ public:
 		uint32_t x;
 		uint32_t y;
 		uint32_t tile;
-		bool valid() const { return tile != 0xFFFFFFFF;}
+		inline bool valid() const { return tile != 0xFFFFFFFF;}
 	};
 private:
 	GeoRect m_rect;
@@ -47,18 +47,18 @@ public:
 	double latStep() const { return m_latStep; }
 	double lonStep() const { return m_lonStep; }
 	
-	GeoRect cellBoundary(uint32_t x, uint32_t y) const {
-		return GeoRect(m_rect.lat()[0]+x*m_latStep,
-								m_rect.lat()[0]+(x+1)*m_latStep,
-								m_rect.lon()[0]+y*m_lonStep,
-								m_rect.lon()[0]+(y+1)*m_lonStep);
+	GeoRect cellBoundary(uint32_t lat, uint32_t lon) const {
+		return GeoRect(m_rect.lat()[0]+lat*m_latStep,
+								m_rect.lat()[0]+(lat+1)*m_latStep,
+								m_rect.lon()[0]+lon*m_lonStep,
+								m_rect.lon()[0]+(lon+1)*m_lonStep);
 	}
 	///inclusive xmin inclusive xmax => multiCellBoundary(x,y,x,y) == cellBoundary(x,y)
-	GeoRect multiCellBoundary(uint32_t xmin, uint32_t ymin, uint32_t xmax, uint32_t ymax) const {
-		return GeoRect(m_rect.lat()[0] + xmin * m_latStep,
-								m_rect.lat()[0]+(xmax+1)*m_latStep,
-								m_rect.lon()[0]+ ymin*m_lonStep,
-								m_rect.lon()[0]+(ymax+1)*m_lonStep);
+	GeoRect multiCellBoundary(uint32_t latmin, uint32_t lonmin, uint32_t latmax, uint32_t lonmax) const {
+		return GeoRect(m_rect.lat()[0] + latmin * m_latStep,
+								m_rect.lat()[0]+(latmax+1)*m_latStep,
+								m_rect.lon()[0]+ lonmin*m_lonStep,
+								m_rect.lon()[0]+(lonmax+1)*m_lonStep);
 	}
 	
 	bool contains(const double lat, const double lon) const {
@@ -87,8 +87,12 @@ public:
 	}
 	
 	/** This does NOT! check if the given coords exisit */
-	uint32_t selectBin(uint32_t x, uint32_t y) const {
-		return y*m_latcount+x;
+	uint32_t selectBin(uint32_t lat, uint32_t lon) const {
+		return lon*m_latcount+lat;
+	}
+	
+	GridBin select(uint32_t tile) const {
+		return (tile < m_latcount*m_loncount ? GridBin(tile%m_latcount, tile/m_latcount, tile) : GridBin());
 	}
 	
 	/** @return all GridBins intersecting rect */
