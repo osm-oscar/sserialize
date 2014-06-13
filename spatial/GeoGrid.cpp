@@ -20,18 +20,19 @@ m_loncount(loncount)
 	m_latStep = (m_rect.lat()[1]-m_rect.lat()[0])/latcount;
 	m_lonStep = (m_rect.lon()[1]-m_rect.lon()[0])/loncount;
 }
-GeoRect GeoGrid::cellBoundary(uint32_t x, uint32_t y) const {
-	return GeoRect(m_rect.lat()[0]+x*m_latStep,
-							m_rect.lat()[0]+(x+1)*m_latStep,
-							m_rect.lon()[0]+y*m_lonStep,
-							m_rect.lon()[0]+(y+1)*m_lonStep);
+
+GeoRect GeoGrid::cellBoundary(uint32_t lat, uint32_t lon) const {
+	return GeoRect(m_rect.lat()[0]+lat*m_latStep,
+							m_rect.lat()[0]+(lat+1)*m_latStep,
+							m_rect.lon()[0]+lon*m_lonStep,
+							m_rect.lon()[0]+(lon+1)*m_lonStep);
 }
-///inclusive xmin inclusive xmax => multiCellBoundary(x,y,x,y) == cellBoundary(x,y)
-GeoRect GeoGrid::multiCellBoundary(uint32_t xmin, uint32_t ymin, uint32_t xmax, uint32_t ymax) const {
-	return GeoRect(m_rect.lat()[0] + xmin * m_latStep,
-							m_rect.lat()[0]+(xmax+1)*m_latStep,
-							m_rect.lon()[0]+ ymin*m_lonStep,
-							m_rect.lon()[0]+(ymax+1)*m_lonStep);
+
+GeoRect GeoGrid::multiCellBoundary(uint32_t latmin, uint32_t lonmin, uint32_t latmax, uint32_t lonmax) const {
+	return GeoRect(m_rect.lat()[0] + latmin * m_latStep,
+							m_rect.lat()[0]+(latmax+1)*m_latStep,
+							m_rect.lon()[0]+ lonmin*m_lonStep,
+							m_rect.lon()[0]+(lonmax+1)*m_lonStep);
 }
 
 GeoGrid::GridBin GeoGrid::select(double lat, double lon) const {
@@ -46,11 +47,6 @@ GeoGrid::GridBin GeoGrid::select(double lat, double lon) const {
 	if (y == m_loncount)
 		y = m_loncount-1;
 	return GridBin(x,y, selectBin(x,y));
-}
-
-/** This does NOT! check if the given coords exisit */
-uint32_t GeoGrid::selectBin(uint32_t x, uint32_t y) const {
-	return y*m_latcount+x;
 }
 
 std::vector<GeoGrid::GridBin> GeoGrid::select(GeoRect rect) {
@@ -77,6 +73,10 @@ std::vector<GeoGrid::GridBin> GeoGrid::select(GeoRect rect) {
 		}
 		return cells;
 	}
+}
+
+GeoGrid::GridBin GeoGrid::select(uint32_t tile) const {
+	return (tile < m_latcount*m_loncount ? GridBin(tile%m_latcount, tile/m_latcount, tile) : GridBin());
 }
 
 bool GeoGrid::select(GeoRect rect, GeoGrid::GridBin & bottomLeft,GeoGrid::GridBin & topRight) const {
