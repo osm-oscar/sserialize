@@ -132,7 +132,11 @@ MyBaseClass(points)
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(TPointsContainer && points) :
 MyBaseClass(points)
-{}
+{
+	if (points.front() != points.back()) {
+		throw sserialize::CorruptDataException("GeoPolygon");
+	}
+}
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(GeoPolygon && other) :
