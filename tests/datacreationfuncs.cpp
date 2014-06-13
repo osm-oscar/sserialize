@@ -295,8 +295,6 @@ void createHandSamplePolygons(SamplePolygonTestData & data) {
 	data.polys.push_back( std::pair<spatial::GeoPolygon, uint32_t>(spatial::GeoPolygon(polyI), POLY_I) );
 	data.polys.push_back( std::pair<spatial::GeoPolygon, uint32_t>(spatial::GeoPolygon(polyJ), POLY_J) );
 
-
-	
 	std::vector< std::pair<uint32_t, uint32_t> > polyIntersects;
 	polyIntersects.push_back( std::pair<uint32_t, uint32_t>(POLY_A, POLY_B) );
 	polyIntersects.push_back( std::pair<uint32_t, uint32_t>(POLY_B, POLY_I) );
