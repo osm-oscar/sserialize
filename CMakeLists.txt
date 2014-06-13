@@ -108,6 +108,7 @@ spatial/GeoMultiPolygon.cpp
 spatial/RTree.cpp
 spatial/GridRTree.cpp
 spatial/GeoHierarchy.cpp
+spatial/GridRegionTree.cpp
 spatial/GeoGrid.cpp
 )
 

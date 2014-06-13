@@ -104,6 +104,8 @@ ADD_TEST_TARGET_SINGLE(StaticUnicodeTrie)
 #spatial
 add_test_target_single(spatial_geopolygon)
 add_test_target_single(spatial_polygonstore)
+add_test_target_single(spatial_GridRegionTree)
+add_test_target_single(spatial_GeoPolygon)
 
 #misc
 ADD_TEST_TARGET_SINGLE(unicodetest)
