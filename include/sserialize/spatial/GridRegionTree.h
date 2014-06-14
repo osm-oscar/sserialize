@@ -4,6 +4,7 @@
 #include <sserialize/spatial/GeoGrid.h>
 #include <sserialize/spatial/GeoPolygon.h>
 #include <sserialize/spatial/GeoMultiPolygon.h>
+#include <sserialize/utility/ProgressInfo.h>
 #include <unordered_set>
 
 namespace sserialize {
@@ -95,6 +96,8 @@ private:
 private:
 	template<typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
 	void getEnclosing(const GeoRect & bounds, T_REGION_ID_ITERATOR begin, const T_REGION_ID_ITERATOR & end, T_OUTPUT_ITERATOR out);
+	template<typename T_GRID_REFINER>
+	void create(const GeoGrid & initial, T_GRID_REFINER refiner);
 	
 	template<typename T_GRID_REFINER>
 	uint32_t insert(const T_GRID_REFINER & refiner, const std::unordered_map<GeoRegion*, uint32_t> & rPtr2Id, std::vector<uint32_t> sortedRegions, const sserialize::spatial::GeoRect & maxBounds);
@@ -103,46 +106,24 @@ public:
 	///@param refiner: refines a given node: bool operator()(GeoRect maxBounds, std::unordered_set<uint32_t> regionids, GeoGrid & newGrid) const,
 	///@return false if no further refinement should happen
 	template<typename T_GEOREGION_ITERATOR, typename T_GRID_REFINER>
-	GridRegionTree(const GeoGrid & initial, T_GEOREGION_ITERATOR begin, T_GEOREGION_ITERATOR end, T_GRID_REFINER refiner) {
-		std::unordered_map<GeoRegion*, uint32_t> rPtr2IdH;
-		m_regions.reserve(end-begin);
-		rPtr2IdH.reserve(m_regions.capacity());
-		for(T_GEOREGION_ITERATOR it(begin); it != end; ++it) {
-			rPtr2IdH[*it] = m_regions.size();
-			m_regions.push_back(*it);
-		}
-		
-		const uint32_t nodePtr = 0;
-		const uint32_t childPtr = 0;
-		const uint32_t gridPtr = 0;
-		
-		m_nodes.push_back(Node(Node::NT_INTERNAL));
-		m_nodeGrids.push_back(initial);
-		m_nodePtr.resize(initial.tileCount(), sserialize::spatial::GridRegionTree::NullNodePtr);
-		
-		m_nodes[nodePtr].internal().childrenBegin = childPtr;
-		m_nodes[nodePtr].internal().gridPtr = gridPtr;
-
-		for(uint32_t tile=0, ts=initial.tileCount(); tile < ts; ++tile) {
-			GeoGrid::GridBin gridBin(initial.select(tile));
-			std::vector<uint32_t> tmp;
-			GeoRect tmpRect(initial.cellBoundary(gridBin));
-			for(uint32_t rIt(0), rEnd(m_regions.size()); rIt != rEnd; ++rIt) {
-				if (m_regions[rIt]->intersects(tmpRect)) {
-					tmp.push_back(rIt);
-				}
-			}
-			if (tmp.size()) {
-				//put this into a temporary as m_nodePtr will likely change during recursion and therefore the fetched adress on the left is wrong
-				uint32_t tmpRet = insert(refiner, rPtr2IdH, tmp, tmpRect);
-				m_nodePtr[childPtr+gridBin.tile] = tmpRet;
-			}
-		}
+	GridRegionTree(const GeoGrid & initial, T_GEOREGION_ITERATOR begin, T_GEOREGION_ITERATOR end, T_GRID_REFINER refiner) :
+	m_regions(begin, end)
+	{
+		create(initial, refiner);
+	}
+	template<typename T_GRID_REFINER>
+	GridRegionTree(const GeoGrid & initial, const std::vector<GeoRegion*> & regions, T_GRID_REFINER refiner) :
+	m_regions(regions)
+	{
+		create(initial, refiner);
 	}
 	virtual ~GridRegionTree() {}
 	void shrink_to_fit();
-	template<typename T_INSERT_ITERATOR1, typename T_INSERT_ITERATOR2>
-	void find(const sserialize::spatial::GeoPoint & p, T_INSERT_ITERATOR1 intersecting, T_INSERT_ITERATOR2 enclosing) const;
+	GeoRegion * region(uint32_t id) { return m_regions.at(id); }
+	const GeoRegion * region(uint32_t id) const { return m_regions.at(id); }
+	template<typename T_OUTPUT_ITERATOR>
+	void find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITERATOR ids) const;
+	void printStats(std::ostream & out) const;
 };
 
 template<typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
@@ -170,19 +151,59 @@ void GridRegionTree::getEnclosing(const sserialize::spatial::GeoRect& bounds, T_
 }
 
 template<typename T_GRID_REFINER>
+void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
+	std::unordered_map<GeoRegion*, uint32_t> rPtr2IdH;
+	rPtr2IdH.reserve(m_regions.capacity());
+	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+		rPtr2IdH[ m_regions[i] ] = i;
+	}
+	
+	const uint32_t nodePtr = 0;
+	const uint32_t childPtr = 0;
+	const uint32_t gridPtr = 0;
+	
+	m_nodes.push_back(Node(Node::NT_INTERNAL));
+	m_nodeGrids.push_back(initial);
+	m_nodePtr.resize(initial.tileCount(), sserialize::spatial::GridRegionTree::NullNodePtr);
+	
+	m_nodes[nodePtr].internal().childrenBegin = childPtr;
+	m_nodes[nodePtr].internal().gridPtr = gridPtr;
+
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(initial.tileCount(), "GridRegionTree::create");
+	for(uint32_t tile=0, ts=initial.tileCount(); tile < ts; ++tile) {
+		GeoGrid::GridBin gridBin(initial.select(tile));
+		std::vector<uint32_t> tmp;
+		GeoRect tmpRect(initial.cellBoundary(gridBin));
+		for(uint32_t rIt(0), rEnd(m_regions.size()); rIt != rEnd; ++rIt) {
+			if (m_regions[rIt]->intersects(tmpRect)) {
+				tmp.push_back(rIt);
+			}
+		}
+		if (tmp.size()) {
+			//put this into a temporary as m_nodePtr will likely change during recursion and therefore the fetched adress on the left is wrong
+			uint32_t tmpRet = insert(refiner, rPtr2IdH, tmp, tmpRect);
+			m_nodePtr[childPtr+gridBin.tile] = tmpRet;
+		}
+		pinfo(tile);
+	}
+	pinfo.end();
+}
+
+
+template<typename T_GRID_REFINER>
 uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unordered_map< sserialize::spatial::GeoRegion*, uint32_t >& rPtr2Id, std::vector< uint32_t > sortedRegions, const sserialize::spatial::GeoRect& maxBounds) {
-	GeoGrid newGrid;
 	uint32_t nodePtr = m_nodes.size();
 	m_nodes.push_back(Node(Node::NT_INVALID));
 	{//remove regions that fully enclose this tile;
 		m_nodes[nodePtr].internalLeaf().valueBegin = m_leafInfo.size();
 		std::vector<uint32_t> enclosed;
-		getEnclosing(newGrid.rect(), sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
+		getEnclosing(maxBounds, sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
 		diffSortedContainer(sortedRegions, sortedRegions, enclosed);
 		m_nodes[nodePtr].internalLeaf().enclosedCount = enclosed.size();
 		m_leafInfo.insert(m_leafInfo.end(), enclosed.cbegin(), enclosed.cend());
 	}
-
+	GeoGrid newGrid;
 	if (refiner(maxBounds, m_regions, sortedRegions, newGrid)) {
 		uint32_t childPtr = m_nodePtr.size();
 		uint32_t gridPtr = m_nodeGrids.size();
@@ -218,8 +239,8 @@ uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unorde
 	return nodePtr;
 }
 
-template<typename T_OUTPUT_ITERATOR1, typename T_OUTPUT_ITERATOR2>
-void GridRegionTree::find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITERATOR1 intersecting, T_OUTPUT_ITERATOR2 enclosing) const {
+template<typename T_OUTPUT_ITERATOR>
+void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERATOR idsIt) const {
 	if (!m_nodes.size())
 		return;
 	uint32_t nodePtr = 0;
@@ -233,8 +254,8 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITER
 				std::vector<uint32_t>::const_iterator it(m_leafInfo.cbegin()+n.internal().valueBegin);
 				std::vector<uint32_t>::const_iterator end(it+n.internal().enclosedCount);
 				for(; it != end; ++it) {
-					*enclosing = m_regions[*it];
-					++enclosing;
+					*idsIt = *it;
+					++idsIt;
 				}
 			}
 			nodePtr = m_nodePtr[n.internal().childrenBegin + grid.select(p).tile];
@@ -243,15 +264,15 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITER
 			std::vector<uint32_t>::const_iterator it(m_leafInfo.cbegin()+n.leaf().valueBegin);
 			std::vector<uint32_t>::const_iterator end(it+n.leaf().enclosedCount);
 			for(; it != end; ++it) {
-				*enclosing = m_regions[*it];
-				++enclosing;
+				*idsIt = *it;
+				++idsIt;
 			}
 			it = end;
 			end =it + n.leaf().intersectedCount;
 			for(; it != end; ++it) {
 				if (m_regions[*it]->contains(p)) {
-					*intersecting = m_regions[*it];
-					++intersecting;
+					*idsIt = *it;
+					++idsIt;
 				}
 			}
 			return;

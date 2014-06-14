@@ -30,7 +30,32 @@ void GridRegionTree::shrink_to_fit() {
 	m_leafInfo.shrink_to_fit();
 	m_nodeGrids.shrink_to_fit();
 	m_nodePtr.shrink_to_fit();
-	m_nodes.shrink_to_fit();}
+	m_nodes.shrink_to_fit();
+}
 
+void GridRegionTree::printStats(std::ostream & out) const {
+	out << "GridRegionTree::printstats--BEGIN" << std::endl;
+	out << "Nodes: " << m_nodes.size() << std::endl;
+	out << "Grids: " << m_nodeGrids.size() << std::endl;
+	uint32_t nullNodeCount = 0;
+	for(const uint32_t nptr : m_nodePtr) {
+		nullNodeCount += (nptr == NullNodePtr ? 1 : 0);
+	}
+	out << "ChildPtrs: " << m_nodePtr.size() << " of which " << (double)nullNodeCount/m_nodePtr.size()*100 << "% are NULL" << std::endl;
+	uint64_t enclosedCount = 0;
+	for(const Node & n : m_nodes) {
+		enclosedCount += n.internalLeaf().enclosedCount;
+	}
+	out << "LeafInfo: " << m_leafInfo.size() << " of which " << (double)enclosedCount/m_leafInfo.size()*100 << "% are enclosed" << std::endl;
+	out << "Regions: " << m_regions.size() << std::endl;
+
+	uint64_t storageUsage = 0; 
+	storageUsage += m_nodes.capacity() * sizeof(Node);
+	storageUsage += m_nodeGrids.capacity() * sizeof(GeoGrid);
+	storageUsage += m_leafInfo.capacity() * sizeof(uint32_t);
+	storageUsage += m_regions.capacity() * sizeof(sserialize::spatial::GeoRegion*);
+	out << "Storage usage: " << storageUsage << std::endl;
+	out << "GridRegionTree::printstats--END" << std::endl;
+}
 
 }}//end namespace

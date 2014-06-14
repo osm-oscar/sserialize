@@ -36,12 +36,12 @@ private:
 	}
 	
 	std::set<uint32_t> polysIntersectingPoint(const sserialize::spatial::GeoPoint & p) {
-		std::vector<spatial::GeoRegion*> regions;
-		typedef std::back_insert_iterator< std::vector<spatial::GeoRegion*> > MyInserIt; 
-		m_grt.find(p, MyInserIt(regions), MyInserIt(regions));
+		std::set<uint32_t> regions;
+		typedef std::insert_iterator< std::set<uint32_t> > MyInserIt; 
+		m_grt.find(p, MyInserIt(regions, regions.end()));
 		std::set<uint32_t> res;
-		for(spatial::GeoRegion * r : regions) {
-			res.insert( m_grIdMap.at(r) );
+		for(uint32_t rTrId : regions) {
+			res.insert(m_grIdMap[m_grt.region(rTrId)]);
 		}
 		return res;
 	}
