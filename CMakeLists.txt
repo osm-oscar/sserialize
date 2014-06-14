@@ -110,6 +110,7 @@ spatial/GridRTree.cpp
 spatial/GeoHierarchy.cpp
 spatial/GridRegionTree.cpp
 spatial/GeoGrid.cpp
+spatial/DistanceCalculator.cpp
 )
 
 set(COMPLETER_SOURCES_CPP

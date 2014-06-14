@@ -8,10 +8,10 @@ namespace detail {
 inline double sqr(double a) { return a*a;}
 
 double EuclideanDistanceCalculator::calc(const double lat0, const double lon0, const double lat1, const double lon1) const {
-	return std::sqrt<double>( sqr(lat0-lat1) + sqr(lon0-lon1) );
+	return std::sqrt( sqr(lat0-lat1) + sqr(lon0-lon1) );
 }
 
-GeodesicDistanceCalculator::GeodesicDistanceCalculator(double a = 6378137, double f = 1.0/298.257223563) {
+GeodesicDistanceCalculator::GeodesicDistanceCalculator(double a, double f) {
 	geod_init(&m_geodParams, a, f);
 }
 
