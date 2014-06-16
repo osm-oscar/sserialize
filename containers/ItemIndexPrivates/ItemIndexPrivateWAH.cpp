@@ -835,7 +835,7 @@ ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserializ
 	bool allIntersectsHaveNext = true;
 	while (resultIds.size() < count && allIntersectsHaveNext) {
 		//process 31 Bits in  each round until either one intersect index is at the end or we have count elements in our result set
-		currentWorkingWord = std::numeric_limits<uint64_t>::max();
+		currentWorkingWord = std::numeric_limits<uint32_t>::max();
 
 		//fast-forward support if all indices have rle encoding
 		//TODO:reimplement
