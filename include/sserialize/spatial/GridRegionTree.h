@@ -94,6 +94,9 @@ private:
 	std::vector<uint32_t> m_leafInfo;
 	std::vector<GeoRegion*> m_regions;
 private:
+	mutable std::atomic<uint64_t> m_cumulatedResultSetSize;
+	mutable std::atomic<uint64_t> m_intersectTestCount;
+private:
 	template<typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
 	void getEnclosing(const GeoRect & bounds, T_REGION_ID_ITERATOR begin, const T_REGION_ID_ITERATOR & end, T_OUTPUT_ITERATOR out);
 	template<typename T_GRID_REFINER>
@@ -102,22 +105,30 @@ private:
 	template<typename T_GRID_REFINER>
 	uint32_t insert(const T_GRID_REFINER & refiner, const std::unordered_map<GeoRegion*, uint32_t> & rPtr2Id, std::vector<uint32_t> sortedRegions, const sserialize::spatial::GeoRect & maxBounds);
 public:
-	GridRegionTree() {}
+	GridRegionTree();
+	GridRegionTree(GridRegionTree && other);
+	GridRegionTree(const GridRegionTree & other);
 	///@param refiner: refines a given node: bool operator()(GeoRect maxBounds, std::unordered_set<uint32_t> regionids, GeoGrid & newGrid) const,
 	///@return false if no further refinement should happen
 	template<typename T_GEOREGION_ITERATOR, typename T_GRID_REFINER>
 	GridRegionTree(const GeoGrid & initial, T_GEOREGION_ITERATOR begin, T_GEOREGION_ITERATOR end, T_GRID_REFINER refiner) :
-	m_regions(begin, end)
+	m_regions(begin, end),
+	m_cumulatedResultSetSize(0),
+	m_intersectTestCount(0)
 	{
 		create(initial, refiner);
 	}
 	template<typename T_GRID_REFINER>
 	GridRegionTree(const GeoGrid & initial, const std::vector<GeoRegion*> & regions, T_GRID_REFINER refiner) :
-	m_regions(regions)
+	m_regions(regions),
+	m_cumulatedResultSetSize(0),
+	m_intersectTestCount(0)
 	{
 		create(initial, refiner);
 	}
 	virtual ~GridRegionTree() {}
+	GridRegionTree & operator=(const GridRegionTree & other);
+	GridRegionTree & operator=(GridRegionTree & other);
 	void shrink_to_fit();
 	GeoRegion * region(uint32_t id) { return m_regions.at(id); }
 	const GeoRegion * region(uint32_t id) const { return m_regions.at(id); }
@@ -171,7 +182,10 @@ void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
 
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(initial.tileCount(), "GridRegionTree::create");
-	for(uint32_t tile=0, ts=initial.tileCount(); tile < ts; ++tile) {
+	uint32_t ts = initial.tileCount();
+	uint32_t tileCompletionCount = 0;
+	#pragma omp parallel for
+	for(uint32_t tile=0; tile < ts; ++tile) {
 		GeoGrid::GridBin gridBin(initial.select(tile));
 		std::vector<uint32_t> tmp;
 		GeoRect tmpRect(initial.cellBoundary(gridBin));
@@ -183,9 +197,12 @@ void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
 		if (tmp.size()) {
 			//put this into a temporary as m_nodePtr will likely change during recursion and therefore the fetched adress on the left is wrong
 			uint32_t tmpRet = insert(refiner, rPtr2IdH, tmp, tmpRect);
+			#pragma omp critical
 			m_nodePtr[childPtr+gridBin.tile] = tmpRet;
 		}
-		pinfo(tile);
+		#pragma omp atomic
+		++tileCompletionCount;
+		pinfo(tileCompletionCount);
 	}
 	pinfo.end();
 }
@@ -193,27 +210,32 @@ void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
 
 template<typename T_GRID_REFINER>
 uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unordered_map< sserialize::spatial::GeoRegion*, uint32_t >& rPtr2Id, std::vector< uint32_t > sortedRegions, const sserialize::spatial::GeoRect& maxBounds) {
-	uint32_t nodePtr = m_nodes.size();
-	m_nodes.push_back(Node(Node::NT_INVALID));
-	{//remove regions that fully enclose this tile;
-		m_nodes[nodePtr].internalLeaf().valueBegin = m_leafInfo.size();
-		std::vector<uint32_t> enclosed;
-		getEnclosing(maxBounds, sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
-		diffSortedContainer(sortedRegions, sortedRegions, enclosed);
-		m_nodes[nodePtr].internalLeaf().enclosedCount = enclosed.size();
-		m_leafInfo.insert(m_leafInfo.end(), enclosed.cbegin(), enclosed.cend());
+	uint32_t nodePtr = NullNodePtr;
+	#pragma omp critical
+	{
+		nodePtr = m_nodes.size();
+		m_nodes.push_back(Node(Node::NT_INVALID));
 	}
+	//remove regions that fully enclose this tile;
+	std::vector<uint32_t> enclosed;
+	getEnclosing(maxBounds, sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
+	diffSortedContainer(sortedRegions, sortedRegions, enclosed);
 	GeoGrid newGrid;
 	if (refiner(maxBounds, m_regions, sortedRegions, newGrid)) {
-		uint32_t childPtr = m_nodePtr.size();
-		uint32_t gridPtr = m_nodeGrids.size();
-		
-		m_nodeGrids.push_back(newGrid);
-		m_nodePtr.resize(m_nodePtr.size()+newGrid.tileCount(), NullNodePtr);
-		
-		m_nodes[nodePtr].internal().type = Node::NT_INTERNAL;
-		m_nodes[nodePtr].internal().childrenBegin = childPtr;
-		m_nodes[nodePtr].internal().gridPtr = gridPtr;
+		uint32_t childPtr = NullNodePtr;
+		#pragma omp critical
+		{
+			childPtr = m_nodePtr.size();
+			Node & n = m_nodes[nodePtr];
+			n.internal().type = Node::NT_INTERNAL;
+			n.internalLeaf().valueBegin = m_leafInfo.size();
+			n.internalLeaf().enclosedCount = enclosed.size();
+			n.internal().childrenBegin = childPtr;
+			n.internal().gridPtr = m_nodeGrids.size();
+			m_nodeGrids.push_back(newGrid);
+			m_nodePtr.resize(m_nodePtr.size()+newGrid.tileCount(), NullNodePtr);
+			m_leafInfo.insert(m_leafInfo.end(), enclosed.cbegin(), enclosed.cend());
+		}
 	
 		for(uint32_t tile=0, ts=newGrid.tileCount(); tile < ts; ++tile) {
 			std::vector<uint32_t> tmp;
@@ -226,15 +248,22 @@ uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unorde
 			}
 			if (tmp.size()) {
 				uint32_t tmpRet = insert(refiner, rPtr2Id, tmp, tmpRect);
+				#pragma omp critical
 				m_nodePtr[childPtr+gridBin.tile] = tmpRet;
 			}
 		}
 	}
 	else {
-		Node & n = m_nodes[nodePtr];
-		n.leaf().type = Node::NT_LEAF;
-		n.leaf().intersectedCount = sortedRegions.size();
-		m_leafInfo.insert(m_leafInfo.end(), sortedRegions.cbegin(), sortedRegions.cend());
+		#pragma omp critical
+		{
+			Node & n = m_nodes[nodePtr];
+			n.leaf().type = Node::NT_LEAF;
+			n.leaf().valueBegin = m_leafInfo.size();
+			n.leaf().enclosedCount = enclosed.size();
+			n.leaf().intersectedCount = sortedRegions.size();
+			m_leafInfo.insert(m_leafInfo.end(), enclosed.cbegin(), enclosed.cend());
+			m_leafInfo.insert(m_leafInfo.end(), sortedRegions.cbegin(), sortedRegions.cend());
+		}
 	}
 	return nodePtr;
 }
@@ -257,6 +286,7 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERA
 					*idsIt = *it;
 					++idsIt;
 				}
+				m_cumulatedResultSetSize += n.internal().enclosedCount;
 			}
 			nodePtr = m_nodePtr[n.internal().childrenBegin + grid.select(p).tile];
 		}
@@ -275,6 +305,8 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERA
 					++idsIt;
 				}
 			}
+			m_cumulatedResultSetSize += n.leaf().intersectedCount + n.leaf().enclosedCount;
+			m_intersectTestCount += n.leaf().intersectedCount;
 			return;
 		}
 		else {

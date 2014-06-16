@@ -26,6 +26,53 @@ bool detail::GridRegionTree::FixedSizeRefiner::operator()(const sserialize::spat
 	return false;
 }
 
+GridRegionTree::GridRegionTree() :
+m_cumulatedResultSetSize(0),
+m_intersectTestCount(0)
+{}
+
+GridRegionTree::GridRegionTree(GridRegionTree && other) {
+	m_nodes.swap(other.m_nodes);
+	m_nodeGrids.swap(other.m_nodeGrids);
+	m_nodePtr.swap(other.m_nodePtr);
+	m_leafInfo.swap(other.m_leafInfo);
+	m_regions.swap(other.m_regions);
+	m_cumulatedResultSetSize.store(other.m_cumulatedResultSetSize.load());
+	m_intersectTestCount.store(other.m_intersectTestCount.load());
+}
+
+GridRegionTree::GridRegionTree(const GridRegionTree & other) :
+m_nodes(other.m_nodes),
+m_nodeGrids(other.m_nodeGrids),
+m_nodePtr(other.m_nodePtr),
+m_leafInfo(other.m_leafInfo),
+m_regions(other.m_regions)
+{
+	m_cumulatedResultSetSize.store(other.m_cumulatedResultSetSize.load());
+	m_intersectTestCount.store(other.m_intersectTestCount.load());
+}
+
+GridRegionTree & GridRegionTree::operator=(const GridRegionTree & other) {
+	m_nodes = other.m_nodes;
+	m_nodeGrids = other.m_nodeGrids;
+	m_nodePtr = other.m_nodePtr;
+	m_leafInfo = other.m_leafInfo;
+	m_regions = other.m_regions;
+	m_cumulatedResultSetSize.store(other.m_cumulatedResultSetSize.load());
+	m_intersectTestCount.store(other.m_intersectTestCount.load());
+	return *this;
+}
+GridRegionTree & GridRegionTree::operator=(GridRegionTree & other) {
+	m_nodes.swap(other.m_nodes);
+	m_nodeGrids.swap(other.m_nodeGrids);
+	m_nodePtr.swap(other.m_nodePtr);
+	m_leafInfo.swap(other.m_leafInfo);
+	m_regions.swap(other.m_regions);
+	m_cumulatedResultSetSize.store(other.m_cumulatedResultSetSize.load());
+	m_intersectTestCount.store(other.m_intersectTestCount.load());
+	return *this;
+}
+
 void GridRegionTree::shrink_to_fit() {
 	m_leafInfo.shrink_to_fit();
 	m_nodeGrids.shrink_to_fit();
@@ -55,6 +102,9 @@ void GridRegionTree::printStats(std::ostream & out) const {
 	storageUsage += m_leafInfo.capacity() * sizeof(uint32_t);
 	storageUsage += m_regions.capacity() * sizeof(sserialize::spatial::GeoRegion*);
 	out << "Storage usage: " << storageUsage << std::endl;
+	out << "Containment tests: " << m_cumulatedResultSetSize.load() << " of which ";
+	out << (double) m_intersectTestCount.load()/m_cumulatedResultSetSize.load() * 100;
+	out << "% were intersection tests" << std::endl;
 	out << "GridRegionTree::printstats--END" << std::endl;
 }
 
