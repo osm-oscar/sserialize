@@ -36,6 +36,19 @@ bool hasUpperCase(const std::string & str);
 /** Returns if a < b **/
 bool unicodeIsSmaller(const std::string& a,const std::string& b);
 
+template<typename T_OCTET_ITERATOR1, typename T_OCTET_ITERATOR2>
+inline bool unicodeIsSmaller(T_OCTET_ITERATOR1 itA, const T_OCTET_ITERATOR1 & endA, T_OCTET_ITERATOR2 itB, const T_OCTET_ITERATOR2 & endB) {
+	while (itA != endA && itB != endB) {
+		uint32_t aCode = utf8::next(itA, endA);
+		uint32_t bCode = utf8::next(itB, endB);
+		if (aCode < bCode)
+			return true;
+		else if (bCode < aCode)
+			return false;
+	}
+	return (itB != endB);
+}
+
 bool oneIsPrefix(const std::string& a, const std::string& b);
 
 /** @param strA: string without header */
