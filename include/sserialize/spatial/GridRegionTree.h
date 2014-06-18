@@ -184,7 +184,7 @@ void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
 	pinfo.begin(initial.tileCount(), "GridRegionTree::create");
 	uint32_t ts = initial.tileCount();
 	uint32_t tileCompletionCount = 0;
-	#pragma omp parallel for
+	#pragma omp parallel for schedule(dynamic,1)
 	for(uint32_t tile=0; tile < ts; ++tile) {
 		GeoGrid::GridBin gridBin(initial.select(tile));
 		std::vector<uint32_t> tmp;
