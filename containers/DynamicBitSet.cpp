@@ -3,6 +3,64 @@
 
 
 namespace sserialize {
+namespace detail {
+namespace DynamicBitSet {
+
+DynamicBitSetIdIterator::DynamicBitSetIdIterator() :
+m_p(0),
+m_off(0),
+m_curId(0),
+m_d(0),
+m_curShift(0)
+{}
+
+DynamicBitSetIdIterator::DynamicBitSetIdIterator(const sserialize::DynamicBitSet * p, SizeType offset) :
+m_p(p),
+m_off(offset),
+m_curId(offset*8),
+m_d(0),
+m_curShift(8)
+{
+	next();
+}
+
+DynamicBitSetIdIterator::~DynamicBitSetIdIterator() {}
+
+SizeType DynamicBitSetIdIterator::get() const {
+	return m_curId;
+}
+
+void DynamicBitSetIdIterator::next() {
+	if (m_curShift >= 8) {
+		const UByteArrayAdapter & d = m_p->data();
+		UByteArrayAdapter::OffsetType ds = d.size();
+		//skip to first byte != 0
+		for(; ds > m_off && (m_d = d.at(m_off)) == 0; ++m_off);
+		m_curShift = (ds > m_off ? 0 : 8);
+		next();
+	}
+	else {
+		if (m_d) {
+			for(; m_curShift < 8 && (m_d & 0x1) == 0; ++m_curShift, ++m_curId, m_d >>= 1);
+		}
+		else {
+			m_curId += 8-m_curShift;
+			next();
+		}
+	}
+}
+
+bool DynamicBitSetIdIterator::notEq(const AbstractArrayIterator<SizeType> * other) const {
+	const DynamicBitSetIdIterator * o = static_cast<const DynamicBitSetIdIterator*>(other);
+	return o->m_off != m_off || o->m_curShift != m_curShift || o->m_curId != m_curId || o->m_d != m_d;
+}
+
+AbstractArrayIterator<SizeType> * DynamicBitSetIdIterator::copy() const {
+	return new DynamicBitSetIdIterator(*this);
+}
+
+}}
+
 
 DynamicBitSet::DynamicBitSet() : m_data(UByteArrayAdapter::createCache(0, false)) {}
 DynamicBitSet::DynamicBitSet(const UByteArrayAdapter & data) : m_data(data) {}

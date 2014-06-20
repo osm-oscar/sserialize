@@ -1,12 +1,45 @@
 #ifndef SSERIALIZE_DYNAMIC_BIT_SET_H
 #define SSERIALIZE_DYNAMIC_BIT_SET_H
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/templated/AbstractArray.h>
 
 namespace sserialize {
+
+class DynamicBitSet;
+
+namespace detail {
+namespace DynamicBitSet {
+
+class DynamicBitSetIdIterator: public sserialize::detail::AbstractArrayIterator<SizeType> {
+private:
+	friend class sserialize::DynamicBitSet;
+private:
+	const sserialize::DynamicBitSet * m_p;
+	UByteArrayAdapter::OffsetType m_off;
+	SizeType m_curId;
+	uint8_t m_d;
+	uint8_t m_curShift;
+	///@param p has to be valid
+	DynamicBitSetIdIterator(const sserialize::DynamicBitSet * p, SizeType offset);
+public:
+	DynamicBitSetIdIterator();
+	virtual ~DynamicBitSetIdIterator();
+	virtual SizeType get() const override;
+	virtual void next() override;
+	virtual bool notEq(const AbstractArrayIterator<SizeType> * other) const override;
+	virtual AbstractArrayIterator<SizeType> * copy() const override;
+};
+
+
+}}
 
 class ItemIndex;
 
 class DynamicBitSet {
+public:
+	///An iterator the iterates over the set ids
+	typedef AbstractArrayIterator<SizeType> const_iterator;
+private:
 	UByteArrayAdapter m_data;
 public:
 	///creates a DynamicBitSet with a in-memory cache as backend
@@ -52,6 +85,9 @@ public:
 	}
 	
 	SizeType size() const;
+	
+	const_iterator cbegin() const;
+	const_iterator cend() const;
 };
 
 }//end namespace
