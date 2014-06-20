@@ -84,9 +84,6 @@ public:
 	inline double max_load_factor() const { return m_maxLoad;}
 	void max_load_factor(double f);
 	void reserve(uint32_t count);
-	inline void reserveStorage(uint32_t count) {
-		m_valueStorage.reserve(count);
-	}
 	mapped_type & operator[](const key_type & key);
 	mapped_type & at(const key_type & key);
 	const mapped_type & at(const key_type & key) const;
@@ -153,6 +150,7 @@ void OADHashTable<TKey, TValue, THash1, THash2>::reserve(uint32_t count) {
 	if ((double)size()/newTableSize < m_maxLoad) {
 		rehash(newTableSize);
 	}
+	m_valueStorage.reserve(count);
 }
 
 template<typename TKey, typename TValue, typename THash1, typename THash2>
