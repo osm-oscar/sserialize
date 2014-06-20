@@ -7,6 +7,7 @@ namespace sserialize {
 
 namespace detail {
 
+///The base class of the AbstractArrayIterator implementation part
 template<typename TReturnType>
 class AbstractArrayIterator {
 public:
