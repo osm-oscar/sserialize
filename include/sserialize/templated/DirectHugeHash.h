@@ -1,15 +1,16 @@
-#ifndef SSERIALIZE_DIRECT_HUGHE_HASH_H
-#define SSERIALIZE_DIRECT_HUGHE_HASH_H
+#ifndef SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
+#define SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
 #include <sserialize/utility/MmappedMemoy.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <unordered_map>
+#include <boost/concept_check.hpp>
 
 namespace sserialize {
 
 ///This class provides a table based hash hashing all elements smaller than size into a file based table
 ///and the rest into a user provides hashmap
 template<typename TValue, typename THashMap = std::unordered_map<uint64_t, TValue> >
-class DirectHugheHash {
+class DirectHugeHashMap {
 private:
 	uint64_t m_begin;
 	uint64_t m_end;
@@ -17,18 +18,25 @@ private:
 	DynamicBitSet m_bitSet;
 	THashMap m_upperData;
 public:
-	DirectHugheHash() : m_begin(0), m_end(0) {}
-	DirectHugheHash(uint64_t begin, uint64_t end, bool inMemory = false) :
+	DirectHugeHashMap() : m_begin(0), m_end(0) {}
+	DirectHugeHashMap(uint64_t begin, uint64_t end, bool inMemory = false) :
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
 	m_data(m_end-m_begin, inMemory),
 	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true))
 	{}
-	virtual ~DirectHugheHash() {}
+	virtual ~DirectHugeHashMap() {}
+	
+	const THashMap & hashMap() const { return m_upperData; }
 	
 	///This function is lineaer in end-begin!
 	uint64_t size() const {
 		return m_bitSet.size() + m_upperData.size();
+	}
+	
+	///reserve @count entries in hash map
+	void reserve(uint64_t count) {
+		m_upperData.reserve(count);
 	}
 	
 	void mark(uint64_t pos) {
