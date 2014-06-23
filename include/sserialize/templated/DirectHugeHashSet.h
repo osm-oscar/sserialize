@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_DIRECT_HUGE_HASH_SET_H
 #define SSERIALIZE_DIRECT_HUGE_HASH_SET_H
-#include <sserialize/utility/MmappedMemoy.h>
+#include <sserialize/utility/MmappedMemory.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <unordered_set>
 

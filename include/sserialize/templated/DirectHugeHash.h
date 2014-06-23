@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
 #define SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
-#include <sserialize/utility/MmappedMemoy.h>
+#include <sserialize/utility/MmappedMemory.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <unordered_map>
 #include <boost/concept_check.hpp>
@@ -19,11 +19,19 @@ private:
 	THashMap m_upperData;
 public:
 	DirectHugeHashMap() : m_begin(0), m_end(0) {}
-	DirectHugeHashMap(uint64_t begin, uint64_t end, bool inMemory = false) :
+	DirectHugeHashMap(uint64_t begin, uint64_t end, MmappedMemoryType mmt) :
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
-	m_data(m_end-m_begin, inMemory),
+	m_data(m_end-m_begin, mmt),
 	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true))
+	{}
+	template<typename... THashParams>
+	DirectHugeHashMap(uint64_t begin, uint64_t end, MmappedMemoryType mmt, THashParams... params) :
+	m_begin(std::min<uint64_t>(begin, end)),
+	m_end(std::max<uint64_t>(begin, end)),
+	m_data(m_end-m_begin, mmt),
+	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true)),
+	m_upperData(params...)
 	{}
 	virtual ~DirectHugeHashMap() {}
 	
@@ -46,6 +54,10 @@ public:
 		else {
 			m_upperData[pos] = TValue();
 		}
+	}
+	
+	void insert(uint64_t pos) {
+		mark(pos);
 	}
 	
 	bool count(uint64_t pos) const {

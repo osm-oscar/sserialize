@@ -25,6 +25,7 @@ namespace sserialize {
 #define SSERIALIZED_OFFSET_BYTE_COUNT 5
 #define SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT 5
 #define EPSILON 0.00000001d
+#define SSERIALIZE_SYSTEM_PAGE_SIZE 4096
 
 ///OffsetType >= SizeType >= IdType!
 

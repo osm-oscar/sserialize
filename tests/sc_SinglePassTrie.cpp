@@ -4,6 +4,7 @@
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"
+#include <sserialize/utility/MmappedMemory.h>
 
 using namespace sserialize;
 
@@ -46,7 +47,7 @@ protected:
 		m_trie.setCaseSensitivity(m_caseSensitive);
 		m_trie.setSuffixTrie(m_suffixTrie);
 	
-		m_trie.setDB(db(), true);
+		m_trie.setDB(db(), sserialize::MM_PROGRAM_MEMORY);
 		
 		m_config.trieList = &m_stTrieList;
 		m_config.mergeIndex = m_mergeIndex;
@@ -131,7 +132,7 @@ public:
 		tempTrie.setCaseSensitivity(m_caseSensitive);
 		tempTrie.setSuffixTrie(m_suffixTrie);
 	
-		tempTrie.setDB(db(), true);
+		tempTrie.setDB(db(), sserialize::MM_PROGRAM_MEMORY);
 		tempTrie.trieSerializationProblemFixer();
 		
 		Static::GeneralizedTrie * stTriePtr = priv();

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
 #include <sserialize/containers/GeneralizedTrie/SerializableTrie.h>
-#include <sserialize/utility/MmappedMemoy.h>
+#include <sserialize/utility/MmappedMemory.h>
 #include <sserialize/utility/log.h>
 
 namespace sserialize {
@@ -47,10 +47,10 @@ public:
 	void swap(MyBaseClass::MyBaseClass & other);
 	
 	template<typename ItemType>
-	bool setDB(const StringsItemDBWrapper< ItemType >& db, bool inMemoryIndex);
+	bool setDB(const StringsItemDBWrapper< ItemType >& db, sserialize::MmappedMemoryType mt);
 	
 	template<typename T_ITEM_FACTORY, typename T_ITEM>
-	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, bool inMemoryIndex);
+	bool fromStringsFactory(const T_ITEM_FACTORY& stringsFactory, sserialize::MmappedMemoryType mt);
 	
 	void createStaticTrie(GeneralizedTrieCreatorConfig & config);
 	
@@ -58,13 +58,13 @@ public:
 };
 
 template<typename ItemType>
-bool SinglePassTrie::setDB(const StringsItemDBWrapper< ItemType >& db, bool inMemoryIndex) {
+bool SinglePassTrie::setDB(const StringsItemDBWrapper< ItemType >& db, MmappedMemoryType mt) {
 	StringsItemDBWrapperStringsFactory<ItemType> stringsFactory(db);
-	return fromStringsFactory<StringsItemDBWrapperStringsFactory<ItemType>, typename StringsItemDBWrapperStringsFactory<ItemType>::value_type>(stringsFactory, inMemoryIndex);
+	return fromStringsFactory<StringsItemDBWrapperStringsFactory<ItemType>, typename StringsItemDBWrapperStringsFactory<ItemType>::value_type>(stringsFactory, mt);
 }
 
 template<typename T_ITEM_FACTORY, typename T_ITEM>
-bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, bool inMemoryIndex) {
+bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, MmappedMemoryType mt) {
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes;
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes;
 	uint64_t exactStorageNeed = 0;
@@ -114,8 +114,8 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, b
 	std::cout << "Creating temporary on-disk storage for indices" << std::endl;
 	std::cout << "Exact index: " << sserialize::prettyFormatSize(exactStorageNeed*sizeof(uint32_t)) << std::endl;
 	std::cout << "Suffix index: " << sserialize::prettyFormatSize(suffixStorageNeed*sizeof(uint32_t)) << std::endl;
-	exactIndicesMem = sserialize::MmappedMemory<uint32_t>(exactStorageNeed, inMemoryIndex);
-	suffixIndicesMem= sserialize::MmappedMemory<uint32_t>(suffixStorageNeed, inMemoryIndex);
+	exactIndicesMem = sserialize::MmappedMemory<uint32_t>(exactStorageNeed, mt);
+	suffixIndicesMem= sserialize::MmappedMemory<uint32_t>(suffixStorageNeed, mt);
 	{
 		uint32_t * exactIndicesPtr = exactIndicesMem.begin();
 		uint32_t * suffixIndicesPtr = suffixIndicesMem.begin();

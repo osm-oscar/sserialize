@@ -4,7 +4,7 @@
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/DiacriticRemover.h>
 #include <sserialize/utility/unicode_case_functions.h>
-#include <sserialize/utility/MmappedMemoy.h>
+#include <sserialize/utility/MmappedMemory.h>
 #include <sserialize/templated/WindowedArray.h>
 #include <unordered_set>
 #include <algorithm>
