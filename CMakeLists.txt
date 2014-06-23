@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(sserialize)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
+find_package(LIBRT REQUIRED)
 IF(CMAKE_CROSSCOMPILING)
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH) 
@@ -138,7 +138,8 @@ utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedFile.
 utility/LinearRegressionFunctions.cpp
 utility/histogram2d.cpp
 utility/log.cpp
-utility/utilfuncs.cpp)
+utility/utilfuncs.cpp
+utility/MmappedMemory.cpp)
 
 set(EXTERNAL_SOURCES_CPP
 vendor/libs/minilzo/minilzo.c
@@ -162,7 +163,7 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
 IF(NOT CMAKE_CROSSCOMPILING)
 	if(ICU_FOUND)
 		include_directories(${ICU_INCLUDE_DIRS})
-		target_link_libraries(${PROJECT_NAME} ${ICU_LIBRARIES})
+		target_link_libraries(${PROJECT_NAME} ${ICU_LIBRARIES} ${LIBRT_LIBRARIES})
 	endif(ICU_FOUND)
 	add_subdirectory(tests ${PROJECT_NAME}tests)
 	add_subdirectory(tools ${PROJECT_NAME}-tools)

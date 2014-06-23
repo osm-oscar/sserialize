@@ -36,6 +36,7 @@ ${sserialize_BINARY_DIR}/libsserialize.a
 ${CPPUNIT_LIBRARY}
 ${ICU_LIBRARIES}
 ${ICU_I18N_LIBRARIES}
+${LIBRT_LIBRARIES}
 )
 
 
