@@ -101,7 +101,15 @@ void GridRegionTree::printStats(std::ostream & out) const {
 	storageUsage += m_nodeGrids.capacity() * sizeof(GeoGrid);
 	storageUsage += m_leafInfo.capacity() * sizeof(uint32_t);
 	storageUsage += m_regions.capacity() * sizeof(sserialize::spatial::GeoRegion*);
-	out << "Storage usage: " << storageUsage << std::endl;
+
+	uint64_t storageUsageSize = 0;
+	storageUsageSize += m_nodes.size() * sizeof(Node);
+	storageUsageSize += m_nodeGrids.size() * sizeof(GeoGrid);
+	storageUsageSize += m_leafInfo.size() * sizeof(uint32_t);
+	storageUsageSize += m_regions.size() * sizeof(sserialize::spatial::GeoRegion*);
+
+	out << "Real Storage usage: " << storageUsage << std::endl;
+	out << "Storage usage: " << storageUsageSize << std::endl;
 	out << "Containment tests: " << m_cumulatedResultSetSize.load() << " of which ";
 	out << (double) m_intersectTestCount.load()/m_cumulatedResultSetSize.load() * 100;
 	out << "% were intersection tests" << std::endl;
