@@ -123,33 +123,38 @@ public:
 	public:
 		class Node: public RefCountObject {
 		public:
-			typedef enum {T_CELL, T_REGION} Type;
 			typedef std::vector<Node*> ChildrenStorageContainer;
+			typedef RCPtrWrapper<Node> NodePtr;
 		private:
-			std::vector< RCPtrWrapper<Node> > m_children;
+			std::vector< NodePtr > m_children;
 			uint32_t m_id;
 			uint32_t m_itemSize;
-			Type m_type;
+			std::vector<uint32_t> m_cells;
 		public:
-			Node(Type t, uint32_t id, uint32_t itemSize = 0) : m_id(id), m_itemSize(itemSize), m_type(t) {}
+			Node(uint32_t id, uint32_t itemSize = 0) : m_id(id), m_itemSize(itemSize) {}
 			virtual ~Node() {}
 			inline uint32_t id() const { return m_id; }
 			inline uint32_t size() const { return m_children.size(); }
-			inline Node * operator[](uint32_t pos) { return m_children[pos].priv(); }
-			inline Node * at(uint32_t pos) { return m_children.at(pos).priv();}
-			inline const Node * operator[](uint32_t pos) const { return m_children[pos].priv(); }
-			inline const Node * at(uint32_t pos) const { return m_children.at(pos).priv();}
+			inline NodePtr & operator[](uint32_t pos) { return m_children[pos]; }
+			inline const NodePtr & at(uint32_t pos) { return m_children.at(pos);}
+			inline const NodePtr & operator[](uint32_t pos) const { return m_children[pos]; }
+			inline const NodePtr & at(uint32_t pos) const { return m_children.at(pos);}
 			inline void push_back(Node * child) { m_children.push_back( RCPtrWrapper<Node>(child) );}
 			inline uint32_t itemSize() const { return m_itemSize; }
 			inline uint32_t & itemSize() { return m_itemSize; }
+			inline const std::vector<uint32_t> & cells() const { return m_cells;}
+			inline std::vector<uint32_t> & cells() { return m_cells;}
 		};
+		typedef Node::NodePtr NodePtr;
 	private:
 		RCPtrWrapper<Node> m_root;
+		CellQueryResult m_cqr;
 	public:
 		SubSet() {}
-		SubSet(Node * root) : m_root(root) {}
+		SubSet(Node * root, const CellQueryResult & cqr) : m_root(root), m_cqr(cqr) {}
 		virtual ~SubSet()  {}
-		inline const Node* root() const { return m_root.priv();}
+		inline const NodePtr & root() const { return m_root;}
+		inline const CellQueryResult & cqr() const { return m_cqr; }
 	};
 
 private:

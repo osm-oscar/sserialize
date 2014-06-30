@@ -260,12 +260,13 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
 			if (!nodes.count(cP)) {
-				n = nodes[cP] = new SubSet::Node(SubSet::Node::T_REGION, cP);
+				n = nodes[cP] = new SubSet::Node(cP);
 			}
 			else {
 				n = nodes[cP];
 			}
 			n->itemSize() += itemsInCell;
+			n->cells().push_back(cellId);
 		}
 	}
 	for(FMIterator it(cqr.fullMatches().cbegin()), end(cqr.fullMatches().cend()); it != end; ++it) {
@@ -275,15 +276,16 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
 			if (!nodes.count(cP)) {
-				n = nodes[cP] = new SubSet::Node(SubSet::Node::T_REGION, cP);
+				n = nodes[cP] = new SubSet::Node(cP);
 			}
 			else {
 				n = nodes[cP];
 			}
 			n->itemSize() += itemsInCell;
+			n->cells().push_back(cellId);
 		}
 	}
-	SubSet::Node * rootNode = new SubSet::Node(SubSet::Node::T_REGION, npos);
+	SubSet::Node * rootNode = new SubSet::Node(npos);
 	for(std::unordered_map<uint32_t, SubSet::Node*>::iterator it(nodes.begin()), end(nodes.end()); it != end; ++it) {
 		uint32_t regionId = it->first;
 		uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId));
@@ -298,7 +300,7 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 		}
 		
 	}
-	return SubSet(rootNode);
+	return SubSet(rootNode, cqr);
 }
 
 
