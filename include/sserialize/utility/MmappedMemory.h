@@ -32,7 +32,6 @@ public:
 	virtual TValue * resize(OffsetType newSize) = 0;
 	virtual OffsetType size() const = 0;
 	virtual MmappedMemoryType type() const = 0;
-	
 };
 
 template<typename TValue>

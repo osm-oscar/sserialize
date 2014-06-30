@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
-#include <boost/concept_check.hpp>
 
 namespace sserialize {
 namespace OpTree {
