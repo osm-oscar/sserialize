@@ -7,6 +7,7 @@
 //stolen from osmpbf
 namespace sserialize {
 
+
 class RefCountObject {
 public:
 	RefCountObject() : m_rc(0) {}
@@ -69,6 +70,8 @@ private:
 
 template<typename RCObj>
 class RCPtrWrapper: public RCWrapper<RCObj> {
+	void safe_bool_func() {}
+	typedef void (RCPtrWrapper<RCObj>:: * safe_bool_type) ();
 public:
 	RCPtrWrapper() : RCWrapper<RCObj>() {};
 	explicit RCPtrWrapper(RCObj * data) : RCWrapper<RCObj>(data) {}
@@ -88,7 +91,10 @@ public:
 
 	RCObj * priv() { return RCWrapper<RCObj>::priv(); }
 	const RCObj * priv() const { return RCWrapper<RCObj>::priv(); }
-
+	
+	operator safe_bool_type() const {
+		return priv() ? &RCPtrWrapper<RCObj>::safe_bool_func : 0;
+	}
 };
 
 template<class RCObj>
