@@ -1,7 +1,6 @@
 #ifndef SSERIALIZE_MM_VECTOR_H
 #define SSERIALIZE_MM_VECTOR_H
 #include <sserialize/utility/MmappedMemory.h>
-#include <boost/concept_check.hpp>
 
 namespace sserialize {
 

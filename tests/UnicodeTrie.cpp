@@ -5,7 +5,6 @@
 #include "TestItemData.h"
 #include "StringCompleterTest.h"
 #include <cppunit/TestResult.h>
-#include <boost/concept_check.hpp>
 
 using namespace sserialize;
 

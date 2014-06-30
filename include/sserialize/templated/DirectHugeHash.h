@@ -3,7 +3,6 @@
 #include <sserialize/utility/MmappedMemory.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <unordered_map>
-#include <boost/concept_check.hpp>
 
 namespace sserialize {
 

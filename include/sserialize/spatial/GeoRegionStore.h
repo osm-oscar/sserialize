@@ -9,7 +9,6 @@
 #include <iostream>
 #include <fstream>
 #include <atomic>
-#include <boost/concept_check.hpp>
 
 //TODO: look into sweep line algo
 
