@@ -140,8 +140,8 @@ public:
 			inline const NodePtr & operator[](uint32_t pos) const { return m_children[pos]; }
 			inline const NodePtr & at(uint32_t pos) const { return m_children.at(pos);}
 			inline void push_back(Node * child) { m_children.push_back( RCPtrWrapper<Node>(child) );}
-			inline uint32_t itemSize() const { return m_itemSize; }
-			inline uint32_t & itemSize() { return m_itemSize; }
+			inline uint32_t maxItemsSize() const { return m_itemSize; }
+			inline uint32_t & maxItemsSize() { return m_itemSize; }
 			inline const std::vector<uint32_t> & cells() const { return m_cells;}
 			inline std::vector<uint32_t> & cells() { return m_cells;}
 		};
@@ -190,6 +190,7 @@ public:
 	
 	uint32_t regionItemsPtr(uint32_t pos) const;
 	uint32_t regionItemsCount(uint32_t pos) const;
+	uint32_t regionCellSumItemsCount(uint32_t pos) const;
 	
 	uint32_t regionParentsBegin(uint32_t id) const;
 	uint32_t regionParentsEnd(uint32_t id) const;

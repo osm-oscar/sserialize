@@ -197,6 +197,11 @@ uint32_t GeoHierarchy::regionItemsCount(uint32_t pos) const {
 	return m_regions.at(pos, Region::RD_ITEMS_COUNT);
 }
 
+uint32_t GeoHierarchy::regionCellSumItemsCount(uint32_t pos) const {
+	std::cerr << "GeoHierachy::regionCellSumItemsCount is not implremented yet" << std::endl;
+	return 0xFFFFFFFF;
+}
+
 uint32_t GeoHierarchy::regionParentsBegin(uint32_t id) const {
 	return m_regions.at(id, Region::RD_CHILDREN_BEGIN) + m_regions.at(id, Region::RD_PARENTS_OFFSET);
 }
@@ -266,7 +271,7 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			else {
 				n = nodes[cP];
 			}
-			n->itemSize() += itemsInCell;
+			n->maxItemsSize() += itemsInCell;
 			n->cells().push_back(cellId);
 		}
 	}
@@ -283,7 +288,7 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			else {
 				n = nodes[cP];
 			}
-			n->itemSize() += itemsInCell;
+			n->maxItemsSize() += itemsInCell;
 			n->cells().push_back(cellId);
 		}
 	}
