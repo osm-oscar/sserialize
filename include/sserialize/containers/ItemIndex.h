@@ -80,9 +80,9 @@ public:
 	inline iterator begin() const { return cbegin(); }
 	inline iterator end() const { return cend(); }
 	
-	void dump(const char * fileName);
-	void dump(std::ostream & out);
-	void dump();
+	void dump(const char * fileName) const;
+	void dump(std::ostream & out) const;
+	void dump() const;
 
 	uint8_t bpn() const;
 	

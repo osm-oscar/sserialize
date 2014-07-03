@@ -213,7 +213,7 @@ ItemIndex ItemIndex::absorb(std::vector< uint32_t > & vec) {
 	return ItemIndex(newPriv);
 }
 
-void ItemIndex::dump(const char* fileName) {
+void ItemIndex::dump(const char* fileName) const {
 	if (fileName) {
 		std::fstream fout;
 		fout.open(fileName);
@@ -223,7 +223,7 @@ void ItemIndex::dump(const char* fileName) {
 	}
 }
 
-void ItemIndex::dump(std::ostream & out) {
+void ItemIndex::dump(std::ostream & out) const {
 	out << "ItemIndex<size=" << size() << ", bpn=" << static_cast<uint32_t>(bpn());
 	out << ">[";
 	for(uint32_t i = 0; i < size(); i++) {
@@ -232,7 +232,7 @@ void ItemIndex::dump(std::ostream & out) {
 	out << "]" << std::endl;
 }
 
-void ItemIndex::dump() {
+void ItemIndex::dump() const {
 	dump(std::cout);
 }
 
