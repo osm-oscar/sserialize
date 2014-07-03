@@ -478,4 +478,26 @@ std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemI
 	return res;
 }
 
+void GeoHierarchy::compactify(bool compactifyCells, bool compactifyRegions) {
+	if (compactifyCells) {
+		std::unordered_set<uint32_t> removedParents;
+		std::vector<uint32_t> keptParents;
+		for(Cell & cell : m_cells) {
+			removedParents.clear();
+			keptParents.clear();
+			for(uint32_t cellParent : cell.parents) {
+				if (removedParents.count(cellParent))
+					continue;
+				keptParents.push_back(cellParent);
+				getAncestors(cellParent, removedParents);
+			}
+			using std::swap;
+			swap(cell.parents, keptParents);
+		}
+	}
+	if (compactifyRegions) {
+		std::vector<uint32_t> regionsInLevelOrder( getRegionsInLevelOrder() );
+	}
+}
+
 }} //end namespace

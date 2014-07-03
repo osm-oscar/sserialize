@@ -34,6 +34,8 @@ private:
 	Region m_rootRegion;
 private:
 	void depths(std::vector<uint32_t> & d, uint32_t me) const;
+	template<typename T_SET_CONTAINER>
+	void getAncestors(uint32_t regionId, T_SET_CONTAINER & out);
 public:
 	GeoHierarchy() {}
 	virtual ~GeoHierarchy() {}
@@ -56,7 +58,23 @@ public:
 	std::vector<uint32_t> getRegionsInLevelOrder() const;
 	///@return first = id, second = size
 	std::vector< std::pair< uint32_t, uint32_t > > createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const;
+	
+	///This reduces the size of the hierarchy by eliminating redundancy:
+	///For each Cell only those parents are kept, that are not an ancestor of another parent of the cell
+	///For earch region, only those cells are kept, that are not part of a descendant of the region<
+	///This should only be called before seialization
+	void compactify(bool compactifyCells, bool compactifyRegions);
 };
+
+template<typename T_SET_CONTAINER>
+void GeoHierarchy::getAncestors(uint32_t regionId, T_SET_CONTAINER & out) {
+	Region & r = m_regions[regionId];
+	out.insert(r.parents.cbegin(), r.parents.cend());
+	for(uint32_t parent : r.parents) {
+		getAncestors(parent, out);
+	}
+}
+
 
 }} //end namespace
 
