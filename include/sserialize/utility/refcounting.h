@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <atomic>
 
-//stolen from osmpbf
 namespace sserialize {
 
 
