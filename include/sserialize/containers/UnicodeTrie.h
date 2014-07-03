@@ -87,6 +87,9 @@ public:
 	
 	const Node * root() const { return m_root;}
 	
+	///use this on your own risk!
+	Node * root() { return m_root;}
+	
 	///create a new node if needed
 	template<typename T_OCTET_ITERATOR>
 	Node * nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
