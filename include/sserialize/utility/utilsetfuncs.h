@@ -151,8 +151,8 @@ void inplaceDiffSortedContainer(std::set<T> & a, const T_CONTAINER & b) {
 }
 
 template<typename T1, typename T2>
-void inplaceDiffSortedContainer(T1 & a, const T2 & b) {
-	diffSortedContainer(a, a, b);
+void inplaceDiffSortedContainer(T1 & srcDest, const T2 & b) {
+	diffSortedContainer(srcDest, srcDest, b);
 }
 
 template<typename T_CONTAINER_DEST, typename T_CONTAINER_A, typename T_CONTAINER_B>
