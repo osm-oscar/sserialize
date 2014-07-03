@@ -260,7 +260,8 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
 			if (!nodes.count(cP)) {
-				n = nodes[cP] = new SubSet::Node(cP);
+				n = new SubSet::Node(cP);
+				nodes[cP] = n;
 			}
 			else {
 				n = nodes[cP];
@@ -276,7 +277,8 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
 			if (!nodes.count(cP)) {
-				n = nodes[cP] = new SubSet::Node(cP);
+				n = new SubSet::Node(cP);
+				nodes[cP] = n;
 			}
 			else {
 				n = nodes[cP];
