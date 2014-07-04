@@ -26,13 +26,12 @@ OffsetType ItemIndexStore::LZODecompressor::getSizeInBytes() const {
 UByteArrayAdapter ItemIndexStore::LZODecompressor::decompress(uint32_t id, const UByteArrayAdapter & src) const {
 	if (m_data.maxCount() < id) {
 		uint32_t chunkLength = m_data.at(id);
-		uint8_t * srcCp = new uint8_t[src.size()];
-		src.get(0, srcCp, src.size());
+		//Get a memory view, but we don't write to it, so it's ok
+		const UByteArrayAdapter::MemoryView srcD = src.getMemView(0, src.size());
 		uint8_t * dest = new uint8_t[chunkLength];
 
 		lzo_uint destLen = chunkLength;
-		int ok = ::lzo1x_decompress(srcCp, src.size(), dest, &destLen, 0);
-		delete srcCp;
+		int ok = ::lzo1x_decompress(srcD.get(), src.size(), dest, &destLen, 0);
 		if (ok != LZO_E_OK) {
 			return UByteArrayAdapter();
 		}
