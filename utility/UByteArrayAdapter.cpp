@@ -517,6 +517,10 @@ UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos
 	}
 }
 
+const UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos, OffsetType size) const {
+	return const_cast<UByteArrayAdapter*>(this)->getMemView(pos, size);
+}
+
 int64_t UByteArrayAdapter::getInt64(const OffsetType pos) const {
 	if (m_len < pos+8) return 0;
 	return m_priv->getInt64(m_offSet+pos);

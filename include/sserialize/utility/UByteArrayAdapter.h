@@ -178,7 +178,9 @@ public:
 	inline OffsetType offset() const { return m_offSet;}
 	inline bool isEmpty() const { return (m_len == 0);}
 	
+	///Returns a read/writable MemoryView. If you don't write to it, then this function behaves like a const function
 	MemoryView getMemView(const OffsetType pos, OffsetType size);
+	const MemoryView getMemView(const OffsetType pos, OffsetType size) const;
 
 	int64_t getInt64(const OffsetType pos) const;
 	uint64_t getUint64(const OffsetType pos) const;
