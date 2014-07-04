@@ -96,6 +96,7 @@ containers/GeneralizedTrie/FlatTrie.cpp
 containers/GeneralizedTrie/MultiPassTrie.cpp
 containers/GeneralizedTrie/SinglePassTrie.cpp
 containers/CellQueryResult.cpp
+containers/CellQueryResultPrivate.cpp
 containers/OpTree.cpp
 )
 
