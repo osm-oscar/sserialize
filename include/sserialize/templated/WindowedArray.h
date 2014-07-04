@@ -115,7 +115,7 @@ public:
 	template<typename T_ITERATOR_TO_WINDOWED_ARRAYS>
 	static WindowedArray uniteSortedInPlace(T_ITERATOR_TO_WINDOWED_ARRAYS begin, T_ITERATOR_TO_WINDOWED_ARRAYS end) {
 		auto mergeFunc = [](WindowedArray a, WindowedArray b) { return WindowedArray::uniteSortedInPlace(a, b); };
-		return sserialize::treeMap(begin, end, mergeFunc);
+		return sserialize::treeReduce(begin, end, mergeFunc);
 	}
 	
 };

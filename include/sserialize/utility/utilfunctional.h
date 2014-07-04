@@ -28,7 +28,7 @@ T_CONTAINER sort(T_CONTAINER a) {
   * @param func function that maps two iterator::value_type to a new one
   */
 template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
-T_RETURN treeMap(T_ITERATOR begin, T_ITERATOR end, T_FUNC mapFunc) {
+T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC mapFunc) {
 	if (end - begin == 0) {
 		return T_RETURN();
 	}
@@ -39,8 +39,8 @@ T_RETURN treeMap(T_ITERATOR begin, T_ITERATOR end, T_FUNC mapFunc) {
 		return mapFunc(*begin, *(begin+1));
 	}
 	else {
-		return mapFunc( treeMap<T_ITERATOR, T_RETURN, T_FUNC>(begin, begin+(end-begin)/2, mapFunc),
-						treeMap<T_ITERATOR, T_RETURN, T_FUNC>(begin+(end-begin)/2, end, mapFunc)
+		return mapFunc( treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin, begin+(end-begin)/2, mapFunc),
+						treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin+(end-begin)/2, end, mapFunc)
 					);
 	}
 }

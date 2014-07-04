@@ -39,7 +39,7 @@ public:
 				std::set_union(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(ret));
 				return ret;
 			};
-			std::vector<uint32_t> mergedTestData = sserialize::treeMap<std::vector< std::vector<uint32_t> >::const_iterator, std::vector<uint32_t> >(testData.begin(), testData.end(), mergeFunc);
+			std::vector<uint32_t> mergedTestData = sserialize::treeReduce<std::vector< std::vector<uint32_t> >::const_iterator, std::vector<uint32_t> >(testData.begin(), testData.end(), mergeFunc);
 			
 			
 			uint32_t storageNeed = 0;
