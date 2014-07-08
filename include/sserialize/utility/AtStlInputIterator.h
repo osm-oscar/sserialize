@@ -1,5 +1,6 @@
 #ifndef SSERIALIZE_AT_STL_INPUT_ITERATOR_H
 #define SSERIALIZE_AT_STL_INPUT_ITERATOR_H
+#include <sserialize/utility/refcounting.h>
 #include <iterator>
 #include <limits>
 #include <functional>
@@ -19,6 +20,11 @@ struct ReadOnlyAtStlIteratorPassThroughDereference {
 	T_RETURN_TYPE operator()(const typename std::enable_if<!std::is_pointer<T_CONTAINER>::value && std::is_same<T_CONTAINER, U>::value, U>::type & c, T_SIZE_TYPE  pos) const {
 		return c.at(pos);
 	}
+	
+	template<typename RCObj>
+	T_RETURN_TYPE operator()(const RCPtrWrapper<RCObj> & c, T_SIZE_TYPE pos) const {
+		return c->at(pos);
+	}
 };
 
 /** This is a template class to iterate over a container which element access function is named at(size_t)
@@ -26,8 +32,12 @@ struct ReadOnlyAtStlIteratorPassThroughDereference {
   *
   *
   */
-template<typename T_CONTAINER, typename T_RETURN_TYPE, typename T_SIZE_TYPE=std::size_t, typename T_DEREFERENCE = ReadOnlyAtStlIteratorPassThroughDereference<T_CONTAINER, T_RETURN_TYPE, T_SIZE_TYPE> >
-class ReadOnlyAtStlIterator: public std::iterator<std::random_access_iterator_tag, T_RETURN_TYPE, T_SIZE_TYPE> {
+template<typename T_CONTAINER, typename T_RETURN_TYPE = typename T_CONTAINER::value_type, typename T_SIZE_TYPE=int64_t, typename T_DEREFERENCE = ReadOnlyAtStlIteratorPassThroughDereference<T_CONTAINER, T_RETURN_TYPE, T_SIZE_TYPE> >
+class ReadOnlyAtStlIterator: public std::iterator<std::random_access_iterator_tag, T_RETURN_TYPE, typename std::make_signed<T_SIZE_TYPE>::type > {
+public:
+	typedef std::iterator<std::random_access_iterator_tag, T_RETURN_TYPE, typename std::make_signed<T_SIZE_TYPE>::type > MyBaseClass;
+	typedef typename MyBaseClass::difference_type difference_type;
+	typedef T_RETURN_TYPE value_type;
 private:
 	T_SIZE_TYPE m_pos;
 	T_CONTAINER m_data;
@@ -46,6 +56,7 @@ public:
 		m_pos = other.m_pos;
 		m_data = other.m_data;
 		m_derefer = other.m_derefer;
+		return *this;
 	}
 	
 	bool operator==(const ReadOnlyAtStlIterator & other) const {
@@ -90,26 +101,26 @@ public:
 		return *this;
 	}
 	
-	ReadOnlyAtStlIterator & operator+=(T_SIZE_TYPE offset) {
+	ReadOnlyAtStlIterator & operator+=(difference_type offset) {
 		m_pos += offset;
 		return *this;
 	}
 
-	ReadOnlyAtStlIterator & operator-=(T_SIZE_TYPE offset) {
+	ReadOnlyAtStlIterator & operator-=(difference_type offset) {
 		m_pos -= offset;
 		return *this;
 	}
 	
-	ReadOnlyAtStlIterator operator+(T_SIZE_TYPE offset) const {
+	ReadOnlyAtStlIterator operator+(difference_type offset) const {
 		return ReadOnlyAtStlIterator(m_pos+offset, m_data, m_derefer);
 	}
 
-	ReadOnlyAtStlIterator operator-(T_SIZE_TYPE offset) const {
+	ReadOnlyAtStlIterator operator-(difference_type offset) const {
 		return ReadOnlyAtStlIterator(m_pos-offset, m_data, m_derefer);
 	}
 
-	T_SIZE_TYPE operator-(const ReadOnlyAtStlIterator & other) const {
-		return (m_data == other.m_data ? m_pos - other.m_pos : std::numeric_limits<T_SIZE_TYPE>::max());
+	difference_type operator-(const ReadOnlyAtStlIterator & other) const {
+		return (m_data == other.m_data ? static_cast<difference_type>(m_pos) - static_cast<difference_type>(other.m_pos) : std::numeric_limits<difference_type>::max());
 	}
 	
 	T_RETURN_TYPE operator*() const {
