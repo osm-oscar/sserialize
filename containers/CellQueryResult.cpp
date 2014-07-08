@@ -60,7 +60,9 @@ CellQueryResult::CellQueryResult(detail::CellQueryResult * priv) :
 m_priv(priv)
 {}
 
-CellQueryResult::CellQueryResult() {}
+CellQueryResult::CellQueryResult() :
+m_priv(new detail::CellQueryResult())
+{}
 
 CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
 m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))

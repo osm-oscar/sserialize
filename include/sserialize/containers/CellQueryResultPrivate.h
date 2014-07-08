@@ -38,6 +38,7 @@ private:
 	void uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx);
 	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 public:
+    CellQueryResult();
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,

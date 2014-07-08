@@ -5,6 +5,15 @@
 namespace sserialize {
 namespace detail {
 
+CellQueryResult::CellQueryResult() :
+m_idx(0)
+{}
+
+CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_gh(gh),
+m_idxStore(idxStore)
+{}
+
 CellQueryResult::~CellQueryResult() {
 	std::vector<CellDesc>::const_iterator dIt(m_desc.cbegin()), dEnd(m_desc.cend());
 	IndexDesc * it(m_idx);
@@ -121,10 +130,5 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const {
 	return 0;
 }
-
-CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
-m_gh(gh),
-m_idxStore(idxStore)
-{}
 
 }}//end namespace
