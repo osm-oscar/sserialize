@@ -1,113 +1,114 @@
 #include <sserialize/containers/CellQueryResult.h>
-#include <sserialize/containers/ItemIndexFactory.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/containers/CellQueryResultPrivate.h>
 
 namespace sserialize {
+namespace detail {
 
+CellQueryResultIterator::CellQueryResultIterator(const RCPtrWrapper<detail::CellQueryResult> & cqr, uint32_t pos) :
+m_d(cqr),
+m_pos(pos)
+{}
 
-CellQueryResult & CellQueryResult::operator=(const CellQueryResult & other) {
-	m_fullMatches = other.fullMatches();
-	m_partialMatches = other.partialMatches();
-	m_partialMatchesItems = other.partialMatchesItems();
-	m_indexType = other.indexType();
+CellQueryResultIterator::CellQueryResultIterator(const CellQueryResultIterator & other) : 
+m_d(other.m_d),
+m_pos(other.m_pos)
+{}
+
+CellQueryResultIterator::~CellQueryResultIterator() {}
+
+CellQueryResultIterator & CellQueryResultIterator::operator=(const CellQueryResultIterator & other) {
+	m_d = other.m_d;
+	m_pos = other.m_pos;
 	return *this;
 }
 
-CellQueryResult & CellQueryResult::operator=(CellQueryResult && other) {
-	m_fullMatches = other.fullMatches();
-	m_partialMatches = other.partialMatches();
-	m_partialMatchesItems.clear();
-	using std::swap;
-	swap(m_partialMatchesItems, other.m_partialMatchesItems);
-	m_indexType = other.indexType();
+const sserialize::ItemIndex & CellQueryResultIterator::operator*() const {
+	return m_d->idx(m_pos);
+}
+
+uint32_t CellQueryResultIterator::cellId() const {
+	return m_d->cellId(m_pos);
+}
+
+bool CellQueryResultIterator::fullMatch() const {
+	return m_d->fullMatch(m_pos);
+}
+
+//TODO:improve this if more information from the text-search is available
+uint32_t CellQueryResultIterator::idxSize() const {
+	return m_d->idx(m_pos).size();
+}
+
+CellQueryResultIterator CellQueryResultIterator::operator++(int ) {
+	++m_pos;
+	return CellQueryResultIterator(m_d, m_pos-1);
+}
+
+CellQueryResultIterator & CellQueryResultIterator::operator++() {
+	++m_pos;
+	return *this;
+}
+
+CellQueryResultIterator CellQueryResultIterator::operator+(differnce_type v) const {
+	return CellQueryResultIterator(m_d, m_pos+v);
+}
+
+}//end namespace detail
+
+
+CellQueryResult::CellQueryResult(detail::CellQueryResult * priv) :
+m_priv(priv)
+{}
+
+CellQueryResult::CellQueryResult() {}
+
+CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
+m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
+{}
+
+CellQueryResult::~CellQueryResult() {}
+
+CellQueryResult::CellQueryResult(const CellQueryResult & other) : m_priv(other.m_priv) {}
+
+CellQueryResult & CellQueryResult::operator=(const CellQueryResult & other) {
+	m_priv = other.m_priv;
 	return *this;
 }
 
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
-	ItemIndex nFM = m_fullMatches / o.m_fullMatches;
-	
-	ItemIndex oPM = (m_fullMatches - nFM) / o.m_partialMatches;
-	ItemIndex myPM = (o.m_fullMatches - nFM)  / m_partialMatches;
-
-	ItemIndex allFmPM = oPM + myPM;
-	
-	ItemIndex itemItemCandidates = (m_partialMatches / o.m_partialMatches) - allFmPM;
-	
-	//we can now assemble the result
-	CellQueryResult r;
-	r.m_fullMatches = nFM;
-
-	{
-		std::vector<uint32_t> itemItemMatchesRaw;
-		for(ItemIndex::const_iterator it(itemItemCandidates.cbegin()), end(itemItemCandidates.cend()); it != end; ++it) {
-			uint32_t idxId = *it;
-			ItemIndex idx = m_partialMatchesItems.at(idxId) / o.m_partialMatchesItems.at(idxId);
-			if (idx.size()) {
-				itemItemMatchesRaw.push_back(idxId);
-				r.m_partialMatchesItems[idxId] = idx; 
-			}
-		}
-		r.m_partialMatches = allFmPM + ItemIndexFactory::create(itemItemMatchesRaw, indexType());
-	}
-	
-	for(ItemIndex::const_iterator it(myPM.cbegin()), end(myPM.cend()); it != end; ++it) {
-		uint32_t idxId = *it;
-		r.m_partialMatchesItems[idxId] = m_partialMatchesItems.at(idxId);
-	}
-	
-	for(ItemIndex::const_iterator it(oPM.cbegin()), end(oPM.cend()); it != end; ++it) {
-		uint32_t idxId = *it;
-		r.m_partialMatchesItems[idxId] = o.m_partialMatchesItems.at(idxId);
-	}
-	return r;
+	return CellQueryResult(m_priv->intersect(o.m_priv.priv()));
 }
 
 CellQueryResult CellQueryResult::operator+(const sserialize::CellQueryResult & o) const {
-	CellQueryResult r;
-	r.fullMatches() = fullMatches() + o.fullMatches();
-	r.partialMatches() = (partialMatches() + o.partialMatches()) - r.fullMatches();
-	r.partialMatchesItems().reserve( std::max<uint32_t>(partialMatchesItems().size(), o.partialMatchesItems().size()) );
-	for(uint32_t idxId : r.partialMatches()) {
-		if (partialMatchesItems().count(idxId)) {
-			if (o.partialMatchesItems().count(idxId))
-				r.partialMatchesItems()[idxId] = partialMatchesItems().at(idxId) + o.partialMatchesItems().at(idxId);
-			else
-				r.partialMatchesItems()[idxId] = partialMatchesItems().at(idxId);
-		}
-		else {
-			r.partialMatchesItems()[idxId] = o.partialMatchesItems().at(idxId);
-		}
-	}
-	return r;
+	return CellQueryResult(m_priv->unite(o.m_priv.priv()));
 }
 
 CellQueryResult CellQueryResult::operator-(const CellQueryResult & o) const {
-	CellQueryResult r;
-	r.fullMatches() = fullMatches() - o.fullMatches();
-	ItemIndex pMCandidates = partialMatches() - o.fullMatches();
-	ItemIndex pMEqCell = pMCandidates / o.partialMatches();
-	
-	std::vector<uint32_t> tmp;
-	for(const uint32_t cellId : pMEqCell) {
-		ItemIndex tI = partialMatchesItems().at(cellId) - o.partialMatchesItems().at(cellId);
-		if (tI.size()) {
-			tmp.push_back(cellId);
-			r.partialMatchesItems()[cellId] = tI;
-		}
-	}
-
-	r.partialMatches() = (pMCandidates - pMEqCell);
-	for(const uint32_t cellId : r.partialMatches()) {
-		r.partialMatchesItems()[cellId] = m_partialMatchesItems.at(cellId);
-	}
-	r.partialMatches() = r.partialMatches() + ItemIndexFactory::create(tmp, indexType());
-	
-	return r;
+	return CellQueryResult(m_priv->diff(o.m_priv.priv()));
 }
 
-CellQueryResult CellQueryResult::operator^(const CellQueryResult & other) const {
-	throw sserialize::UnimplementedFunctionException("sserialize::CellQueryResult::operator^");
-	return CellQueryResult();
+CellQueryResult CellQueryResult::operator^(const CellQueryResult & o) const {
+	return CellQueryResult(m_priv->symDiff(o.m_priv.priv()));
+}
+
+CellQueryResult::const_iterator CellQueryResult::begin() const {
+	return const_iterator(m_priv, 0);
+}
+
+CellQueryResult::const_iterator CellQueryResult::cbegin() const {
+	return const_iterator(m_priv, 0);
+}
+
+CellQueryResult::const_iterator CellQueryResult::end() const {
+	return const_iterator(m_priv, m_priv->cellCount());
+}
+
+CellQueryResult::const_iterator CellQueryResult::cend() const {
+	return const_iterator(m_priv, m_priv->cellCount());
+}
+
+sserialize::ItemIndex CellQueryResult::flaten() const {
+	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) { return a + b; } );
 }
 
 }
