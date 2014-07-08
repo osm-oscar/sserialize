@@ -36,24 +36,23 @@ uint32_t ItemIndexPrivateRleDE::MyIterator::get() const {
 }
 
 void ItemIndexPrivateRleDE::MyIterator::next() {
-	if (m_curRleCount || m_parent->m_data.size() > m_dataOffset) {
-		if (!m_curRleCount) {
-			int len;
-			uint32_t tmp = m_parent->m_data.getVlPackedUint32(m_dataOffset, &len);
-			m_dataOffset += len;//TODO:Check len for error code? very unlikeley, but "huge" performance costs
-			if (tmp & 0x1) { //this is an rle
-				m_curRleCount = tmp >> 1;
-				m_curRleDiff = (m_parent->m_data.getVlPackedUint32(m_dataOffset, &len)) >> 1;
-				m_dataOffset += len;
-			}
-			else {
-				m_curRleDiff = tmp >> 1;
-			}
-		}
-		if (m_curRleCount) {
-			--m_curRleCount;
-		}
+	if (m_curRleCount) {
+		--m_curRleCount;
 		m_curId += m_curRleDiff;
+	}
+	else if (m_parent->m_data.size() > m_dataOffset) {
+		int len;
+		uint32_t tmp = m_parent->m_data.getVlPackedUint32(m_dataOffset, &len);
+		m_dataOffset += len;//TODO:Check len for error code? very unlikeley, but "huge" performance costs
+		if (tmp & 0x1) { //this is an rle
+			m_curRleCount = (tmp >> 1)-1;
+			m_curRleDiff = (m_parent->m_data.getVlPackedUint32(m_dataOffset, &len)) >> 1;
+			m_curId += m_curRleDiff;
+			m_dataOffset += len;
+		}
+		else {
+			m_curId += tmp >> 1;
+		}
 	}
 	else {
 		m_curId = std::numeric_limits<uint32_t>::max();
