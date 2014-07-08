@@ -197,12 +197,23 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 		q.pop_back();
 		qt = sserialize::StringCompleter::QT_SUFFIX;
 	}
-	else if (q.size() == 2 && q.back() == '"' && q.front() == '"') {
+	else if (q.size() >= 2 && q.back() == '"' && q.front() == '"') {
 		q = std::string(q.cbegin()+1, q.cend()-1);
 		qt = sserialize::StringCompleter::QT_EXACT;
 	}
 	else {
-		qt = sserialize::StringCompleter::QT_SUBSTRING;
+		switch (q.size()) {
+		case 0:
+		case 1:
+			qt = sserialize::StringCompleter::QT_EXACT;
+			break;
+		case 2:
+			qt = sserialize::StringCompleter::QT_PREFIX;
+			break;
+		default:
+			qt = sserialize::StringCompleter::QT_SUBSTRING;
+			break;
+		}
 	}
 	return (StringCompleter::QuerryType)qt;
 }

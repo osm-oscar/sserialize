@@ -107,6 +107,7 @@ public:
 	
 	std::string getName() const;
 	
+	///maps query strings to queries, strings smaller than 2 are mapped to exact, with size 2 to Prefix, the rest to substring by default
 	static QuerryType normalize(std::string & qstr);
 };
 }//end namespace
