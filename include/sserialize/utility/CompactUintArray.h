@@ -3,6 +3,7 @@
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/utilcontainerfuncs.h>
+#include <sserialize/utility/AtStlInputIterator.h>
 #include <set>
 #include <deque>
 #include <ostream>
@@ -122,7 +123,14 @@ public:
  */
 class CompactUintArray: public RCWrapper<CompactUintArrayPrivate> {
 public:
+	typedef uint64_t value_type;
+
+	struct CompactUintArrayIteratorDerefer {
+		inline CompactUintArray::value_type operator()(const CompactUintArray & c, uint32_t pos) const { return c.at64(pos); }
+	};
+
 	typedef RCWrapper< sserialize::CompactUintArrayPrivate > MyBaseClass;
+	typedef ReadOnlyAtStlIterator<CompactUintArray, value_type, int64_t, CompactUintArrayIteratorDerefer> const_iterator;
 private:
 	uint32_t m_maxCount;
 protected:
@@ -152,6 +160,9 @@ public:
 	uint64_t set64(const uint32_t pos, const uint64_t value);
 	std::ostream& dump(std::ostream& out, uint32_t len);
 	void dump();
+	
+	inline const_iterator begin() const { return const_iterator(0, *this); }
+	inline const_iterator cbegin() const { return const_iterator(0, *this); }
 
 	///Creates a new CompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
@@ -247,6 +258,8 @@ public:
 	///Creates a new BoundedCompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
+	inline const_iterator end() const { return const_iterator(m_size, *this);}
+	inline const_iterator cend() const { return const_iterator(m_size, *this);}
 };
 
 template<typename T_SOURCE_CONTAINER>
