@@ -5,40 +5,41 @@
 namespace sserialize {
 namespace Static {
 namespace spatial {
+namespace detail {
 
-GeoHierarchy::Cell::Cell() : 
+Cell::Cell() : 
 m_pos(0),
 m_db(0)
 {}
 
-GeoHierarchy::Cell::Cell(uint32_t pos, const sserialize::Static::spatial::GeoHierarchy* db) : 
+Cell::Cell(uint32_t pos, const RCPtrWrapper<GeoHierarchy> & db) : 
 m_pos(pos),
 m_db(db)
 {}
 
-GeoHierarchy::Cell::~Cell() {}
+Cell::~Cell() {}
 
-uint32_t GeoHierarchy::Cell::itemPtr() const {
+uint32_t Cell::itemPtr() const {
 	return (m_db->cells().at(m_pos, CD_ITEM_PTR));
 }
 
-uint32_t GeoHierarchy::Cell::itemCount() const {
+uint32_t Cell::itemCount() const {
 	return m_db->cellItemsCount(m_pos);
 }
 
-uint32_t GeoHierarchy::Cell::parentsBegin() const {
+uint32_t Cell::parentsBegin() const {
 	return (m_db->cells().at(m_pos, CD_PARENTS_BEGIN));
 }
 
-uint32_t GeoHierarchy::Cell::parentsEnd() const {
+uint32_t Cell::parentsEnd() const {
 	return  m_db->cells().at(m_pos+1, CD_PARENTS_BEGIN);
 }
 
-uint32_t GeoHierarchy::Cell::parentsSize() const {
+uint32_t Cell::parentsSize() const {
 	return parentsEnd() - parentsBegin();
 }
 
-uint32_t GeoHierarchy::Cell::parent(uint32_t pos) const {
+uint32_t Cell::parent(uint32_t pos) const {
 	uint32_t pB = parentsBegin();
 	uint32_t pE = parentsEnd();
 	if (pB + pos < pE) {
@@ -47,47 +48,47 @@ uint32_t GeoHierarchy::Cell::parent(uint32_t pos) const {
 	return GeoHierarchy::npos;
 }
 
-GeoHierarchy::Region::Region() :
+Region::Region() :
 m_pos(0),
 m_db(0)
 {}
 
-GeoHierarchy::Region::Region(uint32_t pos, const GeoHierarchy * db) :
+Region::Region(uint32_t pos, const RCPtrWrapper<GeoHierarchy> & db) :
 m_pos(pos),
 m_db(db)
 {}
 
-GeoHierarchy::Region::~Region() {}
+Region::~Region() {}
 
-sserialize::spatial::GeoShapeType GeoHierarchy::Region::type() const {
+sserialize::spatial::GeoShapeType Region::type() const {
 	return  (sserialize::spatial::GeoShapeType) m_db->regions().at(m_pos, RD_TYPE);
 }
 
-uint32_t GeoHierarchy::Region::id() const {
+uint32_t Region::id() const {
 	return m_db->regions().at(m_pos, RD_ID);
 }
 
-sserialize::spatial::GeoRect GeoHierarchy::Region::boundary() const {
+sserialize::spatial::GeoRect Region::boundary() const {
 	return m_db->boundary(m_pos);
 }
 
-uint32_t GeoHierarchy::Region::cellIndexPtr() const {
+uint32_t Region::cellIndexPtr() const {
 	return m_db->regions().at(m_pos, RD_CELL_LIST_PTR);
 }
 
-uint32_t GeoHierarchy::Region::parentsBegin() const {
+uint32_t Region::parentsBegin() const {
 	return m_db->regionParentsBegin(m_pos);
 }
 
-uint32_t GeoHierarchy::Region::parentsEnd() const {
+uint32_t Region::parentsEnd() const {
 	return  m_db->regionParentsEnd(m_pos);
 }
 
-uint32_t GeoHierarchy::Region::parentsSize() const {
+uint32_t Region::parentsSize() const {
 	return parentsEnd() - parentsBegin();
 }
 
-uint32_t GeoHierarchy::Region::parent(uint32_t pos) const {
+uint32_t Region::parent(uint32_t pos) const {
 	uint32_t pB = parentsBegin();
 	uint32_t pE = parentsEnd();
 	if (pB + pos < pE) {
@@ -96,19 +97,19 @@ uint32_t GeoHierarchy::Region::parent(uint32_t pos) const {
 	return GeoHierarchy::npos;
 }
 
-uint32_t GeoHierarchy::Region::childrenBegin() const {
+uint32_t Region::childrenBegin() const {
 	return m_db->regions().at(m_pos, RD_CHILDREN_BEGIN);
 }
 
-uint32_t GeoHierarchy::Region::childrenEnd() const {
+uint32_t Region::childrenEnd() const {
 	return parentsBegin();
 }
 
-uint32_t GeoHierarchy::Region::childrenSize() const {
+uint32_t Region::childrenSize() const {
 	return m_db->regions().at(m_pos, RD_PARENTS_OFFSET);
 }
 
-uint32_t GeoHierarchy::Region::child(uint32_t pos) const {
+uint32_t Region::child(uint32_t pos) const {
 	uint32_t cB = childrenBegin();
 	uint32_t cE = childrenEnd();
 	if (cB + pos < cE) {
@@ -117,11 +118,11 @@ uint32_t GeoHierarchy::Region::child(uint32_t pos) const {
 	return GeoHierarchy::npos;
 }
 
-uint32_t GeoHierarchy::Region::itemsPtr() const {
+uint32_t Region::itemsPtr() const {
 	return m_db->regions().at(m_pos, RD_ITEMS_PTR);
 }
 
-uint32_t GeoHierarchy::Region::itemsCount() const {
+uint32_t Region::itemsCount() const {
 	return m_db->regionItemsCount(m_pos);
 }
 
@@ -146,10 +147,6 @@ OffsetType GeoHierarchy::getSizeInBytes() const {
 uint32_t GeoHierarchy::cellSize() const {
 	uint32_t rs  = m_cells.size();
 	return (rs > 0 ? rs-1 : 0);
-}
-
-GeoHierarchy::Cell GeoHierarchy::cell(uint32_t id) const {
-	return Cell(id, this);
 }
 
 uint32_t GeoHierarchy::cellParentsBegin(uint32_t id) const {
@@ -179,14 +176,6 @@ uint32_t GeoHierarchy::cellItemsCount(uint32_t pos) const {
 uint32_t GeoHierarchy::regionSize() const {
 	uint32_t rs  = m_regions.size();
 	return (rs > 0 ? rs-2 : 0); //we have to subtract 2 because of the rootRegion and the dummy region
-}
-
-GeoHierarchy::Region GeoHierarchy::region(uint32_t id) const {
-	return Region(id, this);
-}
-
-GeoHierarchy::Region GeoHierarchy::rootRegion() const {
-	return region(regionSize());
 }
 
 uint32_t GeoHierarchy::regionItemsPtr(uint32_t pos) const {
@@ -222,23 +211,6 @@ sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
 	return m_regionBoundaries.at(pos);
 }
 
-bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & store) const {
-	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
-		Region r = region(i);
-		std::vector<ItemIndex> idcs;
-		ItemIndex cellIdx = store.at(r.cellIndexPtr());
-		for(uint32_t j = 0, sj = cellIdx.size(); j < sj; ++j) {
-			idcs.push_back( store.at( this->cell(cellIdx.at(j)).itemPtr() ) );
-		}
-		ItemIndex mergedIdx = ItemIndex::unite(idcs);
-		if (mergedIdx != store.at( r.itemsPtr() )) {
-			std::cout << "Merged cell idx does not match region index for region " << i << std::endl;
-			return false;
-		}
-	}
-	return true;
-}
-
 std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
 	out << "regions.size()=" << regionSize() << std::endl;
@@ -254,13 +226,12 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	return out;
 }
 
-GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
-	typedef sserialize::CellQueryResult::PartialMatchesMap::const_iterator PMIterator;
-	typedef sserialize::ItemIndex::const_iterator FMIterator;
+SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
 	std::unordered_map<uint32_t, SubSet::Node*> nodes;
-	for(PMIterator it(cqr.partialMatchesItems().cbegin()), end(cqr.partialMatchesItems().cend()); it != end; ++it) {
-		uint32_t cellId = it->first;
-		uint32_t itemsInCell = it->second.size();
+
+	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
+		uint32_t cellId = it.cellId();
+		uint32_t itemsInCell = (it.fullMatch() ? cellItemsCount(cellId) : it.idxSize());
 		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
@@ -275,23 +246,7 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 			n->cells().push_back(cellId);
 		}
 	}
-	for(FMIterator it(cqr.fullMatches().cbegin()), end(cqr.fullMatches().cend()); it != end; ++it) {
-		uint32_t cellId = *it;
-		uint32_t itemsInCell = cellItemsCount(cellId);
-		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
-			uint32_t cP = cellPtr(cPIt);
-			SubSet::Node * n;
-			if (!nodes.count(cP)) {
-				n = new SubSet::Node(cP);
-				nodes[cP] = n;
-			}
-			else {
-				n = nodes[cP];
-			}
-			n->maxItemsSize() += itemsInCell;
-			n->cells().push_back(cellId);
-		}
-	}
+
 	SubSet::Node * rootNode = new SubSet::Node(npos);
 	for(std::unordered_map<uint32_t, SubSet::Node*>::iterator it(nodes.begin()), end(nodes.end()); it != end; ++it) {
 		uint32_t regionId = it->first;
@@ -310,6 +265,37 @@ GeoHierarchy::SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr
 	return SubSet(rootNode, cqr);
 }
 
+}//end namespace detail
+
+
+GeoHierarchy::Cell GeoHierarchy::cell(uint32_t id) const {
+	return Cell(id, m_priv);
+}
+
+GeoHierarchy::Region GeoHierarchy::region(uint32_t id) const {
+	return Region(id, m_priv);
+}
+
+GeoHierarchy::Region GeoHierarchy::rootRegion() const {
+	return region(regionSize());
+}
+
+bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & store) const {
+	for(uint32_t i = 0, s = regionSize(); i < s; ++i) {
+		Region r = region(i);
+		std::vector<ItemIndex> idcs;
+		ItemIndex cellIdx = store.at(r.cellIndexPtr());
+		for(uint32_t j = 0, sj = cellIdx.size(); j < sj; ++j) {
+			idcs.push_back( store.at( this->cell(cellIdx.at(j)).itemPtr() ) );
+		}
+		ItemIndex mergedIdx = ItemIndex::unite(idcs);
+		if (mergedIdx != store.at( r.itemsPtr() )) {
+			std::cout << "Merged cell idx does not match region index for region " << i << std::endl;
+			return false;
+		}
+	}
+	return true;
+}
 
 }}} //end namespace
 
