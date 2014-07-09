@@ -266,7 +266,13 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::N
 		if (rPIt != rPEnd) {
 			for(; rPIt != rPEnd; ++rPIt) {
 				uint32_t rp = regionPtr(rPIt);
-			nodes[rp]->push_back(*it);
+				if (nodes[rp]) {
+					nodes[rp]->push_back(*it);
+				}
+				else {
+					nodes[rp] = new SubSet::Node(rp);
+					nodes[rp]->push_back(*it);
+				}
 			}
 		}
 		else {
