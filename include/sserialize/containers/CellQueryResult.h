@@ -61,6 +61,8 @@ public:
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
+	uint32_t cellCount() const;
+	
 	CellQueryResult operator/(const CellQueryResult & other) const;
 	CellQueryResult operator+(const CellQueryResult & other) const;
 	CellQueryResult operator-(const CellQueryResult & other) const;

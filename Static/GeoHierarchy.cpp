@@ -227,7 +227,56 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 }
 
 SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
-	std::unordered_map<uint32_t, SubSet::Node*> nodes;
+	SubSet::Node * rootNode = 0;
+	if (cqr.cellCount() > cellSize()*0.5) {
+		std::vector<SubSet::Node*> nodes(regionSize()+1, 0);
+		rootNode = createSubSet(cqr, &(nodes[0]), nodes.size());
+	}
+	else {
+		std::unordered_map<uint32_t, SubSet::Node*> nodes;
+		rootNode = createSubSet(cqr, nodes);
+	}
+	return SubSet(rootNode, cqr);
+}
+
+SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
+	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
+		uint32_t cellId = it.cellId();
+		uint32_t itemsInCell = (it.fullMatch() ? cellItemsCount(cellId) : it.idxSize());
+		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
+			uint32_t cP = cellPtr(cPIt);
+			SubSet::Node * n;
+			if (!nodes[cP]) {
+				n = new SubSet::Node(cP);
+				nodes[cP] = n;
+			}
+			else {
+				n = nodes[cP];
+			}
+			n->maxItemsSize() += itemsInCell;
+			n->cells().push_back(cellId);
+		}
+	}
+
+	SubSet::Node * rootNode = new SubSet::Node(npos);
+	SubSet::Node* * end = nodes+size;
+	for(SubSet::Node* * it(nodes); it != end; ++it) {
+		uint32_t regionId = it-nodes;
+		uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId));
+		if (rPIt != rPEnd) {
+			for(; rPIt != rPEnd; ++rPIt) {
+				uint32_t rp = regionPtr(rPIt);
+			nodes[rp]->push_back(*it);
+			}
+		}
+		else {
+			rootNode->push_back(*it);
+		}
+	}
+	return rootNode;
+}
+
+SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const {
 
 	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
 		uint32_t cellId = it.cellId();
@@ -248,6 +297,7 @@ SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
 	}
 
 	SubSet::Node * rootNode = new SubSet::Node(npos);
+	
 	for(std::unordered_map<uint32_t, SubSet::Node*>::iterator it(nodes.begin()), end(nodes.end()); it != end; ++it) {
 		uint32_t regionId = it->first;
 		uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId));
@@ -260,10 +310,10 @@ SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
 		else {
 			rootNode->push_back(it->second);
 		}
-		
 	}
-	return SubSet(rootNode, cqr);
+	return rootNode;
 }
+
 
 }//end namespace detail
 

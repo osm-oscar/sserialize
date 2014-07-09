@@ -5,6 +5,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/spatial/GeoShape.h>
 #include <sserialize/containers/CellQueryResult.h>
+#include <unordered_map>
 
 #define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 7
 
@@ -99,6 +100,9 @@ public:
 	
 	typedef sserialize::MultiVarBitArray CellDescriptionType;
 	typedef sserialize::BoundedCompactUintArray CellPtrListType;
+private:
+	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
+	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
 private:
 	RegionDescriptionType m_regions;
 	RegionPtrListType m_regionPtrs;

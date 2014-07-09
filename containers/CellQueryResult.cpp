@@ -77,6 +77,10 @@ CellQueryResult & CellQueryResult::operator=(const CellQueryResult & other) {
 	return *this;
 }
 
+uint32_t CellQueryResult::cellCount() const {
+	return m_priv->cellCount();
+}
+
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
 	return CellQueryResult(m_priv->intersect(o.m_priv.priv()));
 }
