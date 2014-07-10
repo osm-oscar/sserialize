@@ -58,6 +58,7 @@ Static/GeoMultiPolygon.cpp
 Static/UnicodeTrie/detail/SimpleNode.cpp
 Static/UnicodeTrie/detail/Node.cpp
 Static/UnicodeTrie/detail/EmptyNode.cpp
+Static/GeoHierarchySubSetCreator.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP

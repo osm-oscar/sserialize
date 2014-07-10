@@ -118,6 +118,7 @@ public:
 	const RegionDescriptionType & regions() const { return m_regions; }
 	const CellDescriptionType & cells() const { return m_cells; }
 	const RegionPtrListType & regionPtrs() const { return m_regionPtrs; }
+	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
 
 	uint32_t cellSize() const;
 	
@@ -125,7 +126,6 @@ public:
 	uint32_t cellParentsEnd(uint32_t id) const;
 	uint32_t cellPtrSize() const;
 	uint32_t cellPtr(uint32_t pos) const;
-	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
 	uint32_t cellItemsPtr(uint32_t pos) const;
 	uint32_t cellItemsCount(uint32_t pos) const;
 	
@@ -230,6 +230,11 @@ public:
 	virtual ~GeoHierarchy() {}
 	inline OffsetType getSizeInBytes() const { return m_priv->getSizeInBytes(); }
 	
+	inline const RegionDescriptionType & regions() const { return m_priv->regions(); }
+	inline const CellDescriptionType & cells() const { return m_priv->cells(); }
+	inline const CellPtrListType & cellPtrs() const { return m_priv->cellPtrs(); }
+	inline const RegionPtrListType & regionPtrs() const { return m_priv->regionPtrs(); }
+	
 	inline uint32_t cellSize() const { return m_priv->cellSize(); }
 	Cell cell(uint32_t id) const;
 	
@@ -237,7 +242,6 @@ public:
 	inline uint32_t cellParentsEnd(uint32_t id) const { return m_priv->cellParentsEnd(id);}
 	inline uint32_t cellPtrSize() const { return m_priv->cellPtrSize();}
 	inline uint32_t cellPtr(uint32_t pos) const { return m_priv->cellPtr(pos);}
-	inline const CellPtrListType & cellPtrs() const { return m_priv->cellPtrs();}
 	inline uint32_t cellItemsPtr(uint32_t pos) const { return m_priv->cellItemsPtr(pos);}
 	inline uint32_t cellItemsCount(uint32_t pos) const { return m_priv->cellItemsCount(pos);}
 	
