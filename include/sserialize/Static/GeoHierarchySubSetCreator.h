@@ -2,6 +2,10 @@
 #define SSERIALIZE_GEO_HIERARCHY_SUB_SET_CREATOR_H
 #include <sserialize/Static/GeoHierarchy.h>
 
+//TODO: sparse hiearchy support:
+//if only direct parents are available, then to calculate aproximate counts,
+//one has to mark the upward graph and sum it up
+
 namespace sserialize {
 namespace spatial {
 namespace detail {

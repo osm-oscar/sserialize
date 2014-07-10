@@ -61,8 +61,9 @@ public:
 	
 	///This reduces the size of the hierarchy by eliminating redundancy:
 	///For each Cell only those parents are kept, that are not an ancestor of another parent of the cell
-	///For earch region, only those cells are kept, that are not part of a descendant of the region<
-	///This should only be called before seialization
+	///For each region, only those cells are kept, that are not part of a descendant of the region
+	///Calculating aproximate region item counts during completion is then more involved
+	///This should only be called before serialization
 	void compactify(bool compactifyCells, bool compactifyRegions);
 };
 
