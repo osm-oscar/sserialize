@@ -28,7 +28,7 @@ T_CONTAINER sort(T_CONTAINER a) {
   * @param func function that maps two iterator::value_type to a new one
   */
 template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
-T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC mapFunc) {
+T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc) {
 	if (end - begin == 0) {
 		return T_RETURN();
 	}
@@ -36,11 +36,34 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC mapFunc) {
 		return *begin;
 	}
 	else if (end - begin == 2) {
-		return mapFunc(*begin, *(begin+1));
+		return redFunc(*begin, *(begin+1));
 	}
 	else {
-		return mapFunc( treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin, begin+(end-begin)/2, mapFunc),
-						treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin+(end-begin)/2, end, mapFunc)
+		return redFunc( treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin, begin+(end-begin)/2, redFunc),
+						treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin+(end-begin)/2, end, redFunc)
+					);
+	}
+}
+
+/** @param begin iterator pointing to the first element
+  * @param end iterator pointing past the last element
+  * @param redfunc function that maps two T_RETURN to a new one
+  * @param mapfunc function that maps one iterator to T_RETURN
+  */
+template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_REDFUNC, typename T_MAPFUNC>
+T_RETURN treeReduceMap(T_ITERATOR begin, T_ITERATOR end, T_REDFUNC redFunc, T_MAPFUNC mapFunc) {
+	if (end - begin == 0) {
+		return T_RETURN();
+	}
+	else if (end - begin == 1) {
+		return mapFunc(*begin);
+	}
+	else if (end - begin == 2) {
+		return redFunc(mapFunc(*begin), mapFunc(*(begin+1)));
+	}
+	else {
+		return redFunc( treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin, begin+(end-begin)/2, redFunc, mapFunc),
+						treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin+(end-begin)/2, end, redFunc, mapFunc)
 					);
 	}
 }
