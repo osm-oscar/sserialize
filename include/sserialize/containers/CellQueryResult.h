@@ -33,6 +33,7 @@ public:
 	uint32_t cellId() const;
 	bool fullMatch() const;
 	uint32_t idxSize() const;
+	inline uint32_t pos() const { return m_pos; }
 	const sserialize::ItemIndex & operator*() const;
 	inline bool operator!=(const CellQueryResultIterator & other) const { return m_pos != other.m_pos; }
 	inline differnce_type operator-(const CellQueryResultIterator & other) const { return m_pos - other.m_pos; }
@@ -62,6 +63,8 @@ public:
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
 	uint32_t cellCount() const;
+	
+	sserialize::ItemIndex idx(uint32_t cellId) const;
 	
 	CellQueryResult operator/(const CellQueryResult & other) const;
 	CellQueryResult operator+(const CellQueryResult & other) const;

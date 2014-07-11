@@ -81,6 +81,10 @@ uint32_t CellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }
 
+sserialize::ItemIndex CellQueryResult::idx(uint32_t pos) const {
+	return m_priv->idx(pos);
+}
+
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
 	return CellQueryResult(m_priv->intersect(o.m_priv.priv()));
 }
