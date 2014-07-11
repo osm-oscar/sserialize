@@ -7,7 +7,7 @@
 #include <sserialize/containers/CellQueryResult.h>
 #include <unordered_map>
 
-#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 7
+#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 8
 
 namespace sserialize {
 namespace Static {
@@ -21,6 +21,7 @@ namespace spatial {
   *Version 5: add items pointer to regions
   *Version 6: add items count to regions
   *Version 7: add items count to cells
+  *Version 8: add sparse parent ptrs to cells
   *-------------------------------------------------------------------------------
   *VERSION|RegionDesc|RegionPtrs |RegionBoundaries       |CellDesc  |CellPtrs
   *-------------------------------------------------------------------------------
@@ -50,6 +51,13 @@ namespace spatial {
   * In essence, the root region is just the entrypoint to the graph
   *
   *
+  * Cell parent ptrs:
+  * They consist of the direct parents of the cell and the union of the ancestors of the direct parents.
+  * The can be accessed seperately.
+  * This only useful during SubSet creation:
+  * the direct parents are used in conjunction with SuBSet without aproximate region item counts and a recursive flattening strategy
+  * the union is used if the SubSet needs an aproximate item counts and a single-region only flattening strategy (all contained cells are stored in the region)
+  *
   */
 
 namespace detail {
@@ -58,13 +66,14 @@ class SubSet {
 public:
 	class Node: public RefCountObject {
 	public:
-		typedef std::vector<Node*> ChildrenStorageContainer;
 		typedef RCPtrWrapper<Node> NodePtr;
+		typedef std::vector<NodePtr> ChildrenStorageContainer;
+		typedef std::vector<uint32_t> CellPositionsContainer;
 	private:
-		std::vector< NodePtr > m_children;
+		ChildrenStorageContainer m_children;
 		uint32_t m_id;
 		uint32_t m_itemSize;
-		std::vector<uint32_t> m_cells;
+		CellPositionsContainer m_cellPositions;
 	public:
 		Node(uint32_t id, uint32_t itemSize = 0) : m_id(id), m_itemSize(itemSize) {}
 		virtual ~Node() {}
@@ -77,21 +86,36 @@ public:
 		inline void push_back(Node * child) { m_children.push_back( RCPtrWrapper<Node>(child) );}
 		inline uint32_t maxItemsSize() const { return m_itemSize; }
 		inline uint32_t & maxItemsSize() { return m_itemSize; }
-		inline const std::vector<uint32_t> & cells() const { return m_cells;}
-		inline std::vector<uint32_t> & cells() { return m_cells;}
+		inline const CellPositionsContainer & cellPositions() const { return m_cellPositions;}
+		inline CellPositionsContainer & cellPositions() { return m_cellPositions;}
 	};
 	typedef Node::NodePtr NodePtr;
 private:
 	RCPtrWrapper<Node> m_root;
 	CellQueryResult m_cqr;
+	bool m_sparse;
+private:
+	template<typename T_HASH_CONTAINER>
+	void insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const;
 public:
 	SubSet() {}
-	SubSet(Node * root, const CellQueryResult & cqr) : m_root(root), m_cqr(cqr) {}
+	SubSet(Node * root, const CellQueryResult & cqr, bool sparse) : m_root(root), m_cqr(cqr), m_sparse(sparse) {}
 	virtual ~SubSet()  {}
 	inline const NodePtr & root() const { return m_root;}
 	inline const CellQueryResult & cqr() const { return m_cqr; }
+	///Sparse SubSets have no itemcounts and need a recursive flattening strategy
+	inline bool sparse() const { return m_sparse; }
+	sserialize::ItemIndex idx(const NodePtr & node) const;
 };
-  
+
+template<typename T_HASH_CONTAINER>
+void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const {
+	idcsPos.insert(node->cellPositions().cbegin(), node->cellPositions().cend());
+	for(uint32_t i(0), s(node->size()); i < s; ++i) {
+		insertCellPositions(node->at(i), idcsPos);
+	}
+}
+ 
 class GeoHierarchy: public RefCountObject {
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
@@ -123,6 +147,7 @@ public:
 	uint32_t cellSize() const;
 	
 	uint32_t cellParentsBegin(uint32_t id) const;
+	uint32_t cellDirectParentsEnd(uint32_t id) const;
 	uint32_t cellParentsEnd(uint32_t id) const;
 	uint32_t cellPtrSize() const;
 	uint32_t cellPtr(uint32_t pos) const;
@@ -144,12 +169,12 @@ public:
 	
 	std::ostream & printStats(std::ostream & out) const;
 	
-	SubSet subSet(const sserialize::CellQueryResult & cqr) const;
+	SubSet subSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
 };
 
 class Cell {
 public:
-	typedef enum {CD_ITEM_PTR=0, CD_ITEM_COUNT=1, CD_PARENTS_BEGIN=2, CD__ENTRY_SIZE=3} CellDescriptionAccessors;
+	typedef enum {CD_ITEM_PTR=0, CD_ITEM_COUNT=1, CD_PARENTS_BEGIN=2, CD_DIRECT_PARENTS_OFFSET=3, CD__ENTRY_SIZE=4} CellDescriptionAccessors;
 private:
 	uint32_t m_pos;
 	RCPtrWrapper<GeoHierarchy> m_db;
@@ -161,6 +186,8 @@ public:
 	uint32_t itemCount() const;
 	///Offset into PtrArray
 	uint32_t parentsBegin() const;
+	///Offset into PtrArray
+	uint32_t directParentsEnd() const;
 	///Offset into PtrArray
 	uint32_t parentsEnd() const;
 	uint32_t parentsSize() const;
@@ -239,6 +266,7 @@ public:
 	Cell cell(uint32_t id) const;
 	
 	inline uint32_t cellParentsBegin(uint32_t id) const { return m_priv->cellParentsBegin(id);}
+	inline uint32_t cellDirectParentsEnd(uint32_t id) const { return m_priv->cellDirectParentsEnd(id);}
 	inline uint32_t cellParentsEnd(uint32_t id) const { return m_priv->cellParentsEnd(id);}
 	inline uint32_t cellPtrSize() const { return m_priv->cellPtrSize();}
 	inline uint32_t cellPtr(uint32_t pos) const { return m_priv->cellPtr(pos);}
@@ -264,7 +292,7 @@ public:
 	
 	inline std::ostream & printStats(std::ostream & out) const { return m_priv->printStats(out); }
 
-	inline SubSet subSet(const sserialize::CellQueryResult & cqr) const { return m_priv->subSet(cqr); }
+	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->subSet(cqr, sparse); }
 };
 
 }}} //end namespace

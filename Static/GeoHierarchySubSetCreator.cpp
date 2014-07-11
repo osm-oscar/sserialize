@@ -26,84 +26,41 @@ m_gh(gh)
 	}
 	
 	for(uint32_t i(0), s(m_gh.cellSize()); i < s; ++i) {
-		m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), m_gh.cellItemsCount(i)) );
 		
-		for(uint32_t cPIt(m_gh.cellParentsBegin(i)), cPEnd(m_gh.cellParentsEnd(i)); cPIt != cPEnd; ++cPIt) {
+		
+		uint32_t cPIt(m_gh.cellParentsBegin(i));
+		uint32_t cdPEnd(m_gh.cellDirectParentsEnd(i));
+		uint32_t cPEnd(m_gh.cellParentsEnd(i));
+		
+		m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), m_cellParentsPtrs.size() + (cdPEnd-cPIt), m_gh.cellItemsCount(i)));
+		
+		for(; cPIt != cPEnd; ++cPIt) {
 			m_cellParentsPtrs.push_back( ghCellPtrs.at(cPIt) );
 		}
+
 	}
 	//dummy end regions
 	m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size()) );
-	m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), 0) );
+	m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), 0, 0) );
 }
 
 GeoHierarchySubSetCreator::~GeoHierarchySubSetCreator() {}
 
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
-GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult & cqr) {
+GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) {
 	SubSet::Node * rootNode = 0;
-	if (cqr.cellCount() > m_cellDesc.size()*0.5) {
+	if (cqr.cellCount() > m_cellDesc.size()*0.5 || sparse) {
 		std::vector<SubSet::Node*> nodes(m_regionDesc.size()+1, 0);
-		rootNode = createSubSet(cqr, &(nodes[0]), nodes.size());
+		if (sparse) {
+			rootNode = createSubSet<true>(cqr, &(nodes[0]), nodes.size());
+		}
+		else {
+			rootNode = createSubSet<false>(cqr, &(nodes[0]), nodes.size());
+		}
 	}
 	else {
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
 		rootNode = createSubSet(cqr, nodes);
-	}
-	return rootNode;
-}
-
-sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
-GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
-	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos);
-
-	const uint32_t * cPPtrsBegin = &(m_cellParentsPtrs[0]);
-	const uint32_t * rPPtrsBegin = &(m_regionParentsPtrs[0]);
-
-	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
-		uint32_t cellId = it.cellId();
-		const CellDesc & cellDesc = m_cellDesc[cellId];
-		uint32_t itemsInCell = (it.fullMatch() ? cellDesc.itemsCount : it.idxSize());
-		rootNode->maxItemsSize() += itemsInCell;
-		const uint32_t * cPIt = cPPtrsBegin + cellDesc.parentsBegin;
-		const uint32_t * cPEnd = cPPtrsBegin + m_cellDesc[cellId+1].parentsBegin;
-		for(; cPIt != cPEnd; ++cPIt) {
-			uint32_t cP = *cPIt;
-			SubSet::Node * n;
-			if (!nodes[cP]) {
-				n = new SubSet::Node(cP);
-				nodes[cP] = n;
-			}
-			else {
-				n = nodes[cP];
-			}
-			n->maxItemsSize() += itemsInCell;
-			n->cells().push_back(cellId);
-		}
-	}
-	
-	SubSet::Node* * end = nodes+size;
-	for(SubSet::Node* * it(nodes); it != end; ++it) {
-		if (*it) {
-			uint32_t regionId = it-nodes;
-			const uint32_t * rPIt = rPPtrsBegin + m_regionDesc[regionId].parentsBegin;
-			const uint32_t * rPEnd = rPPtrsBegin + m_regionDesc[regionId+1].parentsBegin;
-			if (rPIt != rPEnd) {
-				for(; rPIt != rPEnd; ++rPIt) {
-					uint32_t rp = *rPIt;
-					if (nodes[rp]) {
-						nodes[rp]->push_back(*it);
-					}
-					else {
-						nodes[rp] = new SubSet::Node(rp);
-						nodes[rp]->push_back(*it);
-					}
-				}
-			}
-			else {
-				rootNode->push_back(*it);
-			}
-		}
 	}
 	return rootNode;
 }
@@ -118,10 +75,14 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
 		uint32_t cellId = it.cellId();
 		const CellDesc & cellDesc = m_cellDesc[cellId];
-		uint32_t itemsInCell = (it.fullMatch() ? cellDesc.itemsCount : it.idxSize());
+		uint32_t itemsInCell;
+		itemsInCell = (it.fullMatch() ? cellDesc.itemsCount : it.idxSize());
 		rootNode->maxItemsSize() += itemsInCell;
+		rootNode->cellPositions().push_back(it.pos());
+
 		const uint32_t * cPIt = cPPtrsBegin+cellDesc.parentsBegin;
-		const uint32_t * cPEnd = cPPtrsBegin+m_cellDesc[cellId+1].parentsBegin;
+		const uint32_t * cPEnd;
+		cPEnd = cPPtrsBegin+m_cellDesc[cellId+1].parentsBegin;
 		for(; cPIt != cPEnd; ++cPIt) {
 			uint32_t cP = *cPIt;
 			SubSet::Node * n;
@@ -133,7 +94,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 				n = nodes[cP];
 			}
 			n->maxItemsSize() += itemsInCell;
-			n->cells().push_back(cellId);
+			n->cellPositions().push_back(it.pos());
 		}
 	}
 
@@ -153,8 +114,5 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 	}
 	return rootNode;
 }
-
-
-
 
 }}}//end namespace

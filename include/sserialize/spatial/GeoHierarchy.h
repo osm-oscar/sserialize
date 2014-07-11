@@ -9,6 +9,7 @@ namespace spatial {
 
 class GeoHierarchy {
 public:
+	//Pointers are sorted
 
 	struct Region {
 		std::vector<uint32_t> children;
@@ -30,12 +31,14 @@ public:
 	};
 private:
 	std::vector<Cell> m_cells;
-	std::vector<Region> m_regions;
+	std::vector<Region> m_regions; //the largest region is the last region
 	Region m_rootRegion;
 private:
 	void depths(std::vector<uint32_t> & d, uint32_t me) const;
 	template<typename T_SET_CONTAINER>
-	void getAncestors(uint32_t regionId, T_SET_CONTAINER & out);
+	void getAncestors(uint32_t regionId, T_SET_CONTAINER & out) const;
+	//returned parents are sorted
+	void splitCellParents(uint32_t cellId, std::vector<uint32_t> & directParents, std::vector<uint32_t> & remainingParents) const;
 public:
 	GeoHierarchy() {}
 	virtual ~GeoHierarchy() {}
@@ -68,8 +71,8 @@ public:
 };
 
 template<typename T_SET_CONTAINER>
-void GeoHierarchy::getAncestors(uint32_t regionId, T_SET_CONTAINER & out) {
-	Region & r = m_regions[regionId];
+void GeoHierarchy::getAncestors(uint32_t regionId, T_SET_CONTAINER & out) const {
+	const Region & r = m_regions[regionId];
 	out.insert(r.parents.cbegin(), r.parents.cend());
 	for(uint32_t parent : r.parents) {
 		getAncestors(parent, out);

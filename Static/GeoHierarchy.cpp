@@ -7,6 +7,38 @@ namespace Static {
 namespace spatial {
 namespace detail {
 
+sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
+
+	struct MapFunc {
+		const SubSet * subset;
+		sserialize::ItemIndex operator()(uint32_t pos) const {
+			return subset->cqr().idx(pos);
+		}
+	} mapfunc;
+	mapfunc.subset = this;
+
+	struct RedFunc {
+		sserialize::ItemIndex operator()(const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) const {
+			return a + b;
+		}
+	} redfunc;
+
+
+	if (m_sparse) {
+		std::unordered_set<uint32_t> idcsPos;
+		for(uint32_t i(0), s(node->size()); i < s; ++i) {
+			insertCellPositions(node->at(i), idcsPos);
+		}
+		std::vector<uint32_t> tmp(idcsPos.cbegin(), idcsPos.cend());
+		return treeReduceMap<std::vector<uint32_t>::const_iterator, sserialize::ItemIndex, const RedFunc &, const MapFunc &>(
+					tmp.cbegin(), tmp.cend(), redfunc, mapfunc);
+	}
+	else {
+		return treeReduceMap<SubSet::Node::CellPositionsContainer::const_iterator, sserialize::ItemIndex, const RedFunc &, const MapFunc &>(
+					node->cellPositions().cbegin(), node->cellPositions().cend(), redfunc, mapfunc);
+	}
+}
+
 Cell::Cell() : 
 m_pos(0),
 m_db(0)
@@ -29,6 +61,10 @@ uint32_t Cell::itemCount() const {
 
 uint32_t Cell::parentsBegin() const {
 	return (m_db->cells().at(m_pos, CD_PARENTS_BEGIN));
+}
+
+uint32_t Cell::directParentsEnd() const {
+	return  parentsBegin() + (m_db->cells().at(m_pos, CD_DIRECT_PARENTS_OFFSET));
 }
 
 uint32_t Cell::parentsEnd() const {
@@ -153,6 +189,10 @@ uint32_t GeoHierarchy::cellParentsBegin(uint32_t id) const {
 	return cells().at(id, Cell::CD_PARENTS_BEGIN);
 }
 
+uint32_t GeoHierarchy::cellDirectParentsEnd(uint32_t id) const {
+	return cellParentsBegin(id) + cells().at(id, Cell::CD_DIRECT_PARENTS_OFFSET);
+}
+
 uint32_t GeoHierarchy::cellParentsEnd(uint32_t id) const {
 	return cells().at(id+1, Cell::CD_PARENTS_BEGIN);
 }
@@ -226,7 +266,8 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	return out;
 }
 
-SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
+//TODO:implement sparse SubSet creation
+SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > cellSize()*0.5) {
 		std::vector<SubSet::Node*> nodes(regionSize()+1, 0);
@@ -236,7 +277,7 @@ SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr) const {
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
 		rootNode = createSubSet(cqr, nodes);
 	}
-	return SubSet(rootNode, cqr);
+	return SubSet(rootNode, cqr, sparse);
 }
 
 SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
@@ -246,6 +287,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::N
 		uint32_t cellId = it.cellId();
 		uint32_t itemsInCell = (it.fullMatch() ? cellItemsCount(cellId) : it.idxSize());
 		rootNode->maxItemsSize() += itemsInCell;
+		rootNode->cellPositions().push_back(it.pos());
 		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
@@ -257,7 +299,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::N
 				n = nodes[cP];
 			}
 			n->maxItemsSize() += itemsInCell;
-			n->cells().push_back(cellId);
+			n->cellPositions().push_back(it.pos());
 		}
 	}
 
@@ -293,6 +335,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unor
 		uint32_t cellId = it.cellId();
 		uint32_t itemsInCell = (it.fullMatch() ? cellItemsCount(cellId) : it.idxSize());
 		rootNode->maxItemsSize() += itemsInCell;
+		rootNode->cellPositions().push_back(it.pos());
 		for(uint32_t cPIt(cellParentsBegin(cellId)), cPEnd(cellParentsEnd(cellId)); cPIt != cPEnd; ++cPIt) {
 			uint32_t cP = cellPtr(cPIt);
 			SubSet::Node * n;
@@ -304,7 +347,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unor
 				n = nodes[cP];
 			}
 			n->maxItemsSize() += itemsInCell;
-			n->cells().push_back(cellId);
+			n->cellPositions().push_back(it.pos());
 		}
 	}
 
