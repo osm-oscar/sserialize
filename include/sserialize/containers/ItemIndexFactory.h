@@ -3,7 +3,6 @@
 #include <forward_list>
 #include <unordered_set>
 #include <unordered_map>
-#include <google/sparse_hash_map>
 #include <vector>
 #include <stdint.h>
 #include <iostream>
