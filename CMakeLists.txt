@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 2.8)
 project(sserialize)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
-find_package(LIBRT REQUIRED)
+
 IF(CMAKE_CROSSCOMPILING)
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH) 
 	find_package(Ragel REQUIRED)
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE})
 ELSE(CMAKE_CROSSCOMPILING)
+	find_package(LIBRT REQUIRED)
 	find_package(Ragel REQUIRED)
 ENDIF(CMAKE_CROSSCOMPILING)
 
@@ -93,9 +94,6 @@ containers/MultiBitIterator.cpp
 containers/UDWIterator.cpp
 containers/UDWIteratorPrivateHD.cpp
 containers/KeyValueObjectStore.cpp
-containers/GeneralizedTrie/FlatTrie.cpp
-containers/GeneralizedTrie/MultiPassTrie.cpp
-containers/GeneralizedTrie/SinglePassTrie.cpp
 containers/CellQueryResult.cpp
 containers/CellQueryResultPrivate.cpp
 containers/OpTree.cpp
