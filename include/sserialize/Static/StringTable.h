@@ -38,6 +38,8 @@ public:
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
 	inline const_iterator cbegin() const { return priv()->cbegin();}
+	inline const_iterator begin() const { return priv()->cbegin();}
+	inline const_iterator end() const { return priv()->cend();}
 	inline const_iterator cend() const { return priv()->cend();}
 
 	///The order of the strings impacts the type	
