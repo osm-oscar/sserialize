@@ -89,8 +89,46 @@ public:
 	const_reverse_iterator rbegin() const { return reverse_iterator(m_end-1); }
 	const_reverse_iterator rend() const { return reverse_iterator(m_begin-1); }
 	
+	template<typename T_INPUT_ITERATOR>
+	void push_back(T_INPUT_ITERATOR a, T_INPUT_ITERATOR b) {
+		m_push = std::copy(a, b, m_push);
+	}
+	
 	WindowedArray<T_VALUE> slice(std::size_t begin, std::size_t end) {
 		return WindowedArray(m_begin+begin, m_begin+end);
+	}
+	
+	///Unite operator unite the contents of the two Windowed Arrays and puts the contents into dest.
+	///CAVEAT: a and b span dest!!!!
+	template<typename T_UNITE_OPERATOR>
+	static WindowedArray uniteSortedInPlace(WindowedArray a, WindowedArray b, T_UNITE_OPERATOR uniteOp) {
+		if (b.m_end == a.m_begin) {
+			if (a.m_end == b.m_begin) { //this means their size is zero and they begin at the same boundaries 
+				return a;
+			}
+			return uniteSortedInPlace(b, a, uniteOp);
+		}
+		else {
+			if (a.m_end != b.m_begin)
+				throw sserialize::OutOfBoundsException("WindowedArray::uniteSortedInPlace: bounds don't match");
+			WindowedArray dest(a.m_begin, b.m_end, a.m_begin);
+			uniteOp(a, b, dest);
+			return dest;
+		}
+	}
+	
+	static WindowedArray unite(WindowedArray a, WindowedArray b) {
+		if (b.m_end == a.m_begin) {
+			if (a.m_end == b.m_begin) { //this means their size is zero and they begin at the same boundaries 
+				return a;
+			}
+			return unite(b, a);
+		}
+		else {
+			if (a.m_end != b.m_begin)
+				throw sserialize::OutOfBoundsException("WindowedArray::unite: bounds don't match");
+			return WindowedArray(a.m_begin, b.m_end);
+		}
 	}
 	
 	static WindowedArray uniteSortedInPlace(WindowedArray a, WindowedArray b) {
