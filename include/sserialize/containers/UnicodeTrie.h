@@ -343,7 +343,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 		prependToDeque(tmpData, trieData);
 		nodeOffsets[n] = trieData.size();
 		++count;
-// 		pinfo(count);
+		pinfo(count);
 	}
 	pinfo.end();
 	payloadContainerCreator.flush();
