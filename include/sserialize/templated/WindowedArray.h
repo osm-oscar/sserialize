@@ -92,6 +92,7 @@ public:
 	template<typename T_INPUT_ITERATOR>
 	void push_back(T_INPUT_ITERATOR a, T_INPUT_ITERATOR b) {
 		m_push = std::copy(a, b, m_push);
+		assert( m_push <= m_end );
 	}
 	
 	WindowedArray<T_VALUE> slice(std::size_t begin, std::size_t end) {
