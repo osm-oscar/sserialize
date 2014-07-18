@@ -316,6 +316,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 	
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(nodesInLevelOrder.size(), "sserialize::UnicodeTrie::append");
+	uint32_t count = 0;
 	while (nodesInLevelOrder.size()) {
 		Node * n = nodesInLevelOrder.back();
 		nodesInLevelOrder.pop_back();
@@ -341,7 +342,8 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 		
 		prependToDeque(tmpData, trieData);
 		nodeOffsets[n] = trieData.size();
-		pinfo(pinfo.targetCount - nodesInLevelOrder.size());
+		++count;
+// 		pinfo(count);
 	}
 	pinfo.end();
 	payloadContainerCreator.flush();
