@@ -22,6 +22,7 @@ public:
 	typedef int64_t differnce_type;
 	typedef sserialize::ItemIndex value_type;
 	typedef const sserialize::ItemIndex & reference;
+	typedef enum {RD_FULL_MATCH=0x1, RD_FETCHED=0x2} RawDescAccessors;
 private:
 	RCPtrWrapper<detail::CellQueryResult> m_d;
 	uint32_t m_pos;
@@ -33,6 +34,11 @@ public:
 	uint32_t cellId() const;
 	bool fullMatch() const;
 	uint32_t idxSize() const;
+	//This is only correct for (fullMatch() || !fetched())
+	uint32_t idxId() const;
+	bool fetched() const;
+	///raw data in the format (cellId|fetched|fullMatch) least-significant bit to the right
+	uint32_t rawDesc() const;
 	inline uint32_t pos() const { return m_pos; }
 	const sserialize::ItemIndex & operator*() const;
 	inline bool operator!=(const CellQueryResultIterator & other) const { return m_pos != other.m_pos; }
@@ -63,8 +69,13 @@ public:
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
 	uint32_t cellCount() const;
+	sserialize::ItemIndex::Types defaultIndexType() const;
 	
-	sserialize::ItemIndex idx(uint32_t cellId) const;
+	sserialize::ItemIndex idx(uint32_t pos) const;
+	///This is only correct for (fullMatch || !fetched())
+	uint32_t idxId(uint32_t pos) const;
+	bool fetched(uint32_t pos) const;
+	bool fullMatch(uint32_t pos) const;
 	
 	CellQueryResult operator/(const CellQueryResult & other) const;
 	CellQueryResult operator+(const CellQueryResult & other) const;

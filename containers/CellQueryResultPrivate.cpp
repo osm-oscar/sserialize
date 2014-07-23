@@ -49,6 +49,16 @@ const sserialize::ItemIndex & CellQueryResult::idx(uint32_t pos) const {
 	return (m_idx+pos)->idx;
 }
 
+uint32_t CellQueryResult::idxId(uint32_t pos) const {
+	const CellDesc & cd = m_desc[pos];
+	if (cd.fullMatch) {
+		return m_gh.cellItemsPtr(cd.cellId);
+	}
+	else {
+		return (m_idx+pos)->idxPtr;
+	}
+}
+
 CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const {
 	const CellQueryResult & o = *oPtr;
 	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);

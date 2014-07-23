@@ -69,6 +69,8 @@ public:
 		typedef RCPtrWrapper<Node> NodePtr;
 		typedef std::vector<NodePtr> ChildrenStorageContainer;
 		typedef std::vector<uint32_t> CellPositionsContainer;
+		typedef ChildrenStorageContainer::iterator iterator;
+		typedef ChildrenStorageContainer::const_iterator const_iterator;
 	private:
 		ChildrenStorageContainer m_children;
 		uint32_t m_id;
@@ -88,6 +90,13 @@ public:
 		inline uint32_t & maxItemsSize() { return m_itemSize; }
 		inline const CellPositionsContainer & cellPositions() const { return m_cellPositions;}
 		inline CellPositionsContainer & cellPositions() { return m_cellPositions;}
+		
+		inline iterator begin() { return m_children.begin();}
+		inline const_iterator begin() const { return m_children.begin();}
+		inline const_iterator cbegin() const { return m_children.cbegin();}
+		inline iterator end() { return m_children.end(); }
+		inline const_iterator end() const { return m_children.end(); }
+		inline const_iterator cend() const { return m_children.cend(); }
 	};
 	typedef Node::NodePtr NodePtr;
 private:

@@ -39,6 +39,18 @@ uint32_t CellQueryResultIterator::idxSize() const {
 	return m_d->idx(m_pos).size();
 }
 
+uint32_t CellQueryResultIterator::idxId() const {
+	return m_d->idxId(m_pos);
+}
+
+uint32_t CellQueryResultIterator::rawDesc() const {
+	return m_d->rawDesc(m_pos);
+}
+
+bool CellQueryResultIterator::fetched() const {
+	return m_d->fetched(m_pos);
+}
+
 CellQueryResultIterator CellQueryResultIterator::operator++(int ) {
 	++m_pos;
 	return CellQueryResultIterator(m_d, m_pos-1);
@@ -81,8 +93,24 @@ uint32_t CellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }
 
+sserialize::ItemIndex::Types CellQueryResult::defaultIndexType() const {
+	return m_priv->defaultIndexType();
+}
+
 sserialize::ItemIndex CellQueryResult::idx(uint32_t pos) const {
 	return m_priv->idx(pos);
+}
+
+uint32_t CellQueryResult::idxId(uint32_t pos) const {
+	return m_priv->idxId(pos);
+}
+
+bool CellQueryResult::fetched(uint32_t pos) const {
+	return m_priv->fetched(pos);
+}
+
+bool CellQueryResult::fullMatch(uint32_t pos) const {
+	return m_priv->fullMatch(pos);
 }
 
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
