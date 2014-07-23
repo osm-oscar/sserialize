@@ -127,7 +127,7 @@ public:
 	UByteArrayAdapter& operator++();
 	UByteArrayAdapter& operator--();
 	UByteArrayAdapter& operator+=(OffsetType offSet);
-// 	UByteArrayAdapter& operator-=(unsigned int offSet);
+	UByteArrayAdapter& operator-=(OffsetType offSet);
 	UByteArrayAdapter begin() const;
 	UByteArrayAdapter end() const;
 	

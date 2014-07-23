@@ -495,6 +495,18 @@ UByteArrayAdapter& UByteArrayAdapter::operator+=(OffsetType offSet) {
 	return *this;
 }
 
+UByteArrayAdapter& UByteArrayAdapter::operator-=(OffsetType offSet) {
+	if (offSet > m_offSet) {
+		offSet = m_offSet;
+	}
+	m_offSet -= offSet;
+	m_len += offSet;
+	m_putPtr += offSet;
+	m_getPtr += offSet;
+
+	return *this;
+}
+
 UByteArrayAdapter UByteArrayAdapter::begin() const {
 	return *this;
 }
