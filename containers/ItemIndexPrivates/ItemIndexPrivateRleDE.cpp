@@ -2,6 +2,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/SerializationInfo.h>
 
 namespace sserialize {
 
@@ -91,6 +92,13 @@ ItemIndex::Types ItemIndexPrivateRleDE::type() const {
 
 int ItemIndexPrivateRleDE::find(uint32_t id) const {
 	return sserialize::ItemIndexPrivate::find(id);
+}
+
+UByteArrayAdapter ItemIndexPrivateRleDE::data() const {
+	UByteArrayAdapter ret(m_data);
+	ret.resetPtrs();
+	ret -= sserialize::SerializationInfo<uint32_t>::length*2;
+	return ret;
 }
 
 uint32_t ItemIndexPrivateRleDE::at(uint32_t pos) const {

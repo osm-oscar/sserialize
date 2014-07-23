@@ -137,6 +137,8 @@ public:
 	virtual int find(uint32_t id) const;
 
 public:
+	virtual UByteArrayAdapter data() const;
+
 	virtual uint32_t at(uint32_t pos) const;
 	virtual uint32_t first() const;
 	virtual uint32_t last() const;
