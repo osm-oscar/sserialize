@@ -181,7 +181,9 @@ public:
 	///Returns a read/writable MemoryView. If you don't write to it, then this function behaves like a const function
 	MemoryView getMemView(const OffsetType pos, OffsetType size);
 	const MemoryView getMemView(const OffsetType pos, OffsetType size) const;
-
+	inline MemoryView asMemView() { return getMemView(0, size());}
+	const MemoryView asMemView() const { return getMemView(0, size());}
+	
 	int64_t getInt64(const OffsetType pos) const;
 	uint64_t getUint64(const OffsetType pos) const;
 	int32_t getInt32(const OffsetType pos) const;
