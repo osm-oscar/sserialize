@@ -62,5 +62,25 @@ std::ostream & operator<<(std::ostream & out, const std::deque<T> & s) {
 	}
 }
 
+namespace sserialize {
+
+template<char SEPARATOR, typename T_IT>
+std::ostream & print(std::ostream & out, T_IT begin, T_IT end) {
+	if (begin != end) {
+		while(true) {
+			out << *begin;
+			++begin;
+			if (begin != end) {
+				out << SEPARATOR;
+			}
+			else {
+				break;
+			}
+		}
+	}
+	return out;
+}
+
+}
 
 #endif
