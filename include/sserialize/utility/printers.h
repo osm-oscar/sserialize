@@ -67,15 +67,10 @@ namespace sserialize {
 template<char SEPARATOR, typename T_IT>
 std::ostream & print(std::ostream & out, T_IT begin, T_IT end) {
 	if (begin != end) {
-		while(true) {
-			out << *begin;
-			++begin;
-			if (begin != end) {
-				out << SEPARATOR;
-			}
-			else {
-				break;
-			}
+		out << *begin;
+		++begin;
+		for(; begin != end; ++begin) {
+			out << SEPARATOR << *begin;
 		}
 	}
 	return out;
