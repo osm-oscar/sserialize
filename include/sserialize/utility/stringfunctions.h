@@ -202,5 +202,53 @@ T_RETURN_CONTAINER suffixStrings(const T_STRING_TYPE & str, const T_SEPARATOR_SE
 	return ss;
 }
 
+class AsciiCharEscaper {
+	uint64_t m_repChars[2];
+public:
+	AsciiCharEscaper() : m_repChars{0,0} {}
+	~AsciiCharEscaper() {}
+	template<typename T>
+	AsciiCharEscaper(std::initializer_list<T> l) : m_repChars{0,0}  {
+		setEscapeChars(l.begin(), l.end());
+	}
+	inline bool escapeChar(uint8_t c) {
+		return (c > 63 ? (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))) : (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))));
+	}
+	void setEscapeChar(uint8_t c) {
+		if (c > 63) {
+			c -= 64;
+			m_repChars[1] |= static_cast<uint64_t>(1) << c;
+		}
+		else {
+			m_repChars[0] |= static_cast<uint64_t>(1) << c;
+		}
+	}
+	template<typename T_IT>
+	void setEscapeChars(T_IT begin, T_IT end) {
+		for(; begin != end; ++begin)
+			setEscapeChar(*begin);
+	}
+	
+	template<typename T_SRC_IT, typename T_OUTPUT_IT>
+	void escape(T_SRC_IT begin, T_SRC_IT end, T_OUTPUT_IT out) {
+		for(; begin != end; ++begin, ++out) {
+			char c = *begin;
+			if (escapeChar(c)) {
+				*out = '\\';
+				++out;
+			}
+			*out = c;
+		}
+	}
+	inline std::string escape(const std::string str) {
+		std::string tmp;
+		tmp.reserve(str.size());
+		std::back_insert_iterator<std::string> outIt(tmp);
+		escape(str.cbegin(), str.cend(), outIt);
+		return tmp;
+	}
+	
+};
+
 }//end namespace
 #endif
