@@ -117,6 +117,45 @@ public:
 	sserialize::ItemIndex idx(const NodePtr & node) const;
 };
 
+class FlatSubSet {
+public:
+	struct Node {
+		uint32_t m_id;
+		uint32_t m_childrenBegin;
+		uint32_t m_cellsBegin;
+		uint32_t m_maxItems;
+	};
+	typedef std::vector<Node> NodesContainer;
+	typedef std::vector<uint32_t> NodePtrContainer;
+	typedef std::vector<uint32_t> CellsContainer;
+	typedef NodePtrContainer::const_iterator NodeChilrenIterator;
+	typedef CellsContainer::const_iterator CellsIterator;
+private:
+	struct DataHolder: RefCountObject {
+		NodesContainer nodes;
+		NodePtrContainer nodePtrs;
+		CellsContainer cells;
+		bool sparse;
+		DataHolder(bool sparse) : sparse(sparse) {}
+	};
+	RCPtrWrapper<DataHolder> m_d;
+public:
+	FlatSubSet(bool sparse) : m_d(new DataHolder(sparse)) {}
+	~FlatSubSet() {}
+	inline NodesContainer & nodes() { return m_d->nodes; }
+	inline const NodesContainer & nodes() const { return m_d->nodes; }
+	inline NodePtrContainer & nodePtrs() { return m_d->nodePtrs;}
+	inline const NodePtrContainer & nodePtrs() const { return m_d->nodePtrs;}
+	inline CellsContainer & cells() { return m_d->cells; }
+	inline const CellsContainer & cells() const { return m_d->cells; }
+	inline uint32_t size() const { return nodes().size()-1;}
+	inline const Node & at(uint32_t pos) const { return nodes().at(pos); }
+	inline NodeChilrenIterator childrenBegin(uint32_t nodePos) const { return nodePtrs().cbegin() + at(nodePos).m_childrenBegin; }
+	inline NodeChilrenIterator childrenEnd(uint32_t nodePos) const { return nodePtrs().cbegin() + at(nodePos+1).m_childrenBegin; }
+	inline CellsIterator cellsBegin(uint32_t nodePos) const { return cells().cbegin() + at(nodePos).m_cellsBegin;}
+	inline CellsIterator cellsEnd(uint32_t nodePos) const { return cells().cbegin() + at(nodePos+1).m_cellsBegin;}
+};
+
 template<typename T_HASH_CONTAINER>
 void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const {
 	idcsPos.insert(node->cellPositions().cbegin(), node->cellPositions().cend());
@@ -179,6 +218,7 @@ public:
 	std::ostream & printStats(std::ostream & out) const;
 	
 	SubSet subSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
+	FlatSubSet flatSubSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
 };
 
 class Cell {
@@ -256,6 +296,7 @@ public:
 	typedef detail::Region Region;
 	typedef detail::Cell Cell;
 	typedef detail::SubSet SubSet;
+	typedef detail::FlatSubSet FlatSubSet;
 
 private:
 	RCPtrWrapper<detail::GeoHierarchy> m_priv;
@@ -302,6 +343,7 @@ public:
 	inline std::ostream & printStats(std::ostream & out) const { return m_priv->printStats(out); }
 
 	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->subSet(cqr, sparse); }
+	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }
 };
 
 }}} //end namespace
