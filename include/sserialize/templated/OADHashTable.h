@@ -3,6 +3,7 @@
 #include <vector>
 #include <stdexcept>
 #include <limits>
+#include <algorithm>
 
 namespace sserialize {
 namespace detail {
@@ -136,13 +137,16 @@ public:
 	mapped_type & operator[](const key_type & key);
 	mapped_type & at(const key_type & key);
 	const mapped_type & at(const key_type & key) const;
-	
 	inline bool count(const key_type & key) const {
 		SizeType pos = find(key);
 		return (pos == findend ? false : bool(m_d[pos]));
 	}
 	inline const_iterator cbegin() const { return m_valueStorage.cbegin(); }
 	inline const_iterator cend() const { return m_valueStorage.cend(); }
+	///Sort the elments in the value storage and do a rehash afterwards.
+	///If you do this before using cbegin/cend, then the elements in between cbegin-cend will be sorted according to T_SORT_OP
+	template<typename T_SORT_OP>
+	void sort(T_SORT_OP op);
 };
 
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
@@ -245,6 +249,13 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 		return value(cp).second;
 	}
 	throw std::out_of_range();
+}
+
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename T_SORT_OP>
+void OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::sort(T_SORT_OP op) {
+	std::sort(m_valueStorage.begin(), m_valueStorage.end(), op);
+	rehash(m_d.size());
 }
 
 }//end namespace
