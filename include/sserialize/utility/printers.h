@@ -2,6 +2,9 @@
 #define SSERIALIZE_UTIL_PRINTERS_H
 #include <ostream>
 #include <vector>
+#include <set>
+#include <deque>
+#include <sstream>
 
 template<typename T1, typename T2>
 std::ostream & operator<<(std::ostream & out, const std::pair<T1, T2> & s) {
@@ -75,6 +78,75 @@ std::ostream & print(std::ostream & out, T_IT begin, T_IT end) {
 	}
 	return out;
 }
+
+template<typename T>
+std::string nameOfType();
+
+#define __NAME_OF_TYPE_SPECIALICATION(__TYPE) template<> inline std::string nameOfType<__TYPE>() { return std::string(#__TYPE); }
+
+__NAME_OF_TYPE_SPECIALICATION(uint8_t);
+__NAME_OF_TYPE_SPECIALICATION(uint16_t);
+__NAME_OF_TYPE_SPECIALICATION(uint32_t);
+__NAME_OF_TYPE_SPECIALICATION(uint64_t);
+__NAME_OF_TYPE_SPECIALICATION(int8_t);
+__NAME_OF_TYPE_SPECIALICATION(int16_t);
+__NAME_OF_TYPE_SPECIALICATION(int32_t);
+__NAME_OF_TYPE_SPECIALICATION(int64_t);
+__NAME_OF_TYPE_SPECIALICATION(float);
+__NAME_OF_TYPE_SPECIALICATION(double);
+__NAME_OF_TYPE_SPECIALICATION(std::string);
+#undef __NAME_OF_TYPE_SPECIALICATION
+
+inline void toString(std::stringstream & /*ss*/) {}
+
+std::string toString(bool value);
+
+template<typename PrintType>
+void toString(std::stringstream & ss, PrintType t) {
+	ss << t;
+}
+
+template<typename PrintType, typename ... PrintTypeList>
+void toString(std::stringstream & ss, PrintType t, PrintTypeList ... args) {
+	ss << t;
+	toString(ss, args...);
+}
+
+template<typename ... PrintTypeList>
+std::string toString(PrintTypeList ... args) {
+	std::stringstream ss;
+	toString(ss, args...);
+	return ss.str();
+}
+
+template<typename T>
+void print(std::ostream & out, const std::vector<T> & vec) {
+	out << "std::vector<" << nameOfType<T>() << ">[";
+	typename std::vector<T>::const_iterator it(vec.begin());
+	typename std::vector<T>::const_iterator end(vec.end());
+	if (vec.size()) {
+		--end;
+		for(; it < end; ++it) {
+			out << *it << ", ";
+		}
+		out << *it;
+	}
+	out << "]";
+}
+
+inline std::string prettyFormatSize(uint64_t bytes) {
+	if ( bytes >> 30 ) {
+		return toString(bytes >> 30, " Gibibytes");
+	}
+	if ( bytes >> 20 ) {
+		return toString(bytes >> 20, " Mebibytes");
+	}
+	if ( bytes >> 10 ) {
+		return toString(bytes >> 10, " Kibibytes");
+	}
+	return toString(bytes, " Bytes");
+}
+
 
 }
 
