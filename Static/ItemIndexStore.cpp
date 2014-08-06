@@ -195,6 +195,16 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 	out << "Storage size  of ItemIndexStore: " << getSizeInBytes() << std::endl;
 	out << "size: " << indexIds.size() << std::endl;
 
+	uint32_t largestIndex = 0;
+	uint32_t largestSpaceUsageIndex = 0;
+	for(uint32_t i(0), s(size()); i < s; ++i) {
+		sserialize::ItemIndex idx(at(i));
+		largestIndex = std::max<uint32_t>(largestIndex, idx.size());
+		largestSpaceUsageIndex = std::max<uint32_t>(largestSpaceUsageIndex, idx.getSizeInBytes());
+	}
+	out << "Largest index size: " << largestIndex << std::endl;
+	out << "Largest space usage: " << largestSpaceUsageIndex << std::endl;
+
 	uint64_t totalElementCount = 0;
 	uint64_t sizeOfSelectedIndices = 0;
 	long double meanBitsPerId = 0;
