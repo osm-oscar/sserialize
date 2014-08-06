@@ -8,10 +8,10 @@ namespace sserialize {
 
 class UDWIteratorPrivateHD: public UDWIteratorPrivate {
 	MultiBitIterator m_bitIterator;
-	std::shared_ptr<Static::HuffmanDecoder> m_decoder;
+	RCPtrWrapper<Static::HuffmanDecoder> m_decoder;
 public:
 	UDWIteratorPrivateHD();
-	UDWIteratorPrivateHD(const MultiBitIterator & bitIterator, const std::shared_ptr<Static::HuffmanDecoder> & decoder);
+	UDWIteratorPrivateHD(const MultiBitIterator & bitIterator, const RCPtrWrapper<Static::HuffmanDecoder> & decoder);
 	virtual ~UDWIteratorPrivateHD();
 	virtual uint32_t next();
 	virtual bool hasNext();

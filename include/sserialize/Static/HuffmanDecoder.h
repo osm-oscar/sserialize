@@ -27,7 +27,7 @@
 namespace sserialize {
 namespace Static {
 
-class HuffmanDecoder {
+class HuffmanDecoder: public RefCountObject {
 public:
 	class HuffmanCodePointInfo {
 		uint32_t m_value;

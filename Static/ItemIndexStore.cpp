@@ -67,12 +67,12 @@ m_compression((IndexCompressionType) data.getUint8(2))
 	data += m_index.getSizeInBytes();
 	
 	if (m_compression & IC_HUFFMAN) {
-		m_hd = std::shared_ptr<HuffmanDecoder>(new HuffmanDecoder(data) );
+		m_hd.reset(new HuffmanDecoder(data) );
 		data += m_hd->getSizeInBytes();
 	}
 	
 	if  (m_compression & IC_LZO) {
-		m_lzod = std::shared_ptr<LZODecompressor>(new LZODecompressor(data));
+		m_lzod.reset(new LZODecompressor(data));
 	}
 	
 }

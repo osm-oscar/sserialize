@@ -25,12 +25,12 @@ namespace sserialize {
 namespace Static {
 namespace detail {
 
-/** The first index id is ALWAY the empty index*/
-class ItemIndexStore {
+/** The first index id is ALWAYS the empty index*/
+class ItemIndexStore: public RefCountObject {
 public:
 	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_LZO=4} IndexCompressionType;
 private:
-	class LZODecompressor {
+	class LZODecompressor: public RefCountObject {
 		CompactUintArray m_data;
 	public:
 		LZODecompressor();
@@ -45,8 +45,8 @@ private:
 	IndexCompressionType m_compression;
 	UByteArrayAdapter m_data;
 	SortedOffsetIndex m_index;
-	std::shared_ptr<HuffmanDecoder> m_hd;
-	std::shared_ptr<LZODecompressor> m_lzod;
+	RCPtrWrapper<HuffmanDecoder> m_hd;
+	RCPtrWrapper<LZODecompressor> m_lzod;
 public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);
@@ -63,7 +63,7 @@ public:
 	std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const;
 	SortedOffsetIndex & getIndex() { return m_index;}
 	const UByteArrayAdapter & getData() const { return m_data; }
-	std::shared_ptr<HuffmanDecoder> getHuffmanTree() const { return m_hd; }
+	RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const { return m_hd; }
 	UByteArrayAdapter getHuffmanTreeData() const;
 };
 }
@@ -72,10 +72,10 @@ class ItemIndexStore {
 public:
 	typedef detail::ItemIndexStore::IndexCompressionType IndexCompressionType;
 private:
-	std::shared_ptr<detail::ItemIndexStore> m_priv;
+	RCPtrWrapper<detail::ItemIndexStore> m_priv;
 protected:
-	const std::shared_ptr<detail::ItemIndexStore> & priv() const { return m_priv; }
-	std::shared_ptr<detail::ItemIndexStore> & priv() { return m_priv; }
+	const RCPtrWrapper<detail::ItemIndexStore> & priv() const { return m_priv; }
+	RCPtrWrapper<detail::ItemIndexStore> & priv() { return m_priv; }
 public:
 	ItemIndexStore() : m_priv(new detail::ItemIndexStore()) {}
 	ItemIndexStore(sserialize::UByteArrayAdapter data) : m_priv(new detail::ItemIndexStore(data)) {}
@@ -92,7 +92,7 @@ public:
 	inline std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const { return priv()->printStats(out, indexIds);}
 	inline SortedOffsetIndex & getIndex() { return priv()->getIndex();}
 	inline const UByteArrayAdapter & getData() const { return priv()->getData(); }
-	inline std::shared_ptr<HuffmanDecoder> getHuffmanTree() const { return priv()->getHuffmanTree(); }
+	inline RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const { return priv()->getHuffmanTree(); }
 	inline UByteArrayAdapter getHuffmanTreeData() const { return priv()->getHuffmanTreeData();}
 };
 

@@ -94,6 +94,9 @@ public:
 	operator safe_bool_type() const {
 		return priv() ? &RCPtrWrapper<RCObj>::safe_bool_func : 0;
 	}
+	void reset(RCObj * data) {
+		RCWrapper<RCObj>::setPrivate(data);
+	}
 };
 
 template<class RCObj>
