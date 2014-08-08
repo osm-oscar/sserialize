@@ -15,44 +15,53 @@ public:
 private:
 	MmappedMemory<TValue> m_d;
 	value_type * m_begin;
-	SizeType m_size;
+	SizeType m_capacity;
 	SizeType m_pP; //push ptr
 private:
 public:
-	MMVector(sserialize::MmappedMemoryType mmt) : m_d(1, mmt), m_size(1), m_pP(0) { m_begin = m_d.data(); }
-	MMVector(const MMVector & other) : m_d(other.m_pP, other.m_d.type()), m_size(other.m_pP), m_pP(other.m_pP) {
-		m_begin = m_d.resize(other.m_pP);
+	MMVector(sserialize::MmappedMemoryType mmt) : m_d(1, mmt), m_capacity(1), m_pP(0) { m_begin = m_d.data(); }
+	MMVector(const MMVector & other) :
+	m_d(std::max<SizeType>(1, other.m_pP), other.m_d.type()),
+	m_capacity(std::max<SizeType>(1, other.m_pP)),
+	m_pP(other.m_pP)
+	{
+		m_begin = m_d.data();
 		memmove(m_begin, other.m_begin, sizeof(TValue)*m_pP);
 	}
-	MMVector(MMVector && other) : m_d(other.m_d), m_begin(other.m_begin), m_size(other.m_size), m_pP(other.m_pP) {}
+	MMVector(MMVector && other) : m_begin(other.m_begin), m_capacity(other.m_size), m_pP(other.m_pP) {
+		using std::swap;
+		swap(m_d, other.m_d);
+	}
 	~MMVector() {}
 	MMVector & operator=(const MMVector & other) {
-		m_size = other.m_pP;
+		m_capacity = other.m_pP;
 		m_pP = other.m_pP;
 		m_d = MmappedMemory<TValue>(other.m_pP, other.m_d.type());
 		m_begin = m_d.resize(m_pP);
 		memmove(m_begin, other.m_begin, sizeof(TValue)*m_pP);
-
+		return *this;
 	}
 	MMVector & operator=(MMVector && other) {
-		m_d = other.m_d;
+		using std::swap;
+		swap(m_d, other.m_d);
 		m_begin = other.m_begin;
-		m_size = other.m_size;
+		m_capacity = other.m_capacity;
 		m_pP = other.m_pP;
+		return *this;
 	}
 	void swap(MMVector & other) {
 		using std::swap;
 		swap(m_d, other.m_d);
 		swap(m_begin, other.m_begin);
-		swap(m_size, other.m_size);
+		swap(m_capacity, other.m_capacity);
 		swap(m_pP, other.m_pP);
 	}
 	SizeType size() const { return m_pP;}
-	SizeType capacity() const { return m_size; }
+	SizeType capacity() const { return m_capacity; }
 	void reserve(SizeType size) {
-		if (size > m_size) {
+		if (size > m_capacity) {
 			m_begin = m_d.resize(size);
-			m_size = size;
+			m_capacity = size;
 		}
 	}
 	void clear() {
@@ -60,7 +69,7 @@ public:
 	}
 	void shrink_to_fit() {
 		m_begin = resize(m_pP);
-		m_size = m_pP;
+		m_capacity = m_pP;
 	}
 	void resize(SizeType size, const TValue & v = TValue()) {
 		m_begin = m_d.resize(size);
@@ -70,20 +79,21 @@ public:
 			}
 		}
 		m_pP = size;
-		m_size = size;
+		m_capacity = size;
 	}
 	void push_back(const TValue & v) {
-		if (m_pP >= m_size) {
-			SizeType tSize = m_size + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_size/100);
+		if (m_pP >= m_capacity) {
+			SizeType tSize = m_capacity + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_capacity/100);
 			m_begin = m_d.resize(tSize);
-			m_size = tSize;
+			m_capacity = tSize;
 		}
 		m_begin[m_pP] = v;
 		++m_pP;
 	}
 	void pop_back() {
-		if (m_pP > 0)
+		if (m_pP > 0) {
 			--m_pP;
+		}
 	}
 	inline reference operator[](SizeType pos) { return *(begin()+pos);}
 	inline const_reference operator[](SizeType pos) const { return *(cbegin()+pos);}
