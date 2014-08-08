@@ -57,6 +57,7 @@ public:
 	typedef std::pair<key_type, mapped_type> value_type;
 	typedef TValueStorageType ValueStorageType;
 	typedef TTableStorageType TableStorageType;
+	typedef typename ValueStorageType::iterator iterator;
 	typedef typename ValueStorageType::const_iterator const_iterator;
 	typedef typename TableStorageType::value_type SizeType;
 private:
@@ -143,6 +144,11 @@ public:
 	}
 	inline const_iterator cbegin() const { return m_valueStorage.cbegin(); }
 	inline const_iterator cend() const { return m_valueStorage.cend(); }
+	
+	///After changing a key you have to call rehash to make the hashtable consistent
+	inline iterator begin() { return m_valueStorage.begin(); }
+	///After changing a key you have to call rehash to make the hashtable consistent
+	inline iterator end() { return m_valueStorage.end(); }
 	///Sort the elments in the value storage and do a rehash afterwards.
 	///If you do this before using cbegin/cend, then the elements in between cbegin-cend will be sorted according to T_SORT_OP
 	template<typename T_SORT_OP>
