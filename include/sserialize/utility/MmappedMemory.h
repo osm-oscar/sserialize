@@ -3,7 +3,6 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/exceptions.h>
-#include <memory>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +11,7 @@
 
 namespace sserialize {
 
-typedef enum {MM_FILEBASED, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY} MmappedMemoryType;
+typedef enum {MM_INVALID=0, MM_FILEBASED, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY} MmappedMemoryType;
 
 struct FileHandler {
 	static void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess);
@@ -24,7 +23,7 @@ namespace detail {
 namespace MmappedMemory {
 
 template<typename TValue>
-class MmappedMemoryInterface {
+class MmappedMemoryInterface: public RefCountObject {
 public:
 	MmappedMemoryInterface() {}
 	virtual ~MmappedMemoryInterface() {}
@@ -32,6 +31,17 @@ public:
 	virtual TValue * resize(OffsetType newSize) = 0;
 	virtual OffsetType size() const = 0;
 	virtual MmappedMemoryType type() const = 0;
+};
+
+template<typename TValue>
+class MmappedMemoryEmpty: public MmappedMemoryInterface<TValue> {
+public:
+	MmappedMemoryEmpty() {}
+	virtual ~MmappedMemoryEmpty() {}
+	virtual TValue * data() override { return 0; }
+	virtual TValue * resize(OffsetType /*newSize*/) override { return 0; }
+	virtual OffsetType size() const override { return 0; }
+	virtual MmappedMemoryType type() const override { return MM_INVALID; }
 };
 
 template<typename TValue>
@@ -44,6 +54,7 @@ private:
 	bool m_populate;
 	bool m_randomAccess;
 public:
+	///@para size: has to be larger than 1, otherwise will be set to 1
 	MmappedMemoryFileBased(OffsetType size, bool populate = false, bool randomAccess = true) :
 	m_data(0),
 	m_size(0),
@@ -51,6 +62,7 @@ public:
 	m_populate(populate),
 	m_randomAccess(randomAccess)
 	{
+		size = std::max<OffsetType>(1, size);
 		m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess);
 		if (m_data) {
 			m_size = size;
@@ -62,10 +74,12 @@ public:
 	virtual ~MmappedMemoryFileBased() {
 		if (m_data) {
 			FileHandler::closeAndUnlink(m_fileName, m_fd, m_data, m_size*sizeof(TValue));
+			m_data = 0;
 		}
 	}
 	virtual TValue * data() { return m_data; }
 	virtual TValue * resize(OffsetType newSize) {
+		newSize = std::max<OffsetType>(1, newSize);
 		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), m_populate, m_randomAccess);
 		if (!m_data)
 			throw sserialize::CreationException("MmappedMemory::resize");
@@ -83,20 +97,29 @@ private:
 	OffsetType m_size;
 public:
 	MmappedMemoryInMemory(OffsetType size) : m_data(0), m_size(0) {
-		m_data = (TValue*) malloc(sizeof(TValue)*size);
+		if (m_size) {
+			m_data = (TValue*) malloc(sizeof(TValue)*size);
+		}
 		if (m_data) {
 			m_size = size;
 		}
-		else {
+		else if (m_size) {
 			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
 		}
 	}
 	virtual ~MmappedMemoryInMemory() {
-		if (m_data)
+		if (m_data) {
 			free(m_data);
+			m_data = 0;
+		}
 	}
 	virtual TValue * data() { return m_data; }
 	virtual TValue * resize(OffsetType newSize) {
+		if (!newSize) {
+			free(m_data);
+			m_data = 0;
+			return 0;
+		}
 		TValue * newD = (TValue*) realloc(m_data, sizeof(TValue)*newSize);
 		if (!newD) {
 			newD = (TValue*) malloc(sizeof(TValue)*newSize);
@@ -153,6 +176,7 @@ public:
 		if (m_data) {
 			::munmap(m_data, m_size);
 			::shm_unlink(m_name.c_str());
+			m_data = 0;
 		}
 	}
 	virtual TValue * data() { return m_data; }
@@ -182,10 +206,10 @@ class MmappedMemory {
 public:
 private:
 	typedef typename detail::MmappedMemory::MmappedMemoryInterface<TValue>  MyInterface;
-	std::shared_ptr< MyInterface > m_priv;
+	sserialize::RCPtrWrapper< MyInterface > m_priv;
 public:
 	///This will not create memory region => data() equals nullptr and resize() will not work
-	MmappedMemory() : m_priv(new detail::MmappedMemory::MmappedMemoryInMemory<TValue>(0)) {}
+	MmappedMemory() : m_priv(new detail::MmappedMemory::MmappedMemoryEmpty<TValue>()) {}
 	///@param size Number of elements
 	MmappedMemory(OffsetType size, MmappedMemoryType t) : m_priv(0) {
 		switch (t) {
