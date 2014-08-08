@@ -82,12 +82,18 @@ public:
 	const_iterator begin() const { return m_begin; }
 	const_iterator end() const { return m_push; }
 	const_iterator capacityEnd() const { return m_end; }
+
+	const_iterator cbegin() const { return m_begin; }
+	const_iterator cend() const { return m_push; }
 	
 	reverse_iterator rbegin() { return reverse_iterator(m_end-1); }
 	reverse_iterator rend() { return reverse_iterator(m_begin-1); }
 	
 	const_reverse_iterator rbegin() const { return reverse_iterator(m_end-1); }
 	const_reverse_iterator rend() const { return reverse_iterator(m_begin-1); }
+	
+	const_reverse_iterator crbegin() const { return reverse_iterator(m_end-1); }
+	const_reverse_iterator crend() const { return reverse_iterator(m_begin-1); }
 	
 	template<typename T_INPUT_ITERATOR>
 	void push_back(T_INPUT_ITERATOR a, T_INPUT_ITERATOR b) {
