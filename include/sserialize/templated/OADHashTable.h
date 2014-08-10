@@ -67,6 +67,7 @@ private:
 	TableStorageType m_d;
 	double m_maxLoad;
 	double m_rehashMult;
+	uint64_t m_maxCollisions;
 	THash1 m_hash1;
 	THash2 m_hash2;
 private:
@@ -86,12 +87,14 @@ public:
 	OADHashTable() :
 	m_d(15, 0),
 	m_maxLoad(0.8),
-	m_rehashMult(2.0)
+	m_rehashMult(2.0),
+	m_maxCollisions(1000)
 	{}
 	OADHashTable(THash1 hash1, THash2 hash2, double maxLoad = 0.8) :
 	m_d(16, 0), //start with a small hash table, start value has to obey (m_d.size()+1)/(m_rehashMult*m_d.size()) < m_maxLoad
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
+	m_maxCollisions(1000),
 	m_hash1(hash1),
 	m_hash2(hash2)
 	{}
@@ -100,6 +103,7 @@ public:
 	m_d(tableStorage),
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
+	m_maxCollisions(1000),
 	m_hash1(hash1),
 	m_hash2(hash2)
 	{
@@ -111,7 +115,8 @@ public:
 	m_valueStorage(valueStorage),
 	m_d(tableStorage),
 	m_maxLoad(0.8),
-	m_rehashMult(2.0)
+	m_rehashMult(2.0),
+	m_maxCollisions(100)
 	{
 		m_valueStorage.clear();
 		m_d.clear();
@@ -122,6 +127,7 @@ public:
 	m_d(other.m_d),
 	m_maxLoad(other.m_maxLoad),
 	m_rehashMult(other.m_rehashMult),
+	m_maxCollisions(other.m_maxCollisions),
 	m_hash1(other.m_hash1),
 	m_hash2(other.m_hash2)
 	{}
@@ -130,10 +136,13 @@ public:
 	inline SizeType storageCapacity()  const { return m_valueStorage.capacity();}
 	inline double rehashMultiplier() const { return m_rehashMult;}
 	inline void rehashMultiplier(double v) { m_rehashMult = v; }
-	inline SizeType capacity() const { return m_d.size();}
+	inline SizeType capacity() const { return m_d.capacity();}
 	inline double load_factor() const { return (double)size()/m_d.size();}
 	inline double max_load_factor() const { return m_maxLoad;}
 	void max_load_factor(double f);
+	///Set this to std::numeric_limits<uint64_t>::max() if you want as many collisions as the size of the table
+	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; }
+	inline uint64_t maxCollisions() const { return m_maxCollisions; }
 	void reserve(SizeType count);
 	mapped_type & operator[](const key_type & key);
 	mapped_type & at(const key_type & key);
@@ -166,7 +175,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 		return cpos;
 	}
 	uint64_t h2 = (m_hash2(key) & ~0x1);
-	for(uint64_t i = 1; i < m_d.size(); ++i) {
+	for(uint64_t i = 1, maxCollisions = std::min<uint64_t>(s, m_maxCollisions); i < maxCollisions; ++i) {
 		cpos = (h1 + i*h2) % s;
 		SizeType cp = m_d[cpos];
 		if (!cp || value(cp).first == key) {
