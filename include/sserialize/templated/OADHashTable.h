@@ -197,7 +197,8 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 			m_d[pos] = i;
 		}
 		else {
-			reserve(count*m_rehashMult);
+			rehash(count*m_rehashMult);
+			return;
 		}
 	}
 }
