@@ -96,7 +96,13 @@ protected:
 public:
 	Trie() : m_root(0) {}
 	virtual ~Trie() { delete m_root;}
-	
+	//linear in the number of nodes
+	uint64_t size() const {
+		uint64_t s = 0;
+		auto f = [&s](const Node & /*n*/){++s;};
+		root()->apply(f);
+		return s;
+	}
 	const Node * root() const { return m_root;}
 	
 	///use this on your own risk!
