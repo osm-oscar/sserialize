@@ -9,7 +9,7 @@ namespace Static {
 
 /** Fileformat: v1
   *-------------------------------------------------------------------
-  *VERSION|SQ|STRINGTABLE|  StringEntries  |DEQUE<FlatGST::IndexEntry>
+  *VERSION|SQ|STRINGTABLE|  StringEntries  |ARRAY<FlatGST::IndexEntry>
   *-------------------------------------------------------------------
   *   1   |1 |     *     |MultiVarBitArray |          *
   *
