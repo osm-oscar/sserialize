@@ -49,7 +49,8 @@ template<	typename TKey,
 			typename THash1 = detail::OADHashTable::DefaultHash<TKey, false>,
 			typename THash2 = detail::OADHashTable::DefaultHash<TKey, true>,
 			typename TValueStorageType = std::vector< std::pair<TKey, TValue> >,
-			typename TTableStorageType = std::vector<uint32_t> >
+			typename TTableStorageType = std::vector<uint32_t>,
+			typename TKeyEq = std::equal_to<TKey> >
 class OADHashTable {
 public:
 	typedef TKey key_type;
@@ -61,7 +62,7 @@ public:
 	typedef typename ValueStorageType::const_iterator const_iterator;
 	typedef typename TableStorageType::value_type SizeType;
 private:
-	static constexpr SizeType findend = detail::OADHashTable::OADSizeTypeLimits<SizeType>::max;
+	static constexpr uint64_t findend = detail::OADHashTable::OADSizeTypeLimits<uint64_t>::max;
 private:
 	ValueStorageType m_valueStorage;
 	TableStorageType m_d;
@@ -70,9 +71,10 @@ private:
 	uint64_t m_maxCollisions;
 	THash1 m_hash1;
 	THash2 m_hash2;
+	TKeyEq m_keyEq;
 private:
-	SizeType find(const key_type & key) const;
-	void rehash(SizeType count);
+	uint64_t find(const key_type & key) const;
+	void rehash(uint64_t count);
 	
 	//pos == 0 is the null-value => real values start with > 0
 	inline value_type & value(SizeType ptr) {
@@ -90,22 +92,24 @@ public:
 	m_rehashMult(2.0),
 	m_maxCollisions(1000)
 	{}
-	OADHashTable(THash1 hash1, THash2 hash2, double maxLoad = 0.8) :
+	OADHashTable(THash1 hash1, THash2 hash2, TKeyEq keyEq, double maxLoad = 0.8) :
 	m_d(16, 0), //start with a small hash table, start value has to obey (m_d.size()+1)/(m_rehashMult*m_d.size()) < m_maxLoad
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
 	m_maxCollisions(1000),
 	m_hash1(hash1),
-	m_hash2(hash2)
+	m_hash2(hash2),
+	m_keyEq(keyEq)
 	{}
-	OADHashTable(THash1 hash1, THash2 hash2, double maxLoad, const ValueStorageType & valueStorage, const TableStorageType & tableStorage) :
+	OADHashTable(THash1 hash1, THash2 hash2, TKeyEq keyEq, double maxLoad, const ValueStorageType & valueStorage, const TableStorageType & tableStorage) :
 	m_valueStorage(valueStorage),
 	m_d(tableStorage),
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
 	m_maxCollisions(1000),
 	m_hash1(hash1),
-	m_hash2(hash2)
+	m_hash2(hash2),
+	m_keyEq(keyEq)
 	{
 		m_valueStorage.clear();
 		m_d.clear();
@@ -129,14 +133,15 @@ public:
 	m_rehashMult(other.m_rehashMult),
 	m_maxCollisions(other.m_maxCollisions),
 	m_hash1(other.m_hash1),
-	m_hash2(other.m_hash2)
+	m_hash2(other.m_hash2),
+	m_keyEq(other.m_keyEq)
 	{}
 	virtual ~OADHashTable() {}
 	inline SizeType size() const { return m_valueStorage.size(); }
 	inline SizeType storageCapacity()  const { return m_valueStorage.capacity();}
 	inline double rehashMultiplier() const { return m_rehashMult;}
 	inline void rehashMultiplier(double v) { m_rehashMult = v; }
-	inline SizeType capacity() const { return m_d.capacity();}
+	inline uint64_t capacity() const { return m_d.capacity();}
 	inline double load_factor() const { return (double)size()/m_d.size();}
 	inline double max_load_factor() const { return m_maxLoad;}
 	void max_load_factor(double f);
@@ -148,7 +153,7 @@ public:
 	mapped_type & at(const key_type & key);
 	const mapped_type & at(const key_type & key) const;
 	inline bool count(const key_type & key) const {
-		SizeType pos = find(key);
+		uint64_t pos = find(key);
 		return (pos == findend ? false : bool(m_d[pos]));
 	}
 	inline const_iterator cbegin() const { return m_valueStorage.cbegin(); }
@@ -164,35 +169,35 @@ public:
 	void sort(T_SORT_OP op);
 };
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
-typename OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::SizeType
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::find(const key_type & key) const {
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
+uint64_t
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::find(const key_type & key) const {
 	uint64_t h1 = (m_hash1(key)) & ~0x1;
-	SizeType s = m_d.size();
-	SizeType cpos = h1%s;
+	uint64_t s = m_d.size();
+	uint64_t cpos = h1%s;
 	SizeType cp = m_d[cpos];
-	if (!cp || value(cp).first == key) {
+	if (!cp || m_keyEq(value(cp).first, key) ) {
 		return cpos;
 	}
 	uint64_t h2 = (m_hash2(key) & ~0x1);
 	for(uint64_t i = 1, maxCollisions = std::min<uint64_t>(s, m_maxCollisions); i < maxCollisions; ++i) {
 		cpos = (h1 + i*h2) % s;
 		SizeType cp = m_d[cpos];
-		if (!cp || value(cp).first == key) {
+		if (!cp || m_keyEq(value(cp).first, key) ) {
 			return cpos;
 		}
 	}
 	return findend;
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 void
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::rehash(SizeType count) {
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::rehash(uint64_t count) {
 	count = count | 0x1;
 	m_d.clear();
 	m_d.resize(count, 0);
 	for(SizeType i = 1, s = size(); i <= s; ++i) {
-		SizeType pos = find(value(i).first);
+		uint64_t pos = find(value(i).first);
 		if (pos != findend) {
 			m_d[pos] = i;
 		}
@@ -203,12 +208,12 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 	}
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 void
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::max_load_factor(double f) {
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::max_load_factor(double f) {
 	m_maxLoad = f;
 	if (load_factor() > m_maxLoad) {
-		SizeType targetSize = m_d.size()*m_rehashMult;
+		uint64_t targetSize = m_d.size()*m_rehashMult;
 		while ( (double)size()/targetSize > m_maxLoad) {
 			targetSize = targetSize*m_rehashMult;
 		}
@@ -216,9 +221,9 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 	}
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 void
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::reserve(SizeType count) {
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::reserve(SizeType count) {
 	double newTableSize = count/m_maxLoad;
 	if ((double)size()/newTableSize < m_maxLoad) {
 		rehash(newTableSize);
@@ -226,10 +231,10 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 	m_valueStorage.reserve(count);
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 TValue &
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::operator[](const key_type & key) {
-	SizeType pos = find(key);
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::operator[](const key_type & key) {
+	uint64_t pos = find(key);
 	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
@@ -245,10 +250,10 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 	}
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 TValue &
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::at(const key_type & key) {
-	SizeType pos = find(key);
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::at(const key_type & key) {
+	uint64_t pos = find(key);
 	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
@@ -256,10 +261,10 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 	throw std::out_of_range();
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 const TValue &
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::at(const key_type & key) const {
-	SizeType pos = find(key);
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::at(const key_type & key) const {
+	uint64_t pos = find(key);
 	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
@@ -267,9 +272,9 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>
 	throw std::out_of_range();
 }
 
-template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType>
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 template<typename T_SORT_OP>
-void OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType>::sort(T_SORT_OP op) {
+void OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::sort(T_SORT_OP op) {
 	std::sort(m_valueStorage.begin(), m_valueStorage.end(), op);
 	rehash(m_d.size());
 }
