@@ -3,7 +3,8 @@
 #include <sserialize/utility/MmappedMemory.h>
 
 namespace sserialize {
-
+///This is a partially stl-compatible vector basend on MmappedMemory.
+///This is especially usefull in combination with shared or file-based memory to create large vectors without the overhead of reallocation (the paging will do this for us)
 template<typename TValue>
 class MMVector {
 public:
@@ -90,6 +91,19 @@ public:
 		m_begin[m_pP] = v;
 		++m_pP;
 	}
+	template<typename T_VALUE_IT>
+	void push_back(T_VALUE_IT begin, const T_VALUE_IT & end) {
+		if ( end > begin) {
+			std::size_t pushSize = (end-begin);
+			reserve(pushSize+size());
+			TValue * dP = m_begin+m_pP;
+			for(; begin != end; ++begin, ++dP) {
+				*dP = *begin;
+			}
+			m_pP += pushSize;
+		}
+	}
+	
 	void pop_back() {
 		if (m_pP > 0) {
 			--m_pP;
@@ -114,7 +128,7 @@ public:
 	inline const_iterator cbegin() const { return m_begin; }
 	inline iterator end() { return m_begin+m_pP;}
 	inline const_iterator end() const { return m_begin+m_pP;}
-	inline const_iterator cend() const { m_begin+m_pP;}
+	inline const_iterator cend() const { return m_begin+m_pP;}
 	inline reference back() { return *(end()-1);} 
 	inline const_reference back() const { return *(cend()-1);}
 	inline reference front() { return *begin();}
