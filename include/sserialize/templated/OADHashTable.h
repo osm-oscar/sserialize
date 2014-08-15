@@ -73,7 +73,7 @@ private:
 	THash2 m_hash2;
 	TKeyEq m_keyEq;
 private:
-	uint64_t find(const key_type & key) const;
+	uint64_t findBucket(const key_type & key) const;
 	void rehash(uint64_t count);
 	
 	//pos == 0 is the null-value => real values start with > 0
@@ -83,6 +83,14 @@ private:
 	
 	inline const value_type & value(SizeType ptr) const {
 		return m_valueStorage[ptr-1];
+	}
+	
+	inline iterator valueIt(SizeType ptr) {
+		return m_valueStorage.begin()+(ptr-1);
+	}
+	
+	inline const_iterator valueIt(SizeType ptr) const {
+		return m_valueStorage.cbegin()+(ptr-1);
 	}
 	
 public:
@@ -149,13 +157,18 @@ public:
 	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; }
 	inline uint64_t maxCollisions() const { return m_maxCollisions; }
 	void reserve(SizeType count);
+	///Adding more elements to the hash does not invalidate iterators
 	mapped_type & operator[](const key_type & key);
+	void insert(const key_type & key);
 	mapped_type & at(const key_type & key);
 	const mapped_type & at(const key_type & key) const;
 	inline bool count(const key_type & key) const {
-		uint64_t pos = find(key);
+		uint64_t pos = findBucket(key);
 		return (pos == findend ? false : bool(m_d[pos]));
 	}
+	const_iterator find(const key_type & key) const;
+	iterator find(const key_type & key);
+	
 	inline const_iterator cbegin() const { return m_valueStorage.cbegin(); }
 	inline const_iterator cend() const { return m_valueStorage.cend(); }
 	
@@ -171,7 +184,7 @@ public:
 
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 uint64_t
-OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::find(const key_type & key) const {
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::findBucket(const key_type & key) const {
 	uint64_t h1 = (m_hash1(key)) & ~0x1;
 	uint64_t s = m_d.size();
 	uint64_t cpos = h1%s;
@@ -197,7 +210,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 	m_d.clear();
 	m_d.resize(count, 0);
 	for(SizeType i = 1, s = size(); i <= s; ++i) {
-		uint64_t pos = find(value(i).first);
+		uint64_t pos = findBucket(value(i).first);
 		if (pos != findend) {
 			m_d[pos] = i;
 		}
@@ -234,7 +247,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 TValue &
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::operator[](const key_type & key) {
-	uint64_t pos = find(key);
+	uint64_t pos = findBucket(key);
 	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
@@ -251,9 +264,15 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 }
 
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
+void
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::insert(const key_type & key) {
+	operator[](key);
+}
+
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 TValue &
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::at(const key_type & key) {
-	uint64_t pos = find(key);
+	uint64_t pos = findBucket(key);
 	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
@@ -264,7 +283,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 const TValue &
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::at(const key_type & key) const {
-	uint64_t pos = find(key);
+	uint64_t pos = findBucket(key);
 	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
@@ -277,6 +296,28 @@ template<typename T_SORT_OP>
 void OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::sort(T_SORT_OP op) {
 	std::sort(m_valueStorage.begin(), m_valueStorage.end(), op);
 	rehash(m_d.size());
+}
+
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
+typename OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::const_iterator
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::find(const key_type & key) const {
+	uint64_t pos = findBucket(key);
+	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
+	if (pos != findend && cp) {
+		return valueIt(cp);
+	}
+	return end();
+}
+
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
+typename OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::iterator
+OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::find(const key_type & key) {
+	uint64_t pos = findBucket(key);
+	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
+	if (pos != findend && cp) {
+		return valueIt(cp);
+	}
+	return end();
 }
 
 }//end namespace
