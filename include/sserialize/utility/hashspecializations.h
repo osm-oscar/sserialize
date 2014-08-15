@@ -7,7 +7,9 @@
 
 //from http://stackoverflow.com/questions/7222143/unordered-map-hash-function-c, which is from boost
 
-
+inline void hash_combine(uint64_t & seed, const char v) {
+	seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
 template <class T>
 inline void hash_combine(std::size_t & seed, const T & v, const std::hash<T> & hasher) {
