@@ -181,7 +181,7 @@ public:
 	}
 	virtual TValue * data() { return m_data; }
 	virtual TValue * resize(OffsetType newSize) {
-		m_data = (TValue*) FileHandler::resize(m_fd, m_data, m_size, newSize*sizeof(TValue), false, true);
+		m_data = (TValue*) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), false, true);
 		
 		if (m_data || newSize == 0) {
 			m_size = newSize;
