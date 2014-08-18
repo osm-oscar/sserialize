@@ -154,7 +154,7 @@ public:
 	public:
 		StaticString() : m_off(special), m_size(special) {}
 		StaticString(const StaticString & other) : m_off(other.m_off), m_size(other.m_size) {}
-		virtual ~StaticString() {}
+		~StaticString() {}
 		inline uint32_t offset() const { return m_off; }
 		inline uint32_t size() const { return m_size; }
 		inline bool isSpecial() const { return m_off == special; }
@@ -264,6 +264,7 @@ private:
 			return ~HashFunc1::operator()(a);
 		}
 	};
+	
 	typedef OADHashTable<StaticString, TValue, HashFunc1, HashFunc2,  HTValueStorage, HTStorage, StringEq> HashTable;
 private:
 	StringStorage m_stringData;
