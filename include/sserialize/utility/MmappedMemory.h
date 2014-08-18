@@ -139,7 +139,7 @@ public:
 	virtual MmappedMemoryType type() const { return sserialize::MM_PROGRAM_MEMORY;}
 };
 
-
+///Exclusive shared memory based storage backend
 template<typename TValue>
 class MmappedMemorySharedMemory: public MmappedMemoryInterface<TValue> {
 private:
@@ -159,9 +159,10 @@ private:
 public:
 	MmappedMemorySharedMemory(OffsetType size) : m_data(0), m_size(0) {
 		m_name = generateName(size);
-		m_fd = ::shm_open(m_name.c_str(), O_CREAT | O_RDWR, S_IRWXU);
-		if (m_fd < 0)
-			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
+		m_fd = ::shm_open(m_name.c_str(), O_CREAT | O_RDWR | O_EXCL, S_IRWXU);
+		if (m_fd < 0) {
+			throw sserialize::CreationException("sserialize::MmappedMemorySharedMemory unable to create shm region");
+		}
 		
 		m_data = (TValue*) FileHandler::resize(m_fd, 0, 0, size*sizeof(TValue), false, true);
 		
