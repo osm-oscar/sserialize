@@ -29,7 +29,7 @@ private:
 	TValue m_value;
 public:
 	Node(Node * parent) : m_parent(parent) {}
-	virtual ~Node() {
+	~Node() {
 		for(auto & x : m_children) {
 			delete x.second;
 		}
@@ -350,6 +350,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 		nodeOffsets[n] = trieData.size();
 		++count;
 		pinfo(count);
+// 		std::cout << count << std::endl;
 	}
 	pinfo.end();
 	payloadContainerCreator.flush();
