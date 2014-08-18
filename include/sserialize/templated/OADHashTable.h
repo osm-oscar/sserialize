@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <limits>
 #include <algorithm>
+#include <sserialize/utility/utilcontainerfuncs.h>
 
 namespace sserialize {
 namespace detail {
@@ -180,6 +181,11 @@ public:
 	///If you do this before using cbegin/cend, then the elements in between cbegin-cend will be sorted according to T_SORT_OP
 	template<typename T_SORT_OP>
 	void sort(T_SORT_OP op);
+	
+	///Multi threaded sort, see @sort
+	template<typename T_SORT_OP>
+	void mt_sort(T_SORT_OP op, unsigned int numThreads = 0);
+	
 };
 
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
@@ -295,6 +301,13 @@ template<typename TKey, typename TValue, typename THash1, typename THash2, typen
 template<typename T_SORT_OP>
 void OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::sort(T_SORT_OP op) {
 	std::sort(m_valueStorage.begin(), m_valueStorage.end(), op);
+	rehash(m_d.size());
+}
+
+template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
+template<typename T_SORT_OP>
+void OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::mt_sort(T_SORT_OP op, unsigned int numThreads) {
+	sserialize::mt_sort(m_valueStorage.begin(), m_valueStorage.end(), op, numThreads);
 	rehash(m_d.size());
 }
 
