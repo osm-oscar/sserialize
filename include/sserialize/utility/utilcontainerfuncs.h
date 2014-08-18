@@ -7,6 +7,7 @@
 #include <vector>
 #include <deque>
 #include <algorithm>
+#include <thread>
 
 namespace sserialize {
 
@@ -16,6 +17,42 @@ template<typename TIterator>
 void sort(TIterator begin, TIterator end) {
 	if (! std::is_sorted(begin, end) ) {
 		std::sort(begin, end);
+	}
+}
+
+namespace detail {
+	template<typename TIterator, typename T_COMPFUNC>
+	void mt_sort_wrap(TIterator begin, TIterator end, T_COMPFUNC compFunc) {
+		std::sort(begin, end, compFunc);
+	}
+}
+
+
+///multi-threaded sorting, @param numThreads if 0, computer number of threads
+template<typename TIterator, typename CompFunc>
+void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThreads = 0) {
+	if (!numThreads)
+		numThreads = std::max<unsigned int>(std::thread::hardware_concurrency(), 1);
+	std::size_t numElements = std::distance(begin, end);
+	
+	//improve check of when to sort as this really doesn't make any sense on small data
+	if (numElements > numThreads*10000 && numThreads > 1) {
+		std::size_t blockSize = numElements/numThreads;
+		std::vector<std::thread> myThreads;
+		myThreads.reserve(numThreads+1);
+		for(unsigned int i(0); i < numThreads; ++i) {
+			std::nth_element(begin, begin+blockSize, end, comp);
+			myThreads.push_back( std::thread(detail::mt_sort_wrap<TIterator, CompFunc>, begin, begin+blockSize, comp) );
+			begin += blockSize;
+		}
+		if (begin != end) //if there's someting left, put the rest into an extra thread (there might very well be another sorting thread completed before the other
+			myThreads.push_back( std::thread(detail::mt_sort_wrap<TIterator, CompFunc>, begin, end, comp) );
+		for(std::thread & t : myThreads) {
+			t.join();
+		}
+	}
+	else {
+		std::sort(begin, end, comp);
 	}
 }
 
