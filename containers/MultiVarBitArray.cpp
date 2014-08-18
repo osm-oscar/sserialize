@@ -85,9 +85,9 @@ uint32_t MultiVarBitArrayPrivate::set(uint32_t pos, uint32_t subPos, uint32_t va
 		return ~value;
 
 	uint8_t bitCount = this->bitCount(subPos);
-	uint32_t m_mask = createMask(bitCount);
+	uint32_t mymask = createMask(bitCount);
 
-	value = value & m_mask;
+	value = value & mymask;
 	
 	uint64_t initTotalBitShift = m_bitSums.back()*pos + (subPos > 0 ? m_bitSums[subPos-1] : 0);
 	uint64_t startPos = initTotalBitShift/8;
