@@ -289,6 +289,8 @@ public:
 	const HashTable & hashTable() const { return m_ht; }
 	
 	uint32_t size() const { return m_ht.size(); }
+	bool count(const StaticString & str) const;
+	bool count(const std::string & str);
 	
 	const_iterator begin() const { return m_ht.cbegin(); }
 	const_iterator cbegin() const { return m_ht.cbegin(); }
@@ -367,6 +369,21 @@ HashBasedFlatTrie<TValue>::Node::Iterator::operator*() const {
 
 
 //end of internal classes implementations
+
+template<typename TValue>
+bool
+HashBasedFlatTrie<TValue>::count(const std::string & a) {
+	m_strHandler.specialString = a.c_str();
+	bool ret = count(StaticString(a.size()));
+	m_strHandler.specialString = 0;
+	return ret;
+}
+
+template<typename TValue>
+bool
+HashBasedFlatTrie<TValue>::count(const StaticString & a) const {
+	return m_ht.count(a);
+}
 
 template<typename TValue>
 typename HashBasedFlatTrie<TValue>::StaticString
