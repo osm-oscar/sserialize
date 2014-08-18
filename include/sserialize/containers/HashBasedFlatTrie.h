@@ -478,9 +478,9 @@ void HashBasedFlatTrie<TValue>::finalize() {
 	auto sortFunc = [strHandler](const typename HashTable::value_type & a, const typename HashTable::value_type & b) {
 		return sserialize::unicodeIsSmaller(strHandler->strBegin(a.first), strHandler->strEnd(a.first), strHandler->strBegin(b.first), strHandler->strEnd(b.first));
 	};
-	m_ht.sort(sortFunc);
+	m_ht.mt_sort(sortFunc);
 	finalize(0, m_ht.size(), 0);
-	m_ht.sort(sortFunc);
+	m_ht.mt_sort(sortFunc);
 }
 
 template<typename TValue>
