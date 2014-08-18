@@ -283,6 +283,8 @@ public:
 		m_ht = HashTable(HashFunc1(strHandlerPtr), HashFunc2(strHandlerPtr), StringEq(strHandlerPtr), 0.8, HTValueStorage(sserialize::MM_SHARED_MEMORY), HTStorage(sserialize::MM_SHARED_MEMORY));
 	}
 	~HashBasedFlatTrie() {}
+	///reserve @param count strings
+	void reserve(uint32_t count) { m_ht.reserve(count); }
 	
 	const HashTable & hashTable() const { return m_ht; }
 	
@@ -465,7 +467,6 @@ void HashBasedFlatTrie<TValue>::finalize() {
 
 template<typename TValue>
 bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
-	finalize();
 	dest.putUint8(1); //version
 	dest.putOffset(m_stringData.size());
 	dest.put(reinterpret_cast<const uint8_t*>(m_stringData.begin()), m_stringData.size());
