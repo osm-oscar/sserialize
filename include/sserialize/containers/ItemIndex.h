@@ -142,7 +142,7 @@ public:
 
 }//end namespace
 
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);
+sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);
 
 bool operator==(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx);
 inline bool operator!=(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx) {
@@ -177,6 +177,7 @@ template<class TCONTAINER>
 bool operator!=(const TCONTAINER & set, const sserialize::ItemIndex & idx) {
 	return !( idx == set);
 }
+
 
 std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & idx);
 
