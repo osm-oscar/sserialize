@@ -6,52 +6,20 @@
 
 const char * inFileName = 0;
 
-class TestHashBasedFlatTrie: public CppUnit::TestFixture {
-CPPUNIT_TEST_SUITE( TestHashBasedFlatTrie );
-CPPUNIT_TEST( testFlatCorrect );
-CPPUNIT_TEST( testNode );
-CPPUNIT_TEST_SUITE_END();
-private:
+class TestHashBasedFlatTrieBase: public CppUnit::TestFixture {
+protected:
 	typedef sserialize::HashBasedFlatTrie<uint32_t> MyT;
 	MyT m_ht;
 	std::vector<std::string> m_testStrings;
 	std::vector<std::string> m_checkStrings;
 public:
-	TestHashBasedFlatTrie() :
-	m_testStrings({//all: missing empty parent
-		"A", //single
-		"BB", "BC", "BD", //missing parent
-		"C", "CD", "CE", //parent available with children 
-		"DAAAA", "DAAAB", "DAAABE", "DAAAC", //longer node string, but missing parent
-		"EAAAA", "EAAAAA", "EAAAAB", "EAAAAC", //longer node string, no missing parent
-		"FF", "FEG", "FEHI", "FEHJ" //multiple missing parents
-	}),
-	m_checkStrings({
-		"",
-		"A", //single
-		"B",
-		"BB", "BC", "BD", //missing parent
-		"C", "CD", "CE", //parent available with children
-		"DAAA",
-		"DAAAA", "DAAAB", "DAAABE", "DAAAC", //longer node string, but missing parent
-		"EAAAA", "EAAAAA", "EAAAAB", "EAAAAC", //longer node string, no missing parent
-		"F", "FE",
-		"FEG",
-		"FEH", "FEHI", "FEHJ",
-		"FF" //multiple missing parents
-	})
-	{
-		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
-	}
-	
+	//setup hft with strings in m_testStrings
 	virtual void setUp() {
 		for(const std::string & str : m_testStrings) {
 			m_ht.insert(str);
 		}
 		m_ht.finalize();
 	}
-	
-	virtual void tearDown() {}
 	
 	void testFlatCorrect() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t) m_checkStrings.size(), m_ht.size());
@@ -67,10 +35,10 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t) m_checkStrings.size(), m_ht.size());
 		std::vector< std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator> > nodeIts;
 		uint32_t count = 0;
-		MyT::Node node = m_ht.root();
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_checkStrings[count], m_ht.toStr(node.str()));
+		MyT::NodePtr node = m_ht.root();
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_checkStrings[count], m_ht.toStr(node->str()));
 		++count;
-		nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node.begin(), node.end()) );
+		nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
 		while(nodeIts.size()) {
 			//descend upwards if need be
 			if (nodeIts.back().first == nodeIts.back().second) {
@@ -83,19 +51,105 @@ public:
 			node = *nIt;
 			++nIt;
 			//insert children
-			nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node.begin(), node.end()) );
+			nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
 			//check the node
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_checkStrings[count], m_ht.toStr(node.str()));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_checkStrings[count], m_ht.toStr(node->str()));
 			++count;
 		}
 	}
 };
 
-int main(int /*argc*/, const char ** argv) {
+class TestHashBasedFlatTrieSimple: public TestHashBasedFlatTrieBase {
+CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieSimple );
+CPPUNIT_TEST( testFlatCorrect );
+CPPUNIT_TEST( testNode );
+CPPUNIT_TEST_SUITE_END();
+public:
+	TestHashBasedFlatTrieSimple() {
+		m_testStrings = {//all: missing empty parent
+			"A", //single
+			"BB", "BC", "BD", //missing parent
+			"C", "CD", "CE", //parent available with children 
+			"DAAAA", "DAAAB", "DAAABE", "DAAAC", //longer node string, but missing parent
+			"EAAAA", "EAAAAA", "EAAAAB", "EAAAAC", //longer node string, no missing parent
+			"FF", "FEG", "FEHI", "FEHJ" //multiple missing parents
+		};
+		m_checkStrings = {
+			"",
+			"A", //single
+			"B",
+			"BB", "BC", "BD", //missing parent
+			"C", "CD", "CE", //parent available with children
+			"DAAA",
+			"DAAAA", "DAAAB", "DAAABE", "DAAAC", //longer node string, but missing parent
+			"EAAAA", "EAAAAA", "EAAAAB", "EAAAAC", //longer node string, no missing parent
+			"F", "FE",
+			"FEG",
+			"FEH", "FEHI", "FEHJ",
+			"FF" //multiple missing parents
+		};
+		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
+	}
+};
+
+
+class TestHashBasedFlatTrieFile: public TestHashBasedFlatTrieBase {
+CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieFile );
+CPPUNIT_TEST( test );
+CPPUNIT_TEST_SUITE_END();
+public:
+	TestHashBasedFlatTrieFile() {
+		if (!inFileName) {
+			return;
+		}
+		std::ifstream inFile;
+		inFile.open(inFileName);
+		while(!inFile.eof()) {
+			std::string str;
+			std::getline(inFile, str);
+			m_testStrings.push_back(str);
+		}
+		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
+		
+	}
+	void test() {
+		if (!m_testStrings.size())
+			return;
+		std::vector< std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator> > nodeIts;
+		uint32_t count = 0;
+		MyT::NodePtr node = m_ht.root();
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_ht.toStr(m_ht.begin()->first), m_ht.toStr(node->str()));
+		++count;
+		nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
+		while(nodeIts.size()) {
+			//descend upwards if need be
+			if (nodeIts.back().first == nodeIts.back().second) {
+				while (nodeIts.size() && nodeIts.back().first == nodeIts.back().second) {
+					nodeIts.pop_back();
+				}
+				continue;
+			}
+			MyT::Node::const_iterator & nIt = nodeIts.back().first;
+			node = *nIt;
+			++nIt;
+			//insert children
+			nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
+			//check the node
+			CPPUNIT_ASSERT_MESSAGE("too many nodes", count < m_testStrings.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_ht.toStr((m_ht.begin()+count)->first), m_ht.toStr(node->str()));
+			++count;
+		}
+	}
+};
+
+int main(int argc, const char ** argv) {
 	srand( 0 );
-	inFileName = argv[1];
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  TestHashBasedFlatTrie::suite() );
+	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
+	if (argc > 1) {
+		inFileName = argv[1];
+		runner.addTest( TestHashBasedFlatTrieFile::suite() );
+	}
 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
