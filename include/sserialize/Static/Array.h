@@ -64,7 +64,14 @@ public:
 		sserialize::UByteArrayAdapter tmp = m_dest;
 		tmp.setPutPtr(oiBegin);
 		tmp.shrinkToPutPtr();
-		sserialize::Static::SortedOffsetIndex oIndex(tmp);
+		sserialize::Static::SortedOffsetIndex oIndex;
+		try {
+			oIndex = sserialize::Static::SortedOffsetIndex(tmp);
+		}
+		catch (const Exception & e) {
+			std::cout << e.what() << std::endl;
+			writeOutOffset();
+		}
 		if (offsets() != oIndex) {
 			writeOutOffset();
 			throw sserialize::CreationException("Array::flush Offset index is unequal");
