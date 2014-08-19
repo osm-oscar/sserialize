@@ -9,6 +9,7 @@
 #include <sserialize/utility/CompactUintArray.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/Static/DynamicVector.h>
 
 
 namespace sserialize {
@@ -211,39 +212,59 @@ private:
 		}
 	};
 public:
+	class Node;
+	typedef std::shared_ptr<Node> NodePtr;
+	typedef std::shared_ptr<const Node> ConstNodePtr;
 	class Node {
+		friend class HashBasedFlatTrie<TValue>;
 	public:
 		///This only works if the range is sorted and inner nodes are in the range as well.
 		///An inner node is a node where a trie splits into children
 		class Iterator {
 		public:
+			typedef Node value_type;
 		private:
-			HashBasedFlatTrie::const_iterator m_childNodeBegin;
-			HashBasedFlatTrie::const_iterator m_childNodeEnd;
-			HashBasedFlatTrie::const_iterator m_childrenEnd;
+			HashBasedFlatTrie::iterator m_childNodeBegin;
+			HashBasedFlatTrie::iterator m_childNodeEnd;
+			HashBasedFlatTrie::iterator m_childrenEnd;
 			HashBasedFlatTrie::CompFunc m_compFunc;
 		public:
-			Iterator(const HashBasedFlatTrie::const_iterator & parentBegin, const HashBasedFlatTrie::const_iterator & parentEnd, const HashBasedFlatTrie::CompFunc & compFunc);
+			Iterator(const HashBasedFlatTrie::iterator & parentBegin, const HashBasedFlatTrie::iterator & parentEnd, const HashBasedFlatTrie::CompFunc & compFunc);
 			~Iterator();
 			Iterator & operator++();
 			bool operator!=(const Iterator & other);
 			bool operator==(const Iterator & other);
-			Node operator*() const;
+			NodePtr operator*() const;
 		};
 		typedef Iterator const_iterator;
+		typedef Iterator iterator;
 	private:
-		HashBasedFlatTrie::const_iterator m_begin;
-		HashBasedFlatTrie::const_iterator m_end;
+		HashBasedFlatTrie::iterator m_begin;
+		HashBasedFlatTrie::iterator m_end;
 		const StringHandler * m_strHandler;
 	public:
 		Node() {}
-		Node(const HashBasedFlatTrie::const_iterator & begin, const HashBasedFlatTrie::const_iterator & end, const StringHandler * strHandler) :
+		Node(const Node & other) : m_begin(other.m_begin), m_end(other.m_end), m_strHandler(other.m_strHandler) {}
+		Node(const HashBasedFlatTrie::iterator & begin, const HashBasedFlatTrie::iterator & end, const StringHandler * strHandler) :
 		m_begin(begin), m_end(end), m_strHandler(strHandler) {}
 		~Node() {}
+		///empty dummy parent
+		NodePtr parent() { return NodePtr(); }
+		ConstNodePtr parent() const { return ConstNodePtr(); }
+		bool hasChildren() const { return (m_end - m_begin) > 1; }
 		const StaticString & str() const { return m_begin->first; }
 		const_iterator begin() const { return const_iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		const_iterator end() const { return const_iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
+		iterator begin() { return iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
+		iterator end() { return iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		TValue & value() {return m_begin->second;}
+		const TValue & value() const {return m_begin->second;}
+		///Apply functoid fn to all nodes in-order (sorted by keys)
+		template<typename TFunc>
+		void apply(TFunc & fn) const;
+		///Apply functoid fn to all nodes in-order (sorted by keys)
+		template<typename TFunc>
+		void apply(TFunc & fn);
 	};
 private:
 	struct HashFunc1 {
@@ -305,26 +326,41 @@ public:
 	///@return a very simple string type which is valid while this class exists
 	StaticString insert(const std::string & a);
 	StaticString insert(const StaticString & a);
+	template<typename T_OCTET_ITERATOR>
+	StaticString insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 	TValue & operator[](const StaticString & str);
 	///You have to call finalize() before using this @param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
-	Node findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
-	
+	NodePtr findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch);
 	
 	///call this if you want to navigate the trie
 	///you can always choose to add more strings to trie, but then you'd have to call this again
 	void finalize();
 	
 	///before using this, finalize has to be called and no inserts were made afterwards
-	Node root() { return Node(m_ht.begin(), m_ht.end(), &m_strHandler); }
+	NodePtr root() { return std::make_shared<Node>(m_ht.begin(), m_ht.end(), &m_strHandler); }
+	ConstNodePtr root() const {
+		HashBasedFlatTrie<TValue>* tmp = const_cast<HashBasedFlatTrie<TValue>*>(this);
+		return std::make_shared<const Node>( tmp->m_ht.begin(), tmp->m_ht.end(), &m_strHandler);
+	}
 	
 	///you can only call this after finalize()
-	bool append(UByteArrayAdapter & dest);
+
+	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
+	bool append(UByteArrayAdapter & dest, T_PH payloadHandler);
+	
+	static NodePtr make_nodeptr(Node & node) { return std::make_shared<Node>(node); }
+	static ConstNodePtr make_nodeptr(const Node & node) { return std::make_shared<Node>(node); }
+	
+	template<typename T>
+	bool checkTrieEquality(T /*t*/) const { return false; }
+	
+	template<typename TPayloadComparator, typename TNode>
+	bool checkPayloadEquality(TNode /*node*/, TPayloadComparator /*pc*/) const { return false; }
 };
 
-
 template<typename TValue>
-HashBasedFlatTrie<TValue>::Node::Iterator::Iterator(const HashBasedFlatTrie::const_iterator & parentBegin, const HashBasedFlatTrie::const_iterator & parentEnd, const HashBasedFlatTrie::CompFunc & compFunc) :
+HashBasedFlatTrie<TValue>::Node::Iterator::Iterator(const HashBasedFlatTrie::iterator & parentBegin, const HashBasedFlatTrie::iterator & parentEnd, const HashBasedFlatTrie::CompFunc & compFunc) :
 m_childNodeBegin(parentBegin), m_childNodeEnd(parentBegin), m_childrenEnd(parentEnd), m_compFunc(compFunc) {
 	if (m_childNodeBegin != m_childrenEnd) {
 		++m_childNodeEnd;
@@ -363,11 +399,30 @@ HashBasedFlatTrie<TValue>::Node::Iterator::operator==(const Iterator & other) {
 }
 
 template<typename TValue>
-typename HashBasedFlatTrie<TValue>::Node
+typename HashBasedFlatTrie<TValue>::NodePtr
 HashBasedFlatTrie<TValue>::Node::Iterator::operator*() const {
-	return Node(m_childNodeBegin, m_childNodeEnd, m_compFunc.strHandler);
+	return std::make_shared<Node>(m_childNodeBegin, m_childNodeEnd, m_compFunc.strHandler);
 }
 
+template<typename TValue>
+template<typename TFunc>
+void
+HashBasedFlatTrie<TValue>::Node::apply(TFunc & fn) const {
+	fn(*this);
+	for(const_iterator it(begin()), myEnd(end()); it != myEnd; ++it) {
+		(*it)->apply(fn);
+	}
+}
+
+template<typename TValue>
+template<typename TFunc>
+void
+HashBasedFlatTrie<TValue>::Node::apply(TFunc & fn) {
+	fn(*this);
+	for(iterator it(begin()), myEnd(end()); it != myEnd; ++it) {
+		(*it)->apply(fn);
+	}
+}
 
 //end of internal classes implementations
 
@@ -410,6 +465,32 @@ HashBasedFlatTrie<TValue>::operator[](const StaticString & a) {
 }
 
 template<typename TValue>
+template<typename T_OCTET_ITERATOR>
+typename HashBasedFlatTrie<TValue>::NodePtr
+HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) {
+	if (prefixMatch) {
+		throw sserialize::UnimplementedFunctionException("sserialize::HashBasedFlatTrie::findNode with prefixMatch==true");
+	}
+	std::string tmp(strIt, strEnd);
+	m_strHandler.specialString = tmp.c_str();
+	StaticString sstr(tmp.size());
+	typename HashTable::iterator nodeBegin = m_ht.find(sstr);
+	if (nodeBegin != m_ht.end()) {
+		struct MyComp {
+			inline bool operator()(uint32_t a, const std::pair<StaticString, TValue> & b) const {
+				return a < b.first.size();
+			}
+			inline bool operator()(const std::pair<StaticString, TValue> & a, uint32_t b) const {
+				return a.first.size() < b;
+			}
+		};
+		typename HashTable::iterator nodeEnd = std::upper_bound(nodeBegin, m_ht.end(), nodeBegin->first.size(), MyComp());
+		return std::make_shared<Node>(nodeBegin, nodeEnd, &m_strHandler);
+	}
+	return NodePtr();
+}
+
+template<typename TValue>
 typename HashBasedFlatTrie<TValue>::StaticString
 HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 	typename HashTable::const_iterator it(m_ht.find(a));
@@ -427,6 +508,13 @@ HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 		m_ht.insert(ns);
 		return ns;
 	}
+}
+
+template<typename TValue>
+template<typename T_OCTET_ITERATOR>
+typename HashBasedFlatTrie<TValue>::StaticString
+HashBasedFlatTrie<TValue>::insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
+	return insert(std::string(begin, end));
 }
 
 template<typename TValue>
@@ -484,7 +572,8 @@ void HashBasedFlatTrie<TValue>::finalize() {
 }
 
 template<typename TValue>
-bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
+template<typename T_PH, typename T_STATIC_PAYLOAD>
+bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler) {
 	dest.putUint8(1); //version
 	dest.putOffset(m_stringData.size());
 	dest.put(reinterpret_cast<const uint8_t*>(m_stringData.begin()), m_stringData.size());
@@ -508,16 +597,49 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 		++count;
 	}
 	tsCreator.flush();
-	Static::ArrayCreator<TValue> vsCreator(dest);
+
+	std::vector<NodePtr> nodesInLevelOrder;
+	nodesInLevelOrder.reserve(size());
+	{
+		nodesInLevelOrder.push_back(root());
+		uint32_t i = 0;
+		while (i < nodesInLevelOrder.size()) {
+			NodePtr & n = nodesInLevelOrder[i];
+			for(NodePtr cn : *n) {
+				nodesInLevelOrder.push_back(cn);
+			}
+			++i;
+		}
+	}
+	//serialize the payload in bottom-up level-order (may be this should be done in parallel)
+
+	sserialize::Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> tmpPayload(nodesInLevelOrder.size(), nodesInLevelOrder.size());
+	std::vector<uint32_t> nodeIdToData(nodesInLevelOrder.size(), std::numeric_limits<uint32_t>::max());
+	while (nodesInLevelOrder.size()) {
+		NodePtr & n = nodesInLevelOrder.back();
+		uint32_t id = n->m_begin - m_ht.begin();
+		nodeIdToData[id] = tmpPayload.size();
+		tmpPayload.beginRawPush() << payloadHandler(n);
+		tmpPayload.endRawPush();
+		nodesInLevelOrder.pop_back();
+	}
+	
+	
+	Static::ArrayCreator<UByteArrayAdapter> vsCreator(dest);
 	vsCreator.reserveOffsets(m_ht.size());
-	for(const auto & x : m_ht) {
-		vsCreator.put(x.second);
+	for(uint32_t i(0), s(m_ht.size()); i < s; ++i) {
+		vsCreator.put(tmpPayload.dataAt(nodeIdToData[i]));
 	}
 	vsCreator.flush();
 	return true;
 }
 
 
-}//end namespac
+}//end namespace
+
+
+template<typename TValue>
+inline bool operator!=(const typename sserialize::HashBasedFlatTrie<TValue>::NodePtr & a, const typename sserialize::HashBasedFlatTrie<TValue>::NodePtr & b) { return *a != *b; }
+
 
 #endif
