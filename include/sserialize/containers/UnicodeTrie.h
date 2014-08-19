@@ -34,6 +34,7 @@ public:
 			delete x.second;
 		}
 	}
+	bool hasChildren() const { return m_children.size(); }
 	const Node* parent() const { return m_parent; }
 	Node* & parent() { return m_parent; }
 	const std::string & str() const { return m_str; }
@@ -74,6 +75,8 @@ template<typename TValue>
 class Trie {
 public:
 	typedef sserialize::UnicodeTrie::Node<TValue> Node;
+	typedef Node * NodePtr;
+	typedef const Node * ConstNodePtr;
 	typedef TValue value_type;
 	typedef std::shared_ptr< sserialize::Static::UnicodeTrie::NodeCreator > NodeCreatorPtr;
 	struct DefaultPayloadHandler {
@@ -81,13 +84,13 @@ public:
 		TValue operator()(Node * node);
 	};
 private:
-	Node * m_root;
+	NodePtr m_root;
 protected:
-	bool checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const;
+	bool checkTrieEqualityRec(const NodePtr node, const sserialize::Static::UnicodeTrie::Node & snode) const;
 	
 	///T_PAYLOAD_COMPARATOR: bool operator()(Trie::Node * srcNode, const Node & staticNode)
 	template<typename T_PAYLOAD_COMPARATOR>
-	bool checkPayloadEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & rootNode, const T_PAYLOAD_COMPARATOR & payloadComparator) const;
+	bool checkPayloadEqualityRec(const NodePtr node, const sserialize::Static::UnicodeTrie::Node & rootNode, const T_PAYLOAD_COMPARATOR & payloadComparator) const;
 	
 	Trie(const Trie & o);
 	Trie(const Trie && o);
@@ -103,14 +106,19 @@ public:
 		root()->apply(f);
 		return s;
 	}
-	const Node * root() const { return m_root;}
+	ConstNodePtr root() const { return m_root;}
 	
 	///use this on your own risk!
-	Node * root() { return m_root;}
+	NodePtr root() { return m_root;}
 	
 	///create a new node if needed
 	template<typename T_OCTET_ITERATOR>
-	Node * nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
+	NodePtr nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
+	
+	template<typename T_OCTET_ITERATOR>
+	void insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
+		nodeAt(begin, end);
+	}
 	
 	///create a new node if needed
 	template<typename T_OCTET_ITERATOR>
@@ -124,7 +132,7 @@ public:
 	
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
-	Node * findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+	NodePtr findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
 	
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
@@ -145,7 +153,7 @@ public:
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
+typename Trie<TValue>::NodePtr Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end) {
 	using std::swap;
 	uint32_t strItUCode;
 	
@@ -246,7 +254,7 @@ typename Trie<TValue>::Node * Trie<TValue>::nodeAt(T_OCTET_ITERATOR begin, const
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-typename Trie<TValue>::Node * Trie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+typename Trie<TValue>::NodePtr Trie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
 	if (!m_root)
 		return 0;
 
@@ -362,7 +370,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 
 template<typename TValue>
 bool
-Trie<TValue>::checkTrieEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode) const {
+Trie<TValue>::checkTrieEqualityRec(const NodePtr node, const sserialize::Static::UnicodeTrie::Node & snode) const {
 	if (node) {
 		std::string sstr(snode.str());
 		if (node->str().size()) {
@@ -393,7 +401,7 @@ Trie<TValue>::checkTrieEqualityRec(const Node * node, const sserialize::Static::
 
 template<typename TValue>
 template<typename T_PAYLOAD_COMPARATOR>
-bool Trie<TValue>::checkPayloadEqualityRec(const Node * node, const sserialize::Static::UnicodeTrie::Node & snode, const T_PAYLOAD_COMPARATOR & payloadComparator) const {
+bool Trie<TValue>::checkPayloadEqualityRec(const NodePtr node, const sserialize::Static::UnicodeTrie::Node & snode, const T_PAYLOAD_COMPARATOR & payloadComparator) const {
 	if (node) {
 		std::string sstr(snode.str());
 		if (node->str().size()) {
