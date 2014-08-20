@@ -85,7 +85,7 @@ private:
 	}
 	
 private:
-	bool init(UByteArrayAdapter data);
+	void init(UByteArrayAdapter data);
 	
 	static inline uint64_t getRegLineSlopeCorrectionValue(const uint64_t slopenom, const uint64_t size, const uint64_t pos) {
 		return (slopenom/(size-1))*pos + ((slopenom % (size-1))*pos)/(size-1);
