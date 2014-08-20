@@ -19,9 +19,9 @@ namespace sserialize {
   * Limits:
   * The maximum bitSum is 0xFFFF
   * File format:
-  * --------------------------------------------------
+  * ----------------------------------------------------------
   * VERSION|count|configcount|bitconfig(sums)|data
-  * --------------------------------------------------
+  * ----------------------------------------------------------
   *     1     4        1     |compactuintarra|multivarbitarr 
   */
 	
@@ -36,7 +36,7 @@ public:
 	MultiVarBitArrayPrivate(const std::vector< uint8_t >& bitConfig, const sserialize::UByteArrayAdapter& data);
 	virtual ~MultiVarBitArrayPrivate();
 	uint32_t size() const;
-	uint32_t getSizeInBytes() const;
+	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t at(uint32_t pos, uint32_t subPos) const;
 	uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
 
@@ -61,7 +61,7 @@ public:
 	
 	uint32_t size() const;
 	///This is not valid if you used the second constructor with a given bitConfig
-	uint32_t getSizeInBytes() const;
+	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t at(uint32_t pos, uint32_t subPos) const;
 	uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
 
@@ -76,8 +76,8 @@ public:
 	uint8_t bitCount(uint32_t pos) const;
 
 // 	static MultiVarBitArray create(const std::vector< uint8_t >& bitConfig, sserialize::UByteArrayAdapter& destination, uint32_t initCount);
-	static uint32_t minStorageBytes(const std::vector<uint8_t> & bitConfig, const uint32_t count);
-	static uint32_t minStorageBytes(const uint32_t sum, const uint32_t count);
+	static UByteArrayAdapter::OffsetType minStorageBytes(const std::vector<uint8_t> & bitConfig, const uint32_t count);
+	static UByteArrayAdapter::OffsetType minStorageBytes(const uint32_t sum, const sserialize::UByteArrayAdapter::OffsetType count);
 	enum { HEADER_SIZE=6}; //use const expr later
 };
 
@@ -88,7 +88,7 @@ private:
 	MultiVarBitArray m_arr;
 	uint32_t m_headerSize;
 public:
-	/** This will create MultiVarBitArray at the beginning of data */
+	/** This will create MultiVarBitArray at the beginning of data.tellPutPtr() */
 	MultiVarBitArrayCreator(const std::vector< uint8_t >& bitConfig, sserialize::UByteArrayAdapter& data);
 	virtual ~MultiVarBitArrayCreator();
 	bool reserve(uint32_t count);

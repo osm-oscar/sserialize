@@ -1,12 +1,9 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <numeric>
 #include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/utility/utilmath.h>
 
 namespace sserialize {
-
-inline uint32_t createMask(uint8_t bpn) {
-	return ((bpn == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << bpn) - 1));
-}
 
 MultiVarBitArrayPrivate::MultiVarBitArrayPrivate() : RefCountObject() {}
 
@@ -28,7 +25,7 @@ MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const UByteArrayAdapter & data)
 	for(uint16_t i = 1; i < bitConfigCount; i++)
 		m_bitSums.push_back(m_bitSums[i-1]+1+carr.at(i));
 	
-	uint32_t dataOffset = MultiVarBitArray::HEADER_SIZE + CompactUintArray::minStorageBytes(5, bitConfigCount);
+	UByteArrayAdapter::OffsetType dataOffset = MultiVarBitArray::HEADER_SIZE + CompactUintArray::minStorageBytes(5, bitConfigCount);
 	m_data = data+dataOffset;
 }
 
@@ -38,7 +35,7 @@ uint32_t MultiVarBitArrayPrivate::size() const {
 	return m_size;
 }
 
-uint32_t MultiVarBitArrayPrivate::getSizeInBytes() const {
+UByteArrayAdapter::OffsetType MultiVarBitArrayPrivate::getSizeInBytes() const {
 	return MultiVarBitArray::HEADER_SIZE +
 			CompactUintArray::minStorageBytes(5, bitConfigCount()) +
 			MultiVarBitArray::minStorageBytes(bitsPerEntry(), size());
@@ -157,7 +154,7 @@ uint32_t MultiVarBitArray::size() const {
 	return priv()->size();
 }
 
-uint32_t MultiVarBitArray::getSizeInBytes() const {
+UByteArrayAdapter::OffsetType MultiVarBitArray::getSizeInBytes() const {
 	return priv()->getSizeInBytes();
 }
 
@@ -194,13 +191,13 @@ UByteArrayAdapter& MultiVarBitArray::data() {
 	return priv()->data();
 }
 
-uint32_t MultiVarBitArray::minStorageBytes(const std::vector< uint8_t >& bitConfig, const uint32_t count) {
+UByteArrayAdapter::OffsetType MultiVarBitArray::minStorageBytes(const std::vector< uint8_t >& bitConfig, const uint32_t count) {
 	uint32_t sum = std::accumulate(bitConfig.begin(), bitConfig.end(), static_cast<uint32_t>(0));
 	return minStorageBytes(sum, count);
 }
 
-uint32_t MultiVarBitArray::minStorageBytes(const uint32_t sum, const uint32_t count) {
-	return (sum/8)*count + ( (sum%8)*count )/8 + + ( ( (sum%8)*count )%8 > 0 ? 1 : 0);
+UByteArrayAdapter::OffsetType MultiVarBitArray::minStorageBytes(const uint32_t bitSum, const UByteArrayAdapter::OffsetType count) {
+	return (bitSum/8)*count + ( (bitSum%8)*count )/8 + + ( ( (bitSum%8)*count )%8 > 0 ? 1 : 0);
 }
 
 MultiVarBitArrayCreator::MultiVarBitArrayCreator(const std::vector<uint8_t> & bitConfig, UByteArrayAdapter& data) : m_data(data), m_header(m_data) {
@@ -226,7 +223,7 @@ MultiVarBitArrayCreator::~MultiVarBitArrayCreator() {}
 bool MultiVarBitArrayCreator::reserve(uint32_t count) {
 	if (m_arr.size() >= count)
 		return true;
-	uint32_t storageNeed = MultiVarBitArray::minStorageBytes(m_arr.totalBitSum(), count);
+	UByteArrayAdapter::OffsetType storageNeed = MultiVarBitArray::minStorageBytes(m_arr.totalBitSum(), count);
 	if (m_arr.data().size() < storageNeed)
 		if (!m_arr.data().growStorage( storageNeed - m_arr.data().size() ))
 			return false;
@@ -244,11 +241,12 @@ bool MultiVarBitArrayCreator::set(uint32_t pos, uint32_t subPos, uint32_t value)
 UByteArrayAdapter MultiVarBitArrayCreator::flush() {
 	m_header.putUint32(1, m_arr.size());
 
-	uint32_t storageNeed = MultiVarBitArray::minStorageBytes(m_arr.totalBitSum(), m_arr.size());
-	if (m_header.size() <= m_headerSize) //no flush has happened yet
-		m_header.growStorage(storageNeed);
-	if (m_data.size() - m_data.tellPutPtr() < storageNeed+m_headerSize)
-		m_data.growStorage(  storageNeed+m_headerSize - (m_data.size() - m_data.tellPutPtr())  );
+	UByteArrayAdapter::OffsetType storageNeed = MultiVarBitArray::minStorageBytes(m_arr.totalBitSum(), m_arr.size());
+	if (m_header.size() < m_headerSize+storageNeed) {//no flush has happened yet
+		m_header.growStorage(storageNeed+m_headerSize-m_header.size());
+	}
+	m_data.reserveFromPutPtr(m_headerSize+storageNeed);
+	m_data.incPutPtr(m_headerSize+storageNeed);
 	return m_header;
 }
 

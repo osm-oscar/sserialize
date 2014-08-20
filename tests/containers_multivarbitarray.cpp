@@ -17,9 +17,10 @@ CPPUNIT_TEST_SUITE_END();
 private:
 	std::vector< std::vector<uint32_t> > m_values;
 	std::vector<uint8_t> m_bitConfig;
-	std::vector<uint8_t> m_data;
+	UByteArrayAdapter m_data;
 	MultiVarBitArray m_arr;
 public:
+	MultiVarBitArrayTest() : m_data(new std::vector<uint8_t>(), true) {}
 	virtual void setUp() {
 		for(size_t i = 0; i < TSubValueCount; i++) {
 			m_bitConfig.push_back( (rand() & 0x1F)+1 );
@@ -33,10 +34,11 @@ public:
 			m_values.push_back(subValues);
 		}
 		
-		UByteArrayAdapter data(&m_data);
-		data.putUint32(0xFEFE);
 		
-		MultiVarBitArrayCreator creator(m_bitConfig, data);
+		m_data.putUint32(0xFEFE);
+		m_data.reserveFromPutPtr(40);
+		
+		MultiVarBitArrayCreator creator(m_bitConfig, m_data);
 		creator.reserve(TValueCount);
 		
 		for(size_t i = 0; i < TValueCount; i++) {
@@ -44,9 +46,9 @@ public:
 				creator.set(i,j, m_values[i][j] );
 			}
 		}
-		creator.flush();
+		UByteArrayAdapter fd = creator.flush();
 		
-		m_arr = MultiVarBitArray(creator.flush());
+		m_arr = MultiVarBitArray(fd);
 		
 	}
 	virtual void tearDown() {}
@@ -63,7 +65,7 @@ public:
 	
 	void testSize() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size()", TValueCount, m_arr.size());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("getSizeInBytes()", (uint32_t) m_data.size()-4, m_arr.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("getSizeInBytes()", (UByteArrayAdapter::OffsetType) m_data.tellPutPtr()-4, m_arr.getSizeInBytes());
 	}
 	
 	void testBitCount() {
@@ -77,6 +79,7 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
+	runner.addTest( MultiVarBitArrayTest<16, 1>::suite() );
 	runner.addTest( MultiVarBitArrayTest<1024, 1>::suite() );
 	runner.addTest( MultiVarBitArrayTest<1024, 2>::suite() );
 	runner.addTest( MultiVarBitArrayTest<1024, 7>::suite() );
