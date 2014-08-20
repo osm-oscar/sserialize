@@ -88,7 +88,7 @@ FlatTrie<TValue>::FlatTrie(const sserialize::UByteArrayAdapter & src) :
 FlatTrieBase(src),
 m_values(src+(1+FlatTrieBase::getSizeInBytes()))
 {
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_VERSION, src.at(1+FlatTrieBase::getSizeInBytes()), "sserialize::Static::UnicodeTrie::FlatTrie");
+	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_VERSION, src.at(FlatTrieBase::getSizeInBytes()), "sserialize::Static::UnicodeTrie::FlatTrie");
 	SSERIALIZE_EQUAL_LENGTH_CHECK(FlatTrieBase::size(), m_values.size(), "sserialize::Static::UnicodeTrie::FlatTrie");
 }
 
