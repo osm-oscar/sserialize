@@ -3,6 +3,8 @@
 #include <cppunit/Asserter.h>
 #include <cppunit/TestResult.h>
 #include <sserialize/containers/HashBasedFlatTrie.h>
+#include <sserialize/Static/UnicodeTrie/FlatTrie.h>
+#include <sserialize/utility/printers.h>
 
 const char * inFileName = 0;
 
@@ -57,12 +59,28 @@ public:
 			++count;
 		}
 	}
+	
+	void testSerialization() {
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
+		sserialize::Static::UnicodeTrie::FlatTrie<uint32_t> sft(hftOut);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", m_ht.size(), sft.size());
+		MyT::const_iterator rIt(m_ht.begin()), rEnd(m_ht.end());
+		uint32_t sI(0), sS(sft.size());
+		for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("string at", sI), m_ht.toStr(rIt->first), sft.strAt(sI));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("payload at", sI), rIt->second, sft.at(sI));
+		}
+		CPPUNIT_ASSERT_MESSAGE("real iterator not at the end", rIt == rEnd);
+		CPPUNIT_ASSERT_MESSAGE("static iterator not at the end", sI == sS);
+	}
 };
 
 class TestHashBasedFlatTrieSimple: public TestHashBasedFlatTrieBase {
 CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieSimple );
 CPPUNIT_TEST( testFlatCorrect );
 CPPUNIT_TEST( testNode );
+CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieSimple() {
@@ -96,6 +114,7 @@ public:
 class TestHashBasedFlatTrieFile: public TestHashBasedFlatTrieBase {
 CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieFile );
 CPPUNIT_TEST( test );
+CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieFile() {
