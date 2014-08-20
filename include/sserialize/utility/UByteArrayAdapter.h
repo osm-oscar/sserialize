@@ -69,6 +69,13 @@ public:
 		~MemoryView() {}
 		uint8_t * get() { return m_priv->get();}
 		const uint8_t * get() const { return m_priv->get();}
+		uint8_t * begin() { return get(); }
+		const uint8_t * cegin() const { return get(); }
+		const uint8_t * begin() const { return get(); }
+		uint8_t * end() { return get()+size(); }
+		const uint8_t * cend() const { return get()+size(); }
+		const uint8_t * end() const { return get()+size(); }
+
 		OffsetType size() const { return m_priv->size();}
 		///If this is true, then writes are not passed through to the UBA
 		bool isCopy() const { return m_priv->isCopy();}
