@@ -91,6 +91,9 @@ public:
 	RCObj * priv() { return RCWrapper<RCObj>::priv(); }
 	const RCObj * priv() const { return RCWrapper<RCObj>::priv(); }
 	
+	RCObj * get() { return priv(); }
+	const RCObj * get() const { return priv(); }
+	
 	operator safe_bool_type() const {
 		return priv() ? &RCPtrWrapper<RCObj>::safe_bool_func : 0;
 	}
