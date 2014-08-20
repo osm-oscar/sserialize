@@ -12,7 +12,7 @@ std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_fastTempFilePrefix = TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_logFilePrefix = TEMP_FILE_PREFIX;
 
-UByteArrayAdapter::UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv) :
+UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
 m_priv(priv),
 m_offSet(0),
 m_len(0),
@@ -21,7 +21,7 @@ m_putPtr(0)
 {
 }
 
-UByteArrayAdapter::UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len) :
+UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len) :
 m_priv(priv),
 m_offSet(offSet),
 m_len(len),
@@ -850,7 +850,7 @@ UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool dele
 		sserialize::err("UByteArrayAdapter::writeToDisk", "Fatal: could not open file");
 		return UByteArrayAdapter();
 	}
-	std::shared_ptr<UByteArrayAdapterPrivate> priv(new UByteArrayAdapterPrivateMmappedFile(tempFile));
+	RCPtrWrapper<UByteArrayAdapterPrivate> priv(new UByteArrayAdapterPrivateMmappedFile(tempFile));
 	priv->setDeleteOnClose(deleteOnClose);
 	UByteArrayAdapter adap(priv);
 	adap.m_len = m_len;
@@ -868,7 +868,7 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 	if (size == 0)
 		size = 1;
 
-	std::shared_ptr<UByteArrayAdapterPrivate> priv;
+	sserialize::RCPtrWrapper<UByteArrayAdapterPrivate> priv;
 	if (forceFileBase || size > MAX_IN_MEMORY_CACHE) {
 		MmappedFile tempFile;
 		if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
@@ -906,7 +906,7 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 		return UByteArrayAdapter();
 	}
 	tempFile.setSyncOnClose(true);
-	std::shared_ptr<UByteArrayAdapterPrivate> priv( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
+	sserialize::RCPtrWrapper<UByteArrayAdapterPrivate> priv( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
 	priv->setDeleteOnClose(false);
 	UByteArrayAdapter adap(priv);
 	adap.m_len = size;

@@ -5,7 +5,7 @@
 
 namespace sserialize {
 
-class UByteArrayAdapterPrivate {
+class UByteArrayAdapterPrivate: public RefCountObject {
 protected:
 	bool m_deleteOnClose;
 public:

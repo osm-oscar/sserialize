@@ -83,7 +83,7 @@ public:
 	
 private:
 	/** Data is at offset, not at base address **/
-	std::shared_ptr<UByteArrayAdapterPrivate> m_priv;
+	RCPtrWrapper<UByteArrayAdapterPrivate> m_priv;
 	OffsetType m_offSet;
 	OffsetType m_len;
 	OffsetType m_getPtr;
@@ -94,8 +94,8 @@ private:
 	static std::string m_logFilePrefix;
 	
 private:
-	explicit UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv);
-	explicit UByteArrayAdapter(const std::shared_ptr<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
+	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv);
+	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
 	bool resizeForPush(OffsetType pos, OffsetType length);
 // 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
 
