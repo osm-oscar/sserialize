@@ -194,7 +194,7 @@ private:
 			return utf8::peek_next(strHandler->strBegin(a.first)+posInStr, strHandler->strEnd(a.first)) < b;
 		}
 		inline bool operator==(const CompFunc & other) const { return posInStr == other.posInStr && strHandler == other.strHandler; }
-		inline bool operator!=(const CompFunc & other) const { return posInStr == other.posInStr && strHandler == other.strHandler; }
+		inline bool operator!=(const CompFunc & other) const { return posInStr != other.posInStr && strHandler != other.strHandler; }
 	};
 
 	struct StringEq {
@@ -375,8 +375,10 @@ template<typename TValue>
 typename HashBasedFlatTrie<TValue>::Node::Iterator &
 HashBasedFlatTrie<TValue>::Node::Iterator::operator++() {
 	m_childNodeBegin = m_childNodeEnd;
-	uint32_t cp = utf8::peek_next( m_compFunc.strHandler->strBegin(m_childNodeBegin->first)+m_compFunc.posInStr, m_compFunc.strHandler->strEnd(m_childNodeBegin->first));
-	m_childNodeEnd = std::upper_bound(m_childNodeBegin, m_childrenEnd, cp, m_compFunc);
+	if (m_childNodeBegin != m_childrenEnd) {
+		uint32_t cp = utf8::peek_next( m_compFunc.strHandler->strBegin(m_childNodeBegin->first)+m_compFunc.posInStr, m_compFunc.strHandler->strEnd(m_childNodeBegin->first));
+		m_childNodeEnd = std::upper_bound(m_childNodeBegin, m_childrenEnd, cp, m_compFunc);
+	}
 	return *this;
 }
 
@@ -574,7 +576,7 @@ void HashBasedFlatTrie<TValue>::finalize() {
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
 bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler) {
-	dest.putUint8(1); //version
+	dest.putUint8(1); //version of FlatTrieBase
 	dest.putOffset(m_stringData.size());
 	dest.put(reinterpret_cast<const uint8_t*>(m_stringData.begin()), m_stringData.size());
 	const char * maxBegin = m_stringData.begin();
@@ -624,7 +626,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		nodesInLevelOrder.pop_back();
 	}
 	
-	
+	dest.putUint8(1);//version of FlatTrie
 	Static::ArrayCreator<UByteArrayAdapter> vsCreator(dest);
 	vsCreator.reserveOffsets(m_ht.size());
 	for(uint32_t i(0), s(m_ht.size()); i < s; ++i) {
