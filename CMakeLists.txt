@@ -145,7 +145,8 @@ utility/LinearRegressionFunctions.cpp
 utility/histogram2d.cpp
 utility/log.cpp
 utility/utilfuncs.cpp
-utility/MmappedMemory.cpp)
+utility/FileHandler.cpp
+)
 
 set(EXTERNAL_SOURCES_CPP
 vendor/libs/minilzo/minilzo.c

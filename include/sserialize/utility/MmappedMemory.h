@@ -3,21 +3,12 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/exceptions.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <fcntl.h>
+#include <sserialize/utility/FileHandler.h>
+
 
 namespace sserialize {
 
 typedef enum {MM_INVALID=0, MM_FILEBASED, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY} MmappedMemoryType;
-
-struct FileHandler {
-	static void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess);
-	static void * resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize, bool prePopulate, bool randomAccess);
-	static bool closeAndUnlink(const std::string & fileName, int fd, void * mem, OffsetType size);
-};
 
 namespace detail {
 namespace MmappedMemory {
@@ -53,6 +44,7 @@ private:
 	int m_fd;
 	bool m_populate;
 	bool m_randomAccess;
+	bool m_unlink;
 public:
 	///@para size: has to be larger than 1, otherwise will be set to 1
 	MmappedMemoryFileBased(OffsetType size, bool populate = false, bool randomAccess = true) :
@@ -60,7 +52,8 @@ public:
 	m_size(0),
 	m_fd(-1),
 	m_populate(populate),
-	m_randomAccess(randomAccess)
+	m_randomAccess(randomAccess),
+	m_unlink(true)
 	{
 		size = std::max<OffsetType>(1, size);
 		m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess);
@@ -71,9 +64,35 @@ public:
 			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
 		}
 	}
+	///map as much of fileName into memory as possible, if file does not exists, create it
+	MmappedMemoryFileBased(const std::string & fileName, bool populate = false, bool randomAccess = true) :
+	m_data(0),
+	m_size(0),
+	m_fd(-1),
+	m_populate(populate),
+	m_randomAccess(randomAccess),
+	m_unlink(false)
+	{
+		OffsetType size = 0;
+		m_data = (TValue *) FileHandler::mmapFile(fileName, m_fd, size, populate, randomAccess);
+		if (m_data) {
+			m_size = size/sizeof(TValue);
+			if (m_size % sizeof(TValue)) {//resize the file so that a full TValue fits in
+				resize(m_size+1);
+			}
+		}
+		else {
+			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
+		}
+	}
 	virtual ~MmappedMemoryFileBased() {
 		if (m_data) {
-			FileHandler::closeAndUnlink(m_fileName, m_fd, m_data, m_size*sizeof(TValue));
+			if (m_unlink) {
+				FileHandler::closeAndUnlink(m_fileName, m_fd, m_data, m_size*sizeof(TValue));
+			}
+			else {
+				FileHandler::close(m_fd, m_data, m_size*sizeof(TValue));
+			}
 			m_data = 0;
 		}
 	}
@@ -199,7 +218,7 @@ public:
 }}
 
 /** This class provides a temporary memory extension with the possiblity to grow the storage
-	It does not copy the data, this is just an adaptor a piece of memory (kind of an enhanced array pointer)
+	It does not copy the data, this is just an adaptor to a piece of memory (kind of an enhanced array pointer)
 	Use the MMVector if you need funtionality equivalent to std::vector
   */
 template<typename TValue>
@@ -226,6 +245,8 @@ public:
 			break;
 		}
 	}
+	///use the given file name as base, create if it does not exist or reuse it
+	MmappedMemory(const std::string & fileName) : m_priv(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(fileName)) {}
 	virtual ~MmappedMemory() {}
 	MmappedMemoryType type() const { return m_priv->type(); }
 	TValue * data() { return m_priv->data(); }
