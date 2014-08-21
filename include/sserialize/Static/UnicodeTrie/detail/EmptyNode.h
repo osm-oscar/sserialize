@@ -13,7 +13,7 @@ public:
 	EmptyNode();
 	EmptyNode(sserialize::UByteArrayAdapter d);
 	virtual ~EmptyNode();
-	
+	virtual bool valid() const override;
 	virtual uint32_t strLen() const override;
 	virtual UByteArrayAdapter strData() const override;
 	virtual std::string str() const override;

@@ -12,6 +12,7 @@ class Node {
 public:
 	Node() {}
 	virtual ~Node() {}
+	virtual bool valid() const { return true; }
 
 	virtual uint32_t strLen() const = 0;
 	virtual UByteArrayAdapter strData() const = 0;
@@ -55,6 +56,7 @@ public:
 	Node();
 	Node(detail::Node * node) : m_priv(node) {}
 	virtual ~Node() {}
+	virtual bool valid() const { return priv()->valid(); }
 
 	inline uint8_t strLen() const { return priv()->strLen(); }
 	inline UByteArrayAdapter strData() const { return priv()->strData(); }

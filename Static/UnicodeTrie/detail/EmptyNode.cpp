@@ -11,6 +11,9 @@ EmptyNode::EmptyNode() {}
 EmptyNode::EmptyNode(sserialize::UByteArrayAdapter) {}
 EmptyNode::~EmptyNode() {}
 
+
+bool EmptyNode::valid() const { return false; }
+
 uint32_t EmptyNode::strLen() const { return 0; }
 UByteArrayAdapter EmptyNode::strData() const {return UByteArrayAdapter();}
 std::string EmptyNode::str() const { return std::string();}

@@ -2,6 +2,7 @@
 #define SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_H
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/containers/UnicodeStringMap.h>
 #define SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_BASE_VERSION 1
 #define SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_VERSION 1
 
@@ -81,6 +82,22 @@ public:
 	}
 	inline const sserialize::Static::Array<TValue> & payloads() const { return m_values; }
 	std::ostream & printStats(std::ostream & out) const;
+};
+
+template<typename TValue>
+class UnicodeStringMapFlatTrie: public sserialize::detail::UnicodeStringMap<TValue> {
+	FlatTrie<TValue> m_trie;
+public:
+	UnicodeStringMapFlatTrie() {}
+	UnicodeStringMapFlatTrie(const UByteArrayAdapter & d) : m_trie(d) {}
+	UnicodeStringMapFlatTrie(const FlatTrie<TValue> & t) : m_trie(t) {}
+	virtual ~UnicodeStringMapFlatTrie() {}
+	virtual TValue at(const std::string & str, bool prefixMatch) const override {
+		return m_trie.at(str, prefixMatch);
+	}
+	virtual bool count(const std::string & str, bool prefixMatch) const override {
+		return m_trie.find(str, prefixMatch) != FlatTrieBase::npos;
+	}
 };
 
 template<typename TValue>

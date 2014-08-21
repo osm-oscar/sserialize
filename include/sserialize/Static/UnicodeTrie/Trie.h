@@ -3,6 +3,7 @@
 #include <sserialize/Static/UnicodeTrie/Node.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/vendor/utf8.h>
+#include <sserialize/containers/UnicodeStringMap.h>
 #include <queue>
 #define SSERIALIZE_STATIC_UNICODE_TRIE_TRIE_VERSION 1
 
@@ -33,7 +34,10 @@ public:
 	template<typename T_ROOT_NODE_ALLOCATOR>
 	Trie(const sserialize::UByteArrayAdapter & d, T_ROOT_NODE_ALLOCATOR rootNodeAllocator);
 	Node getRootNode() const { return m_root; }
-	
+
+	template<typename T_OCTET_ITERATOR>
+	Node find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const;
+
 	///@param prefixMatch strIt->strEnd can be a prefix of the path
 	///throws sserialize::OutOfBoundsException on miss
 	template<typename T_OCTET_ITERATOR>
@@ -47,6 +51,29 @@ public:
 	template<typename T_FUNC>
 	void apply(T_FUNC fn) const;
 };
+
+template<typename TValue>
+class UnicodeStringMapTrie: public sserialize::detail::UnicodeStringMap<TValue> {
+public:
+	typedef Trie<TValue> TrieType;
+	typedef typename TrieType::Node Node;
+private:
+	TrieType m_trie;
+public:
+	UnicodeStringMapTrie() {}
+	UnicodeStringMapTrie(const UByteArrayAdapter & d) : m_trie(d) {}
+	UnicodeStringMapTrie(const Trie<TValue> & t) : m_trie(t) {}
+	virtual ~UnicodeStringMapTrie() {}
+	virtual TValue at(const std::string & str, bool prefixMatch) const override {
+		return m_trie.at(str.cbegin(), str.cend(), prefixMatch);
+	}
+	virtual bool count(const std::string & str, bool prefixMatch) const override {
+		return m_trie.find(str.cbegin(), str.cend(), prefixMatch).valid();
+	}
+	const TrieType & trie() const { return m_trie; }
+	Node getRootNode() const { return m_trie.getRootNode(); }
+};
+
 
 template<typename TValue>
 Trie<TValue>::Trie(const UByteArrayAdapter & d) :
@@ -75,7 +102,8 @@ m_values(d+1)
 
 template<typename TValue>
 template<typename T_OCTET_ITERATOR>
-TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+typename Trie<TValue>::Node
+Trie<TValue>::find(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
 	Node node(getRootNode());
 
 	std::string nodeStr(node.str());
@@ -90,7 +118,7 @@ TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd,
 				++nStrIt;
 			}
 			else { //no common prefix
-				throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
+				return Node();
 			}
 		}
 
@@ -104,15 +132,24 @@ TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd,
 				nStrEnd = nodeStr.cend();
 			}
 			else {
-				throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
+				return Node();
 			}
 		}
 	}
 	
 	if (nStrIt != nStrEnd && !prefixMatch) {
+		return Node();
+	}
+	return node;
+}
+
+template<typename TValue>
+template<typename T_OCTET_ITERATOR>
+TValue Trie<TValue>::at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR & strEnd, bool prefixMatch) const {
+	Node node = find(strIt, strEnd, prefixMatch);
+	if (!node.valid()) {
 		throw sserialize::OutOfBoundsException("sserialize::Static::UnicodeTrie::Trie::at");
 	}
-	
 	return m_values.at( node.payloadPtr() );
 }
 
