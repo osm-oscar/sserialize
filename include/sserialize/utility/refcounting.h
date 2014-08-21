@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <assert.h>
 #include <atomic>
+#include <utility>
 
 namespace sserialize {
 
@@ -101,6 +102,16 @@ public:
 		RCWrapper<RCObj>::setPrivate(data);
 	}
 };
+
+template<typename T, typename... Args>
+RCPtrWrapper<T> make_rcptrwp(Args&&... args) {
+	return RCPtrWrapper<T>( new T(std::forward<Args>(args)...));
+}
+
+template<typename TBase, typename TDerived, typename... Args>
+RCPtrWrapper<TBase> make_rcptrwpBD(Args&&... args) {
+	return RCPtrWrapper<TBase>( new TDerived(std::forward<Args>(args)...));
+}
 
 template<class RCObj>
 class RefObjRCWrapper {
