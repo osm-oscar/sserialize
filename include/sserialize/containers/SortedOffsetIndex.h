@@ -48,7 +48,18 @@ bool operator==(const T_SORTED_CONTAINER & other, const sserialize::Static::Sort
 }
 
 template<typename T_SORTED_CONTAINER>
+bool operator==(const sserialize::Static::SortedOffsetIndex & index, const T_SORTED_CONTAINER & other) {
+	return other == index;
+}
+
+template<typename T_SORTED_CONTAINER>
 bool operator!=(const T_SORTED_CONTAINER & other, const sserialize::Static::SortedOffsetIndex & index) {
+	return ! (other == index);
+}
+
+
+template<typename T_SORTED_CONTAINER>
+bool operator!=(const sserialize::Static::SortedOffsetIndex & index, const T_SORTED_CONTAINER & other) {
 	return ! (other == index);
 }
 
