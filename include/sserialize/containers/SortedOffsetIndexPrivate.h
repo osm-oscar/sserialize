@@ -138,7 +138,7 @@ public:
 			int64_t offSetCorrectedId;
 			int64_t curOffSetCorrection = yintercept;
 			uint32_t count = 0;
-			uint32_t idStorageNeed = CompactUintArray::minStorageBytes(bitsForIds, src.size());
+			uint64_t idStorageNeed = CompactUintArray::minStorageBytes(bitsForIds, src.size());
 			destination.growStorage(idStorageNeed);
 			CompactUintArray carr(destination+destination.tellPutPtr(), bitsForIds);
 			destination.incPutPtr(idStorageNeed);
