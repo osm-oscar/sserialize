@@ -29,6 +29,7 @@ CPPUNIT_TEST( testStringsRawPut );
 CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST( testAbstractArray );
 CPPUNIT_TEST( testAbstractArrayIterator );
+CPPUNIT_TEST( testVeryLargeUint32 );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -139,6 +140,23 @@ public:
 			for(uint32_t i = 0; it != end; ++it, ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], *it);
 			}
+		}
+	}
+	
+	void testVeryLargeUint32() {
+		UByteArrayAdapter::OffsetType testSize = 1500000000;
+		UByteArrayAdapter d(UByteArrayAdapter::createCache(testSize*8, true));
+		d.reserveFromPutPtr(8*testSize);
+		sserialize::Static::ArrayCreator<uint32_t> ac(d);
+		for(uint32_t i = 0; i < testSize; ++i) {
+			ac.put(i);
+		}
+		d.resetPutPtr();
+		sserialize::Static::Array<uint32_t> sd(d);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testSize, sd.size());
+		for(uint32_t i = 0; i < testSize; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), i, sd.at(i));
 		}
 	}
 	
