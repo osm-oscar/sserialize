@@ -145,14 +145,12 @@ public:
 	
 	void testVeryLargeUint32() {
 		UByteArrayAdapter::OffsetType testSize = 1500000000;
-		UByteArrayAdapter d(UByteArrayAdapter::createCache(testSize*8, true));
-		d.reserveFromPutPtr(8*testSize);
+		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		sserialize::Static::ArrayCreator<uint32_t> ac(d);
 		for(uint32_t i = 0; i < testSize; ++i) {
 			ac.put(i);
 		}
-		d.resetPutPtr();
-		sserialize::Static::Array<uint32_t> sd(d);
+		sserialize::Static::Array<uint32_t> sd(ac.flush());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testSize, sd.size());
 		for(uint32_t i = 0; i < testSize; ++i) {
