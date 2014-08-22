@@ -20,6 +20,9 @@ public:
 	IteratorBasedContainer(T_ITERATOR begin, T_ITERATOR end, std::size_t size) :
 	m_begin(begin), m_end(end), m_size(size)
 	{}
+	IteratorBasedContainer(T_ITERATOR begin, T_ITERATOR end) :
+	m_begin(begin), m_end(end), m_size(std::distance(begin, end))
+	{}
 	~IteratorBasedContainer() {}
 	std::size_t size() const { return m_size; }
 	iterator begin() { return m_begin; }
