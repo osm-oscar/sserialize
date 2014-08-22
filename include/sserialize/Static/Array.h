@@ -32,7 +32,7 @@ class ArrayCreator {
 public:
 	///create a new Array at tellPutPtr()
 	ArrayCreator(UByteArrayAdapter & destination) : m_dest(destination) {
-		m_dest.putUint8(SSERIALIZE_STATIC_ARRAY_VERSION);
+		m_dest.putUint8(3);//version
 		m_dataLenPtr = m_dest.tellPutPtr();
 		m_dest.putOffset(0);
 		
