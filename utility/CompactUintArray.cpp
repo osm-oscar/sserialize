@@ -404,8 +404,8 @@ bool CompactUintArray::reserve(uint32_t newMaxCount) {
 		return true;
 
 	uint32_t mybpn = bpn();
-	uint32_t neededByteCount = minStorageBytes(mybpn, newMaxCount);
-	uint32_t haveByteCount = priv()->data().size();
+	UByteArrayAdapter::OffsetType neededByteCount = minStorageBytes(mybpn, newMaxCount);
+	UByteArrayAdapter::OffsetType haveByteCount = priv()->data().size();
 	if (priv()->data().growStorage(neededByteCount-haveByteCount)) {
 		m_maxCount = newMaxCount;
 		return true;
@@ -478,7 +478,7 @@ CompactUintArray(0)
 	m_size = d.getVlPackedUint64(0, &len);
 	uint8_t bits = (m_size & 0x3F) +1;
 	m_size >>= 6;
-	OffsetType dSize = minStorageBytes(bits, m_size);
+	UByteArrayAdapter::OffsetType dSize = minStorageBytes(bits, m_size);
 	if (m_size) {
 		CompactUintArray::setPrivate(UByteArrayAdapter(d, len, dSize), bits);
 	}
@@ -501,9 +501,9 @@ BoundedCompactUintArray & BoundedCompactUintArray::operator=(const BoundedCompac
 	return *this;
 }
 
-OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
+UByteArrayAdapter::OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
 	uint8_t bits = bpn();
-	SizeType sb = (m_size << 6) | (bits-1);
+	UByteArrayAdapter::OffsetType sb = (m_size << 6) | (bits-1);
 	return psize_vu64(sb) + minStorageBytes(bits, m_size);
 }
 

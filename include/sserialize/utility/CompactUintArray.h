@@ -254,7 +254,7 @@ public:
 	virtual ~BoundedCompactUintArray();
 	BoundedCompactUintArray & operator=(const BoundedCompactUintArray & other);
 	inline SizeType size() const { return m_size; }
-	OffsetType getSizeInBytes() const;
+	   UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	///Creates a new BoundedCompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
