@@ -68,6 +68,7 @@ ADD_TEST_TARGET_SINGLE(util_ChunkedMmappedFile)
 ADD_TEST_TARGET_SINGLE(util_CompressedMmappedFile)
 ADD_TEST_TARGET_SINGLE(util_utilfuncs)
 ADD_TEST_TARGET_SINGLE(util_packfuncs)
+ADD_TEST_TARGET_SINGLE(util_LinearRegregionnFunctions)
 
 #static
 ADD_TEST_TARGET_SINGLE(static_deque)
