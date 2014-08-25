@@ -11,6 +11,7 @@ const char * inFileName = 0;
 class TestHashBasedFlatTrieBase: public CppUnit::TestFixture {
 protected:
 	typedef sserialize::HashBasedFlatTrie<uint32_t> MyT;
+	typedef sserialize::Static::UnicodeTrie::FlatTrie<uint32_t> MyST;
 	MyT m_ht;
 	std::vector<std::string> m_testStrings;
 	std::vector<std::string> m_checkStrings;
@@ -34,11 +35,12 @@ public:
 	
 	//walks the trie in-order and checks for correctness of the Node implementation
 	void testNode() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t) m_checkStrings.size(), m_ht.size());
+		if (!m_testStrings.size())
+			return;
 		std::vector< std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator> > nodeIts;
 		uint32_t count = 0;
 		MyT::NodePtr node = m_ht.root();
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_checkStrings[count], m_ht.toStr(node->str()));
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_ht.toStr(m_ht.begin()->first), m_ht.toStr(node->str()));
 		++count;
 		nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
 		while(nodeIts.size()) {
@@ -55,7 +57,8 @@ public:
 			//insert children
 			nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
 			//check the node
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_checkStrings[count], m_ht.toStr(node->str()));
+			CPPUNIT_ASSERT_MESSAGE("too many nodes", count < m_testStrings.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_ht.toStr((m_ht.begin()+count)->first), m_ht.toStr(node->str()));
 			++count;
 		}
 	}
@@ -63,7 +66,7 @@ public:
 	void testSerialization() {
 		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
-		sserialize::Static::UnicodeTrie::FlatTrie<uint32_t> sft(hftOut);
+		MyST sft(hftOut);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", m_ht.size(), sft.size());
 		MyT::const_iterator rIt(m_ht.begin()), rEnd(m_ht.end());
 		uint32_t sI(0), sS(sft.size());
@@ -74,6 +77,40 @@ public:
 		CPPUNIT_ASSERT_MESSAGE("real iterator not at the end", rIt == rEnd);
 		CPPUNIT_ASSERT_MESSAGE("static iterator not at the end", sI == sS);
 	}
+	
+	void testStaticNode() {
+		if (!m_testStrings.size())
+			return;
+
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
+		MyST sft(hftOut);
+		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
+		uint32_t count = 0;
+		MyST::Node node = sft.root();
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_ht.toStr(m_ht.begin()->first), node.str());
+		++count;
+		nodeIts.push_back( std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator>(node.begin(), node.end()) );
+		while(nodeIts.size()) {
+			//descend upwards if need be
+			if (nodeIts.back().first == nodeIts.back().second) {
+				while (nodeIts.size() && nodeIts.back().first == nodeIts.back().second) {
+					nodeIts.pop_back();
+				}
+				continue;
+			}
+			MyST::Node::const_iterator & nIt = nodeIts.back().first;
+			node = *nIt;
+			++nIt;
+			//insert children
+			nodeIts.push_back( std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator>(node.begin(), node.end()) );
+			//check the node
+			CPPUNIT_ASSERT_MESSAGE("too many nodes", count < m_testStrings.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_ht.toStr((m_ht.begin()+count)->first), node.str());
+			++count;
+		}
+	}
+	
 };
 
 class TestHashBasedFlatTrieSimple: public TestHashBasedFlatTrieBase {
@@ -81,6 +118,7 @@ CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieSimple );
 CPPUNIT_TEST( testFlatCorrect );
 CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
+CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieSimple() {
@@ -113,8 +151,9 @@ public:
 
 class TestHashBasedFlatTrieFile: public TestHashBasedFlatTrieBase {
 CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieFile );
-CPPUNIT_TEST( test );
+CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
+CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieFile() {
@@ -130,34 +169,6 @@ public:
 		}
 		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
 		
-	}
-	void test() {
-		if (!m_testStrings.size())
-			return;
-		std::vector< std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator> > nodeIts;
-		uint32_t count = 0;
-		MyT::NodePtr node = m_ht.root();
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", m_ht.toStr(m_ht.begin()->first), m_ht.toStr(node->str()));
-		++count;
-		nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
-		while(nodeIts.size()) {
-			//descend upwards if need be
-			if (nodeIts.back().first == nodeIts.back().second) {
-				while (nodeIts.size() && nodeIts.back().first == nodeIts.back().second) {
-					nodeIts.pop_back();
-				}
-				continue;
-			}
-			MyT::Node::const_iterator & nIt = nodeIts.back().first;
-			node = *nIt;
-			++nIt;
-			//insert children
-			nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
-			//check the node
-			CPPUNIT_ASSERT_MESSAGE("too many nodes", count < m_testStrings.size());
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_ht.toStr((m_ht.begin()+count)->first), m_ht.toStr(node->str()));
-			++count;
-		}
 	}
 };
 
