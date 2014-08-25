@@ -20,11 +20,11 @@ class UnicodeStringMapEmpty: public UnicodeStringMap<TValue> {
 public:
 	UnicodeStringMapEmpty() {}
 	virtual ~UnicodeStringMapEmpty() {}
-	virtual TValue at(const std::string & /*str*/, bool prefixMatch) const override {
+	virtual TValue at(const std::string & /*str*/, bool /*prefixMatch*/) const override {
 		throw sserialize::OutOfBoundsException("sserialize::detai::UnicodeStringMapEmpty");
 		return TValue();
 	}
-	virtual bool count(const std::string & /*str*/, bool prefixMatch) const override {
+	virtual bool count(const std::string & /*str*/, bool /*prefixMatch*/) const override {
 		return false;
 	}
 };
