@@ -4,6 +4,7 @@
 #include <sserialize/utility/CompactUintArray.h>
 #include <sserialize/utility/utilmath.h>
 #include <sserialize/utility/log.h>
+#include <sserialize/utility/RangeGenerator.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -19,6 +20,8 @@ CPPUNIT_TEST_SUITE( TestCompactUintArray );
 CPPUNIT_TEST( createAutoBitsTest );
 CPPUNIT_TEST( createManuBitsTest );
 CPPUNIT_TEST( boundedTest );
+CPPUNIT_TEST( veryLargeTest );
+CPPUNIT_TEST( specialLargeTest );
 CPPUNIT_TEST_SUITE_END();
 private:
 	std::vector<uint64_t> compSrcArrays[64];
@@ -80,6 +83,45 @@ public:
 			}
 		}
 	}
+	
+	void veryLargeTest() {
+		for(uint32_t bits = 16; bits < 64; ++bits) {
+			UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+			uint32_t count = 0x1FFFFFFFF/bits;
+			uint64_t mask = createMask64(bits);
+			CompactUintArray carr(d, bits);
+			carr.reserve(count);
+			sserialize::RangeGenerator rg(0, count);
+			for(uint64_t x : rg) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
+			}
+			for(uint64_t x : rg) {
+				if ((x & mask) != carr.at64(x)) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64(x));
+				}
+			}
+		}
+	}
+	
+	void specialLargeTest() {
+		uint8_t bits = 31;
+			UByteArrayAdapter d(new std::vector<uint8_t>(), true);
+			uint32_t count = 1500*1000*1000;
+			uint64_t mask = createMask64(bits);
+			CompactUintArray carr(d, bits);
+			carr.reserve(count);
+			sserialize::RangeGenerator rg(0, count);
+			for(uint64_t x : rg) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
+			}
+			for(uint64_t x : rg) {
+				if ((x & mask) != carr.at64(x)) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64(x));
+				}
+			}
+	
+	}
+	
 };
 
 int main() {
