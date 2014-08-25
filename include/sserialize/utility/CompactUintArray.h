@@ -124,6 +124,7 @@ public:
 class CompactUintArray: public RCWrapper<CompactUintArrayPrivate> {
 public:
 	typedef uint64_t value_type;
+	static constexpr uint32_t npos = 0xFFFFFFFF;
 
 	struct CompactUintArrayIteratorDerefer {
 		inline CompactUintArray::value_type operator()(const CompactUintArray & c, uint32_t pos) const { return c.at64(pos); }

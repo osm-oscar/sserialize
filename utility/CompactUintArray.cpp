@@ -350,7 +350,7 @@ uint8_t CompactUintArray::bpn() const{
 
 int32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
 	if (len == 0)
-		return -1;
+		return npos;
 	int32_t left = 0;
 	int32_t right = len-1;
 	int32_t mid = (right-left)/2+left;
@@ -367,7 +367,7 @@ int32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
 		mid = (right-left)/2+left;
 		tk = priv()->at(mid);
 	}
-	return (tk == key ? mid : -1);
+	return (tk == key ? mid : npos);
 }
 
 
