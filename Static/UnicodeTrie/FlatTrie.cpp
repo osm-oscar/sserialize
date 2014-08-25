@@ -4,6 +4,96 @@
 namespace sserialize {
 namespace Static {
 namespace UnicodeTrie {
+namespace detail {
+namespace FlatTrie {
+
+bool CompFunc::operator()(uint32_t a, const StaticString & b) const {
+	UByteArrayAdapter strB = strHandler->strData(b);
+	return a < utf8::peek_next(strB+posInStr, strB.end());
+}
+
+bool CompFunc::operator()(const StaticString & a, uint32_t b) const {
+	UByteArrayAdapter strA = strHandler->strData(a);
+	return utf8::peek_next(strA+posInStr, strA.end()) < b;
+}
+
+
+Node::Iterator::Iterator(const uint32_t parentBegin, const uint32_t parentEnd, const CompFunc & compFunc) :
+m_childNodeBegin(parentBegin),
+m_childNodeEnd(parentBegin),
+m_childrenEnd(parentEnd),
+m_compFunc(compFunc) {
+	if (m_childNodeBegin != m_childrenEnd) {
+		++m_childNodeEnd;
+		operator++();
+	}
+}
+
+Node::Iterator & Node::Iterator::operator++() {
+	m_childNodeBegin = m_childNodeEnd;
+	if (m_childNodeBegin != m_childrenEnd) {
+		UByteArrayAdapter strData = m_compFunc.strHandler->strData(m_childNodeBegin);
+		uint32_t cp = utf8::peek_next( strData+m_compFunc.posInStr, strData.end());
+		sserialize::Static::UnicodeTrie::FlatTrieBase::StaticStringsIterator trieBegin(m_compFunc.strHandler->staticStringsBegin());
+		m_childNodeEnd = std::upper_bound( trieBegin+m_childNodeBegin, trieBegin+m_childrenEnd, cp, m_compFunc).id();
+	}
+	return *this;
+}
+
+bool Node::Iterator::operator!=(const Iterator & other) {
+	return m_childNodeBegin != other.m_childNodeBegin ||
+			m_childNodeEnd != other.m_childNodeEnd ||
+			m_childrenEnd != other.m_childrenEnd ||
+			m_compFunc != other.m_compFunc;
+}
+
+bool Node::Iterator::operator==(const Iterator & other) {
+	return m_childNodeBegin == other.m_childNodeBegin ||
+			m_childNodeEnd == other.m_childNodeEnd ||
+			m_childrenEnd == other.m_childrenEnd ||
+			m_compFunc == other.m_compFunc;
+}
+
+Node Node::Iterator::operator*() const {
+	return Node(m_childNodeBegin, m_childNodeEnd, m_compFunc.strHandler);
+}
+
+Node::Node(uint32_t begin, uint32_t end, const FlatTrieBase * trie) :
+m_trie(trie),
+m_begin(begin),
+m_end(end)
+{}
+
+StaticString Node::sstr() const {
+	return m_trie->sstr(id());
+}
+
+UByteArrayAdapter Node::strData() const {
+	return m_trie->strData(id());
+}
+
+std::string Node::str() const {
+	return m_trie->strAt(id());
+}
+
+Node::const_iterator Node::begin() const {
+	return const_iterator(m_begin, m_end, CompFunc(m_trie, sstr().size()));
+}
+
+Node::const_iterator Node::cbegin() const {
+	return const_iterator(m_begin, m_end, CompFunc(m_trie, sstr().size()));
+}
+
+Node::const_iterator Node::end() const {
+	return const_iterator(m_end, m_end, CompFunc(m_trie, sstr().size()));
+}
+
+Node::const_iterator Node::cend() const {
+	return const_iterator(m_end, m_end, CompFunc(m_trie, sstr().size()));
+}
+
+
+}}//end namespace detail::FlatTrie
 
 FlatTrieBase::FlatTrieBase() {}
 
