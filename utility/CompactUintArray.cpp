@@ -7,8 +7,8 @@
 namespace sserialize {
 
 void CompactUintArrayPrivate::calcBegin(const uint32_t pos, UByteArrayAdapter::OffsetType & posStart, uint8_t & initShift, uint8_t bpn) const {
-	posStart = sserialize::multiplyDiv32(pos, bpn, 8);
-	initShift = (pos == 0 ? 0 : sserialize::multiplyMod32(pos, bpn, 8));
+	posStart = sserialize::multiplyDiv64(pos, bpn, 8);
+	initShift = (pos == 0 ? 0 : sserialize::multiplyMod64(pos, bpn, 8));
 }
 
 CompactUintArrayPrivate::CompactUintArrayPrivate() : RefCountObject() {}
