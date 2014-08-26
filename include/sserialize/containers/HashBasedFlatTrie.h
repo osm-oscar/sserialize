@@ -294,15 +294,14 @@ private:
 private:
 	void finalize(uint64_t nodeBegin, uint64_t nodeEnd, uint32_t posInStr);
 public:
-	HashBasedFlatTrie() :
-	m_stringData(sserialize::MM_SHARED_MEMORY),
-	m_ht(HTValueStorage(sserialize::MM_SHARED_MEMORY),
-	HTStorage(sserialize::MM_SHARED_MEMORY))
+	HashBasedFlatTrie(sserialize::MmappedMemoryType mmt = sserialize::MM_SHARED_MEMORY) :
+	m_stringData(mmt),
+	m_ht(HTValueStorage(sserialize::MM_PROGRAM_MEMORY), HTStorage(sserialize::MM_PROGRAM_MEMORY))
 	{
 		m_strHandler.specialString = 0;
 		m_strHandler.strStorage = &m_stringData;
 		const StringHandler * strHandlerPtr = &m_strHandler;
-		m_ht = HashTable(HashFunc1(strHandlerPtr), HashFunc2(strHandlerPtr), StringEq(strHandlerPtr), 0.8, HTValueStorage(sserialize::MM_SHARED_MEMORY), HTStorage(sserialize::MM_SHARED_MEMORY));
+		m_ht = HashTable(HashFunc1(strHandlerPtr), HashFunc2(strHandlerPtr), StringEq(strHandlerPtr), 0.8, HTValueStorage(mmt), HTStorage(mmt));
 	}
 	~HashBasedFlatTrie() {}
 	///reserve @param count strings
