@@ -135,16 +135,17 @@ void print(std::ostream & out, const std::vector<T> & vec) {
 }
 
 inline std::string prettyFormatSize(uint64_t bytes) {
-	if ( bytes >> 30 ) {
-		return toString(bytes >> 30, " Gibibytes");
+	char prefixes[] = {'N', 'K', 'M', 'G'};
+	std::stringstream ss;
+	for(int i = 3; i >= 0; --i) {
+		uint8_t shift = 10*i;
+		uint64_t tmp = bytes >> shift;
+		if (tmp) {
+			ss << tmp << prefixes[i] << "iB ";
+			bytes = bytes & ~(tmp << shift);
+		}
 	}
-	if ( bytes >> 20 ) {
-		return toString(bytes >> 20, " Mebibytes");
-	}
-	if ( bytes >> 10 ) {
-		return toString(bytes >> 10, " Kibibytes");
-	}
-	return toString(bytes, " Bytes");
+	return ss.str();
 }
 
 
