@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_MM_VECTOR_H
 #define SSERIALIZE_MM_VECTOR_H
 #include <sserialize/utility/MmappedMemory.h>
+#define SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR 0.1
 
 namespace sserialize {
 ///This is a partially stl-compatible vector basend on MmappedMemory.
@@ -18,18 +19,26 @@ private:
 	value_type * m_begin;
 	SizeType m_capacity;
 	SizeType m_pP; //push ptr
+	double m_growFactor;
 private:
 public:
-	MMVector(sserialize::MmappedMemoryType mmt) : m_d(1, mmt), m_capacity(1), m_pP(0) { m_begin = m_d.data(); }
+	MMVector(sserialize::MmappedMemoryType mmt) :
+	m_d(1, mmt), m_capacity(1), m_pP(0),
+	m_growFactor(SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR)
+	{
+		m_begin = m_d.data();
+	}
 	MMVector(const MMVector & other) :
 	m_d(std::max<SizeType>(1, other.m_pP), other.m_d.type()),
 	m_capacity(std::max<SizeType>(1, other.m_pP)),
-	m_pP(other.m_pP)
+	m_pP(other.m_pP), m_growFactor(other.m_growFactor)
 	{
 		m_begin = m_d.data();
 		memmove(m_begin, other.m_begin, sizeof(TValue)*m_pP);
 	}
-	MMVector(MMVector && other) : m_begin(other.m_begin), m_capacity(other.m_size), m_pP(other.m_pP) {
+	MMVector(MMVector && other) :
+	m_begin(other.m_begin), m_capacity(other.m_size), m_pP(other.m_pP), m_growFactor(other.m_growFactor)
+	{
 		using std::swap;
 		swap(m_d, other.m_d);
 	}
@@ -37,6 +46,7 @@ public:
 	MMVector & operator=(const MMVector & other) {
 		m_capacity = other.m_pP;
 		m_pP = other.m_pP;
+		m_growFactor = other.m_growFactor;
 		m_d = MmappedMemory<TValue>(other.m_pP, other.m_d.type());
 		m_begin = m_d.resize(m_pP);
 		memmove(m_begin, other.m_begin, sizeof(TValue)*m_pP);
@@ -48,6 +58,7 @@ public:
 		m_begin = other.m_begin;
 		m_capacity = other.m_capacity;
 		m_pP = other.m_pP;
+		m_growFactor = other.m_growFactor;
 		return *this;
 	}
 	void swap(MMVector & other) {
@@ -56,9 +67,12 @@ public:
 		swap(m_begin, other.m_begin);
 		swap(m_capacity, other.m_capacity);
 		swap(m_pP, other.m_pP);
+		swap(m_growFactor, other.m_growFactor);
 	}
 	SizeType size() const { return m_pP;}
 	SizeType capacity() const { return m_capacity; }
+	double growFactor() const { return m_growFactor; }
+	void growFactor(double v) { m_growFactor = v; }
 	void reserve(SizeType size) {
 		if (size > m_capacity) {
 			m_begin = m_d.resize(size);
@@ -84,7 +98,7 @@ public:
 	}
 	void push_back(const TValue & v) {
 		if (m_pP >= m_capacity) {
-			SizeType tSize = m_capacity + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_capacity/100);
+			SizeType tSize = m_capacity + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_capacity*m_growFactor);
 			m_begin = m_d.resize(tSize);
 			m_capacity = tSize;
 		}
