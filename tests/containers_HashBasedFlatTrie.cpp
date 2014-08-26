@@ -3,6 +3,7 @@
 #include <cppunit/Asserter.h>
 #include <cppunit/TestResult.h>
 #include <sserialize/containers/HashBasedFlatTrie.h>
+#include <sserialize/containers/UnicodeTrie.h>
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
 #include <sserialize/utility/printers.h>
 
@@ -22,6 +23,56 @@ public:
 			m_ht.insert(str);
 		}
 		m_ht.finalize();
+	}
+	
+	void testTrieEquality() {
+		typedef sserialize::UnicodeTrie::Trie<uint32_t> TrieTrie;
+		struct TrieNodeState {
+			std::string str;
+			TrieTrie::Node::const_iterator childrenIt;
+			TrieTrie::Node::const_iterator childrenEnd;
+			TrieNodeState(const std::string & str, const TrieTrie::Node::const_iterator & childrenBegin, const TrieTrie::Node::const_iterator & childrenEnd) :
+			str(str), childrenIt(childrenBegin), childrenEnd(childrenEnd) {}
+		};
+
+		TrieTrie trie;
+		for(const std::string & str : m_testStrings) {
+			trie.insert(str.cbegin(), str.cend());
+		}
+		if (!m_testStrings.size())
+			return;
+		std::vector< std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator> > hNodeIts;
+		std::vector<TrieNodeState> tNodeIts;
+		MyT::NodePtr hnode = m_ht.root();
+		TrieTrie::NodePtr tnode = trie.root();
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", tnode->str(), m_ht.toStr(hnode->str()));
+		hNodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(hnode->begin(), hnode->end()) );
+		tNodeIts.push_back(TrieNodeState(tnode->str(), tnode->cbegin(), tnode->cend()));
+		while(hNodeIts.size() && tNodeIts.size()) {
+			//ascend
+			if (tNodeIts.back().childrenIt == tNodeIts.back().childrenEnd) {
+				CPPUNIT_ASSERT_MESSAGE("hash node iterators should be equal for ascend", hNodeIts.back().first == hNodeIts.back().second);
+				while (tNodeIts.size() && hNodeIts.size() && tNodeIts.back().childrenIt == tNodeIts.back().childrenEnd) {
+					CPPUNIT_ASSERT_MESSAGE("hash node iterators should be equal for ascend", hNodeIts.back().first == hNodeIts.back().second);
+					hNodeIts.pop_back();
+					tNodeIts.pop_back();
+				}
+				continue;
+			}
+			CPPUNIT_ASSERT_MESSAGE("hash node iterators should be unequal", hNodeIts.back().first != hNodeIts.back().second);
+			MyT::Node::const_iterator & hNIt = hNodeIts.back().first;
+			TrieTrie::Node::const_iterator & tNIt = tNodeIts.back().childrenIt;
+			hnode = *hNIt;
+			tnode = tNIt->second;
+			++hNIt;
+			++tNIt;
+			//insert children
+			hNodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(hnode->begin(), hnode->end()) );
+			tNodeIts.push_back( TrieNodeState(tNodeIts.back().str+tnode->str(), tnode->cbegin(), tnode->cend()) );
+			//check the node
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string",tNodeIts.back().str , m_ht.toStr(hnode->str()));
+		}
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("node count", tNodeIts.size(), hNodeIts.size());
 	}
 	
 	void testFlatCorrect() {
@@ -57,7 +108,7 @@ public:
 			//insert children
 			nodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(node->begin(), node->end()) );
 			//check the node
-			CPPUNIT_ASSERT_MESSAGE("too many nodes", count < m_testStrings.size());
+			CPPUNIT_ASSERT_MESSAGE("too many nodes", count < m_ht.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", m_ht.toStr((m_ht.begin()+count)->first), m_ht.toStr(node->str()));
 			++count;
 		}
@@ -119,6 +170,7 @@ CPPUNIT_TEST( testFlatCorrect );
 CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
+CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieSimple() {
@@ -151,6 +203,7 @@ public:
 
 class TestHashBasedFlatTrieFile: public TestHashBasedFlatTrieBase {
 CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieFile );
+CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
