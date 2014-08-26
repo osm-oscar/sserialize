@@ -81,7 +81,7 @@ void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::strin
 void * FileHandler::resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize, bool prePopulate, bool randomAccess) {
 	void * prevLocation = mem;
 	if (prevLocation) {
-		::msync(prevLocation, oldSize, MS_SYNC);
+		::msync(prevLocation, oldSize, MS_ASYNC);
 		if (::munmap(mem, oldSize) < 0) {
 			return 0;
 		}
@@ -114,7 +114,7 @@ bool FileHandler::closeAndUnlink(const std::string & fileName, int fd, void * me
 
 bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 	if (sync) {
-		msync(mem, size, MS_SYNC);
+		msync(mem, size, MS_ASYNC);
 	}
 	bool ok = (::munmap(mem, size) < 0);
 	ok = (::close(fd) < 0) && ok;
