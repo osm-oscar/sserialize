@@ -226,7 +226,7 @@ uint32_t GeoHierarchy::regionItemsCount(uint32_t pos) const {
 	return m_regions.at(pos, Region::RD_ITEMS_COUNT);
 }
 
-uint32_t GeoHierarchy::regionCellSumItemsCount(uint32_t pos) const {
+uint32_t GeoHierarchy::regionCellSumItemsCount(uint32_t /*pos*/) const {
 	std::cerr << "GeoHierachy::regionCellSumItemsCount is not implremented yet" << std::endl;
 	return 0xFFFFFFFF;
 }
@@ -281,7 +281,7 @@ SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse)
 }
 
 //TODO:implement sparse SubSet creation
-FlatSubSet GeoHierarchy::flatSubSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
+FlatSubSet GeoHierarchy::flatSubSet(const sserialize::CellQueryResult& cqr, bool /*sparse*/) const {
 	FlatSubSet subSet(false);
 	//First iteration, count the number of cells
 	uint32_t cellListSize = 0;
