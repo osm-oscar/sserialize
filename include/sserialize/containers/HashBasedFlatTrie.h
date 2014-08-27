@@ -279,10 +279,16 @@ private:
 			return seed;
 		}
 	};
-	struct HashFunc2: public HashFunc1 {
-		HashFunc2(const StringHandler * strHandler = 0) : HashFunc1(strHandler) {}
+	struct HashFunc2 {
+		const StringHandler * strHandler;
+		HashFunc2(const StringHandler * strHandler = 0) : strHandler(strHandler) {}
 		std::size_t operator()(const key_type & a) const {
-			return ~HashFunc1::operator()(a);
+			uint64_t seed = 0;
+			typedef const char * const_iterator;
+			for(const_iterator rit(strHandler->strEnd(a)-1), rend(strHandler->strBegin(a)-1); rit != rend; --rit) {
+				hash_combine(seed, *rit);
+			}
+			return seed;
 		}
 	};
 	
