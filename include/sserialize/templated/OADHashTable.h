@@ -19,6 +19,9 @@ struct DefaultHash {
 template<typename TValue>
 struct DefaultHash<TValue, true> {
 	std::hash<TValue> hasher;
+	///This is a really stupid secondary hash
+	///as it completely depends on the value of the primary hash-functions
+	///-> this will not resolve collisions for values where prim_hash(x) == prim_hash(y)
 	inline size_t operator()(const TValue & v) const { return ~hasher(v); }
 };
 
