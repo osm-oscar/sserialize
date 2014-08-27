@@ -48,6 +48,7 @@ struct OADSizeTypeLimits<uint64_t> {
 
 ///An Open addressing double hashed hash table with up to ValueStorageType::value_type::max-1 elements
 ///element order using the iterators is based on the insertion order
+//dev WARNING:do NOT add ability of deleting functions without looking at the code for maxCollision
 template<	typename TKey,
 			typename TValue,
 			typename THash1 = detail::OADHashTable::DefaultHash<TKey, false>,
@@ -202,7 +203,11 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 		return cpos;
 	}
 	uint64_t h2 = (m_hash2(key) & ~0x1);
-	for(uint64_t i = 1, maxCollisions = m_d.size()*(1.0-load_factor()); i < maxCollisions; ++i) {
+	//maxCollisions is a monotone increasing function of the number of elements in the hash (for fixex table size)
+	//whenever a rehash happens, the load_factor is reduced but all rehashed elements have the same load_factor and therefore the same number of max collisions
+	//all subsequent inserted elments have a load_factor higher than the ones already in the hash,
+	//a lookup after insertion will therefore visit at least as many cells as during the insertion into the hash table
+	for(uint64_t i = 1, maxCollisions = std::max<uint64_t>(10, s*(1.0 - (double)m_valueStorage.size()/s)); i < maxCollisions; ++i) {
 		cpos = (h1 + i*h2) % s;
 		SizeType cp = m_d[cpos];
 		if (!cp || m_keyEq(value(cp).first, key) ) {
