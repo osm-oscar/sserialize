@@ -202,7 +202,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 		return cpos;
 	}
 	uint64_t h2 = (m_hash2(key) & ~0x1);
-	for(uint64_t i = 1, maxCollisions = std::min<uint64_t>(s, m_maxCollisions); i < maxCollisions; ++i) {
+	for(uint64_t i = 1, maxCollisions = m_d.size()*(1.0-load_factor()); i < maxCollisions; ++i) {
 		cpos = (h1 + i*h2) % s;
 		SizeType cp = m_d[cpos];
 		if (!cp || m_keyEq(value(cp).first, key) ) {
