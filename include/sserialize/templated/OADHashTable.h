@@ -158,7 +158,7 @@ public:
 	inline double max_load_factor() const { return m_maxLoad;}
 	void max_load_factor(double f);
 	///Set this to std::numeric_limits<uint64_t>::max() if you want as many collisions as the size of the table
-	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; }
+	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; rehash(m_d.size()); }
 	inline uint64_t maxCollisions() const { return m_maxCollisions; }
 	void reserve(SizeType count);
 	///Adding more elements to the hash does not invalidate iterators
