@@ -13,12 +13,14 @@ namespace sserialize {
 
 class Log {
 public:
-	enum CmdTypes {
+	enum class CmdTypes {
 		endl, flush
 	};
 	enum LogLevel {
 		INFO, DEBUG, ERROR
 	};
+	static constexpr CmdTypes endl = CmdTypes::endl;
+	static constexpr CmdTypes flush = CmdTypes::flush;
 private:
 	LogLevel m_defLogLevel;
 	std::stringstream m_sbuf;
@@ -30,7 +32,7 @@ public:
 	Log();
 	Log(LogLevel defLevel);
 	~Log();
-	Log& operator()(const std::string & logTag, const std::string & msg); 
+	Log& operator()(const std::string & logTag, const std::string & msg);
 	void sbufCmd(CmdTypes t);
 	std::stringstream& sbuf() { return m_sbuf;}
 };

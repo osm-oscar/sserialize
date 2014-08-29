@@ -63,13 +63,13 @@ void Log::sbufCmd(Log::CmdTypes t) {
 #else
 	if (m_defLogLevel != ERROR) {
 		std::cout << m_sbuf.str() << std::flush;
-		if (t == Log::endl) {
+		if (t == sserialize::Log::CmdTypes::endl) {
 			std::cout << std::endl;
 		}
 	}
 	else {
 		std::cerr << m_sbuf.str() << std::flush;
-		if (t == Log::endl) {
+		if (t == Log::CmdTypes::endl) {
 			std::cerr << std::endl;
 		}
 	}
