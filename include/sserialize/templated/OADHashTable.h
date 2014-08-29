@@ -5,6 +5,7 @@
 #include <limits>
 #include <algorithm>
 #include <sserialize/utility/utilcontainerfuncs.h>
+#include <sserialize/utility/log.h>
 
 namespace sserialize {
 namespace detail {
@@ -217,6 +218,9 @@ template<typename TKey, typename TValue, typename THash1, typename THash2, typen
 void
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::rehash(uint64_t count) {
 	count = count | 0x1;
+	if (count/size() > 10) {
+		sserialize::info("sserialize::OADHashTable::rehash", sserialize::toString("load_factor dropped to ", (double)size()/count));
+	}
 	m_d.clear();
 	m_d.resize(count, 0);
 	for(SizeType i = 1, s = size(); i <= s; ++i) {
