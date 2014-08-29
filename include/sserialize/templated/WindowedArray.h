@@ -8,7 +8,7 @@
 namespace sserialize {
 
 template<typename T_VALUE>
-class WindowedArray {
+class WindowedArray final {
 public:
 	typedef T_VALUE * iterator;
 	typedef const T_VALUE * const_iterator;
@@ -38,7 +38,7 @@ public:
 	}
 	
 	///This does NOT free the associated memory 
-	virtual ~WindowedArray() {}
+	~WindowedArray() {}
 	
 	void push_back(const T_VALUE & value) {
 		if (m_push < m_end) {
