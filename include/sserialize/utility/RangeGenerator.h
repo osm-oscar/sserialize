@@ -4,7 +4,8 @@
 
 namespace sserialize {
 
-
+///This is a simple range generating class with iterators, iterators are comparable without a common creation instance (strides have to be the same)
+///RangeGenerator(begin, end, stride).begin() == RangeGenerator(begin, end, stride).begin() (the same holds for end/rbegin/rend)
 class RangeGenerator {
 public:
 	struct IteratorBase {
