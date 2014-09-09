@@ -40,8 +40,32 @@ template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
-int inline popCount(unsigned int v) {
+template<typename T>
+inline int popCount(T v);
+
+template<>
+inline int popCount<int>(int v) {
+	return __builtin_popcount((unsigned int)v);
+}
+
+template<>
+inline int popCount<uint8_t>(uint8_t v) {
 	return __builtin_popcount(v);
+}
+
+template<>
+inline int popCount<uint16_t>(uint16_t v) {
+	return __builtin_popcount(v);
+}
+
+template<>
+inline int popCount<uint32_t>(uint32_t v) {
+	return __builtin_popcount(v);
+}
+
+template<>
+inline int popCount<uint64_t>(uint64_t v) {
+	return __builtin_popcountll(v);
 }
 
 double inline logTo2(double num) {

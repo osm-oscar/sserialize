@@ -87,7 +87,7 @@ uint32_t CompactTrieNodePrivate::getExactIndexPtr() const {
 uint32_t CompactTrieNodePrivate::getPrefixIndexPtr() const {
 	if (hasPrefixIndex()) {
 		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-		uint32_t offSet = popCount( (indexTypes() & 0x1) );
+		uint32_t offSet = popCount( (unsigned int)(indexTypes() & 0x1) );
 		return arr.at(offSet);
 	}
 	else {
@@ -98,7 +98,7 @@ uint32_t CompactTrieNodePrivate::getPrefixIndexPtr() const {
 uint32_t CompactTrieNodePrivate::getSuffixIndexPtr() const {
 	if (hasSuffixIndex()) {
 		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-		uint32_t offSet = popCount( (indexTypes() & 0x3) );
+		uint32_t offSet = popCount( (unsigned int)(indexTypes() & 0x3) );
 		return arr.at(offSet);
 	}
 	else {
@@ -109,7 +109,7 @@ uint32_t CompactTrieNodePrivate::getSuffixIndexPtr() const {
 uint32_t CompactTrieNodePrivate::getSuffixPrefixIndexPtr() const {
 	if (hasSuffixPrefixIndex()) {
 		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-		uint32_t offSet = popCount( (indexTypes() & 0x7) );
+		uint32_t offSet = popCount( (unsigned int)(indexTypes() & 0x7) );
 		return arr.at(offSet);
 	}
 	else {
@@ -210,7 +210,7 @@ uint32_t CompactTrieNodePrivate::getChildCharStorageSize() const {
 }
 
 uint32_t CompactTrieNodePrivate::getIndexPtrStorageSize() const {
-	return CompactUintArray::minStorageBytes(indexArrBpn(), popCount( indexTypes() ) );
+	return CompactUintArray::minStorageBytes(indexArrBpn(), popCount( (unsigned int)indexTypes() ) );
 }
 
 CompactStaticTrieCreationNode::CompactStaticTrieCreationNode(const UByteArrayAdapter & nodeData) : m_node(nodeData), m_data(nodeData) {};
