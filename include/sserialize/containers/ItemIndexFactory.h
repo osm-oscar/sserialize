@@ -12,7 +12,7 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/pack_unpack_functions.h>
-
+#include <sserialize/utility/MultiReaderSingleWriterLock.h>
 
 namespace sserialize {
 
@@ -36,16 +36,23 @@ private:
 	bool m_useRegLine;
 	ItemIndex::Types m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
+	MultiReaderSingleWriterLock m_lock;
 	
 	uint64_t hashFunc(const UByteArrayAdapter & v);
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
+	///returns the position of the index or -1 if none was found @thread-safety: yes
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint64_t offset);
+	///adds the data of an index to store, @thread-safety: true
 	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0);
-	
+private://deleted functions
+	ItemIndexFactory(const ItemIndexFactory & other);
+	ItemIndexFactory & operator=(const ItemIndexFactory & other);
 public:
 	ItemIndexFactory(bool memoryBase = false);
+	ItemIndexFactory(ItemIndexFactory && other);
 	~ItemIndexFactory();
+	ItemIndexFactory & operator=(ItemIndexFactory && other);
 	uint32_t size() { return m_idToOffsets.size();}
 	ItemIndex::Types type() const { return m_type; }
 	UByteArrayAdapter at(OffsetType offset) const;

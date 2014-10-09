@@ -28,7 +28,42 @@ m_type(ItemIndex::T_REGLINE)
 		setIndexFile( UByteArrayAdapter::createCache(8*1024*1024, true) );
 }
 
+ItemIndexFactory::ItemIndexFactory(ItemIndexFactory && other) :
+m_hitCount(other.m_hitCount),
+m_checkIndex(other.m_checkIndex),
+m_bitWidth(other.m_bitWidth),
+m_useRegLine(other.m_useRegLine),
+m_type(other.m_type),
+m_compressionType(other.m_compressionType)
+{
+	using std::swap;
+	swap(m_header, other.m_header);
+	swap(m_indexStore, other.m_indexStore);
+	swap(m_hash, other.m_hash);
+	swap(m_offsetsToId, other.m_offsetsToId);
+	swap(other.m_idToOffsets, other.m_idToOffsets);
+	//default init read-write-lock
+}
+
 ItemIndexFactory::~ItemIndexFactory() {}
+
+ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
+	using std::swap;
+
+	m_hitCount = other.m_hitCount;
+	m_checkIndex = other.m_checkIndex;
+	m_bitWidth = other.m_bitWidth;
+	m_useRegLine = other.m_useRegLine;
+	m_type = other.m_type;
+	m_compressionType = other.m_compressionType;
+	swap(m_header, other.m_header);
+	swap(m_indexStore, other.m_indexStore);
+	swap(m_hash, other.m_hash);
+	swap(m_offsetsToId, other.m_offsetsToId);
+	swap(other.m_idToOffsets, other.m_idToOffsets);
+	//default init read-write-lock
+	return *this;
+}
 
 UByteArrayAdapter ItemIndexFactory::at(sserialize::OffsetType offset) const {
 	return m_indexStore+offset;
@@ -94,11 +129,15 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv
 	if (v.size() == 0)
 		return -1;
 	hv = hashFunc(v);
+	m_lock.acquireReadLock();
 	if (m_hash.count(hv) == 0) {
+		m_lock.releaseReadLock();
 		return -1;
 	}
 	else {
-		for(DataOffsetContainer::const_iterator it(m_hash[hv].begin()), end(m_hash[hv].end()); it != end; ++it) {
+		DataOffsetContainer::const_iterator it(m_hash[hv].begin()), end(m_hash[hv].end());
+		m_lock.releaseReadLock(); //write threads will not change something between it and end
+		for(; it != end; ++it) {
 			if (indexInStore(v, *it))
 				return *it;
 		}
@@ -126,11 +165,13 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 	uint64_t hv;
 	int64_t indexPos = getIndex(idx, hv);
 	if (indexPos < 0) {
+		m_lock.acquireWriteLock();
 		indexPos = m_indexStore.tellPutPtr();
 		m_offsetsToId[indexPos] = size();
 		m_idToOffsets.push_back(indexPos);
 		m_indexStore.put(idx);
 		m_hash[hv].push_front(indexPos);
+		m_lock.releaseWriteLock();
 	}
 	else {
 		++m_hitCount;
