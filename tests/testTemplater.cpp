@@ -1,6 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
+#include <cppunit/TestAssert.h>
 
 class TestTemplate: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( TestTemplate );
