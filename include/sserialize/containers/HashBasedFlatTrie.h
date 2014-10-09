@@ -3,12 +3,14 @@
 #include <sserialize/templated/OADHashTable.h>
 #include <sserialize/templated/MMVector.h>
 #include <sserialize/templated/TransformIterator.h>
+#include <sserialize/templated/GuardedVariable.h>
 #include <sserialize/utility/MmappedMemory.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/utility/CompactUintArray.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/TimeMeasuerer.h>
+#include <sserialize/utility/ThreadPool.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/DynamicVector.h>
@@ -256,7 +258,9 @@ public:
 		bool hasChildren() const { return (m_end - m_begin) > 1; }
 		const StaticString & str() const { return m_begin->first; }
 		const_iterator begin() const { return const_iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
+		const_iterator cbegin() const { return const_iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		const_iterator end() const { return const_iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
+		const_iterator cend() const { return const_iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		iterator begin() { return iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		iterator end() { return iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		TValue & value() {return m_begin->second;}
@@ -301,6 +305,13 @@ private:
 	HashTable m_ht;
 private:
 	void finalize(uint64_t nodeBegin, uint64_t nodeEnd, uint32_t posInStr);
+	uint32_t depth(const NodePtr & n) {
+		uint32_t mD = 0;
+		for(auto c : *n) {
+			mD = std::max<uint32_t>(mD, depth(c));
+		}
+		return mD + 1;
+	}
 public:
 	HashBasedFlatTrie(sserialize::MmappedMemoryType stringsMMT = sserialize::MM_SHARED_MEMORY, sserialize::MmappedMemoryType hashMMT = sserialize::MM_SHARED_MEMORY) :
 	m_stringData(stringsMMT),
@@ -354,7 +365,7 @@ public:
 	///you can only call this after finalize()
 
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
-	bool append(UByteArrayAdapter & dest, T_PH payloadHandler);
+	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
 	
 	static NodePtr make_nodeptr(Node & node) { return std::make_shared<Node>(node); }
 	static ConstNodePtr make_nodeptr(const Node & node) { return std::make_shared<Node>(node); }
@@ -582,7 +593,7 @@ void HashBasedFlatTrie<TValue>::finalize() {
 
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
-bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler) {
+bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
 
@@ -619,40 +630,113 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	tsCreator.flush();
 	pinfo.end();
 
-	std::vector<NodePtr> nodesInLevelOrder;
-	nodesInLevelOrder.reserve(size());
-	{
-		std::cout << "sserialize::HashBasedFlatTrie collecting trie nodes..." << std::flush;
-		tm.begin();
-		nodesInLevelOrder.push_back(root());
-		uint32_t i = 0;
-		while (i < nodesInLevelOrder.size()) {
-			NodePtr & n = nodesInLevelOrder[i];
-			for(NodePtr cn : *n) {
-				nodesInLevelOrder.push_back(cn);
-			}
-			++i;
-		}
-		tm.end();
-		std::cout << tm.elapsedSeconds() << " seconds" << std::endl;
-	}
-	//serialize the payload in bottom-up level-order (may be this should be done in parallel)
 
-	sserialize::Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> tmpPayload(nodesInLevelOrder.size(), nodesInLevelOrder.size());
-	std::vector<uint32_t> nodeIdToData(nodesInLevelOrder.size(), std::numeric_limits<uint32_t>::max());
+	sserialize::Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> tmpPayload(size(), size());
+	std::vector<uint32_t> nodeIdToData(size(), std::numeric_limits<uint32_t>::max());
 	count = 0;
-	
-	pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
-	while (nodesInLevelOrder.size()) {
-		NodePtr & n = nodesInLevelOrder.back();
-		uint32_t id = n->m_begin - m_ht.begin();
-		nodeIdToData[id] = tmpPayload.size();
-		tmpPayload.beginRawPush() << payloadHandler(n);
-		tmpPayload.endRawPush();
-		nodesInLevelOrder.pop_back();
-		pinfo(++count);
+	if (threadCount <= 1) {
+		std::vector<NodePtr> nodesInLevelOrder;
+		nodesInLevelOrder.reserve(size());
+		{
+			std::cout << "sserialize::HashBasedFlatTrie collecting trie nodes..." << std::flush;
+			tm.begin();
+			nodesInLevelOrder.push_back(root());
+			uint32_t i = 0;
+			while (i < nodesInLevelOrder.size()) {
+				NodePtr & n = nodesInLevelOrder[i];
+				for(NodePtr cn : *n) {
+					nodesInLevelOrder.push_back(cn);
+				}
+				++i;
+			}
+			tm.end();
+			std::cout << tm.elapsedSeconds() << " seconds" << std::endl;
+		}
+		//serialize the payload in bottom-up level-order (may be this should be done in parallel)
+
+		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
+		while (nodesInLevelOrder.size()) {
+			NodePtr & n = nodesInLevelOrder.back();
+			uint32_t id = n->m_begin - m_ht.begin();
+			nodeIdToData[id] = tmpPayload.size();
+			tmpPayload.beginRawPush() << payloadHandler(n);
+			tmpPayload.endRawPush();
+			nodesInLevelOrder.pop_back();
+			pinfo(++count);
+		}
+		pinfo.end();
 	}
-	pinfo.end();
+	else {
+		std::vector< std::vector<NodePtr> > nodesInLevelOrder(depth(root()));
+		nodesInLevelOrder[0].push_back(root());
+		for(uint32_t i(0), s(nodesInLevelOrder.size()-1); i < s; ++i) {
+			const std::vector<NodePtr> & levelNodes = nodesInLevelOrder[i];
+			std::vector<NodePtr> & destLevelNodes = nodesInLevelOrder[i+1];
+			for(const NodePtr & n : levelNodes) {
+				for(typename Node::const_iterator begin(n->cbegin()), end(n->cend()); begin != end; ++begin) {
+					destLevelNodes.push_back(*begin);
+				}
+			}
+		}
+		sserialize::ThreadPool threadPool(threadCount);
+		std::vector<T_PH> payloadHandlers(threadPool.numThreads(), payloadHandler);
+		GuardedVariable<int32_t> runningBlockTasks;
+		std::mutex dataAccessMtx;
+		typename HashTable::const_iterator htBegin = m_ht.begin();
+		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
+		for(uint32_t i(0), s(nodesInLevelOrder.size()); i < s; ++i) {
+			runningBlockTasks.set(0);
+			std::vector<NodePtr> & levelNodes = nodesInLevelOrder[s-i];
+			uint32_t blockSize = levelNodes.size()/threadCount+1;
+
+			for(uint32_t blockNum = 0, blockBegin = 0; blockBegin < levelNodes.size(); ++blockNum, blockBegin += blockSize) {
+				uint32_t blockEnd = std::min<uint32_t>(levelNodes.size(), blockBegin+blockSize);
+				T_PH * pH = &payloadHandlers[blockNum];
+				NodePtr * nodeBlocksBegin = &levelNodes[blockBegin];
+				NodePtr * nodeBlocksEnd = &levelNodes[blockEnd];
+				{
+					auto lck(runningBlockTasks.uniqueLock());
+					runningBlockTasks.value() += 1;
+				}
+				threadPool.sheduleTask(
+					[pH, nodeBlocksBegin, nodeBlocksEnd, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin]() {
+						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(nodeBlocksEnd-nodeBlocksBegin, nodeBlocksEnd-nodeBlocksBegin);
+						for(NodePtr * nodeBlocksIt(nodeBlocksBegin); nodeBlocksIt != nodeBlocksEnd; ++nodeBlocksIt) {
+							NodePtr & n = *nodeBlocksBegin;
+							uint32_t id = n->m_begin - htBegin;
+							auto tmp = (*pH)(n);
+							nodeIdToData[id] = myTmpPayload.size();
+							myTmpPayload.beginRawPush() << tmp;
+							myTmpPayload.endRawPush();
+						}
+						{
+							std::unique_lock<std::mutex> dALck(dataAccessMtx);
+							for(NodePtr * nodeBlocksIt(nodeBlocksBegin); nodeBlocksIt != nodeBlocksEnd; ++nodeBlocksIt) {
+								NodePtr & n = *nodeBlocksBegin;
+								uint32_t id = n->m_begin - htBegin;
+								nodeIdToData[id] = tmpPayload.size();
+								tmpPayload.beginRawPush() << tmpPayload.dataAt(nodeBlocksIt-nodeBlocksBegin);
+								tmpPayload.endRawPush();
+							}
+						}
+						{
+							auto lck(runningBlockTasks.uniqueLock());
+							runningBlockTasks.value() -= 1;
+						}
+					}
+				);
+			}
+			nodesInLevelOrder.pop_back();
+			{
+				GuardedVariable<int32_t>::UniqueLock lck(runningBlockTasks.uniqueLock());
+				while (runningBlockTasks.value() > 0) {
+					runningBlockTasks.wait_for(lck, 1000000);
+				}
+				assert(runningBlockTasks.value() >= 0);
+			}
+			pinfo(i);
+		}
+	}
 	
 	std::cout << "sserialize::HashBasedFlatTrie copying payload..." << std::flush;
 	tm.begin();
