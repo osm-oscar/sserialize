@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(sserializetests)
 find_package(CPPUNIT)
 find_package(ICU 4.9 REQUIRED)
+find_package(Threads)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${ICU_INCLUDE_DIRS})
 
 set(TEST_LIB_SOURCES_CPP
@@ -37,6 +38,7 @@ ${CPPUNIT_LIBRARY}
 ${ICU_LIBRARIES}
 ${ICU_I18N_LIBRARIES}
 ${LIBRT_LIBRARIES}
+${CMAKE_THREAD_LIBS_INIT}
 )
 
 
@@ -69,6 +71,7 @@ ADD_TEST_TARGET_SINGLE(util_CompressedMmappedFile)
 ADD_TEST_TARGET_SINGLE(util_utilfuncs)
 ADD_TEST_TARGET_SINGLE(util_packfuncs)
 ADD_TEST_TARGET_SINGLE(util_LinearRegregionnFunctions)
+ADD_TEST_TARGET_SINGLE(util_ThreadPool)
 
 #static
 ADD_TEST_TARGET_SINGLE(static_deque)
