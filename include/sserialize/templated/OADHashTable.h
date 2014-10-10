@@ -272,7 +272,11 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 	}
 	else {
 		m_valueStorage.push_back(value_type(key, mapped_type()));
-		cp = size();
+		auto mySize = m_valueStorage.size();
+		cp = mySize;
+		if ( mySize != cp ) {//get optimized our if return_type(m_valueStorage.size()) == SizeType
+			throw std::out_of_range("OADHashTable: overflow in TableStorage pointer type. Too many elements in hash.");
+		}
 		return value(cp).second;
 	}
 }
