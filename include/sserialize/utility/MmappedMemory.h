@@ -28,7 +28,7 @@ template<typename TValue>
 class MmappedMemoryEmpty: public MmappedMemoryInterface<TValue> {
 public:
 	MmappedMemoryEmpty() {}
-	virtual ~MmappedMemoryEmpty() {}
+	virtual ~MmappedMemoryEmpty() override {}
 	virtual TValue * data() override { return 0; }
 	virtual TValue * resize(OffsetType /*newSize*/) override { return 0; }
 	virtual OffsetType size() const override { return 0; }
@@ -85,7 +85,7 @@ public:
 			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
 		}
 	}
-	virtual ~MmappedMemoryFileBased() {
+	virtual ~MmappedMemoryFileBased() override {
 		if (m_data) {
 			if (m_unlink) {
 				FileHandler::closeAndUnlink(m_fileName, m_fd, m_data, m_size*sizeof(TValue));
@@ -96,8 +96,8 @@ public:
 			m_data = 0;
 		}
 	}
-	virtual TValue * data() { return m_data; }
-	virtual TValue * resize(OffsetType newSize) {
+	virtual TValue * data() override { return m_data; }
+	virtual TValue * resize(OffsetType newSize) override {
 		newSize = std::max<OffsetType>(1, newSize);
 		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), m_populate, m_randomAccess);
 		if (!m_data)
@@ -105,8 +105,8 @@ public:
 		m_size = newSize;
 		return m_data;
 	}
-	virtual OffsetType size() const { return m_size; }
-	virtual MmappedMemoryType type() const { return sserialize::MM_FILEBASED;}
+	virtual OffsetType size() const override { return m_size; }
+	virtual MmappedMemoryType type() const override { return sserialize::MM_FILEBASED;}
 };
 
 template<typename TValue>
@@ -116,24 +116,25 @@ private:
 	OffsetType m_size;
 public:
 	MmappedMemoryInMemory(OffsetType size) : m_data(0), m_size(0) {
-		if (m_size) {
+		if (size) {
 			m_data = (TValue*) malloc(sizeof(TValue)*size);
-		}
-		if (m_data) {
-			m_size = size;
-		}
-		else if (m_size) {
-			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
+			if (!m_data) {
+				throw sserialize::CreationException("MmappedMemory::MmappedMemory");
+			}
+			else {
+				m_size = size;
+			}
 		}
 	}
-	virtual ~MmappedMemoryInMemory() {
+	virtual ~MmappedMemoryInMemory() override {
 		if (m_data) {
 			free(m_data);
 			m_data = 0;
+			m_size = 0;
 		}
 	}
-	virtual TValue * data() { return m_data; }
-	virtual TValue * resize(OffsetType newSize) {
+	virtual TValue * data() override { return m_data; }
+	virtual TValue * resize(OffsetType newSize) override {
 		if (!newSize) {
 			free(m_data);
 			m_data = 0;
@@ -154,8 +155,8 @@ public:
 		m_data = newD;
 		return m_data;
 	}
-	virtual OffsetType size() const { return m_size; }
-	virtual MmappedMemoryType type() const { return sserialize::MM_PROGRAM_MEMORY;}
+	virtual OffsetType size() const override { return m_size; }
+	virtual MmappedMemoryType type() const override { return sserialize::MM_PROGRAM_MEMORY;}
 };
 
 ///Exclusive shared memory based storage backend
@@ -192,15 +193,15 @@ public:
 			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
 		}
 	}
-	virtual ~MmappedMemorySharedMemory() {
+	virtual ~MmappedMemorySharedMemory() override {
 		if (m_data) {
 			::munmap(m_data, m_size);
 			::shm_unlink(m_name.c_str());
 			m_data = 0;
 		}
 	}
-	virtual TValue * data() { return m_data; }
-	virtual TValue * resize(OffsetType newSize) {
+	virtual TValue * data() override { return m_data; }
+	virtual TValue * resize(OffsetType newSize) override {
 		m_data = (TValue*) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), false, true);
 		
 		if (m_data || newSize == 0) {
@@ -211,8 +212,8 @@ public:
 		}
 		return m_data;
 	}
-	virtual OffsetType size() const { return m_size; }
-	virtual MmappedMemoryType type() const { return sserialize::MM_SHARED_MEMORY;}
+	virtual OffsetType size() const override { return m_size; }
+	virtual MmappedMemoryType type() const override { return sserialize::MM_SHARED_MEMORY;}
 };
 
 }}
