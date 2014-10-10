@@ -50,7 +50,7 @@ public:
 	void notify_one() {
 		m_cv.notify_one();
 	}
-	///@param ul unlock lock associated with this variable before notification
+	///@param ul unlock lock associated with this variable before notification, don't use this for predictable scheduling behavior
 	void notify_one(UniqueLock & ul) {
 		ul.unlock();
 		m_cv.notify_one();
@@ -58,7 +58,7 @@ public:
 	void notify_all() {
 		m_cv.notify_all();
 	}
-	///@param ul unlock lock before notification
+	///@param ul unlock lock before notification, don't use this for predictable scheduling behavior
 	void notify_all(UniqueLock & ul) {
 		ul.unlock();
 		m_cv.notify_all();
