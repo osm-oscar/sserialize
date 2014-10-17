@@ -1,5 +1,7 @@
 #ifndef SSERIALIZE_MMAPPED_MEMORY_H
 #define SSERIALIZE_MMAPPED_MEMORY_H
+#include <type_traits>
+#include <functional>
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/exceptions.h>
@@ -13,8 +15,43 @@ typedef enum {MM_INVALID=0, MM_FILEBASED, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY} M
 namespace detail {
 namespace MmappedMemory {
 
+template<typename TValue, typename TDummy=TValue>
+struct MmappedMemoryHelper {
+	static void initMemory(TValue * begin, TValue * end);
+	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest);
+	static void deinitMemory(TValue * begin, TValue * end);
+};
+
 template<typename TValue>
-class MmappedMemoryInterface: public RefCountObject {
+struct MmappedMemoryHelper< typename std::enable_if<std::is_pod<TValue>::value, TValue>::type, TValue > {
+	static void initMemory(TValue * /*begin*/, TValue * /*end*/) {}
+	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
+		memmove(dest, srcBegin, (srcEnd-srcBegin)*sizeof(TValue));
+	}
+	static void deinitMemory(TValue * /*begin*/, TValue * /*end*/) {}
+};
+
+template<typename TValue>
+struct MmappedMemoryHelper< typename std::enable_if<! std::is_pod<TValue>::value, TValue>::type, TValue > {
+	static void initMemory(TValue * begin, TValue * end) {
+		for(; begin != end; ++begin) {
+			new (begin) TValue();
+		}
+	}
+	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
+		for(; srcBegin != srcEnd; ++srcBegin, ++dest) {
+			new (dest) TValue(*srcBegin);
+		}
+	}
+	static void deinitMemory(TValue * begin, TValue * end) {
+		for(; begin != end; ++begin) {
+			begin->~TValue();
+		}
+	}
+};
+
+template<typename TValue>
+class MmappedMemoryInterface: public RefCountObject{
 public:
 	MmappedMemoryInterface() {}
 	virtual ~MmappedMemoryInterface() {}
@@ -27,7 +64,7 @@ public:
 template<typename TValue>
 class MmappedMemoryEmpty: public MmappedMemoryInterface<TValue> {
 public:
-	MmappedMemoryEmpty() {}
+	MmappedMemoryEmpty() : MmappedMemoryInterface<TValue>() {}
 	virtual ~MmappedMemoryEmpty() override {}
 	virtual TValue * data() override { return 0; }
 	virtual TValue * resize(OffsetType /*newSize*/) override { return 0; }
@@ -59,6 +96,7 @@ public:
 		m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess);
 		if (m_data) {
 			m_size = size;
+			MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
 		}
 		else {
 			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
@@ -87,6 +125,7 @@ public:
 	}
 	virtual ~MmappedMemoryFileBased() override {
 		if (m_data) {
+			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
 			if (m_unlink) {
 				FileHandler::closeAndUnlink(m_fileName, m_fd, m_data, m_size*sizeof(TValue));
 			}
@@ -99,9 +138,16 @@ public:
 	virtual TValue * data() override { return m_data; }
 	virtual TValue * resize(OffsetType newSize) override {
 		newSize = std::max<OffsetType>(1, newSize);
+		if (newSize < m_size) {
+			MmappedMemoryHelper<TValue>::deinitMemory(m_data+newSize, m_data+m_size);
+		}
 		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), m_populate, m_randomAccess);
-		if (!m_data)
+		if (!m_data) {
 			throw sserialize::CreationException("MmappedMemory::resize");
+		}
+		if (newSize > m_size) {
+			MmappedMemoryHelper<TValue>::initMemory(m_data+m_size, m_data+newSize);
+		}
 		m_size = newSize;
 		return m_data;
 	}
@@ -122,12 +168,14 @@ public:
 				throw sserialize::CreationException("MmappedMemory::MmappedMemory");
 			}
 			else {
+				MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
 				m_size = size;
 			}
 		}
 	}
 	virtual ~MmappedMemoryInMemory() override {
 		if (m_data) {
+			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
 			free(m_data);
 			m_data = 0;
 			m_size = 0;
@@ -135,6 +183,9 @@ public:
 	}
 	virtual TValue * data() override { return m_data; }
 	virtual TValue * resize(OffsetType newSize) override {
+		if (newSize < m_size) {
+			MmappedMemoryHelper<TValue>::deinitMemory(m_data+newSize, m_data+m_size);
+		}
 		if (!newSize) {
 			free(m_data);
 			m_data = 0;
@@ -144,12 +195,18 @@ public:
 		if (!newD) {
 			newD = (TValue*) malloc(sizeof(TValue)*newSize);
 			if (newD) {
-				memmove(newD, m_data, sizeof(TValue)*m_size);
+				OffsetType tmp = std::min(newSize, m_size);
+				MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+tmp, newD);//copy memory
+				MmappedMemoryHelper<TValue>::initMemory(newD+tmp, newD+newSize);//possibly init remaining memory if newSize > m_size
+				MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);//deinit old memory
 				free(m_data);
 			}
 			else {
 				throw sserialize::CreationException("MmappedMemory::resize");
 			}
+		}
+		else if (newSize > m_size) { //reallocation happened => m_data==newD, init the new allocated data
+			MmappedMemoryHelper<TValue>::initMemory(m_data+m_size, m_data+newSize);
 		}
 		m_size = newSize;
 		m_data = newD;
@@ -187,6 +244,7 @@ public:
 		m_data = (TValue*) FileHandler::resize(m_fd, 0, 0, size*sizeof(TValue), false, true);
 		
 		if (m_data || size == 0) {
+			MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
 			m_size = size;
 		}
 		else {
@@ -195,6 +253,7 @@ public:
 	}
 	virtual ~MmappedMemorySharedMemory() override {
 		if (m_data) {
+			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
 			::munmap(m_data, m_size);
 			::shm_unlink(m_name.c_str());
 			m_data = 0;
@@ -202,9 +261,15 @@ public:
 	}
 	virtual TValue * data() override { return m_data; }
 	virtual TValue * resize(OffsetType newSize) override {
+		if (newSize < m_size) {
+			MmappedMemoryHelper<TValue>::deinitMemory(m_data+newSize, m_data+m_size);
+		}
 		m_data = (TValue*) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), false, true);
 		
 		if (m_data || newSize == 0) {
+			if (newSize > m_size) {
+				MmappedMemoryHelper<TValue>::initMemory(m_data+m_size, m_data+newSize);
+			}
 			m_size = newSize;
 		}
 		else {

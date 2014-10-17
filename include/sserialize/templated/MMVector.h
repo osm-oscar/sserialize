@@ -34,7 +34,7 @@ public:
 	m_pP(other.m_pP), m_growFactor(other.m_growFactor)
 	{
 		m_begin = m_d.data();
-		memmove(m_begin, other.m_begin, sizeof(TValue)*m_pP);
+		sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::initMemory(other.cbegin(), other.cend(), m_begin);
 	}
 	MMVector(MMVector && other) :
 	m_begin(other.m_begin), m_capacity(other.m_size), m_pP(other.m_pP), m_growFactor(other.m_growFactor)
@@ -49,7 +49,7 @@ public:
 		m_growFactor = other.m_growFactor;
 		m_d = MmappedMemory<TValue>(other.m_pP, other.m_d.type());
 		m_begin = m_d.resize(m_pP);
-		memmove(m_begin, other.m_begin, sizeof(TValue)*m_pP);
+		sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::initMemory(other.cbegin(), other.cend(), m_begin);
 		return *this;
 	}
 	MMVector & operator=(MMVector && other) {
@@ -129,13 +129,13 @@ public:
 		if (pos < m_pP) {
 			return *(begin()+pos);
 		}
-		throw std::out_of_range();
+		throw std::out_of_range("MMVector::at");
 	}
 	inline const_reference at(SizeType pos) const {
 		if (pos < m_pP) {
 			return *(cbegin()+pos);
 		}
-		throw std::out_of_range();
+		throw std::out_of_range("MMVector::at");
 	}
 	inline iterator begin() { return m_begin; }
 	inline const_iterator begin() const { return m_begin; }
