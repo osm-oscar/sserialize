@@ -94,14 +94,14 @@ private:
 	public:
 		EntryComparator(const OrderedStringTable * strTable) : m_st(strTable) {}
 		~EntryComparator() {}
-		inline bool operator()(const Entry & a, const Entry & b, uint32_t lcp = 0) const {
+		inline int operator()(const Entry & a, const Entry & b, uint32_t lcp = 0) const {
 			return cmp(a.cbegin(m_st)+lcp, b.cbegin(m_st)+lcp, a.cend(m_st), b.cend(m_st));
 		}
-		inline bool operator()(const Entry & a, const std::string & str, uint32_t lcp = 0) const {
+		inline int operator()(const Entry & a, const std::string & str, uint32_t lcp = 0) const {
 			return cmp(a.cbegin(m_st)+lcp, str.begin(), a.cend(m_st), str.begin());
 		}
 		
-		inline bool operator()(const std::string & str, const Entry & b, uint32_t lcp = 0) const {
+		inline int operator()(const std::string & str, const Entry & b, uint32_t lcp = 0) const {
 			return cmp(str.cbegin()+lcp, b.cbegin(m_st)+lcp, str.cend(), b.cend(m_st));
 		}
 	};
@@ -112,15 +112,14 @@ private:
 		EntrySmallerComparator(const OrderedStringTable * strTable) : m_cmp(strTable) {}
 		~EntrySmallerComparator() {}
 		inline bool operator()(const Entry & a, const Entry & b) const {
-			return m_cmp(a, b) < 0;
+			return (m_cmp(a, b) < (int)0);
 		}
 		inline bool operator()(const Entry & a, const std::string & b) const {
-			return m_cmp(a, b) < 0;
-
+			return (m_cmp(a, b) < (int)0);
 		}
 		
 		inline bool operator()(const std::string & a, const Entry & b) const {
-			return m_cmp(a, b) < 0;
+			return (m_cmp(a, b) < (int)0);
 		}
 	};
 	
