@@ -116,93 +116,75 @@ public:
 	}
 
 	uint32_t depth() {
-		if (this) {
-			uint32_t maxDepth = 0;
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				uint32_t d = it->second->depth();
-				if (d > maxDepth)
-					maxDepth = d;
-			}
-			return maxDepth+1;
+		uint32_t maxDepth = 0;
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			uint32_t d = it->second->depth();
+			if (d > maxDepth)
+				maxDepth = d;
 		}
-		return 0;
+		return maxDepth+1;
 	}
 
 	void addNodesSortedInLevel(const uint16_t targetLevel, uint16_t curLevel, std::deque< MultiTrieNode* > & destination) {
-		if (this) {
-			if (curLevel == targetLevel) {
-				destination.push_back(this);
-			}
-			else {
-				for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
-					it->second->addNodesSortedInLevel(targetLevel, curLevel+1, destination);
-				}
+		if (curLevel == targetLevel) {
+			destination.push_back(this);
+		}
+		else {
+			for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
+				it->second->addNodesSortedInLevel(targetLevel, curLevel+1, destination);
 			}
 		}
 	}
 
 	void addNodesSorted(uint16_t curLevel, std::deque< std::deque< MultiTrieNode* > > & destination) {
-		if (this) {
-			if (destination.size() <= curLevel)
-				destination.push_back(std::deque< MultiTrieNode* >());
-			destination[curLevel].push_back(this);
-			for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
-				it->second->addNodesSorted(curLevel+1, destination);
-			}
+		if (destination.size() <= curLevel)
+			destination.push_back(std::deque< MultiTrieNode* >());
+		destination[curLevel].push_back(this);
+		for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
+			it->second->addNodesSorted(curLevel+1, destination);
 		}
 	}
 
 	void addNodesSorted(std::deque< MultiTrieNode* > & destination) {
-		if (this) {
-			size_t i = destination.size();
-			destination.push_back(this);
-			while (i < destination.size()) {
-				MultiTrieNode * curNode = destination[i];
-				for(ConstChildNodeIterator it = curNode->children.begin(); it != curNode->children.end(); ++it) {
-					destination.push_back(it->second);
-				}
-				i++;
+		size_t i = destination.size();
+		destination.push_back(this);
+		while (i < destination.size()) {
+			MultiTrieNode * curNode = destination[i];
+			for(ConstChildNodeIterator it = curNode->children.begin(); it != curNode->children.end(); ++it) {
+				destination.push_back(it->second);
 			}
+			i++;
 		}
 	}
 	
 	void addNodesSorted(std::vector< MultiTrieNode* > & destination) {
-		if (this) {
-			size_t i = destination.size();
-			destination.push_back(this);
-			while (i < destination.size()) {
-				MultiTrieNode * curNode = destination[i];
-				for(ConstChildNodeIterator it = curNode->children.begin(); it != curNode->children.end(); ++it) {
-					destination.push_back(it->second);
-				}
-				i++;
+		size_t i = destination.size();
+		destination.push_back(this);
+		while (i < destination.size()) {
+			MultiTrieNode * curNode = destination[i];
+			for(ConstChildNodeIterator it = curNode->children.begin(); it != curNode->children.end(); ++it) {
+				destination.push_back(it->second);
 			}
+			i++;
 		}
 	}
 	
 	void addNodesSortedDepthFirst(std::deque< MultiTrieNode* > & destination) {
-		if (this) {
-			destination.push_back(this);
-			for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
-				it->second->addNodesSortedDepthFirst(destination);
-			}
+		destination.push_back(this);
+		for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
+			it->second->addNodesSortedDepthFirst(destination);
 		}
 	}
 
 	void addNodesSortedDepthFirst(std::vector< MultiTrieNode* > & destination) {
-		if (this) {
-			destination.push_back(this);
-			for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
-				it->second->addNodesSortedDepthFirst(destination);
-			}
+		destination.push_back(this);
+		for(ChildNodeIterator it = children.begin();  it != children.end(); ++it) {
+			it->second->addNodesSortedDepthFirst(destination);
 		}
 	}
 
 
 	bool checkParentChildRelations() {
-		if (!this) {
-			return true;
-		}
 		for(ChildNodeIterator i = children.begin(); i != children.end(); ++i) {
 			if (i->second->parent != this) {
 				return false;
@@ -217,95 +199,77 @@ public:
 	}
 
 	void fixChildParentPtrRelation() {
-		if (this) {
-			for(ChildNodeIterator i = children.begin(); i != children.end(); ++i) {
-				i->second->parent = this;
-			}
+		for(ChildNodeIterator i = children.begin(); i != children.end(); ++i) {
+			i->second->parent = this;
 		}
 	}
 
 	void insertExactValuesRecursive(std::set<ItemType> & destination) {
-		if (this) {
-			destination.insert(exactValues.begin(), exactValues.end());
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->insertExactValuesRecursive(destination);
-			}
+		destination.insert(exactValues.begin(), exactValues.end());
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->insertExactValuesRecursive(destination);
 		}
 	}
 
 	void insertSubStrValuesRecursive(std::set<ItemType> & destination) {
-		if (this) {
-			destination.insert(subStrValues.begin(), subStrValues.end());
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->insertSubStrValuesRecursive(destination);
-			}
+		destination.insert(subStrValues.begin(), subStrValues.end());
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->insertSubStrValuesRecursive(destination);
 		}
 	}
 
 	void insertAllValuesRecursive(std::set<ItemType> & destination) {
-		if (this) {
-			destination.insert(exactValues.begin(), exactValues.end());
-			destination.insert(subStrValues.begin(), subStrValues.end());
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->insertAllValuesRecursive(destination);
-			}
+		destination.insert(exactValues.begin(), exactValues.end());
+		destination.insert(subStrValues.begin(), subStrValues.end());
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->insertAllValuesRecursive(destination);
 		}
 	}
 	
 	void getAllValuesRecursiveSetSize(uint32_t & size) {
-		if (this) {
-			size += exactValues.size() + subStrValues.size();
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->getAllValuesRecursiveSetSize(size);
-			}
+		size += exactValues.size() + subStrValues.size();
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->getAllValuesRecursiveSetSize(size);
 		}
 	}
 
 	void getSmallestValueRecursive(ItemType & value) {
-		if (this) {
-			if (exactValues.size())
-				value = std::min<ItemType>(*(exactValues.begin()), value);
-			if (subStrValues.size())
-				value = std::min<ItemType>(*(subStrValues.begin()), value);
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->getSmallestValueRecursive(value);
-			}
+		if (exactValues.size())
+			value = std::min<ItemType>(*(exactValues.begin()), value);
+		if (subStrValues.size())
+			value = std::min<ItemType>(*(subStrValues.begin()), value);
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->getSmallestValueRecursive(value);
 		}
 	}
 
 	void getLargestValueRecursive(ItemType & value) {
-		if (this) {
-			if (exactValues.size())
-				value = std::max<ItemType>(*(exactValues.begin()), value);
-			if (subStrValues.size())
-				value = std::max<ItemType>(*(subStrValues.begin()), value);
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->getLargestValueRecursive(value);
-			}
+		if (exactValues.size())
+			value = std::max<ItemType>(*(exactValues.begin()), value);
+		if (subStrValues.size())
+			value = std::max<ItemType>(*(subStrValues.begin()), value);
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->getLargestValueRecursive(value);
 		}
 	}
 
 	template<class TMapper>
 	void mapDepthFirst(TMapper & mapper) {
-		if (this) {
-			mapper(this);
-			for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
-				it->second->mapDepthFirst(mapper);
-			}
+		mapper(this);
+		for(ChildNodeIterator it = children.begin(); it != children.end(); ++it) {
+			it->second->mapDepthFirst(mapper);
 		}
 	}
 	
 	template<class TMapper>
 	void mapBreadthFirst(TMapper & mapper) {
-		if (this) {
-			std::deque<MultiTrieNode*> nodes;
-			nodes.push_back(this);
-			while(nodes.size()) {
-				for(auto & x : nodes.front()->children)
-					nodes.push_back( x.second );
-				mapper(nodes.front());
-				nodes.pop_front();
-			}
+		std::deque<MultiTrieNode*> nodes;
+		nodes.push_back(this);
+		while(nodes.size()) {
+			for(auto & x : nodes.front()->children)
+				nodes.push_back( x.second );
+			mapper(nodes.front());
+			nodes.pop_front();
 		}
 	}
 	

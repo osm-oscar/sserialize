@@ -17,8 +17,6 @@ SetOpTreePrivateComplex::Node::~Node() {
 }
 
 SetOpTreePrivateComplex::Node * SetOpTreePrivateComplex::Node::getDeepCopy(Node * parent) {
-	if (!this)
-		return 0;
 	SetOpTreePrivateComplex::Node * retNode = new Node();
 	retNode->type = type;
 	retNode->cqtype = cqtype;
@@ -67,13 +65,11 @@ SetOpTreePrivateComplex::Node* SetOpTreePrivateComplex::Node::getNodeWithSrcColl
 
 
 bool SetOpTreePrivateComplex::Node::efSupport(SetOpTree::SelectableOpFilter::SupportedOps op) const {
-	return (this && this->externalFunc && this->externalFunc->supportedOps() & op);
+	return (this->externalFunc && this->externalFunc->supportedOps() & op);
 }
 
 
 void SetOpTreePrivateComplex::Node::printStructure(std::ostream& out) const {
-	if (!this)
-		return;
 	out << "(";
 	if (type == COMPLETE) {
 		out << "\"" << completeString << "\"";

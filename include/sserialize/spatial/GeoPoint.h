@@ -56,22 +56,8 @@ public:
 	static inline GeoPoint fromIntLatLon(uint32_t lat, uint32_t lon) { return GeoPoint(lat, lon); }
 };
 
-}//end namespace spatial
-
-template<>
-struct SerializationInfo<sserialize::spatial::GeoPoint> {
-	static const bool is_fixed_length = true;
-	static const OffsetType length = 8;
-	static const OffsetType max_length = 8;
-	static const OffsetType min_length = 8;
-	static inline OffsetType sizeInBytes(const sserialize::spatial::GeoPoint & /*value*/) { return 8; }
-};
-
-}//end namespace sserialize
-
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point);
-sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & destination, sserialize::spatial::GeoPoint & p);
+sserialize::UByteArrayAdapter & operator<<(::sserialize::UByteArrayAdapter & destination, const GeoPoint & point);
+sserialize::UByteArrayAdapter & operator>>(::sserialize::UByteArrayAdapter & destination, GeoPoint & p);
 
 ///equality test with EPS 
 inline bool operator==(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b) {
@@ -85,5 +71,18 @@ inline bool operator!=(const sserialize::spatial::GeoPoint & a, const sserialize
 inline std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp) {
 	return gp.asString(out);
 }
+
+}//end namespace spatial
+
+template<>
+struct SerializationInfo<sserialize::spatial::GeoPoint> {
+	static const bool is_fixed_length = true;
+	static const OffsetType length = 8;
+	static const OffsetType max_length = 8;
+	static const OffsetType min_length = 8;
+	static inline OffsetType sizeInBytes(const sserialize::spatial::GeoPoint & /*value*/) { return 8; }
+};
+
+}//end namespace sserialize
 
 #endif

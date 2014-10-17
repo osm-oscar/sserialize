@@ -35,7 +35,7 @@ void reserveMemory(std::vector<T> & dest, std::size_t size) {
 }
 
 template<typename T_CONTAINER>
-void reserveMemory(T_CONTAINER & dest, std::size_t size) {
+void reserveMemory(T_CONTAINER & /*dest*/, std::size_t /*size*/) {
 	;
 }
 

@@ -26,7 +26,7 @@ class EmptyOpTree: public OpTree<T_OPERAND> {
 public:
 	EmptyOpTree() {}
 	virtual ~EmptyOpTree() {}
-	virtual bool parse(const std::string & query) {
+	virtual bool parse(const std::string & /*query*/) {
 		return false;
 	}
 	virtual T_OPERAND calc() { return T_OPERAND();}

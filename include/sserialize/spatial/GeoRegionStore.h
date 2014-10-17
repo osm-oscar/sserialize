@@ -147,14 +147,18 @@ private:
 		}
 		
 		void getPolygons(const std::vector<Point> & p, std::set<uint32_t> & definiteHits, std::set<uint32_t> & possibleHits) const {
-			if (!p.size())
-				return std::set<uint32_t>();
-			if (p.size() == 1)
-				return getPolygons(p.front(), definiteHits, possibleHits);
+			if (!p.size()) {
+				return;
+			}
+			if (p.size() == 1) {
+				getPolygons(p.front(), definiteHits, possibleHits);
+				return;
+			}
 			
 			std::vector<Point>::const_iterator end( p.end());
-			for(std::vector<Point>::const_iterator it = p.begin(); it != end; ++it)
+			for(std::vector<Point>::const_iterator it = p.begin(); it != end; ++it) {
 				getPolygons(*it, definiteHits, possibleHits);
+			}
 		}
 		
 		std::ostream & dump(std::ostream & out) const {

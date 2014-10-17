@@ -31,8 +31,6 @@ public:
 	UByteArrayAdapter::OffsetType at(uint32_t pos) const;
 };
 
-}}//end namespace
-
 template<typename T_SORTED_CONTAINER>
 bool operator==(const T_SORTED_CONTAINER & other, const sserialize::Static::SortedOffsetIndex & index) {
 	if (other.size() != index.size())
@@ -62,5 +60,7 @@ template<typename T_SORTED_CONTAINER>
 bool operator!=(const sserialize::Static::SortedOffsetIndex & index, const T_SORTED_CONTAINER & other) {
 	return ! (other == index);
 }
+
+}}//end namespace
 
 #endif

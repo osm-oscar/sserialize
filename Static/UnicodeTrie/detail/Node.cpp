@@ -10,18 +10,13 @@ namespace UnicodeTrie {
 namespace detail {
 
 void Node::dump(std::ostream& out) const {
-	if (this) {
-		out << "sserialize::Static::UnicodeTrie::Node[size=" << childSize() << "; payloadPtr=" << payloadPtr();
-		out << ";";
-		for(uint32_t i(0), s(childSize()); i < s; ++i) {
-			uint32_t cp = childKey(i);
-			out << "(" << sserialize::stringFromUnicodePoints(&cp, (&cp)+1) << "=>" << childPtr(i) << ")";
-		}
-		out << "]";
+	out << "sserialize::Static::UnicodeTrie::Node[size=" << childSize() << "; payloadPtr=" << payloadPtr();
+	out << ";";
+	for(uint32_t i(0), s(childSize()); i < s; ++i) {
+		uint32_t cp = childKey(i);
+		out << "(" << sserialize::stringFromUnicodePoints(&cp, (&cp)+1) << "=>" << childPtr(i) << ")";
 	}
-	else {
-		out << "sserialize::Static::UnicodeTrie::Node is NULL" << std::endl;
-	}
+	out << "]";
 }
 
 }

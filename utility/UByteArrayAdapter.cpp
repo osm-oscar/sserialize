@@ -1243,9 +1243,6 @@ STATIC_PUT_FUNCS_MAKRO(putVlPackedInt64, int64_t);
 STATIC_PUT_FUNCS_MAKRO(putVlPackedUint64, uint64_t);
 #undef STATIC_PUT_FUNCS_MAKRO
 
-
-}//end namespace
-
 using namespace sserialize;
 
 // sserialize::UByteArrayAdapter& operator--(sserialize::UByteArrayAdapter& a) {
@@ -1322,3 +1319,5 @@ UBA_OPERATOR_GET_STREAMING_FUNC(getFloat, float);
 UBA_OPERATOR_GET_STREAMING_FUNC(getString, std::string);
 
 #undef UBA_OPERATOR_STREAMING_FUNC
+
+}//end namespace

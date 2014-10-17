@@ -21,7 +21,7 @@ public:
 	void swap(DynamicVector & other);
 	uint32_t size() const;
 	OffsetType reservedSize() const;
-	void reserve(uint32_t size) { std::cerr << "Reserving is not supported by sserialize::Static::DynamicVector" << std::endl; }
+	void reserve(uint32_t /*size*/) { std::cerr << "Reserving is not supported by sserialize::Static::DynamicVector" << std::endl; }
 	template<typename TStreamingSerializer = UByteArrayAdapter::StreamingSerializer<TPushValue> >
 	void push_back(const TPushValue & value, const TStreamingSerializer & serializer = TStreamingSerializer());
 	void pop_back();

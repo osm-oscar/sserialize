@@ -33,11 +33,11 @@ public:
 
 // 	virtual double realDistance(const sserialize::spatial::GeoShape & other) const;
 	
-	///this can be Null
-	inline UByteArrayAdapter & appendWithTypeInfo(sserialize::UByteArrayAdapter & destination) const {
-		if (this) {
-			destination << static_cast<uint8_t>( type() );
-			return append(destination);
+	///ptr is allwoed to be null
+	static inline UByteArrayAdapter & appendWithTypeInfo(const GeoShape * ptr, sserialize::UByteArrayAdapter & destination) {
+		if (ptr) {
+			destination << static_cast<uint8_t>( ptr->type() );
+			return ptr->append(destination);
 		}
 		else {
 			return destination << static_cast<uint8_t>(GS_NONE);

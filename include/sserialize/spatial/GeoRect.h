@@ -60,14 +60,14 @@ public:
 	GeoRect operator/(const GeoRect & other) const;
 };
 
+bool operator==(const sserialize::spatial::GeoRect & a, const GeoRect & b);
+bool operator!=(const sserialize::spatial::GeoRect & a, const GeoRect & b);
+std::ostream & operator<<(std::ostream & out, const GeoRect & rect);
+
+sserialize::UByteArrayAdapter & operator<<(::sserialize::UByteArrayAdapter & destination, const GeoRect & rect);
+sserialize::UByteArrayAdapter & operator>>(::sserialize::UByteArrayAdapter & src, GeoRect & rect);
+
 }}//end namespacec
-
-bool operator==(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b);
-bool operator!=(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b);
-std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoRect & rect);
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoRect & rect);
-sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, sserialize::spatial::GeoRect & rect);
 
 namespace sserialize {
 

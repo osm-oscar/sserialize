@@ -117,7 +117,7 @@ public:
 	uint32_t size() const { return m_trie.size();}
 	StaticStringsIterator staticStringsBegin() const { return StaticStringsIterator(0, this); }
 	StaticStringsIterator staticStringsEnd() const { return StaticStringsIterator(size(), this); }
-	inline StaticString sstr(uint32_t pos) const { return StaticString{ .m_off = m_trie.at(pos, TA_STR_OFFSET), .m_size = m_trie.at(pos, TA_STR_LEN)}; }
+	inline StaticString sstr(uint32_t pos) const { return StaticString(m_trie.at(pos, TA_STR_OFFSET), m_trie.at(pos, TA_STR_LEN)); }
 	inline UByteArrayAdapter strData(const StaticString & str) const { return UByteArrayAdapter(m_strData, str.off(), str.size()); }
 	inline std::string strAt(const StaticString & str) const {
 		UByteArrayAdapter::MemoryView mem(strData(str).asMemView());

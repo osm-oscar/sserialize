@@ -136,6 +136,7 @@ public:
 			}
 			return dest;
 		}
+		sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & dest) const { return serialize(dest); }
 	};
 private:
 	Node * m_root;
@@ -291,8 +292,14 @@ public:
 		SerializationRecursionInfo recInfo(0, 0, 0, 0);
 		
 		bool ok = serialize(bitsPerLevel, nodes, m_root, recInfo);
-		if (ok)
-			dest << nodes;
+		if (ok) {
+			auto ssFunc = [](sserialize::UByteArrayAdapter & dest, const SerializationNode & src) { src.serialize(dest); };
+			sserialize::Static::ArrayCreator<SerializationNode, decltype(ssFunc)> ac(dest, ssFunc);
+			for(const SerializationNode & n : nodes) {
+				ac.put(n);
+			}
+			ac.flush();
+		}
 		return ok;
 	}
 	
@@ -306,13 +313,13 @@ public:
 
 
 //some (default streaming ops
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint32_t>::SerializationNode & src) {
-	return sserialize::HuffmanTree<uint32_t>::serialize(dest, src);
-}
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint64_t>::SerializationNode & src) {
-	return sserialize::HuffmanTree<uint64_t>::serialize(dest, src);
-}
+// inline /*sserialize::UByteArrayAdapter & operator<<*/(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint32_t>::SerializationNode & src) {
+// 	return sserialize::HuffmanTree<uint32_t>::serialize(dest, src);
+// }
+// 
+// inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const typename sserialize::HuffmanTree<uint64_t>::SerializationNode & src) {
+// 	return sserialize::HuffmanTree<uint64_t>::serialize(dest, src);
+// }
 
 
 #endif

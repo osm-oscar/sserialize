@@ -79,7 +79,7 @@ public:
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const;
-	virtual std::ostream & asString(std::ostream & out);
+	virtual std::ostream & asString(std::ostream & out) const override;
 };
 
 template<typename TPolygonContainer, typename TPolygon>
@@ -420,7 +420,7 @@ sserialize::spatial::GeoShape * GeoMultiPolygon<TPolygonContainer, TPolygon>::co
 }
 
 template<typename TPolygonContainer, typename TPolygon>
-std::ostream & GeoMultiPolygon<TPolygonContainer, TPolygon>::asString(std::ostream & out) {
+std::ostream & GeoMultiPolygon<TPolygonContainer, TPolygon>::asString(std::ostream & out) const {
 	out << "GeoMultiPolygon[" << m_outerBoundary << m_innerBoundary << "{";
 	for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
 		(*it).asString(out);
@@ -440,7 +440,7 @@ typedef sserialize::spatial::detail::GeoMultiPolygon< std::vector<sserialize::sp
 namespace detail {
 
 template<>
-UByteArrayAdapter & GeoMultiPolygon< std::vector<sserialize::spatial::GeoPolygon>, sserialize::spatial::GeoPolygon >::append(sserialize::UByteArrayAdapter & destination) const;
+UByteArrayAdapter & GeoMultiPolygon< std::vector<sserialize::spatial::GeoPolygon>, sserialize::spatial::GeoPolygon >::append(::sserialize::UByteArrayAdapter & destination) const;
 
 }
 

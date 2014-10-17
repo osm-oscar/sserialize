@@ -295,7 +295,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 	if (pos != findend && cp) {
 		return value(cp).second;
 	}
-	throw std::out_of_range();
+	throw std::out_of_range("OADHashTable::at");
 }
 
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
@@ -306,7 +306,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 	if (pos != findend && cp) {
 		return value(cp).second;
 	}
-	throw std::out_of_range();
+	throw std::out_of_range("OADHashTable::at");
 }
 
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>

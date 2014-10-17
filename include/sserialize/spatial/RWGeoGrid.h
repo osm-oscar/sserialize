@@ -31,7 +31,7 @@ public:
 	}
 	
 	TValue at(const spatial::GeoPoint & point) const {
-		return at(point.lat, point.lon);
+		return at(point.lat(), point.lon());
 	}
 	
 	TValue binAt(uint32_t x, uint32_t y) const {

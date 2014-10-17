@@ -478,7 +478,7 @@ UBA_DESERIALIZER_SPECIALIZATIONS(std::string, getString);
 
 #undef UBA_DESERIALIZER_SPECIALIZATIONS
 
-}//end namespace
+
 
 //Streaming operators
 
@@ -521,7 +521,7 @@ sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, 
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, float & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, std::string & value);
 
-
+}//end namespace
 
 
 #endif

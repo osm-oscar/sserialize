@@ -19,5 +19,4 @@ sserialize::UByteArrayAdapter & GeoMultiPolygon< std::vector<sserialize::spatial
 }
 
 }//end namespace detail
-// 
 }}

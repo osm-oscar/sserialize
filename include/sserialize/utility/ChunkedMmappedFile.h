@@ -7,6 +7,8 @@
 #include <limits>
 
 namespace sserialize {
+namespace detail {
+namespace ChunkedMmappedFile {
 
 class MmappedRegion {
 	uint8_t * m_data;
@@ -23,6 +25,8 @@ public:
 	}
 	
 };
+
+}}//end namespace detail::ChunkedMmappedFile
 
 class ChunkedMmappedFilePrivate;
 

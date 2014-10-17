@@ -119,6 +119,8 @@ public:
 		return m_realIdIndex.at(id);
 	}
 	
+	using T_BASE_CLASS::putInto;
+	
 	virtual void putInto(DynamicBitSet & bitSet) const {
 		ItemIndexPrivate::doPutInto(bitSet);
 	}

@@ -43,8 +43,8 @@ GeoPolygon<sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoPolygon
 	return GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >(d);
 }
 
-}}}
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p) {
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPolygon< std::vector<sserialize::spatial::GeoPoint> > & p) {
 	return p.append(destination);
 }
+
+}}}

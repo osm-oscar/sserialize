@@ -330,16 +330,14 @@ checkFlatTrieEquality(const sserialize::Static::FlatGST & trie, bool checkIndex)
 	return (trie.size() == m_nodeCount) && checkFlatTrieEquality(m_root, "", posInFTrie, trie, checkIndex);
 }
 
-}}//end namespace
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::GeneralizedTrie::FlatTrie::StringEntry & source) {
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const FlatTrie::StringEntry & source) {
 	destination.putVlPackedUint32(source.stringId);
 	destination.putVlPackedUint32(source.strBegin);
 	destination.putVlPackedUint32(source.strLen);
 	return destination;
 }
 
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::GeneralizedTrie::FlatTrie::IndexEntry & source) {
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const FlatTrie::IndexEntry & source) {
 	uint8_t header = 0;
 	std::deque<uint32_t> indexPtrs;
 	if (source.exactValues) {
@@ -383,3 +381,5 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	destination.put(sidxPtrs);
 	return destination;
 }
+
+}}//end namespace

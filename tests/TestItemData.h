@@ -38,11 +38,10 @@ std::set<unsigned int> getItemIdsWithString(const std::string & str, sserialize:
 std::set<unsigned int> getItemIdsWithString(const std::deque<std::string> & strs, sserialize::StringCompleter::QuerryType matchType, const std::deque<TestItemData> & items);
 std::set<unsigned int> getItemIds(const std::deque<TestItemData> & items, ItemIndex idx);
 
-
-}//end namespace
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::TestItemData & data) {
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const TestItemData & data) {
 	return destination << data.id << data.geoId;
 }
+
+}//end namespace
 
 #endif

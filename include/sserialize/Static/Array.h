@@ -22,16 +22,27 @@
 
 namespace sserialize {
 namespace Static {
+namespace detail {
+namespace ArrayCreator {
+	template<typename TValue>
+	struct DefaultStreamingSerializer {
+		void operator()(sserialize::UByteArrayAdapter & dest, const TValue & src) {
+			dest << src;
+		}
+	};
+}}
 
-template<typename TValue>
+template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator::DefaultStreamingSerializer<TValue> >
 class ArrayCreator {
 	UByteArrayAdapter & m_dest;
 	std::vector<OffsetType> m_offsets;
 	OffsetType m_dataLenPtr;
 	OffsetType m_beginOffSet;
+	T_STREAMING_SERIALIZER m_ss;
 public:
 	///create a new Array at tellPutPtr()
-	ArrayCreator(UByteArrayAdapter & destination) : m_dest(destination) {
+	ArrayCreator(UByteArrayAdapter & destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER() ) :
+	m_dest(destination), m_ss(ss) {
 		m_dest.putUint8(3);//version
 		m_dataLenPtr = m_dest.tellPutPtr();
 		m_dest.putOffset(0);
@@ -44,7 +55,7 @@ public:
 	void reserveOffsets(uint32_t size) { m_offsets.reserve(size); }
 	void put(const TValue & value) {
 		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
-		m_dest << value;
+		m_ss(m_dest, value);
 	}
 	void beginRawPut() {
 		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
@@ -143,7 +154,7 @@ public:
 	const UByteArrayAdapter & data() const { return m_data; }
 	
 	template<typename T_ORDER_MAP>
-	static void reorder(const Array & src, const T_ORDER_MAP & order, ArrayCreator<TValue> & dest) {
+	static void reorder(const Array & src, const T_ORDER_MAP & /*order*/, ArrayCreator<TValue> & dest) {
 		for(uint32_t i = 0; i < src.size(); ++i) {
 			dest.beginRawPut();
 			dest.rawPut().put(src.dataAt(i));
@@ -287,30 +298,6 @@ template<>
 UByteArrayAdapter
 Array<UByteArrayAdapter>::at(uint32_t pos) const;
 
-}}//end namespace
-
-template<typename TValue>
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::deque<TValue> & source) {
-	sserialize::Static::ArrayCreator<TValue> dc(destination);
-	dc.reserveOffsets(source.size());
-	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
-		dc.put(source[i]);
-	}
-	dc.flush();
-	return destination;
-}
-
-template<typename TValue>
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::vector<TValue> & source) {
-	sserialize::Static::ArrayCreator<TValue> dc(destination);
-	dc.reserveOffsets(source.size());
-	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
-		dc.put(source[i]);
-	}
-	dc.flush();
-	return destination;
-}
-
 template<typename TValue>
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Array<TValue> & destination) {
 	sserialize::UByteArrayAdapter tmpAdap(source);
@@ -441,5 +428,32 @@ template<typename TValue>
 bool operator>=(const sserialize::Static::Array<TValue> & dequeA, const sserialize::Static::Array<TValue> & dequeB) {
 	return ! (dequeA < dequeB);
 }
+
+}//end namespace Static
+
+template<typename TValue>
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::deque<TValue> & source) {
+	sserialize::Static::ArrayCreator<TValue> dc(destination);
+	dc.reserveOffsets(source.size());
+	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
+		dc.put(source[i]);
+	}
+	dc.flush();
+	return destination;
+}
+
+template<typename TValue, typename T_STREAMING_SERIALIZER = sserialize::Static::detail::ArrayCreator::DefaultStreamingSerializer<TValue> >
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::vector<TValue> & source) {
+	sserialize::Static::ArrayCreator<TValue, T_STREAMING_SERIALIZER> dc(destination);
+	dc.reserveOffsets(source.size());
+	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
+		dc.put(source[i]);
+	}
+	dc.flush();
+	return destination;
+}
+
+
+}//end namespace sserialize
 
 #endif

@@ -113,7 +113,7 @@ public:
 		sserialize::spatial::GeoShape * gw = new sserialize::spatial::GeoWay(pts);
 		std::vector<uint8_t> rd;
 		sserialize::UByteArrayAdapter d(&rd, false);
-		gw->appendWithTypeInfo(d);
+		sserialize::spatial::GeoShape::appendWithTypeInfo(gw, d);
 		d.resetPtrs();
 		sserialize::Static::spatial::GeoShape gs(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("type", gs.type(), sserialize::spatial::GeoShapeType::GS_WAY);
@@ -135,7 +135,7 @@ public:
 			sserialize::spatial::GeoShape * gs = gpoly;
 			std::vector<uint8_t> ds;
 			sserialize::UByteArrayAdapter d(&ds, false);
-			gs->appendWithTypeInfo(d);
+			sserialize::spatial::GeoShape::appendWithTypeInfo(gs, d);
 			d.resetPtrs();
 			
 			sserialize::Static::spatial::GeoShape sgs(d);
@@ -165,7 +165,7 @@ public:
 			gmpo->recalculateBoundary();
 			std::vector<uint8_t> ds;
 			sserialize::UByteArrayAdapter d(&ds, false);
-			gmpo->appendWithTypeInfo(d);
+			sserialize::spatial::GeoShape::appendWithTypeInfo(gmpo, d);
 			d.resetPtrs();
 
 			sserialize::Static::spatial::GeoShape sgs(d);

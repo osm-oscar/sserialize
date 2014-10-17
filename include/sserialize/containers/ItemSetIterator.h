@@ -135,7 +135,7 @@ ItemSetIterator<DataBaseItemType, DataBaseType>::registerSelectableOpFilter(SetO
 
 template<class DataBaseItemType, class DataBaseType>
 std::set< uint16_t >
-ItemSetIterator<DataBaseItemType, DataBaseType>::getCharHints(uint32_t posInQueryString) {
+ItemSetIterator<DataBaseItemType, DataBaseType>::getCharHints(uint32_t /*posInQueryString*/) {
 	return std::set< uint16_t >();
 }
 

@@ -78,7 +78,7 @@ public:
 	void testFlatCorrect() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t) m_checkStrings.size(), m_ht.size());
 		MyT::const_iterator tIt(m_ht.cbegin()), tEnd(m_ht.cend());
-		std::vector<std::string>::const_iterator cIt(m_checkStrings.cbegin()), cEnd(m_checkStrings.cend());
+		std::vector<std::string>::const_iterator cIt(m_checkStrings.cbegin());
 		for(; tIt != tEnd; ++tIt, ++cIt) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", *cIt, m_ht.toStr(tIt->first));
 		}

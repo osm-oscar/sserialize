@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sserialize/utility/printers.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>

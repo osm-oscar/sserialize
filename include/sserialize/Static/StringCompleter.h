@@ -94,6 +94,13 @@ public:
 	}
 };
 
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & d, const StringCompleter::HeaderInfo & src) {
+	d.putUint8(SSERIALIZE_STATIC_STRING_COMPLETER_HEADER_VERSION);
+	d.putUint32(src.type);
+	d.putOffset(src.dataSize);
+	return d;
+}
+
 }
 
 template<>
@@ -108,13 +115,5 @@ struct SerializationInfo< sserialize::Static::StringCompleter::HeaderInfo > {
 };
 
 }//end namespace
-
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & d, const sserialize::Static::StringCompleter::HeaderInfo & src) {
-	d.putUint8(SSERIALIZE_STATIC_STRING_COMPLETER_HEADER_VERSION);
-	d.putUint32(src.type);
-	d.putOffset(src.dataSize);
-	return d;
-}
 
 #endif

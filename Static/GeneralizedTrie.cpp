@@ -554,9 +554,7 @@ uint8_t GeneralizedTrie::getType() {
 	return Static::StringCompleter::T_TRIE;
 }
 
-}}//end namespace
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::GeneralizedTrie::HeaderInfo & src) {
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const GeneralizedTrie::HeaderInfo & src) {
 	dest.putUint8(src.version); //Version
 	dest.putUint32(src.trieOptions);
 	dest.putUint32(src.nodeType);
@@ -566,3 +564,5 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest,
 	dest.putOffset(src.nodeDataSize);
 	return dest;
 }
+
+}}//end namespace

@@ -127,6 +127,8 @@ public:
 	static uint8_t getType();
 };
 
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const GeneralizedTrie::HeaderInfo & src);
+
 }
 
 template<>
@@ -141,9 +143,6 @@ struct SerializationInfo<Static::GeneralizedTrie::HeaderInfo> {
 };
 
 }//end namespace
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const sserialize::Static::GeneralizedTrie::HeaderInfo & src);
-
 
 
 #endif

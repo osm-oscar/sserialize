@@ -1,5 +1,6 @@
 #ifndef SSERIALIZE_TESTS_GEO_COMPLETER_TEST_H
 #define SSERIALIZE_TESTS_GEO_COMPLETER_TEST_H
+#include <sserialize/utility/printers.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
@@ -7,7 +8,6 @@
 #include <sserialize/templated/GeoStringsItemDB.h>
 #include "TestItemData.h"
 #include "datacreationfuncs.h"
-#include <sserialize/utility/printers.h>
 
 namespace sserialize {
 

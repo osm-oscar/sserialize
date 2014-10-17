@@ -140,8 +140,6 @@ public:
 	static inline bool uniteSameResult(ItemIndex::Types t) { return (t & (T_DE | T_RLE_DE | T_WAH | T_SIMPLE)); }
 };
 
-}//end namespace
-
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);
 
 bool operator==(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx);
@@ -180,5 +178,7 @@ bool operator!=(const TCONTAINER & set, const sserialize::ItemIndex & idx) {
 
 
 std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & idx);
+
+}//end namespace
 
 #endif

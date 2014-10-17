@@ -190,9 +190,10 @@ inline int16_t findKeyInArray_uint16(uint8_t * arrayStart, uint16_t len, uint16_
 template<int TSTRIDE>
 inline int32_t findKeyInArray_uint24(uint8_t * arrayStart, uint32_t len, uint32_t key) {
 	uint32_t srcKey;
-	for(int i = 0; i < len; i++) {
+	for(uint32_t i = 0; i < len; ++i) {
 		srcKey = up_u24(&arrayStart[TSTRIDE*i]);
-		if (srcKey == key) return i;
+		if (srcKey == key)
+			return i;
 	}
 	return -1;
 }
@@ -200,7 +201,7 @@ inline int32_t findKeyInArray_uint24(uint8_t * arrayStart, uint32_t len, uint32_
 template<int TSTRIDE>
 inline int32_t findKeyInArray_uint32(uint8_t * arrayStart, uint32_t len, uint32_t key) {
 	uint32_t srcKey;
-	for(int i = 0; i < len; i++) {
+	for(uint32_t i = 0; i < len; i++) {
 		srcKey = up_u32(&arrayStart[TSTRIDE*i]);
 		if (srcKey == key) return i;
 	}

@@ -497,10 +497,6 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 	}
 }
 
-}//end namespace
-
-using namespace sserialize;
-
 bool operator==(const sserialize::ItemIndex & idxA, const sserialize::ItemIndex & idxB) {
 	if (idxA.size() != idxB.size())
 		return false;
@@ -536,3 +532,4 @@ std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & s) {
 	}
 }
 
+}//end namespace

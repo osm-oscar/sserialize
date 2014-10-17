@@ -83,7 +83,7 @@ public:
 	//Access functions for StringsItemDBItem
 	uint32_t strCount(uint32_t itemPos) const { return itemStrings().at(itemPos).size();}
 	uint32_t strIdAt(uint32_t itemPos, uint32_t strPos) const { return itemStrings().at(itemPos).at(strPos);}
-	bool match(uint32_t itemPos, const std::string & str, const sserialize::StringCompleter::QuerryType qt) const {
+	bool match(uint32_t /*itemPos*/, const std::string & /*str*/, const sserialize::StringCompleter::QuerryType /*qt*/) const {
 		return false;
 	}
 

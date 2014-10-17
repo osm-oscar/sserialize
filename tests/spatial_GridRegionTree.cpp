@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sserialize/utility/printers.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
@@ -6,7 +7,6 @@
 #include <sserialize/spatial/GridRegionTree.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
-#include <sserialize/utility/printers.h>
 
 using namespace sserialize;
 
@@ -104,6 +104,9 @@ int main() {
 // 	foo();
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( GridRegionTreeTest<1,1,2,2>::suite() );
+	runner.addTest( GridRegionTreeTest<2,2,4,4>::suite() );
+	runner.addTest( GridRegionTreeTest<2,3,5,7>::suite() );
+	runner.addTest( GridRegionTreeTest<1,1,3,3>::suite() );
 	runner.run();
 	return 0;
 }

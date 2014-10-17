@@ -83,7 +83,7 @@ public:
 		return m_pos >= other.m_pos && m_data == other.m_data;
 	}
 		
-	ReadOnlyAtStlIterator operator++(int offset) {
+	ReadOnlyAtStlIterator operator++(int) {
 		return ReadOnlyAtStlIterator(m_pos++, m_data, m_derefer);
 	}
 	
@@ -92,7 +92,7 @@ public:
 		return *this;
 	}
 	
-	ReadOnlyAtStlIterator operator--(int offset) {
+	ReadOnlyAtStlIterator operator--(int) {
 		return ReadOnlyAtStlIterator(m_pos--, m_data, m_derefer);
 	}
 	

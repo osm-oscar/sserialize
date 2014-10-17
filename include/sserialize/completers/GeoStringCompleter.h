@@ -12,6 +12,7 @@ protected:
 public:
 	GeoStringCompleterPrivate();
 	virtual ~GeoStringCompleterPrivate();
+	using StringCompleterPrivate::complete;
 	virtual ItemIndex complete(const spatial::GeoRect & rect, bool approximate) = 0;
 	std::ostream& printStats(std::ostream& out) const = 0;
 	std::string getName() const = 0;

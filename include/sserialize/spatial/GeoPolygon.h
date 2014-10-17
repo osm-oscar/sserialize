@@ -380,18 +380,15 @@ GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon< std::vector<
 template<>
 GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
 
+///serializes without type info
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPolygon< std::vector<sserialize::spatial::GeoPoint> > & p);
 
 }//end namespace detail
 
 typedef detail::GeoPolygon< std::vector<sserialize::spatial::GeoPoint> > GeoPolygon;
 
-
-}}//end namespace
-
 inline void swap(sserialize::spatial::GeoPolygon & a, sserialize::spatial::GeoPolygon & b) { a.swap(b);}
 
-///serializes without type info
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPolygon & p);
-
+}}//end namespace
 
 #endif

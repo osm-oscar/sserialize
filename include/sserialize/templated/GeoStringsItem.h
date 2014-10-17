@@ -1,5 +1,5 @@
 #ifndef SSERIALIZE_GEO_STRINGS_ITEM_H
-#define SSERIALIZE_GEO_STRINGS__ITEM_H
+#define SSERIALIZE_GEO_STRINGS_ITEM_H
 #include <stdint.h>
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/spatial/GeoShape.h>

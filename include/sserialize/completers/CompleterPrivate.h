@@ -11,10 +11,10 @@ class CompleterPrivate: public RefCountObject {
 public:
 	CompleterPrivate() : RefCountObject() {}
 	virtual ~CompleterPrivate() {}
-	virtual ItemSet<DataBaseItemType, DataBaseType> complete(const std::string& query) {
+	virtual ItemSet<DataBaseItemType, DataBaseType> complete(const std::string& /*query*/) {
 		return ItemSet<DataBaseItemType, DataBaseType>();
 	}
-	virtual ItemSetIterator<DataBaseItemType, DataBaseType> partialComplete(const std::string& query) {
+	virtual ItemSetIterator<DataBaseItemType, DataBaseType> partialComplete(const std::string& /*query*/) {
 		return ItemSetIterator<DataBaseItemType, DataBaseType>();
 	}
 };

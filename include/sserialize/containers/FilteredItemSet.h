@@ -42,7 +42,7 @@ public:
 		m_pos = 0;
 		operator++();
 	}
-	std::set<uint16_t> getCharHints(uint32_t posInQuery) { return std::set<uint16_t>(); }
+	std::set<uint16_t> getCharHints(uint32_t /*posInQuery*/) { return std::set<uint16_t>(); }
 	inline uint32_t cacheSize() const { return m_cache.tellPutPtr()/4; }
 	inline uint32_t maxSize() const { return m_itemSet.size(); }
 	bool valid() const { return m_pos < m_itemSet.size(); }

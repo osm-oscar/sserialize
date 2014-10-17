@@ -145,30 +145,13 @@ GeoRect GeoRect::operator/(const GeoRect & other) const {
 	return GeoRect(myMinLat, myMaxLat, myMinLon, myMaxLon);
 }
 
-}}//end namespace
 
-
-bool operator==(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b) {
-	return sserialize::geoEq(a.minLat(), b.minLat()) && sserialize::geoEq(a.maxLat(), b.maxLat())
-				&& sserialize::geoEq(a.minLon(), b.minLon()) && sserialize::geoEq(a.maxLon(), b.maxLon());
-}
-
-bool operator!=(const sserialize::spatial::GeoRect & a, const sserialize::spatial::GeoRect & b) {
-	return sserialize::geoNeq(a.minLat(), b.minLat()) || sserialize::geoNeq(a.maxLat(), b.maxLat())
-				|| sserialize::geoNeq(a.minLon(), b.minLon()) || sserialize::geoNeq(a.maxLon(), b.maxLon());
-}
-
-
-std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoRect & rect) {
-	return out << "GeoRect[(" << rect.minLat() << ", " << rect.minLon() << "); (" << rect.maxLat() << ", " << rect.maxLon()  << ")]";
-}
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoRect & rect) {
+sserialize::UByteArrayAdapter & operator<<(::sserialize::UByteArrayAdapter & destination, const GeoRect & rect) {
 	return destination << sserialize::spatial::GeoPoint(rect.minLat(), rect.minLon())
 						<< sserialize::spatial::GeoPoint(rect.maxLat(), rect.maxLon());
 }
 
-sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, sserialize::spatial::GeoRect & rect) {
+sserialize::UByteArrayAdapter & operator>>(::sserialize::UByteArrayAdapter & src, GeoRect & rect) {
 	sserialize::Static::spatial::GeoPoint bL, tR;
 	src >> bL >> tR;
 	rect.minLat() = bL.lat();
@@ -177,3 +160,19 @@ sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, 
 	rect.maxLon() = tR.lon();
 	return src;
 }
+
+bool operator==(const GeoRect & a, const GeoRect & b) {
+	return sserialize::geoEq(a.minLat(), b.minLat()) && sserialize::geoEq(a.maxLat(), b.maxLat())
+				&& sserialize::geoEq(a.minLon(), b.minLon()) && sserialize::geoEq(a.maxLon(), b.maxLon());
+}
+
+bool operator!=(const GeoRect & a, const GeoRect & b) {
+	return sserialize::geoNeq(a.minLat(), b.minLat()) || sserialize::geoNeq(a.maxLat(), b.maxLat())
+				|| sserialize::geoNeq(a.minLon(), b.minLon()) || sserialize::geoNeq(a.maxLon(), b.maxLon());
+}
+
+std::ostream & operator<<(std::ostream & out, const GeoRect & rect) {
+	return out << "GeoRect[(" << rect.minLat() << ", " << rect.minLon() << "); (" << rect.maxLat() << ", " << rect.maxLon()  << ")]";
+}
+
+}}//end namespace

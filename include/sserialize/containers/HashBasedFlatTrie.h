@@ -14,6 +14,7 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/DynamicVector.h>
+#include <omp.h>
 
 
 namespace sserialize {
@@ -143,7 +144,7 @@ namespace HashBasedFlatTrie {
 template<typename TValue>
 class HashBasedFlatTrie {
 private:
-	class StringHandler;
+	struct StringHandler;
 public:
 
 	class StaticString {

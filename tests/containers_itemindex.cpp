@@ -95,7 +95,7 @@ bool testIntersect(uint32_t setCount, uint32_t minEqual, uint32_t sizeVariance) 
 	}
 
 	//create the item indices
-	std::deque<uint8_t> codedIndices[sets.size()];
+	std::vector< std::deque<uint8_t> > codedIndices(sets.size());
 	std::vector<ItemIndex> itemIndices;
 	for(size_t i = 0; i < sets.size(); i++) {
 		ItemIndexPrivateRegLine::create(sets[i], codedIndices[i]);
@@ -157,7 +157,7 @@ bool testUnite(uint32_t setCount, uint32_t minEqual, uint32_t maxUnEqual, uint32
 	}
 
 	//create the item indices
-	std::deque<uint8_t> codedIndices[sets.size()];
+	std::vector< std::deque<uint8_t> > codedIndices(sets.size());
 	std::vector<ItemIndex> itemIndices;
 	for(size_t i = 0; i < sets.size(); i++) {
 		ItemIndexPrivateRegLine::create(sets[i], codedIndices[i]);
@@ -309,8 +309,8 @@ int main() {
 	uint32_t indirectTestRuns = 5;
 	
 	
-	std::set<uint32_t> srcNums[indexCount];
-	std::deque<uint8_t> codedNums[indexCount];
+	std::vector< std::set<uint32_t> > srcNums(indexCount);
+	std::vector< std::deque<uint8_t> > codedNums(indexCount);
 	
 	//Fill the first
 	srand( 0 );
@@ -378,8 +378,8 @@ int main() {
 		//create sets:
 		std::deque<uint8_t> indirectCodedIndex;
 		uint32_t indirectCodedOffsets[indirectIndexDepth];
-		std::deque<uint32_t> indirectRealNums[indirectIndexDepth];
-		std::set<uint32_t> indirectSrcNums[indirectIndexDepth];
+		std::vector< std::deque<uint32_t> > indirectRealNums(indirectIndexDepth);
+		std::vector< std::set<uint32_t> > indirectSrcNums(indirectIndexDepth);
 		
 		indirectSrcNums[0] = srcNums[0]; //first will contain everything
 		for(std::set<uint32_t>::iterator jt = srcNums[0].begin(); jt != srcNums[0].end(); jt++) {

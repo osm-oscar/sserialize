@@ -121,8 +121,6 @@ std::ostream & GeoPoint::asString(std::ostream & out) const {
 	return out << "GeoPoint(" << lat() << ", " << lon() << ")";
 }
 
-}}//end namespace
-
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
 	return point.append(destination);
 }
@@ -132,3 +130,5 @@ sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & desti
 	p.lon() = sserialize::spatial::GeoPoint::toDoubleLon(destination.getUint32());
 	return destination;
 }
+
+}}//end namespace

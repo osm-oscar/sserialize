@@ -24,9 +24,9 @@ std::vector<uint32_t> createNumbersSet(uint32_t count) {
 
 std::vector<uint64_t> createNumbersSet64(uint32_t count) {
 	//Fill the first
-	uint32_t rndNum;
-	uint32_t rndMask;
-	uint32_t mask;
+	uint64_t rndNum;
+	uint64_t rndMask;
+	uint64_t mask;
 	std::vector<uint64_t> ret;
 	ret.reserve(count);
 	while(ret.size() < count) {

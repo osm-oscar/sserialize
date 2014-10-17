@@ -78,7 +78,7 @@ public:
 	virtual uint32_t getHeaderbytes() const;
 	virtual uint32_t getRegressionLineBytes() const;
 	virtual uint32_t getIdBytes() const;
-
+	using ItemIndexPrivate::putInto;
 	virtual void putInto(std::vector<uint32_t> & dest) const;
 
 public:

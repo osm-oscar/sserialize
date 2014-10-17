@@ -111,9 +111,9 @@ public:
 	bool checkFlatTrieEquality(const sserialize::Static::FlatGST & trie, bool checkIndex = false);
 };
 
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const FlatTrie::StringEntry & source);
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const FlatTrie::IndexEntry & source);
+
+
 }}//end namespace
-
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::GeneralizedTrie::FlatTrie::StringEntry & source);
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::GeneralizedTrie::FlatTrie::IndexEntry & source);
-
 #endif

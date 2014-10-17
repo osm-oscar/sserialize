@@ -6,6 +6,8 @@
 #include <deque>
 #include <sstream>
 
+namespace std {
+
 template<typename T1, typename T2>
 std::ostream & operator<<(std::ostream & out, const std::pair<T1, T2> & s) {
 	return out << "(" << s.first << ", " << s.second << ")";
@@ -64,6 +66,8 @@ std::ostream & operator<<(std::ostream & out, const std::deque<T> & s) {
 			return out << "]";
 	}
 }
+
+}//end namespace std
 
 namespace sserialize {
 

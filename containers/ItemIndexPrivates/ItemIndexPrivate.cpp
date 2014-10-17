@@ -26,7 +26,7 @@ uint32_t ItemIndexPrivate::uncheckedAt(uint32_t pos) const {
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doUnite(const ItemIndexPrivate * other) const {
-	if (!this || !other)
+	if (!other)
 		return new ItemIndexPrivateEmpty();
 	uint32_t lowestId = std::min<uint32_t>(first(), other->first());
 	uint32_t highestId = std::max<uint32_t>(last(), other->last());
@@ -49,7 +49,7 @@ ItemIndexPrivate * ItemIndexPrivate::doUnite(const ItemIndexPrivate * other) con
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doIntersect(const ItemIndexPrivate * other) const {
-	if (!this || !other)
+	if (!other)
 		return new ItemIndexPrivateEmpty();
 	uint32_t lowestId = std::min<uint32_t>(first(), other->first());
 	uint32_t highestId = std::max<uint32_t>(last(), other->last());
@@ -84,7 +84,7 @@ ItemIndexPrivate * ItemIndexPrivate::doIntersect(const ItemIndexPrivate * other)
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doDifference(const ItemIndexPrivate * other) const {
-	if (!this || !other)
+	if (!other)
 		return new ItemIndexPrivateEmpty();
 	uint32_t highestId = last();
 	uint32_t lowestId = first();
@@ -109,7 +109,7 @@ ItemIndexPrivate * ItemIndexPrivate::doDifference(const ItemIndexPrivate * other
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doSymmetricDifference(const ItemIndexPrivate * other) const {
-	if (!this || !other)
+	if (!other)
 		return new ItemIndexPrivateEmpty();
 	uint32_t lowestId = std::min<uint32_t>(first(), other->first());
 	uint32_t highestId = std::max<uint32_t>(last(), other->last());
