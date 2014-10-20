@@ -95,7 +95,6 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	ItemIndex tmpIdx;
 	sserialize::ProgressInfo info;
 	info.begin(store.size(), "Adding indices from store");
-	//skip the first index as that one is by definition empty and already added
 	for(uint32_t i = 0, s = store.size(); i < s; ++i) {
 		tmp.clear();
 		tmpIdx = store.at(i);
@@ -534,7 +533,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		return 0;
 	}
 	
-	std::cout << "Data section has a size of " << dest.tellPutPtr()-destDataBeginOffset;
+	std::cout << "Data section has a size of " << dest.tellPutPtr()-destDataBeginOffset << std::endl;
 	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);

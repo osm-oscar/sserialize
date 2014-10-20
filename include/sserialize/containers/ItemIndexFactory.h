@@ -16,7 +16,10 @@
 
 namespace sserialize {
 
-/** This class is a storage for multiple ItemIndex. It can create a file suitable for the Static::IndexStore */
+/** This class is a storage for multiple ItemIndex. It can create a file suitable for the Static::IndexStore.
+	Live-Compression is currenty only available for VARUINT.
+	If you want to create a store with HUFFMAN and/or LZO you have to do it afterwards.
+*/
 
 class ItemIndexFactory {
 public:
@@ -67,9 +70,9 @@ public:
 	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }
 	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
 	
-	inline ItemIndex getIndex(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
+	inline ItemIndex indexByOffset(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
 	
-	inline ItemIndex indexAt(uint32_t id) const { return getIndex(m_idToOffsets.at(id));}
+	inline ItemIndex indexById(uint32_t id) const { return indexByOffset(m_idToOffsets.at(id));}
 
 	template<class TSortedContainer>
 	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0);
@@ -141,7 +144,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 	if (mok) {
 		uint64_t idxOf;
 		uint32_t idxId = addIndex(s, &idxOf);
-		sserialize::ItemIndex sIdx = getIndex(idxOf);
+		sserialize::ItemIndex sIdx = indexByOffset(idxOf);
 		if (sIdx != idx) {
 			std::cerr << "Broken index detected in ItemIndexFactory" << std::endl;
 		}

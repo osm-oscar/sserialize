@@ -20,8 +20,8 @@ CPPUNIT_TEST( testSerializedEquality );
 CPPUNIT_TEST( testSameId );
 CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
-CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST( testInitFromStatic );
+CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST_SUITE_END();
 private:
@@ -62,7 +62,7 @@ public:
 	
 	void testIdxFromId() {
 		for(uint32_t i = 0; i < m_sets.size(); ++i) {
-			ItemIndex idx = m_idxFactory.indexAt(m_setIds[i]);
+			ItemIndex idx = m_idxFactory.indexById(m_setIds[i]);
 			CPPUNIT_ASSERT(m_sets[i] == idx);
 		}
 	}
@@ -175,14 +175,17 @@ public:
 		std::vector<uint32_t> remap = idxFactory.insert(sdb);
 		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);
-			sserialize::ItemIndex testIdx = idxFactory.getIndex(remap.at(i));
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("idx", real, testIdx);
+			sserialize::ItemIndex testIdx = idxFactory.indexById(remap.at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("remap id at ", i), i, remap.at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size at ", i), real.size(), testIdx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("idx at ", i), real, testIdx);
 		}
 		
 		remap = idxFactory.insert(sdb);
 		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);
-			sserialize::ItemIndex testIdx = idxFactory.getIndex(remap.at(i));
+			sserialize::ItemIndex testIdx = idxFactory.indexById(remap.at(i));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", real.size(), testIdx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("idx second add", real, testIdx);
 		}
 		
@@ -192,9 +195,10 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-// 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_REGLINE>::suite() );
-// 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
-// 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_RLE_DE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<64, 512, ItemIndex::T_SIMPLE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_REGLINE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_RLE_DE>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<4047, 1001, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
