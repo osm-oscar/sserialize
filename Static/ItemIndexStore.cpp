@@ -24,7 +24,7 @@ OffsetType ItemIndexStore::LZODecompressor::getSizeInBytes() const {
 }
 
 UByteArrayAdapter ItemIndexStore::LZODecompressor::decompress(uint32_t id, const UByteArrayAdapter & src) const {
-	if (m_data.maxCount() < id) {
+	if (m_data.maxCount() >= id) {
 		uint32_t chunkLength = m_data.at(id);
 		//Get a memory view, but we don't write to it, so it's ok
 		const UByteArrayAdapter::MemoryView srcD = src.getMemView(0, src.size());
