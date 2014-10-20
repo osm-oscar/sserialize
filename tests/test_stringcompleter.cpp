@@ -29,9 +29,9 @@ bool testPartialStringCompleterQuerry( const std::deque< std::string >& testStri
 		std::set<uint32_t> realSet( getItemIdsWithString(testStrings[i], mqt, data) );
 		if (strCmpSet != realSet) {
 			strCmp.clearCache();
-			ItemIndex strCmpIdx( strCmp.complete(testStrings[i], mqt) );
-			std::set<uint32_t> strCmpSet( getItemIds(data, strCmpIdx) );
-			std::set<uint32_t> realSet( getItemIdsWithString(testStrings[i], mqt, data) );
+			strCmpIdx = strCmp.partialComplete(testStrings[i], mqt).toItemIndex();
+			strCmpSet = getItemIds(data, strCmpIdx);
+			realSet = getItemIdsWithString(testStrings[i], mqt, data);
 			return false;
 		}
 	}
