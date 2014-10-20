@@ -41,6 +41,7 @@ public:
 	virtual void tearDown() {}
 };
 
+
 template<uint32_t T_ITEM_COUNT, ItemIndexIteratorSetOp::OpTypes T_OP_TYPE>
 class ItemIndexIteratorSetOpTest: public ItemIndexIteratorTest { 
 CPPUNIT_TEST_SUITE( ItemIndexIteratorSetOpTest );
