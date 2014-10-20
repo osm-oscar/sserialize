@@ -22,7 +22,7 @@ m_pos(0),
 m_cur(0)
 {
 	if (idx.size()) {
-		next();
+		m_cur = m_index.at(0);
 	}
 	else {
 		m_pos = 1; //move one beyond
@@ -40,23 +40,28 @@ uint32_t ItemIndexIteratorPrivateItemIndex::operator*() const {
 }
 
 void ItemIndexIteratorPrivateItemIndex::next() {
-	if (valid()) {
+	uint32_t idxSize = m_index.size();
+	if (m_pos+1 < idxSize) {
+		++m_pos;
 		m_cur = m_index.at(m_pos);
-		m_pos++;
 	}
-	else
+	else {
+		m_pos = idxSize;
 		m_cur = 0;
+	}
 }
 
 void ItemIndexIteratorPrivateItemIndex::reset() {
 	m_pos = 0;
 	m_cur = 0;
-	next();
+	if (m_index.size()) {
+		m_cur = m_index.at(0);
+	}
 }
 
 
 bool ItemIndexIteratorPrivateItemIndex::valid() const {
-	return m_pos <= m_index.size();
+	return m_pos < m_index.size();
 }
 
 ItemIndexIteratorPrivate* ItemIndexIteratorPrivateItemIndex::copy() const {
