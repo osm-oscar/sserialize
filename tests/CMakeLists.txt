@@ -59,7 +59,6 @@ ADD_TEST_TARGET_SINGLE(containers_setoptreesimple)
 ADD_TEST_TARGET_SINGLE(containers_multibititerators)
 ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
 ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
-ADD_TEST_TARGET_SINGLE(templated_GenericTrie)
 ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie)
 
 #util
@@ -117,5 +116,8 @@ ADD_TEST_TARGET_SINGLE(unicodetest)
 ADD_TEST_TARGET_SINGLE(util_memusage)
 add_test_target_single(containers_itemindex_file)
 add_test_target_single(containers_setoptree)
+
+#staging
+ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
 
 # ENDIF (CPPUNIT_FOUND)
