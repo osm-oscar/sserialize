@@ -10,11 +10,26 @@
 
 using namespace sserialize;
 
+template<typename T_BASE>
+class MyRefiner {
+	T_BASE m_base;
+	sserialize::spatial::GeoRect m_breakRect;
+public:
+	MyRefiner() : T_BASE() {}
+	template<typename... Args>
+	MyRefiner(Args... args) : m_base(args...), m_breakRect(11.5, 13.0, 6.9375, 8.125) {}
+	~MyRefiner() {}
+	bool operator()(const sserialize::spatial::GeoRect& maxBounds, const std::vector<sserialize::spatial::GeoRegion*>& rId2Ptr, const std::vector<uint32_t> & sortedRegions, sserialize::spatial::GeoGrid & newGrid) const {
+		bool baseRet = m_base(maxBounds, rId2Ptr, sortedRegions, newGrid);
+		return baseRet;
+	}
+};
+
 template<uint32_t T_RINIT_X, uint32_t T_RINIT_Y, uint32_t T_RF_X, uint32_t T_RF_Y>
 class GridRegionTreeTest:public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( GridRegionTreeTest );
 CPPUNIT_TEST( testPointIntersect );
-CPPUNIT_TEST( testOutOfBounds );
+// CPPUNIT_TEST( testOutOfBounds );
 CPPUNIT_TEST_SUITE_END();
 private:
 	SamplePolygonTestData m_data;
@@ -68,15 +83,27 @@ public:
 			m_grIdMap[&(m_data.polys[i].first)] =  m_data.polys[i].second;
 		}
 		if (T_RINIT_X && T_RINIT_Y) {
-			std::vector<spatial::GeoRegion*> regions;
-			regions.reserve(m_grIdMap.size());
-			for(auto & x : m_grIdMap) {
-				regions.push_back(x.first);
+			std::vector<spatial::GeoRegion*> regions(m_data.polys.size(), 0);
+			
+			for (size_t i = 0; i < m_data.polys.size(); ++i) {
+				regions[i] = &(m_data.polys[i].first);
+			}
+			
+			{
+				for(size_t i = 0; i < m_data.polys.size(); ++i) {
+					if (m_data.polys[i].second == 3) {
+						if (!regions[3]->intersects(sserialize::spatial::GeoRect(10, 13, 5.75, 8.125))) {
+							std::cerr << "Self-test failed" << std::endl;
+						}
+					}
+				}
 			}
 			spatial::GeoRect initialRect = spatial::GeoShape::bounds(regions.cbegin(), regions.cend());
-			spatial::detail::GridRegionTree::FixedSizeRefiner refiner(0.1, 0.1, T_RF_X, T_RF_Y);
+// 			spatial::detail::GridRegionTree::FixedSizeRefiner refiner(0.1, 0.1, T_RF_X, T_RF_Y);
+			MyRefiner<spatial::detail::GridRegionTree::FixedSizeRefiner> refiner(0.1, 0.1, T_RF_X, T_RF_Y);
 			m_grt = spatial::GridRegionTree(spatial::GeoGrid(initialRect, T_RINIT_X, T_RINIT_Y), regions.begin(), regions.end(), refiner);
 		}
+		
 	}
 
 	virtual void tearDown() {}

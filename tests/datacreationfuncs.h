@@ -50,7 +50,7 @@ struct SamplePolygonTestData {
 
 
 
-typedef enum { POLY_A=0, POLY_B=1, POLY_C=2, POLY_D=3, POLY_E=4, POLY_F=5, POLY_G=6, POLY_H=7, POLY_I=8, POLY_J=9} HandSampledPolys;
+typedef enum { POLY_A=0, POLY_B=1, POLY_C=2, POLY_D=3, POLY_E=4, POLY_F=5, POLY_G=6, POLY_H=7, POLY_I=8, POLY_J=9, POLY_COUNT=10} HandSampledPolys;
 void createHandSamplePolygons(SamplePolygonTestData & data);
 
 

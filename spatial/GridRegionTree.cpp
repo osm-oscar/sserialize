@@ -5,6 +5,13 @@ const uint32_t sserialize::spatial::GridRegionTree::NullNodePtr = 0xFFFFFFFF;
 namespace sserialize {
 namespace spatial {
 
+detail::GridRegionTree::FixedSizeRefiner::FixedSizeRefiner() :
+m_minLatStep(1.0),
+m_minLonStep(1.0),
+m_latCount(2),
+m_lonCout(2)
+{}
+
 detail::GridRegionTree::FixedSizeRefiner::FixedSizeRefiner(double minLatStep, double minLonStep, uint32_t latCount, uint32_t lonCount) :
 m_minLatStep(minLatStep),
 m_minLonStep(minLonStep),

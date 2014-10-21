@@ -74,6 +74,7 @@ private:
 	uint32_t m_latCount;
 	uint32_t m_lonCout;
 public:
+	FixedSizeRefiner();
 	FixedSizeRefiner(double minLatStep, double minLonStep, uint32_t latCount, uint32_t lonCount);
 	~FixedSizeRefiner() {}
 	bool operator()(const sserialize::spatial::GeoRect& maxBounds, const std::vector<sserialize::spatial::GeoRegion*>& rId2Ptr, const std::vector<uint32_t> & sortedRegions, sserialize::spatial::GeoGrid & newGrid) const;
@@ -270,15 +271,16 @@ uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unorde
 
 template<typename T_OUTPUT_ITERATOR>
 void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERATOR idsIt) const {
-	if (!m_nodes.size())
+	if (!m_nodes.size() || !m_nodeGrids[0].contains(p))
 		return;
 	uint32_t nodePtr = 0;
 	while (nodePtr != NullNodePtr) {
 		const Node & n = m_nodes[nodePtr];
 		if (n.type() == Node::NT_INTERNAL) {
-			const GeoGrid & grid = m_nodeGrids[n.internal().gridPtr];
-			if (!grid.contains(p))
-				return;
+			//if we're in this cell, then our test point intersects it
+			//first do the check for enclosing polys since the grid associated with this cell may be smaller than the cell as defined by the parent of this npde
+			//this may happen, if a larger polygon encloses this cell and has therefore been removed from the list of polys that need refinement,
+			//which in turn might result in a reduced grid (depends on the used refiner)
 			if (n.internal().enclosedCount) {
 				std::vector<uint32_t>::const_iterator it(m_leafInfo.cbegin()+n.internal().valueBegin);
 				std::vector<uint32_t>::const_iterator end(it+n.internal().enclosedCount);
@@ -287,6 +289,10 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERA
 					++idsIt;
 				}
 				m_cumulatedResultSetSize += n.internal().enclosedCount;
+			}
+			const GeoGrid & grid = m_nodeGrids[n.internal().gridPtr];
+			if (!grid.contains(p)) {
+				return;
 			}
 			nodePtr = m_nodePtr[n.internal().childrenBegin + grid.select(p).tile];
 		}
