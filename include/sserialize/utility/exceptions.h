@@ -16,6 +16,11 @@ public:
 	Exception(const std::string & msg) : m_msg(msg) {}
 	virtual ~Exception() throw() {}
 	virtual const char* what() const throw() { return m_msg.c_str(); }
+	void appendMessage(const std::string & str) {
+		m_msg.reserve(m_msg.size()+1+str.size());
+		m_msg += "\n";
+		m_msg += str;
+	}
 };
 
 class VersionMissMatchException: public Exception {
@@ -25,7 +30,7 @@ public:
 	VersionMissMatchException(const std::string & what, uint32_t want, uint32_t have) :
 	Exception(what), m_wantVersion(want), m_haveVersion(have) {
 		std::stringstream ss;
-		ss << what << ": want version " << want << " but have version " << have;
+		ss << "VersionMissMatchException (want=" << want << ", have=" << have << "): " << what;
 		setMsg(ss.str());
 	}
 	uint32_t wantVersion() const { return m_wantVersion; }
