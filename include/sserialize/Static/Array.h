@@ -161,6 +161,14 @@ public:
 			dest.endRawPut();
 		}
 	}
+	std::ostream & printStats(std::ostream & out) const {
+		out << "sserialize::Static::Array::stats--BEGIN" << std::endl;
+		out << "size=" << size() << std::endl;
+		out << "data size=" << m_data.size() << std::endl;
+		out << "total size=" << getSizeInBytes() << std::endl;
+		out << "sserialize::Static::Array::stats--END" << std::endl;
+		return out;
+	}
 };
 
 namespace detail {

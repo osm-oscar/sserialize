@@ -183,6 +183,16 @@ uint8_t MultiVarBitArray::bitCount(uint32_t pos) const {
 	return priv()->bitCount(pos);
 }
 
+
+std::ostream & MultiVarBitArray::printStats(std::ostream & out) const {
+	out << "sserialize::MultiVarBitArray::stats--BEGIN" << std::endl;
+	out << "size=" << size() << std::endl;
+	out << "bits per entry=" << totalBitSum() << std::endl;
+	out << "fields per entry=" << bitConfigCount() << std::endl;
+	out << "sserialize::MultiVarBitArray::stats--END" << std::endl;
+	return out;
+}
+
 const UByteArrayAdapter& MultiVarBitArray::data() const {
 	return priv()->data();
 }

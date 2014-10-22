@@ -70,6 +70,9 @@ public:
 	virtual bool count(const std::string & str, bool prefixMatch) const override {
 		return m_trie.find(str.cbegin(), str.cend(), prefixMatch).valid();
 	}
+	virtual std::ostream & printStats(std::ostream & out) const override {
+		return m_trie.printStats(out);
+	}
 	const TrieType & trie() const { return m_trie; }
 	Node getRootNode() const { return m_trie.getRootNode(); }
 };

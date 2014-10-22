@@ -13,6 +13,7 @@ public:
 	virtual ~UnicodeStringMap() {}
 	virtual TValue at(const std::string & str, bool prefixMatch) const = 0;
 	virtual bool count(const std::string & str, bool prefixMatch) const = 0;
+	virtual std::ostream & printStats(std::ostream & out) const = 0;
 };
 
 template<typename TValue>
@@ -26,6 +27,9 @@ public:
 	}
 	virtual bool count(const std::string & /*str*/, bool /*prefixMatch*/) const override {
 		return false;
+	}
+	virtual std::ostream & printStats(std::ostream & out) const {
+		return out << "sserialize::UnicodeStringMap: Empty string map" << std::endl;
 	}
 };
 
@@ -47,6 +51,7 @@ public:
 	virtual ~UnicodeStringMap() {}
 	TValue at(const std::string & str, bool prefixMatch) const { return priv()->at(str, prefixMatch); }
 	bool count(const std::string & str, bool prefixMatch) const { return priv()->count(str, prefixMatch); }
+	std::ostream & printStats(std::ostream & out) const { return priv()->printStats(out); }
 };
 
 }//end namespace

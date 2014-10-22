@@ -162,5 +162,13 @@ uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 	return npos;
 }
 
+std::ostream& FlatTrieBase::printStats(std::ostream& out) const {
+	out << "sserialize::Static::UnicodeTrie::FlatTrieBase::stats--BEGIN" << std::endl;
+	out << "string data size=" << m_strData.size() << std::endl;
+	m_trie.printStats(out);
+	out << "sserialize::Static::UnicodeTrie::FlatTrieBase::stats--END" << std::endl;
+	return out;
+}
+
 
 }}}//end namespace

@@ -75,6 +75,8 @@ public:
 	uint32_t bitConfigCount() const;
 	uint8_t bitCount(uint32_t pos) const;
 
+	std::ostream & printStats(std::ostream & out) const;
+
 // 	static MultiVarBitArray create(const std::vector< uint8_t >& bitConfig, sserialize::UByteArrayAdapter& destination, uint32_t initCount);
 	static UByteArrayAdapter::OffsetType minStorageBytes(const std::vector<uint8_t> & bitConfig, const uint32_t count);
 	static UByteArrayAdapter::OffsetType minStorageBytes(const uint32_t sum, const sserialize::UByteArrayAdapter::OffsetType count);

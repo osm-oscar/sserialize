@@ -127,6 +127,7 @@ public:
 	inline std::string strAt(uint32_t pos) const { return strAt(sstr(pos)); }
 	uint32_t find(const std::string & str, bool prefixMatch) const;
 	Node root() const { return Node(0, size(), this); }
+	std::ostream & printStats(std::ostream & out) const;
 };
 
 /** Layout:
@@ -174,6 +175,9 @@ public:
 	virtual bool count(const std::string & str, bool prefixMatch) const override {
 		return m_trie.find(str, prefixMatch) != FlatTrieBase::npos;
 	}
+	virtual std::ostream & printStats(std::ostream & out) const override {
+		return m_trie.printStats(out);
+	}
 };
 
 template<typename TValue>
@@ -196,6 +200,14 @@ FlatTrie<TValue>::at(const std::string & str, bool prefixMatch) const {
 	return TValue();
 }
 
+template<typename TValue>
+std::ostream & FlatTrie<TValue>::printStats(std::ostream & out) const {
+	out << "sserialize::Static::UnicodeTrie::FlatTrie::stats--BEGIN" << std::endl;
+	FlatTrieBase::printStats(out);
+	m_values.printStats(out);
+	out << "sserialize::Static::UnicodeTrie::FlatTrie::stats--END" << std::endl;
+	return out;
+}
 
 }}}//end namespace
 
