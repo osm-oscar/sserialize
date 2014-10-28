@@ -372,7 +372,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	}
 }
 
-bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, const sserialize::Static::spatial::GeoHierarchy::Region & sr, const sserialize::Static::ItemIndexStore & idxStore) const {
+bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, const sserialize::Static::spatial::GeoHierarchy::Region & sr, const sserialize::Static::ItemIndexStore * idxStore) const {
 	bool ok = true;
 	if (r.children.size() != sr.childrenSize()) {
 		std::cout << "Childern.size of region " << i << " differ" << std::endl;
@@ -403,17 +403,17 @@ bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, cons
 		}
 	}
 	
-	if (idxStore.at(sr.cellIndexPtr()) != r.cells) {
+	if (idxStore && idxStore->at(sr.cellIndexPtr()) != r.cells) {
 		std::cout << "cell-list of region " << i << " differs" << std::endl;
 		return false;
 	}
-	{
+	if (idxStore) {
 		std::set<uint32_t> tmp;
 		for(uint32_t cellId : r.cells) {
 			const Cell & c = m_cells.at(cellId);
 			tmp.insert(c.items.cbegin(), c.items.cend());
 		}
-		if (idxStore.at(sr.itemsPtr()) != tmp) {
+		if (idxStore->at(sr.itemsPtr()) != tmp) {
 			std::cout << "Items of region " << i << " differs" << std::endl;
 			ok = false;
 		}
@@ -421,7 +421,7 @@ bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, cons
 	return ok;
 }
 
-bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh, const sserialize::Static::ItemIndexStore & idxStore) const {
+bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy& sgh, const sserialize::Static::ItemIndexStore* idxStore) const {
 	if (m_regions.size() != sgh.regionSize()) {
 		std::cout << "Region size missmatch" << std::endl;
 		return false;
@@ -466,7 +466,7 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy 
 				ok = false;
 			}
 		}
-		if (idxStore.at(sc.itemPtr()) != c.items) {
+		if (idxStore && idxStore->at(sc.itemPtr()) != c.items) {
 			std::cout << "ItemIndex of cell " << i << " differs" << std::endl;
 			ok = false;
 		}
