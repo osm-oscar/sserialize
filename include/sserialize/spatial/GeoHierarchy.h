@@ -39,6 +39,9 @@ private:
 	void getAncestors(uint32_t regionId, T_SET_CONTAINER & out) const;
 	//returned parents are sorted
 	void splitCellParents(uint32_t cellId, std::vector<uint32_t> & directParents, std::vector<uint32_t> & remainingParents) const;
+	//check functions
+	bool regionEqTest(uint32_t i, const GeoHierarchy::Region & r, const sserialize::Static::spatial::GeoHierarchy::Region & sr, const sserialize::Static::ItemIndexStore & idxStore) const;
+
 public:
 	GeoHierarchy() {}
 	virtual ~GeoHierarchy() {}
@@ -56,7 +59,7 @@ public:
 	///data structure has to be consistent before using this
 	UByteArrayAdapter append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory, bool fullItemsIndex = true) const;
 	void printStats(std::ostream & out) const;
-	bool testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh) const;
+	bool testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh, const sserialize::Static::ItemIndexStore & idxStore) const;
 	///get the regions in level order, where the level of a region is defined by the longest path from root to it self
 	std::vector<uint32_t> getRegionsInLevelOrder() const;
 	///@return first = id, second = size

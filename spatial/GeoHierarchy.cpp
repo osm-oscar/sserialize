@@ -367,7 +367,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	}
 }
 
-bool regionEqTest(uint32_t i, const GeoHierarchy::Region & r, const sserialize::Static::spatial::GeoHierarchy::Region & sr) {
+bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, const sserialize::Static::spatial::GeoHierarchy::Region & sr, const sserialize::Static::ItemIndexStore & idxStore) const {
 	bool ok = true;
 	if (r.children.size() != sr.childrenSize()) {
 		std::cout << "Childern.size of region " << i << " differ" << std::endl;
@@ -397,10 +397,26 @@ bool regionEqTest(uint32_t i, const GeoHierarchy::Region & r, const sserialize::
 			ok = false;
 		}
 	}
+	
+	if (idxStore.at(sr.cellIndexPtr()) != r.cells) {
+		std::cout << "cell-list of region " << i << " differs" << std::endl;
+		return false;
+	}
+	{
+		std::set<uint32_t> tmp;
+		for(uint32_t cellId : r.cells) {
+			const Cell & c = m_cells.at(cellId);
+			tmp.insert(c.items.cbegin(), c.items.cend());
+		}
+		if (idxStore.at(sr.itemsPtr()) != tmp) {
+			std::cout << "Items of region " << i << " differs" << std::endl;
+			ok = false;
+		}
+	}
 	return ok;
 }
 
-bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh) const {
+bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy & sgh, const sserialize::Static::ItemIndexStore & idxStore) const {
 	if (m_regions.size() != sgh.regionSize()) {
 		std::cout << "Region size missmatch" << std::endl;
 		return false;
@@ -409,19 +425,21 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy 
 		std::cout << "Cell size missmatch" << std::endl;
 		return false;
 	}
+	bool allOk = true;
 	
 	{
-		if (!regionEqTest(std::numeric_limits<uint32_t>::max(), m_rootRegion, sgh.rootRegion())) {
+		if (!regionEqTest(std::numeric_limits<uint32_t>::max(), m_rootRegion, sgh.rootRegion(), idxStore)) {
 			std::cout << "Root region missmatch" << std::endl;
-			return false;
+			allOk = false;
 		}
 	}
-	
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions.at(i);
 		sserialize::Static::spatial::GeoHierarchy::Region sr = sgh.region(i);
-		if (!regionEqTest(i, r, sr))
-			return false;
+		if (!regionEqTest(i, r, sr, idxStore)) {
+			allOk = false;
+			break;
+		}
 	}
 	//cells
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
@@ -432,16 +450,28 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy 
 			std::cout << "parent.size of cell " << i << " differ" << std::endl;
 			ok = false;
 		}
+		std::vector<uint32_t> tmp(c.parents.size());
 		for(uint32_t j = 0, js = c.parents.size(); j < js; ++j) {
-			if (c.parents.at(j) != sc.parent(j)) {
+			tmp[j] = sc.parent(j);
+		}
+		std::sort(tmp.begin(), tmp.end());
+		for(uint32_t j = 0, js = c.parents.size(); j < js; ++j) {
+			if (c.parents.at(j) != tmp.at(j)) {
 				std::cout << "parent " << j << " of cell " << i << " differs" << std::endl;
 				ok = false;
 			}
 		}
-		if (!ok)
-			return false;
+		if (idxStore.at(sc.itemPtr()) != c.items) {
+			std::cout << "ItemIndex of cell " << i << " differs" << std::endl;
+			ok = false;
+		}
+
+		if (!ok) {
+			allOk = false;
+			break;
+		}
 	}
-	return true;
+	return allOk;
 }
 
 std::vector<uint32_t> GeoHierarchy::getRegionsInLevelOrder() const {
@@ -484,15 +514,18 @@ std::vector<uint32_t> treeMerge(const std::vector< const std::vector<uint32_t>* 
 
 std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const {
 	std::vector< std::pair<uint32_t, uint32_t> > res;
-	res.resize(m_regions.size(), std::pair<uint32_t, uint32_t>(0,0));
-	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
-		const Region & r = m_regions[i];
-		std::vector< const std::vector<uint32_t> * > tmp;
-		tmp.reserve(r.cells.size());
-		for(uint32_t c : r.cells) {
+	std::vector< const std::vector<uint32_t> * > tmp;
+	std::vector<uint32_t> items;
+	res.resize(m_regions.size()+1, std::pair<uint32_t, uint32_t>(0,0));
+	//if i == m_regions.size() then calculate the index for the rootRegion
+	for(uint32_t i = 0, s = m_regions.size(); i <= s; ++i) {
+		const Region * r = (i < s ? &m_regions[i] : &m_rootRegion);
+		tmp.clear();
+		tmp.reserve(r->cells.size());
+		for(uint32_t c : r->cells) {
 			tmp.push_back(&cell(c).items);
 		}
-		std::vector<uint32_t> items;
+		items.clear();
 		if (tmp.size()) {
 			items = treeMerge(tmp, 0, tmp.size()-1);
 		}
