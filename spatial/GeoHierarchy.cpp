@@ -198,6 +198,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	uint32_t curPtrOffset = 0;
 
 	std::vector<uint32_t> cellListIndexPtrs(m_regions.size(), 0);
+	uint32_t rootRegionCellListIndexPtr;
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions[i];
 		bool ok = true;
@@ -210,6 +211,8 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		cellListIndexPtrs[i] = cellListIndexPtr;
 		allOk = allOk && ok;
 	}
+	rootRegionCellListIndexPtr = idxFactory.addIndex(m_rootRegion.cells);
+	mrdCellListIndexPtr = std::max<uint32_t>(mrdCellListIndexPtr, rootRegionCellListIndexPtr);
 	curPtrOffset += m_rootRegion.children.size();
 	mrdParentsOffset = std::max<uint32_t>(mrdParentsOffset, m_rootRegion.children.size());
 	mrdChildrenBegin = curPtrOffset;
@@ -221,12 +224,12 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		uint32_t & mrdFullItemsPtr = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR];
 		uint32_t & mrdFullItemsCount = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT];
 		for(std::vector< std::pair<uint32_t, uint32_t> >::const_iterator it(fullItemIndexInfo.cbegin()), end(fullItemIndexInfo.cend()); it != end; ++it) {
-			mrdFullItemsPtr = std::max(mrdFullItemsPtr, it->second);
+			mrdFullItemsPtr = std::max(mrdFullItemsPtr, it->first);
 			mrdFullItemsCount = std::max(mrdFullItemsCount, it->second);
 		}
 	}
 	else {
-		fullItemIndexInfo.resize(m_regions.size(), std::pair<uint32_t, uint32_t>(0,0));
+		fullItemIndexInfo.resize(m_regions.size()+1, std::pair<uint32_t, uint32_t>(0,0));
 	}
 	
 	std::vector<uint8_t> bitConfig;
@@ -252,7 +255,9 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 			curPtrOffset += r.children.size() + r.parents.size();
 		}
 		//append the root region region
-		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, 0);
+		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR, fullItemIndexInfo.back().first);
+		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT, fullItemIndexInfo.back().second);
+		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, rootRegionCellListIndexPtr);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE, sserialize::spatial::GS_NONE);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, m_rootRegion.id);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN, curPtrOffset);
