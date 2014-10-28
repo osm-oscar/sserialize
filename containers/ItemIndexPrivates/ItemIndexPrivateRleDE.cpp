@@ -459,6 +459,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 			while (aRle) {
 				creator.push_back(aId);
 				aId += aVal;
+				++aIndexIt;
 				--aRle;
 			}
 		}
@@ -476,6 +477,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 			while (bRle) {
 				creator.push_back(bId);
 				bId += bVal;
+				++bIndexIt;
 				--bRle;
 			}
 		}
