@@ -408,10 +408,12 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 		std::vector<ItemIndex> idcs;
 		ItemIndex cellIdx = store.at(r.cellIndexPtr());
 		for(uint32_t j = 0, sj = cellIdx.size(); j < sj; ++j) {
-			idcs.push_back( store.at( this->cell(cellIdx.at(j)).itemPtr() ) );
+			sserialize::ItemIndex cellItemsIdx(store.at( this->cell(cellIdx.at(j)).itemPtr() ));
+			idcs.push_back(cellItemsIdx);
 		}
 		ItemIndex mergedIdx = ItemIndex::unite(idcs);
-		if (mergedIdx != store.at( r.itemsPtr() )) {
+		ItemIndex regionItems = store.at( r.itemsPtr() );
+		if (mergedIdx != regionItems) {
 			std::cout << "Merged cell idx does not match region index for region " << i << std::endl;
 			return false;
 		}
