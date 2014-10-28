@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/utilcontainerfuncs.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/utility/types.h>
@@ -102,6 +103,11 @@ public:
 
 template<class TSortedContainer>
 uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, OffsetType * indexOffset) {
+	#if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
+	if (!std::is_sorted(idx.cbegin(), idx.cend()) && sserialize::is_strong_monotone_ascending(idx.cbegin(), idx.cend())) {
+		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted/and or non-strong-monotone index");
+	}
+	#endif
 	bool mok = false;
 	std::vector<uint8_t> s;
 	if (m_type == ItemIndex::T_REGLINE) {
