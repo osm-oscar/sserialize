@@ -118,6 +118,23 @@ public:
 			ss << "id at " << count;
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
 		}
+		{
+			std::vector<uint32_t> src[3] = { std::vector<uint32_t>{1,2,3,5,7}, std::vector<uint32_t>{5}, std::vector<uint32_t>{0,2,3,4,5,7} };
+			UByteArrayAdapter dest[3] = { UByteArrayAdapter(new std::vector<uint8_t>(), true), UByteArrayAdapter(new std::vector<uint8_t>(), true), UByteArrayAdapter(new std::vector<uint8_t>(), true)};
+			for(uint32_t i=0; i < 3; ++i) {
+				ItemIndexPrivateRleDE::create(src[i], dest[i]);
+			}
+			std::vector<ItemIndex> idcs{ItemIndex(dest[0], ItemIndex::T_RLE_DE), ItemIndex(dest[1], ItemIndex::T_RLE_DE), ItemIndex(dest[2], ItemIndex::T_RLE_DE)};
+			ItemIndex unitedIdx = ItemIndex::unite(idcs);
+			ItemIndex unitedReal(std::vector<uint32_t>{0,1,2,3,4,5,7});
+	
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special 0+2 is broken", unitedReal, idcs[0] + idcs[2]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special 0+1 is broken", idcs[0], idcs[0] + idcs[1]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special manual is broken", unitedReal, (idcs[0] + idcs[2]) + idcs[1]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special manual like ItemIndex::unite is broken", unitedReal, (idcs[0] + idcs[1]) + idcs[2]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special is broken", unitedReal, unitedIdx);
+		}
+		
 	}
 	
 	void testIntersect() {
