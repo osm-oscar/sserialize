@@ -79,10 +79,6 @@ void Log::sbufCmd(Log::CmdTypes t) {
 }
 
 
-std::string toString(bool value) {
-	return (value ? "true" : "false");
-}
-
 }//End namespace
 
 sserialize::Log& operator<<(sserialize::Log& log, const std::string & msg) {

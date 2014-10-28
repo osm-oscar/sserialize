@@ -103,7 +103,7 @@ __NAME_OF_TYPE_SPECIALICATION(std::string);
 
 inline void toString(std::stringstream & /*ss*/) {}
 
-std::string toString(bool value);
+inline std::string toString(bool value) { return (value ? "true" : "false"); }
 
 template<typename PrintType>
 void toString(std::stringstream & ss, PrintType t) {
