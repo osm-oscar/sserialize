@@ -19,8 +19,8 @@ protected:
 public:
 	//setup hft with strings in m_testStrings
 	virtual void setUp() {
-		for(const std::string & str : m_testStrings) {
-			m_ht.insert(str);
+		for(std::size_t i(0), s(m_testStrings.size()); i < s; ++i) {
+			m_ht[m_ht.insert(m_testStrings[i])] = i; 
 		}
 		m_ht.finalize();
 	}
@@ -162,6 +162,22 @@ public:
 		}
 	}
 	
+	void testStaticSearch() {
+		if (!m_testStrings.size())
+			return;
+
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
+		MyST sft(hftOut);
+		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
+		
+		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
+			const std::string & str = m_testStrings[i];
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("broken for" + str, i, sft.at(str, false));
+		}
+
+	}
+	
 };
 
 class TestHashBasedFlatTrieSimple: public TestHashBasedFlatTrieBase {
@@ -171,6 +187,7 @@ CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST( testTrieEquality );
+CPPUNIT_TEST( testStaticSearch );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieSimple() {
@@ -207,6 +224,7 @@ CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
+CPPUNIT_TEST( testStaticSearch );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieFile() {
