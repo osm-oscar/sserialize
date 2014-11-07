@@ -9,10 +9,35 @@
 
 const char * inFileName = 0;
 
+struct ValueType {
+	uint32_t v;
+	ValueType() : v(std::numeric_limits<uint32_t>::max()) {}
+	ValueType(uint32_t v) : v(v) {}
+	ValueType(const ValueType & other) : v(other.v) {}
+	ValueType(const sserialize::UByteArrayAdapter & d) : v(d.get<uint32_t>(0)) {}
+	operator uint32_t() const { return v; }
+	ValueType & operator=(uint32_t v) {
+		this->v = v;
+		return *this;
+	}
+	ValueType & operator=(ValueType other) {
+		this->v = other.v;
+		return *this;
+	}
+	bool operator==(ValueType other) const { return v == other.v; }
+	bool operator!=(ValueType other) const { return v != other.v; }
+	sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest) const {
+		return dest << v;
+	}
+	sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & dest) {
+		return dest >> v;
+	}
+};
+
 class TestHashBasedFlatTrieBase: public CppUnit::TestFixture {
 protected:
-	typedef sserialize::HashBasedFlatTrie<uint32_t> MyT;
-	typedef sserialize::Static::UnicodeTrie::FlatTrie<uint32_t> MyST;
+	typedef sserialize::HashBasedFlatTrie<ValueType> MyT;
+	typedef sserialize::Static::UnicodeTrie::FlatTrie<ValueType> MyST;
 	MyT m_ht;
 	std::vector<std::string> m_testStrings;
 	std::vector<std::string> m_checkStrings;
@@ -26,18 +51,19 @@ public:
 	}
 	
 	void testTrieEquality() {
-		typedef sserialize::UnicodeTrie::Trie<uint32_t> TrieTrie;
+		typedef sserialize::UnicodeTrie::Trie<ValueType> TrieTrie;
 		struct TrieNodeState {
 			std::string str;
+			ValueType v;
 			TrieTrie::Node::const_iterator childrenIt;
 			TrieTrie::Node::const_iterator childrenEnd;
-			TrieNodeState(const std::string & str, const TrieTrie::Node::const_iterator & childrenBegin, const TrieTrie::Node::const_iterator & childrenEnd) :
-			str(str), childrenIt(childrenBegin), childrenEnd(childrenEnd) {}
+			TrieNodeState(const std::string & str, ValueType v, const TrieTrie::Node::const_iterator & childrenBegin, const TrieTrie::Node::const_iterator & childrenEnd) :
+			str(str), v(v), childrenIt(childrenBegin), childrenEnd(childrenEnd) {}
 		};
 
 		TrieTrie trie;
-		for(const std::string & str : m_testStrings) {
-			trie.insert(str.cbegin(), str.cend());
+		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
+			trie.at(m_testStrings[i].begin(), m_testStrings[i].end()) = i;
 		}
 		if (!m_testStrings.size())
 			return;
@@ -47,7 +73,7 @@ public:
 		TrieTrie::NodePtr tnode = trie.root();
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("root node", tnode->str(), m_ht.toStr(hnode->str()));
 		hNodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(hnode->begin(), hnode->end()) );
-		tNodeIts.push_back(TrieNodeState(tnode->str(), tnode->cbegin(), tnode->cend()));
+		tNodeIts.push_back(TrieNodeState(tnode->str(), tnode->value(), tnode->cbegin(), tnode->cend()));
 		while(hNodeIts.size() && tNodeIts.size()) {
 			//ascend
 			if (tNodeIts.back().childrenIt == tNodeIts.back().childrenEnd) {
@@ -68,9 +94,10 @@ public:
 			++tNIt;
 			//insert children
 			hNodeIts.push_back( std::pair<MyT::Node::const_iterator, MyT::Node::const_iterator>(hnode->begin(), hnode->end()) );
-			tNodeIts.push_back( TrieNodeState(tNodeIts.back().str+tnode->str(), tnode->cbegin(), tnode->cend()) );
+			tNodeIts.push_back( TrieNodeState(tNodeIts.back().str+tnode->str(), tnode->value(), tnode->cbegin(), tnode->cend()) );
 			//check the node
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string",tNodeIts.back().str , m_ht.toStr(hnode->str()));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node string", tNodeIts.back().str , m_ht.toStr(hnode->str()));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("node value at " + tNodeIts.back().str, tNodeIts.back().v, hnode->value());
 		}
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("node count", tNodeIts.size(), hNodeIts.size());
 	}
@@ -173,7 +200,7 @@ public:
 		
 		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
 			const std::string & str = m_testStrings[i];
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, i, sft.at(str, false));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, ValueType(i), sft.at(str, false));
 		}
 	}
 	
@@ -241,7 +268,6 @@ public:
 		std::sort(m_testStrings.begin(), m_testStrings.end());
 		m_testStrings.resize(std::unique(m_testStrings.begin(), m_testStrings.end())-m_testStrings.begin());
 		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
-		
 	}
 
 	void testSpecialStaticSearch() {
@@ -260,7 +286,7 @@ public:
 			if (i != v) {
 				std::string sstr = sft.strAt(pos);
 			}
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, i, sft.at(str, false));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, ValueType(i), sft.at(str, false));
 		}
 		
 		std::string str = "johnson";
