@@ -173,9 +173,8 @@ public:
 		
 		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
 			const std::string & str = m_testStrings[i];
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("broken for" + str, i, sft.at(str, false));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, i, sft.at(str, false));
 		}
-
 	}
 	
 };
@@ -225,6 +224,7 @@ CPPUNIT_TEST( testNode );
 CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST( testStaticSearch );
+CPPUNIT_TEST( testSpecialStaticSearch );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieFile() {
@@ -238,20 +238,47 @@ public:
 			std::getline(inFile, str);
 			m_testStrings.push_back(str);
 		}
+		std::sort(m_testStrings.begin(), m_testStrings.end());
+		m_testStrings.resize(std::unique(m_testStrings.begin(), m_testStrings.end())-m_testStrings.begin());
 		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
 		
 	}
+
+	void testSpecialStaticSearch() {
+		if (!m_testStrings.size())
+			return;
+
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
+		MyST sft(hftOut);
+		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
+		
+		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
+			const std::string & str = m_testStrings[i];
+			uint32_t pos = sft.find(str, false);
+			uint32_t v = sft.at(pos);
+			if (i != v) {
+				std::string sstr = sft.strAt(pos);
+			}
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, i, sft.at(str, false));
+		}
+		
+		std::string str = "johnson";
+		uint32_t testPos = sft.find("johnson", false);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for " + str, str, sft.strAt(testPos));
+	}
+	
 };
 
 int main(int argc, const char ** argv) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
+// 	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
 	if (argc > 1) {
 		inFileName = argv[1];
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
 	}
-	runner.eventManager().popProtector();
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
