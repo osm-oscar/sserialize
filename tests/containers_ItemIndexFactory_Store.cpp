@@ -202,6 +202,7 @@ int main() {
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<4047, 1001, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
 	runner.run();
 	return 0;
 }

@@ -28,6 +28,9 @@ void ItemIndex::createPrivate(const UByteArrayAdapter & index, const ItemIndex::
 		case (ItemIndex::T_RLE_DE):
 			setPrivate( new ItemIndexPrivateRleDE(index) );
 			break;
+		case (ItemIndex::T_NATIVE):
+			setPrivate( new detail::ItemIndexPrivate::ItemIndexPrivateNative(index) );
+			break;
 		default:
 			setPrivate( new ItemIndexPrivateEmpty() );
 			break;
@@ -50,6 +53,9 @@ void ItemIndex::createPrivate(const UByteArrayAdapter& index, const ItemIndex& r
 			break;
 		case(ItemIndex::T_RLE_DE):
 			setPrivate( new ItemIndexPrivateRleDEIndirect(index, realIdIndex) );
+			break;
+		case (ItemIndex::T_NATIVE):
+			setPrivate( new detail::ItemIndexPrivate::ItemIndexPrivateNativeIndirect(index, realIdIndex) );
 			break;
 		default:
 			setPrivate( new ItemIndexPrivateEmpty() );

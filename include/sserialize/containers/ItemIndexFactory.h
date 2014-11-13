@@ -144,6 +144,11 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 		UByteArrayAdapter dest(&s);
 		ItemIndexPrivateSimple::create(idx, dest);
 	}
+	else if (m_type == ItemIndex::T_NATIVE) {
+		mok = true;
+		UByteArrayAdapter dest(&s);
+		detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx.cbegin(), idx.cend(), dest);
+	}
 	if (ok)
 		*ok = mok;
 #if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)

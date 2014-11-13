@@ -7,4 +7,5 @@
 #include "ItemIndexPrivateWAH.h"
 #include "ItemIndexPrivateDE.h"
 #include "ItemIndexPrivateRleDE.h"
+#include "ItemIndexPrivateNative.h"
 #endif

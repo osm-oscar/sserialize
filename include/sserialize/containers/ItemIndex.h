@@ -23,7 +23,7 @@ class ItemIndex: public RCWrapper<ItemIndexPrivate>  {
 	typedef RCWrapper<ItemIndexPrivate> MyBaseClass;
 public:
 	///Types have to be flags (so it's easier to check a list indices if they all have the same type
-	enum Types {T_NULL=0, T_SIMPLE=1, T_REGLINE=2, T_WAH=4, T_DE=8, T_RLE_DE=16, T_EMPTY=32, T_INDIRECT=64, T_STL_DEQUE=128, T_STL_VECTOR=256};
+	enum Types {T_NULL=0, T_SIMPLE=1, T_REGLINE=2, T_WAH=4, T_DE=8, T_RLE_DE=16, T_NATIVE=32, T_EMPTY=64, T_INDIRECT=128, T_STL_DEQUE=256, T_STL_VECTOR=512};
 	struct ItemFilter {
 		virtual bool operator()(uint32_t id) const = 0;
 	};

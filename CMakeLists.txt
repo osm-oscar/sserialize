@@ -80,6 +80,7 @@ containers/ItemIndexPrivates/ItemIndexSetFunctions.cpp
 containers/ItemIndexPrivates/ItemIndexPrivateWAH.cpp
 containers/ItemIndexPrivates/ItemIndexPrivateDE.cpp
 containers/ItemIndexPrivates/ItemIndexPrivateRleDE.cpp
+containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
 )
 
 set(CONTAINTERS_SOURCES_CPP 
