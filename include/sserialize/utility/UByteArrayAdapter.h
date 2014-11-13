@@ -11,7 +11,7 @@
 
 //TODO: prevent segfaults of UByteArrayAdapter is empty (m_priv is 0)
 //TODO: split this class into UByteArrayAdapterIterator and UByteArrayAdapter to seperate concepts
-
+//TODO: get rid of static std::string as that leads to double frees on incorrect linking
 /** This is the main storage abstraction class.
   * It gives a unified view on an Array of uint8_t.
   * The underlying real storage can vary and is ref-counted but not cowed
@@ -41,31 +41,27 @@ public:
 	typedef sserialize::OffsetType SizeType;
 	
 	class MemoryView final {
+	public:
+		friend class UByteArrayAdapter;
 	private:
 		class MemoryViewImp final: public sserialize::RefCountObject {
+			RCPtrWrapper<UByteArrayAdapterPrivate> m_dataBase;
 			uint8_t * m_d;
 			OffsetType m_size;
-			bool m_isCopy;
 		public:
-			MemoryViewImp(uint8_t * ptr, OffsetType size, bool deleteOnClose) :
-			m_d(ptr),
-			m_size(size),
-			m_isCopy(deleteOnClose) {}
-			~MemoryViewImp() {
-				if (m_isCopy) {
-					delete[] m_d;
-				}
-			}
+			MemoryViewImp(uint8_t * ptr, OffsetType size, UByteArrayAdapterPrivate * base);
+			~MemoryViewImp();
 			uint8_t * get() { return m_d; }
 			const uint8_t * get() const { return m_d; }
 			OffsetType size() const { return m_size; }
-			bool isCopy() const { return m_isCopy; }
+			bool isCopy() const;
 		};
 	private:
 		RCPtrWrapper<MemoryViewImp> m_priv;
-	public:
 		///@param isCopy: if true, then ptr gets deleted by delete[]
-		MemoryView(uint8_t * ptr, OffsetType size, bool isCopy) : m_priv(new MemoryViewImp(ptr, size, isCopy)) {}
+		MemoryView(uint8_t * ptr, OffsetType size, UByteArrayAdapterPrivate * base) : m_priv(new MemoryViewImp(ptr, size, base)) {}
+	public:
+		MemoryView() {}
 		~MemoryView() {}
 		uint8_t * get() { return m_priv->get();}
 		const uint8_t * get() const { return m_priv->get();}

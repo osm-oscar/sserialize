@@ -12,6 +12,20 @@ std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_fastTempFilePrefix = TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_logFilePrefix = TEMP_FILE_PREFIX;
 
+
+UByteArrayAdapter::MemoryView::MemoryViewImp::MemoryViewImp(uint8_t * ptr, OffsetType size, UByteArrayAdapterPrivate * base) :
+m_dataBase(base),
+m_d(ptr),
+m_size(size) {}
+
+UByteArrayAdapter::MemoryView::MemoryViewImp::~MemoryViewImp() {
+	if (isCopy()) {
+		delete[] m_d;
+	}
+}
+
+bool UByteArrayAdapter::MemoryView::MemoryViewImp::isCopy() const { return !m_dataBase.get(); }
+
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
 m_priv(priv),
 m_offSet(0),
@@ -520,12 +534,12 @@ UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos
 		return MemoryView(0, 0, 0);
 	}
 	if (m_priv->isContiguous()) {
-		return MemoryView(&operator[](pos), size, false);
+		return MemoryView(&operator[](pos), size, m_priv.get());
 	}
 	else {
 		uint8_t * tmp = new uint8_t[size];
 		get(pos, tmp, size);
-		return MemoryView(tmp, size, true);
+		return MemoryView(tmp, size, 0);
 	}
 }
 
