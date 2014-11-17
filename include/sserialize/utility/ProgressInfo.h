@@ -1,5 +1,5 @@
-#ifndef OSMFIND_COMMON_PROGRESS_INFO_H
-#define OSMFIND_COMMON_PROGRESS_INFO_H
+#ifndef SSERIALIZE_PROGRESS_INFO_H
+#define SSERIALIZE_PROGRESS_INFO_H
 #include <iostream>
 #include <iomanip>
 #include <time.h>
