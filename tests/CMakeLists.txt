@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(sserializetests)
-find_package(CPPUNIT)
+find_package(CPPUNIT REQUIRED)
 find_package(ICU 4.9 REQUIRED)
 find_package(Threads)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${ICU_INCLUDE_DIRS})
