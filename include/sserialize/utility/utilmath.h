@@ -4,6 +4,7 @@
 #include <limits>
 #include <complex>
 #include <stdint.h>
+#include <atomic>
 #include <sserialize/utility/types.h>
 
 namespace sserialize {
@@ -146,6 +147,32 @@ inline bool geoEq(const double a, const double b) {
 inline bool geoNeq(const double a, const double b) {
 	return std::abs<double>(a-b) >= EPSILON;
 }
+
+template<typename T>
+class AtomicMax final {
+	std::atomic<T> m_v;
+public:
+	AtomicMax(const T & initial = T()) : m_v(initial) {}
+	~AtomicMax() {}
+	T value() { return m_v; }
+	void update(const T & v) {
+		T prevV = m_v;
+		while(prevV < v && !m_v.compare_exchange_weak(prevV, v));
+	}
+};
+
+template<typename T>
+class AtomicMin final {
+	std::atomic<T> m_v;
+public:
+	AtomicMin(const T & initial = T()) : m_v(initial) {}
+	~AtomicMin() {}
+	T value() { return m_v; }
+	void update(const T & v) {
+		T prevV = m_v;
+		while(prevV > v && !m_v.compare_exchange_weak(prevV, v));
+	}
+};
 
 }//end namespace
 
