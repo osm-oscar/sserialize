@@ -30,6 +30,7 @@ public:
 	std::set<uint16_t> getCharHints(uint32_t posInQuery);
 	inline uint32_t cacheSize() const { return m_cacheCount; }
 	inline uint32_t maxSize() const { return m_indexIt.maxSize();}
+	uint32_t size();
 	bool valid() const { return m_indexIt.valid(); }
 	DataBaseItemType operator*() const;
 	ItemSetIterator& operator++();
@@ -50,6 +51,13 @@ m_cacheCount(0)
 {
 	m_setOpTree.registerStringCompleter(completer);
 }
+
+template<class DataBaseItemType, class DataBaseType>
+uint32_t
+ItemSetIterator<DataBaseItemType, DataBaseType>::size() {
+	return m_cacheCount + m_indexIt.toItemIndex().size();
+}
+
 
 template<class DataBaseItemType, class DataBaseType>
 DataBaseItemType
