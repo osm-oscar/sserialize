@@ -39,6 +39,23 @@ public:
 	virtual std::ostream & printStructure(std::ostream & out) const { return (out << "SetOpTreePrivate::printStructure: unsupported" << std::endl);}
 };
 
+class SetOpTreePrivateNull: public SetOpTreePrivate {
+private:
+	SetOpTreePrivateNull & operator=(const SetOpTreePrivateNull & other);
+	SetOpTreePrivateNull(const SetOpTreePrivateNull & other);
+public:
+	SetOpTreePrivateNull() {}
+	virtual ~SetOpTreePrivateNull() {}
+	virtual SetOpTreePrivateNull * copy() const { return new SetOpTreePrivateNull(); }
+
+	virtual void buildTree(const std::string &) {}
+	virtual ItemIndexIterator asItemIndexIterator() { return ItemIndexIterator(); }
+	virtual ItemIndex update(const std::string &) { return ItemIndex(); }
+	virtual void doCompletions() {}
+	virtual ItemIndex doSetOperations() { return ItemIndex(); }
+	virtual void clear() {}
+};
+
 }
 
 #endif

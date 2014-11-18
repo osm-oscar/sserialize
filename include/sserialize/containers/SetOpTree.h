@@ -67,7 +67,7 @@ public:
 		virtual ItemIndex operator()(const std::string &)=0;
 	};
 	
-	typedef enum { SOT_SIMPLE, SOT_COMPLEX } SotType;
+	typedef enum { SOT_SIMPLE, SOT_COMPLEX, SOT_NULL} SotType;
 	
 private:
 	void copyPrivate();
