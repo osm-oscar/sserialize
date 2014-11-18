@@ -211,6 +211,10 @@ public:
 	AsciiCharEscaper(std::initializer_list<T> l) : m_repChars{0,0}  {
 		setEscapeChars(l.begin(), l.end());
 	}
+	template<typename T_UNICODE_POINT_ITERATOR>
+	AsciiCharEscaper(const T_UNICODE_POINT_ITERATOR & begin, const T_UNICODE_POINT_ITERATOR & end) : m_repChars{0, 0} {
+		setEscapeChars(begin, end);
+	}
 	inline bool escapeChar(uint8_t c) {
 		return (c > 63 ? (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))) : (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))));
 	}
@@ -240,7 +244,7 @@ public:
 			*out = c;
 		}
 	}
-	inline std::string escape(const std::string str) {
+	inline std::string escape(const std::string & str) {
 		std::string tmp;
 		tmp.reserve(str.size());
 		std::back_insert_iterator<std::string> outIt(tmp);
