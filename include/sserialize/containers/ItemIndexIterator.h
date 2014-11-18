@@ -93,6 +93,7 @@ public:
 	bool valid() const;
 	ItemIndexIterator& operator++();
 	ItemIndexIterator& reset();
+	///convert this ItemIndexIterator to an ItemIndex with all the ids from the current position to the end
 	ItemIndex toItemIndex() const;
 
 	template<class RandomAccessIterator>
