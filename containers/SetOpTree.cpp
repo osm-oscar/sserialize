@@ -53,10 +53,18 @@ ItemIndexIterator SetOpTree::ExternalFunctoid::operator()(SupportedOps op, const
 
 
 SetOpTree::SetOpTree(SotType type) : MyParentClass() {
-	if (type == SOT_SIMPLE)
+	switch(type) {
+	case (SOT_SIMPLE):
 		setPrivate( new SetOpTreePrivateSimple() );
-	else
+		break;
+	case (SOT_COMPLEX):
 		setPrivate( new SetOpTreePrivateComplex()); 
+		break;
+	case (SOT_NULL):
+	default:
+		setPrivate( new SetOpTreePrivateNull());
+		break;
+	}
 }
 
 SetOpTree::SetOpTree(const SetOpTree & other) : RCWrapper< sserialize::SetOpTreePrivate >(other) {}
