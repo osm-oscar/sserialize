@@ -23,6 +23,7 @@ public:
 	ItemSet(const std::string& queryString, const DataBaseType & dataBase, const SetOpTree & setOpTree);
 	ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type);
 	ItemSet(const std::string& queryString, const StringCompleter & completer, const DataBaseType & dataBase, SetOpTree::SotType type);
+	ItemSet(const DataBaseType & dataBase, const sserialize::ItemIndex & idx);
 	~ItemSet() {};
 	
 	///Tries to set an upper limit to the result set size to speed-up set operations (soft constraint)
@@ -61,6 +62,14 @@ m_setOpTree(type)
 {
 	m_setOpTree.registerStringCompleter(completer);
 }
+
+template<class DataBaseItemType, class DataBaseType>
+ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const DataBaseType & dataBase, const sserialize::ItemIndex & idx) :
+m_queryString(),
+m_dataBase(dataBase),
+m_setOpTree(sserialize::SetOpTree::SOT_NULL),
+m_index(idx)
+{}
 
 template<class DataBaseItemType, class DataBaseType>
 ItemSet<DataBaseItemType, DataBaseType>::ItemSet(const std::deque< std::string >& intersectStrings, const StringCompleter& completer, const DataBaseType & dataBase, SetOpTree::SotType type) :
