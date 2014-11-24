@@ -39,7 +39,7 @@ StringCompleter::StringCompleter(UByteArrayAdapter data, const sserialize::Stati
 StringCompleter::~StringCompleter() {}
 
 OffsetType StringCompleter::getSizeInBytes() const {
-	return priv()->getSizeInBytes();
+	return SerializationInfo< sserialize::Static::StringCompleter::HeaderInfo >::length + priv()->getSizeInBytes();
 }
 
 ItemIndex StringCompleter::complete(const std::string & str, sserialize::StringCompleter::QuerryType qtype) const {
