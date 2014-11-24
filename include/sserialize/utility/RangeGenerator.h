@@ -49,11 +49,10 @@ public:
 	inline ReverseIterator crbegin() const { return ReverseIterator(m_end-m_stride, m_stride); }
 	inline ReverseIterator rend() const { return ReverseIterator(m_begin-m_stride, m_stride); }
 	inline ReverseIterator rcend() const { return ReverseIterator(m_begin-m_stride, m_stride); }
+	static inline RangeGenerator range(uint64_t begin, uint64_t end, uint64_t stride=1) {
+		return RangeGenerator(begin, end, stride);
+	}
 };
-
-inline RangeGenerator range(uint64_t begin, uint64_t end, uint64_t stride=1) {
-	return RangeGenerator(begin, end, stride);
-}
 
 }//end namespace
 
