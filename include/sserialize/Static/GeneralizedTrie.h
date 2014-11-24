@@ -3,7 +3,7 @@
 #include <sserialize/Static/StringCompleter.h>
 #include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 
-#define STATIC_TRIE_HEADER_SIZE 16
+// #define STATIC_TRIE_HEADER_SIZE 18
 #define PRIVATE_USE_CHAR_VALUE 0xF0F0
 
 #define SSERIALIZE_STATIC_GENERALIZED_TRIE_VERSION 1
@@ -11,18 +11,9 @@
 /*
  * Static Trie Layout
  * --------------------------------------------------------------------------------------
- * vvvvvvvv|TTTTTTTT|NTNTNTNT|LSLSLSLS|DDDDDDDD|NCNCNCNC| NODEDATASIZE   |NODES
+ * HeaderInfo                 |NODES
  * --------------------------------------------------------------------------------------
- *  1 byte | 1 byte | 1 byte |2 byte | 2 byte  | 4 byte | UBA::FileOffset|multiple bytes
- * 
- * v = version number as uint8
- 
- * T = tree type
- * NT = NodeType
- * LS = length of the longest string as uint16
- * D = depth of the tree as uint16
- * NC = number of nodes in the tree as uint32
- * SC = number of unique strings in the tree as uint32
+ * GeneralizedTrie::HeaderInfo|multiple bytes
  * 
  * TrieNodes have 4 different indices:
  * Exact: contains Elements with the exact query string only
