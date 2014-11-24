@@ -75,6 +75,9 @@ public:
 	}
 	const TrieType & trie() const { return m_trie; }
 	Node getRootNode() const { return m_trie.getRootNode(); }
+	virtual std::string getName() const override {
+		return std::string("UnicodeStringMapTrie");
+	}
 };
 
 

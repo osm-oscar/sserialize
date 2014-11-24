@@ -178,6 +178,9 @@ public:
 	virtual std::ostream & printStats(std::ostream & out) const override {
 		return m_trie.printStats(out);
 	}
+	std::string getName() const override {
+		return std::string("UnicodeStringMapFlatTrie");
+	}
 };
 
 template<typename TValue>
