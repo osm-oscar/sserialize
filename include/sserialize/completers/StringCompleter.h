@@ -47,6 +47,7 @@ namespace StringCompleterPrivate {
 
 class StringCompleter: public RCWrapper<StringCompleterPrivate> {
 public:
+	typedef RCWrapper<StringCompleterPrivate> MyBaseClass;
 	///QuerryType, can be used in conjunction with SupportedQuerries (they are the same)
 	enum QuerryType {
 		QT_NONE=0, QT_EXACT=1, QT_PREFIX=2, QT_SUFFIX=4, QT_SUBSTRING=8, QT_EPSS=15, QT_CASE_INSENSITIVE=16, QT_CASE_SENSTIVE=32
@@ -72,26 +73,17 @@ public:
 		bool hasNext(uint32_t codepoint) const;
 		bool next(uint32_t codepoint);
 	};
-	
-private:
-#ifdef SSERIALIZE_STRING_COMPLETER_WITH_CACHE
-	sserialize::LFUCache< std::pair<std::string, uint16_t>, ItemIndex> m_cache;
-#endif
-#ifdef SSERIALIZE_WITH_THREADS
-	std::mutex m_cacheLock;
-#endif
+
 public:
 	StringCompleter();
 	StringCompleter(const StringCompleter & other);
 	StringCompleter(StringCompleterPrivate * priv);
+	StringCompleter(const sserialize::RCPtrWrapper<StringCompleterPrivate> & priv);
 	StringCompleter & operator=(const StringCompleter & strc);
 	
 	SupportedQuerries getSupportedQuerries();
 	bool supportsQuerry(QuerryType qt);
 
-	void clearCache();
-	void setCacheSize(uint32_t s);
-	
 	ItemIndex complete(const std::string & str, QuerryType qtype);
 	ItemIndexIterator partialComplete(const std::string & str, QuerryType qtype);
 	
@@ -101,7 +93,7 @@ public:
 	std::map<uint16_t, ItemIndex> getNextCharacters(const std::string& str, QuerryType qtype, bool withIndex) const;
 	ItemIndex indexFromId(uint32_t idxId) const;
 	
-    StringCompleterPrivate * getPrivate() const;
+	StringCompleterPrivate * getPrivate() const;
 
 	std::ostream& printStats(std::ostream& out) const;
 	
