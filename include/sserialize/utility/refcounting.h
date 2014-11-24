@@ -32,6 +32,8 @@ private:
 template<typename RCObj>
 class RCWrapper {
 public:
+	typedef RCObj element_type;
+public:
 	RCWrapper() : m_Private(0) {};
 	RCWrapper(RCObj * data) : m_Private(data) { if (m_Private) m_Private->rcInc(); }
 	RCWrapper(const RCWrapper & other) : m_Private(other.m_Private) { if (m_Private) m_Private->rcInc(); }
