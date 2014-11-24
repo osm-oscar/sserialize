@@ -1,4 +1,5 @@
 #include <sserialize/spatial/GridRegionTree.h>
+#include <sserialize/utility/printers.h>
 
 const uint32_t sserialize::spatial::GridRegionTree::NullNodePtr = 0xFFFFFFFF;
 
@@ -115,7 +116,7 @@ void GridRegionTree::printStats(std::ostream & out) const {
 	storageUsageSize += m_leafInfo.size() * sizeof(uint32_t);
 	storageUsageSize += m_regions.size() * sizeof(sserialize::spatial::GeoRegion*);
 
-	out << "Real Storage usage: " << storageUsage << std::endl;
+	out << "Real Storage usage: " << sserialize::prettyFormatSize(storageUsage) << std::endl;
 	out << "Storage usage: " << storageUsageSize << std::endl;
 	out << "Containment tests: " << m_cumulatedResultSetSize.load() << " of which ";
 	out << (double) m_intersectTestCount.load()/m_cumulatedResultSetSize.load() * 100;
