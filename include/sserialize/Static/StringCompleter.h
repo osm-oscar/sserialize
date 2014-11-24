@@ -23,7 +23,7 @@
 namespace sserialize {
 namespace Static {
 
-class StringCompleterPrivate {
+class StringCompleterPrivate: public sserialize::RefCountObject {
 public:
 	typedef sserialize::StringCompleterPrivate::ForwardIterator ForwardIterator;
 public:
@@ -60,14 +60,14 @@ public:
 	};
 private:
 	Type m_t;
-	std::shared_ptr<Static::StringCompleterPrivate> m_priv;
+	sserialize::RCPtrWrapper<Static::StringCompleterPrivate> m_priv;
 public:
 	StringCompleter();
 	StringCompleter(sserialize::UByteArrayAdapter data, const sserialize::Static::ItemIndexStore & indexStore);
 	virtual ~StringCompleter();
 	
-	inline const std::shared_ptr<Static::StringCompleterPrivate> & priv() const { return m_priv; }
-	inline std::shared_ptr<Static::StringCompleterPrivate> & priv() { return m_priv; }
+	inline const sserialize::RCPtrWrapper<Static::StringCompleterPrivate> & priv() const { return m_priv; }
+	inline sserialize::RCPtrWrapper<Static::StringCompleterPrivate> & priv() { return m_priv; }
 	
 	virtual OffsetType getSizeInBytes() const;
 	
