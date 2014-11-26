@@ -148,6 +148,9 @@ utility/histogram2d.cpp
 utility/log.cpp
 utility/utilfuncs.cpp
 utility/FileHandler.cpp
+utility/Compressor.cpp
+utility/detail/Compressor/NoneCompressor.cpp
+utility/detail/Compressor/LZOCompressor.cpp
 )
 
 set(EXTERNAL_SOURCES_CPP

@@ -1,0 +1,5 @@
+#ifndef SSERIALIZE_DETAIL_COMPRESSOR_COMPRESSORS_H
+#define SSERIALIZE_DETAIL_COMPRESSOR_COMPRESSORS_H
+#include "NoneCompressor.h"
+#include "LZOCompressor.h"
+#endif
