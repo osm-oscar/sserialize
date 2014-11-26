@@ -40,6 +40,7 @@ public:
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
 	
+	///TODO:MemoryView should provide a flush() function
 	class MemoryView final {
 	public:
 		friend class UByteArrayAdapter;
@@ -47,19 +48,22 @@ public:
 		class MemoryViewImp final: public sserialize::RefCountObject {
 			RCPtrWrapper<UByteArrayAdapterPrivate> m_dataBase;
 			uint8_t * m_d;
+			OffsetType m_off;
 			OffsetType m_size;
+			bool m_copy;
 		public:
-			MemoryViewImp(uint8_t * ptr, OffsetType size, UByteArrayAdapterPrivate * base);
+			MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base);
 			~MemoryViewImp();
-			uint8_t * get() { return m_d; }
-			const uint8_t * get() const { return m_d; }
-			OffsetType size() const { return m_size; }
-			bool isCopy() const;
+			inline uint8_t * get() { return m_d; }
+			inline const uint8_t * get() const { return m_d; }
+			inline OffsetType size() const { return m_size; }
+			inline bool isCopy() const { return m_copy; }
+			bool flush(OffsetType len, OffsetType off);
 		};
 	private:
 		RCPtrWrapper<MemoryViewImp> m_priv;
 		///@param isCopy: if true, then ptr gets deleted by delete[]
-		MemoryView(uint8_t * ptr, OffsetType size, UByteArrayAdapterPrivate * base) : m_priv(new MemoryViewImp(ptr, size, base)) {}
+		MemoryView(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base) : m_priv(new MemoryViewImp(ptr, off, size, isCopy, base)) {}
 	public:
 		MemoryView() {}
 		~MemoryView() {}
@@ -73,8 +77,11 @@ public:
 		const uint8_t * end() const { return get()+size(); }
 
 		OffsetType size() const { return m_priv->size();}
-		///If this is true, then writes are not passed through to the UBA
+		///If this is true, then writes are not passed through to the UBA, call flush() to do that
 		bool isCopy() const { return m_priv->isCopy();}
+		///flush up to len bytes starting from off
+		bool flush(OffsetType len, OffsetType off = 0) { return m_priv->flush(len, off); }
+		bool flush() { return flush(size()); }
 	};
 	
 private:
