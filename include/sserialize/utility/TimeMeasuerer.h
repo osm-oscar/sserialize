@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <cstdlib> 
 #include <stdint.h>
+#include <string.h>
 
 
 namespace sserialize {
@@ -12,7 +13,10 @@ class TimeMeasurer {
 private:
 	struct timeval m_begin, m_end;
 public:
-	TimeMeasurer() {}
+	TimeMeasurer() {
+		::memset(&m_begin, 0, sizeof(struct timeval));
+		::memset(&m_end, 0, sizeof(struct timeval));
+	}
 	~TimeMeasurer() {}
 	inline void begin() {
 		gettimeofday(&m_begin, NULL);
