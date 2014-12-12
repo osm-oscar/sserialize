@@ -163,7 +163,10 @@ public:
 
 template<typename TValue>
 class UnicodeStringMapFlatTrie: public sserialize::detail::UnicodeStringMap<TValue> {
-	FlatTrie<TValue> m_trie;
+public:
+	typedef FlatTrie<TValue> TrieType;
+private:
+	TrieType m_trie;
 public:
 	UnicodeStringMapFlatTrie() {}
 	UnicodeStringMapFlatTrie(const UByteArrayAdapter & d) : m_trie(d) {}
@@ -181,6 +184,9 @@ public:
 	std::string getName() const override {
 		return std::string("UnicodeStringMapFlatTrie");
 	}
+	
+	const TrieType & trie() const { return m_trie; }
+	TrieType & trie() { return m_trie; }
 };
 
 template<typename TValue>
