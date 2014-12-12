@@ -299,7 +299,7 @@ public:
 int main(int argc, const char ** argv) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-// 	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
+	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
 	if (argc > 1) {
 		inFileName = argv[1];
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
