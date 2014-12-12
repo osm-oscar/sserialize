@@ -20,13 +20,13 @@ Log::Log() : m_defLogLevel(INFO) {
 Log::Log(Log::LogLevel defLevel) : m_defLogLevel(defLevel) {
 #ifdef __ANDROID__
 	switch (defLevel) {
-	case (osmfindlog::Log::INFO):
+	case (sserialize::Log::INFO):
 		m_androidLogLevel = ANDROID_LOG_INFO;
 		break;
-	case (osmfindlog::Log::DEBUG):
+	case (sserialize::Log::DEBUG):
 		m_androidLogLevel = ANDROID_LOG_DEBUG;
 		break;
-	case (osmfindlog::Log::ERROR):
+	case (sserialize::Log::ERROR):
 		m_androidLogLevel = ANDROID_LOG_ERROR;
 		break;
 	default:
