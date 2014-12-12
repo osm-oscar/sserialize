@@ -57,6 +57,9 @@ public:
 	bool count(const std::string & str, bool prefixMatch) const { return priv()->count(str, prefixMatch); }
 	std::ostream & printStats(std::ostream & out) const { return priv()->printStats(out); }
 	std::string getName() const { return priv()->getName(); }
+
+	template<typename T_PRIVATE_TYPE>
+	sserialize::RCPtrWrapper<T_PRIVATE_TYPE> as() { return sserialize::RCPtrWrapper<T_PRIVATE_TYPE>(dynamic_cast<T_PRIVATE_TYPE*>(priv().get())); }
 };
 
 }//end namespace
