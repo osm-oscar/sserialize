@@ -20,6 +20,9 @@ namespace sserialize {
 /** This class is a storage for multiple ItemIndex. It can create a file suitable for the Static::IndexStore.
 	Live-Compression is currenty only available for VARUINT.
 	If you want to create a store with HUFFMAN and/or LZO you have to do it afterwards.
+	
+	Compile-time debug options:
+	DEBUG_CHECK_SERIALIZED_INDEX, DEBUG_CHECK_ALL
 */
 
 class ItemIndexFactory {

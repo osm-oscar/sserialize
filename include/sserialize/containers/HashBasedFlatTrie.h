@@ -249,9 +249,11 @@ public:
 	static NodePtr make_nodeptr(Node & node) { return std::make_shared<Node>(node); }
 	static ConstNodePtr make_nodeptr(const Node & node) { return std::make_shared<Node>(node); }
 	
+	///not implemented yet
 	template<typename T>
 	bool checkTrieEquality(T /*t*/) const { return false; }
 	
+	///not implemented yet
 	template<typename TPayloadComparator, typename TNode>
 	bool checkPayloadEquality(TNode /*node*/, TPayloadComparator /*pc*/) const { return false; }
 };
