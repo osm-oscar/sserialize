@@ -222,7 +222,7 @@ public:
 		setEscapeChars(begin, end);
 	}
 	inline bool escapeChar(char c) const {
-		return (c >= 0) && (c > 63 ? (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))) : (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))));
+		return (c >= 0) && (c > 63 ? (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))) : (m_repChars[0] & (static_cast<uint64_t>(1) << (c))));
 	}
 	void setEscapeChar(uint8_t c);
 	template<typename T_IT>
