@@ -80,6 +80,7 @@ public:
 		Node(uint32_t id, uint32_t itemSize = 0) : m_id(id), m_itemSize(itemSize) {}
 		virtual ~Node() {}
 		inline uint32_t id() const { return m_id; }
+		//number of chilren
 		inline uint32_t size() const { return m_children.size(); }
 		inline NodePtr & operator[](uint32_t pos) { return m_children[pos]; }
 		inline const NodePtr & at(uint32_t pos) { return m_children.at(pos);}
