@@ -5,6 +5,7 @@
 #include <set>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/vendor/utf8.h>
+#include <iostream>
 
 
 namespace sserialize {
@@ -14,6 +15,11 @@ std::deque<std::string> toUpperCase(const std::deque<std::string> & strs);
 
 /** @param str: returns true if str is either yes,true,0, otherwise returns false */
 bool toBool(const std::string & str);
+
+
+inline bool isValidUtf8(const std::string & str) {
+	return utf8::is_valid(str.cbegin(), str.cend());
+}
 
 template<typename CPIterator>
 std::string stringFromUnicodePoints(CPIterator begin, const CPIterator & end) {
@@ -215,18 +221,10 @@ public:
 	AsciiCharEscaper(const T_UNICODE_POINT_ITERATOR & begin, const T_UNICODE_POINT_ITERATOR & end) : m_repChars{0, 0} {
 		setEscapeChars(begin, end);
 	}
-	inline bool escapeChar(uint8_t c) {
-		return (c > 63 ? (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))) : (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))));
+	inline bool escapeChar(char c) const {
+		return (c >= 0) && (c > 63 ? (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))) : (m_repChars[1] & (static_cast<uint64_t>(1) << (c-64))));
 	}
-	void setEscapeChar(uint8_t c) {
-		if (c > 63) {
-			c -= 64;
-			m_repChars[1] |= static_cast<uint64_t>(1) << c;
-		}
-		else {
-			m_repChars[0] |= static_cast<uint64_t>(1) << c;
-		}
-	}
+	void setEscapeChar(uint8_t c);
 	template<typename T_IT>
 	void setEscapeChars(T_IT begin, T_IT end) {
 		for(; begin != end; ++begin)
@@ -234,7 +232,7 @@ public:
 	}
 	
 	template<typename T_SRC_IT, typename T_OUTPUT_IT>
-	void escape(T_SRC_IT begin, T_SRC_IT end, T_OUTPUT_IT out) {
+	void escape(T_SRC_IT begin, T_SRC_IT end, T_OUTPUT_IT out) const {
 		for(; begin != end; ++begin, ++out) {
 			char c = *begin;
 			if (escapeChar(c)) {
@@ -244,14 +242,7 @@ public:
 			*out = c;
 		}
 	}
-	inline std::string escape(const std::string & str) {
-		std::string tmp;
-		tmp.reserve(str.size());
-		std::back_insert_iterator<std::string> outIt(tmp);
-		escape(str.cbegin(), str.cend(), outIt);
-		return tmp;
-	}
-	
+	std::string escape(const std::string & str) const;
 };
 
 }//end namespace

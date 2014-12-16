@@ -173,4 +173,22 @@ std::deque<std::string> splitLine(const std::string & str, const std::set<char> 
 	return splits;
 }
 
+void AsciiCharEscaper::setEscapeChar(uint8_t c) {
+	if (c > 63) {
+		c -= 64;
+		m_repChars[1] |= static_cast<uint64_t>(1) << c;
+	}
+	else {
+		m_repChars[0] |= static_cast<uint64_t>(1) << c;
+	}
+}
+
+std::string AsciiCharEscaper::escape(const std::string & str) const {
+	std::string tmp;
+	tmp.reserve(str.size());
+	std::back_insert_iterator<std::string> outIt(tmp);
+	escape(str.cbegin(), str.cend(), outIt);
+	return tmp;
+}
+
 }//end namespace
