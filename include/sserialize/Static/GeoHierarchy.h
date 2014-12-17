@@ -61,7 +61,10 @@ namespace spatial {
   */
 
 namespace detail {
-  
+
+///SubSet represents a SubSet of a GeoHierarchy. It's based on a CellQueryResult and has 2 incarnation
+///A sparse SubSet has cellpositions/apxitemcount only for direct parents
+
 class SubSet {
 public:
 	class Node: public RefCountObject {
