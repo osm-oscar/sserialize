@@ -74,6 +74,7 @@ ADD_TEST_TARGET_SINGLE(util_utilfuncs)
 ADD_TEST_TARGET_SINGLE(util_packfuncs)
 ADD_TEST_TARGET_SINGLE(util_LinearRegregionnFunctions)
 ADD_TEST_TARGET_SINGLE(util_ThreadPool)
+ADD_TEST_TARGET_SINGLE(AsciiCharEscaper)
 
 #static
 ADD_TEST_TARGET_SINGLE(static_deque)
