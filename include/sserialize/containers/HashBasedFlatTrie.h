@@ -16,6 +16,7 @@
 #include <sserialize/Static/DynamicVector.h>
 #include <omp.h>
 
+///WARNING: USING a hash of NodePtr need explicit initialization of the hash function (see bottom of this file)
 
 namespace sserialize {
 
@@ -96,8 +97,22 @@ private:
 	};
 public:
 	class Node;
-	typedef std::shared_ptr<Node> NodePtr;
-	typedef std::shared_ptr<const Node> ConstNodePtr;
+	struct NodePtrBase;
+	class NodePtr {
+	private:
+		sserialize::RCPtrWrapper<NodePtrBase> m_priv;
+	public:
+		NodePtr();
+		NodePtr(const HashBasedFlatTrie::iterator & begin, const HashBasedFlatTrie::iterator & end, const StringHandler * strHandler);
+		NodePtr(const Node & node);
+		Node& operator*();
+		const Node& operator*() const;
+		Node* operator->();
+		const Node* operator->() const;
+		bool operator==(const NodePtr & other) const;
+		bool operator!=(const NodePtr & other) const;
+	};
+	
 	class Node {
 		friend class HashBasedFlatTrie<TValue>;
 	public:
@@ -121,6 +136,7 @@ public:
 		};
 		typedef Iterator const_iterator;
 		typedef Iterator iterator;
+		typedef HashBasedFlatTrie::iterator RawIterator;
 	private:
 		HashBasedFlatTrie::iterator m_begin;
 		HashBasedFlatTrie::iterator m_end;
@@ -133,7 +149,7 @@ public:
 		~Node() {}
 		///empty dummy parent
 		NodePtr parent() { return NodePtr(); }
-		ConstNodePtr parent() const { return ConstNodePtr(); }
+		NodePtr parent() const { return NodePtr(); }
 		bool hasChildren() const { return (m_end - m_begin) > 1; }
 		const StaticString & str() const { return m_begin->first; }
 		const_iterator begin() const { return const_iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
@@ -142,6 +158,15 @@ public:
 		const_iterator cend() const { return const_iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		iterator begin() { return iterator(m_begin, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
 		iterator end() { return iterator(m_end, m_end, HashBasedFlatTrie::CompFunc(m_strHandler, str().size())); }
+		//raw access iterator, a node is defined as a interval in an sorted array. these iterators return the begin/end to this interval
+		RawIterator & rawBegin() { return m_begin; }
+		const RawIterator & rawBegin() const { return m_begin; }
+		RawIterator & rawEnd() { return m_end; }
+		const RawIterator & rawEnd() const { return m_end; }
+		
+		inline bool operator==(const Node & other) const { return m_begin == other.m_begin && m_end == other.m_end && m_strHandler == other.m_strHandler; }
+		inline bool operator!=(const Node & other) const { return m_begin != other.m_begin || m_end != other.m_end || m_strHandler != other.m_strHandler; }
+		
 		TValue & value() {return m_begin->second;}
 		const TValue & value() const {return m_begin->second;}
 		///Apply functoid fn to all nodes in-order (sorted by keys)
@@ -150,6 +175,24 @@ public:
 		///Apply functoid fn to all nodes in-order (sorted by keys)
 		template<typename TFunc>
 		void apply(TFunc & fn);
+	};
+	
+	struct NodePtrBase: public sserialize::RefCountObject {
+		Node node;
+		NodePtrBase(const Node & node) : node(node) {}
+		NodePtrBase(const HashBasedFlatTrie::iterator & begin, const HashBasedFlatTrie::iterator & end, const StringHandler * strHandler) :
+		node(begin, end, strHandler)
+		{}
+	};
+	
+	struct NodePtrHash {
+		std::hash<typename Node::RawIterator> hasher;
+		inline size_t operator()(const NodePtr & v) const {
+			size_t seed = 0;
+			::hash_combine(seed, v->rawBegin(), hasher);
+			::hash_combine(seed, v->rawEnd(), hasher);
+			return seed;
+		}
 	};
 private:
 	struct HashFunc1 {
@@ -235,10 +278,10 @@ public:
 	void finalize();
 	
 	///before using this, finalize has to be called and no inserts were made afterwards
-	NodePtr root() { return std::make_shared<Node>(m_ht.begin(), m_ht.end(), &m_strHandler); }
-	ConstNodePtr root() const {
+	NodePtr root() { return NodePtr(m_ht.begin(), m_ht.end(), &m_strHandler); }
+	NodePtr root() const {
 		HashBasedFlatTrie<TValue>* tmp = const_cast<HashBasedFlatTrie<TValue>*>(this);
-		return std::make_shared<const Node>( tmp->m_ht.begin(), tmp->m_ht.end(), &m_strHandler);
+		return NodePtr( tmp->m_ht.begin(), tmp->m_ht.end(), &m_strHandler);
 	}
 	
 	///you can only call this after finalize()
@@ -246,8 +289,8 @@ public:
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
 	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
 	
-	static NodePtr make_nodeptr(Node & node) { return std::make_shared<Node>(node); }
-	static ConstNodePtr make_nodeptr(const Node & node) { return std::make_shared<Node>(node); }
+	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
+	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
 	
 	///not implemented yet
 	template<typename T>
@@ -257,6 +300,55 @@ public:
 	template<typename TPayloadComparator, typename TNode>
 	bool checkPayloadEquality(TNode /*node*/, TPayloadComparator /*pc*/) const { return false; }
 };
+
+template<typename TValue>
+HashBasedFlatTrie<TValue>::NodePtr::NodePtr() {}
+
+template<typename TValue>
+HashBasedFlatTrie<TValue>::NodePtr::NodePtr(const typename HashBasedFlatTrie<TValue>::iterator & begin,
+											const typename HashBasedFlatTrie<TValue>::iterator & end,
+											const typename HashBasedFlatTrie<TValue>::StringHandler* strHandler) :
+m_priv(new HashBasedFlatTrie<TValue>::NodePtrBase(begin, end, strHandler))
+{}
+
+template<typename TValue>
+HashBasedFlatTrie<TValue>::NodePtr::NodePtr(const typename HashBasedFlatTrie<TValue>::Node & node) :
+m_priv(new HashBasedFlatTrie<TValue>::NodePtrBase(node))
+{}
+
+template<typename TValue>
+typename HashBasedFlatTrie<TValue>::Node &
+HashBasedFlatTrie<TValue>::NodePtr::operator*() {
+	return m_priv->node;
+}
+
+template<typename TValue>
+const typename HashBasedFlatTrie<TValue>::Node &
+HashBasedFlatTrie<TValue>::NodePtr::operator*() const {
+	return m_priv->node;
+}
+
+template<typename TValue>
+const typename HashBasedFlatTrie<TValue>::Node*
+HashBasedFlatTrie<TValue>::NodePtr::operator->() const {
+	return &(m_priv->node);
+}
+
+template<typename TValue>
+typename HashBasedFlatTrie<TValue>::Node*
+HashBasedFlatTrie<TValue>::NodePtr::operator->() {
+	return &(m_priv->node);
+}
+
+template<typename TValue>
+bool HashBasedFlatTrie<TValue>::NodePtr::operator==(const HashBasedFlatTrie<TValue>::NodePtr & other) const {
+	return m_priv->node == other.m_priv->node;
+}
+
+template<typename TValue>
+bool HashBasedFlatTrie<TValue>::NodePtr::operator!=(const HashBasedFlatTrie<TValue>::NodePtr & other) const {
+	return m_priv->node != other.m_priv->node;
+}
 
 template<typename TValue>
 HashBasedFlatTrie<TValue>::Node::Iterator::Iterator(const HashBasedFlatTrie::iterator & parentBegin, const HashBasedFlatTrie::iterator & parentEnd, const HashBasedFlatTrie::CompFunc & compFunc) :
@@ -302,7 +394,7 @@ HashBasedFlatTrie<TValue>::Node::Iterator::operator==(const Iterator & other) {
 template<typename TValue>
 typename HashBasedFlatTrie<TValue>::NodePtr
 HashBasedFlatTrie<TValue>::Node::Iterator::operator*() const {
-	return std::make_shared<Node>(m_childNodeBegin, m_childNodeEnd, m_compFunc.strHandler);
+	return NodePtr(m_childNodeBegin, m_childNodeEnd, m_compFunc.strHandler);
 }
 
 template<typename TValue>
@@ -386,7 +478,7 @@ HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERAT
 			}
 		};
 		typename HashTable::iterator nodeEnd = std::upper_bound(nodeBegin, m_ht.end(), nodeBegin->first.size(), MyComp());
-		return std::make_shared<Node>(nodeBegin, nodeEnd, &m_strHandler);
+		return NodePtr(nodeBegin, nodeEnd, &m_strHandler);
 	}
 	return NodePtr();
 }
@@ -566,7 +658,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		typename HashTable::const_iterator htBegin = m_ht.begin();
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
 		for(uint32_t i(0), s(nodesInLevelOrder.size()); i < s; ++i) {
-			runningBlockTasks.set(0);
+			runningBlockTasks.unsyncedValue() = 0;
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder[s-i];
 			uint32_t blockSize = levelNodes.size()/threadCount+1;
 
@@ -575,10 +667,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 				T_PH * pH = &payloadHandlers[blockNum];
 				NodePtr * nodeBlocksBegin = &levelNodes[blockBegin];
 				NodePtr * nodeBlocksEnd = &levelNodes[blockEnd];
-				{
-					auto lck(runningBlockTasks.uniqueLock());
-					runningBlockTasks.value() += 1;
-				}
+				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v +=1; });
 				threadPool.sheduleTask(
 					[pH, nodeBlocksBegin, nodeBlocksEnd, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin]() {
 						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(nodeBlocksEnd-nodeBlocksBegin, nodeBlocksEnd-nodeBlocksBegin);
@@ -600,20 +689,17 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 								tmpPayload.endRawPush();
 							}
 						}
-						{
-							auto lck(runningBlockTasks.uniqueLock());
-							runningBlockTasks.value() -= 1;
-						}
+						runningBlockTasks.syncedWithNotifyOne([](int32_t & v) { v -=1; });
 					}
 				);
 			}
 			nodesInLevelOrder.pop_back();
 			{
 				GuardedVariable<int32_t>::UniqueLock lck(runningBlockTasks.uniqueLock());
-				while (runningBlockTasks.value() > 0) {
+				while (runningBlockTasks.unsyncedValue() > 0) {
 					runningBlockTasks.wait_for(lck, 1000000);
 				}
-				assert(runningBlockTasks.value() >= 0);
+				assert(runningBlockTasks.unsyncedValue() >= 0);
 			}
 			pinfo(i);
 		}
@@ -633,12 +719,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	return true;
 }
 
-
 }//end namespace
-
-
-template<typename TValue>
-inline bool operator!=(const typename sserialize::HashBasedFlatTrie<TValue>::NodePtr & a, const typename sserialize::HashBasedFlatTrie<TValue>::NodePtr & b) { return *a != *b; }
 
 
 #endif
