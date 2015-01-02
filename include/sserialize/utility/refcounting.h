@@ -30,13 +30,18 @@ private:
 };
 
 template<typename RCObj>
+class RCPtrWrapper;
+
+template<typename RCObj>
 class RCWrapper {
 public:
 	typedef RCObj element_type;
+	friend class RCPtrWrapper<RCObj>;
 public:
 	RCWrapper() : m_Private(0) {};
 	RCWrapper(RCObj * data) : m_Private(data) { if (m_Private) m_Private->rcInc(); }
 	RCWrapper(const RCWrapper & other) : m_Private(other.m_Private) { if (m_Private) m_Private->rcInc(); }
+	RCWrapper(const RCPtrWrapper<RCObj> & other);
 	virtual ~RCWrapper() {
 		if (m_Private)
 			m_Private->rcDec();
@@ -71,28 +76,48 @@ private:
 };
 
 template<typename RCObj>
-class RCPtrWrapper: public RCWrapper<RCObj> {
+class RCPtrWrapper final {
+public:
+	typedef RCObj element_type;
+	friend class RCWrapper<RCObj>;
+private:
 	void safe_bool_func() {}
 	typedef void (RCPtrWrapper<RCObj>:: * safe_bool_type) ();
+private:
+	RCObj * m_priv;
 public:
-	RCPtrWrapper() : RCWrapper<RCObj>() {};
-	explicit RCPtrWrapper(RCObj * data) : RCWrapper<RCObj>(data) {}
-	RCPtrWrapper(const RCWrapper<RCObj> & other) : RCWrapper<RCObj>(other) {}
-	virtual ~RCPtrWrapper() {}
+	RCPtrWrapper() : m_priv(0) {};
+	explicit RCPtrWrapper(RCObj * data) : m_priv(data) {if (m_priv) m_priv->rcInc();}
+	RCPtrWrapper(const RCPtrWrapper<RCObj> & other) : m_priv(other.m_priv) { if (m_priv) m_priv->rcInc(); }
+	RCPtrWrapper(const RCWrapper<RCObj> & other) : m_priv(other.priv()) {}
+	~RCPtrWrapper() {
+		if (m_priv) {
+			m_priv->rcDec();
+		}
+	}
 
 	RCPtrWrapper & operator=(const RCPtrWrapper& other) {
-		RCWrapper<RCObj>::operator=(other);
+		if (other.m_priv)
+			other.m_priv->rcInc();
+		if (m_priv)
+			m_priv->rcDec();
+		m_priv = other.m_priv;
 		return *this;
 	}
+
+	bool operator==(const RCPtrWrapper & other) { return m_priv == other.m_priv; }
 	
-	RCObj & operator*() { return *RCWrapper<RCObj>::priv();}
-	const RCObj & operator*() const { return *RCWrapper<RCObj>::priv();}
+	inline int privRc() const { return m_priv->rc();}
 
-	RCObj * operator->() { return RCWrapper<RCObj>::priv();}
-	const RCObj * operator->() const { return RCWrapper<RCObj>::priv();}
+	
+	RCObj & operator*() { return *priv();}
+	const RCObj & operator*() const { return *priv();}
 
-	RCObj * priv() { return RCWrapper<RCObj>::priv(); }
-	const RCObj * priv() const { return RCWrapper<RCObj>::priv(); }
+	RCObj * operator->() { return priv();}
+	const RCObj * operator->() const { return priv();}
+
+	RCObj * priv() { return m_priv; }
+	const RCObj * priv() const { return m_priv; }
 	
 	RCObj * get() { return priv(); }
 	const RCObj * get() const { return priv(); }
@@ -101,7 +126,11 @@ public:
 		return priv() ? &RCPtrWrapper<RCObj>::safe_bool_func : 0;
 	}
 	void reset(RCObj * data) {
-		RCWrapper<RCObj>::setPrivate(data);
+		if (data)
+			data->rcInc();
+		if (m_priv)
+			m_priv->rcDec();
+		m_priv = data;
 	}
 };
 
@@ -156,6 +185,11 @@ private:
 	int m_rc;
 };
 
+template<typename RCObj>
+RCWrapper<RCObj>::RCWrapper(const RCPtrWrapper<RCObj> & other) : m_Private(other.m_priv) {
+	if(m_Private)
+		m_Private->rcInc();
+}
 
 }//end namespace 
 
