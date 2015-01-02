@@ -61,6 +61,7 @@ private:
 	CellQueryResult(detail::CellQueryResult * priv);
 public:
 	CellQueryResult();
+	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,

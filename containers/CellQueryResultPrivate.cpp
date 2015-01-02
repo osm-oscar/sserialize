@@ -9,6 +9,21 @@ CellQueryResult::CellQueryResult() :
 m_idx(0)
 {}
 
+CellQueryResult::CellQueryResult(const ItemIndex & fmIdx, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_gh(gh),
+m_idxStore(idxStore)
+{
+	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend());
+
+	uint32_t totalSize = fmIdx.size();
+	m_desc.reserve(totalSize);
+	m_idx = (IndexDesc*) malloc(totalSize * sizeof(IndexDesc));
+	IndexDesc * idxPtr = m_idx;
+	for(; fmIt != fmEnd; ++fmIt) {
+		m_desc.push_back( CellDesc(1, 0, *fmIt) );
+	}
+}
+
 CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
 m_gh(gh),
 m_idxStore(idxStore)
