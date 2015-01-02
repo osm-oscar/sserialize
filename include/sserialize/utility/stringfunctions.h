@@ -164,20 +164,17 @@ T_RETURN_CONTAINER split(const std::string & str, const T_SEPARATOR_SET & separa
 	return splits;
 }
 
-namespace detail {
 template<typename TVALUE>
-class OneValueSet {
-public:
+struct OneValueSet final {
 	TVALUE m_value;
 public:
 	OneValueSet() {}
 	OneValueSet(const TVALUE & v) : m_value(v) {}
-	virtual ~OneValueSet() {}
-	int count(const TVALUE & v) const { return (v == m_value ? 1 : 0); }
-	TVALUE & value() { return m_value; }
-	const TVALUE & value() const { return m_value; }
+	~OneValueSet() {}
+	inline bool count(const TVALUE & v) const { return v == m_value; }
+	inline TVALUE & value() { return m_value; }
+	inline const TVALUE & value() const { return m_value; }
 };
-}//end namespace detail
 
 /** splits the string at the given spearator */
 std::deque<std::string> splitLine(const std::string & str, const std::set<char> & seps);
