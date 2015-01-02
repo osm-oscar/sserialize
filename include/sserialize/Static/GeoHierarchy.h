@@ -208,6 +208,7 @@ public:
 	
 	uint32_t regionSize() const;
 	
+	uint32_t regionCellIdxPtr(uint32_t pos) const;
 	uint32_t regionItemsPtr(uint32_t pos) const;
 	uint32_t regionItemsCount(uint32_t pos) const;
 	uint32_t regionCellSumItemsCount(uint32_t pos) const;
@@ -335,6 +336,7 @@ public:
 	inline uint32_t regionItemsCount(uint32_t pos) const { return m_priv->regionItemsCount(pos);}
 	inline uint32_t regionCellSumItemsCount(uint32_t pos) const { return m_priv->regionCellSumItemsCount(pos);}
 	
+	inline uint32_t regionCellIdxPtr(uint32_t id) const { return m_priv->regionCellIdxPtr(id); }
 	inline uint32_t regionParentsBegin(uint32_t id) const { return m_priv->regionParentsBegin(id);}
 	inline uint32_t regionParentsEnd(uint32_t id) const { return m_priv->regionParentsEnd(id); }
 	inline uint32_t regionPtrSize() const { return m_priv->regionPtrSize();}
