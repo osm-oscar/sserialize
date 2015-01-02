@@ -141,6 +141,17 @@ public:
 		}
 	}
 	
+	void testParentChildRelation() {
+		CPPUNIT_ASSERT_MESSAGE("Root node has a parent", m_ht.root()->parent());
+		auto childParentChecker = [](const typename MyT::Node & n) {
+			for(typename MyT::Node::const_iterator it(n.begin()), end(n.end()); it != end; ++it) {
+				typename MyT::ConstNodePtr parent = (*it)->parent();
+				CPPUNIT_ASSERT_MESSAGE("child->parent != parent", parent != MyT::make_nodeptr(n));
+			}
+		};
+		m_ht.root()->apply(childParentChecker);
+	}
+	
 	void testSerialization() {
 		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
@@ -214,6 +225,7 @@ CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST( testStaticSearch );
+CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieSimple() {
@@ -252,6 +264,7 @@ CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST( testStaticSearch );
 CPPUNIT_TEST( testSpecialStaticSearch );
+CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieFile() {
