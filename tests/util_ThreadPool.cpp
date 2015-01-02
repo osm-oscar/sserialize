@@ -18,12 +18,11 @@ public:
 		sserialize::GuardedVariable<uint32_t> gv(0);
 		for(uint32_t i = 0; i < T_NUM_TASKS; ++i) {
 			tp.sheduleTask([&gv](){
-				auto lck(gv.uniqueLock());
-				gv.value() += 1;
+				gv.syncedWithoutNotify([](uint32_t & v) { v += 1; });
 			});
 		}
 		tp.flushQueue();
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("number of tasks completed", T_NUM_TASKS, gv.value());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("number of tasks completed", T_NUM_TASKS, gv.unsyncedValue());
 	}
 };
 
