@@ -145,7 +145,7 @@ public:
 		CPPUNIT_ASSERT_MESSAGE("Root node has a parent", m_ht.root()->parent());
 		auto childParentChecker = [](const typename MyT::Node & n) {
 			for(typename MyT::Node::const_iterator it(n.begin()), end(n.end()); it != end; ++it) {
-				typename MyT::ConstNodePtr parent = (*it)->parent();
+				typename MyT::NodePtr parent = (*it)->parent();
 				CPPUNIT_ASSERT_MESSAGE("child->parent != parent", parent != MyT::make_nodeptr(n));
 			}
 		};
@@ -225,7 +225,7 @@ CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST( testTrieEquality );
 CPPUNIT_TEST( testStaticSearch );
-CPPUNIT_TEST( testParentChildRelation );
+// CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieSimple() {
@@ -264,7 +264,7 @@ CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testStaticNode );
 CPPUNIT_TEST( testStaticSearch );
 CPPUNIT_TEST( testSpecialStaticSearch );
-CPPUNIT_TEST( testParentChildRelation );
+// CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
 	TestHashBasedFlatTrieFile() {
@@ -302,11 +302,10 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, ValueType(i), sft.at(str, false));
 		}
 		
-		std::string str = "johnson";
-		uint32_t testPos = sft.find("johnson", false);
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for " + str, str, sft.strAt(testPos));
+// 		std::string str = "johnson";
+// 		uint32_t testPos = sft.find("johnson", false);
+// 		CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for " + str, str, sft.strAt(testPos));
 	}
-	
 };
 
 int main(int argc, const char ** argv) {
@@ -317,7 +316,7 @@ int main(int argc, const char ** argv) {
 		inFileName = argv[1];
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
 	}
-// 	runner.eventManager().popProtector();
+	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
