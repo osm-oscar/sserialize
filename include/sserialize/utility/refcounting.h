@@ -10,6 +10,8 @@ namespace sserialize {
 
 class RefCountObject {
 public:
+	typedef uint32_t RCBaseType;
+public:
 	RefCountObject() : m_rc(0) {}
 	virtual ~RefCountObject() {}
 
@@ -21,12 +23,12 @@ public:
 			delete this;
 	}
 
-	inline int rc() const { return m_rc; }
+	inline RCBaseType rc() const { return m_rc; }
 private:
 	RefCountObject(const RefCountObject & other);
 	RefCountObject & operator=(const RefCountObject & other);
 
-	std::atomic<uint32_t> m_rc;
+	std::atomic<RCBaseType> m_rc;
 };
 
 template<typename RCObj>
@@ -58,7 +60,7 @@ public:
 	
 	bool operator==(const RCWrapper & other) { return m_Private == other.m_Private; }
 	
-	inline int privRc() const { return m_Private->rc();}
+	inline RefCountObject::RCBaseType privRc() const { return (m_Private ? m_Private->rc() : 0);}
 
 protected:
 	void setPrivate(RCObj * data) {
@@ -89,7 +91,7 @@ public:
 	RCPtrWrapper() : m_priv(0) {};
 	explicit RCPtrWrapper(RCObj * data) : m_priv(data) {if (m_priv) m_priv->rcInc();}
 	RCPtrWrapper(const RCPtrWrapper<RCObj> & other) : m_priv(other.m_priv) { if (m_priv) m_priv->rcInc(); }
-	RCPtrWrapper(const RCWrapper<RCObj> & other) : m_priv(other.priv()) {}
+	RCPtrWrapper(const RCWrapper<RCObj> & other) : m_priv(other.priv()) { if (m_priv) m_priv->rcInc(); }
 	~RCPtrWrapper() {
 		if (m_priv) {
 			m_priv->rcDec();
@@ -107,7 +109,7 @@ public:
 
 	bool operator==(const RCPtrWrapper & other) { return m_priv == other.m_priv; }
 	
-	inline int privRc() const { return m_priv->rc();}
+	inline RefCountObject::RCBaseType privRc() const { return (m_priv ? m_priv->rc() : 0);}
 
 	
 	RCObj & operator*() { return *priv();}
