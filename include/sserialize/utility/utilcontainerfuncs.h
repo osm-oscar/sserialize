@@ -43,7 +43,7 @@ namespace detail {
 }
 
 
-///multi-threaded sorting, @param numThreads if 0, computer number of threads
+///multi-threaded sorting, @param numThreads if 0, numThreads = std::thread::hardware_concurrency()
 template<typename TIterator, typename CompFunc>
 void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThreads = 0) {
 	if (!numThreads)

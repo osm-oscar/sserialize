@@ -152,9 +152,11 @@ public:
 	{}
 	virtual ~OADHashTable() {}
 	inline SizeType size() const { return m_valueStorage.size(); }
+	///Capacity of the storage table
 	inline SizeType storageCapacity()  const { return m_valueStorage.capacity();}
 	inline double rehashMultiplier() const { return m_rehashMult;}
 	inline void rehashMultiplier(double v) { m_rehashMult = v; }
+	///Capacity of the hash table (not the storage table)
 	inline uint64_t capacity() const { return m_d.capacity();}
 	inline double load_factor() const { return (double)size()/m_d.size();}
 	inline double max_load_factor() const { return m_maxLoad;}
