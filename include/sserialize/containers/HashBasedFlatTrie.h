@@ -111,9 +111,10 @@ public:
 		const Node* operator->() const;
 		bool operator==(const NodePtr & other) const;
 		bool operator!=(const NodePtr & other) const;
+		bool operator!() const { return m_priv.get(); }
 	};
 	
-	class Node {
+	class Node final {
 		friend class HashBasedFlatTrie<TValue>;
 	public:
 		///This only works if the range is sorted and inner nodes are in the range as well.
@@ -342,12 +343,22 @@ HashBasedFlatTrie<TValue>::NodePtr::operator->() {
 
 template<typename TValue>
 bool HashBasedFlatTrie<TValue>::NodePtr::operator==(const HashBasedFlatTrie<TValue>::NodePtr & other) const {
-	return m_priv->node == other.m_priv->node;
+	if (!(bool)m_priv.get() && !(bool)other.m_priv.get()) //both are null
+		return true;
+	else if (!(bool)m_priv.get() xor !(bool)m_priv.get()) //one is null
+		return false;
+	else
+		return m_priv->node == other.m_priv->node;
 }
 
 template<typename TValue>
 bool HashBasedFlatTrie<TValue>::NodePtr::operator!=(const HashBasedFlatTrie<TValue>::NodePtr & other) const {
-	return m_priv->node != other.m_priv->node;
+	if (!(bool)m_priv.get() && !(bool)other.m_priv.get()) //both are null
+		return false;
+	else if (!(bool)m_priv.get() xor !(bool)m_priv.get()) //one is null
+		return true;
+	else
+		return m_priv->node != other.m_priv->node;
 }
 
 template<typename TValue>
