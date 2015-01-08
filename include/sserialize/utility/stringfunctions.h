@@ -76,6 +76,38 @@ uint32_t utf8CharCount(octetIterator begin, const octetIterator & end) {
 	return count;
 }
 
+///Split string into multiple strings at every location of separators, but skip those escaped with a codepoint in escapes
+///@param out output iterator accepting std::string
+///@return number of consumed chars (NOT codepoints)
+template<typename T_OCTET_ITERATOR, typename T_SEPARATOR_SET, typename T_ESCAPES_SET, typename T_OUTPUT_ITERATOR>
+std::size_t split(const T_OCTET_ITERATOR & begin, const T_OCTET_ITERATOR & end, const T_SEPARATOR_SET & separators, const T_ESCAPES_SET & escapes, T_OCTET_ITERATOR out) {
+	std::string curStr;
+	T_OCTET_ITERATOR it(begin), prev(begin);
+	for(; it != end;) {
+		uint32_t cp = utf8::next(it, end);
+		if (escapes.count(cp) > 0) {
+			if (it == end) {
+				continue;
+			}
+			prev = it;
+			utf8::advance(it, 1, end);
+		}
+		else if (separators.count(cp) > 0) {
+			*out = curStr;
+			++out;
+			curStr.clear();
+			continue;
+		}
+		curStr.append(prev, it);
+		prev = it;
+	}
+	if(curStr.length()) {
+		*out = curStr;
+	}
+	return end-it;
+}
+
+
 /** splits the string at the given spearator */
 template<char TSEP>
 std::deque<std::string> splitLine(const std::string & str) {
