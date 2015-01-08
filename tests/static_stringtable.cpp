@@ -56,7 +56,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", stableData().size(), stable().getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)strs().size(), stable().size());
 		for(uint32_t i = 0, s = strs().size(); i < s; ++i) {
-			int32_t pos = m_stable.find(strs().at(i));
+			uint32_t pos = m_stable.find(strs().at(i));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("string at", i), i, (uint32_t) pos);
 		}
 	}

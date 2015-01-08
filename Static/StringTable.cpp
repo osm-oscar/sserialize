@@ -289,8 +289,9 @@ SortedStringTable::SortedStringTable() : StringTable() {}
 SortedStringTable::SortedStringTable(const UByteArrayAdapter & data) : StringTable(data) {}
 SortedStringTable::SortedStringTable(const sserialize::Static::SortedStringTable & other) : StringTable(other) {}
 SortedStringTable::~SortedStringTable() {}
-int32_t SortedStringTable::find(const std::string & value) const {
-	return binarySearchKeyInArray(*priv(), value);
+uint32_t SortedStringTable::find(const std::string & value) const {
+	SizeType tmp = binarySearchKeyInArray(*priv(), value);
+	return (tmp < npos ? tmp : npos);
 }
 
 }}//end namespace

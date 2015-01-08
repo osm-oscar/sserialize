@@ -118,6 +118,7 @@ public:
 	typedef value_type const_reference;
 	typedef value_type reference;
 	typedef enum {TI_FIXED_LENGTH=1} TypeInfo;
+	static constexpr uint32_t npos = 0xFFFFFFFF;
 private:
 	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
@@ -146,7 +147,7 @@ public:
 	TValue at(uint32_t pos) const;
 	TValue operator[](uint32_t pos) const;
 	UByteArrayAdapter dataAt(uint32_t pos) const;
-	int32_t find(const TValue & value) const;
+	uint32_t find(const TValue & value) const;
 	TValue front() const;
 	TValue back() const;
 
@@ -271,12 +272,12 @@ Array<TValue>::dataAt(uint32_t pos) const {
 }
 
 template<typename TValue>
-int32_t Array<TValue>::find(const TValue& value) const {
+uint32_t Array<TValue>::find(const TValue& value) const {
 	for(uint32_t i = 0; i < size(); i++) {
 		if (at(i) == value)
 			return i;
 	}
-	return -1;
+	return npos;
 }
 
 //Template specialications for integral types

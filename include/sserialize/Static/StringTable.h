@@ -15,6 +15,7 @@ class StringTable: public RCWrapper< sserialize::Static::Array<std::string> > {
 public:
 	typedef sserialize::Static::Array<std::string>::const_iterator const_iterator;
 	typedef sserialize::Static::Array<std::string>::const_reference const_reference;
+	static constexpr uint32_t npos = 0xFFFFFFFF;
 protected:
 	inline UByteArrayAdapter & data() { return priv()->data();}
 	inline const UByteArrayAdapter & data() const { return priv()->data(); }
@@ -69,8 +70,8 @@ public:
 	FrequencyStringTable(const FrequencyStringTable & other);
 	FrequencyStringTable & operator=(const FrequencyStringTable & other);
 	virtual ~FrequencyStringTable();
-	inline int32_t find(const std::string & value) const { return priv()->find(value);}
-	inline bool count(const std::string & value) const { return find(value) >= 0; }
+	inline uint32_t find(const std::string & value) const { return priv()->find(value);}
+	inline bool count(const std::string & value) const { return find(value) != npos; }
 };
 
 class SortedStringTable: public StringTable {
@@ -79,8 +80,8 @@ public:
 	SortedStringTable(const UByteArrayAdapter & data);
 	SortedStringTable(const SortedStringTable & other);
 	virtual ~SortedStringTable();
-	int32_t find(const std::string & value) const;
-	inline bool count(const std::string & value) const { return find(value) >= 0; }
+	uint32_t find(const std::string & value) const;
+	inline bool count(const std::string & value) const { return find(value) != npos; }
 };
 
 }}//end namespace

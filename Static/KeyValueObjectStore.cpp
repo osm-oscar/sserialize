@@ -234,16 +234,16 @@ UByteArrayAdapter::OffsetType KeyValueObjectStorePrivate::getSizeInBytes() const
 }
 
 uint32_t KeyValueObjectStorePrivate::findKeyId(const std::string & str) const {
-	int32_t pos = m_keyStringTable.find(str);
-	if (pos < 0) {
+	uint32_t pos = m_keyStringTable.find(str);
+	if (pos == sserialize::Static::StringTable::npos) {
 		return KeyValueObjectStore::npos;
 	}
 	return pos;
 }
 
 uint32_t KeyValueObjectStorePrivate::findValueId(const std::string & str) const {
-	int32_t pos = m_valueStringTable.find(str);
-	if (pos < 0) {
+	uint32_t pos = m_valueStringTable.find(str);
+	if (pos == sserialize::Static::StringTable::npos) {
 		return KeyValueObjectStore::npos;
 	}
 	return pos;
