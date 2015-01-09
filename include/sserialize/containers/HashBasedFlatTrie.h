@@ -246,6 +246,7 @@ public:
 		m_ht = HashTable(HashFunc1(strHandlerPtr), HashFunc2(strHandlerPtr), StringEq(strHandlerPtr), 0.8, HTValueStorage(hashMMT), HTStorage(hashMMT));
 	}
 	~HashBasedFlatTrie() {}
+	uint64_t minStorageSize() const { return m_stringData.size() + m_ht.storageCapacity()*sizeof(typename HTValueStorage::value_type) + m_ht.capacity()*sizeof(HTStorage::value_type);}
 	///reserve @param count strings
 	void reserve(uint32_t count) { m_ht.reserve(count); }
 	
