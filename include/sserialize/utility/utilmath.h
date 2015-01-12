@@ -152,7 +152,8 @@ template<typename T>
 class AtomicMax final {
 	std::atomic<T> m_v;
 public:
-	AtomicMax(const T & initial = T()) : m_v(initial) {}
+	AtomicMax(const T & initial) : m_v(initial) {}
+	AtomicMax() : m_v(std::numeric_limits<T>::min()) {}
 	~AtomicMax() {}
 	T value() { return m_v; }
 	void update(const T & v) {
@@ -165,7 +166,8 @@ template<typename T>
 class AtomicMin final {
 	std::atomic<T> m_v;
 public:
-	AtomicMin(const T & initial = T()) : m_v(initial) {}
+	AtomicMin(const T & initial) : m_v(initial) {}
+	AtomicMin() : m_v(std::numeric_limits<T>::max()) {}
 	~AtomicMin() {}
 	T value() { return m_v; }
 	void update(const T & v) {
