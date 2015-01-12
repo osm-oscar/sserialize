@@ -17,6 +17,10 @@ private:
 	MmappedMemory<TValue> m_data;
 	DynamicBitSet m_bitSet;
 	THashMap m_upperData;
+private:
+	//disable copy operaters as m_data and m_bitSet don't do any copying
+	DirectHugeHashMap(const DirectHugeHashMap & other);
+	DirectHugeHashMap & operator=(const DirectHugeHashMap & other);
 public:
 	DirectHugeHashMap() : m_begin(0), m_end(0), m_count(0) {}
 	DirectHugeHashMap(uint64_t begin, uint64_t end, MmappedMemoryType mmt) :
@@ -36,6 +40,39 @@ public:
 	m_upperData(params...)
 	{}
 	virtual ~DirectHugeHashMap() {}
+	DirectHugeHashMap(DirectHugeHashMap && other) :
+	m_begin(other.m_begin),
+	m_end(other.m_end),
+	m_count(other.m_count)
+	{
+		using std::swap;
+		swap(m_data, other.m_data);
+		swap(m_bitSet, other.m_bitSet);
+		swap(m_upperData, other.m_upperData);
+	}
+	DirectHugeHashMap & operator=(DirectHugeHashMap && other) {
+		clear();
+		swap(other);
+		return *this;
+	}
+	void swap(DirectHugeHashMap & other) {
+		using std::swap;
+		swap(m_begin, other.m_begin),
+		swap(m_end, other.m_end);
+		swap(m_count, other.m_count);
+		swap(m_data, other.m_data);
+		swap(m_bitSet, other.m_bitSet);
+		swap(m_upperData, other.m_upperData);
+	}
+	void clear() {
+		m_count = 0;
+		//make sure to delete the old data prior allocating new memory in case of very large data
+		m_data = MmappedMemory<TValue>();
+		m_upperData.clear();
+		m_bitSet = DynamicBitSet();
+		m_data = MmappedMemory<TValue>(m_end-m_begin, m_data.type());
+		m_bitSet = DynamicBitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true));
+	}
 	uint64_t beginDirectRange() const { return m_begin; }
 	uint64_t endDirectRange() const { return m_end; }
 	
@@ -60,6 +97,19 @@ public:
 		}
 		else {
 			m_upperData[pos] = TValue();
+		}
+	}
+	
+	///memory in direct range is NOT reset
+	void unmark(uint64_t pos) {
+		if (m_begin <= pos && pos < m_end) {
+			if (m_bitSet.isSet(pos-m_begin)) {
+				--m_count;
+				m_bitSet.unset(pos-m_begin);
+			}
+		}
+		else {
+			m_upperData.erase(pos);
 		}
 	}
 	
@@ -122,6 +172,11 @@ public:
 		return m_upperData[pos];
 	}
 };
+
+template<typename TValue>
+void swap(DirectHugeHashMap<TValue> & a, DirectHugeHashMap<TValue> & b) {
+	a.swap(b);
+}
 
 }//end namespace
 
