@@ -7,7 +7,7 @@
 #include <sserialize/containers/CellQueryResult.h>
 #include <unordered_map>
 
-#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 8
+#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 9
 
 namespace sserialize {
 namespace Static {
@@ -22,10 +22,11 @@ namespace spatial {
   *Version 6: add items count to regions
   *Version 7: add items count to cells
   *Version 8: add sparse parent ptrs to cells
+  *Version 9: add storeIdToGhId map
   *-------------------------------------------------------------------------------
-  *VERSION|RegionDesc|RegionPtrs |RegionBoundaries       |CellDesc  |CellPtrs
+  *VERSION|StoreIdToGhId|RegionDesc|RegionPtrs |RegionBoundaries       |CellDesc  |CellPtrs
   *-------------------------------------------------------------------------------
-  *  1Byte|MVBitArray|BCUintArray|(region.size+1)*GeoRect|MVBitArray|BCUintArray
+  *  1Byte|Array<u32>   |MVBitArray|BCUintArray|(region.size+1)*GeoRect|MVBitArray|BCUintArray
   *
   * There has to be one Region more than used. The last one defines the end for the RegionPtrs
   *
@@ -60,6 +61,9 @@ namespace spatial {
   *
   */
 
+class GeoHierarchy;
+  
+  
 namespace detail {
 
 ///SubSet represents a SubSet of a GeoHierarchy. It's based on a CellQueryResult and has 2 incarnation
@@ -76,13 +80,13 @@ public:
 		typedef ChildrenStorageContainer::const_iterator const_iterator;
 	private:
 		ChildrenStorageContainer m_children;
-		uint32_t m_id;
+		uint32_t m_ghId;
 		uint32_t m_itemSize;
 		CellPositionsContainer m_cellPositions;
 	public:
-		Node(uint32_t id, uint32_t itemSize = 0) : m_id(id), m_itemSize(itemSize) {}
+		Node(uint32_t ghId, uint32_t itemSize) : m_ghId(ghId), m_itemSize(itemSize) {}
 		virtual ~Node() {}
-		inline uint32_t id() const { return m_id; }
+		inline uint32_t ghId() const { return m_ghId; }
 		//number of chilren
 		inline uint32_t size() const { return m_children.size(); }
 		inline NodePtr & operator[](uint32_t pos) { return m_children[pos]; }
@@ -116,9 +120,11 @@ public:
 	virtual ~SubSet()  {}
 	inline const NodePtr & root() const { return m_root;}
 	inline const CellQueryResult & cqr() const { return m_cqr; }
+	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
 	///Sparse SubSets have no itemcounts and need a recursive flattening strategy
 	inline bool sparse() const { return m_sparse; }
 	sserialize::ItemIndex idx(const NodePtr & node) const;
+	uint32_t storeId(const NodePtr & node) const;
 };
 
 class FlatSubSet {
@@ -171,6 +177,7 @@ void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPo
 class GeoHierarchy: public RefCountObject {
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
+	typedef sserialize::Static::Array<uint32_t> StoreIdToGhIdMap;
 	typedef sserialize::MultiVarBitArray RegionDescriptionType;
 	typedef sserialize::BoundedCompactUintArray RegionPtrListType;
 	
@@ -180,6 +187,7 @@ private:
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
 private:
+	StoreIdToGhIdMap m_storeIdToGhId;
 	RegionDescriptionType m_regions;
 	RegionPtrListType m_regionPtrs;
 	sserialize::Static::Array<sserialize::spatial::GeoRect> m_regionBoundaries;
@@ -207,6 +215,8 @@ public:
 	uint32_t cellItemsCount(uint32_t pos) const;
 	
 	uint32_t regionSize() const;
+	uint32_t storeIdToGhId(uint32_t storeId) const;
+	uint32_t ghIdToStoreId(uint32_t regionId) const;
 	
 	uint32_t regionCellIdxPtr(uint32_t pos) const;
 	uint32_t regionItemsPtr(uint32_t pos) const;
@@ -236,6 +246,7 @@ public:
 	Cell();
 	Cell(uint32_t pos, const RCPtrWrapper<GeoHierarchy> & db);
 	virtual ~Cell();
+	inline uint32_t ghId() { return m_pos; }
 	uint32_t itemPtr() const;
 	uint32_t itemCount() const;
 	///Offset into PtrArray
@@ -251,7 +262,7 @@ public:
 
 class Region {
 public:
-	typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD_ITEMS_PTR=5, RD_ITEMS_COUNT=6,
+	typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_STORE_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD_ITEMS_PTR=5, RD_ITEMS_COUNT=6,
 					RD__ENTRY_SIZE=7} RegionDescriptionAccessors;
 private:
 	uint32_t m_pos;
@@ -262,7 +273,8 @@ public:
 	Region(uint32_t pos, const RCPtrWrapper<GeoHierarchy> & db);
 	virtual ~Region();
 	sserialize::spatial::GeoShapeType type() const;
-	uint32_t id() const;
+	inline uint32_t ghId() const { return m_pos; }
+	uint32_t storeId() const;
 	sserialize::spatial::GeoRect boundary() const;
 	uint32_t cellIndexPtr() const;
 	///Offset into PtrArray
@@ -329,8 +341,12 @@ public:
 	inline uint32_t cellItemsCount(uint32_t pos) const { return m_priv->cellItemsCount(pos);}
 	
 	inline uint32_t regionSize() const { return m_priv->regionSize();}
+	inline uint32_t storeIdToGhId(uint32_t storeId) const { return m_priv->storeIdToGhId(storeId);}
+	inline uint32_t ghIdToStoreId(uint32_t regionId) const { return m_priv->ghIdToStoreId(regionId); }
+	
 	Region region(uint32_t id) const;
 	Region rootRegion() const;
+	inline Region regionFromStoreId(uint32_t storeId) const { return region(storeIdToGhId(storeId)); }
 	
 	inline uint32_t regionItemsPtr(uint32_t pos) const { return m_priv->regionItemsPtr(pos);}
 	inline uint32_t regionItemsCount(uint32_t pos) const { return m_priv->regionItemsCount(pos);}

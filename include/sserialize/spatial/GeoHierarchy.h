@@ -3,10 +3,12 @@
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/spatial/GeoShape.h>
 #include <sserialize/Static/GeoHierarchy.h>
+#include <sserialize/utility/debug.h>
 
 namespace sserialize {
 namespace spatial {
 
+//Regions are sorted in ascending order, meaning that children are before parents
 class GeoHierarchy {
 public:
 	//Pointers are sorted
@@ -16,7 +18,8 @@ public:
 		std::vector<uint32_t> parents;
 		std::vector<uint32_t> cells;
 		sserialize::spatial::GeoShapeType type;
-		uint32_t id;
+		uint32_t storeId;
+		uint32_t ghId;
 		GeoRect boundary;
 	};
 
@@ -82,6 +85,7 @@ void GeoHierarchy::getAncestors(uint32_t regionId, T_SET_CONTAINER & out) const 
 	}
 }
 
+void swap(GeoHierarchy::Region & a, GeoHierarchy::Region & b);
 
 }} //end namespace
 

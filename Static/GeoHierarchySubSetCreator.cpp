@@ -18,7 +18,7 @@ m_gh(gh)
 	const sserialize::Static::spatial::GeoHierarchy::CellPtrListType & ghCellPtrs = m_gh.cellPtrs();
 	
 	for(uint32_t i(0), s(m_gh.regionSize()); i < s; ++i) {
-		m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size()) );
+		m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), m_gh.region(i).storeId()) );
 		
 		for(uint32_t rPIt(m_gh.regionParentsBegin(i)), rPEnd(m_gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
 			m_regionParentsPtrs.push_back( ghRegionPtrs.at(rPIt) );
@@ -40,7 +40,7 @@ m_gh(gh)
 
 	}
 	//dummy end regions
-	m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size()) );
+	m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), 0) );
 	m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), 0, 0) );
 }
 
@@ -67,7 +67,7 @@ GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool s
 
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
 GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const {
-	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos);
+	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos, 0);
 
 	const uint32_t * cPPtrsBegin = &(m_cellParentsPtrs[0]);
 	const uint32_t * rPPtrsBegin = &(m_regionParentsPtrs[0]);
@@ -87,7 +87,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 			uint32_t cP = *cPIt;
 			SubSet::Node * n;
 			if (!nodes.count(cP)) {
-				n = new SubSet::Node(cP);
+				n = new SubSet::Node(cP, 0);
 				nodes[cP] = n;
 			}
 			else {

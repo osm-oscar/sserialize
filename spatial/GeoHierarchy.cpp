@@ -33,7 +33,8 @@ void GeoHierarchy::splitCellParents(uint32_t cellId, std::vector<uint32_t> & dir
 void GeoHierarchy::createRootRegion() {
 	m_rootRegion.children.clear();
 	m_rootRegion.type = sserialize::spatial::GS_NONE;
-	m_rootRegion.id = 0;
+	m_rootRegion.ghId = m_regions.size();
+	m_rootRegion.storeId = 0;
 	m_rootRegion.parents.clear();
 	m_rootRegion.children.clear();
 	m_rootRegion.cells.clear();
@@ -41,7 +42,7 @@ void GeoHierarchy::createRootRegion() {
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions[i];
 		if (!r.parents.size()) {
-			m_rootRegion.children.push_back(i);
+			m_rootRegion.children.push_back(r.ghId);
 		}
 	}
 	m_rootRegion.cells.reserve(m_cells.size());
@@ -128,6 +129,19 @@ bool GeoHierarchy::checkConsistency() {
 			}
 		}
 	}
+	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+		const Region & r = m_regions.at(i);
+		for(const auto x : r.children) {
+			if (i <= x) {
+				const Region & cr = m_regions.at(x);
+				std::cout << "Region " << i << " with child " << x << " have incorrect id order. storeId=" << r.storeId << ", ghId=" << r.ghId;
+				std::cout << ", cr.storeId=" << cr.storeId << ", cr.ghId=" << cr.ghId << std::endl;
+				std::cout << "Region cells:" << r.cells << std::endl;
+				std::cout << "Child-Region cells: " << cr.cells << std::endl;
+				return false;
+			}
+		}
+	}
 	
 	//cells
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
@@ -186,12 +200,19 @@ void GeoHierarchy::printStats(std::ostream & out) const {
 UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sserialize::ItemIndexFactory& idxFactory, bool fullItemsIndex) const {
 	bool allOk = true;
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(8); //version
+	dest.putUint8(9); //version
+	{ //put the storeIdToGhId map:
+		std::vector<uint32_t> tmp(m_regions.size(), 0);
+		for(uint32_t ghId(0), s(m_regions.size()); ghId < s; ++ghId) {
+			tmp.at(m_regions.at(ghId).storeId) = ghId;
+		}
+		dest << tmp;
+	}
 
 	std::vector<uint32_t> maxValues(sserialize::Static::spatial::GeoHierarchy::Region::RD__ENTRY_SIZE, 0);
 	uint32_t & mrdCellListIndexPtr = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR];
 	uint32_t & mrdChildrenBegin = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN];
-	uint32_t & mrdId= maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_ID];
+	uint32_t & mrdId= maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_STORE_ID];
 	uint32_t & mrdParentsOffset = maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_PARENTS_OFFSET];
 	uint32_t & mrdType= maxValues[sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE];
 	
@@ -205,7 +226,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		uint32_t cellListIndexPtr = idxFactory.addIndex(r.cells, &ok);
 		mrdCellListIndexPtr = std::max<uint32_t>(mrdCellListIndexPtr, cellListIndexPtr);
 		mrdType = std::max<uint32_t>(mrdType, r.type);
-		mrdId = std::max<uint32_t>(mrdId, r.id);
+		mrdId = std::max<uint32_t>(mrdId, r.storeId);
 		mrdParentsOffset = std::max<uint32_t>(mrdParentsOffset, r.children.size());
 		curPtrOffset += r.children.size() + r.parents.size();
 		cellListIndexPtrs[i] = cellListIndexPtr;
@@ -247,7 +268,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 			const Region & r = m_regions[i];
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, cellListIndexPtrs[i]);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE, r.type);
-			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, r.id);
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_STORE_ID, r.storeId);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN, curPtrOffset);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_PARENTS_OFFSET, r.children.size());
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_PTR, fullItemIndexInfo[i].first);
@@ -259,7 +280,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT, fullItemIndexInfo.back().second);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, rootRegionCellListIndexPtr);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE, sserialize::spatial::GS_NONE);
-		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, m_rootRegion.id);
+		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_STORE_ID, m_rootRegion.storeId);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN, curPtrOffset);
 		mvaCreator.set(m_regions.size(), sserialize::Static::spatial::GeoHierarchy::Region::RD_PARENTS_OFFSET, m_rootRegion.children.size());
 		curPtrOffset += m_rootRegion.children.size();
@@ -269,7 +290,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_ITEMS_COUNT, 0);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_CELL_LIST_PTR, 0);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_TYPE, sserialize::spatial::GS_NONE);
-		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_ID, 0);
+		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_STORE_ID, 0);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_CHILDREN_BEGIN, curPtrOffset);
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_PARENTS_OFFSET, 0);
 		
@@ -382,8 +403,12 @@ bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, cons
 		std::cout << "parent.size of region " << i << " differ" << std::endl;
 		ok = false;
 	}
-	if (r.id != sr.id()) {
-		std::cout << "id of region " << i << " differs" << std::endl;
+	if (r.storeId != sr.storeId()) {
+		std::cout << "storeId of region " << i << " differs. Should=" << r.storeId << ", IS=" << sr.storeId() << std::endl;
+		ok = false;
+	}
+	if (r.ghId != sr.ghId()) {
+		std::cout << "ghId of region " << i << " differs. Should=" << r.ghId << ", IS=" << sr.ghId() << std::endl;
 		ok = false;
 	}
 	if (r.type != sr.type()) {
@@ -559,6 +584,17 @@ void GeoHierarchy::compactify(bool compactifyCells, bool compactifyRegions) {
 	if (compactifyRegions) {
 		std::vector<uint32_t> regionsInLevelOrder( getRegionsInLevelOrder() );
 	}
+}
+
+void swap(GeoHierarchy::Region & a, GeoHierarchy::Region & b) {
+	using std::swap;
+	swap(a.children, b.children);
+	swap(a.parents, b.parents);
+	swap(a.cells, b.cells);
+	swap(a.type, b.type);
+	swap(a.storeId, b.storeId);
+	swap(a.ghId, b.ghId);
+	swap(a.boundary, b.boundary);
 }
 
 }} //end namespace

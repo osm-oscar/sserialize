@@ -13,8 +13,9 @@ namespace detail {
 class GeoHierarchySubSetCreator: public RefCountObject {
 private:
 	struct RegionDesc {
-		RegionDesc(uint32_t parentsBegin) : parentsBegin(parentsBegin) {}
+		RegionDesc(uint32_t parentsBegin, uint32_t storeId) : parentsBegin(parentsBegin), storeId(storeId) {}
 		uint32_t parentsBegin;
+		uint32_t storeId;
 	};
 	struct CellDesc {
 		CellDesc(uint32_t parentsBegin, uint32_t directParentsEnd, uint32_t itemsCount) :
@@ -45,7 +46,7 @@ public:
 template<bool SPARSE>
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
 GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
-	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos);
+	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos, 0);
 
 	const uint32_t * cPPtrsBegin = &(m_cellParentsPtrs[0]);
 	const uint32_t * rPPtrsBegin = &(m_regionParentsPtrs[0]);
@@ -71,7 +72,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 			uint32_t cP = *cPIt;
 			SubSet::Node * n;
 			if (!nodes[cP]) {
-				n = new SubSet::Node(cP);
+				n = new SubSet::Node(cP, 0);
 				nodes[cP] = n;
 			}
 			else {
@@ -94,7 +95,8 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 				for(; rPIt != rPEnd; ++rPIt) {
 					uint32_t rp = *rPIt;
 					if (SPARSE && !nodes[rp]) { //sparse SubSet doesnt push parent ptrs upwards
-						nodes[rp] = new SubSet::Node(rp);
+						assert(rp > regionId); //otherwise we would not take care of the newly created region
+						nodes[rp] = new SubSet::Node(rp, 0);
 						nodes[rp]->push_back(*it);
 					}
 					else {
