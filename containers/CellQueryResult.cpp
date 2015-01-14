@@ -93,6 +93,10 @@ CellQueryResult & CellQueryResult::operator=(const CellQueryResult & other) {
 	return *this;
 }
 
+const Static::spatial::GeoHierarchy& CellQueryResult::geoHierarchy() const {
+	return m_priv->geoHierarchy();
+}
+
 uint32_t CellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }
