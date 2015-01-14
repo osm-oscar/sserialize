@@ -261,6 +261,8 @@ public:
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
 	inline const_iterator end() const { return const_iterator(m_size, *this);}
 	inline const_iterator cend() const { return const_iterator(m_size, *this);}
+	template<typename T_OUTPUT_ITERATOR>
+	void copyInto(T_OUTPUT_ITERATOR out);
 };
 
 template<typename T_SOURCE_CONTAINER>
@@ -274,6 +276,13 @@ uint8_t BoundedCompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArr
 	else {
 		dest.putVlPackedUint64(0);
 		return 1;
+	}
+}
+
+template<typename T_OUTPUT_ITERATOR>
+void BoundedCompactUintArray::copyInto(T_OUTPUT_ITERATOR out) {
+	for(uint32_t i(0), s(size()); i < s; ++i, ++out) {
+		*out = at64(i);
 	}
 }
 
