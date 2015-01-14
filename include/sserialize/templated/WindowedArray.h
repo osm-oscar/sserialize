@@ -40,6 +40,11 @@ public:
 	///This does NOT free the associated memory 
 	~WindowedArray() {}
 	
+	///This does NOT free the associated memory 
+	void clear() {
+		m_push = m_begin;
+	}
+	
 	void push_back(const T_VALUE & value) {
 		if (m_push < m_end) {
 			*m_push = value;
