@@ -16,11 +16,11 @@ std::ostream & operator<<(std::ostream & out, const std::pair<T1, T2> & s) {
 template<typename T>
 std::ostream & operator<<(std::ostream & out, const std::vector<T> & s) {
 	if (!s.size())
-		return out << "std::vector[]";
+		return out << "std::vector<0>[]";
 	typename std::vector<T>::const_iterator end( s.cend());
 	typename std::vector<T>::const_iterator it = s.cbegin();
 	
-	out << "std::vector[";
+	out << "std::vector<" << s.size() << ">[";
 	while (true) {
 		out << *it;
 		++it;
@@ -126,17 +126,10 @@ std::string toString(PrintTypeList ... args) {
 template<typename T>
 void print(std::ostream & out, const std::vector<T> & vec) {
 	out << "std::vector<" << nameOfType<T>() << ">[";
-	typename std::vector<T>::const_iterator it(vec.begin());
-	typename std::vector<T>::const_iterator end(vec.end());
-	if (vec.size()) {
-		--end;
-		for(; it < end; ++it) {
-			out << *it << ", ";
-		}
-		out << *it;
-	}
+	print<',', typename std::vector<T>::const_iterator>(out, vec.cbegin(), vec.cend());
 	out << "]";
 }
+
 
 inline std::string prettyFormatSize(uint64_t bytes) {
 	char prefixes[] = {'N', 'K', 'M', 'G'};
