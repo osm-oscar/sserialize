@@ -153,4 +153,37 @@ sserialize::ItemIndex CellQueryResult::flaten() const {
 	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) { return a + b; } );
 }
 
+void CellQueryResult::dump(std::ostream & out) const {
+	out << "CQR<" << cellCount() << ">";
+	if (!cellCount()) {
+		out << "{}";
+		return;
+	}
+	char sep = '{';
+	for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
+		out << sep << ' ';
+		out << it.cellId() << ":";
+		if (it.fullMatch()) {
+			out << "f";
+		}
+		else {
+			out << *it;
+		}
+		sep = ',';
+	}
+	out << " }";
+	return;
+}
+
+void CellQueryResult::dump() const {
+	this->dump(std::cout);
+	std::cout << std::endl;
+}
+
+std::ostream& operator<<(std::ostream& out, const CellQueryResult& src) {
+	src.dump(out);
+	return out;
+}
+
+
 }

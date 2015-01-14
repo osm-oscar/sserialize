@@ -88,7 +88,11 @@ public:
 	const_iterator end() const;
 	const_iterator cend() const;
 	ItemIndex flaten() const;
+	void dump(std::ostream & out) const;
+	void dump() const;
 };
+
+std::ostream & operator<<(std::ostream & out, const CellQueryResult & src);
 
 }
 
