@@ -104,13 +104,13 @@ public:
 	m_d(15, 0),
 	m_maxLoad(0.8),
 	m_rehashMult(2.0),
-	m_maxCollisions(1000)
+	m_maxCollisions(10)
 	{}
 	OADHashTable(THash1 hash1, THash2 hash2, TKeyEq keyEq, double maxLoad = 0.8) :
 	m_d(16, 0), //start with a small hash table, start value has to obey (m_d.size()+1)/(m_rehashMult*m_d.size()) < m_maxLoad
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
-	m_maxCollisions(1000),
+	m_maxCollisions(10),
 	m_hash1(hash1),
 	m_hash2(hash2),
 	m_keyEq(keyEq)
@@ -120,7 +120,7 @@ public:
 	m_d(tableStorage),
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
-	m_maxCollisions(1000),
+	m_maxCollisions(10),
 	m_hash1(hash1),
 	m_hash2(hash2),
 	m_keyEq(keyEq)
@@ -134,7 +134,7 @@ public:
 	m_d(tableStorage),
 	m_maxLoad(0.8),
 	m_rehashMult(2.0),
-	m_maxCollisions(100)
+	m_maxCollisions(10)
 	{
 		m_valueStorage.clear();
 		m_d.clear();
@@ -164,6 +164,13 @@ public:
 	///Set this to std::numeric_limits<uint64_t>::max() if you want as many collisions as the size of the table
 	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; rehash(m_d.size()); }
 	inline uint64_t maxCollisions() const { return m_maxCollisions; }
+	///if you change something here, then you're on your own
+	inline THash1 & hash1() { return m_hash1; }
+	inline const THash1 & hash1() const { return m_hash1; }
+	///if you change something here, then you're on your own
+	inline THash2 & hash2() { return m_hash2; }
+	inline const THash2 & hash2() const { return m_hash2; }
+	
 	void reserve(SizeType count);
 	///Adding more elements to the hash does not invalidate iterators
 	mapped_type & operator[](const key_type & key);
