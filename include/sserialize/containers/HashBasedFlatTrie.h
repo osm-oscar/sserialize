@@ -272,6 +272,7 @@ public:
 	StaticString insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 	TValue & operator[](const StaticString & str);
 	///You have to call finalize() before using this @param prefixMatch strIt->strEnd can be a prefix of the path
+	///This is NOT thread-sage
 	template<typename T_OCTET_ITERATOR>
 	NodePtr findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch);
 	
