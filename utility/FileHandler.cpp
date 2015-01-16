@@ -24,11 +24,15 @@ void * FileHandler::mmapFile(int fd, OffsetType fileSize, bool prePopulate, bool
 
 void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType & fileSize, bool prePopulate, bool randomAccess) {
 	bool fExisted = MmappedFile::fileExists(fileName);
-	fd = open(fileName.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	fd = ::open(fileName.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		return 0;
 	if (!fExisted) {
-		ftruncate(fd, 512); //reserve at least a block on old rotating media
+		if (::ftruncate(fd, 512) < 0) {//reserve at least a block on old rotating media
+			::close(fd);
+			::unlink(fileName.c_str());
+			return 0;
+		}
 		fileSize = 512;
 	}
 	else {
@@ -53,7 +57,7 @@ void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::strin
 	::memset(fileName+fbSize, 'X', 6);
 	fileName[fbSize+6] = 0;
 	
-	fd = mkstemp(fileName);
+	fd = ::mkstemp(fileName);
 	
 	if (fd < 0)
 		return 0;
@@ -114,7 +118,7 @@ bool FileHandler::closeAndUnlink(const std::string & fileName, int fd, void * me
 
 bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 	if (sync) {
-		msync(mem, size, MS_ASYNC);
+		::msync(mem, size, MS_ASYNC);
 	}
 	bool ok = (::munmap(mem, size) < 0);
 	ok = (::close(fd) < 0) && ok;
