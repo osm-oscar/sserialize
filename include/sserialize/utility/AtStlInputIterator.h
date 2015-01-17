@@ -120,7 +120,7 @@ public:
 	}
 
 	difference_type operator-(const ReadOnlyAtStlIterator & other) const {
-		return (m_data == other.m_data ? static_cast<difference_type>(m_pos) - static_cast<difference_type>(other.m_pos) : std::numeric_limits<difference_type>::max());
+		return (m_data == other.m_data ? (difference_type)(m_pos) - (difference_type)(other.m_pos) : std::numeric_limits<difference_type>::max());
 	}
 	
 	T_RETURN_TYPE operator*() const {
