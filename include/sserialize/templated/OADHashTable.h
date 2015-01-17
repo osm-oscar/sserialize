@@ -101,16 +101,16 @@ private:
 	
 public:
 	OADHashTable() :
-	m_d(15, 0),
+	m_d(16, 0),
 	m_maxLoad(0.8),
 	m_rehashMult(2.0),
-	m_maxCollisions(10)
+	m_maxCollisions(100)
 	{}
 	OADHashTable(THash1 hash1, THash2 hash2, TKeyEq keyEq, double maxLoad = 0.8) :
 	m_d(16, 0), //start with a small hash table, start value has to obey (m_d.size()+1)/(m_rehashMult*m_d.size()) < m_maxLoad
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
-	m_maxCollisions(10),
+	m_maxCollisions(100),
 	m_hash1(hash1),
 	m_hash2(hash2),
 	m_keyEq(keyEq)
@@ -120,7 +120,7 @@ public:
 	m_d(tableStorage),
 	m_maxLoad(maxLoad),
 	m_rehashMult(2.0),
-	m_maxCollisions(10),
+	m_maxCollisions(100),
 	m_hash1(hash1),
 	m_hash2(hash2),
 	m_keyEq(keyEq)
@@ -134,7 +134,7 @@ public:
 	m_d(tableStorage),
 	m_maxLoad(0.8),
 	m_rehashMult(2.0),
-	m_maxCollisions(10)
+	m_maxCollisions(100)
 	{
 		m_valueStorage.clear();
 		m_d.clear();
@@ -162,7 +162,7 @@ public:
 	inline double max_load_factor() const { return m_maxLoad;}
 	void max_load_factor(double f);
 	///Set this to std::numeric_limits<uint64_t>::max() if you want as many collisions as the size of the table
-	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; rehash(m_d.size()); }
+	inline void maxCollisions(uint64_t count) { m_maxCollisions = count; rehash(std::max<uint64_t>(m_d.size(), 16)); }
 	inline uint64_t maxCollisions() const { return m_maxCollisions; }
 	///if you change something here, then you're on your own
 	inline THash1 & hash1() { return m_hash1; }
@@ -227,7 +227,7 @@ template<typename TKey, typename TValue, typename THash1, typename THash2, typen
 void
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::rehash(uint64_t count) {
 	count = count | 0x1;
-	if (count/size() > 10) {
+	if (!size() || count/size() > 10) {
 		sserialize::info("sserialize::OADHashTable::rehash", sserialize::toString("load_factor dropped to ", (double)size()/count));
 	}
 	m_d.clear();
