@@ -185,6 +185,8 @@ public:
 	static uint8_t minStorageBits64(const uint64_t number);
 	static uint8_t minStorageBitsFullBytes64(const uint64_t number);
 	static UByteArrayAdapter::OffsetType minStorageBytes(uint8_t bpn, uint32_t count);
+	inline bool operator!=(const CompactUintArray & other) const { return data() != other.data(); }
+	inline bool operator==(const CompactUintArray & other) const { return priv() == other.priv() || data() == other.data(); }
 };
 
 template<typename T_SOURCE_CONTAINER>
