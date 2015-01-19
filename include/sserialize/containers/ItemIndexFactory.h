@@ -37,7 +37,7 @@ private:
 	DataHashType m_hash;
 	OffsetToIdHashType m_offsetsToId;
 	IdToOffsetsType m_idToOffsets;
-	uint32_t m_hitCount;
+	std::atomic<uint32_t> m_hitCount;
 	bool m_checkIndex;
 	int8_t m_bitWidth;
 	bool m_useRegLine;

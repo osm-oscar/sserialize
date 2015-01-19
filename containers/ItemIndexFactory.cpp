@@ -29,7 +29,7 @@ m_type(ItemIndex::T_REGLINE)
 }
 
 ItemIndexFactory::ItemIndexFactory(ItemIndexFactory && other) :
-m_hitCount(other.m_hitCount),
+m_hitCount(other.m_hitCount.load()),
 m_checkIndex(other.m_checkIndex),
 m_bitWidth(other.m_bitWidth),
 m_useRegLine(other.m_useRegLine),
@@ -50,7 +50,7 @@ ItemIndexFactory::~ItemIndexFactory() {}
 ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	using std::swap;
 
-	m_hitCount = other.m_hitCount;
+	m_hitCount.store(other.m_hitCount.load());
 	m_checkIndex = other.m_checkIndex;
 	m_bitWidth = other.m_bitWidth;
 	m_useRegLine = other.m_useRegLine;
@@ -163,21 +163,26 @@ uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType
 uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserialize::OffsetType * indexOffset) {
 	uint64_t hv;
 	int64_t indexPos = getIndex(idx, hv);
+	uint32_t id = std::numeric_limits<uint32_t>::max();
 	if (indexPos < 0) {
 		m_lock.acquireWriteLock();
 		indexPos = m_indexStore.tellPutPtr();
-		m_offsetsToId[indexPos] = size();
+		id = size();
+		m_offsetsToId[indexPos] = id;
 		m_idToOffsets.push_back(indexPos);
 		m_indexStore.put(idx);
 		m_hash[hv].push_front(indexPos);
 		m_lock.releaseWriteLock();
 	}
 	else {
+		m_lock.acquireReadLock();
+		id = m_offsetsToId[indexPos];
+		m_lock.releaseReadLock();
 		++m_hitCount;
 	}
 	if (indexOffset)
 		*indexOffset = indexPos;
-	return m_offsetsToId[indexPos];
+	return id;
 }
 
 UByteArrayAdapter ItemIndexFactory::getFlushedData() {
@@ -185,7 +190,6 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 	fd.growStorage(m_indexStore.tellPutPtr());
 	return fd;
 }
-
 
 OffsetType ItemIndexFactory::flush() {
 	std::cout << "Serializing index with type=" << m_type << std::endl;
