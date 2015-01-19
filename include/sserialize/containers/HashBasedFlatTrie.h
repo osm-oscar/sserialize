@@ -653,26 +653,31 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		pinfo.end();
 	}
 	else {
+		typename HashTable::const_iterator htBegin = m_ht.begin();
+		uint32_t htSize = size();
 		std::vector< std::vector<NodePtr> > nodesInLevelOrder(depth(root()));
 		nodesInLevelOrder[0].push_back(root());
 		for(uint32_t i(0), s(nodesInLevelOrder.size()-1); i < s; ++i) {
 			const std::vector<NodePtr> & levelNodes = nodesInLevelOrder[i];
 			std::vector<NodePtr> & destLevelNodes = nodesInLevelOrder[i+1];
 			for(const NodePtr & n : levelNodes) {
-				for(typename Node::const_iterator begin(n->cbegin()), end(n->cend()); begin != end; ++begin) {
-					destLevelNodes.push_back(*begin);
+				for(typename Node::const_iterator it(n->cbegin()), end(n->cend()); it != end; ++it) {
+					destLevelNodes.push_back(*it);
+					int64_t id = destLevelNodes.back()->rawBegin() - htBegin;
+					assert(id >= 0 && id < htSize);
+					assert(id < size());
 				}
 			}
 		}
+		assert(nodesInLevelOrder.back().size());
 		sserialize::ThreadPool threadPool(threadCount);
 		std::vector<T_PH> payloadHandlers(threadPool.numThreads(), payloadHandler);
 		GuardedVariable<int32_t> runningBlockTasks;
 		std::mutex dataAccessMtx;
-		typename HashTable::const_iterator htBegin = m_ht.begin();
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
-		for(uint32_t i(0), s(nodesInLevelOrder.size()); i < s; ++i) {
+		while(nodesInLevelOrder.size()) {
 			runningBlockTasks.unsyncedValue() = 0;
-			std::vector<NodePtr> & levelNodes = nodesInLevelOrder[s-i];
+			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
 			uint32_t blockSize = levelNodes.size()/threadCount+1;
 
 			for(uint32_t blockNum = 0, blockBegin = 0; blockBegin < levelNodes.size(); ++blockNum, blockBegin += blockSize) {
@@ -682,23 +687,21 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 				NodePtr * nodeBlocksEnd = &levelNodes[blockEnd];
 				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v +=1; });
 				threadPool.sheduleTask(
-					[pH, nodeBlocksBegin, nodeBlocksEnd, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin]() {
+					[pH, nodeBlocksBegin, nodeBlocksEnd, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin, htSize]() {
 						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(nodeBlocksEnd-nodeBlocksBegin, nodeBlocksEnd-nodeBlocksBegin);
 						for(NodePtr * nodeBlocksIt(nodeBlocksBegin); nodeBlocksIt != nodeBlocksEnd; ++nodeBlocksIt) {
-							NodePtr & n = *nodeBlocksBegin;
-							uint32_t id = n->m_begin - htBegin;
-							auto tmp = (*pH)(n);
-							nodeIdToData[id] = myTmpPayload.size();
-							myTmpPayload.beginRawPush() << tmp;
+							NodePtr & n = *nodeBlocksIt;
+							myTmpPayload.beginRawPush() << (*pH)(n);
 							myTmpPayload.endRawPush();
 						}
-						{
+						{//do the real push
 							std::unique_lock<std::mutex> dALck(dataAccessMtx);
 							for(NodePtr * nodeBlocksIt(nodeBlocksBegin); nodeBlocksIt != nodeBlocksEnd; ++nodeBlocksIt) {
-								NodePtr & n = *nodeBlocksBegin;
-								uint32_t id = n->m_begin - htBegin;
-								nodeIdToData[id] = tmpPayload.size();
-								tmpPayload.beginRawPush() << tmpPayload.dataAt(nodeBlocksIt-nodeBlocksBegin);
+								NodePtr & n = *nodeBlocksIt;
+								uint32_t id = n->rawBegin() - htBegin;
+								assert(id < htSize);
+								nodeIdToData.at(id) = tmpPayload.size();
+								tmpPayload.beginRawPush() << myTmpPayload.dataAt(nodeBlocksIt-nodeBlocksBegin);
 								tmpPayload.endRawPush();
 							}
 						}
@@ -706,15 +709,16 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 					}
 				);
 			}
-			nodesInLevelOrder.pop_back();
 			{
 				GuardedVariable<int32_t>::UniqueLock lck(runningBlockTasks.uniqueLock());
 				while (runningBlockTasks.unsyncedValue() > 0) {
-					runningBlockTasks.wait_for(lck, 1000000);
+					runningBlockTasks.wait_for(lck, 1000000);//wait for 1 second
 				}
 				assert(runningBlockTasks.unsyncedValue() >= 0);
 			}
-			pinfo(i);
+			//wait for jobs to deallocate memory
+			nodesInLevelOrder.pop_back();
+			pinfo(pinfo.targetCount-nodesInLevelOrder.size());
 		}
 	}
 	
