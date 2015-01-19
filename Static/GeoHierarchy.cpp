@@ -1,11 +1,23 @@
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/printers.h>
 
 
 namespace sserialize {
 namespace Static {
 namespace spatial {
 namespace detail {
+
+void SubSet::Node::dump(std::ostream& out) {
+	out << "sserialize::spatial::GeoHierarchy::SubSet::Node\n";
+	out << "GH-Id: " << m_ghId << "\n";
+	out << "ItemSize: " << m_itemSize << "\n";
+	out << "Cell-Positions: " << m_cellPositions << "";
+}
+
+void SubSet::Node::dump() {
+	dump(std::cout);
+}
 
 sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
 

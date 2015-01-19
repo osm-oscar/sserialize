@@ -105,6 +105,8 @@ public:
 		inline iterator end() { return m_children.end(); }
 		inline const_iterator end() const { return m_children.end(); }
 		inline const_iterator cend() const { return m_children.cend(); }
+		void dump(std::ostream & out);
+		void dump();
 	};
 	typedef Node::NodePtr NodePtr;
 private:
