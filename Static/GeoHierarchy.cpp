@@ -51,6 +51,19 @@ sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
 	}
 }
 
+bool SubSet::regionByGhId(const SubSet::NodePtr& node, uint32_t ghId, SubSet::NodePtr & dest) const {
+	if (node->ghId() == ghId) {
+		dest = node;
+		return true;
+	}
+	for(const NodePtr & child : *node) {
+		if (regionByGhId(child, ghId, dest)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 const sserialize::Static::spatial::GeoHierarchy & SubSet::geoHierarchy() const {
 	return m_cqr.geoHierarchy();
 }
@@ -59,6 +72,11 @@ uint32_t SubSet::storeId(const SubSet::NodePtr& node) const {
 	return geoHierarchy().ghIdToStoreId(node->ghId());
 }
 
+SubSet::NodePtr SubSet::regionByStoreId(uint32_t storeId) const {
+	NodePtr res;
+	regionByGhId(root(), cqr().geoHierarchy().storeIdToGhId(storeId), res);
+	return res;
+}
 
 
 Cell::Cell() : 

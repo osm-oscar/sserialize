@@ -116,6 +116,7 @@ private:
 private:
 	template<typename T_HASH_CONTAINER>
 	void insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const;
+	bool regionByGhId(const NodePtr& node, uint32_t ghId, NodePtr & dest) const;
 public:
 	SubSet() {}
 	SubSet(Node * root, const CellQueryResult & cqr, bool sparse) : m_root(root), m_cqr(cqr), m_sparse(sparse) {}
@@ -127,6 +128,7 @@ public:
 	inline bool sparse() const { return m_sparse; }
 	sserialize::ItemIndex idx(const NodePtr & node) const;
 	uint32_t storeId(const NodePtr & node) const;
+	NodePtr regionByStoreId(uint32_t storeId) const;
 };
 
 class FlatSubSet {
