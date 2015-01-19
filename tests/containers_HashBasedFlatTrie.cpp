@@ -273,13 +273,13 @@ public:
 
 class TestHashBasedFlatTrieFile: public TestHashBasedFlatTrieBase {
 CPPUNIT_TEST_SUITE( TestHashBasedFlatTrieFile );
-// CPPUNIT_TEST( testTrieEquality );
-// CPPUNIT_TEST( testNode );
-// CPPUNIT_TEST( testSerialization );
+CPPUNIT_TEST( testTrieEquality );
+CPPUNIT_TEST( testNode );
+CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testParallelSerialization );
-// CPPUNIT_TEST( testStaticNode );
-// CPPUNIT_TEST( testStaticSearch );
-// CPPUNIT_TEST( testSpecialStaticSearch );
+CPPUNIT_TEST( testStaticNode );
+CPPUNIT_TEST( testStaticSearch );
+CPPUNIT_TEST( testSpecialStaticSearch );
 // CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
@@ -327,7 +327,7 @@ public:
 int main(int argc, const char ** argv) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-// 	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
+	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
 	if (argc > 1) {
 		inFileName = argv[1];
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
