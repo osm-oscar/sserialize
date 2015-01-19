@@ -2,50 +2,43 @@
 
 namespace sserialize {
 
-void MultiReaderSingleWriterLock::unlockAndNotify() {
-	m_mtx.unlock();
-	m_cv.notify_one();
-}
-MultiReaderSingleWriterLock::MultiReaderSingleWriterLock() : m_count(CountMax), m_pendingWriteLock(false) {}
+MultiReaderSingleWriterLock::MultiReaderSingleWriterLock() : m_count(CountMax) {}
 MultiReaderSingleWriterLock::~MultiReaderSingleWriterLock() {
 	acquireWriteLock();
 	releaseWriteLock();
 }
 void MultiReaderSingleWriterLock::acquireReadLock() {
-	std::unique_lock<std::mutex> lck(m_mtx);
+	std::unique_lock<std::mutex> lck(m_countMtx);
 	while (m_count == 0) { //write is active
-		m_cv.wait(lck);
+		m_countCv.wait(lck);
 	}
 	--m_count;
 }
 void MultiReaderSingleWriterLock::releaseReadLock() {
-	m_mtx.lock();
+	m_countMtx.lock();
 	++m_count;
-	unlockAndNotify();
+	m_countMtx.unlock();
+	m_countCv.notify_one();
 }
 void MultiReaderSingleWriterLock::acquireWriteLock() {
 	//acquiere CountMax of m_count and m_pendingWriteLock
-	std::unique_lock<std::mutex> lck(m_mtx);
-	//Make sure only one write lock can consume m_count
-	while(m_pendingWriteLock) {
-		m_cv.wait(lck);
-	}
-	//now we are the consumer of m_count
-	m_pendingWriteLock = true;
+	//disallow another writer to try to get the real write lock
+	std::unique_lock<std::mutex> writeLck(m_writeLockMtx);
+	std::unique_lock<std::mutex> countLck(m_countMtx);
 	CountType acquiredCount = m_count;
 	m_count = 0;
 	while (~acquiredCount != static_cast<CountType>(0)) {
-		m_cv.wait(lck);
+		m_countCv.wait(countLck);
 		acquiredCount += m_count;
 		m_count = 0;
 	}
 }
 void MultiReaderSingleWriterLock::releaseWriteLock() {
 	//release CountMax to m_count and m_pendingWriteLock
-	m_mtx.lock();
+	m_countMtx.lock();
 	m_count = CountMax;
-	m_pendingWriteLock = false;
-	unlockAndNotify();
+	m_countMtx.unlock();
+	m_countCv.notify_one();
 }
 
 }//end namespace

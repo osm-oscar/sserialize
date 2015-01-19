@@ -14,13 +14,10 @@ private:
 	typedef uint32_t CountType;
 	static constexpr CountType CountMax = 0xFFFFFFFF;
 private:
-	std::mutex m_mtx;
-	std::condition_variable m_cv;
+	std::mutex m_countMtx;
+	std::condition_variable m_countCv;
 	CountType m_count;
-	bool m_pendingWriteLock;
-	
-private:
-	void unlockAndNotify();
+	std::mutex m_writeLockMtx;
 public:
 	MultiReaderSingleWriterLock();
 	~MultiReaderSingleWriterLock();
