@@ -672,11 +672,11 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		assert(nodesInLevelOrder.back().size());
 		sserialize::ThreadPool threadPool(threadCount);
 		std::vector<T_PH> payloadHandlers(threadPool.numThreads(), payloadHandler);
-		GuardedVariable<int32_t> runningBlockTasks;
+		GuardedVariable<int32_t> runningBlockTasks(0);
 		std::mutex dataAccessMtx;
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
 		while(nodesInLevelOrder.size()) {
-			runningBlockTasks.unsyncedValue() = 0;
+			assert(runningBlockTasks.unsyncedValue() == 0);
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
 			uint32_t blockSize = levelNodes.size()/threadCount+1;
 
@@ -685,7 +685,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 				T_PH * pH = &payloadHandlers[blockNum];
 				NodePtr * nodeBlocksBegin = &levelNodes[blockBegin];
 				NodePtr * nodeBlocksEnd = &levelNodes[blockEnd];
-				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v +=1; });
+				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v += 1; });
 				threadPool.sheduleTask(
 					[pH, nodeBlocksBegin, nodeBlocksEnd, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin, htSize]() {
 						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(nodeBlocksEnd-nodeBlocksBegin, nodeBlocksEnd-nodeBlocksBegin);
@@ -705,16 +705,17 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 								tmpPayload.endRawPush();
 							}
 						}
-						runningBlockTasks.syncedWithNotifyOne([](int32_t & v) { v -=1; });
+						runningBlockTasks.syncedWithNotifyOne([](int32_t & v) { v -= 1; });
 					}
 				);
 			}
+			assert(runningBlockTasks.unsyncedValue() <= (int32_t)threadCount+1);
 			{
 				GuardedVariable<int32_t>::UniqueLock lck(runningBlockTasks.uniqueLock());
 				while (runningBlockTasks.unsyncedValue() > 0) {
 					runningBlockTasks.wait_for(lck, 1000000);//wait for 1 second
 				}
-				assert(runningBlockTasks.unsyncedValue() >= 0);
+				assert(runningBlockTasks.unsyncedValue() == 0);
 			}
 			//wait for jobs to deallocate memory
 			nodesInLevelOrder.pop_back();
