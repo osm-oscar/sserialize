@@ -151,6 +151,7 @@ utility/FileHandler.cpp
 utility/Compressor.cpp
 utility/detail/Compressor/NoneCompressor.cpp
 utility/detail/Compressor/LZOCompressor.cpp
+utility/MultiReaderSingleWriterLock.cpp
 )
 
 set(EXTERNAL_SOURCES_CPP
