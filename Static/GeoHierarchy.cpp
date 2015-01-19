@@ -38,9 +38,7 @@ sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
 
 	if (m_sparse) {
 		std::unordered_set<uint32_t> idcsPos;
-		for(uint32_t i(0), s(node->size()); i < s; ++i) {
-			insertCellPositions(node->at(i), idcsPos);
-		}
+		insertCellPositions(node, idcsPos);
 		std::vector<uint32_t> tmp(idcsPos.cbegin(), idcsPos.cend());
 		return treeReduceMap<std::vector<uint32_t>::const_iterator, sserialize::ItemIndex, const RedFunc &, const MapFunc &>(
 					tmp.cbegin(), tmp.cend(), redfunc, mapfunc);
