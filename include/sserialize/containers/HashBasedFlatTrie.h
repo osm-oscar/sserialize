@@ -111,7 +111,7 @@ public:
 		const Node* operator->() const;
 		bool operator==(const NodePtr & other) const;
 		bool operator!=(const NodePtr & other) const;
-		bool operator!() const { return m_priv.get(); }
+		bool operator!() const { return !m_priv.get(); }
 	};
 	
 	class Node final {
