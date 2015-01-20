@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <deque>
 #include <thread>
+#include <atomic>
 
 namespace sserialize {
 
@@ -14,9 +15,9 @@ private:
 	typedef uint32_t CountType;
 	static constexpr CountType CountMax = 0xFFFFFFFF;
 private:
-	std::mutex m_countMtx;
-	std::condition_variable m_countCv;
-	CountType m_count;
+	std::mutex m_readerCountMtx;
+	std::condition_variable m_readerCountCv;
+	CountType m_readerCount;
 	std::mutex m_writeLockMtx;
 public:
 	MultiReaderSingleWriterLock();
