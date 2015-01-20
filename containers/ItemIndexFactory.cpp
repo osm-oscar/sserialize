@@ -128,17 +128,18 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv
 	if (v.size() == 0)
 		return -1;
 	hv = hashFunc(v);
-	m_lock.acquireReadLock();
+	m_mapLock.acquireReadLock();
 	if (m_hash.count(hv) == 0) {
-		m_lock.releaseReadLock();
+		m_mapLock.releaseReadLock();
 		return -1;
 	}
 	else {
 		DataOffsetContainer::const_iterator it(m_hash[hv].begin()), end(m_hash[hv].end());
-		m_lock.releaseReadLock(); //write threads will not change something between it and end
+		m_mapLock.releaseReadLock(); //write threads will not change something between it and end
 		for(; it != end; ++it) {
-			if (indexInStore(v, *it))
+			if (indexInStore(v, *it)) {
 				return *it;
+			}
 		}
 	}
 	return -1;
@@ -147,11 +148,11 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv
 bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint64_t offset) {
 	if (v.size() > (m_indexStore.tellPutPtr()-offset))
 		return false;
-	for(std::size_t i = 0, s = v.size(); i < s; ++i) {
-		if (v[i] != m_indexStore.at(offset+i))
-			return false;
-	}
-	return true;
+	m_dataLock.acquireReadLock();
+	UByteArrayAdapter::MemoryView mv( m_indexStore.getMemView(offset, v.size()) );
+	bool eq = memcmp(mv.get(), v.data(), v.size()) == 0;
+	m_dataLock.releaseReadLock();
+	return eq;
 }
 
 uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType * indexOffset) {
@@ -165,23 +166,27 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 	int64_t indexPos = getIndex(idx, hv);
 	uint32_t id = std::numeric_limits<uint32_t>::max();
 	if (indexPos < 0) {
-		m_lock.acquireWriteLock();
+		m_dataLock.acquireWriteLock();
 		indexPos = m_indexStore.tellPutPtr();
+		m_indexStore.put(idx);
+		m_dataLock.releaseWriteLock();
+		
+		m_mapLock.acquireReadLock();
 		id = size();
 		m_offsetsToId[indexPos] = id;
 		m_idToOffsets.push_back(indexPos);
-		m_indexStore.put(idx);
 		m_hash[hv].push_front(indexPos);
-		m_lock.releaseWriteLock();
+		m_mapLock.releaseWriteLock();
 	}
 	else {
-		m_lock.acquireReadLock();
+		m_mapLock.acquireReadLock();
 		id = m_offsetsToId[indexPos];
-		m_lock.releaseReadLock();
+		m_mapLock.releaseReadLock();
 		++m_hitCount;
 	}
-	if (indexOffset)
+	if (indexOffset) {
 		*indexOffset = indexPos;
+	}
 	return id;
 }
 

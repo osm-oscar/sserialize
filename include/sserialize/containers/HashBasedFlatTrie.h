@@ -12,6 +12,7 @@
 #include <sserialize/utility/TimeMeasuerer.h>
 #include <sserialize/utility/ThreadPool.h>
 #include <sserialize/containers/MultiVarBitArray.h>
+#include <sserialize/utility/debug.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/DynamicVector.h>
 #include <omp.h>
@@ -290,7 +291,7 @@ public:
 	///you can only call this after finalize()
 
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
-	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
+	NO_OPTIMIZE_ON_DEBUG bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
 	
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
 	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
@@ -653,6 +654,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		pinfo.end();
 	}
 	else {
+// 		threadCount = 1;
 		typename HashTable::const_iterator htBegin = m_ht.begin();
 		uint32_t htSize = size();
 		std::vector< std::vector<NodePtr> > nodesInLevelOrder(depth(root()));
@@ -674,34 +676,47 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		std::vector<T_PH> payloadHandlers(threadPool.numThreads(), payloadHandler);
 		GuardedVariable<int32_t> runningBlockTasks(0);
 		std::mutex dataAccessMtx;
+		std::mutex nodeFetchMtx;
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
 		while(nodesInLevelOrder.size()) {
 			assert(runningBlockTasks.unsyncedValue() == 0);
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
-			uint32_t blockSize = levelNodes.size()/threadCount+1;
-
-			for(uint32_t blockNum = 0, blockBegin = 0; blockBegin < levelNodes.size(); ++blockNum, blockBegin += blockSize) {
-				uint32_t blockEnd = std::min<uint32_t>(levelNodes.size(), blockBegin+blockSize);
-				T_PH * pH = &payloadHandlers[blockNum];
-				NodePtr * nodeBlocksBegin = &levelNodes[blockBegin];
-				NodePtr * nodeBlocksEnd = &levelNodes[blockEnd];
+			NodePtr * levelNodesIt = &levelNodes[0];
+			NodePtr * levelNodesEnd = levelNodesIt+levelNodes.size();
+			uint32_t blockSize = levelNodes.size()/threadCount;
+			
+			for(uint32_t i(0); i < threadCount; ++i) {
+				T_PH * pH = &payloadHandlers[i];
 				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v += 1; });
 				threadPool.sheduleTask(
-					[pH, nodeBlocksBegin, nodeBlocksEnd, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin, htSize]() {
-						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(nodeBlocksEnd-nodeBlocksBegin, nodeBlocksEnd-nodeBlocksBegin);
-						for(NodePtr * nodeBlocksIt(nodeBlocksBegin); nodeBlocksIt != nodeBlocksEnd; ++nodeBlocksIt) {
-							NodePtr & n = *nodeBlocksIt;
-							myTmpPayload.beginRawPush() << (*pH)(n);
-							myTmpPayload.endRawPush();
+					[pH, blockSize, &levelNodesIt, &levelNodesEnd, &nodeFetchMtx, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin, htSize]() {
+						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(blockSize, blockSize*16, sserialize::MM_SHARED_MEMORY);
+						std::vector<uint32_t> nodeIds;
+						nodeIds.reserve(blockSize);
+						while(true) {
+							nodeFetchMtx.lock();
+							if (levelNodesIt != levelNodesEnd) {
+								NodePtr & n = *levelNodesIt;
+								++levelNodesIt;
+								nodeFetchMtx.unlock();
+								uint32_t id = n->rawBegin() - htBegin;
+								assert(id < htSize);
+								
+								myTmpPayload.beginRawPush() << (*pH)(n);
+								myTmpPayload.endRawPush();
+								nodeIds.push_back(id);
+								assert(nodeIds.size() == myTmpPayload.size());
+							}
+							else {
+								nodeFetchMtx.unlock();
+								break;
+							}
 						}
 						{//do the real push
 							std::unique_lock<std::mutex> dALck(dataAccessMtx);
-							for(NodePtr * nodeBlocksIt(nodeBlocksBegin); nodeBlocksIt != nodeBlocksEnd; ++nodeBlocksIt) {
-								NodePtr & n = *nodeBlocksIt;
-								uint32_t id = n->rawBegin() - htBegin;
-								assert(id < htSize);
-								nodeIdToData.at(id) = tmpPayload.size();
-								tmpPayload.beginRawPush() << myTmpPayload.dataAt(nodeBlocksIt-nodeBlocksBegin);
+							for(uint32_t i(0), s(nodeIds.size()); i < s; ++i) {
+								nodeIdToData.at(nodeIds.at(i)) = tmpPayload.size();
+								tmpPayload.beginRawPush() << myTmpPayload.dataAt(i);
 								tmpPayload.endRawPush();
 							}
 						}

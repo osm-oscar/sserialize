@@ -43,7 +43,8 @@ private:
 	bool m_useRegLine;
 	ItemIndex::Types m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
-	MultiReaderSingleWriterLock m_lock;
+	MultiReaderSingleWriterLock m_mapLock;
+	MultiReaderSingleWriterLock m_dataLock;
 	
 	uint64_t hashFunc(const UByteArrayAdapter & v);
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
