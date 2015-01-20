@@ -153,7 +153,7 @@ public:
 	}
 	
 	void testSerialization() {
-		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
 		MyST sft(hftOut);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", m_ht.size(), sft.size());
@@ -168,7 +168,7 @@ public:
 	}
 	
 	void testParallelSerialization() {
-		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); }, std::thread::hardware_concurrency());
 		MyST sft(hftOut);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", m_ht.size(), sft.size());
@@ -186,7 +186,7 @@ public:
 		if (!m_testStrings.size())
 			return;
 
-		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
 		MyST sft(hftOut);
 		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
@@ -219,7 +219,7 @@ public:
 		if (!m_testStrings.size())
 			return;
 
-		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
 		MyST sft(hftOut);
 		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
@@ -303,7 +303,7 @@ public:
 		if (!m_testStrings.size())
 			return;
 
-		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); }, std::thread::hardware_concurrency());
 		MyST sft(hftOut);
 		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;

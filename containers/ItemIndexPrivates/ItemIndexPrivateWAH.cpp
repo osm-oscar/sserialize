@@ -12,7 +12,7 @@ m_curData(data+8, data.getUint32(0)/4),
 m_fullData(m_curData),
 m_size(data.getUint32(4)),
 m_curId(0),
-m_cache(UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), false) )
+m_cache(UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), sserialize::MM_PROGRAM_MEMORY) )
 {}
 
 ItemIndexPrivateWAH::ItemIndexPrivateWAH(UDWIterator data) :
@@ -20,7 +20,7 @@ m_curId(0)
 {
 	uint32_t cpCount = data.next()/4;
 	m_size = data.next();
-	m_cache = UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), false);
+	m_cache = UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), sserialize::MM_PROGRAM_MEMORY);
 	m_fullData = UDWConstrainedIterator(data.getPrivate(), cpCount);
 	m_curData = m_fullData;
 }
@@ -154,7 +154,7 @@ void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 
 ItemIndexPrivate * ItemIndexPrivateWAH::fromBitSet(const DynamicBitSet & bitSet) {
 	const UByteArrayAdapter & bitSetData = bitSet.data();
-	UByteArrayAdapter tmpData(UByteArrayAdapter::createCache(bitSet.data().size(), false));
+	UByteArrayAdapter tmpData(UByteArrayAdapter::createCache(bitSet.data().size(), sserialize::MM_PROGRAM_MEMORY));
 	tmpData.putUint32(0); //dummy data size
 	tmpData.putUint32(0); //dummy count
 	
@@ -285,7 +285,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 	UDWConstrainedIterator oIt(cother->dataIterator());
 	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
-	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY);
 	oData.putUint32(0); //dummy size
 	oData.putUint32(0); //dummy count
 	OutPutHandler oHandler(oData);
@@ -388,7 +388,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 	UDWConstrainedIterator oIt(cother->dataIterator());
 	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
-	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY);
 	oData.putUint32(0); //dummy size
 	oData.putUint32(0); //dummy count
 	OutPutHandler oHandler(oData);
@@ -502,7 +502,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 	UDWConstrainedIterator oIt(cother->dataIterator());
 	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
-	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY);
 	oData.putUint32(0); //dummy size
 	oData.putUint32(0); //dummy count
 	OutPutHandler oHandler(oData);
@@ -610,7 +610,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 	UDWConstrainedIterator oIt(cother->dataIterator());
 	//DO NOT CALL reset() on the iterators as that will rewind them to the beginning of the index, not the data
 	
-	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, false);
+	UByteArrayAdapter oData = UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY);
 	oData.putUint32(0); //dummy size
 	oData.putUint32(0); //dummy count
 	OutPutHandler oHandler(oData);

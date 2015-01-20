@@ -10,7 +10,7 @@ m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
 m_size(data.getUint32(4)),
 m_dataOffset(0),
 m_curId(0),
-m_cache(UByteArrayAdapter::createCache(m_size*4, false) ),
+m_cache(UByteArrayAdapter::createCache(m_size*4, sserialize::MM_PROGRAM_MEMORY) ),
 m_cacheOffset(0)
 {
 	if (m_size > m_data.size())
@@ -87,7 +87,7 @@ void ItemIndexPrivateDE::putInto(uint32_t * dest) const {
 
 ItemIndexPrivate * ItemIndexPrivateDE::fromBitSet(const DynamicBitSet & bitSet) {
 	const UByteArrayAdapter & bitSetData(bitSet.data());
-	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), false));
+	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateDECreator creator(cacheData);
 	uint32_t curId = 0;
 	uint32_t myDataSize = bitSetData.size();
@@ -112,7 +112,7 @@ ItemIndexPrivate * ItemIndexPrivateDE::intersect(const sserialize::ItemIndexPriv
 
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
-	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
+	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	dest.putUint32(0); //dummy data size
 	dest.putUint32(0); //dummy count
 	uint32_t resSize = 0;
@@ -157,7 +157,7 @@ ItemIndexPrivate * ItemIndexPrivateDE::unite(const sserialize::ItemIndexPrivate 
 
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
-	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
+	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	dest.putUint32(0); //dummy data size
 	dest.putUint32(0); //dummy count
 	uint32_t resSize = 0;

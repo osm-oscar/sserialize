@@ -7,4 +7,5 @@
 #include "UByteArrayAdapterPrivateChunkedMmappedFile.h"
 #include "UByteArrayAdapterPrivateCompressedMmappedFile.h"
 #include "UByteArrayAdapterPrivateEmpty.h"
+#include "UByteArrayAdapterMM.h"
 #endif

@@ -46,7 +46,7 @@ template<class DataBaseType, class StringIdStoreType>
 ItemIndexIteratorDB<DataBaseType, StringIdStoreType>::ItemIndexIteratorDB(const DataBaseType & db, const StringIdStoreType & stringIds) : 
 m_db(db),
 m_strIds(stringIds),
-m_cache( UByteArrayAdapter::createCache(4*db.size(), false) ),
+m_cache( UByteArrayAdapter::createCache(4*db.size(), sserialize::MM_PROGRAM_MEMORY) ),
 m_start(0),
 m_end(db.size()),
 m_pos(0),
@@ -60,7 +60,7 @@ template<class DataBaseType, class StringIdStoreType>
 ItemIndexIteratorDB<DataBaseType, StringIdStoreType>::ItemIndexIteratorDB(const DataBaseType & db, const StringIdStoreType & stringIds, uint32_t start, uint32_t end) : 
 m_db(db),
 m_strIds(stringIds),
-m_cache( UByteArrayAdapter::createCache(4*db.size(), false) ),
+m_cache( UByteArrayAdapter::createCache(4*db.size(), sserialize::MM_PROGRAM_MEMORY) ),
 m_start(start),
 m_end(end),
 m_pos(start),

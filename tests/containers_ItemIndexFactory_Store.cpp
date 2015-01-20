@@ -36,7 +36,7 @@ public:
 	}
 
 	virtual void setUp() {
-		m_idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, false) );
+		m_idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, sserialize::MM_PROGRAM_MEMORY) );
 		m_sets.reserve(T_SET_COUNT);
 		m_setIds.reserve(T_SET_COUNT);
 		
@@ -171,7 +171,7 @@ public:
 		idxFactory.setRegline(true);
 		idxFactory.setBitWith(-1);
 		idxFactory.setType(T_IDX_TYPE);
-		idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, false) );
+		idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, sserialize::MM_PROGRAM_MEMORY) );
 		std::vector<uint32_t> remap = idxFactory.insert(sdb);
 		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);

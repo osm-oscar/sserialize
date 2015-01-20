@@ -891,29 +891,39 @@ UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool dele
 	return adap;
 }
 
-UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType size, bool forceFileBase) {
+UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType size, sserialize::MmappedMemoryType mmt) {
 	if (size == 0)
 		size = 1;
 
 	sserialize::RCPtrWrapper<UByteArrayAdapterPrivate> priv;
-	if (forceFileBase || size > MAX_IN_MEMORY_CACHE) {
-		MmappedFile tempFile;
-		if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
-			sserialize::err("UByteArrayAdapter::createCache", "Fatal: could not open file");
-			return UByteArrayAdapter();
+	switch(mmt) {
+	case sserialize::MM_FILEBASED:
+		{
+			MmappedFile tempFile;
+			if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
+				throw sserialize::CreationException("UByteArrayAdapter::createCache: could not open file");
+				return UByteArrayAdapter();
+			}
+			priv.reset( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
 		}
-		priv.reset( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
-	}
-	else {
-		std::vector<uint8_t> * privData = new std::vector<uint8_t>();
-		privData->resize(size, 0);
-		if (privData) {
-			priv.reset( new UByteArrayAdapterPrivateVector(privData) );
+		break;
+	case sserialize::MM_SHARED_MEMORY:
+		{
+			MmappedMemory<uint8_t> mm(size, mmt);
+			if (mm.size() != size) {
+				throw sserialize::CreationException("UByteArrayAdapter::createCache: could not create memory maps");
+			}
+			priv.reset( new UByteArrayAdapterPrivateMM(mm) );
 		}
-		else {
-			sserialize::err("UByteArrayAdapter::createCache", "Could not allocate memory. Trying file based.");
-			return createCache(size, true);
+		break;
+	case sserialize::MM_PROGRAM_MEMORY:
+		{
+			priv.reset( new UByteArrayAdapterPrivateVector(new std::vector<uint8_t>(size, 0)) );
 		}
+		break;
+	default:
+		throw sserialize::CreationException("UByteArrayAdapter::createCache: unknown allocation type");
+		break;
 	}
 	priv->setDeleteOnClose(true);
 	UByteArrayAdapter adap(priv);

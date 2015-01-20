@@ -139,7 +139,7 @@ ItemIndexIterator& ItemIndexIterator::reset() {
 
 ItemIndex ItemIndexIterator::toItemIndex() const {
 	uint32_t tempStorageSize = ItemIndexPrivateSimple::storageSize(maxSize(), 4);
-	UByteArrayAdapter tempStorage( UByteArrayAdapter::createCache(tempStorageSize, false) );
+	UByteArrayAdapter tempStorage( UByteArrayAdapter::createCache(tempStorageSize, sserialize::MM_PROGRAM_MEMORY) );
 	if (tempStorage.size() == 0)
 		return ItemIndex();
 	

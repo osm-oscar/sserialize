@@ -190,7 +190,7 @@ public:
 				file >> v;
 				values.push_back(v);
 			}
-			UByteArrayAdapter d(UByteArrayAdapter::createCache(1, false));
+			UByteArrayAdapter d(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 			Static::SortedOffsetIndexPrivate::create(values, d);
 			Static::SortedOffsetIndex idx(d);
 		

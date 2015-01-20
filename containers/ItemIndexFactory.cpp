@@ -25,7 +25,7 @@ m_type(ItemIndex::T_REGLINE)
 	if (memoryBased)
 		 setIndexFile( UByteArrayAdapter(new std::vector<uint8_t>(), true) );
 	else
-		setIndexFile( UByteArrayAdapter::createCache(8*1024*1024, true) );
+		setIndexFile( UByteArrayAdapter::createCache(8*1024*1024, sserialize::MM_FILEBASED) );
 }
 
 ItemIndexFactory::ItemIndexFactory(ItemIndexFactory && other) :

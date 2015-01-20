@@ -2,6 +2,7 @@
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
+#include <sserialize/utility/MmappedMemory.h>
 #include <stdint.h>
 #include <iterator>
 #include <deque>
@@ -313,7 +314,7 @@ public:
 	void dumpAsString(uint32_t byteCount) const;
 
 	UByteArrayAdapter writeToDisk(std::string fileName, bool deleteOnClose = true);
-	static UByteArrayAdapter createCache(OffsetType size, bool forceFileBase);
+	static UByteArrayAdapter createCache(OffsetType size, sserialize::MmappedMemoryType mmt);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
 	static UByteArrayAdapter open(const std::string & fileName);
 	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);

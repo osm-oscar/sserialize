@@ -16,7 +16,7 @@ private:
 	DynamicVector(const DynamicVector & other);
 	DynamicVector & operator=(const DynamicVector & other);
 public:
-	DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize);
+	DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED);
 	virtual ~DynamicVector();
 	void swap(DynamicVector & other);
 	uint32_t size() const;
@@ -40,10 +40,10 @@ void swap(sserialize::Static::DynamicVector<TPushValue, TGetValue> & a, sseriali
 }
 
 template<typename TPushValue, typename TGetValue>
-DynamicVector<TPushValue, TGetValue>::DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize) :
+DynamicVector<TPushValue, TGetValue>::DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt ) :
 m_size(0),
-m_offsets(UByteArrayAdapter::createCache(static_cast<OffsetType>(approxItemCount)*UByteArrayAdapter::OffsetTypeSerializedLength(), true)),
-m_data(UByteArrayAdapter::createCache(initalDataSize, true))
+m_offsets(UByteArrayAdapter::createCache(static_cast<OffsetType>(approxItemCount)*UByteArrayAdapter::OffsetTypeSerializedLength(), mmt)),
+m_data(UByteArrayAdapter::createCache(initalDataSize, mmt))
 {}
 
 

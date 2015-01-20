@@ -194,7 +194,7 @@ bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & 
 
 template<typename TSortedContainer>
 ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, ItemIndex::Types type) {
-	UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, false));
+	UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 	if (create(idx, tmp, type)) {
 		tmp.resetPtrs();
 		return ItemIndex(tmp, type);

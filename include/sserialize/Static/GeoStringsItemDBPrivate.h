@@ -51,7 +51,7 @@ public:
 	
 	ItemIndex complete(const sserialize::spatial::GeoRect & rect) const {
 		size_t size = MyParentClass::size();
-		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, false) );
+		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY) );
 		ItemIndexPrivateSimpleCreator creator(0, size, size, cache);
 		for(size_t i = 0; i < size; ++i) {
 			if (match(i, rect))

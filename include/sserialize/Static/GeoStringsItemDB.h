@@ -65,7 +65,7 @@ public:
 	ItemIndex filter(const sserialize::spatial::GeoRect & rect, bool /*approximate*/, const ItemIndex & partner) const {
 		if (!partner.size())
 			return partner;
-		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, false) );
+		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY) );
 		ItemIndexPrivateSimpleCreator creator(partner.first(), partner.last(), partner.size(), cache);
 		for(size_t i = 0; i < partner.size(); i++) {
 			uint32_t itemId = partner.at(i);

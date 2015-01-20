@@ -1,4 +1,5 @@
 #include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/utility/UByteArrayAdapter.h>
 #include <iostream>
 
 int main(int, char ** argv) {

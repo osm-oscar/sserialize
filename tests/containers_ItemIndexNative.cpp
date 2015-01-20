@@ -13,13 +13,13 @@ CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST_SUITE_END();
 protected:
 	virtual bool create(const std::set<uint32_t> & srcSet, sserialize::ItemIndex & idx) override {
-		sserialize::UByteArrayAdapter dest(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter dest(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		bool ok = sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(srcSet, dest);
 		idx = sserialize::ItemIndex(dest, sserialize::ItemIndex::T_NATIVE);
 		return ok;
 	}
 	virtual bool create(const std::vector<uint32_t> & srcSet, sserialize::ItemIndex & idx) override {
-		sserialize::UByteArrayAdapter dest(sserialize::UByteArrayAdapter::createCache(1, false));
+		sserialize::UByteArrayAdapter dest(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 		bool ok = sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(srcSet, dest);
 		idx = sserialize::ItemIndex(dest, sserialize::ItemIndex::T_NATIVE);
 		return ok;

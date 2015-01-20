@@ -94,7 +94,7 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 	dest.putVlPackedUint32(minKey);
 	dest.putVlPackedUint32(minValue);
 	
-	CompactUintArray carr(UByteArrayAdapter::createCache(0, false), keyBits+valueBits);
+	CompactUintArray carr(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY), keyBits+valueBits);
 	carr.reserve(item.size());
 	for(uint32_t i = 0; i < item.size(); ++i) {
 		uint64_t pv = ( static_cast<uint64_t>(item.at(i).key-minKey) << valueBits) | (item.at(i).value-minValue);

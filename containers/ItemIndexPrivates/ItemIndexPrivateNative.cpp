@@ -80,7 +80,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::intersect(const ItemIndexP
 			++tmpResultSize;
 		}
 	}
-	UByteArrayAdapter tmpD(UByteArrayAdapter::createCache(SerializationInfo<uint32_t>::length+sizeof(uint32_t)*tmpResultSize, false));
+	UByteArrayAdapter tmpD(UByteArrayAdapter::createCache(SerializationInfo<uint32_t>::length+sizeof(uint32_t)*tmpResultSize, sserialize::MM_PROGRAM_MEMORY));
 	tmpD.putUint32(tmpResultSize);
 	tmpD.put(static_cast<uint8_t*>(tmpResultRaw), sizeof(uint32_t)*tmpResultSize);//can we do this? aliasing, cahe updates?
 	free(tmpResultRaw);

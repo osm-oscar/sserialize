@@ -18,14 +18,14 @@ public:
 	FilteredItemSet(const std::string& queryString, const DataBaseType & dataBase, sserialize::SetOpTree::SotType setOpTreeType, const std::shared_ptr<ItemIndex::ItemFilter> & filter) :
 	m_itemSet(queryString, dataBase, setOpTreeType),
 	m_filter(filter),
-	m_cache(sserialize::UByteArrayAdapter::createCache(4, 0)),
+	m_cache(sserialize::UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY)),
 	m_pos(0),
 	m_cachePos(0)
 	{}
 	FilteredItemSet(const std::string& queryString, const DataBaseType & dataBase, const SetOpTree & setOpTree, const std::shared_ptr<ItemIndex::ItemFilter> & filter) :
 	m_itemSet(queryString, dataBase, setOpTree),
 	m_filter(filter),
-	m_cache(sserialize::UByteArrayAdapter::createCache(4, 0)),
+	m_cache(sserialize::UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY)),
 	m_pos(0),
 	m_cachePos(0)
 	{}

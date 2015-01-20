@@ -2,8 +2,8 @@
 #define SSERIALIZE_MMAPPED_MEMORY_H
 #include <type_traits>
 #include <functional>
+#include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/types.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/FileHandler.h>
 

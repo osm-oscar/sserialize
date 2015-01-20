@@ -781,7 +781,7 @@ bool test(int testCount) {
 		allOk = false;
 	}
 
-	UByteArrayAdapter mmappedFileAdap = UByteArrayAdapter::createCache(0, true);
+	UByteArrayAdapter mmappedFileAdap = UByteArrayAdapter::createCache(0, sserialize::MM_FILEBASED);
 	if (!mmappedFileAdap.growStorage(4*testCount)) {
 		std::cout << "Failed to grow storage" << std::endl;
 	}

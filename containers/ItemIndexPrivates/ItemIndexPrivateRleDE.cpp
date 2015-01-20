@@ -222,7 +222,7 @@ void ItemIndexPrivateRleDE::putInto(uint32_t * dest) const {
 
 ItemIndexPrivate *  ItemIndexPrivateRleDE::fromBitSet(const DynamicBitSet & bitSet) {
 	const UByteArrayAdapter & bitSetData(bitSet.data());
-	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), false));
+	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(cacheData);
 	uint32_t curId = 0;
 	uint32_t myDataSize = bitSetData.size();
@@ -246,7 +246,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
-	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
+	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(dest);
 
 	uint32_t aIndexIt = 0;
@@ -355,7 +355,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPriva
 
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
-	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, false));
+	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(dest);
 
 	uint32_t aIndexIt = 0;

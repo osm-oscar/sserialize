@@ -122,7 +122,7 @@ void
 ItemSetIterator<DataBaseItemType, DataBaseType>::execute() {
 	m_setOpTree.buildTree(m_queryString);
 	m_indexIt = m_setOpTree.asItemIndexIterator();
-	m_cache = UByteArrayAdapter::createCache(m_indexIt.maxSize()*4, false);
+	m_cache = UByteArrayAdapter::createCache(m_indexIt.maxSize()*4, sserialize::MM_PROGRAM_MEMORY);
 }
 
 template<class DataBaseItemType, class DataBaseType>
@@ -132,7 +132,7 @@ ItemSetIterator<DataBaseItemType, DataBaseType>::update(const std::string & quer
 	m_cacheCount = 0;
 	m_setOpTree.buildTree(m_queryString);
 	m_indexIt = m_setOpTree.asItemIndexIterator();
-	m_cache = UByteArrayAdapter::createCache(m_indexIt.maxSize()*4, false);
+	m_cache = UByteArrayAdapter::createCache(m_indexIt.maxSize()*4, sserialize::MM_PROGRAM_MEMORY);
 }
 
 template<class DataBaseItemType, class DataBaseType>

@@ -21,7 +21,7 @@ std::set<uint32_t> myCreateNumbers(uint32_t count, uint32_t maxNum) {
 }
 
 DynamicBitSet createBitSet(const std::set<uint32_t> & src) {
-	UByteArrayAdapter data(UByteArrayAdapter::createCache(1, false));
+	UByteArrayAdapter data(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 	DynamicBitSet bitSet(data);
 	for(std::set<uint32_t>::const_iterator it(src.begin()); it != src.end(); ++it) {
 		bitSet.set(*it);

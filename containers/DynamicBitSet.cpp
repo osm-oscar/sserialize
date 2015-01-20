@@ -62,7 +62,7 @@ AbstractArrayIterator<SizeType> * DynamicBitSetIdIterator::copy() const {
 }}
 
 
-DynamicBitSet::DynamicBitSet() : m_data(UByteArrayAdapter::createCache(0, false)) {}
+DynamicBitSet::DynamicBitSet() : m_data(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY)) {}
 DynamicBitSet::DynamicBitSet(const UByteArrayAdapter & data) : m_data(data) {}
 DynamicBitSet::~DynamicBitSet() {}
 
@@ -145,7 +145,7 @@ SizeType DynamicBitSet::size() const {
 
 DynamicBitSet DynamicBitSet::operator&(const DynamicBitSet & other) const {
 	UByteArrayAdapter::OffsetType s = std::min<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
-	UByteArrayAdapter d(UByteArrayAdapter::createCache(s, false) );
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(s, sserialize::MM_PROGRAM_MEMORY) );
 	for(UByteArrayAdapter::OffsetType i = 0; i < s; ++i) {
 		d[i] = m_data[i] & other.m_data[i];
 	}
@@ -154,7 +154,7 @@ DynamicBitSet DynamicBitSet::operator&(const DynamicBitSet & other) const {
 
 DynamicBitSet DynamicBitSet::operator|(const DynamicBitSet & other) const {
 	UByteArrayAdapter::OffsetType smax = std::max<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
-	UByteArrayAdapter d(UByteArrayAdapter::createCache(smax, false) );
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(smax, sserialize::MM_PROGRAM_MEMORY) );
 	
 	UByteArrayAdapter::OffsetType i = 0;
 	UByteArrayAdapter::OffsetType s;
@@ -172,7 +172,7 @@ DynamicBitSet DynamicBitSet::operator|(const DynamicBitSet & other) const {
 
 DynamicBitSet DynamicBitSet::operator-(const DynamicBitSet & other) const {
 	UByteArrayAdapter::OffsetType s = std::min<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
-	UByteArrayAdapter d(UByteArrayAdapter::createCache(s, false) );
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(s, sserialize::MM_PROGRAM_MEMORY) );
 	for(UByteArrayAdapter::OffsetType i = 0; i < s; ++i) {
 		d[i] = m_data[i] & (~other.m_data[i]);
 	}
@@ -180,7 +180,7 @@ DynamicBitSet DynamicBitSet::operator-(const DynamicBitSet & other) const {
 }
 DynamicBitSet DynamicBitSet::operator^(const DynamicBitSet & other) const {
 	UByteArrayAdapter::OffsetType smax = std::max<UByteArrayAdapter::SizeType>( m_data.size(), other.m_data.size());
-	UByteArrayAdapter d(UByteArrayAdapter::createCache(smax, false) );
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(smax, sserialize::MM_PROGRAM_MEMORY) );
 	
 	UByteArrayAdapter::OffsetType i = 0;
 	UByteArrayAdapter::OffsetType s;
@@ -197,7 +197,7 @@ DynamicBitSet DynamicBitSet::operator^(const DynamicBitSet & other) const {
 }
 
 DynamicBitSet DynamicBitSet::operator~() const {
-	UByteArrayAdapter d(UByteArrayAdapter::createCache(m_data.size(), false) );
+	UByteArrayAdapter d(UByteArrayAdapter::createCache(m_data.size(), sserialize::MM_PROGRAM_MEMORY) );
 	UByteArrayAdapter::OffsetType s = m_data.size();
 	for(UByteArrayAdapter::OffsetType i = 0; i < s; ++i) {
 		d[i] = ~m_data[i];

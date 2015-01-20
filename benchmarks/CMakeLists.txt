@@ -9,10 +9,12 @@ include_directories(
 	${CMAKE_SOURCE_DIR}
 )
 
+find_package(LIBRT REQUIRED)
+
 IF(ANDROID)
 	SET(BENCH_LIB_LINK_LIBS "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME}/libsserialize.a")
 ELSE(ANDROID)
-	set(BENCH_LIB_LINK_LIBS ${sserialize_BINARY_DIR}/libsserialize.a)
+	set(BENCH_LIB_LINK_LIBS ${sserialize_BINARY_DIR}/libsserialize.a ${LIBRT_LIBRARIES})
 ENDIF(ANDROID)
 
 
