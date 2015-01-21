@@ -171,7 +171,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 		m_indexStore.put(idx);
 		m_dataLock.releaseWriteLock();
 		
-		m_mapLock.acquireReadLock();
+		m_mapLock.acquireWriteLock();
 		id = size();
 		m_offsetsToId[indexPos] = id;
 		m_idToOffsets.push_back(indexPos);
