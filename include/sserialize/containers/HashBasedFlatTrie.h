@@ -690,7 +690,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v += 1; });
 				threadPool.sheduleTask(
 					[pH, blockSize, &levelNodesIt, &levelNodesEnd, &nodeFetchMtx, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin, htSize]() {
-						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(blockSize, blockSize*16, sserialize::MM_SHARED_MEMORY);
+						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(blockSize, blockSize*16, sserialize::MM_PROGRAM_MEMORY);
 						std::vector<uint32_t> nodeIds;
 						nodeIds.reserve(blockSize);
 						while(true) {
