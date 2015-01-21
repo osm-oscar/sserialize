@@ -5,13 +5,16 @@ namespace sserialize {
 MultiReaderSingleWriterLock::MultiReaderSingleWriterLock() : m_readerCount(0) {}
 MultiReaderSingleWriterLock::~MultiReaderSingleWriterLock() {}
 void MultiReaderSingleWriterLock::acquireReadLock() {
-	std::unique_lock<std::mutex> lck(m_writeLockMtx);//wait for writers
-	std::unique_lock<std::mutex> rLck(m_readerCountMtx);
+	m_writeLockMtx.lock();//wait for writers
+	m_readerCountMtx.lock();
 	++m_readerCount;
+	m_readerCountMtx.unlock();
+	m_writeLockMtx.unlock();
 }
 void MultiReaderSingleWriterLock::releaseReadLock() {
-	std::unique_lock<std::mutex> lck(m_readerCountMtx);
+	m_readerCountMtx.lock();
 	--m_readerCount;
+	m_readerCountMtx.unlock();
 	m_readerCountCv.notify_one();//notify writer about change in reader count
 }
 
