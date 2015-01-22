@@ -12,11 +12,11 @@ CPPUNIT_TEST( testRandomEquality );
 CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
+CPPUNIT_TEST( testDifference );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST( testPutIntoVector );
 CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST( testRandomMaxSetEquality );
-CPPUNIT_TEST( testDifference );
 CPPUNIT_TEST_SUITE_END();
 protected:
 	template<typename T_SORTED_CONTAINER>
@@ -41,11 +41,11 @@ CPPUNIT_TEST( testRandomEquality );
 CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
+CPPUNIT_TEST( testDifference );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST( testPutIntoVector );
 CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST( testRandomMaxSetEquality );
-CPPUNIT_TEST( testDifference );
 CPPUNIT_TEST_SUITE_END();
 protected:
 	template<typename T_SORTED_CONTAINER>

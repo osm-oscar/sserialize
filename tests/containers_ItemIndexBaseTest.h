@@ -177,7 +177,6 @@ public:
 			std::set<uint32_t> intersected;
 			std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator<std::set<uint32_t> >(intersected, intersected.end()));
 			ItemIndex intIdx = idxA - idxB;
-			CPPUNIT_ASSERT_MESSAGE("decoding difference index fails", testIndexEquality(intersected));
 			uint32_t count = 0;
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of difference does not match", (uint32_t) intersected.size(), intIdx.size());
 			for(std::set<uint32_t>::iterator it = intersected.begin(); it != intersected.end(); ++it, ++count) {
