@@ -736,6 +736,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			nodesInLevelOrder.pop_back();
 			pinfo(pinfo.targetCount-nodesInLevelOrder.size());
 		}
+		pinfo.end();
 	}
 	
 	std::cout << "sserialize::HashBasedFlatTrie copying payload..." << std::flush;
