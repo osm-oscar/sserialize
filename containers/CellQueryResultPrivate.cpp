@@ -132,6 +132,9 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 			else if (myCD.fetched) {
 				r.uncheckedSet(r.m_desc.size(), idx(myI));
 			}
+			else {
+				r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
+			}
 			r.m_desc.push_back(CellDesc(1, oCD.fetched | myCD.fetched, myCellId));
 			break;
 		default:
