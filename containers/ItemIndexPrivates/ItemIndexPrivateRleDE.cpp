@@ -350,7 +350,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateRleDE * cother = dynamic_cast<const ItemIndexPrivateRleDE*>(other);
 	if (!cother) {
-		return ItemIndexPrivate::doIntersect(other);
+		return ItemIndexPrivate::doUnite(other);
 	}
 
 	UByteArrayAdapter aData(m_data);
