@@ -1,6 +1,7 @@
 #include "containers_ItemIndexBaseTest.h"
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/containers/ItemIndexFactory.h>
+#include <cppunit/TestResult.h>
 
 #define DEFAULT_ENABLED_TESTS 
 
@@ -13,6 +14,7 @@ CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
 CPPUNIT_TEST( testDifference );
+CPPUNIT_TEST( testSymmetricDifference );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST( testPutIntoVector );
 CPPUNIT_TEST( testIterator );
@@ -42,6 +44,7 @@ CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testUnite );
 CPPUNIT_TEST( testDifference );
+CPPUNIT_TEST( testSymmetricDifference );
 CPPUNIT_TEST( testDynamicBitSet );
 CPPUNIT_TEST( testPutIntoVector );
 CPPUNIT_TEST( testIterator );
@@ -77,6 +80,7 @@ int main() {
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_DE>::suite() );
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_RLE_DE>::suite() );
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }

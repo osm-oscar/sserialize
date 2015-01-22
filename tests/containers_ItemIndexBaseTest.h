@@ -41,8 +41,9 @@ class ItemIndexPrivateBaseTest: public CppUnit::TestFixture {
 protected:
 	virtual bool create(const std::set<uint32_t> & srcSet, sserialize::ItemIndex & idx) = 0;
 	virtual bool create(const std::vector<uint32_t> & srcSet, sserialize::ItemIndex & idx) = 0;
+	size_t TEST_RUNS;
 public:
-	virtual void setUp() {}
+	virtual void setUp() {TEST_RUNS = 256;}
 	virtual void tearDown() {}
 	
 
@@ -50,7 +51,7 @@ public:
 // 		srand(0);
 		uint32_t setCount = 2048;
 
-		for(size_t i = 0; i < 256; i++) {
+		for(size_t i = 0; i < TEST_RUNS; i++) {
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % setCount) );
 			ItemIndex idx;
 			create(realValues, idx);
@@ -91,6 +92,9 @@ public:
 			for(uint32_t i=0; i < 3; ++i) {
 				create(src[i], idcs[i]);
 			}
+			for(uint32_t i(0), s(idcs.size()); i < s; ++i) {
+				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("united special created index=",i," is broken"), src[i] == idcs[i]);
+			}
 			ItemIndex unitedIdx = ItemIndex::unite(idcs);
 			ItemIndex unitedReal(std::vector<uint32_t>{0,1,2,3,4,5,7});
 	
@@ -100,11 +104,20 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special manual like ItemIndex::unite is broken", unitedReal, (idcs[0] + idcs[1]) + idcs[2]);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special is broken", unitedReal, unitedIdx);
 		}
+		{
+			std::vector<uint32_t> srcSet(1);
+			ItemIndex idx;
+			for(uint32_t i(0), s(1024); i < s; ++i) {
+				srcSet[0] = i;
+				create(srcSet, idx);
+				CPPUNIT_ASSERT_MESSAGE("single value index test", srcSet == idx);
+			}
+		}
 		
 	}
 	
 	void testIntersect() {
-		for(uint32_t runs = 0; runs < 256; ++runs) {
+		for(uint32_t runs = 0; runs < TEST_RUNS; ++runs) {
 			std::set<uint32_t> a,b;
 			createOverLappingSets(a, b,  0xFF, 0xFF, 0xFF);
 			ItemIndex idxA;
@@ -133,7 +146,7 @@ public:
 // 		srand(0);
 		uint32_t setCount = 2048;
 
-		for(size_t i = 0; i < 256; i++) {
+		for(size_t i = 0; i < TEST_RUNS; i++) {
 			std::set<uint32_t> realValuesA( myCreateNumbers(rand() % setCount) );
 			std::set<uint32_t> realValuesB( myCreateNumbers(rand() % setCount) );
 			ItemIndex idxA;
@@ -161,8 +174,7 @@ public:
 	
 	void testDifference() {
 // 		srand(0);
-		int TEST_RUNS = 10;
-		for(int i = 0; i < TEST_RUNS; ++i) {
+		for(size_t i = 0; i < TEST_RUNS; ++i) {
 			std::set<uint32_t> a,b;
 			createOverLappingSets(a, b,  0xFF, 0xFF, 0xFF);
 			ItemIndex idxA;
@@ -173,17 +185,17 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)a.size(), idxA.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)b.size(), idxB.size());
 			CPPUNIT_ASSERT_MESSAGE("A set unequal", a == idxA);
-			CPPUNIT_ASSERT_MESSAGE("A set unequal", b == idxB);
+			CPPUNIT_ASSERT_MESSAGE("B set unequal", b == idxB);
 			
 			std::set<uint32_t> intersected;
 			std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator<std::set<uint32_t> >(intersected, intersected.end()));
-			ItemIndex intIdx = idxA - idxB;
+			ItemIndex diffIdx = idxA - idxB;
 			uint32_t count = 0;
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of difference does not match", (uint32_t) intersected.size(), intIdx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of difference", (uint32_t) intersected.size(), diffIdx.size());
 			for(std::set<uint32_t>::iterator it = intersected.begin(); it != intersected.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count << " run " << i;
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, intIdx.at(count));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, diffIdx.at(count));
 			}
 		}
 		{
@@ -205,11 +217,66 @@ public:
 		}
 	}
 	
-	void testRandomMaxSetEquality() {
+	void testSymmetricDifference() {
 // 		srand(0);
+		for(size_t i = 0; i < TEST_RUNS; ++i) {
+			std::set<uint32_t> a,b;
+			createOverLappingSets(a, b,  0xFF, 0xFF, 0xFF);
+			ItemIndex idxA;
+			ItemIndex idxB;
+			create(a, idxA);
+			create(b, idxB);
+			
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("A set size", (uint32_t)a.size(), idxA.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("B set size", (uint32_t)b.size(), idxB.size());
+			CPPUNIT_ASSERT_MESSAGE("A set unequal", a == idxA);
+			CPPUNIT_ASSERT_MESSAGE("B set unequal", b == idxB);
+			
+			std::set<uint32_t> resultSet;
+			std::set_symmetric_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator<std::set<uint32_t> >(resultSet, resultSet.end()));
+			ItemIndex symDiffIdx = idxA ^ idxB;
+			uint32_t count = 0;
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of symDiff", (uint32_t) resultSet.size(), symDiffIdx.size());
+			for(std::set<uint32_t>::iterator it = resultSet.begin(); it != resultSet.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count << " run " << i;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, symDiffIdx.at(count));
+			}
+		}
+	}
+	
+	void testFind() {
 		uint32_t setCount = 16;
 
 		for(size_t i = 0; i < setCount; i++) {
+		
+			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
+			std::set<uint32_t> testValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
+			testValues.insert(realValues.begin(), realValues.end());
+			ItemIndex idx;
+			create(realValues, idx);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+		
+			int count = 0;
+			for(std::set<uint32_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count << "; run=" << i;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), count, idx.find(*it));
+			}
+
+			for(std::set<uint32_t>::iterator it = testValues.begin(); it != testValues.end(); ++it) {
+				std::stringstream ss;
+				ss << "id at " << count << "; run=" << i;
+				CPPUNIT_ASSERT_MESSAGE(ss.str(), (idx.find(*it) < 0) == (realValues.count(*it) == 0));
+			}
+		}
+	}
+	
+	void testRandomMaxSetEquality() {
+// 		srand(0);
+
+		for(size_t i = 0; i < TEST_RUNS; i++) {
 		
 			DynamicBitSet bitSet;
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
@@ -229,9 +296,7 @@ public:
 	
 	void testDynamicBitSet() {
 // 		srand(0);
-		uint32_t setCount = 16;
-
-		for(size_t i = 0; i < setCount; i++) {
+		for(size_t i = 0; i < TEST_RUNS; i++) {
 			DynamicBitSet bitSet;
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
 			ItemIndex idx;
@@ -248,9 +313,8 @@ public:
 	
 	void testPutIntoVector() {
 // 		srand(0);
-		uint32_t setCount = 16;
 
-		for(size_t i = 0; i < setCount; i++) {
+		for(size_t i = 0; i < TEST_RUNS; i++) {
 			std::vector<uint32_t> vec;
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % 16395, 0xFFFFF) );
 			ItemIndex idx;
@@ -269,7 +333,7 @@ public:
 // 		srand(0);
 		uint32_t setCount = 10000;
 
-		for(size_t i = 0; i < 256; i++) {
+		for(size_t i = 0; i < TEST_RUNS; i++) {
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % setCount) );
 			ItemIndex idx;
 			create(realValues, idx);
