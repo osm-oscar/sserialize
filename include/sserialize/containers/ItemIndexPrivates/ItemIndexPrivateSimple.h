@@ -92,7 +92,7 @@ public:
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 	
 	template<typename TCONTAINER>
-	static void create(const TCONTAINER & src, UByteArrayAdapter & dest) {
+	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest) {
 		if (src.size()) {
 			ItemIndexPrivateSimpleCreator creator(*src.begin(), *src.rbegin(), src.size(), dest);
 			typename TCONTAINER::const_iterator srcIt = src.begin();
@@ -104,6 +104,7 @@ public:
 		else {
 			dest.putUint32(0);
 		}
+		return true;
 	}
 };
 
