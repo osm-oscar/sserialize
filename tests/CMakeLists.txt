@@ -46,7 +46,8 @@ ${CMAKE_THREAD_LIBS_INIT}
 
 #containers
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexFactory_Store)
-ADD_TEST_TARGET_SINGLE(containers_itemindex)
+ADD_TEST_TARGET_SINGLE(containers_ItemIndex)
+ADD_TEST_TARGET_SINGLE(containers_ItemIndexRegLine)
 ADD_TEST_TARGET_SINGLE(containers_gst)
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexIterator)
 ADD_TEST_TARGET_SINGLE(containers_geostringsitemdb)

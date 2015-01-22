@@ -159,6 +159,57 @@ public:
 		}
 	}
 	
+	void testDifference() {
+		int TEST_RUNS = 10;
+		for(int i = 0; i < TEST_RUNS; ++i) {
+			std::set<uint32_t> a,b;
+			createOverLappingSets(a, b,  0xFF, 0xFF, 0xFF);
+			ItemIndex idxA;
+			ItemIndex idxB;
+			create(a, idxA);
+			create(b, idxB);
+			
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)a.size(), idxA.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)b.size(), idxB.size());
+			CPPUNIT_ASSERT_MESSAGE("A set unequal", a == idxA);
+			CPPUNIT_ASSERT_MESSAGE("A set unequal", b == idxB);
+			
+			std::set<uint32_t> intersected;
+			std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::insert_iterator<std::set<uint32_t> >(intersected, intersected.end()));
+			ItemIndex intIdx = idxA - idxB;
+			CPPUNIT_ASSERT_MESSAGE("decoding difference index fails", testIndexEquality(intersected));
+			uint32_t count = 0;
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of difference does not match", (uint32_t) intersected.size(), intIdx.size());
+			for(std::set<uint32_t>::iterator it = intersected.begin(); it != intersected.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count << " run " << i;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, intIdx.at(count));
+			}
+		}
+	}
+	
+	void testRandomMaxSetEquality() {
+		srand(0);
+		uint32_t setCount = 16;
+
+		for(size_t i = 0; i < setCount; i++) {
+		
+			DynamicBitSet bitSet;
+			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
+			ItemIndex idx;
+			create(realValues, idx);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+		
+			uint32_t count = 0;
+			for(std::set<uint32_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
+				std::stringstream ss;
+				ss << "id at " << count << "; run=" << i;
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
+			}
+		}
+	}
+	
 	void testDynamicBitSet() {
 		srand(0);
 		uint32_t setCount = 16;
