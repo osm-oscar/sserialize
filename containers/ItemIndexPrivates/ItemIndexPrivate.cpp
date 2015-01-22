@@ -67,7 +67,7 @@ ItemIndexPrivate * ItemIndexPrivate::doIntersect(const ItemIndexPrivate * other)
 	UByteArrayAdapter indexFileAdapter( ItemIndexPrivateSimpleCreator::createCache(lowestId, highestId, smallestIndexSize, false) );
 	ItemIndexPrivateSimpleCreator creator(lowestId, highestId, smallestIndexSize, indexFileAdapter);
 
-	if ((double)smallestIndexSize < (double)largestIndexSize/logTo2((double)largestIndexSize)) {
+	if (this->is_random_access() && other->is_random_access() && (double)smallestIndexSize < (double)largestIndexSize/logTo2((double)largestIndexSize)) {
 		intersectWithBinarySearch(this, other, creator);
 	}
 	else {
@@ -162,6 +162,10 @@ void ItemIndexPrivate::doPutInto(uint32_t * dest) const {
 	for(uint32_t i = 0, s = size(); i < s; ++i, ++dest) {
 		*dest = at(i);
 	}
+}
+
+bool ItemIndexPrivate::is_random_access() const {
+	return true; ///BUG: set default to false
 }
 
 void ItemIndexPrivate::putInto(DynamicBitSet & bitSet) const {

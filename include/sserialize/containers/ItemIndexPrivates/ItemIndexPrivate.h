@@ -51,6 +51,8 @@ public:
 	
 	virtual uint32_t getSizeInBytes() const = 0;
 
+	virtual bool is_random_access() const;
+
 	virtual void putInto(DynamicBitSet & bitSet) const;
 	virtual void putInto(uint32_t* dest) const;
 	
