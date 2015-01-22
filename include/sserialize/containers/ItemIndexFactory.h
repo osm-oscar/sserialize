@@ -180,6 +180,10 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 template<typename TSortedContainer>
 bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, ItemIndex::Types type) {
 	switch(type) {
+	case ItemIndex::T_NATIVE:
+		return sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx, dest);
+	case ItemIndex::T_SIMPLE:
+		return ItemIndexPrivateSimple::create(idx, dest);
 	case ItemIndex::T_REGLINE:
 		return ItemIndexPrivateRegLine::create(idx, dest, -1, true);
 	case ItemIndex::T_WAH:
