@@ -78,14 +78,19 @@ public:
 		if (!src.size())
 			return true;
 		if (src.size() == 1) {
-			uint32_t leadingZeros = *src.begin()/31;
-			uint32_t valueBit = (static_cast<uint32_t>(0x1) << (*src.begin()%31));
-			leadingZeros <<= 2;//indicator bit and rle bit
-			leadingZeros |= 0x1;
-			dest.putUint32(leadingZeros);
-			dest.putUint32(valueBit<<1);
-			dest.putUint32(beginning, 8);
-			
+			uint32_t val = *src.begin();
+			if (val > 30) {
+				uint32_t leadingZeros = *src.begin()/31;
+				uint32_t valueBit = (static_cast<uint32_t>(0x1) << (*src.begin()%31));
+				leadingZeros <<= 2;//indicator bit and rle bit
+				leadingZeros |= 0x1;
+				dest.putUint32(leadingZeros);
+				dest.putUint32(valueBit<<1);
+				dest.putUint32(beginning, 8);
+			}
+			else {
+				dest.putUint32(static_cast<uint32_t>(1) << (val+1) );
+			}
 			return true;
 		}
 		uint32_t prev = *src.begin();
