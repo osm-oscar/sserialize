@@ -29,23 +29,45 @@ void intersectWithMerge2(const ItemIndexPrivate * aindex, const ItemIndexPrivate
 	uint32_t bIndexIt = 0;
 	uint32_t aSize = aindex->size();
 	uint32_t bSize = bindex->size();
-	uint32_t aItemId = aindex->at(aIndexIt);
-	uint32_t bItemId = bindex->at(bIndexIt);;
-	while (aIndexIt < aSize && bIndexIt < bSize) {
-		if (aItemId == bItemId) {
-			creator.push_back(aItemId);
-			aIndexIt++;
-			bIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-			bItemId = bindex->at(bIndexIt);
-		}
-		else if (aItemId < bItemId) {
-			aIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-		}
-		else { //bItemId is smaller
-			bIndexIt++;
-			bItemId = bindex->at(bIndexIt);
+	if (aIndexIt < aSize && bIndexIt < bSize) {
+		uint32_t aItemId = aindex->at(aIndexIt);
+		uint32_t bItemId = bindex->at(bIndexIt);;
+		while (true) {
+			if (aItemId == bItemId) {
+				creator.push_back(aItemId);
+				aIndexIt++;
+				bIndexIt++;
+				if (aIndexIt < aSize) {
+					aItemId = aindex->at(aIndexIt);
+				}
+				else {
+					break;
+				}
+				if (bIndexIt < bSize) {
+					bItemId = bindex->at(bIndexIt);
+				}
+				else {
+					break;
+				}
+			}
+			else if (aItemId < bItemId) {
+				aIndexIt++;
+				if (aIndexIt < aSize) {
+					aItemId = aindex->at(aIndexIt);
+				}
+				else {
+					break;
+				}
+			}
+			else { //bItemId is smaller
+				bIndexIt++;
+				if (bIndexIt < bSize) {
+					bItemId = bindex->at(bIndexIt);
+				}
+				else {
+					break;
+				}
+			}
 		}
 	}
 }
@@ -56,28 +78,39 @@ void uniteWithMerge2(const ItemIndexPrivate * aindex, const ItemIndexPrivate * b
 	uint32_t aSize = aindex->size();
 	uint32_t bSize = bindex->size();
 	
-	//Check if they are equal, if they are, skip this element. And move pointer to the next
-	//If they are not equal, move the pointer to the smaller id one ahead
-	//If this pointer is the aindexptr, insert element into array as it will not be in bindex (i.e. not excluded)
-	uint32_t aItemId = aindex->at(aIndexIt);
-	uint32_t bItemId = bindex->at(bIndexIt);
-	while (aIndexIt < aSize && bIndexIt < bSize) {
-		if (aItemId == bItemId) {
-			creator.push_back(aItemId);
-			aIndexIt++;
-			bIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-			bItemId = bindex->at(bIndexIt);
-		}
-		else if (aItemId < bItemId) {
-			creator.push_back(aItemId);
-			aIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-		}
-		else { //bItemId is smaller
-			creator.push_back(bItemId);
-			bIndexIt++;
-			bItemId = bindex->at(bIndexIt);
+	if (aIndexIt < aSize && bIndexIt < bSize) {
+		uint32_t aItemId = aindex->at(aIndexIt);
+		uint32_t bItemId = bindex->at(bIndexIt);
+		while (true) {
+			if (aItemId == bItemId) {
+				creator.push_back(aItemId);
+				aIndexIt++;
+				bIndexIt++;
+				if (aIndexIt < aSize)
+					aItemId = aindex->at(aIndexIt);
+				else
+					break;
+				if (bIndexIt < bSize)
+					bItemId = bindex->at(bIndexIt);
+				else
+					break;
+			}
+			else if (aItemId < bItemId) {
+				creator.push_back(aItemId);
+				aIndexIt++;
+				if (aIndexIt < aSize)
+					aItemId = aindex->at(aIndexIt);
+				else
+					break;
+			}
+			else { //bItemId is smaller
+				creator.push_back(bItemId);
+				bIndexIt++;
+				if (bIndexIt < bSize)
+					bItemId = bindex->at(bIndexIt);
+				else
+					break;
+			}
 		}
 	}
 
@@ -114,17 +147,37 @@ void differenceWithMerge(const ItemIndexPrivate * aindex, const ItemIndexPrivate
 		if (aItemId == bItemId) {
 			aIndexIt++;
 			bIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-			bItemId = bindex->at(bIndexIt);
+			if (aIndexIt < aSize) {
+				aItemId = aindex->at(aIndexIt);
+			}
+			else {
+				break;
+			}
+			if (bIndexIt < bSize) {
+				bItemId = bindex->at(bIndexIt);
+			}
+			else {
+				break;
+			}
 		}
 		else if (aItemId < bItemId) {
 			creator.push_back(aItemId);
 			aIndexIt++;
-			aItemId = aindex->at(aIndexIt);
+			if (aIndexIt < aSize) {
+				aItemId = aindex->at(aIndexIt);
+			}
+			else {
+				break;
+			}
 		}
 		else { //bItemId is smaller
 			bIndexIt++;
-			bItemId = bindex->at(bIndexIt);
+			if (bIndexIt < bSize) {
+				bItemId = bindex->at(bIndexIt);
+			}
+			else {
+				break;
+			}
 		}
 	}
 
@@ -140,24 +193,46 @@ void symmetricDifferenceWithMerge(const ItemIndexPrivate * aindex, const ItemInd
 	uint32_t bIndexIt = 0;
 	uint32_t aSize = aindex->size();
 	uint32_t bSize = bindex->size();
-	uint32_t aItemId = aindex->at(aIndexIt);
-	uint32_t bItemId = bindex->at(bIndexIt);;
-	while (aIndexIt < aSize && bIndexIt < bSize) {
-		if (aItemId == bItemId) {
-			aIndexIt++;
-			bIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-			bItemId = bindex->at(bIndexIt);
-		}
-		else if (aItemId < bItemId) {
-			creator.push_back(aItemId);
-			aIndexIt++;
-			aItemId = aindex->at(aIndexIt);
-		}
-		else { //bItemId is smaller
-			creator.push_back(bItemId);
-			bIndexIt++;
-			bItemId = bindex->at(bIndexIt);
+	if (aIndexIt < aSize && bIndexIt < bSize) {
+		uint32_t aItemId = aindex->at(aIndexIt);
+		uint32_t bItemId = bindex->at(bIndexIt);
+		while (true) {
+			if (aItemId == bItemId) {
+				aIndexIt++;
+				bIndexIt++;
+				if (aIndexIt < aSize) {
+					aItemId = aindex->at(aIndexIt);
+				}
+				else {
+					break;
+				}
+				if (bIndexIt < bSize) {
+					bItemId = bindex->at(bIndexIt);
+				}
+				else {
+					break;
+				}
+			}
+			else if (aItemId < bItemId) {
+				creator.push_back(aItemId);
+				aIndexIt++;
+				if (aIndexIt < aSize) {
+					aItemId = aindex->at(aIndexIt);
+				}
+				else {
+					break;
+				}
+			}
+			else { //bItemId is smaller
+				creator.push_back(bItemId);
+				bIndexIt++;
+				if (bIndexIt < bSize) {
+					bItemId = bindex->at(bIndexIt);
+				}
+				else {
+					break;
+				}
+			}
 		}
 	}
 
