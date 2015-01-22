@@ -105,6 +105,18 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special is broken", unitedReal, unitedIdx);
 		}
 		{
+			for(uint32_t i(0); i < TEST_RUNS; ++i) {
+				std::set<uint32_t> srcSet = createNumbersSet(rand() % 2048);
+				ItemIndex idx;
+				for(uint32_t j(0), js(32); j < js; ++j) {
+					srcSet.insert(j);
+					create(srcSet, idx);
+					CPPUNIT_ASSERT_MESSAGE("single value index test", srcSet == idx);
+				}
+			}
+		}
+
+		{
 			std::vector<uint32_t> srcSet(1);
 			ItemIndex idx;
 			for(uint32_t i(0), s(1024); i < s; ++i) {
@@ -113,7 +125,6 @@ public:
 				CPPUNIT_ASSERT_MESSAGE("single value index test", srcSet == idx);
 			}
 		}
-		
 	}
 	
 	void testIntersect() {
