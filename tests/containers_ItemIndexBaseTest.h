@@ -47,7 +47,7 @@ public:
 	
 
 	void testRandomEquality() {
-		srand(0);
+// 		srand(0);
 		uint32_t setCount = 2048;
 
 		for(size_t i = 0; i < 256; i++) {
@@ -130,7 +130,7 @@ public:
 	}
 	
 	void testUnite() {
-		srand(0);
+// 		srand(0);
 		uint32_t setCount = 2048;
 
 		for(size_t i = 0; i < 256; i++) {
@@ -160,6 +160,7 @@ public:
 	}
 	
 	void testDifference() {
+// 		srand(0);
 		int TEST_RUNS = 10;
 		for(int i = 0; i < TEST_RUNS; ++i) {
 			std::set<uint32_t> a,b;
@@ -185,10 +186,27 @@ public:
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, intIdx.at(count));
 			}
 		}
+		{
+			std::set<uint32_t> realValuesA( myCreateNumbers(rand() % 2048) );
+			std::set<uint32_t>::const_iterator rvaIt(realValuesA.cbegin());
+			std::set<uint32_t>::const_iterator rvaEnd(realValuesA.cbegin());
+			std::advance(rvaIt, (realValuesA.size()/2));
+			std::advance(rvaEnd, (realValuesA.size()/2)+1);
+			std::set<uint32_t> realValuesB(rvaIt, rvaEnd);
+			ItemIndex idxA, idxB;
+			create(realValuesA, idxA);
+			create(realValuesB, idxB);
+			CPPUNIT_ASSERT_MESSAGE("A set unequal", realValuesA == idxA);
+			CPPUNIT_ASSERT_MESSAGE("B set unequal", realValuesB == idxB);
+			realValuesA.erase(*realValuesB.begin());
+			ItemIndex diffIdx = idxA - idxB;
+			
+			CPPUNIT_ASSERT_MESSAGE("diff index unequal", realValuesA == diffIdx);
+		}
 	}
 	
 	void testRandomMaxSetEquality() {
-		srand(0);
+// 		srand(0);
 		uint32_t setCount = 16;
 
 		for(size_t i = 0; i < setCount; i++) {
@@ -210,7 +228,7 @@ public:
 	}
 	
 	void testDynamicBitSet() {
-		srand(0);
+// 		srand(0);
 		uint32_t setCount = 16;
 
 		for(size_t i = 0; i < setCount; i++) {
@@ -229,7 +247,7 @@ public:
 	}
 	
 	void testPutIntoVector() {
-		srand(0);
+// 		srand(0);
 		uint32_t setCount = 16;
 
 		for(size_t i = 0; i < setCount; i++) {
@@ -248,7 +266,7 @@ public:
 	}
 	
 	void testIterator() {
-		srand(0);
+// 		srand(0);
 		uint32_t setCount = 10000;
 
 		for(size_t i = 0; i < 256; i++) {
