@@ -602,7 +602,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 
 ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::ItemIndexPrivate * other) const {
 	if (other->type() != ItemIndex::T_WAH)
-		return ItemIndexPrivate::doDifference(other);
+		return ItemIndexPrivate::doSymmetricDifference(other);
 	const ItemIndexPrivateWAH * cother = static_cast<const ItemIndexPrivateWAH*>(other);
 
 
