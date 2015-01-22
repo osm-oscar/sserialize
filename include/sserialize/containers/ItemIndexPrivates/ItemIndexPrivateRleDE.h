@@ -162,8 +162,8 @@ public:
 
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const;
 	virtual ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const;
-// 	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
-// 	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
+	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
+	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
 
 	///The result of this operations uses a memory-based backend
 	///none of the indices has to be empty!
