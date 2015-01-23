@@ -162,6 +162,43 @@ uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 	return npos;
 }
 
+uint32_t FlatTrieBase::size() const {
+	return m_trie.size();
+}
+
+FlatTrieBase::StaticStringsIterator FlatTrieBase::staticStringsBegin() const {
+	return StaticStringsIterator(0, this);
+}
+
+FlatTrieBase::StaticStringsIterator FlatTrieBase::staticStringsEnd() const {
+	return FlatTrieBase::StaticStringsIterator(size(), this);
+}
+
+FlatTrieBase::StaticString FlatTrieBase::sstr(uint32_t pos) const {
+	return FlatTrieBase::StaticString(m_trie.at(pos, TA_STR_OFFSET), m_trie.at(pos, FlatTrieBase::TA_STR_LEN));
+}
+
+UByteArrayAdapter FlatTrieBase::strData(const FlatTrieBase::StaticString & str) const {
+	return UByteArrayAdapter(m_strData, str.off(), str.size());
+}
+
+std::string FlatTrieBase::strAt(const StaticString & str) const {
+	UByteArrayAdapter::MemoryView mem(strData(str).asMemView());
+	return std::string(mem.begin(), mem.end());
+}
+
+UByteArrayAdapter FlatTrieBase::strData(uint32_t pos) const {
+	return strData(sstr(pos));
+}
+
+std::string FlatTrieBase::strAt(uint32_t pos) const {
+	return strAt(sstr(pos));
+}
+
+FlatTrieBase::Node FlatTrieBase::root() const {
+	return Node(0, size(), this);
+}
+
 std::ostream& FlatTrieBase::printStats(std::ostream& out) const {
 	out << "sserialize::Static::UnicodeTrie::FlatTrieBase::stats--BEGIN" << std::endl;
 	out << "string data size=" << m_strData.size() << std::endl;

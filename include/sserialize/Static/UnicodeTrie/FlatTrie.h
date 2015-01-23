@@ -114,19 +114,16 @@ public:
 	FlatTrieBase(const sserialize::UByteArrayAdapter & src);
 	virtual ~FlatTrieBase() {}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	uint32_t size() const { return m_trie.size();}
-	StaticStringsIterator staticStringsBegin() const { return StaticStringsIterator(0, this); }
-	StaticStringsIterator staticStringsEnd() const { return StaticStringsIterator(size(), this); }
-	inline StaticString sstr(uint32_t pos) const { return StaticString(m_trie.at(pos, TA_STR_OFFSET), m_trie.at(pos, TA_STR_LEN)); }
-	inline UByteArrayAdapter strData(const StaticString & str) const { return UByteArrayAdapter(m_strData, str.off(), str.size()); }
-	inline std::string strAt(const StaticString & str) const {
-		UByteArrayAdapter::MemoryView mem(strData(str).asMemView());
-		return std::string(mem.begin(), mem.end());
-	}
-	inline UByteArrayAdapter strData(uint32_t pos) const { return strData(sstr(pos)); }
-	inline std::string strAt(uint32_t pos) const { return strAt(sstr(pos)); }
+	uint32_t size() const;
+	StaticStringsIterator staticStringsBegin() const;
+	StaticStringsIterator staticStringsEnd() const;
+	StaticString sstr(uint32_t pos) const;
+	UByteArrayAdapter strData(const StaticString & str) const;
+	std::string strAt(const StaticString & str) const;
+	UByteArrayAdapter strData(uint32_t pos) const;
+	std::string strAt(uint32_t pos) const;
 	uint32_t find(const std::string & str, bool prefixMatch) const;
-	Node root() const { return Node(0, size(), this); }
+	Node root() const;
 	std::ostream & printStats(std::ostream & out) const;
 };
 
@@ -154,10 +151,10 @@ public:
 	///throws sserialize::OutOfBoundsException on miss
 	TValue at(const std::string & str, bool prefixMatch) const;
 	template<typename T_OCTET_ITERATOR>
-	inline TValue at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const {
+	TValue at(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch) const {
 		return at(std::string(strIt, strEnd), prefixMatch);
 	}
-	inline const sserialize::Static::Array<TValue> & payloads() const { return m_values; }
+	const sserialize::Static::Array<TValue> & payloads() const { return m_values; }
 	std::ostream & printStats(std::ostream & out) const;
 };
 
