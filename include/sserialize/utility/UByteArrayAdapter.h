@@ -35,7 +35,7 @@ class UByteArrayAdapterPrivate;
 class ChunkedMmappedFile;
 class CompressedMmappedFile;
 
-class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, serialize::SignedOffsetType> {
+class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, sserialize::SignedOffsetType> {
 public:
 	typedef sserialize::OffsetType OffsetType;
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
