@@ -7,6 +7,9 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/FileHandler.h>
 
+#ifdef __ANDROID__
+#include <sserialize/utility/log.h>
+#endif
 
 namespace sserialize {
 
@@ -216,7 +219,9 @@ public:
 	virtual MmappedMemoryType type() const override { return sserialize::MM_PROGRAM_MEMORY;}
 };
 
-///Exclusive shared memory based storage backend
+#ifndef __ANDROID__
+///Exclusive shared memory based storage backend, currently unspported on android
+//TODO:port this to ashm
 template<typename TValue>
 class MmappedMemorySharedMemory: public MmappedMemoryInterface<TValue> {
 private:
@@ -280,6 +285,7 @@ public:
 	virtual OffsetType size() const override { return m_size; }
 	virtual MmappedMemoryType type() const override { return sserialize::MM_SHARED_MEMORY;}
 };
+#endif
 
 }}
 
@@ -303,8 +309,12 @@ public:
 			m_priv.reset(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(size));
 			break;
 		case MM_SHARED_MEMORY:
+#ifndef __ANDROID__
 			m_priv.reset(new detail::MmappedMemory::MmappedMemorySharedMemory<TValue>(size));
 			break;
+#else
+			sserialize::info("sserialize::MmappedMemory", "Using MM_PROGRAM_MEMORY instead of MM_SHARED_MEMORY on android");
+#endif
 		case MM_PROGRAM_MEMORY:
 		default:
 			m_priv.reset(new detail::MmappedMemory::MmappedMemoryInMemory<TValue>(size));
