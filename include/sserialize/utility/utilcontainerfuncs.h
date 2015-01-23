@@ -44,7 +44,7 @@ namespace detail {
 
 
 ///multi-threaded sorting, @param numThreads if 0, numThreads = std::thread::hardware_concurrency()
-template<typename TIterator, typename CompFunc>
+template<typename TIterator, typename CompFunc = std::less<typename std::iterator_traits<TIterator>::value_type> >
 void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThreads = 0) {
 	if (!numThreads)
 		numThreads = std::max<unsigned int>(std::thread::hardware_concurrency(), 1);
