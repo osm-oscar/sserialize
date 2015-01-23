@@ -15,6 +15,7 @@
 #include <sserialize/utility/debug.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/DynamicVector.h>
+#include <sserialize/Static/UnicodeTrie/FlatTrie.h>
 #include <omp.h>
 
 ///WARNING: USING a hash of NodePtr need explicit initialization of the hash function (see bottom of this file)
@@ -296,9 +297,7 @@ public:
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
 	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
 	
-	///not implemented yet
-	template<typename T>
-	bool checkTrieEquality(T /*t*/) const { return false; }
+	bool checkTrieEquality(const sserialize::Static::UnicodeTrie::FlatTrieBase & sft) const;
 	
 	///not implemented yet
 	template<typename TPayloadComparator, typename TNode>
@@ -576,6 +575,21 @@ void HashBasedFlatTrie<TValue>::finalize() {
 	m_ht.mt_sort(sortFunc);
 	finalize(0, m_ht.size(), 0);
 	m_ht.mt_sort(sortFunc);
+}
+
+template<typename TValue>
+bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::FlatTrieBase& sft) const {
+	if (m_ht.size() != sft.size()) {
+		return false;
+	}
+	const_iterator rIt(m_ht.cbegin()), rEnd(m_ht.cend());
+	uint32_t sI(0), sS(sft.size());
+	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
+		if (toStr(rIt->first) != sft.strAt(sI)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 template<typename TValue>
