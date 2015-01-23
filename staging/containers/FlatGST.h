@@ -240,9 +240,9 @@ template<typename T_ITEM_FACTORY, typename T_ITEM>
 bool FlatGST::populateStringTable(const T_ITEM_FACTORY & stringsFactory) {
 	DiacriticRemover transLiterator;
 	if (m_addTransDiacs) {
-		UErrorCode status = transLiterator.init();
-		if (U_FAILURE(status)) {
-			std::cerr << "Failed to create translitorated on request: " << u_errorName(status) << std::endl;
+		DiacriticRemover::DiacriticRemover::ErrorCodeType status = transLiterator.init();
+		if (DiacriticRemover::DiacriticRemover::isFailure(status)) {
+			std::cerr << "Failed to create translitorated on request: " << DiacriticRemover::DiacriticRemover::errorName(status) << std::endl;
 			return false;
 		}
 	}
