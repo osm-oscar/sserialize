@@ -23,9 +23,6 @@ public:
 	inline const TVALUE & value() const { return m_value; }
 };
 
-std::deque<std::string> toLowerCase(const std::deque<std::string> & strs);
-std::deque<std::string> toUpperCase(const std::deque<std::string> & strs);
-
 /** @param str: returns true if str is either yes,true,0, otherwise returns false */
 bool toBool(const std::string & str);
 
@@ -43,8 +40,6 @@ std::string stringFromUnicodePoints(CPIterator begin, const CPIterator & end) {
 	}
 	return ret;
 }
-
-bool backslashEscape(std::string & str, char c);
 
 bool isLowerCase(uint32_t cp);
 bool isUpperCase(uint32_t cp);

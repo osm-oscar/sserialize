@@ -6,52 +6,6 @@
 
 namespace sserialize {
 
-std::deque<std::string> toLowerCase(std::deque<std::string> & strs) {
-	std::set<std::string> lowerCase;
-	for(std::deque<std::string> ::iterator it = strs.begin(); it != strs.end(); it++) {
-		lowerCase.insert(unicode_to_lower(*it));
-	}
-	std::deque<std::string> lowerCaseD;
-	for(std::set<std::string>::iterator it = lowerCase.begin(); it != lowerCase.end(); it++) {
-		lowerCaseD.push_back(*it);
-	}
-	return lowerCaseD;
-}
-
-std::deque<std::string> toUpperCase(std::deque<std::string> & strs) {
-	std::set<std::string> upperCase;
-	for(std::deque<std::string> ::iterator it = strs.begin(); it != strs.end(); it++) {
-		upperCase.insert(unicode_to_upper(*it));
-	}
-	std::deque<std::string> upperCaseD;
-	for(std::set<std::string>::iterator it = upperCase.begin(); it != upperCase.end(); it++) {
-		upperCaseD.push_back(*it);
-	}
-	return upperCaseD;
-}
-
-bool backslashEscape(std::string & str, char c) {
-	std::string escaped;
-	escaped.reserve(str.size());
-	
-	std::string::const_iterator from(str.begin());
-	std::string::const_iterator to(str.begin());
-	std::string::const_iterator end(str.end());
-	for(; to != end; ++to) {
-		if (*to == c) {
-			escaped.append(from, to);
-			escaped += '\\';
-			escaped += *to;
-			from = to+1;
-		}
-	}
-	if (escaped.size()) {
-		str.swap(escaped);
-		return true;
-	}
-	return false;
-}
-
 bool toBool(const std::string& str) {
 	return (str == "yes" || str == "true" || str == "1");
 }
