@@ -603,7 +603,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	dest.putUint8(1); //version of FlatTrieBase
 	dest.putOffset(m_stringData.size());
 	
-	std::cout << "Copying string data..." << std::flush;
+	std::cout << "Copying string data(" << sserialize::prettyFormatSize(m_stringData.size()) << ")..." << std::flush;
 	tm.begin();
 	dest.put(reinterpret_cast<const uint8_t*>(m_stringData.begin()), m_stringData.size());
 	tm.end();
