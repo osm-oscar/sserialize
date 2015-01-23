@@ -289,16 +289,28 @@ public:
 		if (!inFileName) {
 			return;
 		}
-		std::ifstream inFile;
-		inFile.open(inFileName);
-		while(!inFile.eof()) {
-			std::string str;
-			std::getline(inFile, str);
-			m_testStrings.push_back(str);
+		uint64_t newLineCount = 0;
+		sserialize::MmappedMemory<char> inFile(inFileName);
+		const char * data = inFile.data();
+		const char * dataEnd = data+inFile.size();
+		for(const char * it = data; it < dataEnd; ++it) {
+			if (*it == '\n') {
+				++newLineCount;
+			}
+		}
+		std::cout << "Importing " << newLineCount << " strings from file" << std::endl;
+		m_testStrings.reserve(newLineCount);
+		const char * prev = data;
+		for(const char * it = data; it < dataEnd; ++it) {
+			if (*it == '\n') {
+				m_testStrings.push_back( std::string(prev, it) );
+				prev = it+1;
+			}
 		}
 		sserialize::mt_sort(m_testStrings.begin(), m_testStrings.end(), std::less<std::string>());
 		m_testStrings.resize(std::unique(m_testStrings.begin(), m_testStrings.end())-m_testStrings.begin());
 		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
+		std::cout << "Imported " << m_testStrings.size() << " unique strings from file" << std::endl;
 	}
 
 	void testSpecialStaticSearch() {
