@@ -9,6 +9,8 @@
 
 const char * inFileName = 0;
 
+
+
 struct ValueType {
 	uint32_t v;
 	ValueType() : v(std::numeric_limits<uint32_t>::max()) {}
@@ -294,7 +296,7 @@ public:
 			std::getline(inFile, str);
 			m_testStrings.push_back(str);
 		}
-		std::sort(m_testStrings.begin(), m_testStrings.end());
+		sserialize::mt_sort(m_testStrings.begin(), m_testStrings.end(), std::less<std::string>());
 		m_testStrings.resize(std::unique(m_testStrings.begin(), m_testStrings.end())-m_testStrings.begin());
 		std::random_shuffle(m_testStrings.begin(), m_testStrings.end());
 	}
