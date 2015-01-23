@@ -102,8 +102,10 @@ public:
 	//linear in the number of nodes
 	uint64_t size() const {
 		uint64_t s = 0;
-		auto f = [&s](const Node & /*n*/){++s;};
-		root()->apply(f);
+		if (m_root) {
+			auto f = [&s](const Node & /*n*/){++s;};
+			root()->apply(f);
+		}
 		return s;
 	}
 	ConstNodePtr root() const { return m_root;}
