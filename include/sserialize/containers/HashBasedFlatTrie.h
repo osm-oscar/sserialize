@@ -597,7 +597,9 @@ template<typename T_PH, typename T_STATIC_PAYLOAD>
 bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
-
+#if defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE)
+	UByteArrayAdapter::OffsetType flatTrieBaseBeginOffset = dest.tellPutPtr();
+#endif
 	dest.putUint8(1); //version of FlatTrieBase
 	dest.putOffset(m_stringData.size());
 	
@@ -630,8 +632,16 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	}
 	tsCreator.flush();
 	pinfo.end();
-
-
+#if defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE)
+	{
+		UByteArrayAdapter tmp(dest);
+		tmp.setPutPtr(flatTrieBaseBeginOffset);
+		tmp.shrinkToPutPtr();
+		sserialize::Static::UnicodeTrie::FlatTrieBase ftb(tmp);
+		assert(checkTrieEquality(ftb));
+		std::cout << "Tries are equal" << std::endl;
+	}
+#endif
 	sserialize::Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> tmpPayload(size(), size());
 	std::vector<uint32_t> nodeIdToData(size(), std::numeric_limits<uint32_t>::max());
 	count = 0;
