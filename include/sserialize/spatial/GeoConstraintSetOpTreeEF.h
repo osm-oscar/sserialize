@@ -21,7 +21,7 @@ class GeoConstraintSetOpTreeSF: public sserialize::SetOpTree::SelectableOpFilter
 	TCompleter m_completer;
 protected:
 	bool parse(const std::string & str, GeoRect & rect, bool & approximate) const {
-		std::deque<std::string> splitStr = splitLine<';'>(str);
+		std::vector<std::string> splitStr = split< std::vector<std::string> >(str, ';');
 		if (splitStr.size() < 4)
 			return false;
 		rect.lat()[0] = std::atof(splitStr[0].c_str() );

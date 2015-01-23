@@ -1,14 +1,27 @@
 #ifndef COMMON_STRING_FUNCTIONS
 #define COMMON_STRING_FUNCTIONS
-#include <string>
 #include <deque>
 #include <set>
+#include <string>
+#include <functional>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/vendor/utf8.h>
-#include <iostream>
+
 
 
 namespace sserialize {
+
+template<typename TVALUE>
+struct OneValueSet final {
+	TVALUE m_value;
+public:
+	OneValueSet() {}
+	OneValueSet(const TVALUE & v) : m_value(v) {}
+	~OneValueSet() {}
+	inline bool count(const TVALUE & v) const { return v == m_value; }
+	inline TVALUE & value() { return m_value; }
+	inline const TVALUE & value() const { return m_value; }
+};
 
 std::deque<std::string> toLowerCase(const std::deque<std::string> & strs);
 std::deque<std::string> toUpperCase(const std::deque<std::string> & strs);
@@ -80,7 +93,10 @@ uint32_t utf8CharCount(octetIterator begin, const octetIterator & end) {
 ///@param out output iterator accepting std::string
 ///@return number of consumed chars (NOT codepoints)
 template<typename T_OCTET_ITERATOR, typename T_SEPARATOR_SET, typename T_ESCAPES_SET, typename T_OUTPUT_ITERATOR>
-std::size_t split(const T_OCTET_ITERATOR & begin, const T_OCTET_ITERATOR & end, const T_SEPARATOR_SET & separators, const T_ESCAPES_SET & escapes, T_OCTET_ITERATOR out) {
+std::size_t split(const T_OCTET_ITERATOR & begin, const T_OCTET_ITERATOR & end, 
+					const typename std::enable_if<!std::is_integral<T_SEPARATOR_SET>::value, T_SEPARATOR_SET>::type & separators,
+					const typename std::enable_if<!std::is_integral<T_ESCAPES_SET>::value, T_ESCAPES_SET>::type & escapes,
+					T_OUTPUT_ITERATOR out) {
 	std::string curStr;
 	T_OCTET_ITERATOR it(begin), prev(begin);
 	for(; it != end;) {
@@ -96,6 +112,7 @@ std::size_t split(const T_OCTET_ITERATOR & begin, const T_OCTET_ITERATOR & end, 
 			*out = curStr;
 			++out;
 			curStr.clear();
+			prev = it;
 			continue;
 		}
 		curStr.append(prev, it);
@@ -107,109 +124,29 @@ std::size_t split(const T_OCTET_ITERATOR & begin, const T_OCTET_ITERATOR & end, 
 	return end-it;
 }
 
-
-/** splits the string at the given spearator */
-template<char TSEP>
-std::deque<std::string> splitLine(const std::string & str) {
-	std::deque<std::string> splits;
-	std::string curStr;
-	for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
-		if (*it == TSEP) {
-			splits.push_back(curStr);
-			curStr = std::string();
-		}
-		else {
-			curStr.push_back(*it);
-		}
-	}
-	if(curStr.length())
-		splits.push_back(curStr);
-	return splits;
-}
-
-template<char TSEP>
-std::vector<std::string> splitLineVec(const std::string & str) {
-	std::vector<std::string> splits;
-	std::string curStr;
-	for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
-		if (*it == TSEP) {
-			splits.push_back(curStr);
-			curStr = std::string();
-		}
-		else {
-			curStr.push_back(*it);
-		}
-	}
-	if(curStr.length())
-		splits.push_back(curStr);
-	return splits;
-}
-
-///split string @str into multiple strings at seperators and use escapes as escape char, NOT unicode aware!
-template<typename T_RETURN_CONTAINER>
-T_RETURN_CONTAINER split(const std::string & str, const char & separators, const char & escapes) {
-	T_RETURN_CONTAINER splits;
-	std::string curStr;
-	for(std::string::const_iterator it(str.cbegin()), end(str.cend()); it != end; ++it) {
-		if (*it == escapes) {
-			++it;
-			if (it != end) {
-				curStr.push_back(*it);
-			}
-		}
-		else if (separators == *it) {
-			splits.insert(splits.end(), curStr);
-			curStr.clear();
-		}
-		else {
-			curStr.push_back(*it);
-		}
-	}
-	if(curStr.length())
-		splits.push_back(curStr);
-	return splits;
-}
-
-///split string @str into multiple strings at seperators and use escapes as escape char, NOT unicode aware!
 template<typename T_RETURN_CONTAINER, typename T_SEPARATOR_SET, typename T_ESCAPES_SET>
-T_RETURN_CONTAINER split(const std::string & str, const T_SEPARATOR_SET & separators, const T_ESCAPES_SET & escapes) {
-	T_RETURN_CONTAINER splits;
-	std::string curStr;
-	for(std::string::const_iterator it(str.cbegin()), end(str.cend()); it != end; ++it) {
-		if (escapes.count( *it ) > 0) {
-			++it;
-			if (it != end) {
-				curStr.push_back(*it);
-			}
-		}
-		else if (separators.count( *it ) > 0) {
-			splits.insert(splits.end(), curStr);
-			curStr.clear();
-		}
-		
-		else {
-			curStr.push_back(*it);
-		}
-	}
-	if(curStr.length())
-		splits.push_back(curStr);
-	return splits;
+T_RETURN_CONTAINER split(const std::string & str,
+						const typename std::enable_if<!std::is_integral<T_SEPARATOR_SET>::value, T_SEPARATOR_SET>::type & separators,
+						const typename std::enable_if<!std::is_integral<T_ESCAPES_SET>::value, T_ESCAPES_SET>::type & escapes) {
+	typedef std::insert_iterator<T_RETURN_CONTAINER> MyInsertIterator;
+	T_RETURN_CONTAINER dest;
+	std::insert_iterator<T_RETURN_CONTAINER> insertIt(dest, dest.end());
+	split<std::string::const_iterator, T_SEPARATOR_SET, T_ESCAPES_SET, MyInsertIterator>(str.cbegin(), str.cend(), separators, escapes, insertIt);
+	return dest;
 }
 
-template<typename TVALUE>
-struct OneValueSet final {
-	TVALUE m_value;
-public:
-	OneValueSet() {}
-	OneValueSet(const TVALUE & v) : m_value(v) {}
-	~OneValueSet() {}
-	inline bool count(const TVALUE & v) const { return v == m_value; }
-	inline TVALUE & value() { return m_value; }
-	inline const TVALUE & value() const { return m_value; }
-};
+template<typename T_RETURN_CONTAINER>
+T_RETURN_CONTAINER split(const std::string & str, uint32_t separator, uint32_t escape) {
+	OneValueSet<uint32_t> sepSet(separator);
+	OneValueSet<uint32_t> escapeSet(escape);
+	return split< T_RETURN_CONTAINER, OneValueSet<uint32_t>, OneValueSet<uint32_t> >(str, sepSet, escapeSet);
+}
 
-/** splits the string at the given spearator */
-std::deque<std::string> splitLine(const std::string & str, const std::set<char> & seps);
+template<typename T_RETURN_CONTAINER>
+T_RETURN_CONTAINER split(const std::string & str, uint32_t separator) {
+	return split<T_RETURN_CONTAINER>(str, separator, 0xFFFFFFFF);
+}
+
 
 ///move strIt to the beginning of the next suffix string
 template<typename T_OCTET_ITERATOR, typename T_SEPARATOR_SET>

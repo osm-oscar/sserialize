@@ -156,23 +156,6 @@ int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t&
 	}
 }
 
-std::deque<std::string> splitLine(const std::string & str, const std::set<char> & seps) {
-	std::deque<std::string> splits;
-	std::string curStr;
-	for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
-		if (seps.count( *it ) > 0) {
-			splits.push_back(curStr);
-			curStr = std::string();
-		}
-		else {
-			curStr.push_back(*it);
-		}
-	}
-	if(curStr.length())
-		splits.push_back(curStr);
-	return splits;
-}
-
 void AsciiCharEscaper::setEscapeChar(char c) {
 	if (c >= 0) {
 		if (c > 63) {
