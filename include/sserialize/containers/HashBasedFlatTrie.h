@@ -582,8 +582,27 @@ bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::Fla
 	if (m_ht.size() != sft.size()) {
 		return false;
 	}
+	
+	if (sft.strData().size() != m_stringData.size()) {
+		return false;
+	}
+	UByteArrayAdapter sftStrData = sft.strData();
+	for(UByteArrayAdapter::OffsetType i(0), s(m_stringData.size()); i < s; ++i) {
+		if (sftStrData.at(i) != (uint8_t) m_stringData.at(i)) {
+			return false;
+		}
+	}
 	const_iterator rIt(m_ht.cbegin()), rEnd(m_ht.cend());
 	uint32_t sI(0), sS(sft.size());
+	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
+		auto sftX = sft.sstr(sI);
+		if (rIt->first.size() != sftX.size() || rIt->first.offset() != sftX.off()) {
+			return false;
+		}
+	}
+
+	rIt = m_ht.cbegin();
+	sI = 0;
 	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
 		if (toStr(rIt->first) != sft.strAt(sI)) {
 			return false;
