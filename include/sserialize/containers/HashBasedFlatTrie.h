@@ -610,13 +610,13 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	std::cout << tm.elapsedSeconds() << " seconds" << std::endl;
 	
 	const char * maxBegin = m_stringData.begin();
-	uint32_t maxLen = 0;
+	uint64_t maxLen = 0;
 	for(const auto & x : m_ht) {
 		maxBegin = std::max<const char*>(maxBegin, m_strHandler.strBegin(x.first));
-		maxLen = std::max<uint32_t>(maxLen, x.first.size());
+		maxLen = std::max<uint64_t>(maxLen, x.first.size());
 	}
 	uint64_t maxOffset = maxBegin - m_stringData.begin();
-	if (maxOffset > std::numeric_limits<uint32_t>::max()) {
+	if (maxOffset > std::numeric_limits<uint32_t>::max() || maxLen > std::numeric_limits<uint32_t>::max()) {
 		throw sserialize::OutOfBoundsException("String data is too large");
 	}
 	
@@ -625,8 +625,9 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	const char * strDataBegin = m_stringData.begin();
 	pinfo.begin(m_ht.size(), "sserialize::HashBasedFlatTrie serializing trie");
 	for(const auto & x : m_ht) {
-		tsCreator.set(count, 0, m_strHandler.strBegin(x.first)-strDataBegin);
-		tsCreator.set(count, 1, x.first.size());
+		bool ok = tsCreator.set(count, 0, m_strHandler.strBegin(x.first)-strDataBegin);
+		ok = tsCreator.set(count, 1, x.first.size()) && ok;
+		assert(ok);
 		++count;
 		pinfo(count);
 	}
