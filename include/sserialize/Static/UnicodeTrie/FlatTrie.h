@@ -115,6 +115,7 @@ public:
 	virtual ~FlatTrieBase() {}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t size() const;
+	inline const UByteArrayAdapter & strData() const { return m_strData; }
 	StaticStringsIterator staticStringsBegin() const;
 	StaticStringsIterator staticStringsEnd() const;
 	StaticString sstr(uint32_t pos) const;
