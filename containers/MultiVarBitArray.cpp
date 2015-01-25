@@ -248,6 +248,10 @@ bool MultiVarBitArrayCreator::set(uint32_t pos, uint32_t subPos, uint32_t value)
 	return value == m_arr.set(pos, subPos, value);
 }
 
+uint32_t MultiVarBitArrayCreator::at(uint32_t pos, uint32_t subPos) const {
+	return m_arr.at(pos, subPos);
+}
+
 UByteArrayAdapter MultiVarBitArrayCreator::flush() {
 	m_header.putUint32(1, m_arr.size());
 

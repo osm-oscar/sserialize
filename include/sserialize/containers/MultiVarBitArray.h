@@ -96,6 +96,7 @@ public:
 	bool reserve(uint32_t count);
 	/** This will increase the Array to fit pos */
 	bool set(uint32_t pos, uint32_t subPos, uint32_t value);
+	uint32_t at(uint32_t pos, uint32_t subPos) const;
 	
 	/** Flushes everthing to that, adjusting the length of the data and returns the data-block associated with the created MultiVarBitArray */
 	UByteArrayAdapter flush();
