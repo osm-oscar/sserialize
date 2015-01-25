@@ -646,12 +646,20 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	uint32_t count = 0;
 	const char * strDataBegin = m_stringData.begin();
 	pinfo.begin(m_ht.size(), "sserialize::HashBasedFlatTrie serializing trie");
+#if (defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE))
+	uint64_t debugCheckOffsetEntry = m_strHandler.strBegin(m_ht.begin()->first)-strDataBegin;
+	uint64_t debugCheckSizeEntry = m_ht.begin()->first.size();
+#endif
 	for(const auto & x : m_ht) {
 		bool ok = tsCreator.set(count, 0, m_strHandler.strBegin(x.first)-strDataBegin);
 		ok = tsCreator.set(count, 1, x.first.size()) && ok;
 		assert(ok);
 		++count;
 		pinfo(count);
+#if (defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE))
+		assert(tsCreator.at(0,0) == debugCheckOffsetEntry);
+		assert(tsCreator.at(0,1) == debugCheckSizeEntry);
+#endif
 	}
 	tsCreator.flush();
 	pinfo.end();
