@@ -3,6 +3,9 @@
 #include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/containers/MultiVarBitArray.h>
+#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
 
 using namespace sserialize;
@@ -76,6 +79,38 @@ public:
 	}
 };
 
+class MultiVarBitArraySpecialTest: public CppUnit::TestFixture {
+CPPUNIT_TEST_SUITE( MultiVarBitArraySpecialTest );
+CPPUNIT_TEST( testLargeSpecialEquality );
+CPPUNIT_TEST_SUITE_END();
+public:
+	void testLargeSpecialEquality() {
+		uint32_t size = 0x63E70FF;
+		uint32_t entry0 = 2011012750;
+		uint32_t entry1 = 747;
+		UByteArrayAdapter dest(UByteArrayAdapter::createCache(1, MM_PROGRAM_MEMORY));
+		MultiVarBitArrayCreator tsCreator(std::vector<uint8_t>({CompactUintArray::minStorageBits(entry0), CompactUintArray::minStorageBits(entry1)}), dest);
+		tsCreator.set(0, 0, 1891253);
+		tsCreator.set(0, 1, 0);
+		tsCreator.set(104755300, 0, 1242567038);
+		tsCreator.set(104755300, 1, 9);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("first entry missmatch at ", 104755300), (uint32_t)1891253, (uint32_t)tsCreator.at(0, 0));
+		CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("first entry missmatch at ", 104755300), (uint32_t)0, (uint32_t)tsCreator.at(0, 1));
+		for(uint32_t i(1); i < size; ++i) {
+			tsCreator.set(i, 0, 1242567038);
+			tsCreator.set(i, 1, 9);
+			if ((uint32_t)1891253 != (uint32_t)tsCreator.at(0, 0)) {
+			tsCreator.set(0, 0, 1891253);
+			tsCreator.set(0, 1, 0);
+			tsCreator.set(i, 0, 1242567038);
+			tsCreator.set(i, 1, 9);
+			}
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("first entry missmatch at ", i), (uint32_t)1891253, (uint32_t)tsCreator.at(0, 0));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("first entry missmatch at ", i), (uint32_t)0, (uint32_t)tsCreator.at(0, 1));
+		}
+	}
+};
+
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
@@ -89,6 +124,7 @@ int main() {
 	runner.addTest( MultiVarBitArrayTest<1024, 127>::suite() );
 	runner.addTest( MultiVarBitArrayTest<128*1024, 3>::suite() );
 	runner.addTest( MultiVarBitArrayTest<1024*1024, 3>::suite() );
+	runner.addTest( MultiVarBitArraySpecialTest::suite() );
 	runner.run();
 	return 0;
 }
