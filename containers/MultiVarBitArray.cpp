@@ -60,7 +60,7 @@ uint32_t MultiVarBitArrayPrivate::at(uint32_t pos, uint32_t subPos) const {
 	uint32_t mask = createMask(bitCount(subPos));
 	uint8_t bitCount = this->bitCount(subPos);
 
-	uint64_t initTotalBitShift = m_bitSums.back()*pos + (subPos > 0 ? m_bitSums[subPos-1] : 0);
+	uint64_t initTotalBitShift = ((uint64_t)m_bitSums.back())*pos + (subPos > 0 ? m_bitSums[subPos-1] : 0);
 	uint64_t posStart = initTotalBitShift/8;
 	uint8_t initShift = initTotalBitShift - posStart*8;
 
@@ -86,7 +86,7 @@ uint32_t MultiVarBitArrayPrivate::set(uint32_t pos, uint32_t subPos, uint32_t va
 
 	value = value & mymask;
 	
-	uint64_t initTotalBitShift = m_bitSums.back()*pos + (subPos > 0 ? m_bitSums[subPos-1] : 0);
+	uint64_t initTotalBitShift = ((uint64_t)m_bitSums.back())*pos + (subPos > 0 ? m_bitSums[subPos-1] : 0);
 	uint64_t startPos = initTotalBitShift/8;
 	uint8_t initShift = initTotalBitShift - startPos*8;
 
