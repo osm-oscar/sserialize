@@ -55,7 +55,10 @@ public:
 
 	virtual void putInto(DynamicBitSet & bitSet) const;
 	virtual void putInto(uint32_t* dest) const;
-	
+
+
+	///Default uniteK uses unite
+	virtual ItemIndexPrivate * uniteK(const sserialize::ItemIndexPrivate * other, uint32_t numItems) const;
 	///Default intersect which uses a ItemIndexPrivateSimple as storage backend
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const;
 	///Default unite which uses a ItemIndexPrivateSimple as storage backend

@@ -176,6 +176,11 @@ void ItemIndexPrivate::putInto(uint32_t * dest) const {
 	doPutInto(dest);
 }
 
+ItemIndexPrivate* ItemIndexPrivate::uniteK(const sserialize::ItemIndexPrivate* other, uint32_t numItems) const {
+	return unite(other);
+}
+
+
 ItemIndexPrivate * ItemIndexPrivate::unite(const ItemIndexPrivate * other) const {
 	return doUnite(other);
 }

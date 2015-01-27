@@ -503,6 +503,11 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 	}
 }
 
+ItemIndex ItemIndex::uniteK(const ItemIndex& a, const ItemIndex& b, uint32_t numItems) {
+	return a.priv()->uniteK(b.priv(), numItems);
+}
+
+
 bool operator==(const sserialize::ItemIndex & idxA, const sserialize::ItemIndex & idxB) {
 	if (idxA.size() != idxB.size())
 		return false;
