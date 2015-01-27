@@ -229,6 +229,8 @@ void SetOpsOpTreeParser::readString(Token & token) {
 	token.begin = m_strIt - m_parseString.begin();
 	token.type = Token::STRING;
 	if (*m_strIt == '"') {
+		token.tokenString += *m_strIt;
+		++m_strIt;
 		while(m_strIt != m_strEnd) {
 			if (*m_strIt == '\\') {
 				++m_strIt;
