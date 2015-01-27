@@ -228,21 +228,47 @@ void SetOpsOpTreeParser::sanitize() {
 void SetOpsOpTreeParser::readString(Token & token) {
 	token.begin = m_strIt - m_parseString.begin();
 	token.type = Token::STRING;
-	while (m_strIt != m_strEnd) {
-		if (*m_strIt == '\\') {
-			++m_strIt;
-			if (m_strIt != m_strEnd) {
+	if (*m_strIt == '"') {
+		while(m_strIt != m_strEnd) {
+			if (*m_strIt == '\\') {
+				++m_strIt;
+				if (m_strIt != m_strEnd) {
+					token.tokenString += *m_strIt;
+					++m_strIt;
+				}
+				else {
+					break;
+				}
+			}
+			else if (*m_strIt == '"') {
+				token.tokenString += *m_strIt;
+				++m_strIt;
+				break;
+			}
+			else {
 				token.tokenString += *m_strIt;
 				++m_strIt;
 			}
-			else
-				break;
 		}
-		else if (m_opMap.count(*m_strIt) > 0 || *m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')')
-			break;
-		else {
-			token.tokenString += *m_strIt;
-			++m_strIt;
+	}
+	else {
+		while (m_strIt != m_strEnd) {
+			if (*m_strIt == '\\') {
+				++m_strIt;
+				if (m_strIt != m_strEnd) {
+					token.tokenString += *m_strIt;
+					++m_strIt;
+				}
+				else
+					break;
+			}
+			else if (m_opMap.count(*m_strIt) > 0 || *m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')') {
+				break;
+			}
+			else {
+				token.tokenString += *m_strIt;
+				++m_strIt;
+			}
 		}
 	}
 	token.end = m_strIt - m_parseString.begin();
