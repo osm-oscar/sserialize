@@ -49,6 +49,38 @@ sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
 	}
 }
 
+sserialize::ItemIndex SubSet::topK(const NodePtr & node, uint32_t numItems) const {
+
+	struct MapFunc {
+		const SubSet * subset;
+		sserialize::ItemIndex operator()(uint32_t pos) const {
+			return subset->cqr().idx(pos);
+		}
+	} mapfunc;
+	mapfunc.subset = this;
+
+	struct RedFunc {
+		uint32_t numItems;
+		sserialize::ItemIndex operator()(const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) const {
+			return sserialize::ItemIndex::uniteK(a, b, numItems);
+		}
+	} redfunc;
+	redfunc.numItems = numItems;
+
+
+	if (m_sparse) {
+		std::unordered_set<uint32_t> idcsPos;
+		insertCellPositions(node, idcsPos);
+		std::vector<uint32_t> tmp(idcsPos.cbegin(), idcsPos.cend());
+		return treeReduceMap<std::vector<uint32_t>::const_iterator, sserialize::ItemIndex, const RedFunc &, const MapFunc &>(
+					tmp.cbegin(), tmp.cend(), redfunc, mapfunc);
+	}
+	else {
+		return treeReduceMap<SubSet::Node::CellPositionsContainer::const_iterator, sserialize::ItemIndex, const RedFunc &, const MapFunc &>(
+					node->cellPositions().cbegin(), node->cellPositions().cend(), redfunc, mapfunc);
+	}
+}
+
 bool SubSet::regionByGhId(const SubSet::NodePtr& node, uint32_t ghId, SubSet::NodePtr & dest) const {
 	if (node->ghId() == ghId) {
 		dest = node;
