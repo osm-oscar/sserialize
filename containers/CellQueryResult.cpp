@@ -80,6 +80,11 @@ CellQueryResult::CellQueryResult(const ItemIndex & fullMatches, const GeoHierarc
 m_priv( new detail::CellQueryResult(fullMatches, gh, idxStore) )
 {}
 
+
+CellQueryResult::CellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_priv( new detail::CellQueryResult(cellId, cellIdxId, gh, idxStore) )
+{}
+
 CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
 m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
 {}
@@ -154,8 +159,15 @@ CellQueryResult::const_iterator CellQueryResult::cend() const {
 }
 
 sserialize::ItemIndex CellQueryResult::flaten() const {
-	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) { return a + b; } );
+	auto func = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; } ;
+	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func);
 }
+
+ItemIndex CellQueryResult::topK(uint32_t numItems) const {
+	auto func = [numItems](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return sserialize::ItemIndex::uniteK(a, b, numItems); };
+	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func);
+}
+
 
 void CellQueryResult::dump(std::ostream & out) const {
 	out << "CQR<" << cellCount() << ">";

@@ -62,6 +62,7 @@ private:
 public:
 	CellQueryResult();
 	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	CellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
@@ -91,6 +92,7 @@ public:
 	const_iterator end() const;
 	const_iterator cend() const;
 	ItemIndex flaten() const;
+	ItemIndex topK(uint32_t numItems) const;
 	void dump(std::ostream & out) const;
 	void dump() const;
 };

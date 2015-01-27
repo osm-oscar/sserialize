@@ -18,10 +18,22 @@ m_idxStore(idxStore)
 	uint32_t totalSize = fmIdx.size();
 	m_desc.reserve(totalSize);
 	m_idx = (IndexDesc*) malloc(totalSize * sizeof(IndexDesc));
-	IndexDesc * idxPtr = m_idx;
 	for(; fmIt != fmEnd; ++fmIt) {
 		m_desc.push_back( CellDesc(1, 0, *fmIt) );
 	}
+}
+
+CellQueryResult::CellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_gh(gh),
+m_idxStore(idxStore)
+{
+
+	uint32_t totalSize = 1;
+	m_desc.reserve(totalSize);
+	m_idx = (IndexDesc*) malloc(totalSize * sizeof(IndexDesc));
+	IndexDesc * idxPtr = m_idx;
+	m_desc.push_back( CellDesc(0, 0, cellId) );
+	idxPtr[0].idxPtr = cellIdxId;
 }
 
 CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
