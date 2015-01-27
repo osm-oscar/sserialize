@@ -55,6 +55,7 @@ public:
 		m_data.putUint32(0);
 	}
 	virtual ~ItemIndexPrivateRleDECreator() {}
+	inline uint32_t size() const { return m_count; }
 	///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
 	void push_back(uint32_t id) {
 		uint32_t diff = id - m_prev;
@@ -137,21 +138,21 @@ public:
 	virtual int find(uint32_t id) const;
 
 public:
-	virtual UByteArrayAdapter data() const;
+	virtual UByteArrayAdapter data() const override;
 
-	virtual uint32_t at(uint32_t pos) const;
-	virtual uint32_t first() const;
-	virtual uint32_t last() const;
+	virtual uint32_t at(uint32_t pos) const override;
+	virtual uint32_t first() const override;
+	virtual uint32_t last() const override;
 
 	virtual MyBaseClass::const_iterator cbegin() const override;
 	virtual MyBaseClass::const_iterator cend() const override;
 
-	virtual uint32_t size() const;
+	virtual uint32_t size() const override;
 
-	virtual uint8_t bpn() const;
+	virtual uint8_t bpn() const override;
 
 
-	virtual uint32_t getSizeInBytes() const;
+	virtual uint32_t getSizeInBytes() const override;
 	
 	virtual void putInto(DynamicBitSet & bitSet) const override;
 	virtual void putInto(uint32_t * dest) const override;
@@ -159,11 +160,11 @@ public:
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 
 
-
-	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const;
-	virtual ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const;
-	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
-	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
+	virtual ItemIndexPrivate * uniteK(const sserialize::ItemIndexPrivate * other, uint32_t numItems) const override;
+	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const override;
+	virtual ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const override;
+	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const override;
+	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const override;
 
 	///The result of this operations uses a memory-based backend
 	///none of the indices has to be empty!

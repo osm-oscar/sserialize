@@ -347,6 +347,168 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::intersect(const sserialize::ItemIndexP
 	return new ItemIndexPrivateRleDE(dest);
 }
 
+
+ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPrivate * other, uint32_t numItems) const {
+	const ItemIndexPrivateRleDE * cother = dynamic_cast<const ItemIndexPrivateRleDE*>(other);
+	if (!cother) {
+		return ItemIndexPrivate::doUnite(other);
+	}
+
+	UByteArrayAdapter aData(m_data);
+	UByteArrayAdapter bData(cother->m_data);
+	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
+	ItemIndexPrivateRleDECreator creator(dest);
+
+	uint32_t aIndexIt = 0;
+	uint32_t bIndexIt = 0;
+	uint32_t aSize = m_size;
+	uint32_t bSize = cother->m_size;
+	uint32_t aRle = 0;
+	uint32_t bRle = 0;
+	uint32_t aId = 0;
+	uint32_t bId = 0;
+	uint32_t aVal = aData.getVlPackedUint32();
+	uint32_t bVal = bData.getVlPackedUint32();
+	if (aVal & 0x1) {
+		aRle = aVal >> 1;
+		aVal = aData.getVlPackedUint32();
+	}
+	if (bVal & 0x1) {
+		bRle = bVal >> 1;
+		bVal = bData.getVlPackedUint32();
+	}
+	aVal >>= 1;
+	bVal >>= 1;
+
+	aId = aVal;
+	bId = bVal;
+	
+	while (aIndexIt < aSize && bIndexIt < bSize && creator.size() < numItems) {
+		if (aId == bId) {
+			creator.push_back(aId);
+			
+			if (aRle) {
+				--aRle;
+			}
+				
+			if (!aRle) {
+				aVal = aData.getVlPackedUint32();
+				if (aVal & 0x1) {
+					aRle = aVal >> 1;
+					aVal = aData.getVlPackedUint32();
+				}
+				aVal >>= 1;
+			}
+			aId += aVal;
+			++aIndexIt;
+
+			if (bRle) {
+				--bRle;
+			}
+				
+			if (!bRle) {
+				bVal = bData.getVlPackedUint32();
+				if (bVal & 0x1) {
+					bRle = bVal >> 1;
+					bVal = bData.getVlPackedUint32();
+				}
+				bVal >>= 1;
+			}
+			bId += bVal;
+			++bIndexIt;
+		}
+		else if (aId < bId) {
+			creator.push_back(aId);
+		
+			if (aRle) {
+				--aRle;
+			}
+				
+			if (!aRle) {
+				aVal = aData.getVlPackedUint32();
+				if (aVal & 0x1) {
+					aRle = aVal >> 1;
+					aVal = aData.getVlPackedUint32();
+				}
+				aVal >>= 1;
+			}
+			aId += aVal;
+			++aIndexIt;
+		}
+		else {
+			creator.push_back(bId);
+		
+			if (bRle) {
+				--bRle;
+			}
+				
+			if (!bRle) {
+				bVal = bData.getVlPackedUint32();
+				if (bVal & 0x1) {
+					bRle = bVal >> 1;
+					bVal = bData.getVlPackedUint32();
+				}
+				bVal >>= 1;
+			}
+			bId += bVal;
+			++bIndexIt;
+		}
+	}
+
+	if (aIndexIt < aSize) {
+		if (aRle) {
+			while (aRle && creator.size() < numItems) {
+				creator.push_back(aId);
+				aId += aVal;
+				++aIndexIt;
+				--aRle;
+			}
+		}
+		else {
+			creator.push_back(aId);
+			++aIndexIt;
+		}
+		if (creator.size() < numItems) {
+			//from here on,  the differences are equal to the ones in aData
+			aData.shrinkToGetPtr();
+			creator.flushWithData(aData, aSize - aIndexIt);
+		}
+		else {
+			creator.flush();
+		}
+	}
+	else if (bIndexIt < bSize) {
+		if (bRle) {
+			while (bRle && creator.size() < numItems) {
+				creator.push_back(bId);
+				bId += bVal;
+				++bIndexIt;
+				--bRle;
+			}
+		}
+		else {
+			creator.push_back(bId);
+			++bIndexIt;
+		}
+		if (creator.size() < numItems) {
+			//from here on,  the differences are equal to the ones in aData
+			bData.shrinkToGetPtr();
+			creator.flushWithData(bData, bSize - bIndexIt);
+		}
+		else {
+			creator.flush();
+		}
+	}
+	else {
+		creator.flush();
+	}
+	
+	dest.resetPtrs();
+	
+	return new ItemIndexPrivateRleDE(dest);
+
+}
+
 ItemIndexPrivate * ItemIndexPrivateRleDE::unite(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateRleDE * cother = dynamic_cast<const ItemIndexPrivateRleDE*>(other);
 	if (!cother) {
