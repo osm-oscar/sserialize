@@ -264,7 +264,8 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				else
 					break;
 			}
-			else if (m_opMap.count(*m_strIt) > 0 || *m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')') {
+// 			else if (m_opMap.count(*m_strIt) > 0 || *m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')') {
+			else if (*m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')') {
 				break;
 			}
 			else {
