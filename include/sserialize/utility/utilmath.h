@@ -180,6 +180,26 @@ public:
 	}
 };
 
+template<typename T>
+class AtomicMinMax final {
+	AtomicMax<T> m_max;
+	AtomicMin<T> m_min;
+public:
+	AtomicMinMax(const T & minInitial, const T & maxInitial) : m_max(maxInitial), m_min(minInitial) {}
+	AtomicMinMax() {}
+	~AtomicMinMax() {}
+	T min() const { return m_min.load(); }
+	T max() const { return m_max.load(); }
+	void update(const T & v) {
+		m_max.update(v);
+		m_min.update(v);
+	}
+	void update(const AtomicMinMax & o) {
+		m_max.update(o.max());
+		m_min.update(o.min());
+	}
+};
+
 }//end namespace
 
 #endif
