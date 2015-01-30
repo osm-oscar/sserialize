@@ -201,11 +201,9 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 			{
 				const sserialize::ItemIndex & myPIdx = idx(myI);
 				const sserialize::ItemIndex & oPIdx = o.idx(oI);
-				sserialize::ItemIndex res(myPIdx / oPIdx);
-				if (res.size()) {
-					r.uncheckedSet(r.m_desc.size(), res);
-					r.m_desc.push_back(CellDesc(0, 1, myCellId));
-				}
+				sserialize::ItemIndex res(myPIdx + oPIdx);
+				r.uncheckedSet(r.m_desc.size(), res);
+				r.m_desc.push_back(CellDesc(0, 1, myCellId));
 			}
 			break;
 		case 0x2: //my full
@@ -255,7 +253,6 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		}
 		r.m_desc.push_back(myCD);
 		++myI;
-		continue;
 	}
 
 	for(; oI < oEnd;) {
@@ -268,9 +265,9 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		}
 		r.m_desc.push_back(oCD);
 		++oI;
-		continue;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	assert(r.m_desc.size() >= std::max<uint32_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
 
@@ -327,6 +324,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 		continue;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	assert(r.m_desc.size() <= m_desc.size());
 	return rPtr;
 }
 
@@ -406,6 +404,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 		continue;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	assert(r.m_desc.size() <= (m_desc.size() + o.m_desc.size()));
 	return rPtr;
 }
 
