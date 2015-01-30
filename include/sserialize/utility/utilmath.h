@@ -155,7 +155,9 @@ public:
 	AtomicMax(const T & initial) : m_v(initial) {}
 	AtomicMax() : m_v(std::numeric_limits<T>::min()) {}
 	~AtomicMax() {}
-	T value() { return m_v; }
+	T load() const { return m_v.load(); }
+	std::atomic<T> & value() { return m_v; }
+	const std::atomic<T> & value() const { return m_v; }
 	void update(const T & v) {
 		T prevV = m_v;
 		while(prevV < v && !m_v.compare_exchange_weak(prevV, v));
@@ -169,7 +171,9 @@ public:
 	AtomicMin(const T & initial) : m_v(initial) {}
 	AtomicMin() : m_v(std::numeric_limits<T>::max()) {}
 	~AtomicMin() {}
-	T value() { return m_v; }
+	T load() const { return m_v.load(); }
+	std::atomic<T> & value() { return m_v; }
+	const std::atomic<T> & value() const { return m_v; }
 	void update(const T & v) {
 		T prevV = m_v;
 		while(prevV > v && !m_v.compare_exchange_weak(prevV, v));
