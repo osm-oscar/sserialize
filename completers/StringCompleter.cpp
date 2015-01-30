@@ -141,12 +141,12 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 		}
 		else {
 			q = std::string(q.cbegin()+1, q.cend());
-			qt = sserialize::StringCompleter::QT_PREFIX;
+			qt = sserialize::StringCompleter::QT_SUFFIX;
 		}
 	}
 	else if (q.back() == '*') {
 		q.pop_back();
-		qt = sserialize::StringCompleter::QT_SUFFIX;
+		qt = sserialize::StringCompleter::QT_PREFIX;
 	}
 	else if (q.size() >= 2 && q.back() == '"' && q.front() == '"') {
 		q = std::string(q.cbegin()+1, q.cend()-1);
