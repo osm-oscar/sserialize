@@ -12,6 +12,7 @@ public:
 	UnicodeStringMap() {}
 	virtual ~UnicodeStringMap() {}
 	virtual TValue at(const std::string & str, bool prefixMatch) const = 0;
+	virtual bool count(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd, bool prefixMatch) const = 0;
 	virtual bool count(const std::string & str, bool prefixMatch) const = 0;
 	virtual std::ostream & printStats(std::ostream & out) const = 0;
 	virtual std::string getName() const = 0;
@@ -25,6 +26,9 @@ public:
 	virtual TValue at(const std::string & /*str*/, bool /*prefixMatch*/) const override {
 		throw sserialize::OutOfBoundsException("sserialize::detai::UnicodeStringMapEmpty");
 		return TValue();
+	}
+	virtual bool count(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd, bool prefixMatch) const override {
+		return false;
 	}
 	virtual bool count(const std::string & /*str*/, bool /*prefixMatch*/) const override {
 		return false;
@@ -54,6 +58,7 @@ public:
 	UnicodeStringMap(const PrivPtrType & priv) : m_priv(priv) {}
 	virtual ~UnicodeStringMap() {}
 	TValue at(const std::string & str, bool prefixMatch) const { return priv()->at(str, prefixMatch); }
+	bool count(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd, bool prefixMatch) const { return priv()->count(strBegin, strEnd, prefixMatch); }
 	bool count(const std::string & str, bool prefixMatch) const { return priv()->count(str, prefixMatch); }
 	std::ostream & printStats(std::ostream & out) const { return priv()->printStats(out); }
 	std::string getName() const { return priv()->getName(); }

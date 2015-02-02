@@ -176,6 +176,9 @@ public:
 	virtual bool count(const std::string & str, bool prefixMatch) const override {
 		return m_trie.find(str, prefixMatch) != FlatTrieBase::npos;
 	}
+	virtual bool count(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd, bool prefixMatch) const override {
+		return count(std::string(strBegin, strEnd), prefixMatch);
+	}
 	virtual std::ostream & printStats(std::ostream & out) const override {
 		return m_trie.printStats(out);
 	}

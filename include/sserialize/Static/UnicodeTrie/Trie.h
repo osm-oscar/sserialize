@@ -67,6 +67,9 @@ public:
 	virtual TValue at(const std::string & str, bool prefixMatch) const override {
 		return m_trie.at(str.cbegin(), str.cend(), prefixMatch);
 	}
+	virtual bool count(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd, bool prefixMatch) const override {
+		return m_trie.find(strBegin, strEnd, prefixMatch).valid();
+	}
 	virtual bool count(const std::string & str, bool prefixMatch) const override {
 		return m_trie.find(str.cbegin(), str.cend(), prefixMatch).valid();
 	}
