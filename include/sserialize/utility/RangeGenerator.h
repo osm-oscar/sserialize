@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_UTIL_RANGE_GENERATOR_H
 #define SSERIALIZE_UTIL_RANGE_GENERATOR_H
 #include <assert.h>
+#include <iterator>
 
 namespace sserialize {
 
@@ -8,7 +9,7 @@ namespace sserialize {
 ///RangeGenerator(begin, end, stride).begin() == RangeGenerator(begin, end, stride).begin() (the same holds for end/rbegin/rend)
 class RangeGenerator {
 public:
-	struct IteratorBase {
+	struct IteratorBase: std::iterator<std::input_iterator_tag, uint64_t, int64_t> {
 		uint64_t m_v;
 		uint64_t m_stride;
 		IteratorBase(uint64_t v, uint64_t stride=1) : m_v(v), m_stride(stride) {}
