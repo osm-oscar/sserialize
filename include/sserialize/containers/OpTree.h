@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <sserialize/utility/refcounting.h>
 
 namespace sserialize {
 namespace OpTree {
@@ -98,6 +99,10 @@ public:
 		OpDesc(uint8_t type, uint8_t children) : type(type), children(children) {}
 		OpDesc() : type(OT_INVALID), children(0) {}
 	};
+	struct StringHinter: sserialize::RefCountObject {
+		virtual bool operator()(const std::string::const_iterator & begin, const std::string::const_iterator end) const = 0;
+	};
+	typedef sserialize::RCPtrWrapper<StringHinter> StringHinterSharedPtr;
 private:
 	std::unordered_map<char, OpDesc> m_opMap;
 	std::string m_parseString;
@@ -105,6 +110,7 @@ private://state
 	std::string::const_iterator m_strIt;
 	std::string::const_iterator m_strEnd;
 	bool m_beforeWasTerminal;
+	StringHinterSharedPtr m_strHinter;
 private:
 	void sanitize();
 	void readString(Token & token);
@@ -114,7 +120,8 @@ protected:
 	virtual Token nextToken() override;
 	virtual bool hasNextToken() override;
 public:
-	SetOpsOpTreeParser();
+	SetOpsOpTreeParser(const SetOpsOpTreeParser & other);
+	SetOpsOpTreeParser(const StringHinterSharedPtr & strHinter);
 	virtual ~SetOpsOpTreeParser() {}
 };
 

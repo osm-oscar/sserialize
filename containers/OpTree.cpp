@@ -228,14 +228,14 @@ void SetOpsOpTreeParser::sanitize() {
 void SetOpsOpTreeParser::readString(Token & token) {
 	token.begin = m_strIt - m_parseString.begin();
 	token.type = Token::STRING;
+	std::string::const_iterator strBegin = m_strIt;
+	std::string::const_iterator lastValidStrEnd = strBegin;
 	if (*m_strIt == '"') {
-		token.tokenString += *m_strIt;
 		++m_strIt;
 		while(m_strIt != m_strEnd) {
 			if (*m_strIt == '\\') {
 				++m_strIt;
 				if (m_strIt != m_strEnd) {
-					token.tokenString += *m_strIt;
 					++m_strIt;
 				}
 				else {
@@ -243,12 +243,10 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				}
 			}
 			else if (*m_strIt == '"') {
-				token.tokenString += *m_strIt;
 				++m_strIt;
 				break;
 			}
 			else {
-				token.tokenString += *m_strIt;
 				++m_strIt;
 			}
 		}
@@ -258,22 +256,39 @@ void SetOpsOpTreeParser::readString(Token & token) {
 			if (*m_strIt == '\\') {
 				++m_strIt;
 				if (m_strIt != m_strEnd) {
-					token.tokenString += *m_strIt;
 					++m_strIt;
 				}
 				else
 					break;
 			}
-// 			else if (m_opMap.count(*m_strIt) > 0 || *m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')') {
-			else if (*m_strIt == ' ' || *m_strIt == '(' || *m_strIt == ')') {
+			else if (*m_strIt == ' ') {
+				if (m_strHinter->operator()(strBegin, m_strIt+1)) {
+					lastValidStrEnd = m_strIt;
+					++m_strIt;
+				}
+				else {
+					break;
+				}
+			}
+			else if (*m_strIt == '(' || *m_strIt == ')') {
+				//we've read a string with spaces, check if all up to here is also part of it
+				if (lastValidStrEnd != strBegin && m_strHinter->operator()(strBegin, m_strIt)) {
+					lastValidStrEnd = m_strIt;
+				}
 				break;
 			}
 			else {
-				token.tokenString += *m_strIt;
 				++m_strIt;
 			}
 		}
 	}
+	if (m_strIt == m_strEnd && m_strHinter->operator()(strBegin, m_strIt)) {
+		lastValidStrEnd = m_strIt;
+	}
+	else if (lastValidStrEnd != strBegin) {
+		m_strIt = lastValidStrEnd;
+	}
+	token.tokenString.append(strBegin, m_strIt);
 	token.end = m_strIt - m_parseString.begin();
 }
 
@@ -351,8 +366,19 @@ bool SetOpsOpTreeParser::hasNextToken() {
 	return m_strIt != m_parseString.cend();
 }
 
-SetOpsOpTreeParser::SetOpsOpTreeParser() :
-m_beforeWasTerminal(false)
+
+SetOpsOpTreeParser::SetOpsOpTreeParser(const SetOpsOpTreeParser& other) :
+m_opMap(other.m_opMap),
+m_parseString(other.m_parseString),
+m_strIt(m_parseString.cbegin()+(other.m_strIt - other.m_parseString.cbegin())),
+m_strEnd(m_parseString.cbegin()+(other.m_strEnd - other.m_parseString.cbegin())),
+m_beforeWasTerminal(other.m_beforeWasTerminal),
+m_strHinter(other.m_strHinter)
+{}
+
+SetOpsOpTreeParser::SetOpsOpTreeParser(const StringHinterSharedPtr & strHinter) :
+m_beforeWasTerminal(false),
+m_strHinter(strHinter)
 {
 	m_opMap['+'] = OpDesc(OT_UNITE, 2);
 	m_opMap['-'] = OpDesc(OT_DIFF, 2);
