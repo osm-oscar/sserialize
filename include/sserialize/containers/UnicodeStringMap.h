@@ -27,7 +27,7 @@ public:
 		throw sserialize::OutOfBoundsException("sserialize::detai::UnicodeStringMapEmpty");
 		return TValue();
 	}
-	virtual bool count(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd, bool prefixMatch) const override {
+	virtual bool count(const std::string::const_iterator & /*strBegin*/, const std::string::const_iterator & /*strEnd*/, bool /*prefixMatch*/) const override {
 		return false;
 	}
 	virtual bool count(const std::string & /*str*/, bool /*prefixMatch*/) const override {
