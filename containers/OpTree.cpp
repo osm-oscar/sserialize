@@ -228,14 +228,15 @@ void SetOpsOpTreeParser::sanitize() {
 void SetOpsOpTreeParser::readString(Token & token) {
 	token.begin = m_strIt - m_parseString.begin();
 	token.type = Token::STRING;
-	std::string::const_iterator strBegin = m_strIt;
-	std::string::const_iterator lastValidStrEnd = strBegin;
+	int lastValidStrSize = -1; //one passed the end == size of the valid string
+	std::string::const_iterator lastValidStrIt = m_strIt;
 	if (*m_strIt == '"') {
 		++m_strIt;
 		while(m_strIt != m_strEnd) {
 			if (*m_strIt == '\\') {
 				++m_strIt;
 				if (m_strIt != m_strEnd) {
+					token.tokenString += *m_strIt;
 					++m_strIt;
 				}
 				else {
@@ -247,6 +248,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				break;
 			}
 			else {
+				token.tokenString += *m_strIt;
 				++m_strIt;
 			}
 		}
@@ -256,39 +258,46 @@ void SetOpsOpTreeParser::readString(Token & token) {
 			if (*m_strIt == '\\') {
 				++m_strIt;
 				if (m_strIt != m_strEnd) {
+					token.tokenString += *m_strIt;
 					++m_strIt;
 				}
 				else
 					break;
 			}
 			else if (*m_strIt == ' ') {
-				if (m_strHinter->operator()(strBegin, m_strIt+1)) {
-					lastValidStrEnd = m_strIt;
+				token.tokenString += *m_strIt;
+				if (m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend())) {
+					lastValidStrSize = token.tokenString.size()-1;
+					lastValidStrIt = m_strIt;
 					++m_strIt;
 				}
 				else {
+					token.tokenString.pop_back();
 					break;
 				}
 			}
 			else if (*m_strIt == '(' || *m_strIt == ')') {
 				//we've read a string with spaces, check if all up to here is also part of it
-				if (lastValidStrEnd != strBegin && m_strHinter->operator()(strBegin, m_strIt)) {
-					lastValidStrEnd = m_strIt;
+				if (lastValidStrSize >= 0 && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend())) {
+					lastValidStrSize = token.tokenString.size();
+					lastValidStrIt = m_strIt;
 				}
 				break;
 			}
 			else {
+				token.tokenString += *m_strIt;
 				++m_strIt;
 			}
 		}
 	}
-	if (m_strIt == m_strEnd && m_strHinter->operator()(strBegin, m_strIt)) {
-		lastValidStrEnd = m_strIt;
+	if (lastValidStrSize < 0 || (m_strIt == m_strEnd && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend()))) {
+		lastValidStrSize = token.tokenString.size();
+		lastValidStrIt = m_strIt;
 	}
-	else if (lastValidStrEnd != strBegin) {
-		m_strIt = lastValidStrEnd;
+	else if (lastValidStrSize > 0) {
+		m_strIt = lastValidStrIt;
 	}
-	token.tokenString.append(strBegin, m_strIt);
+	token.tokenString.resize(lastValidStrSize);
 	token.end = m_strIt - m_parseString.begin();
 }
 
