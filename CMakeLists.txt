@@ -85,6 +85,7 @@ containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
 
 set(CONTAINTERS_SOURCES_CPP 
 containers/ItemIndexFactory.cpp
+containers/DataSetFactory.cpp
 containers/SetOpTree.cpp
 containers/SetOpTreePrivateComplex.cpp
 containers/SetOpTreePrivateSimple.cpp
