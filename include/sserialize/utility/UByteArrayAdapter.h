@@ -41,10 +41,11 @@ public:
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
 	
-	///TODO:MemoryView should provide a flush() function
 	class MemoryView final {
-	public:
 		friend class UByteArrayAdapter;
+	public:
+		typedef const uint8_t * const_iterator;
+		typedef uint8_t * iterator;
 	private:
 		class MemoryViewImp final: public sserialize::RefCountObject {
 			RCPtrWrapper<UByteArrayAdapterPrivate> m_dataBase;
@@ -71,7 +72,7 @@ public:
 		uint8_t * get() { return m_priv->get();}
 		const uint8_t * get() const { return m_priv->get();}
 		uint8_t * begin() { return get(); }
-		const uint8_t * cegin() const { return get(); }
+		const uint8_t * cbegin() const { return get(); }
 		const uint8_t * begin() const { return get(); }
 		uint8_t * end() { return get()+size(); }
 		const uint8_t * cend() const { return get()+size(); }
