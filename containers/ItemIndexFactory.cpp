@@ -502,31 +502,25 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 
 	
 	uint32_t bufferSize = 10*1024*1024;
-	uint8_t * inBuf = new uint8_t[bufferSize];
 	uint8_t * outBuf = new uint8_t[2*bufferSize];
 
 	UByteArrayAdapter::OffsetType totalOutPutBuffLen = 0;
 	
 	ProgressInfo pinfo;
-	pinfo.begin(store.size(), "Recompressing index");
+	pinfo.begin(store.size(), "Recompressing index with lzo");
 	for(uint32_t i = 0; i < store.size(); ++i ) {
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
-		UByteArrayAdapter idxData( store.rawDataAt(i) );
+		UByteArrayAdapter::MemoryView idxData( store.rawDataAt(i).asMemView() );
 		uncompressedSizes.push_back(idxData.size());
 		if (idxData.size() > bufferSize) {
-			delete[] inBuf;
 			delete[] outBuf;
 			bufferSize = idxData.size();
-			inBuf = new uint8_t[bufferSize];
 			outBuf = new uint8_t[2*bufferSize];
 			
 		}
-		lzo_uint inBufLen = idxData.size();
 		lzo_uint outBufLen = bufferSize*2;
-		idxData.get(0, inBuf, inBufLen);
-		int r = ::lzo1x_1_compress(inBuf, inBufLen, outBuf, &outBufLen, wrkmem);
+		int r = ::lzo1x_1_compress(idxData.get(), idxData.size(), outBuf, &outBufLen, wrkmem);
 		if (r != LZO_E_OK) {
-			delete[] inBuf;
 			delete[] outBuf;
 			std::cerr << "Compression Error" << std::endl;
 			return 0;
@@ -535,7 +529,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		dest.put(outBuf, outBufLen);
 		pinfo(i);
 	}
-	pinfo.end("Recompressed index");
+	pinfo.end();
 	
 	if (totalOutPutBuffLen != dest.tellPutPtr()-destDataBeginOffset) {
 		std::cout << "Compression failed" << std::endl;
