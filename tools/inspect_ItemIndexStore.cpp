@@ -198,7 +198,7 @@ void printHelp() {
 	-o filename\tout file name\n \
 	-eq filename\tequality test \n \
 	-ds\tdump stats \n \
-	-t type\ttransform to (rline|wah|de|rlede|simple) \n \
+	-t type\ttransform to (rline|wah|de|rlede|simple|native) \n \
 	";
 }
 
@@ -269,6 +269,8 @@ int main(int argc, char ** argv) {
 				transform = sserialize::ItemIndex::T_RLE_DE;
 			else if (t == "simple")
 				transform = sserialize::ItemIndex::T_SIMPLE;
+			else if (t == "native")
+				transform = sserialize::ItemIndex::T_NATIVE;
 			++i;
 		}
 		else {
