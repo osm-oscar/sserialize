@@ -13,10 +13,10 @@
 
 /** FileFormat: v4
  *
- *-------------------------------
- *Version| |DataLen|Data|DataIndex|
- *-------------------------------
- *  1    | |5    |  * |   *     |
+ *-----------------------------------------------
+ *Version|DataLen        |Data| Data offsets    |
+ *-----------------------------------------------
+ *  u8   |UBA::OffsetType|  * |SortedOffsetIndex|
  * SIZE = Size of Data
  */
 
