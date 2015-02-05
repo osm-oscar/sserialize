@@ -36,7 +36,7 @@ bool CellQueryResultIterator::fullMatch() const {
 
 //TODO:improve this if more information from the text-search is available
 uint32_t CellQueryResultIterator::idxSize() const {
-	return m_d->idx(m_pos).size();
+	return m_d->idxSize(m_pos);
 }
 
 uint32_t CellQueryResultIterator::idxId() const {
@@ -108,6 +108,10 @@ uint32_t CellQueryResult::cellCount() const {
 
 sserialize::ItemIndex::Types CellQueryResult::defaultIndexType() const {
 	return m_priv->defaultIndexType();
+}
+
+uint32_t CellQueryResult::idxSize(uint32_t pos) const {
+	return m_priv->idxSize(pos);
 }
 
 sserialize::ItemIndex CellQueryResult::idx(uint32_t pos) const {

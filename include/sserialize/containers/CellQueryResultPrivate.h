@@ -51,7 +51,7 @@ public:
 					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~CellQueryResult();
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
-
+	uint32_t idxSize(uint32_t pos) const;
 	const sserialize::ItemIndex & idx(uint32_t pos) const;
 	///This is only correct for (fullMatch() || !fetched())
 	uint32_t idxId(uint32_t pos) const;

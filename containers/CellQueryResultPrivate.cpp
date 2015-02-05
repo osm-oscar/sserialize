@@ -58,6 +58,20 @@ void CellQueryResult::uncheckedSet(uint32_t pos, const sserialize::ItemIndex & i
 	new(m_idx+pos) sserialize::ItemIndex(idx);
 }
 
+uint32_t CellQueryResult::idxSize(uint32_t pos) const {
+	const CellDesc & cd = m_desc[pos];
+	if (cd.fetched) {
+		return (m_idx+pos)->idx.size();
+	}
+	uint32_t idxId;
+	if (cd.fullMatch) {
+		return m_gh.cellItemsCount(cd.cellId);
+	}
+	else {
+		return m_idxStore.idxSize( (m_idx+pos)->idxPtr );
+	}
+}
+
 const sserialize::ItemIndex & CellQueryResult::idx(uint32_t pos) const {
 	const CellDesc & cd = m_desc[pos];
 	if (cd.fetched) {
