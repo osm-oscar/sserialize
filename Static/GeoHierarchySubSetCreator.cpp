@@ -76,7 +76,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 		uint32_t cellId = it.cellId();
 		const CellDesc & cellDesc = m_cellDesc[cellId];
 		uint32_t itemsInCell;
-		itemsInCell = (it.fullMatch() ? cellDesc.itemsCount : it.idxSize());
+		itemsInCell = it.idxSize();
 		rootNode->maxItemsSize() += itemsInCell;
 		rootNode->cellPositions().push_back(it.pos());
 

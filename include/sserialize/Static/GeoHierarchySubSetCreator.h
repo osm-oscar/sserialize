@@ -32,6 +32,7 @@ private:
 	std::vector<uint32_t> m_regionParentsPtrs;
 	std::vector<RegionDesc> m_regionDesc;
 	std::vector<CellDesc> m_cellDesc;
+	sserialize::Static::ItemIndexStore m_idxStore;
 private:
 	template<bool SPARSE>
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
@@ -55,11 +56,13 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 		uint32_t cellId = it.cellId();
 		const CellDesc & cellDesc = m_cellDesc[cellId];
 		uint32_t itemsInCell;
+		
+		itemsInCell = (it.fullMatch() ? cellDesc.itemsCount : it.idxSize());
 		if (!SPARSE) {
-			itemsInCell = (it.fullMatch() ? cellDesc.itemsCount : it.idxSize());
 			rootNode->maxItemsSize() += itemsInCell;
 			rootNode->cellPositions().push_back(it.pos());
 		}
+		
 		const uint32_t * cPIt = cPPtrsBegin + cellDesc.parentsBegin;
 		const uint32_t * cPEnd;
 		if (SPARSE) {
@@ -78,9 +81,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 			else {
 				n = nodes[cP];
 			}
-			if (!SPARSE) {
-				n->maxItemsSize() += itemsInCell;
-			}
+			n->maxItemsSize() += itemsInCell;
 			n->cellPositions().push_back(it.pos());
 		}
 	}
@@ -94,10 +95,13 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 			if (rPIt != rPEnd) {
 				for(; rPIt != rPEnd; ++rPIt) {
 					uint32_t rp = *rPIt;
-					if (SPARSE && !nodes[rp]) { //sparse SubSet doesnt push parent ptrs upwards
-						assert(rp > regionId); //otherwise we would not take care of the newly created region
-						nodes[rp] = new SubSet::Node(rp, 0);
+					if (SPARSE) {
+						if (!nodes[rp]) { //sparse SubSet doesnt push parent ptrs upwards
+							assert(rp > regionId); //otherwise we would not take care of the newly created region
+							nodes[rp] = new SubSet::Node(rp, 0);
+						}
 						nodes[rp]->push_back(*it);
+						nodes[rp]->maxItemsSize() += (*it)->maxItemsSize(); //approximate for item size
 					}
 					else {
 						nodes[rp]->push_back(*it);
