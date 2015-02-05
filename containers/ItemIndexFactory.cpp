@@ -41,7 +41,7 @@ m_compressionType(other.m_compressionType)
 	swap(m_indexStore, other.m_indexStore);
 	swap(m_hash, other.m_hash);
 	swap(m_offsetsToId, other.m_offsetsToId);
-	swap(other.m_idToOffsets, other.m_idToOffsets);
+	swap(m_idToOffsets, other.m_idToOffsets);
 	swap(m_idxSizes, other.m_idxSizes);
 	//default init read-write-lock
 }
@@ -61,7 +61,7 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	swap(m_indexStore, other.m_indexStore);
 	swap(m_hash, other.m_hash);
 	swap(m_offsetsToId, other.m_offsetsToId);
-	swap(other.m_idToOffsets, other.m_idToOffsets);
+	swap(m_idToOffsets, other.m_idToOffsets);
 	swap(m_idxSizes, other.m_idxSizes);
 	//default init read-write-lock
 	return *this;
