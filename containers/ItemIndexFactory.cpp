@@ -92,6 +92,10 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 }
 
 std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemIndexStore& store) {
+	m_idToOffsets.reserve(store.size()+size());
+	m_offsetsToId.reserve(store.size()+size());
+	m_idxSizes.reserve(store.size()+size());
+	m_hash.reserve(store.size()+size());
 	std::vector<uint32_t> res;
 	res.reserve(store.size());
 	std::vector<uint32_t> tmp; 
