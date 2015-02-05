@@ -31,12 +31,14 @@ public:
 	typedef std::unordered_map< uint64_t, std::forward_list<OffsetType> > DataHashType;
 	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
 	typedef std::vector<uint64_t > IdToOffsetsType;
+	typedef std::vector<uint32_t> ItemIndexSizesContainer;
 private:
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
 	DataHashType m_hash;
 	OffsetToIdHashType m_offsetsToId;
 	IdToOffsetsType m_idToOffsets;
+	ItemIndexSizesContainer m_idxSizes;
 	std::atomic<uint32_t> m_hitCount;
 	bool m_checkIndex;
 	int8_t m_bitWidth;
@@ -52,7 +54,7 @@ private:
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint64_t offset);
 	///adds the data of an index to store, @thread-safety: true
-	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0);
+	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0, uint32_t idxSize = 0);
 private://deleted functions
 	ItemIndexFactory(const ItemIndexFactory & other);
 	ItemIndexFactory & operator=(const ItemIndexFactory & other);
@@ -78,6 +80,7 @@ public:
 	inline ItemIndex indexByOffset(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
 	
 	inline ItemIndex indexById(uint32_t id) const { return indexByOffset(m_idToOffsets.at(id));}
+	inline uint32_t idxSize(uint32_t id) const { return m_idxSizes.at(id); }
 
 	template<class TSortedContainer>
 	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0);
@@ -158,7 +161,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 #if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
 	if (mok) {
 		uint64_t idxOf;
-		uint32_t idxId = addIndex(s, &idxOf);
+		uint32_t idxId = addIndex(s, &idxOf, idx.size());
 		sserialize::ItemIndex sIdx = indexByOffset(idxOf);
 		if (sIdx != idx) {
 			std::cerr << "Broken index detected in ItemIndexFactory" << std::endl;
@@ -169,7 +172,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 	}
 #else
 	if (mok) {
-		return addIndex(s, indexOffset);
+		return addIndex(s, indexOffset, idx.size());
 	}
 #endif
 	else {

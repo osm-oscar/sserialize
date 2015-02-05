@@ -1,6 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
+#include <cppunit/TestResult.h>
 #include <stdlib.h>
 #include <vector>
 #include <sserialize/utility/utilfuncs.h>
@@ -18,6 +19,7 @@ class ItemIndexFactoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
 CPPUNIT_TEST( testSerializedEquality );
 CPPUNIT_TEST( testSameId );
+CPPUNIT_TEST( testIdxSize );
 CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
 CPPUNIT_TEST( testInitFromStatic );
@@ -60,6 +62,13 @@ public:
 		}
 	}
 	
+	void testIdxSize() {
+		for(uint32_t i = 0; i < m_sets.size(); ++i) {
+			uint32_t idxSize = m_idxFactory.idxSize(m_setIds[i]);
+			CPPUNIT_ASSERT_EQUAL((uint32_t)m_sets[i].size(), idxSize);
+		}
+	}
+	
 	void testIdxFromId() {
 		for(uint32_t i = 0; i < m_sets.size(); ++i) {
 			ItemIndex idx = m_idxFactory.indexById(m_setIds[i]);
@@ -79,10 +88,10 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), sdb.size());
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
-			ItemIndex idx = sdb.at( m_setIds[i] );
-			std::stringstream ss;
-			ss << "Index at " << i;
-			CPPUNIT_ASSERT_MESSAGE(ss.str(), m_sets[i] == idx);
+			uint32_t idxId = m_setIds[i];
+			ItemIndex idx = sdb.at( idxId );
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Index at ", i), m_sets[i] == idx);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("Index size at", i), m_idxFactory.idxSize(idxId), sdb.idxSize(idxId));
 		}
 	}
 	
@@ -203,6 +212,7 @@ int main() {
 	runner.addTest(  ItemIndexFactoryTest<4047, 1001, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
+	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }

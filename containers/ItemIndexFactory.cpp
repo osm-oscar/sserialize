@@ -42,6 +42,7 @@ m_compressionType(other.m_compressionType)
 	swap(m_hash, other.m_hash);
 	swap(m_offsetsToId, other.m_offsetsToId);
 	swap(other.m_idToOffsets, other.m_idToOffsets);
+	swap(m_idxSizes, other.m_idxSizes);
 	//default init read-write-lock
 }
 
@@ -61,6 +62,7 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	swap(m_hash, other.m_hash);
 	swap(m_offsetsToId, other.m_offsetsToId);
 	swap(other.m_idToOffsets, other.m_idToOffsets);
+	swap(m_idxSizes, other.m_idxSizes);
 	//default init read-write-lock
 	return *this;
 }
@@ -75,6 +77,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 		m_hash.clear();
 		m_offsetsToId.clear();
 		m_idToOffsets.clear();
+		m_idxSizes.clear();
 	}
 
 	m_header = data;
@@ -161,7 +164,7 @@ uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType
 	return addIndex(tmp, ok, indexOffset);
 }
 
-uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserialize::OffsetType * indexOffset) {
+uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize::OffsetType * indexOffset, uint32_t idxSize) {
 	uint64_t hv;
 	int64_t indexPos = getIndex(idx, hv);
 	uint32_t id = std::numeric_limits<uint32_t>::max();
@@ -175,6 +178,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector< uint8_t >& idx, sserializ
 		id = size();
 		m_offsetsToId[indexPos] = id;
 		m_idToOffsets.push_back(indexPos);
+		m_idxSizes.push_back(idxSize);
 		m_hash[hv].push_front(indexPos);
 		m_mapLock.releaseWriteLock();
 	}
@@ -197,9 +201,10 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 }
 
 OffsetType ItemIndexFactory::flush() {
+	assert(m_idxSizes.size() == m_idToOffsets.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	m_header.resetPtrs();
-	m_header << static_cast<uint8_t>(3); //Version
+	m_header << static_cast<uint8_t>(4); //Version
 	m_header << static_cast<uint8_t>(m_type);//type
 	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IndexCompressionType::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
@@ -224,6 +229,9 @@ OffsetType ItemIndexFactory::flush() {
 			std::cout << "OffsetIndex creation FAILED!" << std::endl;
 		}
 	}
+	std::cout << "Serializing idx sizes..." << std::flush;
+	m_indexStore << m_idxSizes;
+	std::cout << std::endl;
 	std::cout << "done." << std::endl;
 
 	return 3+UByteArrayAdapter::OffsetTypeSerializedLength()+m_indexStore.tellPutPtr();

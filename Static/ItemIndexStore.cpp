@@ -56,7 +56,10 @@ m_compression((IndexCompressionType) data.getUint8(2))
 {
 	data.resetGetPtr();
 	data += 3;
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, m_version, "Static::ItemIndexStore");
+// 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, m_version, "Static::ItemIndexStore");
+	if (m_version != 3 && m_version != 4) {
+		throw sserialize::VersionMissMatchException("sserialize::Static::ItemIndexStore", 4, m_version);
+	}
 	OffsetType dataLength = data.getOffset();
 	data.shrinkToGetPtr();
 	
@@ -65,6 +68,11 @@ m_compression((IndexCompressionType) data.getUint8(2))
 	
 	m_index = SortedOffsetIndex(data);
 	data += m_index.getSizeInBytes();
+	
+	if (m_version == 4) {
+		m_idxSizes = sserialize::Static::Array<uint32_t>(data);
+		data += m_idxSizes.getSizeInBytes();
+	}
 	
 	if (m_compression & IC_HUFFMAN) {
 		m_hd.reset(new HuffmanDecoder(data) );
