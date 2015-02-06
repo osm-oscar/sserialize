@@ -378,7 +378,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 	
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(3); //version
+	dest.putUint8(4); //version
 	dest.putUint8(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN);
 	dest.putOffset(0);
@@ -389,7 +389,7 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 	MultiBitBackInserter backInserter(dest);
 	data.resetGetPtr();
 	ProgressInfo pinfo;
-	pinfo.begin(data.size(), "Encoding words");
+	pinfo.begin(data.size(), "Encoding indices");
 	while(data.getPtrHasNext()) {
 		newOffsets.push_back(backInserter.data().tellPutPtr()-destDataBeginOffset);
 		uint32_t indexSize = data.getUint32();
