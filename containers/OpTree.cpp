@@ -231,6 +231,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 	int lastValidStrSize = -1; //one passed the end == size of the valid string
 	std::string::const_iterator lastValidStrIt = m_strIt;
 	if (*m_strIt == '"') {
+		token.tokenString += *m_strIt;
 		++m_strIt;
 		while(m_strIt != m_strEnd) {
 			if (*m_strIt == '\\') {
@@ -244,6 +245,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				}
 			}
 			else if (*m_strIt == '"') {
+				token.tokenString += *m_strIt;
 				++m_strIt;
 				break;
 			}
