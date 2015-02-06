@@ -98,10 +98,6 @@ void dumpDataHistoFunc(sserialize::Static::ItemIndexStore & store, 	uint8_t alph
 	std::cout << bitUsage/8 << "(" << (double)(bitUsage/8) / size * 100 << "%)" << std::endl;
 }
 
-UByteArrayAdapter::OffsetType recompressLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	return sserialize::ItemIndexFactory::compressWithLZO(store, dest);
-}
-
 UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	if (store.indexType() != ItemIndex::T_WAH) {
 		std::cerr << "Unsupported index format" << std::endl;
@@ -157,6 +153,10 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
 	return dest.tellPutPtr()-beginOffset;
+}
+
+UByteArrayAdapter::OffsetType recompressLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
+	return sserialize::ItemIndexFactory::compressWithLZO(store, dest);
 }
 
 UByteArrayAdapter::OffsetType recompressDataVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
@@ -395,7 +395,6 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
-
 	if (recompressWithLZO) {
 		std::string outFile;
 		if (outFileName.empty())
