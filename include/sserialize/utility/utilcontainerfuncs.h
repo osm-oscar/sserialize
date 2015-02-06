@@ -27,6 +27,16 @@ bool is_strong_monotone_ascending(TIterator begin, const TIterator & end) {
 	return true;
 }
 
+template<typename TIterator1, typename TIterator2, typename BinaryPredicate>
+bool equal(TIterator1 begin1, const TIterator1 & end1, TIterator2 begin2, const TIterator2 & end2, BinaryPredicate pred = BinaryPredicate()) {
+	for( ;begin1 != end1 && begin2 != end2; ++begin1, ++begin2) {
+		if (!pred(*begin1, *begin2)) {
+			return false;
+		}
+	}
+	return (begin1 == end1 && begin2 == end2);
+}
+
 ///uses std::is_sorted to check if the range is already sorted, if not uses std::sort to sort the range
 template<typename TIterator>
 void sort(TIterator begin, TIterator end) {
