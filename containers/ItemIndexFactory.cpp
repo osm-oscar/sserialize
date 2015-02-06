@@ -115,18 +115,17 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 
 uint64_t ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
 	uint64_t h = 0;
-	uint32_t count = std::min<uint32_t>(v.size(), 1024);
-	for(uint32_t i = 0; i < count; ++i) {
-		hash_combine(h, v.at(i));
+	UByteArrayAdapter::MemoryView mv(v.asMemView());
+	for(UByteArrayAdapter::MemoryView::const_iterator it(mv.cbegin()), end(mv.cend()); it != end; ++it) {
+		hash_combine(h, (const char)*it);
 	}
 	return h;
 }
 
 uint64_t ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
 	uint64_t h = 0;
-	uint32_t count = std::min<uint32_t>(v.size(), 1024);
-	for(std::vector<uint8_t>::const_iterator it(v.begin()), end(v.begin()+count); it != end; ++it) {
-		hash_combine(h, *it);
+	for(std::vector<uint8_t>::const_iterator it(v.begin()), end(v.end()); it != end; ++it) {
+		hash_combine(h, (const char)*it);
 	}
 	return h;
 }
