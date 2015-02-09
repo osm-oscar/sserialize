@@ -233,6 +233,12 @@ OffsetType ItemIndexFactory::flush() {
 		}
 	}
 	std::cout << "Serializing idx sizes..." << std::flush;
+#ifdef DEBUG_CHECK_ALL
+	assert(m_idxSizes[0] == 0);
+	for(uint32_t i(1), s(m_idxSizes.size()); i < s; ++i) {
+		assert(m_idxSizes[i] > 0);
+	}
+#endif
 	m_indexStore << m_idxSizes;
 	std::cout << std::endl;
 	std::cout << "done." << std::endl;
