@@ -29,6 +29,21 @@ void dumpIndex(std::ostream & out, const Static::SortedOffsetIndex & idx) {
 	}
 }
 
+bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(indexStore.size(), "Checking index store");
+	for(uint32_t i(0), s(indexStore.size()); i < s; ++i) {
+		sserialize::ItemIndex idx(indexStore.at(i));
+		if (idx.size() != indexStore.idxSize(i)) {
+			std::cout << "Idx size does not match real index size\n";
+			return false;
+		}
+		pinfo(i);
+	}
+	pinfo.end();
+	return true;
+}
+
 inline void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
 	if (a.count(v) == 0)
 		a[v] = 1;
@@ -199,6 +214,7 @@ void printHelp() {
 	-eq filename\tequality test \n \
 	-ds\tdump stats \n \
 	-t type\ttransform to (rline|wah|de|rlede|simple|native) \n \
+	-c\tcheck item index store \
 	";
 }
 
@@ -215,6 +231,7 @@ int main(int argc, char ** argv) {
 	bool recompressVarShannon = false;
 	bool recompressWithLZO = false;
 	bool checkCompressed = false;
+	bool checkIndex = false;
 	std::string equalityTest;
 	ItemIndex::Types transform = ItemIndex::T_NULL;
 	
@@ -246,6 +263,9 @@ int main(int argc, char ** argv) {
 		}
 		else if (curArg == "-cc") {
 			checkCompressed = true;
+		}
+		else if (curArg == "-c") {
+			checkIndex = true;
 		}
 		else if (curArg == "-o" && i+1 < argc) {
 			outFileName = std::string(argv[i+1]);
@@ -428,6 +448,15 @@ int main(int argc, char ** argv) {
 		Static::ItemIndexStore otherStore(otherAdap);
 		if (checkCompressedIndex(otherStore, store)) {
 			std::cout << "Stores are equal" << std::endl;
+		}
+	}
+	
+	if (checkIndex) {
+		if (doCheckIndex(store)) {
+			std::cout << "Detected NO errors in ItemIndexStore" << std::endl;
+		}
+		else {
+			std::cout << "Detected ERRORS in ItemIndexStore" << std::endl;
 		}
 	}
 	
