@@ -73,6 +73,9 @@ m_compression((IndexCompressionType) data.getUint8(2))
 		m_idxSizes = sserialize::Static::Array<uint32_t>(data);
 		data += m_idxSizes.getSizeInBytes();
 	}
+	else if (m_version == 3) {
+		std::cout << "sserialize::ItemIndexStore: version 3 detected, please upgrade to version 4" << std::endl;
+	}
 	
 	if (m_compression & IC_HUFFMAN) {
 		m_hd.reset(new HuffmanDecoder(data) );
