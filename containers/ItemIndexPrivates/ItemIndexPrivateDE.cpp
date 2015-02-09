@@ -34,7 +34,7 @@ int ItemIndexPrivateDE::find(uint32_t id) const {
 uint32_t ItemIndexPrivateDE::at(uint32_t pos) const {
 	if (!size() || size() <= pos)
 		return 0;
-	int len;
+	int len = 0;
 	for(;m_cacheOffset <= pos;) {
 		m_curId += m_data.getVlPackedUint32(m_dataOffset, &len);
 		m_cache.putUint32(m_cacheOffset*4, m_curId);
