@@ -20,10 +20,10 @@ CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
 CPPUNIT_TEST( testSerializedEquality );
 CPPUNIT_TEST( testSameId );
 CPPUNIT_TEST( testIdxSize );
-CPPUNIT_TEST( testCompressionHuffman );
+// CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
 CPPUNIT_TEST( testInitFromStatic );
-CPPUNIT_TEST( testCompressionVarUint );
+// CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST_SUITE_END();
 private:
