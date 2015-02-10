@@ -152,6 +152,56 @@ public:
 	
 };
 
+namespace detail {
+namespace ItemIndexImpl {
+
+struct IntersectOp {
+	static constexpr bool pushFirstSmaller = false;
+	static constexpr bool pushEqual = true;
+	static constexpr bool pushSecondSmaller = false;
+	static constexpr bool pushFirstRemainder = false;
+	static constexpr bool pushSecondRemainder = false;
+	static inline uint32_t maxSize(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		return std::min<uint32_t>(first->size(), second->size());
+	}
+};
+
+struct UniteOp {
+	static constexpr bool pushFirstSmaller = true;
+	static constexpr bool pushEqual = true;
+	static constexpr bool pushSecondSmaller = true;
+	static constexpr bool pushFirstRemainder = true;
+	static constexpr bool pushSecondRemainder = true;
+	static inline uint32_t maxSize(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		return first->size() + second->size();
+	}
+};
+
+struct DifferenceOp {
+	static constexpr bool pushFirstSmaller = true;
+	static constexpr bool pushEqual = false;
+	static constexpr bool pushSecondSmaller = false;
+	static constexpr bool pushFirstRemainder = true;
+	static constexpr bool pushSecondRemainder = false;
+	static inline uint32_t maxSize(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* /*second*/) {
+		return first->size();
+	}
+};
+
+
+struct SymmetricDifferenceOp {
+	static constexpr bool pushFirstSmaller = true;
+	static constexpr bool pushEqual = false;
+	static constexpr bool pushSecondSmaller = true;
+	static constexpr bool pushFirstRemainder = true;
+	static constexpr bool pushSecondRemainder = true;
+	static inline uint32_t maxSize(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		return first->size() + second->size();
+	}
+};
+
+}}//end namespace detail::ItemIndex
+
 }//end namespace
 
 #endif

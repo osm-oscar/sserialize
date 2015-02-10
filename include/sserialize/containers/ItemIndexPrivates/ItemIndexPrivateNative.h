@@ -1,6 +1,7 @@
 #ifndef ITEM_INDEX_PRIVATE_NATIVE_H
 #define ITEM_INDEX_PRIVATE_NATIVE_H
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
+#include <sserialize/utility/SerializationInfo.h>
 #include <string.h>
 
 namespace sserialize {
@@ -18,11 +19,15 @@ private:
 		::memmove(&res, data, sizeof(uint32_t));
 		return res;
 	}
+	
+	template<typename TFunc>
+	sserialize::ItemIndexPrivate * genericSetOp(const sserialize::ItemIndexPrivate * other) const;
+	
 public:
 	ItemIndexPrivateNative();
 	ItemIndexPrivateNative(const sserialize::UByteArrayAdapter & data);
 	virtual ~ItemIndexPrivateNative();
-	virtual ItemIndex::Types type() const override;
+	virtual sserialize::ItemIndex::Types type() const override;
 	
 public:
 	///uses at(pos) by default
@@ -40,6 +45,9 @@ public:
 	virtual uint32_t getSizeInBytes() const override;
 	
 	virtual sserialize::ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const override;
+	virtual sserialize::ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const override;
+	virtual sserialize::ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const override;
+	virtual sserialize::ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const override;
 	
 	template<typename T_UINT32_ITERATOR>
 	static bool create(T_UINT32_ITERATOR begin, const T_UINT32_ITERATOR & end, UByteArrayAdapter & dest);
@@ -65,6 +73,65 @@ bool ItemIndexPrivateNative::create(T_UINT32_ITERATOR begin, const T_UINT32_ITER
 	return true;
 }
 
+
+
+template<typename TFunc>
+sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const sserialize::ItemIndexPrivate * other) const {
+	const ItemIndexPrivateNative * cother = dynamic_cast<const ItemIndexPrivateNative*>(other);
+	if (!cother) {
+		return ItemIndexPrivate::doUnite(other);
+	}
+	uint32_t maxResultSize = TFunc::maxSize(this, other);
+	void * tmpResultRaw = malloc(maxResultSize*sizeof(uint32_t));
+	uint32_t * tmpResult = (uint32_t*) tmpResultRaw;
+	uint32_t tmpResultSize = 0;
+	
+	const uint8_t * myD = m_dataMem.get();
+	const uint8_t * oD = cother->m_dataMem.get();
+	uint32_t myI(0), oI(0);
+	for( ;myI < m_size && oI < cother->m_size; ) {
+		uint32_t myId = this->ItemIndexPrivateNative::uncheckedAt(myI, myD);
+		uint32_t oId = cother->ItemIndexPrivateNative::uncheckedAt(oI, oD);
+		if (myId < oId) {
+			if (TFunc::pushFirstSmaller) {
+				tmpResult[tmpResultSize] = myId;
+				++tmpResultSize;
+			}
+			++myI;
+		}
+		else if (oId < myId) {
+			if (TFunc::pushSecondSmaller) {
+				tmpResult[tmpResultSize] = oId;
+				++tmpResultSize;
+			}
+			++oI;
+		}
+		else {
+			if (TFunc::pushEqual) {
+				tmpResult[tmpResultSize] = myId;
+				++tmpResultSize;
+			}
+			++oI;
+			++myI;
+		}
+	}
+	if (TFunc::pushFirstRemainder) {
+		uint32_t remainderSize = m_size-myI;
+		::memmove(tmpResult+tmpResultSize, myD+sizeof(uint32_t)*myI, sizeof(uint32_t)*remainderSize);
+		tmpResultSize += remainderSize;
+	}
+	if (TFunc::pushSecondRemainder) {
+		uint32_t remainderSize = cother->m_size-oI;
+		::memmove(tmpResult+tmpResultSize, oD+sizeof(uint32_t)*oI, sizeof(uint32_t)*remainderSize);
+		tmpResultSize += remainderSize;
+	}
+	
+	UByteArrayAdapter tmpD(UByteArrayAdapter::createCache(sserialize::SerializationInfo<uint32_t>::length+sizeof(uint32_t)*tmpResultSize, sserialize::MM_PROGRAM_MEMORY));
+	tmpD.putUint32(tmpResultSize);
+	tmpD.put(static_cast<uint8_t*>(tmpResultRaw), sizeof(uint32_t)*tmpResultSize);//can we do this? aliasing, cahe updates?
+	free(tmpResultRaw);
+	return new ItemIndexPrivateNative(tmpD);
+}
 
 typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateNative> ItemIndexPrivateNativeIndirect;
 
