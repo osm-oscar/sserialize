@@ -269,7 +269,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 			else if (*m_strIt == ' ') {
 				token.tokenString += *m_strIt;
 				if (m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend())) {
-					if (token.tokenString.size() == 0 || token.tokenString.back() != ' ') {
+					if (token.tokenString.size() > 1 && token.tokenString.at(token.tokenString.size()-2) != ' ') {
 						lastValidStrSize = token.tokenString.size()-1;
 						lastValidStrIt = m_strIt;
 					}
