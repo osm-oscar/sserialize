@@ -56,7 +56,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::intersect(const ItemIndexP
 	if (!cother) {
 		return ItemIndexPrivate::doIntersect(other);
 	}
-	return ItemIndexPrivateNative::genericSetOp<sserialize::detail::ItemIndexImpl::IntersectOp>(other);
+	return ItemIndexPrivateNative::genericSetOp<sserialize::detail::ItemIndexImpl::IntersectOp>(cother);
 }
 
 sserialize::ItemIndexPrivate* ItemIndexPrivateNative::unite(const ItemIndexPrivate* other) const {
@@ -64,7 +64,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::unite(const ItemIndexPriva
 	if (!cother) {
 		return ItemIndexPrivate::doUnite(other);
 	}
-	return genericSetOp<sserialize::detail::ItemIndexImpl::UniteOp>(other);
+	return genericSetOp<sserialize::detail::ItemIndexImpl::UniteOp>(cother);
 }
 
 sserialize::ItemIndexPrivate* ItemIndexPrivateNative::difference(const ItemIndexPrivate* other) const {
@@ -72,7 +72,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::difference(const ItemIndex
 	if (!cother) {
 		return ItemIndexPrivate::doDifference(other);
 	}
-	return genericSetOp<sserialize::detail::ItemIndexImpl::DifferenceOp>(other);
+	return genericSetOp<sserialize::detail::ItemIndexImpl::DifferenceOp>(cother);
 }
 
 sserialize::ItemIndexPrivate* ItemIndexPrivateNative::symmetricDifference(const ItemIndexPrivate* other) const {
@@ -80,7 +80,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::symmetricDifference(const 
 	if (!cother) {
 		return ItemIndexPrivate::doSymmetricDifference(other);
 	}
-	return genericSetOp<sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp>(other);
+	return genericSetOp<sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp>(cother);
 }
 
 }}}//end namespace

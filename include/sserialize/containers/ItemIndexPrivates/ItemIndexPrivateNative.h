@@ -21,7 +21,7 @@ private:
 	}
 	
 	template<typename TFunc>
-	sserialize::ItemIndexPrivate * genericSetOp(const sserialize::ItemIndexPrivate * other) const;
+	sserialize::ItemIndexPrivate * genericSetOp(const ItemIndexPrivateNative * other) const;
 	
 public:
 	ItemIndexPrivateNative();
@@ -76,12 +76,8 @@ bool ItemIndexPrivateNative::create(T_UINT32_ITERATOR begin, const T_UINT32_ITER
 
 
 template<typename TFunc>
-sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateNative * cother = dynamic_cast<const ItemIndexPrivateNative*>(other);
-	if (!cother) {
-		return ItemIndexPrivate::doUnite(other);
-	}
-	uint32_t maxResultSize = TFunc::maxSize(this, other);
+sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIndexPrivateNative * cother) const {
+	uint32_t maxResultSize = TFunc::maxSize(this, cother);
 	void * tmpResultRaw = malloc(maxResultSize*sizeof(uint32_t));
 	uint32_t * tmpResult = (uint32_t*) tmpResultRaw;
 	uint32_t tmpResultSize = 0;
