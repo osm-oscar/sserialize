@@ -230,6 +230,12 @@ void SetOpsOpTreeParser::readString(Token & token) {
 	token.type = Token::STRING;
 	int lastValidStrSize = -1; //one passed the end == size of the valid string
 	std::string::const_iterator lastValidStrIt = m_strIt;
+	if (*m_strIt == '?') {
+		token.tokenString += '?';
+		++m_strIt;
+		lastValidStrIt = m_strIt;
+		lastValidStrSize = token.tokenString.size();
+	}
 	if (*m_strIt == '"') {
 		token.tokenString += *m_strIt;
 		++m_strIt;
@@ -253,6 +259,12 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				token.tokenString += *m_strIt;
 				++m_strIt;
 			}
+		}
+		if (m_strIt != m_strEnd && *m_strIt == '?') {
+			token.tokenString += *m_strIt;
+			++m_strIt;
+			lastValidStrIt = m_strIt;
+			lastValidStrSize = token.tokenString.size();
 		}
 	}
 	else {

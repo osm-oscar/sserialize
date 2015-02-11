@@ -156,14 +156,13 @@ StringCompleter::QuerryType myNormalize(std::string & q) {
 
 StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 	uint32_t qt = myNormalize(q);
-	if (qt == sserialize::StringCompleter::QT_NONE && q.size() >= 2 && q.back() == '"' && q.front() == '"') {
+	if (q.size() >= 2 && q.back() == '"' && q.front() == '"') {
 		q = std::string(q.cbegin()+1, q.cend()-1);
-		qt = myNormalize(q);
 		if (qt == sserialize::StringCompleter::QT_NONE) {
 			qt = sserialize::StringCompleter::QT_EXACT;
 		}
 	}
-	else {
+	else if (qt = sserialize::StringCompleter::QT_NONE) {
 		qt = sserialize::StringCompleter::QT_SUBSTRING;
 	}
 	return (StringCompleter::QuerryType)qt;
