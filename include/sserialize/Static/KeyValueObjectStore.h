@@ -87,6 +87,7 @@ public:
 class KeyValueObjectStore {
 public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
+	typedef KeyValueObjectStoreItem Item;
 	typedef ReadOnlyAtStlIterator<KeyValueObjectStore, KeyValueObjectStoreItem > iterator;
 	typedef ReadOnlyAtStlIterator<KeyValueObjectStore, KeyValueObjectStoreItem > const_iterator;
 	
