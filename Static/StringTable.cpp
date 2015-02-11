@@ -253,7 +253,7 @@ bool StringTable::match(uint32_t stringId, const std::string & searchStr, sseria
 		}
 	}
 
-	return  (*strMatchFunc)(searchStr, dataAt(stringId).getStringData());
+	return  (*strMatchFunc)(searchStr, strDataAt(stringId));
 }
 
 std::ostream& StringTable::printStats(std::ostream& out) const {

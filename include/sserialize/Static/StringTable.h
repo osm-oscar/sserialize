@@ -35,8 +35,8 @@ public:
 	inline uint32_t size() const { return priv()->size();}
 	inline UByteArrayAdapter::OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
 	inline std::string at(uint32_t pos) const { return priv()->at(pos); }
-	inline UByteArrayAdapter dataAt(uint32_t pos) const { return priv()->dataAt(pos);}
-	inline uint32_t strSize(uint32_t pos) const { return priv()->dataSize(pos); }
+	inline UByteArrayAdapter strDataAt(uint32_t pos) const { return priv()->dataAt(pos).getStringData(0);}
+	inline uint32_t strSize(uint32_t pos) const { return priv()->dataAt(pos).getStringLength(0); }
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
 	inline const_iterator cbegin() const { return priv()->cbegin();}

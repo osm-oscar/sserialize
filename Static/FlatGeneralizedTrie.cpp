@@ -149,7 +149,7 @@ FlatGST::~FlatGST() {}
 
 UByteArrayAdapter FlatGST::fgstStringAt(uint32_t pos) const {
 	StringEntry e( m_strEntries, pos );
-	UByteArrayAdapter r( m_stable.dataAt( e.strId() ).getStringData(0), e.strBegin(), e.strLen() );
+	UByteArrayAdapter r( m_stable.strDataAt( e.strId() ), e.strBegin(), e.strLen() );
 	return r;
 }
 
