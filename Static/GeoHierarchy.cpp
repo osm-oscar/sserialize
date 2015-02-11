@@ -1,6 +1,7 @@
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/printers.h>
+#include <sserialize/utility/statfuncs.h>
 
 
 namespace sserialize {
@@ -336,6 +337,13 @@ sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
 }
 
 std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
+	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
+	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
+		cellItemSizes[i] = cellItemsCount(i);
+	}
+	std::sort(cellItemSizes.begin(), cellItemSizes.end());
+	double cs_mean = sserialize::statistics::mean(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
+	double cs_variance = sserialize::statistics::variance(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
 	out << "regions.size()=" << regionSize() << std::endl;
 	out << "regionPtrs.size()=" << regionPtrSize() << std::endl;
@@ -346,6 +354,12 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	out << "region ptr data size=" << m_regionPtrs.getSizeInBytes() << std::endl;
 	out << "cell data size=" << m_cells.getSizeInBytes() << std::endl;
 	out << "cell ptr data size=" << m_cellPtrs.getSizeInBytes() << std::endl;
+	out << "Cell size info:\n";
+	out << "\tmedian: " << cellItemSizes.at(cellItemSizes.size()/2) << "\n";
+	out << "\tmin: " << cellItemSizes.front() << "\n";
+	out << "\tmax: " << cellItemSizes.back() << "\n";
+	out << "\tmean: " << cs_mean << "\n";
+	out << "\tvariance: " << cs_variance << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
