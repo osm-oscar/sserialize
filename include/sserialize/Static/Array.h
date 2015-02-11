@@ -267,7 +267,7 @@ Array<TValue>::dataSize(uint32_t pos) const {
 		len = m_data.size()-begin;
 	}
 	else {
-		len = m_index.at(pos+1);
+		len = m_index.at(pos+1) - begin;
 	}
 	return len;
 }
@@ -284,7 +284,7 @@ Array<TValue>::dataAt(uint32_t pos) const {
 		len = m_data.size()-begin;
 	}
 	else {
-		len = m_index.at(pos+1);
+		len = m_index.at(pos+1) - begin;
 	}
 	return UByteArrayAdapter(m_data, begin, len);
 }
