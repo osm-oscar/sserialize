@@ -146,6 +146,7 @@ public:
 	UByteArrayAdapter::OffsetType getSizeInBytes() const {return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
 	TValue at(uint32_t pos) const;
 	TValue operator[](uint32_t pos) const;
+	UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const;
 	UByteArrayAdapter dataAt(uint32_t pos) const;
 	uint32_t find(const TValue & value) const;
 	TValue front() const;
@@ -252,6 +253,23 @@ template<typename TValue>
 TValue
 Array<TValue>::back() const {
 	return at(size()-1);
+}
+
+template<typename TValue>
+UByteArrayAdapter::OffsetType
+Array<TValue>::dataSize(uint32_t pos) const {
+	if (pos >= size() || size() == 0) {
+		return 0;
+	}
+	UByteArrayAdapter::OffsetType begin = m_index.at(pos);
+	UByteArrayAdapter::OffsetType len;
+	if (pos+1 == size()) {
+		len = m_data.size()-begin;
+	}
+	else {
+		len = m_index.at(pos+1);
+	}
+	return len;
 }
 
 template<typename TValue>
