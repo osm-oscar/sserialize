@@ -217,6 +217,7 @@ public:
 	
 	//returns an empty string if length is invalid
 	std::string getString(const OffsetType pos, int * length = 0) const;
+	inline uint32_t getStringLength(const OffsetType pos) { return getVlPackedUint32(pos);}
 	//returns an empty string if length is invalid
 	UByteArrayAdapter getStringData(const OffsetType pos, int * length = 0) const;
 	OffsetType get(const OffsetType pos, uint8_t * dest, OffsetType len) const;
