@@ -134,8 +134,8 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 	if (!q.size()) {
 		return sserialize::StringCompleter::QT_NONE;
 	}
-	if (q.front() == '*') {
-		if (q.size() > 2 && q[1] == '*') {
+	if (q.front() == '?') {
+		if (q.size() > 2 && q[1] == '?') {
 			q = std::string(q.cbegin()+1, q.cend()-1);
 			qt = sserialize::StringCompleter::QT_SUBSTRING;
 		}
@@ -144,7 +144,7 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 			qt = sserialize::StringCompleter::QT_SUFFIX;
 		}
 	}
-	else if (q.back() == '*') {
+	else if (q.back() == '?') {
 		q.pop_back();
 		qt = sserialize::StringCompleter::QT_PREFIX;
 	}
