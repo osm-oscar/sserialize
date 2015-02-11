@@ -129,7 +129,10 @@ std::string StringCompleter::getName() const {
 	return priv()->getName();
 }
 
-StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
+
+//check if explicit match operators were set, and remove them
+//@return StringCompleter::QuerryType
+StringCompleter::QuerryType myNormalize(std::string & q) {
 	uint32_t qt = sserialize::StringCompleter::QT_NONE;
 	if (!q.size()) {
 		return sserialize::StringCompleter::QT_NONE;
@@ -148,23 +151,20 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 		q.pop_back();
 		qt = sserialize::StringCompleter::QT_PREFIX;
 	}
-	else if (q.size() >= 2 && q.back() == '"' && q.front() == '"') {
+	return (StringCompleter::QuerryType) qt;
+}
+
+StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
+	uint32_t qt = myNormalize(q);
+	if (qt == sserialize::StringCompleter::QT_NONE && q.size() >= 2 && q.back() == '"' && q.front() == '"') {
 		q = std::string(q.cbegin()+1, q.cend()-1);
-		qt = sserialize::StringCompleter::QT_EXACT;
+		qt = myNormalize(q);
+		if (qt == sserialize::StringCompleter::QT_NONE) {
+			qt = sserialize::StringCompleter::QT_EXACT;
+		}
 	}
 	else {
-		switch (q.size()) {
-		case 0:
-		case 1:
-			qt = sserialize::StringCompleter::QT_EXACT;
-			break;
-		case 2:
-			qt = sserialize::StringCompleter::QT_PREFIX;
-			break;
-		default:
-			qt = sserialize::StringCompleter::QT_SUBSTRING;
-			break;
-		}
+		qt = sserialize::StringCompleter::QT_SUBSTRING;
 	}
 	return (StringCompleter::QuerryType)qt;
 }
