@@ -270,6 +270,10 @@ void SetOpsOpTreeParser::readString(Token & token) {
 		}
 	}
 	else {
+		if (lastValidStrSize > 0) { //we've read a '?'
+			lastValidStrIt = m_strIt-1;
+			lastValidStrSize = -1;
+		}
 		while (m_strIt != m_strEnd) {
 			if (*m_strIt == '\\') {
 				++m_strIt;
@@ -307,13 +311,13 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				++m_strIt;
 			}
 		}
-	}
-	if (lastValidStrSize < 0 || (m_strIt == m_strEnd && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend()))) {
-		lastValidStrSize = token.tokenString.size();
-		lastValidStrIt = m_strIt;
-	}
-	else if (lastValidStrSize > 0) {
-		m_strIt = lastValidStrIt;
+		if (lastValidStrSize < 0 || (m_strIt == m_strEnd && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend()))) {
+			lastValidStrSize = token.tokenString.size();
+			lastValidStrIt = m_strIt;
+		}
+		else if (lastValidStrSize > 0) {
+			m_strIt = lastValidStrIt;
+		}
 	}
 	token.tokenString.resize(lastValidStrSize);
 	token.end = m_strIt - m_parseString.begin();
