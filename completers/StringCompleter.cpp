@@ -162,7 +162,7 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 			qt = sserialize::StringCompleter::QT_EXACT;
 		}
 	}
-	else if (qt = sserialize::StringCompleter::QT_NONE) {
+	else if (qt == sserialize::StringCompleter::QT_NONE) {
 		qt = sserialize::StringCompleter::QT_SUBSTRING;
 	}
 	return (StringCompleter::QuerryType)qt;
