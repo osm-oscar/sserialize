@@ -55,6 +55,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
 		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("data size a", i), sd.dataAt(i).size(), sd.dataSize(i));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
 		}
 	}
