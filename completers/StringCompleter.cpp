@@ -138,7 +138,7 @@ StringCompleter::QuerryType myNormalize(std::string & q) {
 		return sserialize::StringCompleter::QT_NONE;
 	}
 	if (q.front() == '?') {
-		if (q.size() > 2 && q[1] == '?') {
+		if (q.size() >= 2 && q.back() == '?') {
 			q = std::string(q.cbegin()+1, q.cend()-1);
 			qt = sserialize::StringCompleter::QT_SUBSTRING;
 		}
