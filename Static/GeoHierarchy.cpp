@@ -593,6 +593,8 @@ std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial:
 	out << ", childrenSize=" << r.childrenSize();
 	out << ", itemsPtr=" << r.itemsPtr();
 	out << ", itemsCount=" << r.itemsCount();
+	out << ", storeId=" << r.storeId();
+	out << ", gId=" << r.ghId();
 	out << "]";
 	return out;
 }
