@@ -354,7 +354,6 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 		uint32_t cellItemCount = cellItemsCount(i);
 		uint32_t cellParentCount = cellParentsSize(i);
 		cellItemSizes[i] = cellItemCount;
-		largestCellSize = std::max<uint32_t>(largestCellSize, cellItemSizes[i]);
 		if (largestCellSize < cellItemCount) {
 			largestCellSize = cellItemCount;
 			largestCellId = i;
