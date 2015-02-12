@@ -103,120 +103,32 @@ ItemIndexPrivate * ItemIndexPrivateDE::fromBitSet(const DynamicBitSet & bitSet) 
 	return creator.getPrivateIndex();
 }
 
-
-
 ItemIndexPrivate * ItemIndexPrivateDE::intersect(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateDE * cother = dynamic_cast<const ItemIndexPrivateDE*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doIntersect(other);
-
-	UByteArrayAdapter aData(m_data);
-	UByteArrayAdapter bData(cother->m_data);
-	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
-	dest.putUint32(0); //dummy data size
-	dest.putUint32(0); //dummy count
-	uint32_t resSize = 0;
-	uint32_t prevDest = 0;
-	
-	uint32_t aIndexIt = 0;
-	uint32_t bIndexIt = 0;
-	uint32_t aSize = m_size;
-	uint32_t bSize = cother->m_size;
-	uint32_t aItemId = aData.getVlPackedUint32();
-	uint32_t bItemId = bData.getVlPackedUint32();
-	while (aIndexIt < aSize && bIndexIt < bSize) {
-		if (aItemId == bItemId) {
-			dest.putVlPackedUint32(aItemId - prevDest);
-			prevDest = aItemId;
-			aIndexIt++;
-			bIndexIt++;
-			++resSize;
-			aItemId += aData.getVlPackedUint32();
-			bItemId = bItemId + bData.getVlPackedUint32();
-		}
-		else if (aItemId < bItemId) {
-			aIndexIt++;
-			aItemId += aData.getVlPackedUint32();
-		}
-		else { //bItemId is smaller
-			bIndexIt++;
-			bItemId += bData.getVlPackedUint32();
-		}
-	}
-
-	dest.putUint32(4, resSize);
-	dest.putUint32(0, dest.tellPutPtr()-8);
-	dest.resetGetPtr();
-	return new ItemIndexPrivateDE(dest);
+	return genericOp<sserialize::detail::ItemIndexImpl::IntersectOp>(cother);
 }
 
 ItemIndexPrivate * ItemIndexPrivateDE::unite(const sserialize::ItemIndexPrivate * other) const {
 	const ItemIndexPrivateDE * cother = dynamic_cast<const ItemIndexPrivateDE*>(other);
 	if (!cother)
 		return ItemIndexPrivate::doUnite(other);
+	return genericOp<sserialize::detail::ItemIndexImpl::UniteOp>(cother);
+}
 
-	UByteArrayAdapter aData(m_data);
-	UByteArrayAdapter bData(cother->m_data);
-	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
-	dest.putUint32(0); //dummy data size
-	dest.putUint32(0); //dummy count
-	uint32_t resSize = 0;
-	uint32_t prevDest = 0;
-	
-	uint32_t aIndexIt = 0;
-	uint32_t bIndexIt = 0;
-	uint32_t aSize = m_size;
-	uint32_t bSize = cother->m_size;
-	uint32_t aItemId = aData.getVlPackedUint32();
-	uint32_t bItemId = bData.getVlPackedUint32();
-	while (aIndexIt < aSize && bIndexIt < bSize) {
-		if (aItemId == bItemId) {
-			dest.putVlPackedUint32(aItemId - prevDest);
-			prevDest = aItemId;
-			aIndexIt++;
-			bIndexIt++;
-			aItemId += aData.getVlPackedUint32();
-			bItemId += bData.getVlPackedUint32();
-		}
-		else if (aItemId < bItemId) {
-			dest.putVlPackedUint32(aItemId - prevDest);
-			prevDest = aItemId;
-			aIndexIt++;
-			aItemId += aData.getVlPackedUint32();
-		}
-		else { //bItemId is smaller
-			dest.putVlPackedUint32(bItemId - prevDest);
-			prevDest = bItemId;
-			bIndexIt++;
-			bItemId += bData.getVlPackedUint32();
-		}
-		++resSize;
-	}
+ItemIndexPrivate* ItemIndexPrivateDE::difference(const ItemIndexPrivate* other) const {
+	const ItemIndexPrivateDE * cother = dynamic_cast<const ItemIndexPrivateDE*>(other);
+	if (!cother)
+		return ItemIndexPrivate::doDifference(other);
+	return genericOp<sserialize::detail::ItemIndexImpl::DifferenceOp>(cother);
+}
 
-	if (aIndexIt < aSize) {
-		dest.putVlPackedUint32(aItemId - prevDest);
-		++resSize;
-		++aIndexIt;
-		//from here on,  the differences are equal to the ones in aData
-		aData.shrinkToGetPtr();
-		dest.put(aData);
-		resSize += aSize - aIndexIt;
-	}
-
-	if (bIndexIt < bSize) {
-		dest.putVlPackedUint32(bItemId - prevDest);
-		++resSize;
-		++bIndexIt;
-		//from here on,  the differences are equal to the ones in aData
-		bData.shrinkToGetPtr();
-		dest.put(bData);
-		resSize += bSize - bIndexIt;
-	}
-
-	dest.putUint32(4, resSize);
-	dest.putUint32(0, dest.tellPutPtr()-8);
-	dest.resetGetPtr();
-	return new ItemIndexPrivateDE(dest);
+ItemIndexPrivate* ItemIndexPrivateDE::symmetricDifference(const ItemIndexPrivate* other) const {
+	const ItemIndexPrivateDE * cother = dynamic_cast<const ItemIndexPrivateDE*>(other);
+	if (!cother)
+		return ItemIndexPrivate::doSymmetricDifference(other);
+	return genericOp<sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp>(cother);
 }
 
 }//end namespace

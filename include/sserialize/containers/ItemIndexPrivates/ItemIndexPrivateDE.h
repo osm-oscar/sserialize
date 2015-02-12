@@ -25,6 +25,9 @@ private:
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
 	mutable uint32_t m_cacheOffset;
+private:
+	template<typename TFunc>
+	sserialize::ItemIndexPrivate* genericOp(const sserialize::ItemIndexPrivateDE * cother) const;
 public:
 	ItemIndexPrivateDE();
 	ItemIndexPrivateDE(const UByteArrayAdapter & data);
@@ -53,8 +56,8 @@ public:
 
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const;
 	virtual ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const;
-// 	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
-// 	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
+	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
+	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
 
 public:
 	template<typename TCONTAINER>
@@ -96,24 +99,94 @@ public:
 		m_data.putUint32(0);
 	}
 	virtual ~ItemIndexPrivateDECreator() {}
-	void push_back(uint32_t id) {
+	inline void push_back(uint32_t id) {
 		m_data.putVlPackedUint32(id - m_prev);
 		m_prev = id;
 		++m_count;
 	}
-	void flush() {
+	
+	///don't push anything after calling this function
+	inline void flushWithData(const UByteArrayAdapter & src, uint32_t itemcount) {
+		m_data.put(src);
+		m_count += itemcount;
+		flush();
+	}
+	
+	inline void flush() {
 		m_data.putUint32(m_beginning, m_data.tellPutPtr() - (m_beginning + 8));
 		m_data.putUint32(m_beginning+4, m_count);
 	}
 
-	ItemIndexPrivate * getPrivateIndex() {
+	inline ItemIndexPrivate * getPrivateIndex() {
 		return new ItemIndexPrivateDE(UByteArrayAdapter(m_data, m_beginning));
 	}
 	
-	ItemIndex getIndex() {
+	inline ItemIndex getIndex() {
 		return ItemIndex(UByteArrayAdapter(m_data, m_beginning), ItemIndex::T_DE);
 	}
 };
+
+template<typename TFunc>
+sserialize::ItemIndexPrivate* ItemIndexPrivateDE::genericOp(const sserialize::ItemIndexPrivateDE* cother) const {
+	UByteArrayAdapter aData(m_data);
+	UByteArrayAdapter bData(cother->m_data);
+	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
+	ItemIndexPrivateDECreator creator(dest);
+	
+	uint32_t aIndexIt = 0;
+	uint32_t bIndexIt = 0;
+	uint32_t aSize = m_size;
+	uint32_t bSize = cother->m_size;
+	uint32_t aItemId = aData.getVlPackedUint32();
+	uint32_t bItemId = bData.getVlPackedUint32();
+	while (aIndexIt < aSize && bIndexIt < bSize) {
+		if (aItemId == bItemId) {
+			if (TFunc::pushEqual) {
+				creator.push_back(aItemId);
+			}
+			aIndexIt++;
+			bIndexIt++;
+			aItemId += aData.getVlPackedUint32();
+			bItemId += bData.getVlPackedUint32();
+		}
+		else if (aItemId < bItemId) {
+			if (TFunc::pushFirstSmaller) {
+				creator.push_back(aItemId);
+			}
+			aIndexIt++;
+			aItemId += aData.getVlPackedUint32();
+		}
+		else { //bItemId is smaller
+			if (TFunc::pushSecondSmaller) {
+				creator.push_back(bItemId);
+			}
+			bIndexIt++;
+			bItemId += bData.getVlPackedUint32();
+		}
+	}
+
+	if (TFunc::pushFirstRemainder && aIndexIt < aSize) {
+		creator.push_back(aItemId);
+		++aIndexIt;
+		//from here on,  the differences are equal to the ones in aData
+		aData.shrinkToGetPtr();
+		uint32_t remainderSize = aSize - aIndexIt;
+		creator.flushWithData(aData, remainderSize);
+	}
+	else if(TFunc::pushSecondRemainder && bIndexIt < bSize) {
+		creator.push_back(bItemId);
+		++bIndexIt;
+		//from here on,  the differences are equal to the ones in aData
+		bData.shrinkToGetPtr();
+		uint32_t remainderSize = bSize - bIndexIt;
+		creator.flushWithData(bData, remainderSize);
+	}
+	else {
+		creator.flush();
+	}
+	return creator.getPrivateIndex();
+}
+
 
 typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateDE> ItemIndexPrivateDEIndirect;
 
