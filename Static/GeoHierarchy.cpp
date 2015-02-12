@@ -338,8 +338,14 @@ sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
 
 std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
+	uint32_t largestCellSize = 0;
+	uint32_t largestCellId = 0;
 	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
 		cellItemSizes[i] = cellItemsCount(i);
+		largestCellSize = std::max<uint32_t>(largestCellSize, cellItemSizes[i]);
+		if (cellItemSizes[i] == largestCellSize) {
+			largestCellId = i;
+		}
 	}
 	std::sort(cellItemSizes.begin(), cellItemSizes.end());
 	double cs_mean = sserialize::statistics::mean(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
@@ -360,6 +366,7 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	out << "\tmax: " << cellItemSizes.back() << "\n";
 	out << "\tmean: " << cs_mean << "\n";
 	out << "\tvariance: " << cs_variance << "\n";
+	out << "\tid of largest: " << largestCellId << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
@@ -531,8 +538,18 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 
 std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Cell & c) {
 	out << "sserialize::Static::spatial::GeoHierarchy::Cell[";
-	out << ", itemPtr=" << c.itemPtr();
+	out << "itemPtr=" << c.itemPtr();
 	out << ", itemsCount=" << c.itemCount();
+	if (c.parentsSize()) {
+		out << ", parents:";
+		char sep = '(';
+		for(uint32_t i(0), s(c.parentsSize()); i != s; ++i) {
+			out << sep << c.parent(i);
+			sep = ',';
+		}
+		out << ")";
+		
+	}
 	out << "]";
 	return out;
 }
