@@ -344,11 +344,32 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
 	uint32_t largestCellSize = 0;
 	uint32_t largestCellId = 0;
+	uint32_t smallestCellSize = 0xFFFFFFFF;
+	uint32_t smallestCellId = 0;
+	uint32_t deepestCellSize = 0;
+	uint32_t deepestCellId = 0;
+	uint32_t highestCellSize = 0xFFFFFFFF; //highest in the gh => smallest number of parents
+	uint32_t highestCellId = 0;
 	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
-		cellItemSizes[i] = cellItemsCount(i);
+		uint32_t cellItemCount = cellItemsCount(i);
+		uint32_t cellParentCount = cellParentsSize(i);
+		cellItemSizes[i] = cellItemCount;
 		largestCellSize = std::max<uint32_t>(largestCellSize, cellItemSizes[i]);
-		if (cellItemSizes[i] == largestCellSize) {
+		if (largestCellSize < cellItemCount) {
+			largestCellSize = cellItemCount;
 			largestCellId = i;
+		}
+		if (smallestCellSize > cellItemCount) {
+			smallestCellSize = cellItemCount;
+			smallestCellId = i;
+		}
+		if (cellParentCount > deepestCellSize) {
+			deepestCellSize = cellParentCount;
+			deepestCellId = i;
+		}
+		if (cellParentCount < highestCellSize) {
+			highestCellSize = cellParentCount;
+			highestCellId = i;
 		}
 	}
 	std::sort(cellItemSizes.begin(), cellItemSizes.end());
@@ -370,7 +391,14 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
 	out << "\tmax: " << cellItemSizes.back() << "\n";
 	out << "\tmean: " << cs_mean << "\n";
 	out << "\tvariance: " << cs_variance << "\n";
+	out << "\tsmallest: " << smallestCellSize << "\n";
+	out << "\tlargest: " << largestCellSize << "\n";
 	out << "\tid of largest: " << largestCellId << "\n";
+	out << "\tid of smallest: " << smallestCellId << "\n";
+	out << "\tfewest parents: " << highestCellSize << "\n";
+	out << "\tmost parents: " << deepestCellSize << "\n";
+	out << "\tid with fewest parents: " << highestCellId << "\n";
+	out << "\tid with most parents: " << deepestCellId << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
