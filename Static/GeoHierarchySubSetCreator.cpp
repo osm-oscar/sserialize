@@ -9,7 +9,7 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator() {}
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh) :
 m_gh(gh)
 {
-	m_cellParentsPtrs.reserve(m_gh.cellPtrSize());
+	m_cellParentsPtrs.reserve(m_gh.cellPtrsSize());
 	m_regionParentsPtrs.reserve(m_gh.regionPtrSize());
 	m_regionDesc.reserve(m_gh.regionSize());
 	m_cellDesc.reserve(m_gh.cellSize());
