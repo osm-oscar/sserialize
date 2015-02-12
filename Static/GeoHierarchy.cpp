@@ -269,6 +269,10 @@ uint32_t GeoHierarchy::cellParentsEnd(uint32_t id) const {
 	return cells().at(id+1, Cell::CD_PARENTS_BEGIN);
 }
 
+uint32_t GeoHierarchy::cellParentsSize(uint32_t id) const {
+	return cellParentsEnd(id) - cellParentsBegin(id);
+}
+
 uint32_t GeoHierarchy::cellPtrsSize() const {
 	return m_cellPtrs.size();
 }

@@ -214,6 +214,7 @@ public:
 	uint32_t cellParentsBegin(uint32_t id) const;
 	uint32_t cellDirectParentsEnd(uint32_t id) const;
 	uint32_t cellParentsEnd(uint32_t id) const;
+	uint32_t cellParentsSize(uint32_t id) const;
 	uint32_t cellPtrsSize() const;
 	uint32_t cellPtr(uint32_t pos) const;
 	uint32_t cellItemsPtr(uint32_t pos) const;
@@ -340,6 +341,7 @@ public:
 	inline uint32_t cellParentsBegin(uint32_t id) const { return m_priv->cellParentsBegin(id);}
 	inline uint32_t cellDirectParentsEnd(uint32_t id) const { return m_priv->cellDirectParentsEnd(id);}
 	inline uint32_t cellParentsEnd(uint32_t id) const { return m_priv->cellParentsEnd(id);}
+	inline uint32_t cellParentsSize(uint32_t id) const { return m_priv->cellParentsSize(id); }
 	inline uint32_t cellPtrsSize() const { return m_priv->cellPtrsSize();}
 	inline uint32_t cellPtr(uint32_t pos) const { return m_priv->cellPtr(pos);}
 	inline uint32_t cellItemsPtr(uint32_t pos) const { return m_priv->cellItemsPtr(pos);}
