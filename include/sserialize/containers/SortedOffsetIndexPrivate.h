@@ -101,6 +101,7 @@ public:
 	///Append a SortedOffsetIndexPrivate at dest
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, sserialize::UByteArrayAdapter & destination) {
+		assert(sserialize::is_strong_monotone_ascending(src.cbegin(), src.cend()));
 	
 		if (src.size() > 1) {
 			uint64_t slopenom = 0;
