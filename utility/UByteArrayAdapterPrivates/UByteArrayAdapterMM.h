@@ -14,8 +14,10 @@ public:
 		}
 	}
 	virtual ~UByteArrayAdapterPrivateMM() {}
+	
+	virtual void setDeleteOnClose(bool /*del*/) override {}
 
-	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) {
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) override {
 		if (m_data.size() < size)
 			size = m_data.size();
 		m_data.resize(m_data.size() - size);
@@ -24,7 +26,7 @@ public:
 		return true;
 	}
 
-	virtual bool growStorage(UByteArrayAdapter::OffsetType size) {
+	virtual bool growStorage(UByteArrayAdapter::OffsetType size) override {
 		if (m_data.size() < size) {
 			m_data.resize(size);
 			data() = m_data.data();
