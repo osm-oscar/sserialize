@@ -804,7 +804,7 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t 
 }
 
 int UByteArrayAdapter::put(const OffsetType pos, const std::string & str) {
-	uint32_t needSize = psize_vu32(str.size()) + str.size();
+	UByteArrayAdapter::OffsetType needSize = psize_vu32(str.size()) + str.size();
 	if (m_len < pos+needSize)
 		return -1;
 	int len = putVlPackedUint32(pos, str.size());
@@ -1176,7 +1176,7 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 }
 
 bool UByteArrayAdapter::put(const std::string& str) {
-	uint32_t needSize = psize_vu32(str.size()) + str.size();
+	UByteArrayAdapter::OffsetType needSize = psize_vu32(str.size()) + str.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	int pushedBytes = put(m_putPtr, str);
@@ -1188,7 +1188,7 @@ bool UByteArrayAdapter::put(const std::string& str) {
 }
 
 bool UByteArrayAdapter::put(const uint8_t * data, UByteArrayAdapter::OffsetType len) {
-	uint32_t needSize = len;
+	UByteArrayAdapter::OffsetType needSize = len;
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	bool ok = put(m_putPtr, data, len);
@@ -1200,7 +1200,7 @@ bool UByteArrayAdapter::put(const uint8_t * data, UByteArrayAdapter::OffsetType 
 }
 
 bool UByteArrayAdapter::put(const std::deque< uint8_t >& data) {
-	uint32_t needSize = data.size();
+	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	bool ok = put(m_putPtr, data);
@@ -1212,7 +1212,7 @@ bool UByteArrayAdapter::put(const std::deque< uint8_t >& data) {
 }
 
 bool UByteArrayAdapter::put(const std::vector< uint8_t >& data) {
-	uint32_t needSize = data.size();
+	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	bool ok = put(m_putPtr, data);
@@ -1224,7 +1224,7 @@ bool UByteArrayAdapter::put(const std::vector< uint8_t >& data) {
 }
 
 bool UByteArrayAdapter::put(const UByteArrayAdapter & data) {
-	uint32_t needSize = data.size();
+	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	bool ok = put(m_putPtr, data);
