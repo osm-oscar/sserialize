@@ -41,7 +41,7 @@ DataSetFactory & DataSetFactory::operator=(DataSetFactory && other) {
 
 
 void DataSetFactory::setDataStoreFile(sserialize::UByteArrayAdapter data) {
-	if (size()) { //clear eversthing
+	if (size()) { //clear everything
 		m_hitCount = 0;
 		m_hash.clear();
 		m_offsetsToId.clear();
@@ -64,7 +64,6 @@ uint64_t DataSetFactory::hashFunc(const UByteArrayAdapter & v) {
 	}
 	return h;
 }
-
 
 int64_t DataSetFactory::getStoreOffset(const UByteArrayAdapter & v, uint64_t & hv) {
 	if (v.size() == 0)
@@ -106,12 +105,12 @@ uint32_t DataSetFactory::insert(const sserialize::UByteArrayAdapter & data) {
 		m_dataLock.acquireWriteLock();
 		indexPos = m_dataStore.tellPutPtr();
 		m_dataStore.put(data);
+		id = m_idToOffsets.size();
+		m_idToOffsets.push_back(indexPos);
 		m_dataLock.releaseWriteLock();
 		
 		m_mapLock.acquireWriteLock();
-		id = size();
 		m_offsetsToId[indexPos] = id;
-		m_idToOffsets.push_back(indexPos);
 		m_hash[hv].push_front(indexPos);
 		m_mapLock.releaseWriteLock();
 	}
@@ -147,17 +146,17 @@ OffsetType DataSetFactory::flush() {
 	m_header << static_cast<uint8_t>(3); //Version
 	m_header.putOffset(m_dataStore.tellPutPtr());
 	
-	std::cout << "Gathering offsets...";
+	std::cout << "DataSetFactory: Gathering offsets...";
 	//Create the offsets
 	std::vector<uint64_t> os(m_offsetsToId.size(), 0);
 	for(OffsetToIdHashType::const_iterator it (m_offsetsToId.begin()), end(m_offsetsToId.end()); it != end; ++it) {
 			os[it->second] = it->first;
 	}
 	std::cout << os.size() << " gathered" << std::endl;
-	std::cout << "Serializing offsets...";
+	std::cout << "DataSetFactory: Serializing offsets...";
 	uint64_t oIBegin = m_dataStore.tellPutPtr();
 	if (! Static::SortedOffsetIndexPrivate::create(os, m_dataStore) ) {
-		std::cout << "ItemIndexFactory::serialize: failed to create Offsetindex." << std::endl;
+		std::cout << "failed to create Offsetindex." << std::endl;
 		return 0;
 	}
 	else {
