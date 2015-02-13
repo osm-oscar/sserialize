@@ -175,13 +175,13 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize
 		m_dataLock.acquireWriteLock();
 		indexPos = m_indexStore.tellPutPtr();
 		m_indexStore.put(idx);
+		id = m_idToOffsets.size();
+		m_idToOffsets.push_back(indexPos);
+		m_idxSizes.push_back(idxSize);
 		m_dataLock.releaseWriteLock();
 		
 		m_mapLock.acquireWriteLock();
-		id = size();
 		m_offsetsToId[indexPos] = id;
-		m_idToOffsets.push_back(indexPos);
-		m_idxSizes.push_back(idxSize);
 		m_hash[hv].push_front(indexPos);
 		m_mapLock.releaseWriteLock();
 	}
