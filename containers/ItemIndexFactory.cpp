@@ -205,6 +205,7 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 
 OffsetType ItemIndexFactory::flush() {
 	assert(m_idxSizes.size() == m_idToOffsets.size());
+	assert(m_idToOffsets.size() == m_offsetsToId.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	m_header.resetPtrs();
 	m_header << static_cast<uint8_t>(4); //Version

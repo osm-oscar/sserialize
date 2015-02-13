@@ -142,6 +142,8 @@ UByteArrayAdapter DataSetFactory::getFlushedData() {
 }
 
 OffsetType DataSetFactory::flush() {
+	assert(m_idToOffsets.size() == m_offsetsToId.size());
+
 	m_header.resetPtrs();
 	m_header << static_cast<uint8_t>(3); //Version
 	m_header.putOffset(m_dataStore.tellPutPtr());
@@ -150,7 +152,7 @@ OffsetType DataSetFactory::flush() {
 	//Create the offsets
 	std::vector<uint64_t> os(m_offsetsToId.size(), 0);
 	for(OffsetToIdHashType::const_iterator it (m_offsetsToId.begin()), end(m_offsetsToId.end()); it != end; ++it) {
-			os[it->second] = it->first;
+			os.at(it->second) = it->first;
 	}
 	std::cout << os.size() << " gathered" << std::endl;
 	std::cout << "DataSetFactory: Serializing offsets...";
