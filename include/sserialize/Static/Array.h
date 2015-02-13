@@ -11,7 +11,7 @@
 #include <fstream>
 #define SSERIALIZE_STATIC_ARRAY_VERSION 3
 
-/** FileFormat: v4
+/** FileFormat: v3
  *
  *-----------------------------------------------
  *Version|DataLen        |Data| Data offsets    |

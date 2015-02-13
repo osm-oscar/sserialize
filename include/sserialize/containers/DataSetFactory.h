@@ -27,7 +27,7 @@ public:
 	typedef std::forward_list<OffsetType> DataOffsetContainer;
 	typedef std::unordered_map< uint64_t, std::forward_list<OffsetType> > DataHashType;
 	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
-	typedef std::vector<uint64_t > IdToOffsetsType;
+	typedef std::vector<uint64_t> IdToOffsetsType;
 private:
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_dataStore;
