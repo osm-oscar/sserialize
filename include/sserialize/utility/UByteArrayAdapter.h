@@ -126,6 +126,7 @@ public:
 	UByteArrayAdapter(sserialize::MmappedFile file);
 	UByteArrayAdapter(const ChunkedMmappedFile & file);
 	UByteArrayAdapter(const CompressedMmappedFile & file);
+	UByteArrayAdapter(const sserialize::MmappedMemory<uint8_t> & mem);
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
 	void zero();

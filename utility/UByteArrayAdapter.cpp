@@ -252,6 +252,14 @@ m_getPtr(0),
 m_putPtr(0)
 {}
 
+UByteArrayAdapter::UByteArrayAdapter(const MmappedMemory<uint8_t> & mem) :
+m_priv(new UByteArrayAdapterPrivateMM(mem)),
+m_offSet(0),
+m_len(mem.size()),
+m_getPtr(0),
+m_putPtr(0)
+{}
+
 UByteArrayAdapter::~UByteArrayAdapter() {}
 
 UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapter) {
