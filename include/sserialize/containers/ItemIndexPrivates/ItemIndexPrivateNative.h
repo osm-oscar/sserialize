@@ -78,54 +78,58 @@ bool ItemIndexPrivateNative::create(T_UINT32_ITERATOR begin, const T_UINT32_ITER
 template<typename TFunc>
 sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIndexPrivateNative * cother) const {
 	uint32_t maxResultSize = TFunc::maxSize(this, cother);
-	void * tmpResultRaw = malloc(maxResultSize*sizeof(uint32_t));
-	uint32_t * tmpResult = (uint32_t*) tmpResultRaw;
-	uint32_t tmpResultSize = 0;
+	sserialize::MmappedMemory<uint8_t> mm((maxResultSize+1)*sizeof(uint32_t), MM_PROGRAM_MEMORY);
 	
-	const uint8_t * myD = m_dataMem.get();
-	const uint8_t * oD = cother->m_dataMem.get();
-	uint32_t myI(0), oI(0);
-	for( ;myI < m_size && oI < cother->m_size; ) {
-		uint32_t myId = this->ItemIndexPrivateNative::uncheckedAt(myI, myD);
-		uint32_t oId = cother->ItemIndexPrivateNative::uncheckedAt(oI, oD);
+	uint8_t * tmpResultIt = mm.begin()+sizeof(uint32_t);
+	
+	const uint8_t * myD = m_dataMem.begin();
+	const uint8_t * myDEnd = m_dataMem.end();
+	const uint8_t * oD = cother->m_dataMem.begin();
+	const uint8_t * oDEnd = cother->m_dataMem.end();
+	for( ;myD < myDEnd && oD < oDEnd; ) {
+		uint32_t myId, oId;
+		::memmove(&myId, myD, sizeof(uint32_t));
+		::memmove(&oId, oD, sizeof(uint32_t));
 		if (myId < oId) {
 			if (TFunc::pushFirstSmaller) {
-				tmpResult[tmpResultSize] = myId;
-				++tmpResultSize;
+				::memmove(tmpResultIt, myD, sizeof(uint32_t));
+				tmpResultIt += sizeof(uint32_t);
 			}
-			++myI;
+			myD += sizeof(uint32_t);
 		}
 		else if (oId < myId) {
 			if (TFunc::pushSecondSmaller) {
-				tmpResult[tmpResultSize] = oId;
-				++tmpResultSize;
+				::memmove(tmpResultIt, oD, sizeof(uint32_t));
+				tmpResultIt += sizeof(uint32_t);
 			}
-			++oI;
+			oD += sizeof(uint32_t);
 		}
 		else {
 			if (TFunc::pushEqual) {
-				tmpResult[tmpResultSize] = myId;
-				++tmpResultSize;
+				::memmove(tmpResultIt, myD, sizeof(uint32_t));
+				tmpResultIt += sizeof(uint32_t);
 			}
-			++oI;
-			++myI;
+			oD += sizeof(uint32_t);
+			myD += sizeof(uint32_t);
 		}
 	}
-	if (TFunc::pushFirstRemainder) {
-		uint32_t remainderSize = m_size-myI;
-		::memmove(tmpResult+tmpResultSize, myD+sizeof(uint32_t)*myI, sizeof(uint32_t)*remainderSize);
-		tmpResultSize += remainderSize;
+	if (TFunc::pushFirstRemainder && myDEnd-myD > 0) {
+		uint32_t remainderSize = myDEnd-myD;
+		::memmove(tmpResultIt, myD, remainderSize);
+		tmpResultIt += remainderSize;
 	}
-	if (TFunc::pushSecondRemainder) {
-		uint32_t remainderSize = cother->m_size-oI;
-		::memmove(tmpResult+tmpResultSize, oD+sizeof(uint32_t)*oI, sizeof(uint32_t)*remainderSize);
-		tmpResultSize += remainderSize;
+	else if (TFunc::pushSecondRemainder && oDEnd-oD > 0) {
+		uint32_t remainderSize = oDEnd - oD;
+		::memmove(tmpResultIt, oD, remainderSize);
+		tmpResultIt += remainderSize;
 	}
 	
-	UByteArrayAdapter tmpD(UByteArrayAdapter::createCache(sserialize::SerializationInfo<uint32_t>::length+sizeof(uint32_t)*tmpResultSize, sserialize::MM_PROGRAM_MEMORY));
-	tmpD.putUint32(tmpResultSize);
-	tmpD.put(static_cast<uint8_t*>(tmpResultRaw), sizeof(uint32_t)*tmpResultSize);//can we do this? aliasing, cahe updates?
-	free(tmpResultRaw);
+	uint32_t tmpResultSize = (tmpResultIt - (mm.begin()+sizeof(uint32_t)))/sizeof(uint32_t);
+	assert(tmpResultSize <= maxResultSize);
+	mm.resize((tmpResultSize+1)*sizeof(uint32_t));
+	
+	UByteArrayAdapter tmpD(mm);
+	tmpD.putUint32(0, tmpResultSize);
 	return new ItemIndexPrivateNative(tmpD);
 }
 
