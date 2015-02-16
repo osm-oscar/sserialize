@@ -201,6 +201,7 @@ FlatTrieBase::Node FlatTrieBase::root() const {
 
 std::ostream& FlatTrieBase::printStats(std::ostream& out) const {
 	out << "sserialize::Static::UnicodeTrie::FlatTrieBase::stats--BEGIN" << std::endl;
+	out << "total data size=" << m_strData.size() + m_trie.getSizeInBytes() << std::endl;
 	out << "string data size=" << m_strData.size() << std::endl;
 	m_trie.printStats(out);
 	out << "sserialize::Static::UnicodeTrie::FlatTrieBase::stats--END" << std::endl;

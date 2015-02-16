@@ -213,6 +213,7 @@ FlatTrie<TValue>::at(const std::string & str, bool prefixMatch) const {
 template<typename TValue>
 std::ostream & FlatTrie<TValue>::printStats(std::ostream & out) const {
 	out << "sserialize::Static::UnicodeTrie::FlatTrie::stats--BEGIN" << std::endl;
+	out << "total data size=" << FlatTrieBase::getSizeInBytes() + m_values.getSizeInBytes() << std::endl;
 	FlatTrieBase::printStats(out);
 	m_values.printStats(out);
 	out << "sserialize::Static::UnicodeTrie::FlatTrie::stats--END" << std::endl;
