@@ -15,7 +15,7 @@
 namespace sserialize {
 namespace GeneralizedTrie {
 
-template<typename IndexStorageContainer = std::vector<uint32_t> >
+template<typename IndexStorageContainer = sserialize::WindowedArray<uint32_t> >
 class BaseTrie {
 public:
 	typedef unsigned int ItemIdType;
@@ -25,14 +25,13 @@ public:
 	typedef typename Node::ItemSetIterator ItemSetIterator;
 	typedef typename Node::ConstItemSetIterator ConstItemSetIterator;
 	typedef typename Node::ItemSetContainer ItemSetContainer;
+	typedef std::unordered_set<std::string> StringsContainer;
 protected: //variables
 	uint32_t m_count;
 	uint32_t m_nodeCount;
 	Node * m_root;
-	std::vector<std::string> m_prefixStrings;
 	bool m_caseSensitive;
 	bool m_addTransDiacs;
-	bool m_isSuffixTrie;
 	std::unordered_set<uint32_t> m_suffixDelimeters;
 
 
@@ -54,18 +53,16 @@ protected: //check functions
 	bool consistencyCheckRecurse(Node * node) const;
 
 protected:
-	template<typename T_ITEM_FACTORY, typename T_ITEM>
-	bool trieFromStringsFactory(const T_ITEM_FACTORY & stringsFactory, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToSubStrNodes, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToExactNodes);
+	template<typename T_ITEM_FACTORY>
+	bool trieFromStringsFactory(const T_ITEM_FACTORY & stringsFactory, const uint32_t begin, const uint32_t end, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToSubStrNodes, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToExactNodes);
 
-	
 public: //Initalization and Destruction
 	BaseTrie();
-	BaseTrie(bool caseSensitive, bool suffixTrie);
+	BaseTrie(bool caseSensitive);
 	virtual ~BaseTrie();
 	void clear();
 	void swap( BaseTrie & other);
 	inline void setCaseSensitivity(bool c) { m_caseSensitive = c; }
-	inline void setSuffixTrie(bool c) { m_isSuffixTrie = c; }
 	inline void setSuffixDelimeters(const std::unordered_set<uint32_t> & s) { m_suffixDelimeters = s; }
 	
 	/** If you set this to true, then transliterated versions of itemstrings are added as well
@@ -75,30 +72,11 @@ public: //Initalization and Destruction
 	inline void setAddTransliteratedDiacritics(bool c) { m_addTransDiacs = c; }
 	
 	inline bool isCaseSensitive() { return m_caseSensitive; }
-	inline bool isSuffixTrie() { return m_isSuffixTrie;}
 	inline bool getSuffixDelimeters() { return m_suffixDelimeters; }
 
 public: //Fill functions
 	Node* at(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd);
 	Node* operator[](const std::string & str);
-	/** This will set the DB from which the trie is created
-	  * @param db The DB to create the trie from
-	  * @param suffixDelimeters this is only useful if suffixTrie is set. This will change the way suffixstrings are created.
-	  *                         If set, then the item strings will be scanned from left to right to find a code point in suffixDelimeters
-	  *                         If it finds one, then this will be the next suffix string (to the end if the given string)
-	  *
-	  *
-	  *
-	  */
-	template<typename ItemType>
-	bool setDB(const StringsItemDBWrapper< ItemType >& db);
-	
-	/** This will create a trie out of a strings factory
-	  * The Stringsfactory should provide begin(), end() iterators with their value_type having begin(), end() as well
-	  * Dereferencing the StringFactory::const_iterator can yield a temporary value which should have a fast copy or move operation
-	  */
-	template<typename T_ITEM_FACTORY, typename T_ITEM>
-	bool fromStringsFactory(const T_ITEM_FACTORY & stringsFactor);
 
 public://Completion
 	ItemIndex complete(const std::string & str, sserialize::StringCompleter::QuerryType qt = sserialize::StringCompleter::QT_SUBSTRING) const;
@@ -123,19 +101,17 @@ m_count(0),
 m_nodeCount(0),
 m_root(0),
 m_caseSensitive(false),
-m_addTransDiacs(false),
-m_isSuffixTrie(false)
+m_addTransDiacs(false)
 {
 }
 
 template<typename IndexStorageContainer>
-BaseTrie<IndexStorageContainer>::BaseTrie(bool caseSensitive, bool suffixTrie) :
+BaseTrie<IndexStorageContainer>::BaseTrie(bool caseSensitive) :
 m_count(0),
 m_nodeCount(0),
 m_root(0),
 m_caseSensitive(caseSensitive),
-m_addTransDiacs(false),
-m_isSuffixTrie(suffixTrie)
+m_addTransDiacs(false)
 {}
 
 template<typename IndexStorageContainer>
@@ -160,10 +136,8 @@ BaseTrie<IndexStorageContainer>::swap( BaseTrie & other) {
 	swap(m_count, other.m_count);
 	swap(m_nodeCount, other.m_nodeCount);
 	swap(m_root, other.m_root);
-	swap(m_prefixStrings, other.m_prefixStrings);
 	swap(m_caseSensitive, other.m_caseSensitive);
 	swap(m_addTransDiacs, other.m_addTransDiacs);
-	swap(m_isSuffixTrie, other.m_isSuffixTrie);
 	swap(m_suffixDelimeters, other.m_suffixDelimeters);
 }
 
@@ -297,27 +271,13 @@ template<typename IndexStorageContainer>
 typename  BaseTrie<IndexStorageContainer>::Node *
 BaseTrie<IndexStorageContainer>::nextSuffixNode(std::string::const_iterator & strIt, const std::string::const_iterator & strEnd) {
 	Node * node = at(strIt, strEnd);
-	nextSuffixString(strIt, strEnd);
+	sserialize::nextSuffixString(strIt, strEnd, m_suffixDelimeters);
 	return node;
 }
 
-///Inserts the string between strIt and strEnd. If suffixDelimeters is given, the string split between those code points
 template<typename IndexStorageContainer>
-void BaseTrie<IndexStorageContainer>::nextSuffixString(std::string::const_iterator & strIt, const std::string::const_iterator & strEnd) {
-	if (m_suffixDelimeters.size()) {
-		while (strIt != strEnd) {
-			if (m_suffixDelimeters.count( utf8::next(strIt, strEnd) ) > 0)
-				break;
-		}
-	}
-	else if (strIt != strEnd) {
-		utf8::next(strIt, strEnd);
-	}
-}
-
-template<typename IndexStorageContainer>
-template<typename T_ITEM_FACTORY, typename T_ITEM>
-bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTORY & stringsFactory, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToSubStrNodes, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToExactNodes) {
+template<typename T_ITEM_FACTORY>
+bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTORY & stringsFactory, const uint32_t begin, const uint32_t end, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToSubStrNodes, std::unordered_map<std::string, std::unordered_set<Node*> > & strIdToExactNodes) {
 	DiacriticRemover transLiterator;
 	if (m_addTransDiacs) {
 		UErrorCode status = transLiterator.init();
@@ -326,52 +286,49 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 			return false;
 		}
 	}
+	StringsContainer itemPrefixStrings, itemSuffixStrings;
 
 	clear();
 	ProgressInfo progressInfo;
 
-	{
-		uint32_t count = 0;
-		std::unordered_set<std::string> strings;
-		progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::trieFromStringsFactory: Gathering strings");
-		for(typename T_ITEM_FACTORY::const_iterator itemsIt(stringsFactory.begin()), itemsEnd(stringsFactory.end()); itemsIt != itemsEnd; ++itemsIt) {
-			T_ITEM item = *itemsIt;
-			for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
-				strings.insert(*itemStrsIt);
-			}
-			progressInfo(++count);
-		}
-		progressInfo.end();
-		m_prefixStrings = std::vector<std::string>(strings.begin(), strings.end());
-		std::sort(m_prefixStrings.begin(), m_prefixStrings.end());
-	}
 	
 	//This is the first part (create the trie)
-	progressInfo.begin(m_prefixStrings.size(), "BaseTrie::trieFromStringsFactory: Creating Trie form strings");
-	uint32_t count = 0;
-	for(std::vector<std::string>::const_iterator strsIt(m_prefixStrings.cbegin()); strsIt != m_prefixStrings.cend(); ++strsIt) {
-		std::vector<std::string> strs;
-		if (m_caseSensitive)
-			strs.push_back(*strsIt);
-		else
-			strs.push_back( unicode_to_lower(*strsIt) );
-		
-		if (m_addTransDiacs) {
-			strs.push_back( strs.back() );
-			transLiterator.transliterate(strs.back());
+	progressInfo.begin(end-begin, "BaseTrie::trieFromStringsFactory: Creating Trie form strings");
+	for(uint32_t i(0); i < end; ++i) {
+		itemPrefixStrings.clear();
+		itemSuffixStrings.clear();
+		stringsFactory(i, itemPrefixStrings, itemSuffixStrings);
+		for(std::string str : itemPrefixStrings) {
+			if (!m_caseSensitive) {
+				str = sserialize::unicode_to_lower(str);
+			}
+			at(str.cbegin(), str.cend());
+			if (m_addTransDiacs) {
+				transLiterator.transliterate(str);
+				at(str.cbegin(), str.cend());
+			}
 		}
-
-		for(std::vector<std::string>::const_iterator it = strs.begin(); it != strs.end(); ++it) {
-			at(it->begin(), it->end());
-			if (m_isSuffixTrie) {
-				std::string::const_iterator strIt = it->begin();
-				std::string::const_iterator strEnd = it->end();
+		
+		for(std::string str : itemSuffixStrings) {
+			if (!m_caseSensitive) {
+				str = sserialize::unicode_to_lower(str);
+			}
+			std::string::const_iterator strIt(str.cbegin());
+			std::string::const_iterator strEnd(str.cend());
+			while (strIt != strEnd) {
+				nextSuffixNode(strIt, strEnd);
+			}
+			if (m_addTransDiacs) {
+				transLiterator.transliterate(str);
+				std::string::const_iterator strIt(str.cbegin());
+				std::string::const_iterator strEnd(str.cend());
 				while (strIt != strEnd) {
 					nextSuffixNode(strIt, strEnd);
 				}
 			}
 		}
-		progressInfo(++count);
+
+		progressInfo(i);
 	}
 	progressInfo.end();
 	
@@ -380,46 +337,56 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 		return false;
 	}
 
-	//get all nodes for all strings
-	strIdToSubStrNodes.reserve(m_prefixStrings.size());
-	strIdToExactNodes.reserve(m_prefixStrings.size());
-	
-	progressInfo.begin(m_prefixStrings.size(), "BaseTrie::trieFromStringsFactory: Finding String->node mappings" );
-	count = 0;
+	progressInfo.begin(end-begin, "BaseTrie::trieFromStringsFactory: Finding String->node mappings" );
 	#pragma omp parallel for 
-	for(size_t i = 0; i <  m_prefixStrings.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
-		std::vector<std::string> strs;
-		if (m_caseSensitive)
-			strs.push_back(m_prefixStrings[i]);
-		else
-			strs.push_back( unicode_to_lower(m_prefixStrings[i]) );
-		
-		if (m_addTransDiacs) {
-			strs.push_back( strs.back() );
-			transLiterator.transliterate(strs.back());
-		}
-
-		
-		for(std::vector<std::string>::const_iterator insStrIt = strs.begin(); insStrIt != strs.end(); ++insStrIt) {
-			std::string::const_iterator strIt(insStrIt->begin());
-			std::string::const_iterator strEnd(insStrIt->end());
+	for(uint32_t i = 0; i < end; ++i) {
+		itemPrefixStrings.clear();
+		itemSuffixStrings.clear();
+		std::unordered_set<Node*> mySuffixNodes;
+		stringsFactory(i, itemPrefixStrings, itemSuffixStrings);
+		for(std::string str : itemPrefixStrings) {
+			std::string itemStr = str;
+			if (!m_caseSensitive) {
+				str = sserialize::unicode_to_lower(str);
+			}
+			Node * n = at(str.cbegin(), str.cend());
 			#pragma omp critical
-			{strIdToExactNodes[m_prefixStrings[i]].insert( at(strIt, strEnd) );}
-			if (m_isSuffixTrie) {
-				while (strIt != strEnd) {
-					Node * node = nextSuffixNode(strIt, strEnd);
-					#pragma omp critical
-					{strIdToSubStrNodes[m_prefixStrings[i]].insert( node );}
+			{
+				strIdToExactNodes[itemStr].insert(n);
+			}
+			if (m_addTransDiacs) {
+				transLiterator.transliterate(str);
+				#pragma omp critical
+				{
+					strIdToExactNodes[itemStr].insert(n);
 				}
 			}
 		}
-		#pragma omp atomic
-		++count;
 		
-		if (count % 100 == 0) {
+		for(std::string str : itemSuffixStrings) {
+			std::string itemStr = str;
+			if (!m_caseSensitive) {
+				str = sserialize::unicode_to_lower(str);
+			}
+			std::string::const_iterator strIt(str.cbegin());
+			std::string::const_iterator strEnd(str.cend());
+			while (strIt != strEnd) {
+				mySuffixNodes.insert( nextSuffixNode(strIt, strEnd) );
+			}
+			if (m_addTransDiacs) {
+				transLiterator.transliterate(str);
+				std::string::const_iterator strIt(str.cbegin());
+				std::string::const_iterator strEnd(str.cend());
+				while (strIt != strEnd) {
+					mySuffixNodes.insert( nextSuffixNode(strIt, strEnd) );
+				}
+			}
 			#pragma omp critical
-			progressInfo(count);
+			{
+				strIdToSubStrNodes[itemStr].insert(mySuffixNodes.cbegin(), mySuffixNodes.cend());
+			}
 		}
+		progressInfo(i);
 	}
 	progressInfo.end();
 
@@ -429,202 +396,6 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	}
 	return true;
 }
-
-
-template<typename IndexStorageContainer>
-template<typename T_ITEM_FACTORY, typename T_ITEM>
-bool BaseTrie<IndexStorageContainer>::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory) {
-	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes;
-	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes;
-	
-	if (!trieFromStringsFactory<T_ITEM_FACTORY, T_ITEM>(stringsFactory, strIdToSubStrNodes, strIdToExactNodes)) {
-		return false;
-	}
-	
-	//Now add the items
-	ProgressInfo progressInfo;
-	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::fromStringsFactory::insertItems");
-	uint32_t count = 0;
-	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
-		std::unordered_set<Node*> exactNodes;
-		std::unordered_set<Node*> suffixNodes;
-		T_ITEM item = *itemIt;
-		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
-			if (strIdToExactNodes.count(*itemStrsIt)) {
-				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
-			}
-			else {
-				std::cout << "ERROR: No exact node for item string" << std::endl;
-			}
-			if (strIdToSubStrNodes.count(*itemStrsIt)) {
-				suffixNodes.insert(strIdToSubStrNodes[*itemStrsIt].begin(), strIdToSubStrNodes[*itemStrsIt].end());
-			}
-		}
-		
-		for(typename std::unordered_set<Node*>::iterator esit = exactNodes.begin(); esit != exactNodes.end(); ++esit) {
-			(*esit)->exactValues.insert((*esit)->exactValues.end(), count);
-		}
-		for(typename std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
-			(*it)->subStrValues.insert((*it)->subStrValues.end(), count);
-		}
-
-		progressInfo(++count);
-	}
-	progressInfo.end();
-	std::cout << std::endl;
-	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::fromStringsFactory::insertItems" << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-	
-/** This function sets the DB the trie uses and creates the trie out of the DB data
-  * It does so in 3 Steps:
-  * 1. Create trie nodes with all the strings in the db's string table
-  * 2. Gather for every string the end node (multiple end nodes for suffix)
-  * 3. Add the item ids to the nodes by iterating over them, the string ids will tell where to put the ids
-  *
-  **/
-template<typename IndexStorageContainer>
-template<typename ItemType>
-bool BaseTrie<IndexStorageContainer>::setDB(const StringsItemDBWrapper< ItemType >& db) {
-	clear();
-	ProgressInfo progressInfo;
-	
-	DiacriticRemover transLiterator;
-	if (m_addTransDiacs) {
-		UErrorCode status = transLiterator.init();
-		if (U_FAILURE(status)) {
-			std::cerr << "Failed to create translitorated on request: " << u_errorName(status) << std::endl;
-			return false;
-		}
-	}
-	{
-		m_prefixStrings.insert(m_prefixStrings.end(), db.strIdToStr().cbegin(), db.strIdToStr().cend());
-		std::sort(m_prefixStrings.begin(), m_prefixStrings.end());
-	}
-	
-	//This is the first part (create the trie)
-	progressInfo.begin(db.strIdToStr().size());
-	uint32_t count = 0;
-	for(std::vector<std::string>::const_iterator strsIt = db.strIdToStr().begin(); strsIt != db.strIdToStr().end(); ++strsIt) {
-		std::vector<std::string> strs;
-		if (m_caseSensitive)
-			strs.push_back(*strsIt);
-		else
-			strs.push_back( unicode_to_lower(*strsIt) );
-		
-		if (m_addTransDiacs) {
-			strs.push_back( strs.back() );
-			transLiterator.transliterate(strs.back());
-		}
-
-		for(std::vector<std::string>::const_iterator it = strs.begin(); it != strs.end(); ++it) {
-			at(it->begin(), it->end());
-			if (m_isSuffixTrie) {
-				std::string::const_iterator strIt = it->begin();
-				std::string::const_iterator strEnd = it->end();
-				while (strIt != strEnd) {
-					nextSuffixNode(strIt, strEnd);
-				}
-			}
-		}
-		progressInfo(++count, "BaseTrie::setDB::createTrie");
-	}
-	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::setDB::createTrie" << std::endl;
-		return false;
-	}
-
-	//get all nodes for all strings
-	std::unordered_map<unsigned int, std::set<Node*> > strIdToSubStrNodes; strIdToSubStrNodes.reserve(db.strIdToStr().size());
-	std::unordered_map<unsigned int, std::set<Node*> > strIdToExactNodes; strIdToExactNodes.reserve(db.strIdToStr().size());
-	
-	progressInfo.begin(db.strIdToStr().size());
-	count = 0;
-	#pragma omp parallel for 
-	for(size_t i = 0; i <  db.strIdToStr().size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
-		const std::string & dbStr = db.strIdToStr().at(i);
-		std::vector<std::string> strs;
-		if (m_caseSensitive)
-			strs.push_back(dbStr);
-		else
-			strs.push_back( unicode_to_lower(dbStr) );
-		
-		if (m_addTransDiacs) {
-			strs.push_back( strs.back() );
-			transLiterator.transliterate(strs.back());
-		}
-
-		
-		for(std::vector<std::string>::const_iterator insStrIt = strs.begin(); insStrIt != strs.end(); ++insStrIt) {
-			std::string::const_iterator strIt(insStrIt->begin());
-			std::string::const_iterator strEnd(insStrIt->end());
-			#pragma omp critical
-			{strIdToExactNodes[i].insert( at(strIt, strEnd) );}
-			if (m_isSuffixTrie) {
-				while (strIt != strEnd) {
-					Node * node = nextSuffixNode(strIt, strEnd);
-					#pragma omp critical
-					{strIdToSubStrNodes[i].insert( node );}
-				}
-			}
-		}
-		#pragma omp atomic
-		count++;
-		progressInfo(count, "BaseTrie::setDB::findStringNodes");
-	}
-	progressInfo.end("BaseTrie::setDB::findStringNodes");
-
-	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::setDB::findStringNodes" << std::endl;
-		return false;
-	}
-
-// 	assert( m_root->parent() == 0 );
-	//Now add the items
-	
-	progressInfo.begin(db.size());
-	count = 0;
-	for(size_t i = 0; i < db.size(); i++) {
-		std::vector<uint32_t> itemStrs( db.itemStringIDs(i) );
-		std::set<Node*> exactNodes;
-		std::set<Node*> suffixNodes;
-		for(std::vector<uint32_t>::const_iterator itemStrsIt = itemStrs.begin(); itemStrsIt != itemStrs.end(); ++itemStrsIt) {
-			if (strIdToExactNodes.count(*itemStrsIt)) {
-				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
-			}
-			else {
-				std::cout << "ERROR: No exact node for item string" << std::endl;
-			}
-			if (strIdToSubStrNodes.count(*itemStrsIt)) {
-				suffixNodes.insert(strIdToSubStrNodes[*itemStrsIt].begin(), strIdToSubStrNodes[*itemStrsIt].end());
-			}
-		}
-		
-		for(typename std::set<Node*>::iterator esit = exactNodes.begin(); esit != exactNodes.end(); ++esit) {
-			(*esit)->exactValues.insert((*esit)->exactValues.end(), i);
-		}
-		for(typename std::set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
-			(*it)->subStrValues.insert((*it)->subStrValues.end(), i);
-		}
-		
-		++count;
-		progressInfo(count, "BaseTrie::setDB::insertItems");
-	}
-	progressInfo.end("BaseTrie::setDB::insertItems");
-	std::cout << std::endl;
-	if (!consistencyCheck()) {
-		std::cout << "Trie is broken after BaseTrie::setDB::insertItems" << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
 
 //------------------------Completion functions-------------------------------->
 

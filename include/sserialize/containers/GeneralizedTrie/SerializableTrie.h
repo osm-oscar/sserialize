@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_SERIALIZABLE_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_SERIALIZABLE_TRIE_H
 #include <sserialize/containers/GeneralizedTrie/BaseTrie.h>
+#include <sserialize/utility/printers.h>
 
 namespace sserialize {
 namespace GeneralizedTrie {
@@ -65,7 +66,7 @@ protected:
 	bool checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticNode, sserialize::Static::GeneralizedTrie& staticTrie, StringCompleter::SupportedQuerries sqtype);
 public:
 	SerializableTrie() {}
-	SerializableTrie(bool caseSensitive, bool suffixTrie) : MyBaseClass(caseSensitive, suffixTrie) {}
+	SerializableTrie(bool caseSensitive) : MyBaseClass(caseSensitive) {}
 	virtual ~SerializableTrie() {}
 	void swap(MyBaseClass & other) { MyBaseClass::swap(other); }
 	
@@ -124,6 +125,8 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 			std::cout << "FATAL: ExactIndex broken at:" << std::endl;
 			curNode->dump();
 			curStaticNode.dump();
+			std::cout << "SHOULD: " << curNode->exactValues << std::endl;
+			std::cout << "IS: " << idx << std::endl;
 			return false;
 		}
 	}
@@ -135,6 +138,8 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 			std::cout << "FATAL: PrefixIndex broken at:" << std::endl;
 			curNode->dump();
 			curStaticNode.dump();
+			std::cout << "SHOULD: " << destination << std::endl;
+			std::cout << "IS: " << idx << std::endl;
 			return false;
 		}
 	}
@@ -146,6 +151,8 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 			std::cout << "FATAL: SuffixIndex broken at:" << std::endl;
 			curNode->dump();
 			curStaticNode.dump();
+			std::cout << "SHOULD: " << s << std::endl;
+			std::cout << "IS: " << idx << std::endl;
 			return false;
 		}
 	}
@@ -158,6 +165,8 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 			std::cout << "FATAL: SuffixPrefixIndex broken at:" << std::endl;
 			curNode->dump();
 			curStaticNode.dump();
+			std::cout << "SHOULD: " << destination << std::endl;
+			std::cout << "IS: " << idx << std::endl;
 			return false;
 		}
 	}

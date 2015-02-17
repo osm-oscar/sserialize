@@ -30,6 +30,7 @@ protected:
 protected:
 	sserialize::MmappedMemory<uint32_t> exactIndicesMem;
 	sserialize::MmappedMemory<uint32_t> suffixIndicesMem;
+	bool m_hasSuffixes;
 
 private:
 
@@ -42,57 +43,51 @@ private:
 	SinglePassTrie & operator=(const SinglePassTrie & other);
 public:
 	SinglePassTrie();
-	SinglePassTrie(bool caseSensitive, bool suffixTrie);
+	SinglePassTrie(bool caseSensitive);
 	virtual ~SinglePassTrie();
 	void swap(MyBaseClass::MyBaseClass & other);
 	
-	template<typename ItemType>
-	bool setDB(const StringsItemDBWrapper< ItemType >& db, sserialize::MmappedMemoryType mt);
-	
-	template<typename T_ITEM_FACTORY, typename T_ITEM>
-	bool fromStringsFactory(const T_ITEM_FACTORY& stringsFactory, sserialize::MmappedMemoryType mt);
+	template<typename T_ITEM_FACTORY>
+	bool fromStringsFactory(const T_ITEM_FACTORY& stringsFactory, const uint32_t begin, const uint32_t end, sserialize::MmappedMemoryType mt);
 	
 	void createStaticTrie(GeneralizedTrieCreatorConfig & config);
 	
 	using MyBaseClass::trieSerializationProblemFixer;
 };
 
-template<typename ItemType>
-bool SinglePassTrie::setDB(const StringsItemDBWrapper< ItemType >& db, MmappedMemoryType mt) {
-	StringsItemDBWrapperStringsFactory<ItemType> stringsFactory(db);
-	return fromStringsFactory<StringsItemDBWrapperStringsFactory<ItemType>, typename StringsItemDBWrapperStringsFactory<ItemType>::value_type>(stringsFactory, mt);
-}
 
-template<typename T_ITEM_FACTORY, typename T_ITEM>
-bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, MmappedMemoryType mt) {
+template<typename T_ITEM_FACTORY>
+bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, const uint32_t begin, const uint32_t end, MmappedMemoryType mt) {
+	StringsContainer itemPrefixStrings, itemSuffixStrings;
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToSubStrNodes;
 	std::unordered_map<std::string, std::unordered_set<Node*> > strIdToExactNodes;
 	uint64_t exactStorageNeed = 0;
 	uint64_t suffixStorageNeed = 0;
 	
-	if (!MyBaseClass::MyBaseClass::trieFromStringsFactory<T_ITEM_FACTORY, T_ITEM>(stringsFactory, strIdToSubStrNodes, strIdToExactNodes)) {
+	if (!MyBaseClass::MyBaseClass::trieFromStringsFactory<T_ITEM_FACTORY>(stringsFactory, begin, end, strIdToSubStrNodes, strIdToExactNodes)) {
 		std::cout << "Failed to create trie" << std::endl;
 		return false;
 	}
 	
 	ProgressInfo progressInfo;
-	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "BaseTrie::fromStringsFactory::calculating storage need");
-	uint32_t count = 0;
+	progressInfo.begin(end-begin, "BaseTrie::fromStringsFactory::calculating storage need");
 	std::unordered_set<Node*> exactNodes;
 	std::unordered_set<Node*> suffixNodes;
-	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
-		T_ITEM item = *itemIt;
-		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
-			if (strIdToExactNodes.count(*itemStrsIt)) {
-				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
-				suffixNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
-			}
-			else {
-				std::cout << "ERROR: No exact node for item string" << std::endl;
-			}
-			if (strIdToSubStrNodes.count(*itemStrsIt)) {
-				suffixNodes.insert(strIdToSubStrNodes[*itemStrsIt].begin(), strIdToSubStrNodes[*itemStrsIt].end());
-			}
+	for(uint32_t i(0); i < end; ++i) {
+		exactNodes.clear();
+		suffixNodes.clear();
+		itemPrefixStrings.clear();
+		itemSuffixStrings.clear();
+		stringsFactory(i, itemPrefixStrings, itemSuffixStrings);
+		for(const std::string & str : itemPrefixStrings) {
+			const std::unordered_set<Node*> & v = strIdToExactNodes.at(str);
+			exactNodes.insert(v.begin(), v.end());
+			suffixNodes.insert(v.begin(), v.end());
+		}
+		
+		for(const std::string & str : itemSuffixStrings) {
+			const std::unordered_set<Node*> & v = strIdToSubStrNodes.at(str);
+			suffixNodes.insert(v.begin(), v.end());
 		}
 		
 		exactStorageNeed += exactNodes.size();
@@ -104,9 +99,10 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, M
 		for(std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
 			(*it)->subStrValues.reserve((*it)->subStrValues.capacity()+1);
 		}
-		exactNodes.clear();
-		suffixNodes.clear();
-		progressInfo(++count);
+		if (suffixNodes.size()) {
+			m_hasSuffixes = true;
+		}
+		progressInfo(i);
 	}
 	progressInfo.end();
 	std::cout << std::endl;
@@ -130,37 +126,38 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, M
 			suffixIndicesPtr = suffixIndicesPtr+cap;
 		};
 		m_root->mapDepthFirst(indexStorageDistributor);
+		assert(exactIndicesPtr == exactIndicesMem.begin()+exactStorageNeed);
+		assert(suffixIndicesPtr == suffixIndicesMem.begin()+suffixStorageNeed);
 	}
 	std::cout << "Distributed memory to nodes" << std::endl;
 	
 	
-	progressInfo.begin(stringsFactory.end()-stringsFactory.begin(), "SinglePassTrie::fromStringsFactory::popluating exact/suffix index");
-	count = 0;
-	for(typename T_ITEM_FACTORY::const_iterator itemIt(stringsFactory.begin()), itemEnd(stringsFactory.end()); itemIt != itemEnd; ++itemIt) {
-		T_ITEM item = *itemIt;
-		for(typename T_ITEM::const_iterator itemStrsIt(item.begin()), itemStrsEnd(item.end()); itemStrsIt != itemStrsEnd; ++itemStrsIt) {
-			if (strIdToExactNodes.count(*itemStrsIt)) {
-				exactNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
-				suffixNodes.insert(strIdToExactNodes[*itemStrsIt].begin(), strIdToExactNodes[*itemStrsIt].end());
-			}
-			else {
-				std::cout << "ERROR: No exact node for item string" << std::endl;
-			}
-			if (strIdToSubStrNodes.count(*itemStrsIt)) {
-				suffixNodes.insert(strIdToSubStrNodes[*itemStrsIt].begin(), strIdToSubStrNodes[*itemStrsIt].end());
-			}
+	progressInfo.begin(end-begin, "SinglePassTrie::fromStringsFactory::popluating exact/suffix index");
+	for(uint32_t i = 0; i < end; ++i) {
+		exactNodes.clear();
+		suffixNodes.clear();
+		itemPrefixStrings.clear();
+		itemSuffixStrings.clear();
+		stringsFactory(i, itemPrefixStrings, itemSuffixStrings);
+		for(const std::string & str : itemPrefixStrings) {
+			const std::unordered_set<Node*> & v = strIdToExactNodes.at(str);
+			exactNodes.insert(v.begin(), v.end());
+			suffixNodes.insert(v.begin(), v.end());
+		}
+		
+		for(const std::string & str : itemSuffixStrings) {
+			const std::unordered_set<Node*> & v = strIdToSubStrNodes.at(str);
+			suffixNodes.insert(v.begin(), v.end());
 		}
 		
 		for(std::unordered_set<Node*>::iterator esit = exactNodes.begin(); esit != exactNodes.end(); ++esit) {
-			(*esit)->exactValues.push_back(count);
+			(*esit)->exactValues.push_back(i);
 		}
 		for(std::unordered_set<Node*>::iterator it = suffixNodes.begin(); it != suffixNodes.end(); ++it) {
-			(*it)->subStrValues.push_back(count);
+			(*it)->subStrValues.push_back(i);
 		}
-		exactNodes.clear();
-		suffixNodes.clear();
 		
-		progressInfo(++count);
+		progressInfo(i);
 	}
 	progressInfo.end();
 	

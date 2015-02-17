@@ -4,9 +4,9 @@ namespace sserialize {
 namespace GeneralizedTrie {
 
 
-SinglePassTrie::SinglePassTrie() {}
+SinglePassTrie::SinglePassTrie() : m_hasSuffixes(false) {}
 
-SinglePassTrie::SinglePassTrie(bool caseSensitive, bool suffixTrie) : MyBaseClass(caseSensitive, suffixTrie) {}
+SinglePassTrie::SinglePassTrie(bool caseSensitive) : MyBaseClass(caseSensitive), m_hasSuffixes(false) {}
 
 SinglePassTrie::~SinglePassTrie() {}
 
@@ -48,7 +48,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 			nodeInfo.prefixIndexPtr = config.indexFactory->addIndex(node->exactValues, &ok);
 			idxTypes |= Static::TrieNodePrivate::IT_PREFIX;
 		}
-		if (isSuffixTrie()) {
+		{
 			std::vector<ItemSetContainer> subStrIndices;
 			subStrIndices.reserve(node->children.size()+1);
 			if (idxTypes & Static::TrieNodePrivate::IT_SUFFIX)
@@ -74,7 +74,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 			nodeInfo.suffixPrefixIndexPtr = nodeInfo.suffixIndexPtr;
 			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
 		}
-		else if (isSuffixTrie()) {
+		else {
 			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
 			nodeInfo.suffixPrefixIndexPtr = nodeInfo.prefixIndexPtr;
 		}
@@ -174,10 +174,12 @@ void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 	headerInfo.version = 1;
 	headerInfo.depth = getDepth();
 	headerInfo.trieOptions = Static::GeneralizedTrie::STO_NONE;
-	if (m_caseSensitive)
+	if (m_caseSensitive) {
 		headerInfo.trieOptions |= Static::GeneralizedTrie::STO_CASE_SENSITIVE;
-	if (m_isSuffixTrie)
+	}
+	if (m_hasSuffixes) {
 		headerInfo.trieOptions |= Static::GeneralizedTrie::STO_SUFFIX;
+	}
 	headerInfo.nodeType = config.nodeType;
 	headerInfo.longestString = 0;
 	headerInfo.numberOfNodes = m_nodeCount;
