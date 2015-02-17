@@ -24,10 +24,10 @@ void FlatTrie::createStaticFlatTrie(FlatGSTConfig & config) {
 	std::vector<std::string> trieStrings;
 	
 	if (m_caseSensitive) {
-		trieStrings = m_strings;
+		trieStrings = m_prefixStrings;
 	}
 	else {
-		for(std::vector<std::string>::const_iterator it = m_strings.begin(); it != m_strings.end(); ++it) {
+		for(std::vector<std::string>::const_iterator it = m_prefixStrings.begin(); it != m_prefixStrings.end(); ++it) {
 			trieStrings.push_back( unicode_to_lower(*it) );
 		}
 	}

@@ -29,7 +29,7 @@ protected: //variables
 	uint32_t m_count;
 	uint32_t m_nodeCount;
 	Node * m_root;
-	std::vector<std::string> m_strings;
+	std::vector<std::string> m_prefixStrings;
 	bool m_caseSensitive;
 	bool m_addTransDiacs;
 	bool m_isSuffixTrie;
@@ -160,7 +160,7 @@ BaseTrie<IndexStorageContainer>::swap( BaseTrie & other) {
 	swap(m_count, other.m_count);
 	swap(m_nodeCount, other.m_nodeCount);
 	swap(m_root, other.m_root);
-	swap(m_strings, other.m_strings);
+	swap(m_prefixStrings, other.m_prefixStrings);
 	swap(m_caseSensitive, other.m_caseSensitive);
 	swap(m_addTransDiacs, other.m_addTransDiacs);
 	swap(m_isSuffixTrie, other.m_isSuffixTrie);
@@ -342,14 +342,14 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 			progressInfo(++count);
 		}
 		progressInfo.end();
-		m_strings = std::vector<std::string>(strings.begin(), strings.end());
-		std::sort(m_strings.begin(), m_strings.end());
+		m_prefixStrings = std::vector<std::string>(strings.begin(), strings.end());
+		std::sort(m_prefixStrings.begin(), m_prefixStrings.end());
 	}
 	
 	//This is the first part (create the trie)
-	progressInfo.begin(m_strings.size(), "BaseTrie::trieFromStringsFactory: Creating Trie form strings");
+	progressInfo.begin(m_prefixStrings.size(), "BaseTrie::trieFromStringsFactory: Creating Trie form strings");
 	uint32_t count = 0;
-	for(std::vector<std::string>::const_iterator strsIt(m_strings.cbegin()); strsIt != m_strings.cend(); ++strsIt) {
+	for(std::vector<std::string>::const_iterator strsIt(m_prefixStrings.cbegin()); strsIt != m_prefixStrings.cend(); ++strsIt) {
 		std::vector<std::string> strs;
 		if (m_caseSensitive)
 			strs.push_back(*strsIt);
@@ -381,18 +381,18 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	}
 
 	//get all nodes for all strings
-	strIdToSubStrNodes.reserve(m_strings.size());
-	strIdToExactNodes.reserve(m_strings.size());
+	strIdToSubStrNodes.reserve(m_prefixStrings.size());
+	strIdToExactNodes.reserve(m_prefixStrings.size());
 	
-	progressInfo.begin(m_strings.size(), "BaseTrie::trieFromStringsFactory: Finding String->node mappings" );
+	progressInfo.begin(m_prefixStrings.size(), "BaseTrie::trieFromStringsFactory: Finding String->node mappings" );
 	count = 0;
 	#pragma omp parallel for 
-	for(size_t i = 0; i <  m_strings.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
+	for(size_t i = 0; i <  m_prefixStrings.size(); ++i) { //we need to do it like that due to the parallelisation (map::iterator does not work here)
 		std::vector<std::string> strs;
 		if (m_caseSensitive)
-			strs.push_back(m_strings[i]);
+			strs.push_back(m_prefixStrings[i]);
 		else
-			strs.push_back( unicode_to_lower(m_strings[i]) );
+			strs.push_back( unicode_to_lower(m_prefixStrings[i]) );
 		
 		if (m_addTransDiacs) {
 			strs.push_back( strs.back() );
@@ -404,12 +404,12 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 			std::string::const_iterator strIt(insStrIt->begin());
 			std::string::const_iterator strEnd(insStrIt->end());
 			#pragma omp critical
-			{strIdToExactNodes[m_strings[i]].insert( at(strIt, strEnd) );}
+			{strIdToExactNodes[m_prefixStrings[i]].insert( at(strIt, strEnd) );}
 			if (m_isSuffixTrie) {
 				while (strIt != strEnd) {
 					Node * node = nextSuffixNode(strIt, strEnd);
 					#pragma omp critical
-					{strIdToSubStrNodes[m_strings[i]].insert( node );}
+					{strIdToSubStrNodes[m_prefixStrings[i]].insert( node );}
 				}
 			}
 		}
@@ -503,8 +503,8 @@ bool BaseTrie<IndexStorageContainer>::setDB(const StringsItemDBWrapper< ItemType
 		}
 	}
 	{
-		m_strings.insert(m_strings.end(), db.strIdToStr().cbegin(), db.strIdToStr().cend());
-		std::sort(m_strings.begin(), m_strings.end());
+		m_prefixStrings.insert(m_prefixStrings.end(), db.strIdToStr().cbegin(), db.strIdToStr().cend());
+		std::sort(m_prefixStrings.begin(), m_prefixStrings.end());
 	}
 	
 	//This is the first part (create the trie)
