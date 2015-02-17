@@ -340,68 +340,6 @@ sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
 	return m_regionBoundaries.at(pos);
 }
 
-std::ostream & GeoHierarchy::printStats(std::ostream & out) const {
-	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
-	uint32_t largestCellSize = 0;
-	uint32_t largestCellId = 0;
-	uint32_t smallestCellSize = 0xFFFFFFFF;
-	uint32_t smallestCellId = 0;
-	uint32_t deepestCellSize = 0;
-	uint32_t deepestCellId = 0;
-	uint32_t highestCellSize = 0xFFFFFFFF; //highest in the gh => smallest number of parents
-	uint32_t highestCellId = 0;
-	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
-		uint32_t cellItemCount = cellItemsCount(i);
-		uint32_t cellParentCount = cellParentsSize(i);
-		cellItemSizes[i] = cellItemCount;
-		if (largestCellSize < cellItemCount) {
-			largestCellSize = cellItemCount;
-			largestCellId = i;
-		}
-		if (smallestCellSize > cellItemCount) {
-			smallestCellSize = cellItemCount;
-			smallestCellId = i;
-		}
-		if (cellParentCount > deepestCellSize) {
-			deepestCellSize = cellParentCount;
-			deepestCellId = i;
-		}
-		if (cellParentCount < highestCellSize) {
-			highestCellSize = cellParentCount;
-			highestCellId = i;
-		}
-	}
-	std::sort(cellItemSizes.begin(), cellItemSizes.end());
-	double cs_mean = sserialize::statistics::mean(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
-	double cs_variance = sserialize::statistics::variance(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
-	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
-	out << "regions.size()=" << regionSize() << std::endl;
-	out << "regionPtrs.size()=" << regionPtrSize() << std::endl;
-	out << "cells.size()=" << cellSize() << std::endl;
-	out << "cellPtrs.size()=" << cellPtrs().size() << std::endl;
-	out << "total data size=" << getSizeInBytes() << std::endl;
-	out << "regions data size=" << m_regions.getSizeInBytes() << std::endl;
-	out << "region ptr data size=" << m_regionPtrs.getSizeInBytes() << std::endl;
-	out << "cell data size=" << m_cells.getSizeInBytes() << std::endl;
-	out << "cell ptr data size=" << m_cellPtrs.getSizeInBytes() << std::endl;
-	out << "Cell size info:\n";
-	out << "\tmedian: " << cellItemSizes.at(cellItemSizes.size()/2) << "\n";
-	out << "\tmin: " << cellItemSizes.front() << "\n";
-	out << "\tmax: " << cellItemSizes.back() << "\n";
-	out << "\tmean: " << cs_mean << "\n";
-	out << "\tvariance: " << cs_variance << "\n";
-	out << "\tsmallest: " << smallestCellSize << "\n";
-	out << "\tlargest: " << largestCellSize << "\n";
-	out << "\tid of largest: " << largestCellId << "\n";
-	out << "\tid of smallest: " << smallestCellId << "\n";
-	out << "\tfewest parents: " << highestCellSize << "\n";
-	out << "\tmost parents: " << deepestCellSize << "\n";
-	out << "\tid with fewest parents: " << highestCellId << "\n";
-	out << "\tid with most parents: " << deepestCellId << "\n";
-	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
-	return out;
-}
-
 //TODO:implement sparse SubSet creation
 SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
 	SubSet::Node * rootNode = 0;
@@ -525,6 +463,79 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unor
 
 }//end namespace detail
 
+std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const {
+	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
+	std::vector<uint32_t> cellDepths(cellSize(), 0);
+	
+	{
+		struct MyCellDeptFunc {
+			std::vector<uint32_t> & cellDepths;
+			const sserialize::Static::ItemIndexStore & store;
+			const sserialize::Static::spatial::GeoHierarchy * ghPtr;
+			void calc(const Region & r, uint32_t depth) {
+				uint32_t cellIdxPtr = r.cellIndexPtr();
+				sserialize::ItemIndex cellIdx = store.at(cellIdxPtr);
+				for(uint32_t x : cellIdx) {
+					uint32_t & y = cellDepths.at(x);
+					y = std::max<uint32_t>(y, depth);
+				}
+				for(uint32_t i(0), s(r.childrenSize()); i < s; ++i) {
+					calc(ghPtr->region(r.child(i)), depth+1);
+				}
+			}
+		};
+		MyCellDeptFunc mcdf = { .cellDepths = cellDepths, .store = store, .ghPtr = this};
+		mcdf.calc(rootRegion(), 0);
+	}
+	
+	uint32_t largestCellSize = 0;
+	uint32_t largestCellId = 0;
+	uint32_t smallestCellSize = 0xFFFFFFFF;
+	uint32_t smallestCellId = 0;
+	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
+		uint32_t cellItemCount = cellItemsCount(i);
+		cellItemSizes[i] = cellItemCount;
+		if (largestCellSize < cellItemCount) {
+			largestCellSize = cellItemCount;
+			largestCellId = i;
+		}
+		if (smallestCellSize > cellItemCount) {
+			smallestCellSize = cellItemCount;
+			smallestCellId = i;
+		}
+	}
+	
+	std::sort(cellDepths.begin(), cellDepths.end());
+	std::sort(cellItemSizes.begin(), cellItemSizes.end());
+	double cs_mean = sserialize::statistics::mean(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
+	double cs_variance = sserialize::statistics::variance(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
+	double cd_mean = sserialize::statistics::mean(cellDepths.cbegin(), cellDepths.cend(), (double)0);
+	double cd_variance = sserialize::statistics::variance(cellDepths.cbegin(), cellDepths.cend(), (double)0);
+	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
+	out << "regions.size()=" << regionSize() << std::endl;
+	out << "regionPtrs.size()=" << regionPtrSize() << std::endl;
+	out << "cells.size()=" << cellSize() << std::endl;
+	out << "cellPtrs.size()=" << cellPtrs().size() << std::endl;
+	out << "total data size=" << getSizeInBytes() << std::endl;
+	out << "regions data size=" << regions().getSizeInBytes() << std::endl;
+	out << "region ptr data size=" << regionPtrs().getSizeInBytes() << std::endl;
+	out << "cell data size=" << cells().getSizeInBytes() << std::endl;
+	out << "cell ptr data size=" << cellPtrs().getSizeInBytes() << std::endl;
+	out << "Cell size info:\n";
+	out << "\tmedian: " << cellItemSizes.at(cellItemSizes.size()/2) << "\n";
+	out << "\tmin: " << cellItemSizes.front() << "\n";
+	out << "\tmax: " << cellItemSizes.back() << "\n";
+	out << "\tmean: " << cs_mean << "\n";
+	out << "\tid of largest: " << largestCellId << "\n";
+	out << "\tid of smallest: " << smallestCellId << "\n";
+	out << "Cell depth info:\n";
+	out << "\tmedian: " << cellDepths.at(cellDepths.size()/2) << "\n";
+	out << "\tmin: " << cellDepths.front() << "\n";
+	out << "\tmax: " << cellDepths.back() << "\n";
+	out << "\tmean: " << cd_mean << "\n";
+	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
+	return out;
+}
 
 GeoHierarchy::Cell GeoHierarchy::cell(uint32_t id) const {
 	return Cell(id, m_priv);

@@ -76,7 +76,7 @@ std::ostream& GeoHierarchyUnclustered::printStats(std::ostream& out) const {
 	out << "GeoHierarchyCompleter\n";
 	m_ghCompleter->printStats(out);
 	out << "GeoHierarchy\n";
-	m_gh.printStats(out);
+	m_gh.printStats(out, m_store);
 	out << "GeoHierarchyUnclustered::stats--END" << std::endl;
 	return out;
 }

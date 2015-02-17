@@ -236,8 +236,6 @@ public:
 	
 	sserialize::spatial::GeoRect boundary(uint32_t id) const;
 	
-	std::ostream & printStats(std::ostream & out) const;
-	
 	SubSet subSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
 	FlatSubSet flatSubSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
 };
@@ -369,7 +367,7 @@ public:
 	
 	bool consistencyCheck(const sserialize::Static::ItemIndexStore& store) const;
 	
-	inline std::ostream & printStats(std::ostream & out) const { return m_priv->printStats(out); }
+	std::ostream & printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const;
 
 	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->subSet(cqr, sparse); }
 	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }
