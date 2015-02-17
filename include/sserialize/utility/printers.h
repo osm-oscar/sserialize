@@ -5,12 +5,31 @@
 #include <set>
 #include <deque>
 #include <sstream>
+#include <sserialize/templated/WindowedArray.h>
 
 namespace std {
 
 template<typename T1, typename T2>
 std::ostream & operator<<(std::ostream & out, const std::pair<T1, T2> & s) {
 	return out << "(" << s.first << ", " << s.second << ")";
+}
+
+template<typename T>
+std::ostream & operator<<(std::ostream & out, const sserialize::WindowedArray<T> & s) {
+	if (!s.size())
+		return out << "sserialize::WindowedArray<0>[]";
+	typename sserialize::WindowedArray<T>::const_iterator end( s.cend());
+	typename sserialize::WindowedArray<T>::const_iterator it = s.cbegin();
+	
+	out << "sserialize::WindowedArray<" << s.size() << ">[";
+	while (true) {
+		out << *it;
+		++it;
+		if (it != end)
+			out << ", ";
+		else
+			return out << "]";
+	}
 }
 
 template<typename T>
@@ -132,17 +151,22 @@ void print(std::ostream & out, const std::vector<T> & vec) {
 
 
 inline std::string prettyFormatSize(uint64_t bytes) {
-	char prefixes[] = {'N', 'K', 'M', 'G'};
-	std::stringstream ss;
-	for(int i = 3; i >= 0; --i) {
-		uint8_t shift = 10*i;
-		uint64_t tmp = bytes >> shift;
-		if (tmp) {
-			ss << tmp << prefixes[i] << "iB ";
-			bytes = bytes & ~(tmp << shift);
+	if (bytes) {
+		char prefixes[] = {'N', 'K', 'M', 'G'};
+		std::stringstream ss;
+		for(int i = 3; i >= 0; --i) {
+			uint8_t shift = 10*i;
+			uint64_t tmp = bytes >> shift;
+			if (tmp) {
+				ss << tmp << prefixes[i] << "iB ";
+				bytes = bytes & ~(tmp << shift);
+			}
 		}
+		return ss.str();
 	}
-	return ss.str();
+	else {
+		return "0 NiB";
+	}
 }
 
 
