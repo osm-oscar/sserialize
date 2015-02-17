@@ -21,8 +21,6 @@ IF(NOT CMAKE_CROSSCOMPILING)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 	find_package(ICU 4.4 REQUIRED)
 	set(OPTIONAL_SOURCES_CPP
-	containers/GeneralizedTrie/FlatTrie.cpp
-	containers/GeneralizedTrie/MultiPassTrie.cpp
 	containers/GeneralizedTrie/SinglePassTrie.cpp
 	utility/DiacriticRemover.cpp
 	)
