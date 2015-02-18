@@ -305,7 +305,7 @@ bool MmappedFile::fileExists(const std::string & fileName) {
 	return fileExistsPrivate(fileName);
 }
 
-std::size_t MmappedFile::fileSize(const std::string& fileName) {
+OffsetType MmappedFile::fileSize(const std::string& fileName) {
 	struct ::stat64 stFileInfo;
 	if (::stat64(fileName.c_str(),&stFileInfo) == 0)
 		return stFileInfo.st_size;

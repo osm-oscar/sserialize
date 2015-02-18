@@ -116,7 +116,7 @@ public:
 	static bool createCacheFile(OffsetType size, sserialize::MmappedFile & dest);
 	static bool truncateFile(const std::string & fileName, OffsetType size);
 	static bool fileExists(const std::string & fileName);
-	static std::size_t fileSize(const std::string & fileName);
+	static OffsetType fileSize(const std::string & fileName);
 	/** Not thread-safe **/
 	static std::string findLockFilePath(const std::string & fileNamePrefix, uint32_t maxTest);
 	
