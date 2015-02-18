@@ -109,6 +109,20 @@ OffsetType ItemIndexStore::getSizeInBytes() const {
 	return r;
 }
 
+UByteArrayAdapter::OffsetType ItemIndexStore::dataSize(uint32_t pos) const {
+	if (pos >= size())
+		return 0;
+	UByteArrayAdapter::OffsetType indexStart = m_index.at(pos);
+	UByteArrayAdapter::OffsetType indexLength;
+	if (pos+1 == size()) {
+		indexLength = m_data.size() - indexStart;
+	}
+	else {
+		indexLength = m_index.at(pos+1) - indexStart;
+	}
+	return indexLength;
+}
+
 UByteArrayAdapter ItemIndexStore::rawDataAt(uint32_t pos) const {
 	if (pos >= size())
 		return UByteArrayAdapter();

@@ -56,6 +56,7 @@ public:
 	uint32_t size() const;
 	ItemIndex::Types indexType() const { return m_type; }
 	IndexCompressionType compressionType() const { return m_compression; }
+	UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const;
 	UByteArrayAdapter rawDataAt(uint32_t pos) const;
 	ItemIndex at(uint32_t pos) const;
 	ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const;
@@ -86,6 +87,7 @@ public:
 	inline uint32_t size() const { return priv()->size(); }
 	inline ItemIndex::Types indexType() const { return priv()->indexType(); }
 	inline IndexCompressionType compressionType() const { return priv()->compressionType(); }
+	inline UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const { return priv()->dataSize(pos); }
 	inline UByteArrayAdapter rawDataAt(uint32_t pos) const { return priv()->rawDataAt(pos); }
 	inline ItemIndex at(uint32_t pos) const { return priv()->at(pos);}
 	inline ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const { return priv()->at(pos, realIdIndex);}
