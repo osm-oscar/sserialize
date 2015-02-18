@@ -38,11 +38,11 @@ typedef uint64_t IdType;
 #define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #else
-typedef uint32_t OffsetType;
-typedef int32_t SignedOffsetType;
-typedef uint32_t SizeType;
-typedef int32_t SignedSizeType;
-typedef uint32_t IdType;
+typedef uint64_t OffsetType;
+typedef int64_t SignedOffsetType;
+typedef uint64_t SizeType;
+typedef int64_t SignedSizeType;
+typedef uint64_t IdType;
 #define MAX_SIZE_FOR_FULL_MMAP 0x3FFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #endif
