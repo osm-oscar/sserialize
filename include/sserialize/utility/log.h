@@ -17,7 +17,7 @@ public:
 		endl, flush
 	};
 	enum LogLevel {
-		INFO, DEBUG, ERROR
+		LL_INFO, LL_DEBUG, LL_ERROR
 	};
 	static constexpr CmdTypes endl = CmdTypes::endl;
 	static constexpr CmdTypes flush = CmdTypes::flush;

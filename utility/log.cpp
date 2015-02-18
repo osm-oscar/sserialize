@@ -7,11 +7,11 @@
 
 namespace sserialize {
 
-Log info(sserialize::Log::INFO);
-Log debug(sserialize::Log::DEBUG);
-Log err(sserialize::Log::DEBUG);
+Log info(sserialize::Log::LL_INFO);
+Log debug(sserialize::Log::LL_DEBUG);
+Log err(sserialize::Log::LL_DEBUG);
 
-Log::Log() : m_defLogLevel(INFO) {
+Log::Log() : m_defLogLevel(LL_INFO) {
 #ifdef __ANDROID__
 	m_androidLogLevel = ANDROID_LOG_INFO;
 #endif
@@ -20,13 +20,13 @@ Log::Log() : m_defLogLevel(INFO) {
 Log::Log(Log::LogLevel defLevel) : m_defLogLevel(defLevel) {
 #ifdef __ANDROID__
 	switch (defLevel) {
-	case (sserialize::Log::INFO):
+	case (sserialize::Log::LL_INFO):
 		m_androidLogLevel = ANDROID_LOG_INFO;
 		break;
-	case (sserialize::Log::DEBUG):
+	case (sserialize::Log::LL_DEBUG):
 		m_androidLogLevel = ANDROID_LOG_DEBUG;
 		break;
-	case (sserialize::Log::ERROR):
+	case (sserialize::Log::LL_ERROR):
 		m_androidLogLevel = ANDROID_LOG_ERROR;
 		break;
 	default:
@@ -47,7 +47,7 @@ Log& Log::operator()(const std::string& logTag, const std::string& msg) {
 #ifdef __ANDROID__
 	__android_log_print(m_androidLogLevel, logTag.c_str(), msg.c_str(), 0);
 #else
-	if (m_defLogLevel != ERROR) {
+	if (m_defLogLevel != LL_ERROR) {
 		std::cout << logTag << ": " << msg << std::endl;
 	}
 	else {
@@ -61,7 +61,7 @@ void Log::sbufCmd(Log::CmdTypes t) {
 #ifdef __ANDROID__
 	__android_log_print(m_androidLogLevel, "", m_sbuf.str().c_str(), 0);
 #else
-	if (m_defLogLevel != ERROR) {
+	if (m_defLogLevel != LL_ERROR) {
 		std::cout << m_sbuf.str() << std::flush;
 		if (t == sserialize::Log::CmdTypes::endl) {
 			std::cout << std::endl;
