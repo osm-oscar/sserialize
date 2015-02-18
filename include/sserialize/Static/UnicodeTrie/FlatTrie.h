@@ -119,10 +119,12 @@ public:
 	StaticStringsIterator staticStringsBegin() const;
 	StaticStringsIterator staticStringsEnd() const;
 	StaticString sstr(uint32_t pos) const;
-	UByteArrayAdapter strData(const StaticString & str) const;
 	std::string strAt(const StaticString & str) const;
-	UByteArrayAdapter strData(uint32_t pos) const;
 	std::string strAt(uint32_t pos) const;
+	UByteArrayAdapter strData(const StaticString & str) const;
+	UByteArrayAdapter strData(uint32_t pos) const;
+	inline uint32_t strSize(const StaticString & str) const { return str.size(); }
+	inline uint32_t strSize(uint32_t pos) const { return strSize(sstr(pos)); }
 	uint32_t find(const std::string & str, bool prefixMatch) const;
 	Node root() const;
 	std::ostream & printStats(std::ostream & out) const;
