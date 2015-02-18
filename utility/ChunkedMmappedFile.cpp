@@ -132,8 +132,8 @@ bool ChunkedMmappedFilePrivate::do_open() {
 	m_fd = ::open(m_fileName.c_str(), proto);
 	if (m_fd < 0)
 		return false;
-	struct ::stat stFileInfo;
-	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<SizeType>( stFileInfo.st_size ) < std::numeric_limits<SizeType>::max()) {
+	struct ::stat64 stFileInfo;
+	if (::fstat64(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<SizeType>( stFileInfo.st_size ) < std::numeric_limits<SizeType>::max()) {
 		m_size = stFileInfo.st_size;
 	}
 	else {

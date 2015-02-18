@@ -53,8 +53,8 @@ bool MmappedFilePrivate::do_open() {
 	m_fd = ::open(m_fileName.c_str(), proto);
 	if (m_fd < 0)
 		return false;
-	struct ::stat stFileInfo;
-	if (::fstat(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<OffsetType>(stFileInfo.st_size) < std::numeric_limits<OffsetType>::max()) {
+	struct ::stat64 stFileInfo;
+	if (::fstat64(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<OffsetType>(stFileInfo.st_size) < std::numeric_limits<OffsetType>::max()) {
 		m_realSize = stFileInfo.st_size;
 		m_exposedSize = m_realSize;
 	}
@@ -260,8 +260,8 @@ bool createFilePrivate(const std::string & fileName, OffsetType size) {
 		::close(fd);
 		return false;
 	}
-	struct ::stat stFileInfo;
-	::fstat(fd, &stFileInfo);
+	struct ::stat64 stFileInfo;
+	::fstat64(fd, &stFileInfo);
 	::close(fd);
 	return  stFileInfo.st_size >= 0 && static_cast<OffsetType>( stFileInfo.st_size ) >= size;
 }
@@ -297,8 +297,8 @@ bool MmappedFile::truncateFile(const std::string & fileName, OffsetType size) {
 }
 
 bool fileExistsPrivate(const std::string & fileName) {
-	struct ::stat stFileInfo;
-	return (::stat(fileName.c_str(), &stFileInfo) == 0 );
+	struct ::stat64 stFileInfo;
+	return (::stat64(fileName.c_str(), &stFileInfo) == 0 );
 }
 
 bool MmappedFile::fileExists(const std::string & fileName) {
@@ -306,8 +306,8 @@ bool MmappedFile::fileExists(const std::string & fileName) {
 }
 
 std::size_t MmappedFile::fileSize(const std::string& fileName) {
-	struct ::stat stFileInfo;
-	if (::stat(fileName.c_str(),&stFileInfo) == 0)
+	struct ::stat64 stFileInfo;
+	if (::stat64(fileName.c_str(),&stFileInfo) == 0)
 		return stFileInfo.st_size;
 	else
 		return 0;
@@ -343,8 +343,8 @@ bool MmappedFile::unlinkFile(const std::string & fileName) {
 }
 
 bool MmappedFile::isDirectory(const std::string & fileName) {
-	struct ::stat stFileInfo;
-	if (::stat(fileName.c_str(),&stFileInfo) == 0)
+	struct ::stat64 stFileInfo;
+	if (::stat64(fileName.c_str(),&stFileInfo) == 0)
 		return S_ISDIR( stFileInfo.st_mode );
 	else
 		return false;
