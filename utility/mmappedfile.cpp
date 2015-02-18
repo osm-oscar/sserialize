@@ -50,7 +50,7 @@ bool MmappedFilePrivate::do_open() {
 		proto = O_RDWR;
 	if (m_fileName.size() == 0)
 		return false;
-	m_fd = ::open(m_fileName.c_str(), proto);
+	m_fd = ::open64(m_fileName.c_str(), proto);
 	if (m_fd < 0)
 		return false;
 	struct ::stat64 stFileInfo;
@@ -243,7 +243,7 @@ MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & file
 }
 
 bool createFilePrivate(const std::string & fileName, OffsetType size) {
-	int fd = ::open(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+	int fd = ::open64(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
 	if (fd == -1) {
 		return false;
 	}

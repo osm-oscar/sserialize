@@ -129,7 +129,7 @@ bool ChunkedMmappedFilePrivate::do_open() {
 		proto = O_RDWR;
 	if (m_fileName.size() == 0)
 		return false;
-	m_fd = ::open(m_fileName.c_str(), proto);
+	m_fd = ::open64(m_fileName.c_str(), proto);
 	if (m_fd < 0)
 		return false;
 	struct ::stat64 stFileInfo;
