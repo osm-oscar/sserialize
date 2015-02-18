@@ -82,7 +82,6 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, c
 		for(const std::string & str : itemPrefixStrings) {
 			const std::unordered_set<Node*> & v = strIdToExactNodes.at(str);
 			exactNodes.insert(v.begin(), v.end());
-			suffixNodes.insert(v.begin(), v.end());
 		}
 		
 		for(const std::string & str : itemSuffixStrings) {
@@ -142,7 +141,6 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, c
 		for(const std::string & str : itemPrefixStrings) {
 			const std::unordered_set<Node*> & v = strIdToExactNodes.at(str);
 			exactNodes.insert(v.begin(), v.end());
-			suffixNodes.insert(v.begin(), v.end());
 		}
 		
 		for(const std::string & str : itemSuffixStrings) {

@@ -340,11 +340,9 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 	progressInfo.begin(end-begin, "BaseTrie::trieFromStringsFactory: Finding String->node mappings" );
 	#pragma omp parallel for 
 	for(uint32_t i = 0; i < end; ++i) {
-		itemPrefixStrings.clear();
-		itemSuffixStrings.clear();
-		std::unordered_set<Node*> mySuffixNodes;
-		stringsFactory(i, itemPrefixStrings, itemSuffixStrings);
-		for(std::string str : itemPrefixStrings) {
+		StringsContainer myItemPrefixStrings, myItemSuffixStrings;
+		stringsFactory(i, myItemPrefixStrings, myItemSuffixStrings);
+		for(std::string str : myItemPrefixStrings) {
 			std::string itemStr = str;
 			if (!m_caseSensitive) {
 				str = sserialize::unicode_to_lower(str);
@@ -362,8 +360,9 @@ bool BaseTrie<IndexStorageContainer>::trieFromStringsFactory(const T_ITEM_FACTOR
 				}
 			}
 		}
-		
-		for(std::string str : itemSuffixStrings) {
+		std::unordered_set<Node*> mySuffixNodes;
+		for(std::string str : myItemSuffixStrings) {
+			mySuffixNodes.clear();
 			std::string itemStr = str;
 			if (!m_caseSensitive) {
 				str = sserialize::unicode_to_lower(str);

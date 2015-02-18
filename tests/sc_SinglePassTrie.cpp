@@ -13,19 +13,19 @@ enum { BO_TREE_CASE_SENSITIVE=0x1, BO_SUFFIX_TREE=0x2};
 template<uint32_t T_BUILD_OPTS, Static::TrieNode::Types NODE_TYPE>
 class StaticGeneralizedTrieTest: public StringCompleterTest {
 CPPUNIT_TEST_SUITE( StaticGeneralizedTrieTest );
-// CPPUNIT_TEST( testCreateStringCompleter );
+CPPUNIT_TEST( testCreateStringCompleter );
 CPPUNIT_TEST( testSupportedQuerries );
-// CPPUNIT_TEST( testCompletionECS );
-// CPPUNIT_TEST( testCompletionECI );
-// CPPUNIT_TEST( testCompletionPCS );
-// CPPUNIT_TEST( testCompletionPCI );
-// CPPUNIT_TEST( testCompletionSCS );
-// CPPUNIT_TEST( testCompletionSCI );
-// CPPUNIT_TEST( testCompletionSPCS );
-// CPPUNIT_TEST( testCompletionSPCI );
-// CPPUNIT_TEST( testStringCompleterPrivateCast );
-// CPPUNIT_TEST( testSinglePassTrieEquality );
-// CPPUNIT_TEST( testSinglePassTrieIndexEquality );
+CPPUNIT_TEST( testCompletionECS );
+CPPUNIT_TEST( testCompletionECI );
+CPPUNIT_TEST( testCompletionPCS );
+CPPUNIT_TEST( testCompletionPCI );
+CPPUNIT_TEST( testCompletionSCS );
+CPPUNIT_TEST( testCompletionSCI );
+CPPUNIT_TEST( testCompletionSPCS );
+CPPUNIT_TEST( testCompletionSPCI );
+CPPUNIT_TEST( testStringCompleterPrivateCast );
+CPPUNIT_TEST( testSinglePassTrieEquality );
+CPPUNIT_TEST( testSinglePassTrieIndexEquality );
 CPPUNIT_TEST_SUITE_END();
 private: //builds opts;
 	bool m_caseSensitive;
@@ -49,9 +49,7 @@ private:
 			if (suffixTrie) {
 				suffixStrings.insert(item.strs.cbegin(), item.strs.cend());
 			}
-			else {
-				prefixStrings.insert(item.strs.cbegin(), item.strs.cend());
-			}
+			prefixStrings.insert(item.strs.cbegin(), item.strs.cend());
 		};
 	
 		tempTrie.fromStringsFactory(derefer, 0, myDB.size(), sserialize::MM_PROGRAM_MEMORY);
@@ -61,6 +59,8 @@ private:
 protected:
 	bool setUpCompleter() {
 		createTrie(m_trie);
+		
+// 		std::cout << m_trie.complete("m", sserialize::StringCompleter::QT_SUFFIX) << std::endl;
 		
 		m_config.trieList = &m_stTrieList;
 		
@@ -154,12 +154,12 @@ int main() {
 	runner.addTest( StaticGeneralizedTrieTest<0x1, Static::TrieNode::T_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x2, Static::TrieNode::T_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x3, Static::TrieNode::T_COMPACT>::suite() );
-
+// 
 	runner.addTest( StaticGeneralizedTrieTest<0x0, Static::TrieNode::T_LARGE_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x1, Static::TrieNode::T_LARGE_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x2, Static::TrieNode::T_LARGE_COMPACT>::suite() );
 	runner.addTest( StaticGeneralizedTrieTest<0x3, Static::TrieNode::T_LARGE_COMPACT>::suite() );
-// 	runner.eventManager().popProtector();
+	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
