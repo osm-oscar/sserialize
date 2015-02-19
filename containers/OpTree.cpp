@@ -298,13 +298,22 @@ void SetOpsOpTreeParser::readString(Token & token) {
 					break;
 				}
 			}
-			else if (*m_strIt == '(' || *m_strIt == ')' || m_opMap.count(*m_strIt)) {
+			else if (*m_strIt == '(' || *m_strIt == ')') {
 				//we've read a string with spaces, check if all up to here is also part of it
 				if (lastValidStrSize >= 0 && token.tokenString.size() && token.tokenString.back() != ' ' && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend())) {
 					lastValidStrSize = token.tokenString.size();
 					lastValidStrIt = m_strIt;
 				}
 				break;
+			}
+			else if (m_opMap.count(*m_strIt)) {
+				if (token.tokenString.size() && token.tokenString.back() == ' ') {
+					break;
+				}
+				else {
+					token.tokenString += *m_strIt;
+					++m_strIt;
+				}
 			}
 			else {
 				token.tokenString += *m_strIt;
