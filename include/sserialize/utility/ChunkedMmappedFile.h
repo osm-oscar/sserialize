@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_CHUNKED_MMAPPED_FILE_H
 #define SSERIALIZE_CHUNKED_MMAPPED_FILE_H
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/templated/DirectLFUCache.h>
+#include <sserialize/templated/DirectRandomCache.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/types.h>
 #include <limits>
@@ -91,7 +91,7 @@ private:
 	uint32_t m_chunkMask;
 	
 	uint32_t m_maxOccupyCount;
-	DirectLFUCache<uint8_t*> m_cache;
+	DirectRandomCache<uint8_t*> m_cache;
 private:
 	uint8_t * do_map(const SizeType chunk);
 	
