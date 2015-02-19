@@ -976,6 +976,9 @@ UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool c
 		if (file.open()) {
 			indexAdapter = UByteArrayAdapter(file);
 		}
+		else {
+			throw sserialize::CorruptDataException("Could not open file " + fileName);
+		}
 	}
 	else {
 		if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
@@ -983,11 +986,17 @@ UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool c
 			if (file.open()) {
 				indexAdapter = UByteArrayAdapter(file);
 			}
+			else {
+				throw sserialize::CorruptDataException("Could not open file " + fileName);
+			}
 		}
 		else {
 			MmappedFile file(fileName, false);
 			if (file.open()) {
 				indexAdapter = UByteArrayAdapter(file);
+			}
+			else {
+				throw sserialize::CorruptDataException("Could not open file " + fileName);
 			}
 		}
 	}
