@@ -20,8 +20,6 @@
 #define COMPRESSED_MMAPPED_FILE_VERSION 1
 #define COMPRESSED_MMAPPED_FILE_HEADER_SIZE 12
 
-
-
 namespace sserialize {
 
 
@@ -190,13 +188,13 @@ void CompressedMmappedFilePrivate::setCacheCount(uint32_t count) {
 
 
 bool CompressedMmappedFilePrivate::do_open() {
-	std::size_t fileSize;
+	OffsetType fileSize;
 
-	m_fd = open(m_fileName.c_str(), O_RDONLY);
+	m_fd = ::open64(m_fileName.c_str(), O_RDONLY);
 	if (m_fd < 0)
 		return false;
-	struct ::stat stFileInfo;
-	if (::fstat(m_fd,&stFileInfo) == 0) {
+	struct ::stat64 stFileInfo;
+	if (::fstat64(m_fd,&stFileInfo) == 0) {
 		fileSize = stFileInfo.st_size;
 	}
 	else {
@@ -210,9 +208,9 @@ bool CompressedMmappedFilePrivate::do_open() {
 
 	
 	uint8_t headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE];
-	::lseek(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
+	::lseek64(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
 	SSERIALIZE_EQUAL_LENGTH_CHECK(COMPRESSED_MMAPPED_FILE_HEADER_SIZE, ::read(m_fd, headerData, COMPRESSED_MMAPPED_FILE_HEADER_SIZE), "sserialize::CompressedMmappedFile::open");
-	::lseek(m_fd, 0, SEEK_SET);
+	::lseek64(m_fd, 0, SEEK_SET);
 	
 	if (headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] != COMPRESSED_MMAPPED_FILE_VERSION) {
 		sserialize::err("CompressedMmappedFile::open", "Wrong version for file " + m_fileName);
@@ -287,9 +285,9 @@ bool CompressedMmappedFilePrivate::do_close() {
 	
 	//unmap the chunk index
 	
-	std::size_t fileSize;
-	struct ::stat stFileInfo;
-	if (::fstat(m_fd,&stFileInfo) == 0) {
+	OffsetType fileSize;
+	struct ::stat64 stFileInfo;
+	if (::fstat64(m_fd,&stFileInfo) == 0) {
 		fileSize = stFileInfo.st_size;
 	}
 	else

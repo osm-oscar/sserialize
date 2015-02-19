@@ -14,7 +14,6 @@
 #include <limits>
 #include <iostream>
 
-
 namespace sserialize {
 
 MmappedFilePrivate::MmappedFilePrivate(std::string filename) :
@@ -67,7 +66,7 @@ bool MmappedFilePrivate::do_open() {
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) ::mmap(0, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
+	m_data = (uint8_t*) ::mmap64(0, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
 		::close(m_fd);
@@ -247,9 +246,9 @@ bool createFilePrivate(const std::string & fileName, OffsetType size) {
 	if (fd == -1) {
 		return false;
 	}
-	off_t result = 0;
+	SignedOffsetType result = 0;
 	if (size > 0) {
-		result = ::lseek(fd, size-1, SEEK_SET);
+		result = ::lseek64(fd, size-1, SEEK_SET);
 	}
 	if (result == -1) {
 		::close(fd);

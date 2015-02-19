@@ -143,7 +143,7 @@ bool ChunkedMmappedFilePrivate::do_open() {
 		return false;
 	
 	//init the cache
-	m_cache = DirectLFUCache<uint8_t*>(size()/chunkSize() + 1, 0);
+	m_cache = DirectRandomCache<uint8_t*>(size()/chunkSize() + 1, 0);
 	
 	return true;
 }
@@ -184,11 +184,11 @@ inline uint8_t * ChunkedMmappedFilePrivate::do_map(const ChunkedMmappedFilePriva
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	off_t chunkOffSet = chunk*chunkSize(); //This will always be page aligned as a chunk has a minimum size of PAGE_SIZE
-	uint8_t * data = (uint8_t*) ::mmap(0, sizeOfChunk(chunk), mmap_proto, MAP_SHARED, m_fd, chunkOffSet);
+	ChunkedMmappedFilePrivate::SizeType chunkOffSet = chunk*chunkSize(); //This will always be page aligned as a chunk has a minimum size of PAGE_SIZE
+	uint8_t * data = (uint8_t*) ::mmap64(0, sizeOfChunk(chunk), mmap_proto, MAP_SHARED, m_fd, chunkOffSet);
 	
 	if (data == MAP_FAILED) {
-		sserialize::err("ChunkedMmappedFile", "Maping a chunk failed");
+		sserialize::err("ChunkedMmappedFile", "Mapping a chunk failed");
 		return 0;
 	}
 	return data;
@@ -274,6 +274,7 @@ void ChunkedMmappedFilePrivate::write(const uint8_t * src, const sserialize::Chu
 uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFilePrivate::SizeType chunk) {
 	uint8_t * data = m_cache[chunk]; //returns null if not set, usage will be increased by one, but also reset to zero below due to insertion
 	if (data) {
+		assert(data);
 		return data;
 	}
 	else {
@@ -286,7 +287,7 @@ uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFi
 		uint8_t * data = do_map(chunk);
 		
 		m_cache.insert(chunk, data);
-		
+		assert(data);
 		return data;
 	}
 }
