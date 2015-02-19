@@ -28,6 +28,7 @@ namespace sserialize {
 #define SSERIALIZE_SYSTEM_PAGE_SIZE 4096
 
 ///OffsetType >= SizeType >= IdType!
+//BUG:OffsetType should be signed so that off_t and OffsetType are the same, SizeType should be unsigned
 
 #ifdef __LP64__
 typedef uint64_t OffsetType;
