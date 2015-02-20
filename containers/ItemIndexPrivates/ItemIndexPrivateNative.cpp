@@ -8,8 +8,8 @@ namespace detail {
 namespace ItemIndexPrivate {
 
 ItemIndexPrivateNative::ItemIndexPrivateNative(const UByteArrayAdapter& data) :
-m_dataMem((data+sserialize::SerializationInfo<uint32_t>::length).asMemView()),
-m_size(data.getUint32(0))
+m_size(data.getUint32(0)),
+m_dataMem( UByteArrayAdapter(data, sserialize::SerializationInfo<uint32_t>::length, m_size*sizeof(uint32_t)/sizeof(uint8_t)).asMemView() )
 {}
 
 ItemIndexPrivateNative::ItemIndexPrivateNative() : m_size(0) {}
@@ -45,6 +45,13 @@ uint8_t ItemIndexPrivateNative::bpn() const {
 
 uint32_t ItemIndexPrivateNative::getSizeInBytes() const {
 	return m_dataMem.size()+SerializationInfo<uint32_t>::length;
+}
+
+UByteArrayAdapter ItemIndexPrivateNative::data() const {
+	UByteArrayAdapter ret(m_dataMem.dataBase());
+	ret.resetPtrs();
+	ret -= sserialize::SerializationInfo<uint32_t>::length;
+	return ret;
 }
 
 sserialize::ItemIndex::Types ItemIndexPrivateNative::type() const {

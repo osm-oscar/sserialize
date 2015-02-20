@@ -8,10 +8,19 @@ namespace sserialize {
 namespace detail {
 namespace ItemIndexPrivate {
 
+/** Layout:
+  *
+  * ----------------------------------------------
+  * Size|Ids*
+  * ----------------------------------------------
+  *  u32|uint32_t in native format
+  *
+  */
+
 class ItemIndexPrivateNative: public sserialize::ItemIndexPrivate {
 private:
-	UByteArrayAdapter::MemoryView m_dataMem;
 	uint32_t m_size;
+	UByteArrayAdapter::MemoryView m_dataMem;
 private:
 	inline uint32_t uncheckedAt(uint32_t pos, const uint8_t * data) const {
 		data += sizeof(uint32_t)*pos;
@@ -43,6 +52,8 @@ public:
 	virtual uint8_t bpn() const override;
 	
 	virtual uint32_t getSizeInBytes() const override;
+	
+    virtual UByteArrayAdapter data() const override;
 	
 	virtual sserialize::ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const override;
 	virtual sserialize::ItemIndexPrivate * unite(const sserialize::ItemIndexPrivate * other) const override;
