@@ -10,6 +10,10 @@ namespace sserialize {
 ItemIndexPrivate::ItemIndexPrivate() {}
 ItemIndexPrivate::~ItemIndexPrivate() {}
 
+UByteArrayAdapter ItemIndexPrivate::data() const {
+	throw sserialize::UnimplementedFunctionException("sserialize::ItemIndexPrivate::data");
+	return UByteArrayAdapter();
+}
 
 ItemIndexPrivate::const_iterator ItemIndexPrivate::cbegin() const {
 	typedef ReadOnlyAtStlIterator<const ItemIndexPrivate*, uint32_t, uint32_t> MyIt;
