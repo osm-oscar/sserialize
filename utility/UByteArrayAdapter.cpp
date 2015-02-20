@@ -33,20 +33,22 @@ bool UByteArrayAdapter::MemoryView::MemoryViewImp::flush(OffsetType len, OffsetT
 			return false;
 		}
 		len = std::min<OffsetType>(len, m_size-off);
-		m_dataBase->put(m_off, m_d+off, len);
+		m_dataBase->put(m_off+off, m_d+off, len);
 	}
 	return true;
 }
 
+UByteArrayAdapter UByteArrayAdapter::MemoryView::MemoryViewImp::dataBase() const {
+	return UByteArrayAdapter(m_dataBase, m_off, m_size);
+}
 
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
 m_priv(priv),
 m_offSet(0),
-m_len(0),
+m_len(priv->size()),
 m_getPtr(0),
 m_putPtr(0)
-{
-}
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len) :
 m_priv(priv),
@@ -554,14 +556,16 @@ UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos
 	if (pos+size > m_len) {
 		return MemoryView(0, 0, 0, false, 0);
 	}
-	if (m_priv->isContiguous()) {
-		return MemoryView(&operator[](pos), pos, size, false, m_priv.get());
+	uint8_t * data = 0;
+	bool isCopy = !m_priv->isContiguous();
+	if (isCopy) {
+		data = new uint8_t[size];
+		get(pos, data, size);
 	}
 	else {
-		uint8_t * tmp = new uint8_t[size];
-		get(pos, tmp, size);
-		return MemoryView(tmp, pos, size,true, 0);
+		data = &operator[](pos);
 	}
+	return MemoryView(data, m_offSet+pos, size, isCopy, m_priv.get());
 }
 
 const UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos, OffsetType size) const {

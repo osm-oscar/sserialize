@@ -56,6 +56,7 @@ public:
 		public:
 			MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base);
 			~MemoryViewImp();
+			UByteArrayAdapter dataBase() const;
 			inline uint8_t * get() { return m_d; }
 			inline const uint8_t * get() const { return m_d; }
 			inline OffsetType size() const { return m_size; }
@@ -84,7 +85,10 @@ public:
 		///flush up to len bytes starting from off
 		bool flush(OffsetType len, OffsetType off = 0) { return m_priv->flush(len, off); }
 		bool flush() { return flush(size()); }
+		///storage this memview is based on
+		inline UByteArrayAdapter dataBase() const { return m_priv->dataBase(); }
 	};
+	friend class MemoryView;
 	
 private:
 	/** Data is at offset, not at base address **/
