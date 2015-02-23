@@ -508,9 +508,9 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	std::sort(cellDepths.begin(), cellDepths.end());
 	std::sort(cellItemSizes.begin(), cellItemSizes.end());
 	double cs_mean = sserialize::statistics::mean(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
-	double cs_variance = sserialize::statistics::variance(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
+	double cs_stddev = sserialize::statistics::stddev(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
 	double cd_mean = sserialize::statistics::mean(cellDepths.cbegin(), cellDepths.cend(), (double)0);
-	double cd_variance = sserialize::statistics::variance(cellDepths.cbegin(), cellDepths.cend(), (double)0);
+	double cd_stddev= sserialize::statistics::stddev(cellDepths.cbegin(), cellDepths.cend(), (double)0);
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
 	out << "regions.size()=" << regionSize() << std::endl;
 	out << "regionPtrs.size()=" << regionPtrSize() << std::endl;
@@ -526,6 +526,7 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	out << "\tmin: " << cellItemSizes.front() << "\n";
 	out << "\tmax: " << cellItemSizes.back() << "\n";
 	out << "\tmean: " << cs_mean << "\n";
+	out << "\tstddev: " << cs_stddev << "\n";
 	out << "\tid of largest: " << largestCellId << "\n";
 	out << "\tid of smallest: " << smallestCellId << "\n";
 	out << "Cell depth info:\n";
@@ -533,6 +534,7 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	out << "\tmin: " << cellDepths.front() << "\n";
 	out << "\tmax: " << cellDepths.back() << "\n";
 	out << "\tmean: " << cd_mean << "\n";
+	out << "\tstddef: " << cd_stddev << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
