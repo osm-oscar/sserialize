@@ -20,6 +20,7 @@ public:
 			this->data() = 0;
 		}
 	}
+	virtual OffsetType size() const override { return m_data->size(); }
 
 	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) {
 		if (m_data->size() < size)
