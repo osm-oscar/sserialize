@@ -343,6 +343,7 @@ void SetOpsOpTreeParser::createDefaultOp(Token & token) const {
 void SetOpsOpTreeParser::initTokenizer(const std::string & parseString) {
 	m_parseString = parseString;
 	sanitize();
+	m_beforeWasTerminal = false;
 	m_strIt = m_parseString.cbegin();
 	m_strEnd = m_parseString.cend();
 }
