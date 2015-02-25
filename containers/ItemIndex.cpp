@@ -116,6 +116,10 @@ ItemIndex & ItemIndex::operator=(const ItemIndex & idx) {
 	return *this;
 }
 
+void ItemIndex::loadIntoMemory() const {
+	priv()->loadIntoMemory();
+}
+
 UByteArrayAdapter ItemIndex::data() const {
 	return priv()->data();
 }

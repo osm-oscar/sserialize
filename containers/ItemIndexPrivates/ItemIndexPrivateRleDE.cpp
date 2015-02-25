@@ -94,6 +94,10 @@ int ItemIndexPrivateRleDE::find(uint32_t id) const {
 	return sserialize::ItemIndexPrivate::find(id);
 }
 
+void ItemIndexPrivateRleDE::loadIntoMemory() {
+	UByteArrayAdapter::makeContigous(m_data);
+}
+
 UByteArrayAdapter ItemIndexPrivateRleDE::data() const {
 	UByteArrayAdapter ret(m_data);
 	ret.resetPtrs();

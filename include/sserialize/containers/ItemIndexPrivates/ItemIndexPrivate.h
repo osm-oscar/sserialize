@@ -34,6 +34,9 @@ protected:
 	void doPutInto(uint32_t* dest) const;
 	
 public:
+	///load all data into memory (only usefull if the underlying storage is not contigous)
+	virtual void loadIntoMemory();
+
 	///uses at(pos) by default
 	virtual uint32_t uncheckedAt(uint32_t pos) const;
 	///checked at

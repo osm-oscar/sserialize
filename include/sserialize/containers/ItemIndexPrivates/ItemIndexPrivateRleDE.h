@@ -141,6 +141,8 @@ public:
 	virtual int find(uint32_t id) const;
 
 public:
+	virtual void loadIntoMemory() override;
+
 	virtual UByteArrayAdapter data() const override;
 
 	virtual uint32_t at(uint32_t pos) const override;

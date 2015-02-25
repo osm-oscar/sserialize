@@ -10,6 +10,8 @@ namespace sserialize {
 ItemIndexPrivate::ItemIndexPrivate() {}
 ItemIndexPrivate::~ItemIndexPrivate() {}
 
+void ItemIndexPrivate::loadIntoMemory() {}
+
 UByteArrayAdapter ItemIndexPrivate::data() const {
 	throw sserialize::UnimplementedFunctionException("sserialize::ItemIndexPrivate::data");
 	return UByteArrayAdapter();

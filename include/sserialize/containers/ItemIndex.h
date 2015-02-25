@@ -54,6 +54,7 @@ public:
 	explicit ItemIndex(const std::deque<uint32_t> & index, const ItemIndex & realIdIndex);
 	explicit ItemIndex(const std::vector<uint32_t> & index, const ItemIndex & realIdIndex);
 	~ItemIndex();
+	void loadIntoMemory() const;
 	
 	UByteArrayAdapter data() const;
 	
