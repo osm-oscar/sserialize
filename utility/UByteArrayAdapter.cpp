@@ -564,7 +564,11 @@ UByteArrayAdapter & UByteArrayAdapter::makeContigous(UByteArrayAdapter & d) {
 	//this may be only relevant on ILP32 
 // 	#ifndef __LP64__
 	if(!d.m_priv->isContiguous()) {
+		OffsetType pP = d.m_putPtr;
+		OffsetType gP = d.m_getPtr;
 		d = UByteArrayAdapter(d.asMemView());
+		d.m_putPtr = pP;
+		d.m_getPtr = gP;
 	}
 // 	#endif
 	return d;
@@ -574,7 +578,10 @@ UByteArrayAdapter UByteArrayAdapter::makeContigous(const UByteArrayAdapter & d) 
 	//this may be only relevant on ILP32 
 // 	#ifndef __LP64__
 	if(!d.m_priv->isContiguous()) {
-		return UByteArrayAdapter(d.asMemView());
+		UByteArrayAdapter tmp(d.asMemView());
+		tmp.m_putPtr = d.m_putPtr;
+		tmp.m_getPtr = d.m_getPtr;
+		return tmp;
 	}
 // 	#endif
 	return d;
