@@ -17,14 +17,14 @@ using namespace sserialize;
 template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_TYPE>
 class ItemIndexFactoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
-CPPUNIT_TEST( testSerializedEquality );
-CPPUNIT_TEST( testSameId );
+// CPPUNIT_TEST( testSerializedEquality );
+// CPPUNIT_TEST( testSameId );
 CPPUNIT_TEST( testIdxSize );
 // CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
-CPPUNIT_TEST( testInitFromStatic );
+// CPPUNIT_TEST( testInitFromStatic );
 // CPPUNIT_TEST( testCompressionVarUint );
-CPPUNIT_TEST( testIdxFromId );
+// CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
@@ -160,10 +160,14 @@ public:
 		CPPUNIT_ASSERT_MESSAGE("compression type not set", csdb.compressionType() & Static::ItemIndexStore::IndexCompressionType::IC_LZO);
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
-			ItemIndex idx = csdb.at( m_setIds[i] );
-			std::stringstream ss;
-			ss << "Index at " << i;
-			CPPUNIT_ASSERT_MESSAGE(ss.str(), m_sets[i] == idx);
+			uint32_t idxId = m_setIds[i];
+			ItemIndex idx = csdb.at(idxId);
+			uint32_t realIndexSize =  m_sets[i].size();
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Index at", i), m_sets[i] == idx);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("IndexIndexStore.idxSize at", i), realIndexSize, sdb.idxSize(idxId));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("IndexIndexStore.idxSize at", i), realIndexSize, csdb.idxSize(idxId));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("Static::Index.size at", i), realIndexSize, idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("Index.size at", i), realIndexSize, csdb.idxSize(idxId));
 		}
 	}
 	
@@ -212,7 +216,7 @@ int main() {
 	runner.addTest(  ItemIndexFactoryTest<4047, 1001, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
-	runner.eventManager().popProtector();
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }

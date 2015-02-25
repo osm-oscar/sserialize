@@ -507,7 +507,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(3);//version
+	dest.putUint8(4);//version
 	dest.putUint8(store.indexType());
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_LZO | store.compressionType());
 	dest.putOffset(0);
@@ -559,6 +559,17 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Current size:" << dest.tellPutPtr()-beginOffset << std::endl;
+	
+	//add the index sizes table
+	{
+		sserialize::Static::ArrayCreator<uint32_t> ac(dest);
+		ac.reserveOffsets(store.size());
+		for(uint32_t i(0), s(store.size()); i < s; ++i) {
+			ac.put(store.idxSize(i));
+		}
+		ac.flush();
+	}
+	
 	if (store.compressionType() == Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN) {
 		UByteArrayAdapter htData = store.getHuffmanTreeData();
 		std::cout << "Adding huffman tree with size: " << htData.size() << std::endl;
