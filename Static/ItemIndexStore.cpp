@@ -134,7 +134,7 @@ UByteArrayAdapter ItemIndexStore::rawDataAt(uint32_t pos) const {
 	else {
 		indexLength = m_index.at(pos+1) - indexStart;
 	}
-	return UByteArrayAdapter(m_data, indexStart, indexLength);
+	return UByteArrayAdapter::makeContigous(UByteArrayAdapter(m_data, indexStart, indexLength));
 }
 
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
