@@ -169,7 +169,7 @@ T_RETURN_CONTAINER suffixStrings(const T_STRING_TYPE & str, const T_SEPARATOR_SE
 	return ss;
 }
 
-class AsciiCharEscaper {
+class AsciiCharEscaper final {
 	uint64_t m_repChars[2];
 public:
 	AsciiCharEscaper() : m_repChars{0,0} {}
@@ -201,6 +201,29 @@ public:
 				++out;
 			}
 			*out = c;
+		}
+	}
+	std::string escape(const std::string & str) const;
+};
+
+class JsonEscaper final {
+	AsciiCharEscaper m_escaper;
+	char m_escapeMap[128];
+public:
+	JsonEscaper();
+	~JsonEscaper() {}
+	template<typename T_SRC_IT, typename T_OUTPUT_IT>
+	void escape(T_SRC_IT begin, T_SRC_IT end, T_OUTPUT_IT out) const {
+		for(; begin != end; ++begin, ++out) {
+			char c = *begin;
+			if (m_escaper.escapeChar(c)) {
+				*out = '\\';
+				++out;
+				*out = m_escapeMap[(unsigned char)c];
+			}
+			else {
+				*out = c;
+			}
 		}
 	}
 	std::string escape(const std::string & str) const;

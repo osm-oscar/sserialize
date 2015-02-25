@@ -130,4 +130,24 @@ std::string AsciiCharEscaper::escape(const std::string & str) const {
 	return tmp;
 }
 
+JsonEscaper::JsonEscaper() :
+//escapes as per http://stackoverflow.com/questions/7123908/javascript-json-parser-that-tells-error-position
+m_escaper({'"', '\\', '/', '\b', '\f', '\n', '\r', '\t'})
+{
+	m_escapeMap['"'] = '"';
+	m_escapeMap['\\'] = '\\';
+	m_escapeMap['/'] = '/';
+	m_escapeMap['\b'] = 'b';
+	m_escapeMap['\f'] = 'f';
+	m_escapeMap['\n'] = 'n';
+	m_escapeMap['\r'] = 'r';
+	m_escapeMap['\t'] = 't';
+}
+
+std::string JsonEscaper::escape(const std::string & str) const {
+	std::string tmp;
+	escape(str.cbegin(), str.cend(), std::back_insert_iterator<std::string>(tmp));
+	return tmp;
+}
+
 }//end namespace
