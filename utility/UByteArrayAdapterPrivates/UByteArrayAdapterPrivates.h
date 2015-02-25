@@ -8,4 +8,5 @@
 #include "UByteArrayAdapterPrivateCompressedMmappedFile.h"
 #include "UByteArrayAdapterPrivateEmpty.h"
 #include "UByteArrayAdapterMM.h"
+#include "UByteArrayAdapterMV.h"
 #endif

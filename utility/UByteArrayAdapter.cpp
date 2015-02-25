@@ -262,6 +262,14 @@ m_getPtr(0),
 m_putPtr(0)
 {}
 
+UByteArrayAdapter::UByteArrayAdapter(const MemoryView & mem) :
+m_priv(new UByteArrayAdapterPrivateMV(mem)),
+m_offSet(0),
+m_len(mem.size()),
+m_getPtr(0),
+m_putPtr(0)
+{}
+
 UByteArrayAdapter::~UByteArrayAdapter() {}
 
 UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapter) {
@@ -550,6 +558,26 @@ UByteArrayAdapter UByteArrayAdapter::begin() const {
 
 UByteArrayAdapter UByteArrayAdapter::end() const {
 	return UByteArrayAdapter(*this, m_len);
+}
+
+UByteArrayAdapter & UByteArrayAdapter::makeContigous(UByteArrayAdapter & d) {
+	//this may be only relevant on ILP32 
+// 	#ifndef __LP64__
+	if(!d.m_priv->isContiguous()) {
+		d = UByteArrayAdapter(d.asMemView());
+	}
+// 	#endif
+	return d;
+}
+
+UByteArrayAdapter UByteArrayAdapter::makeContigous(const UByteArrayAdapter & d) {
+	//this may be only relevant on ILP32 
+// 	#ifndef __LP64__
+	if(!d.m_priv->isContiguous()) {
+		return UByteArrayAdapter(d.asMemView());
+	}
+// 	#endif
+	return d;
 }
 
 UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos, OffsetType size) {

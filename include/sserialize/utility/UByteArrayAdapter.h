@@ -70,6 +70,8 @@ public:
 	public:
 		MemoryView() {}
 		~MemoryView() {}
+		uint8_t * data() { return m_priv->get();}
+		const uint8_t * data() const { return m_priv->get();}
 		uint8_t * get() { return m_priv->get();}
 		const uint8_t * get() const { return m_priv->get();}
 		uint8_t * begin() { return get(); }
@@ -131,6 +133,7 @@ public:
 	UByteArrayAdapter(const ChunkedMmappedFile & file);
 	UByteArrayAdapter(const CompressedMmappedFile & file);
 	UByteArrayAdapter(const sserialize::MmappedMemory<uint8_t> & mem);
+	UByteArrayAdapter(const MemoryView & mem);
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
 	void zero();
@@ -331,6 +334,9 @@ public:
 	static void setTempFilePrefix(const std::string & path);
 	static void setFastTempFilePrefix(const std::string & path);
 	static void setLogFilePrefix(const std::string & path);
+	
+	static UByteArrayAdapter & makeContigous(UByteArrayAdapter & d);
+	static UByteArrayAdapter makeContigous(const UByteArrayAdapter & d);
 	
 	static inline OffsetType OffsetTypeSerializedLength() { return 5; }
 	enum {S_OffsetTypeSerializedLength=5};
