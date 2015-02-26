@@ -326,7 +326,9 @@ public:
 	UByteArrayAdapter writeToDisk(std::string fileName, bool deleteOnClose = true);
 	static UByteArrayAdapter createCache(OffsetType size, sserialize::MmappedMemoryType mmt);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
-	static UByteArrayAdapter open(const std::string & fileName);
+	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
+	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = 0xFFFFFFFFFFFFFFFF, uint8_t chunkSizeExponent = 20);
+	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
 	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
 	static std::string getTempFilePrefix();
 	static std::string getFastTempFilePrefix();

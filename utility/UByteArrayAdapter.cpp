@@ -998,48 +998,45 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 	return adap;
 }
 
-UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName) {
-	MmappedFile f(fileName, false);
-	if (!f.open()) {
-		return UByteArrayAdapter();
+UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writable, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
+	if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
+		if (chunkSizeExponent == 0) {
+			return UByteArrayAdapter( sserialize::RCPtrWrapper<UByteArrayAdapterPrivate>( new UByteArrayAdapterPrivateSeekedFile(fileName, writable) ) );
+		}
+		else {
+			ChunkedMmappedFile file(fileName, chunkSizeExponent, writable);
+			if (file.open()) {
+				return UByteArrayAdapter(file);
+			}
+			else {
+				throw sserialize::CorruptDataException("Could not open file " + fileName);
+			}
+		}
 	}
 	else {
-		return f.dataAdapter();
+		MmappedFile file(fileName, writable);
+		if (file.open()) {
+			return UByteArrayAdapter(file);
+		}
+		else {
+			throw sserialize::CorruptDataException("Could not open file " + fileName);
+		}
 	}
 }
 
 UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool compressed, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
-	UByteArrayAdapter indexAdapter;
 	if (compressed) {
 		CompressedMmappedFile file(fileName);
 		if (file.open()) {
-			indexAdapter = UByteArrayAdapter(file);
+			return UByteArrayAdapter(file);
 		}
 		else {
 			throw sserialize::CorruptDataException("Could not open file " + fileName);
 		}
 	}
 	else {
-		if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
-			ChunkedMmappedFile file(fileName, chunkSizeExponent, false);
-			if (file.open()) {
-				indexAdapter = UByteArrayAdapter(file);
-			}
-			else {
-				throw sserialize::CorruptDataException("Could not open file " + fileName);
-			}
-		}
-		else {
-			MmappedFile file(fileName, false);
-			if (file.open()) {
-				indexAdapter = UByteArrayAdapter(file);
-			}
-			else {
-				throw sserialize::CorruptDataException("Could not open file " + fileName);
-			}
-		}
+		return open(fileName, false, maxFullMapSize, chunkSizeExponent);
 	}
-	return indexAdapter;
 }
 
 

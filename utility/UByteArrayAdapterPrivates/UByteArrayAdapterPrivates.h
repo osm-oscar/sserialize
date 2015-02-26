@@ -9,4 +9,5 @@
 #include "UByteArrayAdapterPrivateEmpty.h"
 #include "UByteArrayAdapterMM.h"
 #include "UByteArrayAdapterMV.h"
+#include "UByteArrayAdapterSeekedFile.h"
 #endif

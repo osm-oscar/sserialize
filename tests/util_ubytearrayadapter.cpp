@@ -5,6 +5,7 @@
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/utility/mmappedfile.h>
 #include "datacreationfuncs.h"
 
 using namespace sserialize;
@@ -793,6 +794,22 @@ bool test(int testCount) {
 		std::cout << "UByteArrayAdapterPrivateMmappedFile FAILED tests!" << std::endl;
 		allOk = false;
 	}
+	
+	sserialize::MmappedFile::createFile("ubatestseekedfile.tmp", 10);
+	UByteArrayAdapter seekedFileAdap = UByteArrayAdapter::open("ubatestseekedfile.tmp", true, 5, 0);
+	if (!seekedFileAdap.growStorage(4*testCount)) {
+		std::cout << "Failed to grow storage" << std::endl;
+	}
+	std::cout << "Testing UByteArrayAdapterPrivateSeekedFile" << std::endl;
+	if (testPrivateDependent(realNumbers, seekedFileAdap)) {
+		std::cout << "UByteArrayAdapterPrivateSeekedFile PASSED tests!" << std::endl;
+	}
+	else {
+		std::cout << "UByteArrayAdapterPrivateSeekedFile FAILED tests!" << std::endl;
+		allOk = false;
+	}
+	sserialize::MmappedFile::unlinkFile("ubatestseekedfile.tmp");
+	
 	return allOk;
 }
 
@@ -832,7 +849,7 @@ int main(int argc, char** argv) {
 	bool allOk = true;
 
 	for(int i=0; i < maxRuns; i++) {
-		if (test(0xFFFF)) {
+		if (test(0xFFFFF)) {
 			std::cout << "Passed all tests in run " << i << std::endl;
 		}
 		else {
