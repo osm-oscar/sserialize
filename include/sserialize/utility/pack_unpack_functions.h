@@ -150,6 +150,34 @@ inline float unpack_float_from_uint32_t(const uint32_t src) {
 	return tmp.d;
 }
 
+template<typename T>
+T up_cl(const uint8_t * src);
+
+template<>
+inline uint16_t up_cl(const uint8_t * src) {
+	return up_u16(src);
+}
+
+template<>
+inline uint32_t up_cl(const uint8_t * src) {
+	return up_u32(src);
+}
+
+template<>
+inline uint64_t up_cl(const uint8_t * src) {
+	return up_u64(src);
+}
+
+template<>
+inline int32_t up_cl(const uint8_t * src) {
+	return up_s32(src);
+}
+
+template<>
+inline int64_t up_cl(const uint8_t * src) {
+	return up_s64(src);
+}
+
 //pack functions
 
 inline void p_u8(uint8_t src, uint8_t * dest) {
@@ -207,6 +235,33 @@ inline void p_s64(int64_t s, uint8_t * d) {
 	p_u64(s, d);
 }
 
+template<typename T>
+void p_cl(T s, uint8_t * d);
+
+template<>
+inline void p_cl(uint16_t s, uint8_t * d) {
+	p_u16(s, d);
+}
+
+template<>
+inline void p_cl(uint32_t s, uint8_t * d) {
+	p_u32(s, d);
+}
+
+template<>
+inline void p_cl(uint64_t s, uint8_t * d) {
+	p_u64(s, d);
+}
+
+template<>
+inline void p_cl(int32_t s, uint8_t * d) {
+	p_s32(s, d);
+}
+
+template<>
+inline void p_cl(int64_t s, uint8_t * d) {
+	p_s64(s, d);
+}
 
 //BUG: do this right
 inline uint64_t pack_double_to_uint64_t(const double src) {
