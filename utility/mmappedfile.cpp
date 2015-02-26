@@ -72,7 +72,10 @@ bool MmappedFilePrivate::do_open() {
 		::close(m_fd);
 		return false;
 	}
-		
+	
+	//BUG:does not work for large files on 32bit (but there chunkedmmapefile should be in use)
+	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
+	
 	return true;
 }
 
@@ -176,7 +179,7 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	int mmap_proto = PROT_READ;
 	if (m_writable)
 		mmap_proto |= PROT_WRITE;
-	m_data = (uint8_t*) ::mmap(m_data, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
+	m_data = (uint8_t*) ::mmap64(m_data, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
 		std::cerr << "MmappedFilePrivate::resize::mmap: failed to mmap file while resizing from " << m_realSize << " to " << size << " bytes:";
@@ -185,6 +188,9 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 		do_close();
 		allOk = false;
 	}
+	
+	//BUG:does not work for large files on 32bit (but there chunkedmmapefile should be in use)
+	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
 
 	return allOk;
 }
@@ -222,13 +228,17 @@ MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & file
 		return 0;
 	}
 	
-	uint8_t * data = (uint8_t*) ::mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	uint8_t * data = (uint8_t*) ::mmap64(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (data == MAP_FAILED) {
 		::close(fd);
 		::unlink(fileName);
 		return 0;
 	}
+	
+	//BUG:does not work for large files on 32bit (but there chunkedmmapefile should be in use)
+	::madvise(data, size, MADV_RANDOM);//TODO:should be part of the interface, not just here
+	
 	MmappedFilePrivate * mf = new MmappedFilePrivate();
 	mf->m_fileName = std::string(fileName, fbSize+6);
 	mf->m_realSize = size;
