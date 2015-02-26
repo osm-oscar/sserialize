@@ -214,6 +214,7 @@ void printHelp() {
 	-eq filename\tequality test \n \
 	-ds\tdump stats \n \
 	-t type\ttransform to (rline|wah|de|rlede|simple|native) \n \
+	-nd\tdisable deduplication of item index store \n \
 	-c\tcheck item index store \
 	";
 }
@@ -232,6 +233,7 @@ int main(int argc, char ** argv) {
 	bool recompressWithLZO = false;
 	bool checkCompressed = false;
 	bool checkIndex = false;
+	bool deduplication = true;
 	std::string equalityTest;
 	ItemIndex::Types transform = ItemIndex::T_NULL;
 	
@@ -292,6 +294,9 @@ int main(int argc, char ** argv) {
 			else if (t == "native")
 				transform = sserialize::ItemIndex::T_NATIVE;
 			++i;
+		}
+		else if (curArg == "-nd") {
+			deduplication = false;
 		}
 		else {
 			inFileName = curArg;
@@ -487,6 +492,7 @@ int main(int argc, char ** argv) {
 		ItemIndexFactory factory;
 		factory.setType(transform);
 		factory.setIndexFile(outData);
+		factory.setDeduplication(deduplication);
 		std::cout << "Transforming index" << std::endl;
 		factory.insert(store);
 		std::cout << "Serializing IndexStore" << std::endl;
