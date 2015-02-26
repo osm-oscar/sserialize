@@ -43,6 +43,7 @@ private:
 	bool m_checkIndex;
 	int8_t m_bitWidth;
 	bool m_useRegLine;
+	bool m_useDeduplication;
 	ItemIndex::Types m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
 	MultiReaderSingleWriterLock m_mapLock;
@@ -76,6 +77,8 @@ public:
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }
 	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
+	//default is on
+	void setDeduplication(bool dedup) { m_useDeduplication  = dedup; }
 	
 	inline ItemIndex indexByOffset(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
 	

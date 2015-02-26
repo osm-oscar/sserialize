@@ -20,6 +20,7 @@ m_hitCount(0),
 m_checkIndex(true),
 m_bitWidth(-1),
 m_useRegLine(true),
+m_useDeduplication(true),
 m_type(ItemIndex::T_REGLINE)
 {
 	if (memoryBased)
@@ -33,6 +34,7 @@ m_hitCount(other.m_hitCount.load()),
 m_checkIndex(other.m_checkIndex),
 m_bitWidth(other.m_bitWidth),
 m_useRegLine(other.m_useRegLine),
+m_useDeduplication(other.m_useDeduplication),
 m_type(other.m_type),
 m_compressionType(other.m_compressionType)
 {
@@ -55,6 +57,7 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	m_checkIndex = other.m_checkIndex;
 	m_bitWidth = other.m_bitWidth;
 	m_useRegLine = other.m_useRegLine;
+	m_useDeduplication = other.m_useDeduplication;
 	m_type = other.m_type;
 	m_compressionType = other.m_compressionType;
 	swap(m_header, other.m_header);
@@ -95,7 +98,9 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	m_idToOffsets.reserve(store.size()+size());
 	m_offsetsToId.reserve(store.size()+size());
 	m_idxSizes.reserve(store.size()+size());
-	m_hash.reserve(store.size()+size());
+	if (m_useDeduplication) {
+		m_hash.reserve(store.size()+size());
+	}
 	std::vector<uint32_t> res;
 	res.reserve(store.size());
 	std::vector<uint32_t> tmp; 
@@ -169,7 +174,10 @@ uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType
 
 uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize::OffsetType * indexOffset, uint32_t idxSize) {
 	uint64_t hv;
-	int64_t indexPos = getIndex(idx, hv);
+	int64_t indexPos = -1;
+	if (m_useDeduplication) {
+		indexPos = getIndex(idx, hv);
+	}
 	uint32_t id = std::numeric_limits<uint32_t>::max();
 	if (indexPos < 0) {
 		m_dataLock.acquireWriteLock();
@@ -207,6 +215,7 @@ OffsetType ItemIndexFactory::flush() {
 	assert(m_idxSizes.size() == m_idToOffsets.size());
 	assert(m_idToOffsets.size() == m_offsetsToId.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
+	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
 	m_header.resetPtrs();
 	m_header << static_cast<uint8_t>(4); //Version
 	m_header << static_cast<uint8_t>(m_type);//type
@@ -236,8 +245,10 @@ OffsetType ItemIndexFactory::flush() {
 	std::cout << "Serializing idx sizes..." << std::flush;
 #ifdef DEBUG_CHECK_ALL
 	assert(m_idxSizes[0] == 0);
-	for(uint32_t i(1), s(m_idxSizes.size()); i < s; ++i) {
-		assert(m_idxSizes[i] > 0);
+	if (m_useDeduplication) {
+		for(uint32_t i(1), s(m_idxSizes.size()); i < s; ++i) {
+			assert(m_idxSizes[i] > 0);
+		}
 	}
 #endif
 	m_indexStore << m_idxSizes;
