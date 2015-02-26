@@ -17,8 +17,9 @@
 namespace sserialize {
 
 uint32_t UByteArrayAdapterPrivateSeekedFile::populateCache(sserialize::UByteArrayAdapter::OffsetType pos, uint32_t len) const {
+	assert(len <= m_bufferSize);
 	uint64_t tmp = pos-m_bufferOffset;
-	if (pos > m_bufferOffset || tmp+len > m_bufferSize) {
+	if (pos < m_bufferOffset || tmp+len > m_bufferSize) {
 		::lseek64(m_fd, pos, SEEK_SET);
 		::read(m_fd, m_buffer, m_bufferSize);
 		m_bufferOffset = pos;
@@ -69,7 +70,7 @@ m_buffer(new uint8_t[m_bufferSize])
 }
 
 UByteArrayAdapterPrivateSeekedFile::~UByteArrayAdapterPrivateSeekedFile() {
-	delete m_buffer;
+	delete[] m_buffer;
 	::close(m_fd);
 	if (m_deleteOnClose) {
 		//unlink, ignore for now
