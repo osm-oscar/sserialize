@@ -74,7 +74,8 @@ bool MmappedFilePrivate::do_open() {
 	}
 	
 	//BUG:does not work for large files on 32bit (but there chunkedmmapefile should be in use)
-	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
+	//Bad for performance
+// 	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
 	
 	return true;
 }
@@ -190,7 +191,8 @@ bool MmappedFilePrivate::resize(OffsetType size) {
 	}
 	
 	//BUG:does not work for large files on 32bit (but there chunkedmmapefile should be in use)
-	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
+	//Bad for performance
+// 	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
 
 	return allOk;
 }
@@ -237,7 +239,8 @@ MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & file
 	}
 	
 	//BUG:does not work for large files on 32bit (but there chunkedmmapefile should be in use)
-	::madvise(data, size, MADV_RANDOM);//TODO:should be part of the interface, not just here
+	//Bad for performance
+// 	::madvise(data, size, MADV_RANDOM);//TODO:should be part of the interface, not just here
 	
 	MmappedFilePrivate * mf = new MmappedFilePrivate();
 	mf->m_fileName = std::string(fileName, fbSize+6);
