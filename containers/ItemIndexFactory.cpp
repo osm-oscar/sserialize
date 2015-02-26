@@ -103,11 +103,12 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	}
 	std::vector<uint32_t> res;
 	res.reserve(store.size());
+	res.push_back(0);
 	std::vector<uint32_t> tmp; 
 	ItemIndex tmpIdx;
 	sserialize::ProgressInfo info;
 	info.begin(store.size(), "Adding indices from store");
-	for(uint32_t i = 0, s = store.size(); i < s; ++i) {
+	for(uint32_t i = 1, s = store.size(); i < s; ++i) {//skip the first index as that one is by definition 0
 		tmp.clear();
 		tmpIdx = store.at(i);
 		tmpIdx.putInto(tmp);
