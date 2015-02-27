@@ -465,6 +465,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unor
 
 std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const {
 	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
+	std::vector<uint32_t> cellAncestorCount(cellSize(), 0);
 	std::vector<uint32_t> cellDepths(cellSize(), 0);
 	
 	{
@@ -503,14 +504,18 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 			smallestCellSize = cellItemCount;
 			smallestCellId = i;
 		}
+		cellAncestorCount[i] = cellParentsSize(i);
 	}
 	
 	std::sort(cellDepths.begin(), cellDepths.end());
 	std::sort(cellItemSizes.begin(), cellItemSizes.end());
+	std::sort(cellAncestorCount.begin(), cellAncestorCount.end());
 	double cs_mean = sserialize::statistics::mean(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
 	double cs_stddev = sserialize::statistics::stddev(cellItemSizes.cbegin(), cellItemSizes.cend(), (double)0);
 	double cd_mean = sserialize::statistics::mean(cellDepths.cbegin(), cellDepths.cend(), (double)0);
 	double cd_stddev= sserialize::statistics::stddev(cellDepths.cbegin(), cellDepths.cend(), (double)0);
+	double ca_mean = sserialize::statistics::mean(cellAncestorCount.cbegin(), cellAncestorCount.cend(), (double)0);
+	double ca_stddev= sserialize::statistics::stddev(cellAncestorCount.cbegin(), cellAncestorCount.cend(), (double)0);
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--BEGIN" << std::endl;
 	out << "regions.size()=" << regionSize() << std::endl;
 	out << "regionPtrs.size()=" << regionPtrSize() << std::endl;
@@ -535,6 +540,12 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	out << "\tmax: " << cellDepths.back() << "\n";
 	out << "\tmean: " << cd_mean << "\n";
 	out << "\tstddef: " << cd_stddev << "\n";
+	out << "Cell ancestor info:\n";
+	out << "\tmedian: " << cellAncestorCount.at(cellAncestorCount.size()/2) << "\n";
+	out << "\tmin: " << cellAncestorCount.front() << "\n";
+	out << "\tmax: " << cellAncestorCount.back() << "\n";
+	out << "\tmean: " << ca_mean << "\n";
+	out << "\tstddef: " << ca_stddev << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
