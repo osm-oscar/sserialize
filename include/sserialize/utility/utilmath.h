@@ -181,20 +181,50 @@ public:
 };
 
 template<typename T>
-class AtomicMinMax final {
-	AtomicMax<T> m_max;
-	AtomicMin<T> m_min;
+class MinMax final {
 public:
-	AtomicMinMax(const T & minInitial, const T & maxInitial) : m_max(maxInitial), m_min(minInitial) {}
+	typedef T value_type;
+private:
+	value_type m_max;
+	value_type m_min;
+public:
+	MinMax(const value_type & minInitial, const value_type & maxInitial) : m_max(maxInitial), m_min(minInitial) {}
+	MinMax() : m_max(std::numeric_limits<value_type>::min()), m_min(std::numeric_limits<value_type>::max()) {}
+	~MinMax() {}
+	inline const value_type & min() const { return m_min; }
+	inline const value_type & max() const { return m_max; }
+	void update(const value_type & v) {
+		m_max = std::max<value_type>(m_max, v);
+		m_min = std::min<value_type>(m_min, v);
+	}
+	void update(const MinMax & o) {
+		m_max = std::max<value_type>(m_max, o.m_max);
+		m_min = std::min<value_type>(m_min, o.m_min);
+	}
+};
+
+template<typename T>
+class AtomicMinMax final {
+public:
+	typedef T value_type;
+private:
+	AtomicMax<value_type> m_max;
+	AtomicMin<value_type> m_min;
+public:
+	AtomicMinMax(const value_type & minInitial, const value_type & maxInitial) : m_max(maxInitial), m_min(minInitial) {}
 	AtomicMinMax() {}
 	~AtomicMinMax() {}
-	T min() const { return m_min.load(); }
-	T max() const { return m_max.load(); }
-	void update(const T & v) {
+	inline value_type min() const { return m_min.load(); }
+	inline value_type max() const { return m_max.load(); }
+	void update(const value_type & v) {
 		m_max.update(v);
 		m_min.update(v);
 	}
-	void update(const AtomicMinMax & o) {
+	void update(const AtomicMinMax<value_type> & o) {
+		m_max.update(o.max());
+		m_min.update(o.min());
+	}
+	void update(const MinMax<value_type> & o) {
 		m_max.update(o.max());
 		m_min.update(o.min());
 	}
