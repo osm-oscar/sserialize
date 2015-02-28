@@ -54,9 +54,9 @@ ItemIndex GeoHierarchyUnclustered::complete(const std::string & str, sserialize:
 	else if (ghIdx.size() > 1000) {
 		sserialize::DynamicBitSet bitSet;
 		for(uint32_t regionId : ghIdx) {
-			m_store.at(m_gh.regionItemsPtr(ghIdx.at(regionId))).putInto(bitSet);
+			m_store.at(m_gh.regionItemsPtr(regionId)).putInto(bitSet);
 		}
-		return sserialize::ItemIndex::fromBitSet(bitSet, m_store.indexType());
+		return sserialize::ItemIndex::fromBitSet(bitSet, m_store.indexType()) + itemIdx;
 	}
 	return itemIdx;
 }
