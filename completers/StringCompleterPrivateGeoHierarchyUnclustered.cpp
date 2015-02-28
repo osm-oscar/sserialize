@@ -45,18 +45,22 @@ ItemIndex GeoHierarchyUnclustered::complete(const std::string & str, sserialize:
 	if (ghIdx.size() < 1000) {
 		std::vector<ItemIndex> mergeIdcs(ghIdx.size()+1);
 		uint32_t i = 0;
-		for(uint32_t s = ghIdx.size(); i < s; ++i) {
-			mergeIdcs[i] = m_store.at(m_gh.regionItemsPtr(ghIdx.at(i)));
+		for(uint32_t regionId : ghIdx) {
+			uint32_t ghRegionId = m_gh.storeIdToGhId(regionId);
+			ItemIndex & idx = mergeIdcs[i];
+			idx = m_store.at(m_gh.regionItemsPtr(ghRegionId));
+			++i;
 		}
 		mergeIdcs[i] = itemIdx;
-		return ItemIndex::unite(mergeIdcs);
+		itemIdx = ItemIndex::unite(mergeIdcs);
 	}
 	else if (ghIdx.size() > 1000) {
 		sserialize::DynamicBitSet bitSet;
 		for(uint32_t regionId : ghIdx) {
-			m_store.at(m_gh.regionItemsPtr(regionId)).putInto(bitSet);
+			uint32_t ghRegionId = m_gh.storeIdToGhId(regionId);
+			m_store.at(m_gh.regionItemsPtr(ghRegionId)).putInto(bitSet);
 		}
-		return sserialize::ItemIndex::fromBitSet(bitSet, m_store.indexType()) + itemIdx;
+		itemIdx = sserialize::ItemIndex::fromBitSet(bitSet, m_store.indexType()) + itemIdx;
 	}
 	return itemIdx;
 }
