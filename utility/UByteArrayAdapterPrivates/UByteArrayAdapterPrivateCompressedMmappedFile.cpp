@@ -1,8 +1,5 @@
 #include "UByteArrayAdapterPrivateCompressedMmappedFile.h"
 #include <sserialize/utility/pack_unpack_functions.h>
-#ifdef SSERIALIZE_WITH_THREADS
-#include <sserialize/utility/MutexLocker.h>
-#endif
 
 namespace sserialize {
 
@@ -29,14 +26,14 @@ void UByteArrayAdapterPrivateCompressedMmappedFile::setDeleteOnClose(bool /*del*
 //Access functions
 uint8_t & UByteArrayAdapterPrivateCompressedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) {
 #ifdef SSERIALIZE_WITH_THREADS
-	MutexLocker locker(m_fileLock);
+	std::unique_lock<std::mutex> locker(m_fileLock);
 #endif
 	return m_file.operator[](pos);
 }
 
 const uint8_t & UByteArrayAdapterPrivateCompressedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) const {
 #ifdef SSERIALIZE_WITH_THREADS
-	MutexLocker locker(m_fileLock);
+	std::unique_lock<std::mutex> locker(m_fileLock);
 #endif
 	return m_file.operator[](pos);
 }
@@ -121,7 +118,7 @@ uint16_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint16(UByteArrayAdap
 
 uint8_t UByteArrayAdapterPrivateCompressedMmappedFile::getUint8(UByteArrayAdapter::OffsetType pos) const {
 #ifdef SSERIALIZE_WITH_THREADS
-	MutexLocker locker(m_fileLock);
+	std::unique_lock<std::mutex> locker(m_fileLock);
 #endif
 	return m_file[pos];
 }
@@ -210,7 +207,7 @@ int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt32(UByteArr
 void UByteArrayAdapterPrivateCompressedMmappedFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
 	uint32_t mightOverFlow = len;
 #ifdef SSERIALIZE_WITH_THREADS
-	MutexLocker locker(m_fileLock);
+	std::unique_lock<std::mutex> locker(m_fileLock);
 #endif
 	m_file.read(pos, dest, mightOverFlow);
 }

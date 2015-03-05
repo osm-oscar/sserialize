@@ -1,10 +1,5 @@
 #include <sserialize/completers/StringCompleter.h>
 #include <sserialize/completers/StringCompleterPrivate.h>
-#ifdef SSERIALIZE_WITH_THREADS
-#include <sserialize/utility/MutexLocker.h>
-#endif
-
-
 
 namespace sserialize {
 
