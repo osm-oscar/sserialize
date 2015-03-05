@@ -26,17 +26,17 @@ namespace TreedCellQueryResult  {
 		} opNode;
 		struct {
 			uint64_t type:3;
-			uint64_t padding:29;
+			uint64_t cellId:29;
 			uint64_t pmIdxId:32;
 		} pmNode;
 		struct {
 			uint64_t type:3;
-			uint64_t padding:29;
-			uint64_t cellId:32;
+			uint64_t cellId:29;
+			uint64_t padding:32;
 		} fmNode;
 		struct {
 			uint64_t type:3;
-			uint64_t internalIdxId;
+			uint64_t internalIdxId:61;
 		} fetchedNode;
 		FlatNode(Type t) {
 			common.type = t;
@@ -45,79 +45,6 @@ namespace TreedCellQueryResult  {
 			common.type = t;
 		}
 	};
-	
-	struct Node {
-		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_INTERSECT=4, T_UNITE=5, T_DIFF=6, T_SYM_DIFF=7} Type;
-		uint64_t type:3;
-		uint64_t value:61;
-		Node() {}
-		Node(uint32_t type, uint64_t value) {
-			this->type = type;
-			this->value = value;
-		}
-		Node(const Node & other) {
-			type = other.type;
-			value = other.value;
-		}
-		Type type() const { return (Type) type; }
-	};
-
-	struct PMLeafNode: Node {
-		PMLeafNode(uint32_t idxId) : Node(Node::T_PM_LEAF, idxId) {}
-		PMLeafNode(PMLeafNode & other) : Node(other) {}
-		inline uint32_t idxId() const { return Node::value; }
-	};
-	
-	struct FMLeafNode: Node {
-		FMLeafNode(uint32_t cellId) : Node(Node::T_FM_LEAF, cellId) {}
-		FMLeafNode(const FMLeafNode & other) : Node(other) {}
-		inline uint32_t cellId() const { return Node::value; }
-	};
-	
-	struct FetchedLeafNode: Node {
-		FetchedLeafNode(const sserialize::ItemIndex & idx) : Node(Node::T_FETCHED_LEAF), m_idx(idx) {}
-		FetchedLeafNode(const FetchedLeafNode & other) : Node(other), m_idx(other.m_idx) {}
-		sserialize::ItemIndex m_idx;
-		const sserialize::ItemIndex & idx() const { return m_idx; }
-	};
-	
-	struct OpNode: Node {
-		///Does not copy ptrs
-		OpNode(const OpNode & other) : Node(other) {}
-		OpNode(Node::Type type) : Node(type, 0) {}
-		Node * children[2]; //this always has 2 children as it is created by a call to an operator which takes 2 arguments
-	};
-	
-	template<Node::Type nodeType>
-	struct NodeTypeCalculator;
-	
-	#define NODE_TYPE_CALCULATOR_SPECIALIZATION(__ENUMTYPE, __NODETYPE) template<> struct NodeTypeCalculator<__ENUMTYPE> { typedef __NODETYPE type; };
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_PM_LEAF, PMLeafNode)
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_FM_LEAF, FMLeafNode)
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_FETCHED_LEAF, FetchedLeafNode)
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_INTERSECT, OpNode)
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_UNITE, OpNode)
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_DIFF, OpNode)
-	NODE_TYPE_CALCULATOR_SPECIALIZATION(Node::Type::T_SYM_DIFF, OpNode)
-	#undef NODE_TYPE_CALCULATOR_SPECIALIZATION
-	
-	template<Node::Type nodeType>
-	struct NodeCaster {
-		typedef NodeTypeCalculator<nodeType> type;
-		static type * cast(Node * base) { 
-			return static_cast<type*>(base);
-		}
-		static const type * cast(const Node * base) { 
-			return static_cast<type*>(base);
-		}
-		static type * copy(Node * base) {
-			return new type(*cast(base));
-		}
-		static const type * copy(const Node * base) {
-			return new type(*cast(base));
-		}
-	};
-	
 	class TreeHandler {
 	public:
 		typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
@@ -128,14 +55,12 @@ namespace TreedCellQueryResult  {
 		GeoHierarchy m_gh;
 		ItemIndexStore m_idxStore;
 	private:
-		void flattenOpNode(const Node * n, uint32_t cellId, sserialize::ItemIndex & idx, FlattenResultType & frt);
-		void flatten(const Node * n, uint32_t cellId, sserialize::ItemIndex & idx, FlattenResultType & frt);
+		void flattenOpNode(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, FlattenResultType & frt);
+		void flatten(const FlatNode * n, const ItemIndex * idces, uint32_t cellId, sserialize::ItemIndex & idx, FlattenResultType & frt);
 	public:
 		TreeHandler(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
-		//flatten the node and adjust its type
-		Node* flatten(const Node* n, uint32_t cellId);
-		static Node * copy(const Node * src) const;
-		static void deleteTree(Node * node);
+		//flatten the node and adjust its type accordingly, put newly created ItemIndex into destInteralIdces
+		void flatten(const FlatNode * n, FlatNode & destNode, std::vector<ItemIndex> & destInternalIdces);
 	};
 
 ///Base class for the TreedCQR, which is a delayed set ops CQR. It delays the set operations of cells until calling finalize() which will return a CQR
@@ -144,24 +69,28 @@ public:
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 private:
-	
-	
 	struct CellDesc {
-		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId, Node * tree);
+		static constexpr uint32_t notree = 0xFFFFFFFF;
+		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId, uint32_t treeBegin, uint32_t treeEnd);
+		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId);
 		CellDesc(const CellDesc & other);
 		CellDesc(CellDesc && other);
 		~CellDesc();
-		Node * tree;
+		inline uint32_t treeSize() const { return treeEnd-treeBegin; }
+		inline bool hasTree() const { return treeSize(); }
 		uint64_t fullMatch:1;
 		uint64_t cellId:31;
 		uint64_t pmIdxId:32;
+		//by definition: if this is 0xFFFFFFFF then the start is invalid
+		uint32_t treeBegin;
+		uint32_t treeEnd; //this is needed for fast copying of trees (and alignment gives it for free)
 	};
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 	sserialize::Static::ItemIndexStore m_idxStore;
 	std::vector<CellDesc> m_desc;
+	std::vector<FlatNode> m_trees;
 private:
-	void uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx);
 	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 public:
 	TreedCQRImp();
