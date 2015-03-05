@@ -216,8 +216,14 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 				const sserialize::ItemIndex & myPIdx = idx(myI);
 				const sserialize::ItemIndex & oPIdx = o.idx(oI);
 				sserialize::ItemIndex res(myPIdx + oPIdx);
-				r.uncheckedSet(r.m_desc.size(), res);
-				r.m_desc.push_back(CellDesc(0, 1, myCellId));
+				if (res.size() == m_gh.cellItemsCount(myCellId)) {
+					r.m_idx[r.m_desc.size()].idxPtr = m_gh.cellItemsPtr(myCellId);
+					r.m_desc.push_back(CellDesc(1, 0, myCellId));
+				}
+				else {
+					r.uncheckedSet(r.m_desc.size(), res);
+					r.m_desc.push_back(CellDesc(0, 1, myCellId));
+				}
 			}
 			break;
 		case 0x2: //my full
