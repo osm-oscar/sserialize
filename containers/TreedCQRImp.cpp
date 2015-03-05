@@ -1,38 +1,66 @@
 #include <sserialize/containers/TreedCQRImp.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/containers/CellQueryResultPrivate.h>
 
 namespace sserialize {
 namespace detail {
 namespace TreedCellQueryResult  {
 
-void TreeHandler::flattenOpNode(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex& idx, FlattenResultType & frt) {
+void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const {
+	switch(n->common.type) {
+	case FlatNode::T_PM_LEAF:
+		frt = FT_FM;
+		break;
+	case FlatNode::T_FETCHED_LEAF:
+		frt = FT_FETCHED;
+		idx = m_fetchedIdx.at(n->fetchedNode.internalIdxId);
+		break;
+	case FlatNode::T_FM_LEAF:
+		frt = FT_FM;
+		break;
+	case FlatNode::T_INTERSECT:
+	case FlatNode::T_DIFF:
+	case FlatNode::T_UNITE:
+	case FlatNode::T_SYM_DIFF:
+		break;
+	default:
+		throw sserialize::TypeMissMatchException("TreedQueryResult: invalid node type");
+	}
+	
 	sserialize::ItemIndex aIdx, bIdx;
-	FlattenResultType frtA = FT_NONE;
-	FlattenResultType frtB = FT_NONE;
-	flatten(n+n->opNode.childA, aIdx, frtA);
-	flatten(n+n->opNode.childB, bIdx, frtB);
+	FlattenResultType frtA, frtB;
+	uint32_t pmIdxIdA, pmIdxIdB;
+	flattenCell(n+n->opNode.childA, cellId, aIdx, pmIdxIdA, frtA);
+	flattenCell(n+n->opNode.childB, cellId, bIdx, pmIdxIdB, frtB);
+	
 	assert(frtA != FT_NONE && frtB != FT_NONE);
+	
 	switch (n->common.type) {
 	case FlatNode::T_INTERSECT:
-		if ((frtA | frtB) == FT_FM) {
+		if ((frtA | frtB) == FT_FM) { //both are FT_FM
 			frt = FT_FM;
 		}
 		else {
 			if (frtA == FT_FM) {
+				frt = frtB;
 				idx = bIdx;
-				frt = FT_FETCHED;
+				pmIdxId = pmIdxIdB;
 			}
 			else if (frtB == FT_FM) {
+				frt = frtA;
 				idx = aIdx;
-				frt = FT_FETCHED;
-			}
-			else if (aIdx.size() && bIdx.size()) {
-				idx = aIdx / bIdx;
-				frt = FT_FETCHED;
+				pmIdxId = pmIdxIdA;
 			}
 			else {
-				frt = FT_EMPTY;
+				if (frtA == FT_PM) {
+					aIdx = m_idxStore.at(pmIdxIdA); 
+				}
+				if (frtB == FT_PM) {
+					bIdx = m_idxStore.at(pmIdxIdB);
+				}
+				idx = aIdx / bIdx;
+				frt = FT_FETCHED;
 			}
 		}
 		break;
@@ -40,88 +68,61 @@ void TreeHandler::flattenOpNode(const FlatNode * n, uint32_t cellId, sserialize:
 		if ((frtA | frtB) & FT_FM) {
 			frt = FT_FM;
 		}
-		else if (aIdx.size() || bIdx.size()) {
+		else {
+			if (frtA == FT_PM) {
+				aIdx = m_idxStore.at(pmIdxIdA); 
+			}
+			if (frtB == FT_PM) {
+				bIdx = m_idxStore.at(pmIdxIdB);
+			}
 			idx = aIdx + bIdx;
 			frt = FT_FETCHED;
 		}
-		else {
-			frt = FT_EMPTY;
-		}
 		break;
 	case FlatNode::T_DIFF:
-		if ((aIdx.size() || frtA == FT_FM) && !(frtB == FT_FM)) {
-			if (frtA == FT_FM) {
+		if (frtB == FT_FM) {
+			frt = FT_FETCHED;
+		}
+		else { //frtB is either fetched or partial
+			if (frtA == FT_PM) {
+				aIdx = m_idxStore.at(pmIdxIdA); 
+			}
+			else if (frtA == FT_FM) {
 				aIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
+			}
+			if (frtB == FT_PM) {
+				bIdx = m_idxStore.at(pmIdxIdB);
 			}
 			idx = aIdx - bIdx;
 			frt = FT_FETCHED;
 		}
-		else {
-			frt = FT_EMPTY;
-		}
 		break;
 	case FlatNode::T_SYM_DIFF:
 		if ((frtA | frtB) != FT_FM) {
-			//this means at least one is a partial match
-			if (frtA == FT_FM) {
+			//this means at least one is a partial match or fetched
+			if (frtA == FT_PM) {
+				aIdx = m_idxStore.at(pmIdxIdA); 
+			}
+			else if (frtA == FT_FM) {
 				aIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
 			}
-			if (frtB == FT_FM) {
+			if (frtB == FT_PM) {
+				bIdx = m_idxStore.at(pmIdxIdB);
+			}
+			else if (frtB == FT_FM) {
 				bIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
 			}
 			idx = aIdx ^ bIdx;
 			frt = FT_FETCHED;
 		}
 		else {
-			frt = FT_EMPTY;
+			frt = FT_FETCHED;
 		}
 		break;
 	default:
 		throw sserialize::TypeMissMatchException("TreedQueryResult: invalid node type");
 		break;
 	};
-}
-
-///fullMatch needs to be set to false, lazy eval only
-void TreeHandler::flatten(const FlatNode * n, const ItemIndex * idces, sserialize::ItemIndex& idx, FlattenResultType & frt) {
-	if (!n) {}
-	switch(n->common.type) {
-	case FlatNode::T_PM_LEAF:
-		idx = m_idxStore.at(n->pmNode.pmIdxId);
-		frt = FT_FETCHED;
-		break;
-	case FlatNode::T_FM_LEAF:
-		frt = FT_FM;
-		break;
-	case FlatNode::T_FETCHED_LEAF:
-		idx = idces[n->fetchedNode.internalIdxId];
-		break;
-	case FlatNode::T_INTERSECT:
-	case FlatNode::T_UNITE:
-	case FlatNode::T_DIFF:
-	case FlatNode::T_SYM_DIFF:
-		{
-			flattenOpNode(n, idx, frt);
-		}
-		break;
-	default:
-		throw sserialize::TypeMissMatchException("TreedQueryResult: invalid node type");
-	};
-}
-
-
-void TreeHandler::flatten(const FlatNode * n, FlatNode & destNode, std::vector<ItemIndex> & destInternalIdces)  {
-	sserialize::ItemIndex res;
-	FlattenResultType frt;
-	flatten(n, res, frt);
-	if (frt) {
-		destNode.type = FlatNode::T_FM_LEAF;
-	}
-	else {
-		destNode.type = FlatNode::T_FETCHED_LEAF;
-		destNode.fetchedNode.internalIdxId = destInternalIdces.size();
-		destInternalIdces.push_back(res);
-	}
 }
 
 
@@ -146,7 +147,7 @@ m_idxStore(idxStore)
 {
 	uint32_t totalSize = 1;
 	m_desc.reserve(totalSize);
-	m_desc.push_back( CellDesc(0, cellId) );
+	m_desc.push_back( CellDesc(0, cellId, cellIdxId) );
 }
 
 TreedCQRImp::TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
@@ -155,15 +156,6 @@ m_idxStore(idxStore)
 {}
 
 TreedCQRImp::~TreedCQRImp() {}
-
-TreedCQRImp::CellDesc::CellDesc(TreedCQRImp::CellDesc && other) :
-treeBegin(notree),
-treeEnd(notree)
-{
-	fullMatch = other.fullMatch;
-	pmIdxId = other.pmIdxId;
-	cellId = other.cellId;
-}
 
 TreedCQRImp::CellDesc::CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId) :
 treeBegin(notree),
@@ -175,8 +167,8 @@ treeEnd(notree)
 }
 
 TreedCQRImp::CellDesc::CellDesc(const TreedCQRImp::CellDesc& other) :
-treeBegin(notree),
-treeEnd(notree)
+treeBegin(other.treeBegin),
+treeEnd(other.treeEnd)
 {
 	fullMatch = other.fullMatch;
 	pmIdxId = other.pmIdxId;
@@ -193,6 +185,17 @@ treeEnd(treeEnd)
 }
 
 TreedCQRImp::CellDesc::~CellDesc() {}
+
+TreedCQRImp::CellDesc& TreedCQRImp::CellDesc::operator=(const TreedCQRImp::CellDesc& other) {
+	//can't we just use memmove to copy the whole struct?
+	treeBegin = other.treeBegin;
+	treeEnd = other.treeEnd;
+	fullMatch = other.fullMatch;
+	pmIdxId = other.pmIdxId;
+	cellId = other.cellId;
+	return *this;
+}
+
 
 TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 	const TreedCQRImp & o = *other;
@@ -241,7 +244,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 				r.m_desc.push_back(myCD);
 				break;
 			case 0x3: //both full
-				r.m_desc.emplace_back(1, myCellId, 0, 0);
+				r.m_desc.emplace_back(1, myCellId, 0);
 				break;
 			default:
 				break;
@@ -268,7 +271,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 				r.m_trees[treeBegin].opNode.childA = 1;
 				
 				if (myCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), m_trees.front() + myCD.treeBegin, m_trees.front() + myCD.treeEnd);
+					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
 					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 				}
 				else {
@@ -279,7 +282,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 				}
 			
 				if (oCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), o.m_trees.front() + oCD.treeBegin, o.m_trees.front() + oCD.treeEnd);
+					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
 				}
 				else {
 					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
@@ -354,7 +357,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			r.m_trees[treeBegin].opNode.childA = 1;
 			
 			if (myCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), m_trees.front() + myCD.treeBegin, m_trees.front() + myCD.treeEnd);
+				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
 				r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 			}
 			else {
@@ -365,7 +368,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			}
 		
 			if (oCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.front() + oCD.treeBegin, o.m_trees.front() + oCD.treeEnd);
+				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
 			}
 			else {
 				r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
@@ -448,7 +451,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 			r.m_trees[treeBegin].opNode.childA = 1;
 			
 			if (myCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), m_trees.front() + myCD.treeBegin, m_trees.front() + myCD.treeEnd);
+				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
 				r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 			}
 			else {
@@ -465,7 +468,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 			}
 		
 			if (oCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.front() + oCD.treeBegin, o.m_trees.front() + oCD.treeEnd);
+				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
 			}
 			else {
 				if (oCD.fullMatch) {
@@ -544,7 +547,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 			r.m_trees[treeBegin].opNode.childA = 1;
 			
 			if (myCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), m_trees.front() + myCD.treeBegin, m_trees.front() + myCD.treeEnd);
+				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
 				r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 			}
 			else {
@@ -561,7 +564,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 			}
 		
 			if (oCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.front() + oCD.treeBegin, o.m_trees.front() + oCD.treeEnd);
+				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
 			}
 			else {
 				if (oCD.fullMatch) {
@@ -617,5 +620,45 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 	assert(r.m_desc.size() <= m_desc.size() + o.m_desc.size());
 	return rPtr;
 }
+
+detail::CellQueryResult* TreedCQRImp::toCQR() const {
+	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
+	CellQueryResult & r = *rPtr;
+	r.m_desc.reserve(cellCount());
+	r.m_idx = (detail::CellQueryResult::IndexDesc*) malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
+	
+
+	sserialize::ItemIndex idx;
+	uint32_t pmIdxId;
+	FlattenResultType frt = FT_NONE;
+	
+	for(uint32_t i(0), s(m_desc.size()); i < s; ++i) {
+		const CellDesc & cd = m_desc[i];
+		if (m_desc[i].hasTree()) {
+			flattenCell((&m_trees[i])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+			assert(frt != FT_NONE);
+			if (frt == FT_FM) {
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
+			}
+			else if (frt == FT_PM) {
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
+				r.m_idx[i].idxPtr = cd.pmIdxId;
+			}
+			else if (frt == FT_FETCHED) { //frt == FT_FETCHED
+				r.uncheckedSet(r.m_desc.size(), idx);
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
+			}
+		}
+		else {
+			r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
+			if (!cd.fullMatch) {
+				r.m_idx[i].idxPtr = cd.pmIdxId;
+			}
+		}
+	}
+	r.m_idx = (detail::CellQueryResult::IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(detail::CellQueryResult::IndexDesc));
+	return rPtr;
+}
+
 
 }}}//end namespace

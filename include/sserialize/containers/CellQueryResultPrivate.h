@@ -7,12 +7,17 @@
 
 namespace sserialize {
 namespace detail {
+namespace TreedCellQueryResult {
+	class TreedCQRImp;
+}//end namespace TreedCellQueryResult
 
 class CellQueryResult: public RefCountObject {
 public:
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 private:
+
+	friend class sserialize::detail::TreedCellQueryResult::TreedCQRImp;
 	
 	struct CellDesc {
 		CellDesc(uint32_t inFullMatch, uint32_t inFetched, uint32_t inCellId) {

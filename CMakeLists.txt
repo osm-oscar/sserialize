@@ -104,6 +104,7 @@ containers/KeyValueObjectStore.cpp
 containers/CellQueryResult.cpp
 containers/CellQueryResultPrivate.cpp
 containers/OpTree.cpp
+containers/TreedCQRImp.cpp
 )
 
 set(SPATIAL_SOURCES_CPP

@@ -9,7 +9,8 @@ namespace sserialize {
 namespace detail {
 namespace TreedCellQueryResult  {
 
-	//TODO: Implement this with a flat tree aproach without pointers which should improve the speed a lot since then its all just sequential memory access
+	//TODO: Add ability to stop flattening (i.e. by call back function, could also provide a progress bar)
+	//If we do this, then we need to make sure that we copy the indexes as well when we copy a tree
 
 	union FlatNode {
 		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_INTERSECT=4, T_UNITE=5, T_DIFF=6, T_SYM_DIFF=7} Type;
@@ -41,26 +42,6 @@ namespace TreedCellQueryResult  {
 		FlatNode(Type t) {
 			common.type = t;
 		}
-		FlatNode(Type t) {
-			common.type = t;
-		}
-	};
-	class TreeHandler {
-	public:
-		typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
-		typedef sserialize::Static::ItemIndexStore ItemIndexStore;
-	private:
-		typedef enum {FT_NONE=0x0, FT_PM=0x1, FT_FM=0x2, FT_FETCHED=0x4, FT_EMPTY=0x8} FlattenResultType;
-	private:
-		GeoHierarchy m_gh;
-		ItemIndexStore m_idxStore;
-	private:
-		void flattenOpNode(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, FlattenResultType & frt);
-		void flatten(const FlatNode * n, const ItemIndex * idces, uint32_t cellId, sserialize::ItemIndex & idx, FlattenResultType & frt);
-	public:
-		TreeHandler(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
-		//flatten the node and adjust its type accordingly, put newly created ItemIndex into destInteralIdces
-		void flatten(const FlatNode * n, FlatNode & destNode, std::vector<ItemIndex> & destInternalIdces);
 	};
 
 ///Base class for the TreedCQR, which is a delayed set ops CQR. It delays the set operations of cells until calling finalize() which will return a CQR
@@ -69,29 +50,34 @@ public:
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 private:
-	struct CellDesc {
+	struct CellDesc final {
 		static constexpr uint32_t notree = 0xFFFFFFFF;
 		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId, uint32_t treeBegin, uint32_t treeEnd);
 		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId);
 		CellDesc(const CellDesc & other);
-		CellDesc(CellDesc && other);
 		~CellDesc();
+		CellDesc & operator=(const CellDesc & other);
 		inline uint32_t treeSize() const { return treeEnd-treeBegin; }
 		inline bool hasTree() const { return treeSize(); }
 		uint64_t fullMatch:1;
+		uint64_t hasFetchedNode;
 		uint64_t cellId:31;
 		uint64_t pmIdxId:32;
 		//by definition: if this is 0xFFFFFFFF then the start is invalid
 		uint32_t treeBegin;
 		uint32_t treeEnd; //this is needed for fast copying of trees (and alignment gives it for free)
 	};
+	
+	typedef enum {FT_NONE=0x0, FT_PM=0x1, FT_FM=0x2, FT_FETCHED=0x4, FT_EMPTY=0x8} FlattenResultType;
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 	sserialize::Static::ItemIndexStore m_idxStore;
 	std::vector<CellDesc> m_desc;
 	std::vector<FlatNode> m_trees;
+	std::vector<ItemIndex> m_fetchedIdx;
 private:
 	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	void flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const;
 public:
 	TreedCQRImp();
 	TreedCQRImp(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
@@ -111,10 +97,11 @@ public:
 	TreedCQRImp * unite(const TreedCQRImp * other) const;
 	TreedCQRImp * diff(const TreedCQRImp * other) const;
 	TreedCQRImp * symDiff(const TreedCQRImp * other) const;
+	sserialize::detail::CellQueryResult * toCQR() const;
 };
 
 template<typename T_PMITEMSPTR_IT>
-CellQueryResult::CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
+TreedCQRImp::TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 				T_PMITEMSPTR_IT pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
 m_gh(gh),
 m_idxStore(idxStore)
@@ -123,36 +110,32 @@ m_idxStore(idxStore)
 
 	uint32_t totalSize = fmIdx.size() + pmIdx.size();
 	m_desc.reserve(totalSize);
-	m_idx = (IndexDesc*) malloc(totalSize * sizeof(IndexDesc));
-	IndexDesc * idxPtr = m_idx;
 
-	for(; fmIt != fmEnd && pmIt != pmEnd; ++idxPtr) {
+	for(; fmIt != fmEnd && pmIt != pmEnd;) {
 		uint32_t fCellId = *fmIt;
 		uint32_t pCellId = *pmIt;
 		if(fCellId <= pCellId) {
-			m_desc.push_back(CellDesc(1, 0, fCellId));
+			m_desc.push_back(CellDesc(1, fCellId, 0));
 			++fmIt;
 		}
 		else {
-			m_desc.push_back(CellDesc(0, 0, pCellId));
-			idxPtr->idxPtr = *pmItemsIt;
+			m_desc.push_back(CellDesc(0, pCellId, *pmItemsIt));
 			++pmIt;
 			++pmItemsIt;
 		}
 	}
 	for(; fmIt != fmEnd; ++fmIt) {
-		m_desc.push_back( CellDesc(1, 0, *fmIt) );
+		m_desc.push_back( CellDesc(1, *fmIt, 0) );
 	}
 	
-	for(; pmIt != pmEnd; ++idxPtr, ++pmIt, ++pmItemsIt) {
-		m_desc.push_back(CellDesc(0, 0, *pmIt));
-		idxPtr->idxPtr = *pmItemsIt;
+	for(; pmIt != pmEnd; ++pmIt, ++pmItemsIt) {
+		m_desc.push_back(CellDesc(0, *pmIt, *pmItemsIt));
 	}
 
 }
 
 
-}}//end namespace
+}}}//end namespace
 
 
 #endif
