@@ -98,7 +98,6 @@ public:
 		inline uint32_t & maxItemsSize() { return m_itemSize; }
 		inline const CellPositionsContainer & cellPositions() const { return m_cellPositions;}
 		inline CellPositionsContainer & cellPositions() { return m_cellPositions;}
-		
 		inline iterator begin() { return m_children.begin();}
 		inline const_iterator begin() const { return m_children.begin();}
 		inline const_iterator cbegin() const { return m_children.cbegin();}
