@@ -81,6 +81,14 @@ void TreedCellQueryResult::dump() const {
 	std::cout << std::endl;
 }
 
+sserialize::CellQueryResult TreedCellQueryResult::toCQR() const {
+	return CellQueryResult( m_priv->toCQR([](uint32_t) { return true; }) );
+}
+
+sserialize::CellQueryResult TreedCellQueryResult::toCQR(std::function<bool(uint32_t)> progressFunction) const {
+	return CellQueryResult( m_priv->toCQR([&progressFunction](uint32_t progress) { return progressFunction(progress); }) );
+}
+
 std::ostream& operator<<(std::ostream& out, const TreedCellQueryResult& src) {
 	src.dump(out);
 	return out;

@@ -50,11 +50,15 @@ public:
 
 }
 
+class TreedCellQueryResult;
+
 class CellQueryResult {
 public:
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 	typedef detail::CellQueryResultIterator const_iterator;
+private:
+	friend class sserialize::TreedCellQueryResult;
 private:
 	RCPtrWrapper<detail::CellQueryResult> m_priv;
 private:
