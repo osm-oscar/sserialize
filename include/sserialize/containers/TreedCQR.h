@@ -3,6 +3,7 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/CellQueryResult.h>
 #include <sserialize/utility/CompactUintArray.h>
+#include <functional>
 
 namespace sserialize {
 
@@ -16,6 +17,8 @@ namespace spatial {
 }
 	class ItemIndexStore;
 }
+
+//This is a tree based implementation of the CellQueryResult. Treed from (to) tree. Verb form of tree, 
 
 class TreedCellQueryResult {
 public:
@@ -49,6 +52,7 @@ public:
 	TreedCellQueryResult operator^(const TreedCellQueryResult & other) const;
 	
 	sserialize::CellQueryResult toCQR() const;
+	sserialize::CellQueryResult toCQR(std::function<bool(uint32_t)> progressFunction) const;
 	void dump(std::ostream & out) const;
 	void dump() const;
 };

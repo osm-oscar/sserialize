@@ -2,6 +2,7 @@
 #define SSERIALIZE_TREED_CELL_QUERY_RESULT_PRIVATE_H
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/GeoHierarchy.h>
+#include <sserialize/containers/CellQueryResultPrivate.h>
 #include <memory>
 #include <string.h>
 
@@ -97,7 +98,8 @@ public:
 	TreedCQRImp * unite(const TreedCQRImp * other) const;
 	TreedCQRImp * diff(const TreedCQRImp * other) const;
 	TreedCQRImp * symDiff(const TreedCQRImp * other) const;
-	sserialize::detail::CellQueryResult * toCQR() const;
+	template<typename T_PROGRESS_FUNCION>
+	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf) const;
 };
 
 template<typename T_PMITEMSPTR_IT>
@@ -131,9 +133,48 @@ m_idxStore(idxStore)
 	for(; pmIt != pmEnd; ++pmIt, ++pmItemsIt) {
 		m_desc.push_back(CellDesc(0, *pmIt, *pmItemsIt));
 	}
-
 }
 
+template<typename T_PROGRESS_FUNCION>
+sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf) const {
+	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
+	CellQueryResult & r = *rPtr;
+	r.m_desc.reserve(cellCount());
+	r.m_idx = (detail::CellQueryResult::IndexDesc*) malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
+	
+
+	sserialize::ItemIndex idx;
+	uint32_t pmIdxId;
+	FlattenResultType frt = FT_NONE;
+	
+	for(uint32_t i(0), s(m_desc.size()); i < s && pf(i); ++i) {
+		const CellDesc & cd = m_desc[i];
+		if (m_desc[i].hasTree()) {
+			flattenCell((&m_trees[i])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+			assert(frt != FT_NONE);
+			if (frt == FT_FM) {
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
+			}
+			else if (frt == FT_PM) {
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
+				r.m_idx[i].idxPtr = cd.pmIdxId;
+			}
+			else if (frt == FT_FETCHED) { //frt == FT_FETCHED
+				r.uncheckedSet(r.m_desc.size(), idx);
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
+			}
+		}
+		else {
+			r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
+			if (!cd.fullMatch) {
+				r.m_idx[i].idxPtr = cd.pmIdxId;
+			}
+		}
+	}
+	r.m_desc.shrink_to_fit();
+	r.m_idx = (detail::CellQueryResult::IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(detail::CellQueryResult::IndexDesc));
+	return rPtr;
+}
 
 }}}//end namespace
 

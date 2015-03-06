@@ -1,7 +1,6 @@
 #include <sserialize/containers/TreedCQRImp.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/containers/CellQueryResultPrivate.h>
 
 namespace sserialize {
 namespace detail {
@@ -618,45 +617,6 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 	}
 	
 	assert(r.m_desc.size() <= m_desc.size() + o.m_desc.size());
-	return rPtr;
-}
-
-detail::CellQueryResult* TreedCQRImp::toCQR() const {
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
-	CellQueryResult & r = *rPtr;
-	r.m_desc.reserve(cellCount());
-	r.m_idx = (detail::CellQueryResult::IndexDesc*) malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
-	
-
-	sserialize::ItemIndex idx;
-	uint32_t pmIdxId;
-	FlattenResultType frt = FT_NONE;
-	
-	for(uint32_t i(0), s(m_desc.size()); i < s; ++i) {
-		const CellDesc & cd = m_desc[i];
-		if (m_desc[i].hasTree()) {
-			flattenCell((&m_trees[i])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
-			assert(frt != FT_NONE);
-			if (frt == FT_FM) {
-				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
-			}
-			else if (frt == FT_PM) {
-				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
-				r.m_idx[i].idxPtr = cd.pmIdxId;
-			}
-			else if (frt == FT_FETCHED) { //frt == FT_FETCHED
-				r.uncheckedSet(r.m_desc.size(), idx);
-				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
-			}
-		}
-		else {
-			r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
-			if (!cd.fullMatch) {
-				r.m_idx[i].idxPtr = cd.pmIdxId;
-			}
-		}
-	}
-	r.m_idx = (detail::CellQueryResult::IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(detail::CellQueryResult::IndexDesc));
 	return rPtr;
 }
 
