@@ -96,9 +96,9 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 
 std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemIndexStore& store) {
 	m_idToOffsets.reserve(store.size()+size());
-	m_offsetsToId.reserve(store.size()+size());
 	m_idxSizes.reserve(store.size()+size());
 	if (m_useDeduplication) {
+		m_offsetsToId.reserve(store.size()+size());
 		m_hash.reserve(store.size()+size());
 	}
 	std::vector<uint32_t> res;
@@ -189,12 +189,14 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize
 		m_idxSizes.push_back(idxSize);
 		m_dataLock.releaseWriteLock();
 		
-		m_mapLock.acquireWriteLock();
-		m_offsetsToId[indexPos] = id;
-		m_hash[hv].push_front(indexPos);
-		m_mapLock.releaseWriteLock();
+		if (m_useDeduplication) {
+			m_mapLock.acquireWriteLock();
+			m_offsetsToId[indexPos] = id;
+			m_hash[hv].push_front(indexPos);
+			m_mapLock.releaseWriteLock();
+		}
 	}
-	else {
+	else {//index is in store, so we have deduplication enabled
 		m_mapLock.acquireReadLock();
 		id = m_offsetsToId[indexPos];
 		m_mapLock.releaseReadLock();
@@ -214,7 +216,7 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 
 OffsetType ItemIndexFactory::flush() {
 	assert(m_idxSizes.size() == m_idToOffsets.size());
-	assert(m_idToOffsets.size() == m_offsetsToId.size());
+	assert(m_useDeduplication && m_idToOffsets.size() == m_offsetsToId.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
 	m_header.resetPtrs();
@@ -223,23 +225,17 @@ OffsetType ItemIndexFactory::flush() {
 	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IndexCompressionType::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
 	
-	std::cout << "Gathering offsets...";
-	//Create the offsets
-	std::vector<uint64_t> os(m_offsetsToId.size(), 0);
-	for(OffsetToIdHashType::const_iterator it (m_offsetsToId.begin()), end(m_offsetsToId.end()); it != end; ++it) {
-			os[it->second] = it->first;
-	}
-	std::cout << os.size() << " gathered" << std::endl;
+
 	std::cout << "Serializing offsets...";
 	uint64_t oIBegin = m_indexStore.tellPutPtr();
-	if (! Static::SortedOffsetIndexPrivate::create(os, m_indexStore) ) {
+	if (! Static::SortedOffsetIndexPrivate::create(m_idToOffsets, m_indexStore) ) {
 		std::cout << "ItemIndexFactory::serialize: failed to create Offsetindex." << std::endl;
 		return 0;
 	}
 	else {
 		UByteArrayAdapter oIData(m_indexStore, oIBegin);
 		sserialize::Static::SortedOffsetIndex oIndex(oIData);
-		if (os != oIndex) {
+		if (m_idToOffsets != oIndex) {
 			std::cout << "OffsetIndex creation FAILED!" << std::endl;
 		}
 	}
