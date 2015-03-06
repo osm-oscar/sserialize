@@ -185,6 +185,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize
 		indexPos = m_indexStore.tellPutPtr();
 		m_indexStore.put(idx);
 		id = m_idToOffsets.size();
+		assert((std::size_t)id == m_idToOffsets.size()); //check for wrap around of ids
 		m_idToOffsets.push_back(indexPos);
 		m_idxSizes.push_back(idxSize);
 		m_dataLock.releaseWriteLock();
