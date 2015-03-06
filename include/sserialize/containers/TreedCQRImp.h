@@ -156,19 +156,19 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf)
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
 			}
 			else if (frt == FT_PM) {
+				r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
-				r.m_idx[i].idxPtr = cd.pmIdxId;
 			}
-			else if (frt == FT_FETCHED) { //frt == FT_FETCHED
+			else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
 				r.uncheckedSet(r.m_desc.size(), idx);
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
 			}
 		}
 		else {
-			r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
 			if (!cd.fullMatch) {
-				r.m_idx[i].idxPtr = cd.pmIdxId;
+				r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;
 			}
+			r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
 		}
 	}
 	r.m_desc.shrink_to_fit();
