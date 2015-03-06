@@ -9,7 +9,8 @@ namespace TreedCellQueryResult  {
 void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const {
 	switch(n->common.type) {
 	case FlatNode::T_PM_LEAF:
-		frt = FT_FM;
+		pmIdxId = n->pmNode.pmIdxId;
+		frt = FT_PM;
 		return;
 	case FlatNode::T_FETCHED_LEAF:
 		frt = FT_FETCHED;
