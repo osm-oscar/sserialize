@@ -117,21 +117,21 @@ m_idxStore(idxStore)
 		uint32_t fCellId = *fmIt;
 		uint32_t pCellId = *pmIt;
 		if(fCellId <= pCellId) {
-			m_desc.push_back(CellDesc(1, fCellId, 0));
+			m_desc.emplace_back(1, fCellId, 0);
 			++fmIt;
 		}
 		else {
-			m_desc.push_back(CellDesc(0, pCellId, *pmItemsIt));
+			m_desc.emplace_back(0, pCellId, *pmItemsIt);
 			++pmIt;
 			++pmItemsIt;
 		}
 	}
 	for(; fmIt != fmEnd; ++fmIt) {
-		m_desc.push_back( CellDesc(1, *fmIt, 0) );
+		m_desc.emplace_back(1, *fmIt, 0);
 	}
 	
 	for(; pmIt != pmEnd; ++pmIt, ++pmItemsIt) {
-		m_desc.push_back(CellDesc(0, *pmIt, *pmItemsIt));
+		m_desc.emplace_back(0, *pmIt, *pmItemsIt);
 	}
 }
 
