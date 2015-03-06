@@ -88,22 +88,22 @@ m_idxStore(idxStore)
 		uint32_t fCellId = *fmIt;
 		uint32_t pCellId = *pmIt;
 		if(fCellId <= pCellId) {
-			m_desc.push_back(CellDesc(1, 0, fCellId));
+			m_desc.emplace_back(1, 0, fCellId);
 			++fmIt;
 		}
 		else {
-			m_desc.push_back(CellDesc(0, 0, pCellId));
+			m_desc.emplace_back(0, 0, pCellId);
 			idxPtr->idxPtr = *pmItemsIt;
 			++pmIt;
 			++pmItemsIt;
 		}
 	}
 	for(; fmIt != fmEnd; ++fmIt) {
-		m_desc.push_back( CellDesc(1, 0, *fmIt) );
+		m_desc.emplace_back(1, 0, *fmIt);
 	}
 	
 	for(; pmIt != pmEnd; ++idxPtr, ++pmIt, ++pmItemsIt) {
-		m_desc.push_back(CellDesc(0, 0, *pmIt));
+		m_desc.emplace_back(0, 0, *pmIt);
 		idxPtr->idxPtr = *pmItemsIt;
 	}
 
