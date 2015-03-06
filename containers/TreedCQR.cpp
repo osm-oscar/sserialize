@@ -16,8 +16,8 @@ m_priv( new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, gh, idxStore)
 {}
 
 
-TreedCellQueryResult::TreedCellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
-m_priv( new detail::TreedCellQueryResult::TreedCQRImp(cellId, cellIdxId, gh, idxStore) )
+TreedCellQueryResult::TreedCellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
+m_priv( new detail::TreedCellQueryResult::TreedCQRImp(fullMatch, cellId, gh, idxStore, cellIdxId) )
 {}
 
 TreedCellQueryResult::TreedCellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin, const sserialize::TreedCellQueryResult::GeoHierarchy& gh, const sserialize::TreedCellQueryResult::ItemIndexStore& idxStore) :

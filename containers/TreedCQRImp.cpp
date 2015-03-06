@@ -140,13 +140,13 @@ m_idxStore(idxStore)
 	}
 }
 
-TreedCQRImp::TreedCQRImp(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+TreedCQRImp::TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
 m_gh(gh),
 m_idxStore(idxStore)
 {
 	uint32_t totalSize = 1;
 	m_desc.reserve(totalSize);
-	m_desc.push_back( CellDesc(0, cellId, cellIdxId) );
+	m_desc.push_back( CellDesc((fullMatch ? (uint32_t)1 : 0), cellId, ((uint32_t)fullMatch ? 0 : cellIdxId) ) );
 }
 
 TreedCQRImp::TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
