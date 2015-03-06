@@ -72,6 +72,20 @@ void TreedCellQueryResult::dump(std::ostream & out) const {
 		return;
 	}
 	char sep = '{';
+	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+		out << sep << ' ';
+		out << m_priv->cellId(i) << ":";
+		if (m_priv->fullMatch(i)) {
+			out << "f";
+		}
+		else if (m_priv->hasTree(i)) {
+			out << "t";
+		}
+		else {
+			out << "p";
+		}
+		sep = ',';
+	}
 	out << " }";
 	return;
 }
