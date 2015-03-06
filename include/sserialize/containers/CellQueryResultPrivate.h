@@ -47,7 +47,7 @@ private:
 public:
 	CellQueryResult();
 	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
-	CellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId);
 	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const { return m_gh; }
 	
 	///@parameter fmBegin begining of the fully matched cells

@@ -81,8 +81,8 @@ m_priv( new detail::CellQueryResult(fullMatches, gh, idxStore) )
 {}
 
 
-CellQueryResult::CellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
-m_priv( new detail::CellQueryResult(cellId, cellIdxId, gh, idxStore) )
+CellQueryResult::CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
+m_priv( new detail::CellQueryResult(fullMatch, cellId, gh, idxStore, cellIdxId) )
 {}
 
 CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :

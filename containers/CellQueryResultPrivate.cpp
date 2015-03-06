@@ -23,7 +23,7 @@ m_idxStore(idxStore)
 	}
 }
 
-CellQueryResult::CellQueryResult(uint32_t cellId, uint32_t cellIdxId, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+CellQueryResult::CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
 m_gh(gh),
 m_idxStore(idxStore)
 {
@@ -32,8 +32,10 @@ m_idxStore(idxStore)
 	m_desc.reserve(totalSize);
 	m_idx = (IndexDesc*) malloc(totalSize * sizeof(IndexDesc));
 	IndexDesc * idxPtr = m_idx;
-	m_desc.push_back( CellDesc(0, 0, cellId) );
-	idxPtr[0].idxPtr = cellIdxId;
+	m_desc.push_back( CellDesc((fullMatch ? 1 : 0), 0, cellId) );
+	if (!fullMatch) {
+		idxPtr[0].idxPtr = cellIdxId;
+	}
 }
 
 CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
