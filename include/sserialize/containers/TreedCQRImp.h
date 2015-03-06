@@ -92,6 +92,7 @@ public:
 	virtual ~TreedCQRImp();
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
+	inline bool hasTree(uint32_t pos) const { return m_desc[pos].hasTree();}
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
 	inline uint32_t cellCount() const { return m_desc.size();}
 	TreedCQRImp * intersect(const TreedCQRImp * other) const;
