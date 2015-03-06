@@ -30,7 +30,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 	sserialize::ItemIndex aIdx, bIdx;
 	FlattenResultType frtA, frtB;
 	uint32_t pmIdxIdA, pmIdxIdB;
-	flattenCell(n+n->opNode.childA, cellId, aIdx, pmIdxIdA, frtA);
+	flattenCell(n+1, cellId, aIdx, pmIdxIdA, frtA);
 	flattenCell(n+n->opNode.childB, cellId, bIdx, pmIdxIdB, frtB);
 	
 	assert(frtA != FT_NONE && frtB != FT_NONE);
@@ -223,7 +223,6 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 					r.m_trees.emplace_back(FlatNode::T_INTERSECT);
 					{
 						FlatNode & opNode = r.m_trees.back();
-						opNode.opNode.childA = 1;
 						opNode.opNode.childB = 2;
 					}
 					
@@ -267,7 +266,6 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 
 				uint32_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_INTERSECT);
-				r.m_trees[treeBegin].opNode.childA = 1;
 				
 				if (myCD.hasTree()) {
 					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
@@ -338,7 +336,6 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			r.m_trees.emplace_back(FlatNode::T_UNITE);
 			{
 				FlatNode & opNode = r.m_trees.back();
-				opNode.opNode.childA = 1;
 				opNode.opNode.childB = 2;
 			}
 			
@@ -353,7 +350,6 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 		else { //at least one has a tree, none is full match
 			uint32_t treeBegin = r.m_trees.size();
 			r.m_trees.emplace_back(FlatNode::T_UNITE);
-			r.m_trees[treeBegin].opNode.childA = 1;
 			
 			if (myCD.hasTree()) {
 				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
@@ -447,7 +443,6 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 		else {//we definetly have to create a tree, no matter what
 			uint32_t treeBegin = r.m_trees.size();
 			r.m_trees.emplace_back(FlatNode::T_DIFF);
-			r.m_trees[treeBegin].opNode.childA = 1;
 			
 			if (myCD.hasTree()) {
 				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
@@ -543,7 +538,6 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 		else {//we definetly have to create a tree, no matter what
 			uint32_t treeBegin = r.m_trees.size();
 			r.m_trees.emplace_back(FlatNode::T_SYM_DIFF);
-			r.m_trees[treeBegin].opNode.childA = 1;
 			
 			if (myCD.hasTree()) {
 				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);

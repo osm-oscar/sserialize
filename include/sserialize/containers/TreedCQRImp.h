@@ -24,8 +24,7 @@ namespace TreedCellQueryResult  {
 		} common;
 		struct {
 			uint64_t type:3;
-			uint64_t childA:30;//offset to child A from the position of THIS node of the tree
-			uint64_t childB:31;//offset to child B from the position of THIS node of the tree
+			uint64_t childB:61;//offset to child B from the position of THIS node of the tree, childA is always at position 1
 		} opNode;
 		struct {
 			uint64_t type:3;
