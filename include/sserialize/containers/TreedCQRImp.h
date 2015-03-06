@@ -12,6 +12,8 @@ namespace TreedCellQueryResult  {
 
 	//TODO: Add ability to stop flattening (i.e. by call back function, could also provide a progress bar)
 	//If we do this, then we need to make sure that we copy the indexes as well when we copy a tree
+	//realy? only if we allow set operations between partialy flattened CQR
+	//Need?: if there are too many cells that might get pruned away beforehand by the tree operations then we could periodically flatten it
 
 	union FlatNode {
 		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_INTERSECT=4, T_UNITE=5, T_DIFF=6, T_SYM_DIFF=7} Type;
@@ -22,9 +24,8 @@ namespace TreedCellQueryResult  {
 		} common;
 		struct {
 			uint64_t type:3;
-			uint64_t padding:1;
 			uint64_t childA:30;//offset to child A from the position of THIS node of the tree
-			uint64_t childB:30;//offset to child B from the position of THIS node of the tree
+			uint64_t childB:31;//offset to child B from the position of THIS node of the tree
 		} opNode;
 		struct {
 			uint64_t type:3;
@@ -61,8 +62,8 @@ private:
 		inline uint32_t treeSize() const { return treeEnd-treeBegin; }
 		inline bool hasTree() const { return treeSize(); }
 		uint64_t fullMatch:1;
-		uint64_t hasFetchedNode;
-		uint64_t cellId:31;
+		uint64_t hasFetchedNode:1;
+		uint64_t cellId:30;
 		uint64_t pmIdxId:32;
 		//by definition: if this is 0xFFFFFFFF then the start is invalid
 		uint32_t treeBegin;
