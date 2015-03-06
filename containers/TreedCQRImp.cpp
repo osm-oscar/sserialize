@@ -224,7 +224,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 					{
 						FlatNode & opNode = r.m_trees.back();
 						opNode.opNode.childA = 1;
-						opNode.opNode.childA = 2;
+						opNode.opNode.childB = 2;
 					}
 					
 					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
@@ -339,7 +339,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			{
 				FlatNode & opNode = r.m_trees.back();
 				opNode.opNode.childA = 1;
-				opNode.opNode.childA = 2;
+				opNode.opNode.childB = 2;
 			}
 			
 			r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
