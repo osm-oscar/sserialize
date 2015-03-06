@@ -29,7 +29,7 @@ namespace TreedCellQueryResult  {
 		struct {
 			uint64_t type:3;
 			uint64_t cellId:29;
-			uint64_t pmIdxId:32;
+			uint64_t pmIdxId:32;//29 bits is not be enough if ItemIndexStore has no deduplication
 		} pmNode;
 		struct {
 			uint64_t type:3;
