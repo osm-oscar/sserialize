@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_TYPES_H
 #define SSERIALIZE_TYPES_H
 #include <stdint.h>
+#include <assert.h>
 
 namespace sserialize {
 
@@ -36,6 +37,7 @@ typedef int64_t SignedOffsetType;
 typedef uint64_t SizeType;
 typedef int64_t SignedSizeType;
 typedef uint64_t IdType;
+static_assert(sizeof(std::size_t) == sizeof(OffsetType), "std::size_t and OffsetType differ");
 #define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #else
