@@ -224,6 +224,7 @@ OffsetType ItemIndexFactory::flush() {
 	assert(m_useDeduplication && m_idToOffsets.size() == m_offsetsToId.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
+	std::cout << "Size=" << m_idToOffsets.size() << std::endl;
 	m_header.resetPtrs();
 	m_header << static_cast<uint8_t>(4); //Version
 	m_header << static_cast<uint8_t>(m_type);//type
@@ -231,8 +232,8 @@ OffsetType ItemIndexFactory::flush() {
 	m_header.putOffset(m_indexStore.tellPutPtr());
 	
 
-	std::cout << "Serializing offsets...";
 	uint64_t oIBegin = m_indexStore.tellPutPtr();
+	std::cout << "Serializing offsets starting at " << oIBegin << "...";
 	if (! Static::SortedOffsetIndexPrivate::create(m_idToOffsets, m_indexStore) ) {
 		std::cout << "ItemIndexFactory::serialize: failed to create Offsetindex." << std::endl;
 		return 0;
@@ -244,7 +245,8 @@ OffsetType ItemIndexFactory::flush() {
 			std::cout << "OffsetIndex creation FAILED!" << std::endl;
 		}
 	}
-	std::cout << "Serializing idx sizes..." << std::flush;
+	uint64_t idxSizesBegin = m_indexStore.tellPutPtr();
+	std::cout << "Serializing idx sizes starting at " << idxSizesBegin << "..." << std::flush;
 #ifdef DEBUG_CHECK_ALL
 	assert(m_idxSizes[0] == 0);
 	if (m_useDeduplication) {
