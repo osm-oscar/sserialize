@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_TYPES_H
 #define SSERIALIZE_TYPES_H
 #include <stdint.h>
+#include <limits>
 #include <assert.h>
 
 namespace sserialize {
