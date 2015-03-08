@@ -50,10 +50,21 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 	return d;
 }
 
-void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess) {
-	std::size_t fbSize = sserialize::UByteArrayAdapter::getFastTempFilePrefix().size();
+void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess, bool fastFile) {
+	std::size_t fbSize;
+	if (fastFile) {
+		fbSize = sserialize::UByteArrayAdapter::getFastTempFilePrefix().size();
+	}
+	else {
+		fbSize = sserialize::UByteArrayAdapter::getTempFilePrefix().size();
+	}
 	char * fileName = new char[fbSize+7];
-	::memmove(fileName, sserialize::UByteArrayAdapter::getFastTempFilePrefix().c_str(), sizeof(char)*fbSize);
+	if (fastFile) {
+		::memmove(fileName, sserialize::UByteArrayAdapter::getFastTempFilePrefix().c_str(), sizeof(char)*fbSize);
+	}
+	else {
+		::memmove(fileName, sserialize::UByteArrayAdapter::getTempFilePrefix().c_str(), sizeof(char)*fbSize);
+	}
 	::memset(fileName+fbSize, 'X', 6);
 	fileName[fbSize+6] = 0;
 	

@@ -13,7 +13,7 @@
 
 namespace sserialize {
 
-typedef enum {MM_INVALID=0, MM_FILEBASED, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY} MmappedMemoryType;
+typedef enum {MM_INVALID=0, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY, MM_FAST_FILEBASED, MM_SLOW_FILEBASE, MM_FILEBASED = MM_FAST_FILEBASED} MmappedMemoryType;
 
 namespace detail {
 namespace MmappedMemory {
@@ -87,7 +87,7 @@ private:
 	bool m_unlink;
 public:
 	///@para size: has to be larger than 1, otherwise will be set to 1
-	MmappedMemoryFileBased(OffsetType size, bool populate = false, bool randomAccess = true) :
+	MmappedMemoryFileBased(OffsetType size, bool fastFile, bool populate = false, bool randomAccess = false) :
 	m_data(0),
 	m_size(0),
 	m_fd(-1),
@@ -96,7 +96,7 @@ public:
 	m_unlink(true)
 	{
 		size = std::max<OffsetType>(1, size);
-		m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess);
+		m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess, fastFile);
 		if (m_data) {
 			m_size = size;
 			MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
@@ -106,7 +106,7 @@ public:
 		}
 	}
 	///map as much of fileName into memory as possible, if file does not exists, create it
-	MmappedMemoryFileBased(const std::string & fileName, bool populate = false, bool randomAccess = true) :
+	MmappedMemoryFileBased(const std::string & fileName, bool populate = false, bool randomAccess = false) :
 	m_data(0),
 	m_size(0),
 	m_fd(-1),
@@ -259,8 +259,8 @@ public:
 	virtual ~MmappedMemorySharedMemory() override {
 		if (m_data) {
 			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
-			::munmap(m_data, m_size);
-			::shm_unlink(m_name.c_str());
+			assert(::munmap(m_data, m_size) == 0);
+			assert(::shm_unlink(m_name.c_str()) == 0);
 			m_data = 0;
 		}
 	}
@@ -305,8 +305,11 @@ public:
 	///@param size Number of elements
 	MmappedMemory(OffsetType size, MmappedMemoryType t) : m_priv(0) {
 		switch (t) {
-		case MM_FILEBASED:
-			m_priv.reset(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(size));
+		case MM_FAST_FILEBASED:
+			m_priv.reset(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(size, true));
+			break;
+		case MM_SLOW_FILEBASE:
+			m_priv.reset(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(size, false));
 			break;
 		case MM_SHARED_MEMORY:
 #ifndef __ANDROID__

@@ -14,7 +14,7 @@ struct FileHandler {
 	static void * mmapFile(int fd, OffsetType size, bool prePopulate, bool randomAccess);
 	//mmap a file and create if it does not exist
 	static void * mmapFile(const std::string & fileName, int & fd, OffsetType & size, bool prePopulate, bool randomAccess);
-	static void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess);
+	static void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess, bool fastFile);
 	static void * resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize, bool prePopulate, bool randomAccess);
 	static bool closeAndUnlink(const std::string & fileName, int fd, void * mem, OffsetType size);
 	static bool close(int fd, void* mem, sserialize::OffsetType size, bool sync = false);
