@@ -18,7 +18,7 @@ void SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 	int curLen;
 	uint64_t size = data.getVlPackedUint64(0, &curLen);
 	if (curLen < 0) {
-		sserialize::CorruptDataException("sserialize::SortedOffsetIndexPrivate::init: Failed to retrieve m_size");
+		throw sserialize::CorruptDataException("sserialize::SortedOffsetIndexPrivate::init: Failed to retrieve m_size");
 		return;
 	}
 	data += curLen;
@@ -60,7 +60,7 @@ void SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 			m_yintercept = 0;
 			m_slopenom = 0;
 			m_idOffset = 0;
-			SSERIALIZE_LENGTH_CHECK(m_size, m_idStore.maxCount(), "sserialize::SortedOffsetIndexPrivate::init: Id store has not enought ids");
+			throw sserialize::CorruptDataException("sserialize::SortedOffsetIndexPrivate::init: Id store has not enought ids");
 			return;
 		}
 	}
