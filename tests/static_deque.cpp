@@ -117,6 +117,8 @@ public:
 		d.resetPutPtr();
 		sserialize::Static::Array<uint32_t> sd(d);
 		
+		CPPUNIT_ASSERT_MESSAGE("static array unequal", realValues == sd);
+		
 		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), asd.size());
@@ -131,6 +133,8 @@ public:
 		d << realValues;
 		d.resetPutPtr();
 		sserialize::Static::Array<uint32_t> sd(d);
+		
+		CPPUNIT_ASSERT_MESSAGE("static array unequal", realValues == sd);
 
 		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
 

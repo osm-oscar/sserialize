@@ -8,16 +8,25 @@
 #include <sserialize/utility/mmappedfile.h>
 #include <sserialize/utility/AtStlInputIterator.h>
 #include <sserialize/templated/AbstractArray.h>
+#include <sserialize/utility/pack_unpack_functions.h>
 #include <fstream>
-#define SSERIALIZE_STATIC_ARRAY_VERSION 3
+#include <functional>
+#define SSERIALIZE_STATIC_ARRAY_VERSION 4
 
-/** FileFormat: v3
+/** FileFormat: v4
  *
- *-----------------------------------------------
- *Version|DataLen        |Data| Data offsets    |
- *-----------------------------------------------
- *  u8   |UBA::OffsetType|  * |SortedOffsetIndex|
+ *-------------------------------------------------------------
+ *Version|DataLen        |Data| (Data offsets or entry length)
+ *-------------------------------------------------------------
+ *  u8   |UBA::OffsetType|  * | (SortedOffsetIndex or vu32)
  * SIZE = Size of Data
+ * 
+ * data offsets/entry length: entry length if entry has constant length but is not integral, otherweise offset index
+ * 
+ * Changelog:
+ * v4: remove Data Offsets index for constant-length types,
+ * 
+ * 
  */
 
 namespace sserialize {
@@ -43,7 +52,7 @@ public:
 	///create a new Array at tellPutPtr()
 	ArrayCreator(UByteArrayAdapter & destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER() ) :
 	m_dest(destination), m_ss(ss) {
-		m_dest.putUint8(3);//version
+		m_dest.putUint8(4);//version
 		m_dataLenPtr = m_dest.tellPutPtr();
 		m_dest.putOffset(0);
 		
@@ -53,8 +62,11 @@ public:
 	const std::vector<OffsetType> & offsets() const { return m_offsets; }
 	virtual ~ArrayCreator() {}
 	void reserveOffsets(uint32_t size) { m_offsets.reserve(size); }
+	void reserve(uint32_t size) { reserveOffsets(size); }
 	void put(const TValue & value) {
-		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
+		if (!sserialize::SerializationInfo<TValue>::is_fixed_length) {
+			m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
+		}
 		m_ss(m_dest, value);
 	}
 	void beginRawPut() {
@@ -62,36 +74,43 @@ public:
 	}
 	UByteArrayAdapter & rawPut() { return m_dest;}
 	void endRawPut() {}
-	///@return data to create the deque (NOT dest data)
+	///@return data to create the Array (NOT dest data)
 	UByteArrayAdapter flush() {
-#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
 		OffsetType oiBegin = m_dest.tellPutPtr();
-#endif
+		#endif
 		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
-		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest)) {
-			throw sserialize::CreationException("Array::flush: Creating the offset");
+		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
+			if (!std::is_integral<TValue>::value) {
+				m_dest.putVlPackedUint32(sserialize::SerializationInfo<TValue>::length);
+			}
 		}
-#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
-		sserialize::UByteArrayAdapter tmp = m_dest;
-		tmp.setPutPtr(oiBegin);
-		tmp.shrinkToPutPtr();
-		sserialize::Static::SortedOffsetIndex oIndex;
-		try {
-			oIndex = sserialize::Static::SortedOffsetIndex(tmp);
+		else {
+			if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest)) {
+				throw sserialize::CreationException("Array::flush: Creating the offset");
+			}
+			#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+			sserialize::UByteArrayAdapter tmp = m_dest;
+			tmp.setPutPtr(oiBegin);
+			tmp.shrinkToPutPtr();
+			sserialize::Static::SortedOffsetIndex oIndex;
+			try {
+				oIndex = sserialize::Static::SortedOffsetIndex(tmp);
+			}
+			catch (const Exception & e) {
+				std::cout << e.what() << std::endl;
+				writeOutOffset();
+			}
+			if (offsets() != oIndex) {
+				writeOutOffset();
+				throw sserialize::CreationException("Array::flush Offset index is unequal");
+			}
+			if (oIndex.getSizeInBytes() != (m_dest.tellPutPtr()-oiBegin)) {
+				writeOutOffset();
+				throw sserialize::CreationException("Array::flush Offset index reports wrong sizeInBytes()");
+			}
+			#endif
 		}
-		catch (const Exception & e) {
-			std::cout << e.what() << std::endl;
-			writeOutOffset();
-		}
-		if (offsets() != oIndex) {
-			writeOutOffset();
-			throw sserialize::CreationException("Array::flush Offset index is unequal");
-		}
-		if (oIndex.getSizeInBytes() != (m_dest.tellPutPtr()-oiBegin)) {
-			writeOutOffset();
-			throw sserialize::CreationException("Array::flush Offset index reports wrong sizeInBytes()");
-		}
-#endif
 		return m_dest + (m_beginOffSet-1-UByteArrayAdapter::OffsetTypeSerializedLength());
 	}
 	
@@ -109,6 +128,60 @@ public:
 	}
 };
 
+namespace detail {
+
+template<typename TValue, typename TEnable = void>
+class ArrayOffsetIndex;
+
+template<typename TValue>
+class ArrayOffsetIndex<TValue, typename std::enable_if<sserialize::SerializationInfo<TValue>::is_fixed_length>::type > {
+public:
+	typedef ArrayOffsetIndex<TValue, typename std::enable_if<sserialize::SerializationInfo<TValue>::is_fixed_length>::type > MyType;
+private:
+	uint32_t m_size;
+public:
+	ArrayOffsetIndex() {}
+	ArrayOffsetIndex(const MyType & other) : m_size(other.m_size) {}
+	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType dataSize, const sserialize::UByteArrayAdapter & d) :
+	m_size(dataSize/sserialize::SerializationInfo<TValue>::length)
+	{
+		if (!std::is_integral<TValue>::value) {
+			if (d.getVlPackedUint32(0) != sserialize::SerializationInfo<TValue>::length) {
+				throw sserialize::CorruptDataException("Entry sizes do not match.");
+			}
+		}
+	}
+	~ArrayOffsetIndex() {}
+	sserialize::UByteArrayAdapter::OffsetType at(uint32_t pos) const { return sserialize::SerializationInfo<TValue>::length*pos; }
+	uint32_t size() const { return m_size; }
+	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {
+		if (std::is_integral<TValue>::value) {
+			return 0;
+		}
+		else {
+			return psize_v<uint32_t>(sserialize::SerializationInfo<TValue>::length);
+		}
+	}
+};
+
+template<typename TValue>
+class ArrayOffsetIndex<TValue, typename std::enable_if<!sserialize::SerializationInfo<TValue>::is_fixed_length>::type > {
+public:
+	typedef ArrayOffsetIndex<TValue, typename std::enable_if<!sserialize::SerializationInfo<TValue>::is_fixed_length>::type > MyType;
+private:
+	sserialize::Static::SortedOffsetIndex m_index;
+public:
+	ArrayOffsetIndex() {}
+	ArrayOffsetIndex(const MyType & other) : m_index(other.m_index) {}
+	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType /*dataSize*/, const sserialize::UByteArrayAdapter & d) : m_index(d) {}
+	~ArrayOffsetIndex() {}
+	inline sserialize::UByteArrayAdapter::OffsetType at(uint32_t pos) const { return m_index.at(pos); }
+	uint32_t size() const { return m_index.size(); }
+	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const { return m_index.getSizeInBytes();}
+};
+
+}//end namespace detail::Array
+
 template<typename TValue>
 class Array: public RefCountObject {
 public:
@@ -120,14 +193,15 @@ public:
 	typedef enum {TI_FIXED_LENGTH=1} TypeInfo;
 	static constexpr uint32_t npos = 0xFFFFFFFF;
 private:
-	SortedOffsetIndex m_index;
 	UByteArrayAdapter m_data;
+	detail::ArrayOffsetIndex<TValue> m_index;
+	sserialize::UByteArrayAdapter::Deserializer<TValue> m_ds;
 public:
 	Array();
 	/** Creates a new deque at data.putPtr */
 	Array(const UByteArrayAdapter & data);
 	/** This does not copy the ref count, but inits it */
-	Array(const Array & other) : RefCountObject(), m_index(other.m_index), m_data(other.m_data) {}
+	Array(const Array & other) : RefCountObject(), m_data(other.m_data), m_index(other.m_index) {}
 	virtual ~Array() {}
 	
 	iterator begin() { return iterator(0, this); }
@@ -221,8 +295,8 @@ Array<TValue>::Array() : RefCountObject() {}
 template<typename TValue>
 Array<TValue>::Array(const UByteArrayAdapter & data) :
 RefCountObject(),
-m_index(data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength() + data.getOffset(1))),
-m_data(UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1)))
+m_data(UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1))),
+m_index(m_data.size(), data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength() + m_data.size()))
 {
 SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ARRAY_VERSION, data.at(0), "Static::Array");
 SSERIALIZE_LENGTH_CHECK(m_index.size()*sserialize::SerializationInfo<TValue>::min_length, m_data.size(), "Static::Array::Array::Insufficient data");
@@ -234,13 +308,13 @@ Array<TValue>::at(uint32_t pos) const {
 	if (pos >= size() || size() == 0) {
 		return TValue();
 	}
-	return TValue(dataAt(pos));
+	return m_ds(dataAt(pos));
 }
 
 template<typename TValue>
 TValue
 Array<TValue>::operator[](uint32_t pos) const {
-	return TValue(dataAt(pos));
+	return m_ds(dataAt(pos));
 }
 
 template<typename TValue>
@@ -297,33 +371,6 @@ uint32_t Array<TValue>::find(const TValue& value) const {
 	}
 	return npos;
 }
-
-//Template specialications for integral types
-
-template<>
-int32_t
-Array<int32_t>::at(uint32_t pos) const;
-
-template<>
-uint32_t
-Array<uint32_t>::at(uint32_t pos) const;
-
-
-template<>
-uint16_t
-Array<uint16_t>::at(uint32_t pos) const;
-
-template<>
-uint8_t
-Array<uint8_t>::at(uint32_t pos) const;
-
-template<>
-std::string
-Array<std::string>::at(uint32_t pos) const;
-
-template<>
-UByteArrayAdapter
-Array<UByteArrayAdapter>::at(uint32_t pos) const;
 
 template<typename TValue>
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Array<TValue> & destination) {

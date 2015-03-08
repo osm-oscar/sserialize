@@ -41,7 +41,6 @@ staging/containers/FlatGST.cpp
 )
 
 set(STATIC_SOURCES_CPP
-Static/Array.cpp
 Static/Set.cpp
 Static/StringTable.cpp
 Static/ItemIndexStore.cpp
