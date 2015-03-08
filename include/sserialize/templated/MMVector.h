@@ -1,6 +1,8 @@
 #ifndef SSERIALIZE_MM_VECTOR_H
 #define SSERIALIZE_MM_VECTOR_H
 #include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/Static/Array.h>
+#include <iterator>
 #define SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR 0.1
 
 namespace sserialize {
@@ -12,6 +14,8 @@ public:
 	typedef TValue value_type;
 	typedef value_type * iterator;
 	typedef const value_type * const_iterator;
+	typedef std::reverse_iterator<iterator> reverse_iterator;
+	typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 	typedef value_type & reference;
 	typedef const value_type & const_reference;
 private:
@@ -143,6 +147,14 @@ public:
 	inline iterator end() { return m_begin+m_pP;}
 	inline const_iterator end() const { return m_begin+m_pP;}
 	inline const_iterator cend() const { return m_begin+m_pP;}
+	
+	inline reverse_iterator rbegin() { return reverse_iterator(end()); }
+	inline const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+	inline const_reverse_iterator crbegin() const { return const_reverse_iterator(cend()); }
+	inline reverse_iterator rend() { return reverse_iterator(begin());}
+	inline const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
+	inline const_reverse_iterator crend() const { return const_reverse_iterator(cbegin());}
+	
 	inline reference back() { return *(end()-1);} 
 	inline const_reference back() const { return *(cend()-1);}
 	inline reference front() { return *begin();}
@@ -152,6 +164,17 @@ public:
 template<typename TValue>
 void swap(MMVector<TValue> & a, MMVector<TValue> & b) {
 	a.swap(b);
+}
+
+template<typename TValue>
+UByteArrayAdapter & operator<<(UByteArrayAdapter & dest, const MMVector<TValue> & src) {
+	sserialize::Static::ArrayCreator<TValue> ac(dest);
+	ac.reserve(src.size());
+	for(typename MMVector<TValue>::const_iterator it(src.cbegin()), end(src.cend()); it != end; ++it) {
+		ac.put(*it);
+	}
+	ac.flush();
+	return dest;
 }
 
 }//end namespace
