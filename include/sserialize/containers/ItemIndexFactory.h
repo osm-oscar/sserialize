@@ -14,6 +14,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/MultiReaderSingleWriterLock.h>
+#include <sserialize/templated/MMVector.h>
 
 namespace sserialize {
 
@@ -30,8 +31,8 @@ public:
 	typedef std::forward_list<OffsetType> DataOffsetContainer;
 	typedef std::unordered_map< uint64_t, std::forward_list<OffsetType> > DataHashType;
 	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
-	typedef std::vector<uint64_t > IdToOffsetsType;
-	typedef std::vector<uint32_t> ItemIndexSizesContainer;
+	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
+	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
 private:
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;

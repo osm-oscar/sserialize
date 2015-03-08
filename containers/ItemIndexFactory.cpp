@@ -16,6 +16,8 @@
 namespace sserialize {
 
 ItemIndexFactory::ItemIndexFactory(bool memoryBased) :
+m_idToOffsets(sserialize::MM_FILEBASED),
+m_idxSizes(sserialize::MM_FILEBASED),
 m_hitCount(0),
 m_checkIndex(true),
 m_bitWidth(-1),
@@ -30,6 +32,8 @@ m_type(ItemIndex::T_REGLINE)
 }
 
 ItemIndexFactory::ItemIndexFactory(ItemIndexFactory && other) :
+m_idToOffsets(sserialize::MM_FILEBASED),
+m_idxSizes(sserialize::MM_FILEBASED),
 m_hitCount(other.m_hitCount.load()),
 m_checkIndex(other.m_checkIndex),
 m_bitWidth(other.m_bitWidth),
