@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_STATIC_DATA_SET_STORE
-#define SSERIALIZE_STATIC_ITEM_INDEX_STORE
+#define SSERIALIZE_STATIC_DATA_SET_STORE
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/containers/ItemIndex.h>
-#include "HuffmanDecoder.h"
+#include <sserialize/Static/HuffmanDecoder.h>
 #include <unordered_set>
 #define SSERIALIZE_STATIC_DATA_SET_STORE_VERSION 1
 
@@ -15,8 +15,6 @@
  *   1   |Static::Array<UBA>|BoundedCompactUintArray
  *
  * 
- * There are 3 different compression modes which can be partialy mixed wit the following decompression order
- * [LZO][VARUINT32|HUFFMAN]
  *
  *
  */

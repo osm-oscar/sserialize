@@ -4,23 +4,17 @@
 namespace sserialize {
 
 DataSetFactory::DataSetFactory(bool memoryBased) :
+m_ac(0),
 m_hitCount(0)
 {
-	if (memoryBased)
-		 setDataStoreFile( UByteArrayAdapter(new std::vector<uint8_t>(), true) );
-	else
-		setDataStoreFile( UByteArrayAdapter::createCache(8*1024*1024, sserialize::MM_FILEBASED) );
 }
 
 DataSetFactory::DataSetFactory(DataSetFactory && other) :
+m_ac(std::move(other.m_ac)),
 m_hitCount(other.m_hitCount.load())
 {
 	using std::swap;
-	swap(m_header, other.m_header);
-	swap(m_dataStore, other.m_dataStore);
 	swap(m_hash, other.m_hash);
-	swap(m_offsetsToId, other.m_offsetsToId);
-	swap(other.m_idToOffsets, other.m_idToOffsets);
 	//default init read-write-lock
 }
 
@@ -28,13 +22,10 @@ DataSetFactory::~DataSetFactory() {}
 
 DataSetFactory & DataSetFactory::operator=(DataSetFactory && other) {
 	using std::swap;
+	m_ac = std::move(other.m_ac);
 
 	m_hitCount.store(other.m_hitCount.load());
-	swap(m_header, other.m_header);
-	swap(m_dataStore, other.m_dataStore);
 	swap(m_hash, other.m_hash);
-	swap(m_offsetsToId, other.m_offsetsToId);
-	swap(other.m_idToOffsets, other.m_idToOffsets);
 	//default init read-write-lock
 	return *this;
 }
@@ -42,18 +33,10 @@ DataSetFactory & DataSetFactory::operator=(DataSetFactory && other) {
 
 void DataSetFactory::setDataStoreFile(sserialize::UByteArrayAdapter data) {
 	if (size()) { //clear everything
+		m_ac.clear();
 		m_hitCount = 0;
 		m_hash.clear();
-		m_offsetsToId.clear();
-		m_idToOffsets.clear();
 	}
-
-	m_header = data;
-	m_header.putUint8(0); // dummy version
-	m_header.putOffset(0); //dummy offset
-	m_dataStore = m_header;
-	m_dataStore.shrinkToPutPtr();
-	m_header.resetPtrs();
 }
 
 uint64_t DataSetFactory::hashFunc(const UByteArrayAdapter & v) {
@@ -65,7 +48,7 @@ uint64_t DataSetFactory::hashFunc(const UByteArrayAdapter & v) {
 	return h;
 }
 
-int64_t DataSetFactory::getStoreOffset(const UByteArrayAdapter & v, uint64_t & hv) {
+int64_t DataSetFactory::getStoreId(const UByteArrayAdapter & v, uint64_t & hv) {
 	if (v.size() == 0)
 		return -1;
 	hv = hashFunc(v);
@@ -86,12 +69,11 @@ int64_t DataSetFactory::getStoreOffset(const UByteArrayAdapter & v, uint64_t & h
 	return -1;
 }
 
-bool DataSetFactory::dataInStore(const UByteArrayAdapter & v, uint64_t offset) {
-	if (v.size() > (m_dataStore.tellPutPtr()-offset))
-		return false;
+bool DataSetFactory::dataInStore(const UByteArrayAdapter & v, uint32_t id) {
+	UByteArrayAdapter tmp = m_ac.dataAt(id);
 	UByteArrayAdapter::MemoryView mvo(v.asMemView());
 	m_dataLock.acquireReadLock();
-	UByteArrayAdapter::MemoryView mv( m_dataStore.getMemView(offset, v.size()) );
+	UByteArrayAdapter::MemoryView mv( tmp.asMemView() );
 	bool eq = memcmp(mv.get(), mvo.get(), v.size()) == 0;
 	m_dataLock.releaseReadLock();
 	return eq;
@@ -99,25 +81,18 @@ bool DataSetFactory::dataInStore(const UByteArrayAdapter & v, uint64_t offset) {
 
 uint32_t DataSetFactory::insert(const sserialize::UByteArrayAdapter & data) {
 	uint64_t hv;
-	int64_t indexPos = getStoreOffset(data, hv);
-	uint32_t id = std::numeric_limits<uint32_t>::max();
-	if (indexPos < 0) {
+	int64_t id = getStoreId(data, hv);
+	if (id < 0) {
 		m_dataLock.acquireWriteLock();
-		indexPos = m_dataStore.tellPutPtr();
-		m_dataStore.put(data);
-		id = m_idToOffsets.size();
-		m_idToOffsets.push_back(indexPos);
+		id = m_ac.size();
+		m_ac.put(data);
 		m_dataLock.releaseWriteLock();
 		
 		m_mapLock.acquireWriteLock();
-		m_offsetsToId[indexPos] = id;
-		m_hash[hv].push_front(indexPos);
+		m_hash[hv].push_front(id);
 		m_mapLock.releaseWriteLock();
 	}
 	else {
-		m_mapLock.acquireReadLock();
-		id = m_offsetsToId[indexPos];
-		m_mapLock.releaseReadLock();
 		++m_hitCount;
 	}
 	return id;
@@ -132,45 +107,11 @@ UByteArrayAdapter DataSetFactory::at(uint32_t id) const {
 	if (id >= size()) {
 		throw sserialize::OutOfBoundsException("sserialize::DataSetFactory::dataAtToRename");
 	}
-	return m_dataStore+m_idToOffsets.at(id);
-}
-
-UByteArrayAdapter DataSetFactory::getFlushedData() {
-	UByteArrayAdapter fd = m_header;
-	fd.growStorage(m_dataStore.tellPutPtr());
-	return fd;
+	return m_ac.dataAt(id);
 }
 
 OffsetType DataSetFactory::flush() {
-	assert(m_idToOffsets.size() == m_offsetsToId.size());
-
-	m_header.resetPtrs();
-	m_header << static_cast<uint8_t>(3); //Version
-	m_header.putOffset(m_dataStore.tellPutPtr());
-	
-	std::cout << "DataSetFactory: Gathering offsets...";
-	//Create the offsets
-	std::vector<uint64_t> os(m_offsetsToId.size(), 0);
-	for(OffsetToIdHashType::const_iterator it (m_offsetsToId.begin()), end(m_offsetsToId.end()); it != end; ++it) {
-			os.at(it->second) = it->first;
-	}
-	std::cout << os.size() << " gathered" << std::endl;
-	std::cout << "DataSetFactory: Serializing offsets...";
-	uint64_t oIBegin = m_dataStore.tellPutPtr();
-	if (! Static::SortedOffsetIndexPrivate::create(os, m_dataStore) ) {
-		std::cout << "failed to create Offsetindex." << std::endl;
-		return 0;
-	}
-	else {
-		UByteArrayAdapter oIData(m_dataStore, oIBegin);
-		sserialize::Static::SortedOffsetIndex oIndex(oIData);
-		if (os != oIndex) {
-			std::cout << "OffsetIndex creation FAILED!" << std::endl;
-		}
-	}
-	std::cout << "done." << std::endl;
-
-	return 3+UByteArrayAdapter::OffsetTypeSerializedLength()+m_dataStore.tellPutPtr();
+	return m_ac.flush().size();
 }
 
 }//end namespace
