@@ -43,7 +43,8 @@ namespace ArrayCreator {
 
 template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator::DefaultStreamingSerializer<TValue> >
 class ArrayCreator {
-	UByteArrayAdapter & m_dest;
+	UByteArrayAdapter * m_dest;
+	uint32_t m_size;
 	std::vector<OffsetType> m_offsets;
 	OffsetType m_dataLenPtr;
 	OffsetType m_beginOffSet;
@@ -51,46 +52,112 @@ class ArrayCreator {
 public:
 	///create a new Array at tellPutPtr()
 	ArrayCreator(UByteArrayAdapter & destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER() ) :
-	m_dest(destination), m_ss(ss) {
-		m_dest.putUint8(4);//version
-		m_dataLenPtr = m_dest.tellPutPtr();
-		m_dest.putOffset(0);
+	m_dest(&destination),
+	m_size(0),
+	m_ss(ss)
+	{
+		m_dest->putUint8(4);//version
+		m_dataLenPtr = m_dest->tellPutPtr();
+		m_dest->putOffset(0);
 		
-		m_beginOffSet = m_dest.tellPutPtr();
+		m_beginOffSet = m_dest->tellPutPtr();
 	}
-	uint32_t size() const { return m_offsets.size(); }
-	const std::vector<OffsetType> & offsets() const { return m_offsets; }
+	ArrayCreator(UByteArrayAdapter * destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER() ) :
+	m_dest(destination),
+	m_size(0),
+	m_ss(ss)
+	{
+		m_dest->putUint8(4);//version
+		m_dataLenPtr = m_dest->tellPutPtr();
+		m_dest->putOffset(0); //data len
+		
+		m_beginOffSet = m_dest->tellPutPtr();
+	}
+	ArrayCreator() :
+	m_dest(0),
+	m_size(0),
+	m_dataLenPtr(0),
+	m_beginOffSet(0)
+	{}
+	
+	ArrayCreator(ArrayCreator && other) :
+	m_dest(other.m_dest),
+	m_size(other.m_size),
+	m_dataLenPtr(other.m_dataLenPtr),
+	m_beginOffSet(other.m_beginOffSet)
+	{
+		using std::swap;
+		swap(m_offsets, other.m_offsets);
+		swap(m_ss, other.m_ss);
+	}
 	virtual ~ArrayCreator() {}
+	ArrayCreator & operator=(ArrayCreator && other) {
+		m_dest = other.m_dest;
+		m_size = other.m_size;
+		m_dataLenPtr = other.m_dataLenPtr;
+		m_beginOffSet = other.m_beginOffSet;
+		using std::swap;
+		swap(m_offsets, other.m_offsets);
+		swap(m_ss, other.m_ss);
+	}
+	void clear() {
+		m_offsets.clear();
+		m_dest->setPutPtr(m_beginOffSet);
+	}
+	uint32_t size() const { return m_size; }
+	const std::vector<OffsetType> & offsets() const { return m_offsets; }
 	void reserveOffsets(uint32_t size) { m_offsets.reserve(size); }
 	void reserve(uint32_t size) { reserveOffsets(size); }
 	void put(const TValue & value) {
 		if (!sserialize::SerializationInfo<TValue>::is_fixed_length) {
-			m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
+			m_offsets.push_back(m_dest->tellPutPtr() - m_beginOffSet);
 		}
-		m_ss(m_dest, value);
+		++m_size;
+		m_ss(*m_dest, value);
 	}
 	void beginRawPut() {
-		m_offsets.push_back(m_dest.tellPutPtr() - m_beginOffSet);
+		if (!sserialize::SerializationInfo<TValue>::is_fixed_length) {
+			m_offsets.push_back(m_dest->tellPutPtr() - m_beginOffSet);
+		}
+		++m_size;
 	}
-	UByteArrayAdapter & rawPut() { return m_dest;}
+	UByteArrayAdapter & rawPut() { return *m_dest;}
 	void endRawPut() {}
+	UByteArrayAdapter dataAt(uint32_t id) const {
+		sserialize::UByteArrayAdapter::OffsetType off = 0;
+		sserialize::UByteArrayAdapter::OffsetType len = 0;
+		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
+			off = id*sserialize::SerializationInfo<TValue>::length;
+			len = sserialize::SerializationInfo<TValue>::length;
+		}
+		else {
+			off = m_offsets.at(id);
+			if (id+1 < m_offsets.size()) {
+				len = m_offsets.at(id+1) - off;
+			}
+			else {
+				len = m_dest->tellPutPtr() - off;
+			}
+		}
+		return UByteArrayAdapter(*m_dest, 0, len).resetPtrs();
+	}
 	///@return data to create the Array (NOT dest data)
 	UByteArrayAdapter flush() {
 		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
-		OffsetType oiBegin = m_dest.tellPutPtr();
+		OffsetType oiBegin = m_dest->tellPutPtr();
 		#endif
-		m_dest.putOffset(m_dataLenPtr, m_dest.tellPutPtr() - m_beginOffSet); //datasize
+		m_dest->putOffset(m_dataLenPtr, m_dest->tellPutPtr() - m_beginOffSet); //datasize
 		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
 			if (!std::is_integral<TValue>::value) {
-				m_dest.putVlPackedUint32(sserialize::SerializationInfo<TValue>::length);
+				m_dest->putVlPackedUint32(sserialize::SerializationInfo<TValue>::length);
 			}
 		}
 		else {
-			if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, m_dest)) {
+			if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, *m_dest)) {
 				throw sserialize::CreationException("Array::flush: Creating the offset");
 			}
 			#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
-			sserialize::UByteArrayAdapter tmp = m_dest;
+			sserialize::UByteArrayAdapter tmp = *m_dest;
 			tmp.setPutPtr(oiBegin);
 			tmp.shrinkToPutPtr();
 			sserialize::Static::SortedOffsetIndex oIndex;
@@ -105,13 +172,18 @@ public:
 				writeOutOffset();
 				throw sserialize::CreationException("Array::flush Offset index is unequal");
 			}
-			if (oIndex.getSizeInBytes() != (m_dest.tellPutPtr()-oiBegin)) {
+			if (oIndex.getSizeInBytes() != (m_dest->tellPutPtr()-oiBegin)) {
 				writeOutOffset();
 				throw sserialize::CreationException("Array::flush Offset index reports wrong sizeInBytes()");
 			}
 			#endif
 		}
-		return m_dest + (m_beginOffSet-1-UByteArrayAdapter::OffsetTypeSerializedLength());
+		return getFlushedData();
+	}
+	//this is only valid after flushing
+	UByteArrayAdapter getFlushedData() const {
+		sserialize::UByteArrayAdapter::OffsetType offsetToBegin = (m_beginOffSet-1-UByteArrayAdapter::OffsetTypeSerializedLength());
+		return UByteArrayAdapter(*m_dest, offsetToBegin, m_dest->tellPutPtr()-offsetToBegin).resetPtrs();
 	}
 	
 	void writeOutOffset() {
