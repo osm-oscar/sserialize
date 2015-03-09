@@ -13,7 +13,7 @@
 
 namespace sserialize {
 
-typedef enum {MM_INVALID=0, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY, MM_FAST_FILEBASED, MM_SLOW_FILEBASE, MM_FILEBASED = MM_FAST_FILEBASED} MmappedMemoryType;
+typedef enum {MM_INVALID=0, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY, MM_FAST_FILEBASED, MM_SLOW_FILEBASED, MM_FILEBASED = MM_FAST_FILEBASED} MmappedMemoryType;
 
 namespace detail {
 namespace MmappedMemory {
@@ -308,7 +308,7 @@ public:
 		case MM_FAST_FILEBASED:
 			m_priv.reset(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(size, true));
 			break;
-		case MM_SLOW_FILEBASE:
+		case MM_SLOW_FILEBASED:
 			m_priv.reset(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(size, false));
 			break;
 		case MM_SHARED_MEMORY:
