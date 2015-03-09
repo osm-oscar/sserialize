@@ -28,16 +28,19 @@ namespace sserialize {
 
 class ItemIndexFactory {
 public:
-	typedef std::forward_list<OffsetType> DataOffsetContainer;
-	typedef std::unordered_map< uint64_t, std::forward_list<OffsetType> > DataHashType;
-	typedef std::unordered_map< uint64_t, uint32_t > OffsetToIdHashType;
+	struct DataOffsetEntry {
+		uint64_t prev;
+		uint32_t id;
+	} __attribute__ ((packed));
+	typedef std::unordered_map< uint64_t, uint64_t > DataHashType;
+	typedef sserialize::MMVector<DataOffsetEntry> DataOffsetContainer;
 	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
 	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
 private:
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
 	DataHashType m_hash;
-	OffsetToIdHashType m_offsetsToId;
+	DataOffsetContainer m_dataOffsets;
 	IdToOffsetsType m_idToOffsets;
 	ItemIndexSizesContainer m_idxSizes;
 	std::atomic<uint32_t> m_hitCount;
@@ -52,9 +55,9 @@ private:
 	
 	uint64_t hashFunc(const UByteArrayAdapter & v);
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
-	///returns the position of the index or -1 if none was found @thread-safety: yes
+	///returns the id of the index or -1 if none was found @thread-safety: yes
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
-	bool indexInStore(const std::vector< uint8_t >& v, uint64_t offset);
+	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
 	///adds the data of an index to store, @thread-safety: true
 	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0, uint32_t idxSize = 0);
 private://deleted functions

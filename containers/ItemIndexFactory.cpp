@@ -16,8 +16,9 @@
 namespace sserialize {
 
 ItemIndexFactory::ItemIndexFactory(bool memoryBased) :
-m_idToOffsets(sserialize::MM_FILEBASED),
-m_idxSizes(sserialize::MM_FILEBASED),
+m_dataOffsets(sserialize::MM_SHARED_MEMORY),
+m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
+m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(0),
 m_checkIndex(true),
 m_bitWidth(-1),
@@ -32,8 +33,9 @@ m_type(ItemIndex::T_REGLINE)
 }
 
 ItemIndexFactory::ItemIndexFactory(ItemIndexFactory && other) :
-m_idToOffsets(sserialize::MM_FILEBASED),
-m_idxSizes(sserialize::MM_FILEBASED),
+m_dataOffsets(sserialize::MM_SHARED_MEMORY),
+m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
+m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(other.m_hitCount.load()),
 m_checkIndex(other.m_checkIndex),
 m_bitWidth(other.m_bitWidth),
@@ -46,7 +48,7 @@ m_compressionType(other.m_compressionType)
 	swap(m_header, other.m_header);
 	swap(m_indexStore, other.m_indexStore);
 	swap(m_hash, other.m_hash);
-	swap(m_offsetsToId, other.m_offsetsToId);
+	swap(m_dataOffsets, other.m_dataOffsets);
 	swap(m_idToOffsets, other.m_idToOffsets);
 	swap(m_idxSizes, other.m_idxSizes);
 	//default init read-write-lock
@@ -67,7 +69,7 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	swap(m_header, other.m_header);
 	swap(m_indexStore, other.m_indexStore);
 	swap(m_hash, other.m_hash);
-	swap(m_offsetsToId, other.m_offsetsToId);
+	swap(m_dataOffsets, other.m_dataOffsets);
 	swap(m_idToOffsets, other.m_idToOffsets);
 	swap(m_idxSizes, other.m_idxSizes);
 	//default init read-write-lock
@@ -82,7 +84,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	if (size()) { //clear eversthing
 		m_hitCount = 0;
 		m_hash.clear();
-		m_offsetsToId.clear();
+		m_dataOffsets.clear();
 		m_idToOffsets.clear();
 		m_idxSizes.clear();
 	}
@@ -102,7 +104,7 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	m_idToOffsets.reserve(store.size()+size());
 	m_idxSizes.reserve(store.size()+size());
 	if (m_useDeduplication) {
-		m_offsetsToId.reserve(store.size()+size());
+		m_dataOffsets.reserve(store.size()+m_dataOffsets.size());
 		m_hash.reserve(store.size()+size());
 	}
 	std::vector<uint32_t> res;
@@ -150,21 +152,32 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv
 		return -1;
 	}
 	else {
-		DataOffsetContainer::const_iterator it(m_hash[hv].begin()), end(m_hash[hv].end());
-		m_mapLock.releaseReadLock(); //write threads will not change something between it and end
-		for(; it != end; ++it) {
-			if (indexInStore(v, *it)) {
-				return *it;
+		DataOffsetEntry doe = m_dataOffsets.at(m_hash[hv]);
+		m_mapLock.releaseReadLock();
+		while (true) {
+			if (indexInStore(v, doe.id)) {
+				return doe.id;
+			}
+			if (doe.prev) {
+				m_mapLock.acquireReadLock();
+				doe =  m_dataOffsets.at(doe.prev);
+				m_mapLock.releaseReadLock();
+			}
+			else {
+				break;
 			}
 		}
 	}
 	return -1;
 }
 
-bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint64_t offset) {
-	if (v.size() > (m_indexStore.tellPutPtr()-offset))
-		return false;
+bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint32_t id) {
 	m_dataLock.acquireReadLock();
+	sserialize::UByteArrayAdapter::OffsetType offset = m_idToOffsets.at(id);
+	if (v.size() > (m_indexStore.tellPutPtr()-offset)) {
+		m_dataLock.releaseReadLock();
+		return false;
+	}
 	UByteArrayAdapter::MemoryView mv( m_indexStore.getMemView(offset, v.size()) );
 	bool eq = memcmp(mv.get(), v.data(), v.size()) == 0;
 	m_dataLock.releaseReadLock();
@@ -179,36 +192,36 @@ uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType
 
 uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize::OffsetType * indexOffset, uint32_t idxSize) {
 	uint64_t hv;
-	int64_t indexPos = -1;
+	int64_t id = -1;
 	if (m_useDeduplication) {
-		indexPos = getIndex(idx, hv);
+		id = getIndex(idx, hv);
 	}
-	uint32_t id = std::numeric_limits<uint32_t>::max();
-	if (indexPos < 0) {
+	if (id < 0) {
 		m_dataLock.acquireWriteLock();
-		indexPos = m_indexStore.tellPutPtr();
+		sserialize::UByteArrayAdapter::OffsetType dataOffset = m_indexStore.tellPutPtr();
 		m_indexStore.put(idx);
 		id = m_idToOffsets.size();
 		assert((std::size_t)id == m_idToOffsets.size()); //check for wrap around of ids
-		m_idToOffsets.push_back(indexPos);
+		m_idToOffsets.push_back(dataOffset);
 		m_idxSizes.push_back(idxSize);
 		m_dataLock.releaseWriteLock();
 		
 		if (m_useDeduplication) {
 			m_mapLock.acquireWriteLock();
-			m_offsetsToId[indexPos] = id;
-			m_hash[hv].push_front(indexPos);
+			uint64_t prevElement = 0;
+			if (m_hash.count(hv)) {
+				prevElement = m_hash[hv];
+			}
+			m_dataOffsets.push_back(DataOffsetEntry({ .prev = prevElement, .id = (uint32_t)id}));
+			m_hash[hv] = m_dataOffsets.size()-1;
 			m_mapLock.releaseWriteLock();
 		}
 	}
 	else {//index is in store, so we have deduplication enabled
-		m_mapLock.acquireReadLock();
-		id = m_offsetsToId[indexPos];
-		m_mapLock.releaseReadLock();
 		++m_hitCount;
 	}
 	if (indexOffset) {
-		*indexOffset = indexPos;
+		*indexOffset = m_idToOffsets.at(id);
 	}
 	return id;
 }
@@ -221,7 +234,7 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 
 OffsetType ItemIndexFactory::flush() {
 	assert(m_idxSizes.size() == m_idToOffsets.size());
-	assert(m_useDeduplication && m_idToOffsets.size() == m_offsetsToId.size());
+	assert(m_useDeduplication && m_idToOffsets.size() == m_hash.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
 	std::cout << "Size=" << m_idToOffsets.size() << std::endl;
