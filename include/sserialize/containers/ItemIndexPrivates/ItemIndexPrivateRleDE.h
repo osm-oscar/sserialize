@@ -19,6 +19,8 @@ namespace sserialize {
   * If data[i] & 0x1 then data is a rle and the next varuint32 tells the difference between the (data[i] >> 1) elements
   *
   *
+  * TODO:get rid of the first 8 Bytes, use vu32 instead, swap SIZE and COUNT, so that for COUNT==1 the size can be dropped
+  *
   */
   
 class ItemIndexPrivateRleDE;
@@ -87,7 +89,7 @@ public:
 		flushHeader();
 	}
 	///you need to call this prior to using toIndex() or using the data
-	///you should not push after calling ths function
+	///you should not push after calling this function
 	void flush() {
 		flushRle();
 		flushHeader();
