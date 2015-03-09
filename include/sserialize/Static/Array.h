@@ -99,6 +99,7 @@ public:
 		using std::swap;
 		swap(m_offsets, other.m_offsets);
 		swap(m_ss, other.m_ss);
+		return *this;
 	}
 	void clear() {
 		m_offsets.clear();
