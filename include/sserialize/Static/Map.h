@@ -18,6 +18,8 @@
  *
  * SIZE=size of Data
  *
+ * TODO:base this on Static::Array
+ *
  */
 
 namespace sserialize {

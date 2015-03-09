@@ -19,6 +19,9 @@
  * If type is int32_t, uint32_t, uint16_t, uint8_t, itemindex is not present
  * Otherwise: SortedOffsetIndex encodes offsets
  * size is length in bytes of data
+ * 
+ * TODO:base this on Static::Array since this is essentialy a sorted array
+ * 
  */
 
 namespace sserialize {
