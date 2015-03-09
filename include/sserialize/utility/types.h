@@ -6,8 +6,6 @@
 
 namespace sserialize {
 
-
-
 #ifndef TEMP_FILE_PREFIX
 #define TEMP_FILE_PREFIX "/tmp/sserializetmp"
 #endif
