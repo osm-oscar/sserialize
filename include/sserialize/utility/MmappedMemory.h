@@ -259,8 +259,9 @@ public:
 	virtual ~MmappedMemorySharedMemory() override {
 		if (m_data) {
 			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
-			assert(::munmap(m_data, m_size) == 0);
-			assert(::shm_unlink(m_name.c_str()) == 0);
+			::munmap(m_data, m_size*sizeof(TValue));
+			::close(m_fd);
+			::shm_unlink(m_name.c_str());
 			m_data = 0;
 		}
 	}
