@@ -1,24 +1,16 @@
 #ifndef SSERIALIZE_STATIC_MAP_H
 #define SSERIALIZE_STATIC_MAP_H
-#include <map>
-#include <sserialize/containers/SortedOffsetIndexPrivate.h>
-#include <sserialize/containers/SortedOffsetIndex.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/Static/Array.h>
 #include <sserialize/Static/Pair.h>
-#include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/AtStlInputIterator.h>
-#define SSERIALIZE_STATIC_MAP_VERSION 2
 
 /** FileFormat
  *
- *------------------------------------------------------------
- *VERSION|SIZE|SortedOffsetIndex|Data*
- *------------------------------------------------------------
- * 1byte | 5  | *               | *
+ *-------------
+ *Static::Array
+ *-------------
  *
- * SIZE=size of Data
+ * Use Static::Array as basis, remove version information (array is on version 4)
  *
- * TODO:base this on Static::Array
  *
  */
 
@@ -27,55 +19,47 @@ namespace Static {
  
 template<typename TKey, typename TValue>
 class Map {
-private:
-	struct IteratorDerefer {
-		Static::Pair<TKey, TValue> operator()(const Map<TKey, TValue> * map, uint32_t pos);
-	};
 public:
 	typedef Map<TKey, TValue> type;
 	typedef TKey key_type;
 	typedef TValue mapped_type;
 	typedef sserialize::Static::Pair<TKey, TValue> value_type;
-	typedef sserialize::ReadOnlyAtStlIterator< type *, value_type > iterator;
-	typedef sserialize::ReadOnlyAtStlIterator< const type *, value_type > const_iterator; 
+	typedef typename sserialize::Static::Array<value_type>::iterator iterator;
+	typedef typename sserialize::Static::Array<value_type>::const_iterator const_iterator; 
 	typedef uint32_t size_type;
-	static const size_type npos = std::numeric_limits<size_type>::max();
+	static constexpr size_type npos = std::numeric_limits<size_type>::max();
 private:
-	UByteArrayAdapter m_data;
-	SortedOffsetIndex m_index;
+	sserialize::Static::Array<value_type> m_data;
 public:
 	Map();
 	Map(const UByteArrayAdapter & data);
 	~Map() {}
-	iterator begin() { return iterator(0, this); }
-	const_iterator cbegin() const { return const_iterator(0, this); }
-	iterator end() { return iterator(size(), this); }
-	const_iterator cend() const { return const_iterator(size(), this); }
+	iterator begin() { return m_data.begin(); }
+	const_iterator begin() const { return m_data.begin(); }
+	const_iterator cbegin() const { return m_data.cbegin(); }
+	iterator end() { return m_data.end(); }
+	const_iterator end() const { return m_data.end(); }
+	const_iterator cend() const { return m_data.cend(); }
 	
-	inline sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {  return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
-	inline size_type size() const { return m_index.size();}
+	inline sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {return m_data.getSizeInBytes();}
+	inline size_type size() const { return m_data.size();}
 	bool contains(const key_type & key) const;
 	mapped_type at(const key_type & key) const;
 	value_type atPosition(const size_type pos) const;
 	value_type find(const key_type & key) const;
-	int32_t findPosition(const key_type & key) const;
+	size_type
+	findPosition(const key_type & key) const;
 };
 
 template<typename TKey, typename TValue>
-typename Map<TKey, TValue>::value_type
-Map<TKey, TValue>::IteratorDerefer::operator()(const Map<TKey, TValue> * map, uint32_t pos) {
-	return map->atPosition(pos);
-}
-
-template<typename TKey, typename TValue>
-int32_t
+typename Map<TKey, TValue>::size_type
 Map<TKey, TValue>::findPosition(const TKey & key) const {
 	if (! size())
-		return -1;
-	int32_t len = m_index.size()-1;
-	int32_t left = 0;
-	int32_t right = len;
-	int32_t mid = (right-left)/2+left;
+		return npos;
+	int64_t len = m_data.size()-1;
+	int64_t left = 0;
+	int64_t right = len;
+	int64_t mid = (right-left)/2+left;
 	while( left < right ) {
 		Pair<TKey, TValue> pair(atPosition(mid));
 		int8_t cmp = pair.compareWithFirst(key);
@@ -90,7 +74,7 @@ Map<TKey, TValue>::findPosition(const TKey & key) const {
 		mid = (right-left)/2+left;
 	}
 	Pair<TKey, TValue> pair(atPosition(mid));
-	return (pair.compareWithFirst(key) == 0 ? mid : -1);
+	return (pair.compareWithFirst(key) == 0 ? mid : npos);
 }
 
 template<typename TKey, typename TValue>
@@ -98,12 +82,8 @@ Map<TKey, TValue>::Map() {}
 
 template<typename TKey, typename TValue>
 Map<TKey, TValue>::Map(const UByteArrayAdapter & data) :
-m_index(data+(1+UByteArrayAdapter::OffsetTypeSerializedLength()))
-{
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_MAP_VERSION, data.at(0), "Static::Map");
-	m_data = UByteArrayAdapter(data,(1 + UByteArrayAdapter::OffsetTypeSerializedLength() + m_index.getSizeInBytes()), data.getOffset(1));
-	SSERIALIZE_LENGTH_CHECK(2*m_index.size(), m_data.size(), "Static::Map::Map::Insufficient data");
-}
+m_data(data)
+{}
 
 template<typename TKey, typename TValue>
 bool
@@ -114,8 +94,8 @@ Map<TKey, TValue>::contains(const TKey & key) const {
 template<typename TKey, typename TValue>
 typename Map<TKey, TValue>::mapped_type
 Map<TKey, TValue>::at(const TKey & key) const {
-	int32_t pos = findPosition(key);
-	if (pos < 0) {
+	size_type pos = findPosition(key);
+	if (pos == npos) {
 		return TValue();
 	}
 	else {
@@ -127,20 +107,15 @@ Map<TKey, TValue>::at(const TKey & key) const {
 template<typename TKey, typename TValue>
 typename Map<TKey, TValue>::value_type
 Map<TKey, TValue>::atPosition(const uint32_t pos) const {
-	if (pos >= m_index.size()) {
-		return Pair<TKey, TValue>();
-	}
-	else {
-		return Pair<TKey, TValue>(m_data + m_index.at(pos));
-	}
+	return m_data.at(pos);
 }
 
 template<typename TKey, typename TValue>
 typename Map<TKey, TValue>::value_type
 Map<TKey, TValue>::find(const TKey & key) const {
-	int32_t pos = findPosition(key);
-	if (pos < 0) {
-		return Pair<TKey, TValue>();
+	size_type pos = findPosition(key);
+	if (pos == npos) {
+		return value_type();
 	}
 	else {
 		return atPosition(pos);
@@ -204,29 +179,19 @@ bool operator<(const sserialize::Static::Map<TKey, TValue> & mapA, const sserial
 
 template<typename TKey, typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::map<TKey, TValue> & map) {
-	std::vector<uint8_t> tmpStore;
-	sserialize::UByteArrayAdapter tmpValueStore(&tmpStore);
-	std::set<sserialize::OffsetType> offSets;
-	for(typename std::map<TKey, TValue>::const_iterator it = map.begin(); it != map.end(); it++) {
-		offSets.insert(tmpValueStore.tellPutPtr());
-		tmpValueStore << *it;
+	sserialize::Static::ArrayCreator< std::pair<TKey, TValue>  > ac(destination);
+	for(const std::pair<TKey, TValue> & x : map) {
+		ac.put(x);
 	}
-	sserialize::UByteArrayAdapter indexData(new std::vector<uint8_t>, true);
-	sserialize::Static::SortedOffsetIndexPrivate::create(offSets, indexData);
-	
-	//Add everything to our adapter
-	destination.putUint8(SSERIALIZE_STATIC_MAP_VERSION); //version
-	destination.putOffset(tmpStore.size());
-	destination.put(indexData);
-	destination.put(tmpStore);
+	ac.flush();
 	return destination;
 }
 
 template<typename TKey, typename TValue>
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Map<TKey, TValue> & destination) {
-	sserialize::UByteArrayAdapter tmpAdap(source);
-	tmpAdap.shrinkToGetPtr();
-	destination = sserialize::Static::Map<TKey, TValue>(tmpAdap);
+	sserialize::UByteArrayAdapter d(source);
+	d.shrinkToGetPtr();
+	destination = sserialize::Static::Map<TKey, TValue>(d);
 	source.incGetPtr(destination.getSizeInBytes());
 	return source;
 }
