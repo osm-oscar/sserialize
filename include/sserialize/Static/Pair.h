@@ -60,8 +60,6 @@ Pair<TValue1, TValue2>::compareWithFirst(const TValue1 & value) const {
 	}
 }
 
-}}//end namespace
-
 template<typename TValue1, typename TValue2>
 bool operator==(const sserialize::Static::Pair<TValue1, TValue2> & a, const sserialize::Static::Pair<TValue1, TValue2> & b) {
 	return (a.first() == b.first() && a.second() == b.second());
@@ -115,6 +113,9 @@ bool operator<(const sserialize::Static::Pair<TValue1, TValue2> & a, const std::
 		return a.second() < b.second;
 }
 
+}//end namespace Static
+
+
 template<typename TValue1, typename TValue2>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::pair<TValue1, TValue2> & value) {
 	destination << value.first << value.second;
@@ -126,6 +127,8 @@ sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & destin
 	destination >> value.first >> value.second;
 	return destination;
 }
+
+}//end namespace
 
 #endif
 
