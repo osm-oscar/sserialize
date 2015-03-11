@@ -8,6 +8,7 @@
 namespace sserialize {
 ///This is a partially stl-compatible vector basend on MmappedMemory.
 ///This is especially usefull in combination with shared or file-based memory to create large vectors without the overhead of reallocation (the paging will do this for us)
+///BUG: This together with MmappedMemory is totaly broken. Fix memory allocation and deallocation
 template<typename TValue>
 class MMVector {
 public:
@@ -25,12 +26,24 @@ private:
 	SizeType m_pP; //push ptr
 	double m_growFactor;
 private:
+	SizeType calcNewGrowSize() {
+		SizeType tSize = m_capacity + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_capacity*m_growFactor);
+		return tSize;
+	}
 public:
 	MMVector(sserialize::MmappedMemoryType mmt) :
 	m_d(1, mmt), m_capacity(1), m_pP(0),
 	m_growFactor(SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR)
 	{
 		m_begin = m_d.data();
+	}
+	MMVector(sserialize::MmappedMemoryType mmt, SizeType size, const TValue & value = TValue()) :
+	m_d(1, mmt), m_capacity(1), m_pP(0),
+	m_growFactor(SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR)
+	{
+		m_begin = m_d.data();
+		if (size)
+			resize(size, value);
 	}
 	MMVector(const MMVector & other) :
 	m_d(std::max<SizeType>(1, other.m_pP), other.m_d.type()),
@@ -83,32 +96,42 @@ public:
 			m_capacity = size;
 		}
 	}
+	
 	void clear() {
+		sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::deinitMemory(begin(), end());
 		m_pP = 0;
 	}
+	
 	void shrink_to_fit() {
 		m_begin = resize(m_pP);
 		m_capacity = m_pP;
 	}
+	
 	void resize(SizeType size, const TValue & v = TValue()) {
+		if (size < m_pP) {
+			sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::deinitMemory(m_begin+size, m_begin+m_pP);
+		}
 		m_begin = m_d.resize(size);
 		if (size > m_pP) {
-			for(iterator it(m_begin+m_pP), end(m_begin+size); it != end; ++it) {
-				*it = v;
-			}
+			sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::initMemory(m_begin+m_pP, m_begin+size, v);
 		}
 		m_pP = size;
 		m_capacity = size;
 	}
-	void push_back(const TValue & v) {
+	
+	template<typename... Args>
+	void emplace_back(Args && ...args) {
 		if (m_pP >= m_capacity) {
-			SizeType tSize = m_capacity + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_capacity*m_growFactor);
-			m_begin = m_d.resize(tSize);
-			m_capacity = tSize;
+			reserve(calcNewGrowSize());
 		}
-		m_begin[m_pP] = v;
+		new(m_begin+m_pP) TValue(std::forward<Args>(args)...);
 		++m_pP;
 	}
+	
+	void push_back(const TValue & v) {
+		emplace_back(v);
+	}
+	
 	template<typename T_VALUE_IT>
 	void push_back(T_VALUE_IT begin, const T_VALUE_IT & end) {
 		if ( end > begin) {
@@ -116,14 +139,15 @@ public:
 			reserve(pushSize+size());
 			TValue * dP = m_begin+m_pP;
 			for(; begin != end; ++begin, ++dP) {
-				*dP = *begin;
+				new(m_begin+m_pP) TValue(*begin);
 			}
 			m_pP += pushSize;
 		}
 	}
-	
+
 	void pop_back() {
 		if (m_pP > 0) {
+			sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::deinitMemory(m_begin+m_pP);
 			--m_pP;
 		}
 	}

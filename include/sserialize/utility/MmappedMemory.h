@@ -18,27 +18,67 @@ typedef enum {MM_INVALID=0, MM_PROGRAM_MEMORY, MM_SHARED_MEMORY, MM_FAST_FILEBAS
 namespace detail {
 namespace MmappedMemory {
 
-template<typename TValue, typename TDummy=TValue>
+template<typename TValue, typename TEnable=void>
 struct MmappedMemoryHelper {
 	static void initMemory(TValue * begin, TValue * end);
+	static void initMemory(TValue * begin, TValue * end, const TValue & v);
 	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest);
 	static void deinitMemory(TValue * begin, TValue * end);
+	static void deinitMemory(TValue * data);
 };
 
+//is_trivially_copyable?
+
 template<typename TValue>
-struct MmappedMemoryHelper< typename std::enable_if<std::is_pod<TValue>::value, TValue>::type, TValue > {
+struct MmappedMemoryHelper<TValue, typename std::enable_if< std::is_integral<TValue>::value >::type> {
 	static void initMemory(TValue * /*begin*/, TValue * /*end*/) {}
+	static void initMemory(TValue * begin, TValue * end, const TValue & v) {
+		for(; begin != end; ++begin) {
+			*begin = v;
+		}
+	}
 	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
 		memmove(dest, srcBegin, (srcEnd-srcBegin)*sizeof(TValue));
 	}
 	static void deinitMemory(TValue * /*begin*/, TValue * /*end*/) {}
+static void deinitMemory(TValue * /*data*/) {}
 };
 
 template<typename TValue>
-struct MmappedMemoryHelper< typename std::enable_if<! std::is_pod<TValue>::value, TValue>::type, TValue > {
+struct MmappedMemoryHelper<TValue, typename std::enable_if< !std::is_integral<TValue>::value && std::is_trivial<TValue>::value>::type > {
 	static void initMemory(TValue * begin, TValue * end) {
 		for(; begin != end; ++begin) {
 			new (begin) TValue();
+		}
+	}
+	static void initMemory(TValue * begin, TValue * end, const TValue & v) {
+		for(; begin != end; ++begin) {
+			new (begin) TValue(v);
+		}
+	}
+	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
+		memmove(dest, srcBegin, (srcEnd-srcBegin)*sizeof(TValue));
+	}
+	static void deinitMemory(TValue * begin, TValue * end) {
+		for(; begin != end; ++begin) {
+			begin->~TValue();
+		}
+	}
+	static void deinitMemory(TValue * data) {
+		data->~TValue();
+	}
+};
+
+template<typename TValue>
+struct MmappedMemoryHelper<TValue, typename std::enable_if< !std::is_integral<TValue>::value && !std::is_trivial<TValue>::value>::type > {
+	static void initMemory(TValue * begin, TValue * end) {
+		for(; begin != end; ++begin) {
+			new (begin) TValue();
+		}
+	}
+	static void initMemory(TValue * begin, TValue * end, const TValue & v) {
+		for(; begin != end; ++begin) {
+			new (begin) TValue(v);
 		}
 	}
 	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
@@ -50,6 +90,9 @@ struct MmappedMemoryHelper< typename std::enable_if<! std::is_pod<TValue>::value
 		for(; begin != end; ++begin) {
 			begin->~TValue();
 		}
+	}
+	static void deinitMemory(TValue * data) {
+		data->~TValue();
 	}
 };
 
@@ -99,7 +142,6 @@ public:
 		m_data = (TValue *) FileHandler::createAndMmappTemp(size*sizeof(TValue), m_fd, m_fileName, populate, randomAccess, fastFile);
 		if (m_data) {
 			m_size = size;
-			MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
 		}
 		else {
 			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
@@ -128,7 +170,6 @@ public:
 	}
 	virtual ~MmappedMemoryFileBased() override {
 		if (m_data) {
-			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
 			if (m_unlink) {
 				FileHandler::closeAndUnlink(m_fileName, m_fd, m_data, m_size*sizeof(TValue));
 			}
@@ -141,15 +182,9 @@ public:
 	virtual TValue * data() override { return m_data; }
 	virtual TValue * resize(OffsetType newSize) override {
 		newSize = std::max<OffsetType>(1, newSize);
-		if (newSize < m_size) {
-			MmappedMemoryHelper<TValue>::deinitMemory(m_data+newSize, m_data+m_size);
-		}
 		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), m_populate, m_randomAccess);
 		if (!m_data) {
 			throw sserialize::CreationException("MmappedMemory::resize");
-		}
-		if (newSize > m_size) {
-			MmappedMemoryHelper<TValue>::initMemory(m_data+m_size, m_data+newSize);
 		}
 		m_size = newSize;
 		return m_data;
@@ -171,14 +206,12 @@ public:
 				throw sserialize::CreationException("MmappedMemory::MmappedMemory");
 			}
 			else {
-				MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
 				m_size = size;
 			}
 		}
 	}
 	virtual ~MmappedMemoryInMemory() override {
 		if (m_data) {
-			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
 			free(m_data);
 			m_data = 0;
 			m_size = 0;
@@ -186,9 +219,6 @@ public:
 	}
 	virtual TValue * data() override { return m_data; }
 	virtual TValue * resize(OffsetType newSize) override {
-		if (newSize < m_size) {
-			MmappedMemoryHelper<TValue>::deinitMemory(m_data+newSize, m_data+m_size);
-		}
 		if (!newSize) {
 			free(m_data);
 			m_data = 0;
@@ -198,18 +228,11 @@ public:
 		if (!newD) {
 			newD = (TValue*) malloc(sizeof(TValue)*newSize);
 			if (newD) {
-				OffsetType tmp = std::min(newSize, m_size);
-				MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+tmp, newD);//copy memory
-				MmappedMemoryHelper<TValue>::initMemory(newD+tmp, newD+newSize);//possibly init remaining memory if newSize > m_size
-				MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);//deinit old memory
 				free(m_data);
 			}
 			else {
 				throw sserialize::CreationException("MmappedMemory::resize");
 			}
-		}
-		else if (newSize > m_size) { //reallocation happened => m_data==newD, init the new allocated data
-			MmappedMemoryHelper<TValue>::initMemory(m_data+m_size, m_data+newSize);
 		}
 		m_size = newSize;
 		m_data = newD;
@@ -249,7 +272,6 @@ public:
 		m_data = (TValue*) FileHandler::resize(m_fd, 0, 0, size*sizeof(TValue), false, true);
 		
 		if (m_data || size == 0) {
-			MmappedMemoryHelper<TValue>::initMemory(m_data, m_data+size);
 			m_size = size;
 		}
 		else {
@@ -258,7 +280,6 @@ public:
 	}
 	virtual ~MmappedMemorySharedMemory() override {
 		if (m_data) {
-			MmappedMemoryHelper<TValue>::deinitMemory(m_data, m_data+m_size);
 			::munmap(m_data, m_size*sizeof(TValue));
 			::close(m_fd);
 			::shm_unlink(m_name.c_str());
@@ -267,15 +288,9 @@ public:
 	}
 	virtual TValue * data() override { return m_data; }
 	virtual TValue * resize(OffsetType newSize) override {
-		if (newSize < m_size) {
-			MmappedMemoryHelper<TValue>::deinitMemory(m_data+newSize, m_data+m_size);
-		}
 		m_data = (TValue*) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), false, true);
 		
 		if (m_data || newSize == 0) {
-			if (newSize > m_size) {
-				MmappedMemoryHelper<TValue>::initMemory(m_data+m_size, m_data+newSize);
-			}
 			m_size = newSize;
 		}
 		else {
@@ -291,8 +306,9 @@ public:
 }}
 
 /** This class provides a temporary memory extension with the possiblity to grow the storage
-	It does not copy the data, this is just an adaptor to a piece of memory (kind of an enhanced array pointer)
-	Use the MMVector if you need funtionality equivalent to std::vector
+  * It does not copy the data, this is just an adaptor to a piece of memory (kind of an enhanced array pointer).
+  * @warning The memory allocated and deallocated is not initalized or deinitialized in any way
+  * Use the MMVector if you need funtionality equivalent to std::vector
   */
 template<typename TValue>
 class MmappedMemory {
@@ -330,7 +346,7 @@ public:
 	virtual ~MmappedMemory() {}
 	MmappedMemoryType type() const { return m_priv->type(); }
 	TValue * data() { return m_priv->data(); }
-	///Invalidates pointers when data() before != data() afterwards
+	///Invalidates pointers when data() before != data() afterwards, initializes memory
 	TValue * resize(OffsetType newSize) { return m_priv->resize(newSize); }
 	OffsetType size() const { return m_priv->size(); }
 	TValue * begin() { return data(); }

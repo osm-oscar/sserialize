@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
 #define SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/templated/MMVector.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <unordered_map>
 
@@ -14,7 +14,7 @@ private:
 	uint64_t m_begin;
 	uint64_t m_end;
 	uint64_t m_count;//count only within m_begin and m_end
-	MmappedMemory<TValue> m_data;
+	MMVector<TValue> m_data;
 	DynamicBitSet m_bitSet;
 	THashMap m_upperData;
 private:
@@ -27,7 +27,7 @@ public:
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
 	m_count(0),
-	m_data(m_end-m_begin, mmt),
+	m_data(mmt, m_end-m_begin),
 	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true))
 	{}
 	template<typename... THashParams>
@@ -35,7 +35,7 @@ public:
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
 	m_count(0),
-	m_data(m_end-m_begin, mmt),
+	m_data(mmt, m_end-m_begin),
 	m_bitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true)),
 	m_upperData(params...)
 	{}
@@ -165,9 +165,9 @@ public:
 			if (!m_bitSet.isSet(pos-m_begin)) {
 				++m_count;
 				m_bitSet.set(pos-m_begin);
-				m_data.data()[pos-m_begin] = TValue();
+				m_data[pos-m_begin] = TValue();
 			}
-			return m_data.data()[pos-m_begin]; 
+			return m_data[pos-m_begin]; 
 		}
 		return m_upperData[pos];
 	}
