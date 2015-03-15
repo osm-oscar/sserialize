@@ -4,7 +4,8 @@
 namespace sserialize {
 
 DataSetFactory::DataSetFactory(bool memoryBased) :
-m_ac(0),
+m_data(UByteArrayAdapter::createCache(1, (memoryBased ? sserialize::MM_PROGRAM_MEMORY : sserialize::MM_SHARED_MEMORY))),
+m_ac(&m_data),
 m_hitCount(0)
 {
 }
@@ -37,6 +38,7 @@ void DataSetFactory::setDataStoreFile(sserialize::UByteArrayAdapter data) {
 		m_hitCount = 0;
 		m_hash.clear();
 	}
+	m_data = data;
 }
 
 uint64_t DataSetFactory::hashFunc(const UByteArrayAdapter & v) {

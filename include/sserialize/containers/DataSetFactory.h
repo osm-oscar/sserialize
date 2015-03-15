@@ -19,6 +19,7 @@ public:
 	typedef std::forward_list<uint32_t> DataOffsetContainer;
 	typedef std::unordered_map< uint64_t, DataOffsetContainer > DataHashType;
 private:
+	UByteArrayAdapter m_data;
 	Static::ArrayCreator<UByteArrayAdapter> m_ac;
 	DataHashType m_hash;
 	std::atomic<uint32_t> m_hitCount;
