@@ -139,7 +139,7 @@ public:
 			reserve(pushSize+size());
 			TValue * dP = m_begin+m_pP;
 			for(; begin != end; ++begin, ++dP) {
-				new(m_begin+m_pP) TValue(*begin);
+				new(dP) TValue(*begin);
 			}
 			m_pP += pushSize;
 		}
