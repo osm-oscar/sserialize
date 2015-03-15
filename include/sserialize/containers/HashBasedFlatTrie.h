@@ -16,6 +16,7 @@
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/DynamicVector.h>
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
+#include <sserialize/utility/printers.h>
 #include <omp.h>
 
 ///WARNING: USING a hash of NodePtr need explicit initialization of the hash function (see bottom of this file)
@@ -23,33 +24,41 @@
 namespace sserialize {
 
 template<typename TValue>
+class HashBasedFlatTrie;
+
+namespace detail {
+namespace HashBasedFlatTrie {
+
+class StaticString final {
+public:
+	typedef uint32_t OffsetType;
+	static constexpr OffsetType special = 0xFFFFFFFF;
+protected:
+	template<typename TValue>
+	friend class sserialize::HashBasedFlatTrie;
+	uint32_t m_off;
+	uint32_t m_size;
+	StaticString(uint32_t offset, uint32_t size) : m_off(offset), m_size(size) {}
+	StaticString(uint32_t size) : m_off(special), m_size(size) {}
+public:
+	StaticString() : m_off(special), m_size(special) {}
+	StaticString(const StaticString & other) : m_off(other.m_off), m_size(other.m_size) {}
+	~StaticString() {}
+	inline uint32_t offset() const { return m_off; }
+	inline uint32_t size() const { return m_size; }
+	inline bool isSpecial() const { return m_off == special; }
+	inline bool isInvalid() const { return m_off == special && m_size == special; }
+	StaticString addOffset(OffsetType off) const { return StaticString(m_off + off, m_size-off); }
+};
+
+}}//end namespace detail::HashBasedFlatTrie
+
+template<typename TValue>
 class HashBasedFlatTrie {
 private:
 	struct StringHandler;
 public:
-
-	class StaticString {
-	public:
-		typedef uint32_t OffsetType;
-		static constexpr OffsetType special = 0xFFFFFFFF;
-	protected:
-		friend class HashBasedFlatTrie<TValue>;
-		uint32_t m_off;
-		uint32_t m_size;
-		StaticString(uint32_t offset, uint32_t size) : m_off(offset), m_size(size) {}
-		StaticString(uint32_t size) : m_off(special), m_size(size) {}
-	public:
-		StaticString() : m_off(special), m_size(special) {}
-		StaticString(const StaticString & other) : m_off(other.m_off), m_size(other.m_size) {}
-		~StaticString() {}
-		inline uint32_t offset() const { return m_off; }
-		inline uint32_t size() const { return m_size; }
-		inline bool isSpecial() const { return m_off == special; }
-		inline bool isInvalid() const { return m_off == special && m_size == special; }
-		StaticString addOffset(OffsetType off) const { return StaticString(m_off + off, m_size-off); }
-	};
-
-	typedef StaticString StaticString;
+	typedef detail::HashBasedFlatTrie::StaticString StaticString;
 	typedef TValue mapped_type;
 	typedef StaticString key_type;
 	typedef MMVector<char> StringStorage;
@@ -296,6 +305,8 @@ public:
 	
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
 	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
+
+	bool valid(uint32_t & offendingString) const;
 	
 	bool checkTrieEquality(const sserialize::Static::UnicodeTrie::FlatTrieBase & sft) const;
 	
@@ -510,6 +521,7 @@ HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 	else {//special string (comes from outside)
 		typename StaticString::OffsetType strOff = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
+		assert(utf8::is_valid(m_strHandler.strBegin(a), m_strHandler.strEnd(a)));
 		StaticString ns(strOff, a.size());
 		m_ht.insert(ns);
 		return ns;
@@ -567,8 +579,28 @@ void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEnd
 }
 
 template<typename TValue>
+bool HashBasedFlatTrie<TValue>::valid(uint32_t & offendingString) const {
+	uint32_t counter = 0;
+	for(const auto & x : *this) {
+		if (!utf8::is_valid(m_strHandler.strBegin(x.first), m_strHandler.strEnd(x.first))) {
+			offendingString = counter;
+			return false;
+		}
+		++counter;
+	}
+	return true;
+}
+
+template<typename TValue>
 void HashBasedFlatTrie<TValue>::finalize() {
 	const StringHandler * strHandler = &m_strHandler;
+	#if defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE) || defined(DEBUG_CHECK_ALL)
+	std::cout << "Finalizing HashBasedFlatTrie with size=" << size() << std::endl;
+	uint32_t brokenString = 0;
+	if (!valid(brokenString)) {
+		throw sserialize::CorruptDataException("String is not valid at position=" + sserialize::toString<uint32_t>(brokenString));
+	}
+	#endif
 	auto sortFunc = [strHandler](const typename HashTable::value_type & a, const typename HashTable::value_type & b) {
 		return sserialize::unicodeIsSmaller(strHandler->strBegin(a.first), strHandler->strEnd(a.first), strHandler->strBegin(b.first), strHandler->strEnd(b.first));
 	};
