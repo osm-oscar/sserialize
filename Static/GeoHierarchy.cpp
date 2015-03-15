@@ -563,11 +563,15 @@ GeoHierarchy::Region GeoHierarchy::rootRegion() const {
 }
 
 bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & store) const {
+	bool allOk = true;
 	for(uint32_t i = 0, s = regionSize(); i < s; ++i) {
 		Region r = region(i);
 		for (uint32_t j = 0, sj = r.childrenSize(); j < sj; ++j) {
 			if (i <= r.child(j)) {
 				std::cout << "Region-DAG has unsorted ids" << std::endl;
+				allOk = false;
+				i = s;
+				break;
 			}
 		}
 	}
@@ -583,10 +587,11 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 		ItemIndex regionItems = store.at( r.itemsPtr() );
 		if (mergedIdx != regionItems) {
 			std::cout << "Merged cell idx does not match region index for region " << i << std::endl;
-			return false;
+			allOk = false;
+			break;
 		}
 	}
-	return true;
+	return allOk;
 }
 
 }}} //end namespace
