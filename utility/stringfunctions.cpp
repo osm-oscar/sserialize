@@ -134,14 +134,14 @@ JsonEscaper::JsonEscaper() :
 //escapes as per http://stackoverflow.com/questions/7123908/javascript-json-parser-that-tells-error-position
 m_escaper({'"', '\\', '/', '\b', '\f', '\n', '\r', '\t'})
 {
-	m_escapeMap['"'] = '"';
-	m_escapeMap['\\'] = '\\';
-	m_escapeMap['/'] = '/';
-	m_escapeMap['\b'] = 'b';
-	m_escapeMap['\f'] = 'f';
-	m_escapeMap['\n'] = 'n';
-	m_escapeMap['\r'] = 'r';
-	m_escapeMap['\t'] = 't';
+	m_escapeMap[(uint32_t)'"'] = '"';
+	m_escapeMap[(uint32_t)'\\'] = '\\';
+	m_escapeMap[(uint32_t)'/'] = '/';
+	m_escapeMap[(uint32_t)'\b'] = 'b';
+	m_escapeMap[(uint32_t)'\f'] = 'f';
+	m_escapeMap[(uint32_t)'\n'] = 'n';
+	m_escapeMap[(uint32_t)'\r'] = 'r';
+	m_escapeMap[(uint32_t)'\t'] = 't';
 }
 
 std::string JsonEscaper::escape(const std::string & str) const {
