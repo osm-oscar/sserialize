@@ -151,7 +151,7 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf)
 	for(uint32_t i(0), s(m_desc.size()); i < s && pf(i); ++i) {
 		const CellDesc & cd = m_desc[i];
 		if (m_desc[i].hasTree()) {
-			flattenCell((&m_trees[i])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+			flattenCell((&m_trees[0])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
 			assert(frt != FT_NONE);
 			if (frt == FT_FM) {
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
