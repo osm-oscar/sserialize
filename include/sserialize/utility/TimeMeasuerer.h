@@ -17,15 +17,23 @@ public:
 		::memset(&m_begin, 0, sizeof(struct timeval));
 		::memset(&m_end, 0, sizeof(struct timeval));
 	}
+	
 	~TimeMeasurer() {}
+	
 	inline void begin() {
 		gettimeofday(&m_begin, NULL);
 	}
+	
 	inline void end() {
 		gettimeofday(&m_end, NULL);
 	}
+	
+	inline long beginTime() const {
+		return m_begin.tv_sec;
+	}
+	
 	/** @return returns the elapsed time in useconds  */
-	long elapsedTime() const {
+	inline long elapsedTime() const {
 		long mtime, seconds, useconds;
 		seconds  = m_end.tv_sec  - m_begin.tv_sec;
 		useconds = m_end.tv_usec - m_begin.tv_usec;
@@ -33,19 +41,19 @@ public:
 		return mtime;
 	}
 	
-	long elapsedUseconds() const {
+	inline long elapsedUseconds() const {
 		return elapsedTime();
 	}
 
-	long elapsedMilliSeconds() const {
+	inline long elapsedMilliSeconds() const {
 		return elapsedTime()/1000;
 	}
 	
-	long elapsedSeconds() const {
+	inline long elapsedSeconds() const {
 		return elapsedTime()/1000000;
 	}
 
-	long elapsedMinutes() {
+	inline long elapsedMinutes() {
 		return elapsedSeconds()/60;
 	}
 };
