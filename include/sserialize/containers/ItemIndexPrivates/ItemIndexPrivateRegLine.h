@@ -242,11 +242,8 @@ public:
 			}
 			uint8_t countType = 0x20 | (bits-1);
 			destination.putUint8(countType);
-			std::deque<uint32_t> d;
-			d.push_back(itemId);
-			std::deque<uint8_t> tmp;
-			CompactUintArray::createFromSet(d, tmp, bits);
-			destination.put(tmp);
+			std::array<uint32_t, 1> d({itemId});
+			CompactUintArray::create(d, destination, bits);
 		}
 		else {
 			destination.putUint8(0);

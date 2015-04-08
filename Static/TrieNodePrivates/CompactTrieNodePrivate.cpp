@@ -334,10 +334,9 @@ CompactStaticTrieCreationNode::createNewNode(
 		idxPtrs.push_back(nodeInfo.suffixPrefixIndexPtr);
 	}
 
-	std::deque<uint8_t> indexPtrsData;
 	uint8_t bpn = 1;
 	if (nodeInfo.indexTypes & TrieNodePrivate::IT_ALL) {
-		bpn = CompactUintArray::create(idxPtrs, indexPtrsData);
+		bpn = CompactUintArray::create(idxPtrs, destination);
 	}
 	if (!bpn) {
 		return CompactStaticTrieCreationNode::INDEX_PTR_FAILED;
@@ -345,8 +344,6 @@ CompactStaticTrieCreationNode::createNewNode(
 	
 	nodeHeader |= static_cast<uint16_t>(bpn-1) << 8;
 	destination.putUint16(putPtr, nodeHeader);
-	destination.put(indexPtrsData);
-
 	return CompactStaticTrieCreationNode::NO_ERROR;
 }
 

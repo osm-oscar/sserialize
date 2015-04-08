@@ -169,16 +169,16 @@ public:
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest, uint8_t bits);
 
-	template<typename T_SOURCE_CONTAINER>
-	static bool createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bits);
+// 	template<typename T_SOURCE_CONTAINER>
+// 	static bool createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bits);
 
 	///Creates a new CompactUintArray beginning at dest.tellPutPtr()
 	///@return returns the needed bits, 0 on failure
 	template<typename T_SOURCE_CONTAINER>
 	static uint8_t create(const T_SOURCE_CONTAINER & src, UByteArrayAdapter & dest);
 
-	template<typename T_SOURCE_CONTAINER>
-	static uint8_t create(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest);
+// 	template<typename T_SOURCE_CONTAINER>
+// 	static uint8_t create(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest);
 
 	static uint8_t minStorageBits(const uint32_t number);
 	static uint8_t minStorageBitsFullBytes(uint32_t number);
@@ -215,25 +215,25 @@ uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdapt
 	return bits;
 }
 
-template<typename T_SOURCE_CONTAINER>
-bool CompactUintArray::createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bpn) {
-	std::deque<uint8_t> tmpDest;
-	UByteArrayAdapter adap(&tmpDest);
-	bool ok = bpn == create(src, adap, bpn);
-	if (ok)
-		appendToDeque(tmpDest, dest);
-	return ok;
-}
+// template<typename T_SOURCE_CONTAINER>
+// bool CompactUintArray::createFromSet(const T_SOURCE_CONTAINER & src, std::deque<uint8_t> & dest, uint8_t bpn) {
+// 	std::deque<uint8_t> tmpDest;
+// 	UByteArrayAdapter adap(&tmpDest);
+// 	bool ok = bpn == create(src, adap, bpn);
+// 	if (ok)
+// 		dest.insert(dest.end(), tmpDest.begin(), tmpDest.end());
+// 	return ok;
+// }
 
-template<typename T_SOURCE_CONTAINER>
-uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest) {
-	std::deque<uint8_t> tmpDest;
-	UByteArrayAdapter adap(&tmpDest);
-	uint8_t bpn = create(src, adap);
-	if (bpn > 0)
-		appendToDeque(tmpDest, dest);
-	return bpn;
-}
+// template<typename T_SOURCE_CONTAINER>
+// uint8_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, std::deque< uint8_t >& dest) {
+// 	std::deque<uint8_t> tmpDest;
+// 	UByteArrayAdapter adap(&tmpDest);
+// 	uint8_t bpn = create(src, adap);
+// 	if (bpn > 0)
+// 		dest.insert(dest.end(), tmpDest.begin(), tmpDest.end());
+// 	return bpn;
+// }
 
 /** Storage Layout of BoundedCompactUintArray
   *------------------------------------------
