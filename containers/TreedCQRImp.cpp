@@ -62,7 +62,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 					bIdx = m_idxStore.at(pmIdxIdB);
 				}
 				idx = aIdx / bIdx;
-				frt = FT_FETCHED;
+				frt = ((idx.size() > 0) ? FT_FETCHED : FT_EMPTY);
 			}
 		}
 		break;
@@ -70,7 +70,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 		if ((frtA | frtB) & FT_FM) { //at least one is full match
 			frt = FT_FM;
 		}
-		else { //both are eith pm or fetched
+		else { //both are either pm or fetched
 			if (frtA == FT_PM) {
 				aIdx = m_idxStore.at(pmIdxIdA); 
 			}
@@ -82,8 +82,8 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 		}
 		break;
 	case FlatNode::T_DIFF:
-		if (frtB == FT_FM) { //right hand is fm -> result is empty
-			frt = FT_FETCHED;
+		if (frtB == FT_FM || frtA == FT_EMPTY) { //right hand is fm -> result is empty
+			frt = FT_EMPTY;
 		}
 		else { //frtB is either fetched or partial
 			if (frtA == FT_PM) {
@@ -96,7 +96,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 				bIdx = m_idxStore.at(pmIdxIdB);
 			}
 			idx = aIdx - bIdx;
-			frt = FT_FETCHED;
+			frt = ((idx.size() > 0) ? FT_FETCHED : FT_EMPTY);
 		}
 		break;
 	case FlatNode::T_SYM_DIFF:
@@ -114,10 +114,10 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 				bIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
 			}
 			idx = aIdx ^ bIdx;
-			frt = FT_FETCHED;
+			frt = ((idx.size() > 0) ? FT_FETCHED : FT_EMPTY);
 		}
 		else { //result is empty
-			frt = FT_FETCHED;
+			frt = FT_EMPTY;
 		}
 		break;
 	default:
