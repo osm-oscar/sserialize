@@ -78,6 +78,7 @@ private:
 	std::vector<ItemIndex> m_fetchedIdx;
 private:
 	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	///flattens a cell tree, @pmIdxId set iff frt == FT_PM, @idx set iff frt == FT_FETCHED
 	void flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const;
 public:
 	TreedCQRImp();
@@ -99,6 +100,7 @@ public:
 	TreedCQRImp * unite(const TreedCQRImp * other) const;
 	TreedCQRImp * diff(const TreedCQRImp * other) const;
 	TreedCQRImp * symDiff(const TreedCQRImp * other) const;
+	///@pf progress function pf(uint32_t numFinishedCells, uint32_t currentResultCellCount)
 	template<typename T_PROGRESS_FUNCION>
 	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf) const;
 };
@@ -148,7 +150,7 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf)
 	uint32_t pmIdxId;
 	FlattenResultType frt = FT_NONE;
 	
-	for(uint32_t i(0), s(m_desc.size()); i < s && pf(i); ++i) {
+	for(uint32_t i(0), s(m_desc.size()); i < s && pf(i, m_desc.size()); ++i) {
 		const CellDesc & cd = m_desc[i];
 		if (m_desc[i].hasTree()) {
 			flattenCell((&m_trees[0])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
@@ -157,13 +159,14 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf)
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
 			}
 			else if (frt == FT_PM) {
-				r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;
+				r.m_idx[r.m_desc.size()].idxPtr = pmIdxId;
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
 			}
 			else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
 				r.uncheckedSet(r.m_desc.size(), idx);
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
 			}
+			//frt == FT_EMPTY
 		}
 		else {
 			if (!cd.fullMatch) {
