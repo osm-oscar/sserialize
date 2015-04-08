@@ -203,7 +203,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
 	TreedCQRImp & r = *rPtr;
 	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
-	for(; myI < myEnd && oI < oEnd;) {
+	for( ;myI < myEnd && oI < oEnd; ) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
 		uint32_t myCellId = myCD.cellId;
