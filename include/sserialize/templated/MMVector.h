@@ -54,10 +54,13 @@ public:
 		sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::initMemory(other.cbegin(), other.cend(), m_begin);
 	}
 	MMVector(MMVector && other) :
-	m_begin(other.m_begin), m_capacity(other.m_size), m_pP(other.m_pP), m_growFactor(other.m_growFactor)
+	m_begin(other.m_begin), m_capacity(other.m_capacity), m_pP(other.m_pP), m_growFactor(other.m_growFactor)
 	{
 		using std::swap;
 		swap(m_d, other.m_d);
+		other.m_begin = 0;
+		other.m_capacity = 0;
+		other.m_pP = 0;
 	}
 	~MMVector() {}
 	MMVector & operator=(const MMVector & other) {
