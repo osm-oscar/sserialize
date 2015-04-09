@@ -17,7 +17,7 @@ class InputBuffer {
 	TSourceIterator m_srcEnd;
 	OffsetType m_bufferSize;
 	std::vector<TValue> m_buffer;
-	std::vector<TValue>::iterator m_bufferIt;
+	typename std::vector<TValue>::iterator m_bufferIt;
 private:
 	void fillBuffer() {
 		TSourceIterator bufferBeginIt = m_srcIt;
@@ -52,7 +52,7 @@ private:
 	uint64_t m_mergeBufferSize;
 private:
 	template<typename TRandomAccessContainer, typename CompFunc>
-	void mergeChunks(TRandomAccessContainer & srcdest, CompFunc & comp);
+	void mergeChunks(TRandomAccessContainer & srcdest, OffsetType begin, OffsetType end, OffsetType chunkSize, CompFunc & comp);
 public:
 	OutOfMemorySorter(MmappedMemoryType tempStorageType) : m_mmt(tempStorageType) {}
 	~OutOfMemorySorter() {}
@@ -89,14 +89,14 @@ template<typename TRandomAccessContainer, typename CompFunc>
 void
 OutOfMemorySorter<TValue>::
 mergeChunks(TRandomAccessContainer & srcdest, OffsetType begin, OffsetType end, OffsetType chunkSize, CompFunc & comp) {
-	typedef detail::oom::InputBuffer<TRandomAccessContainer::iterator, TValue> MyInputBufferType;
+	typedef detail::oom::InputBuffer<typename TRandomAccessContainer::iterator, TValue> MyInputBufferType;
 	std::vector< MyInputBufferType > inputBuffers;
 	{
 		OffsetType dataSize = end-begin;
 		OffsetType numChunks = dataSize/chunkSize + (dataSize%chunkSize? 1 : 0);
 		inputBuffers.reserve(numChunks);
 	}
-	TRandomAccessContainer::iterator myBegin(srcdest.begin());
+	typename TRandomAccessContainer::iterator myBegin(srcdest.begin());
 	for(OffsetType i(begin); i < end; i += chunkSize) {
 		OffsetType realChunkSize = std::min<OffsetType>(chunkSize, end-i);
 		inputBuffers.emplace_back(myBegin+i, myBegin+(i+realChunkSize), m_mergeBufferSize);
@@ -107,12 +107,11 @@ mergeChunks(TRandomAccessContainer & srcdest, OffsetType begin, OffsetType end, 
 	sserialize::MMVector<TValue> outputBuffer(m_mmt);
 	outputBuffer.reserve(end-begin);
 	while (inputBuffers.size()) {
-		MyPrioQ::iterator pB = priQ.begin();
-		MyPrioQ::iterator pE = priQ.upper_bound(*pB);
+		typename MyPrioQ::iterator pB = priQ.begin();
+		typename MyPrioQ::iterator pE = priQ.upper_bound(*pB);
 		outputBuffer.push_back(inputBuffers[*pB].top());
 		for(; pB != pE;) {
 			MyInputBufferType & x = inputBuffers[pB->second];
-			if (x.
 		}
 		
 	}
