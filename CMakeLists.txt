@@ -37,7 +37,6 @@ Static/TrieNodePrivates/LargeCompactTrieNodePrivate.cpp
 )
 
 set(STAGING_SOURCES_CPP
-staging/containers/FlatGST.cpp
 )
 
 set(STATIC_SOURCES_CPP

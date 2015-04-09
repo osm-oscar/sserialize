@@ -91,7 +91,6 @@ ADD_TEST_TARGET_SINGLE(static_densegeopointvector)
 ADD_TEST_TARGET_SINGLE(static_GeoShapes)
 
 #completers
-ADD_TEST_TARGET_SINGLE(sc_gsa)
 ADD_TEST_TARGET_SINGLE(sc_stringsitemdb)
 ADD_TEST_TARGET_SINGLE(sc_ststringsitemdb)
 ADD_TEST_TARGET_SINGLE(sc_SinglePassTrie)
