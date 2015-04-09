@@ -5,6 +5,64 @@
 namespace sserialize {
 namespace spatial {
 
+namespace detail {
+namespace geohierarchy {
+
+CellList::CellList() :
+m_cellIdData(sserialize::MM_FAST_FILEBASED),
+m_cellItems(sserialize::MM_FILEBASED),
+m_d(sserialize::MM_PROGRAM_MEMORY)
+{}
+
+
+CellList::CellList(const sserialize::MMVector<uint32_t> & cellIdData, const sserialize::MMVector<uint32_t> & cellItems, const sserialize::MMVector<Cell> & cells) :
+m_cellIdData(cellIdData),
+m_cellItems(cellItems),
+m_d(cells)
+{}
+
+CellList::CellList(sserialize::MMVector<uint32_t> && cellIdData, sserialize::MMVector<uint32_t> && cellItems, sserialize::MMVector<Cell> && cells) :
+m_cellIdData(std::move(cellIdData)),
+m_cellItems(std::move(cellItems)),
+m_d(std::move(cells))
+{}
+
+CellList::CellList(const CellList & other) :
+m_cellIdData(other.m_cellIdData),
+m_cellItems(other.m_cellItems),
+m_d(other.m_d)
+{}
+
+CellList::CellList(const CellList && other) :
+m_cellIdData(std::move(other.m_cellIdData)),
+m_cellItems(std::move(other.m_cellItems)),
+m_d(std::move(other.m_d))
+{}
+
+CellList::~CellList() {}
+
+
+CellList & CellList::operator=(CellList && other) {
+	this->swap(other);
+	return *this;
+}
+
+CellList & CellList::operator=(const CellList & other) {
+	m_cellIdData = other.m_cellIdData;
+	m_cellItems = other.m_cellItems;
+	m_d = other.m_d;
+	return *this;
+}
+
+void CellList::swap(CellList & other) {
+	using std::swap;
+	swap(m_cellIdData, other.m_cellIdData);
+	swap(m_cellItems, other.m_cellItems);
+	swap(m_d, other.m_d);
+}
+
+}}//end namespace detail::geohierarchy
+
 void GeoHierarchy::depths(std::vector<uint32_t> & d, uint32_t me) const {
 	for(uint32_t child : m_regions.at(me).children) {
 		if (d[child] <= d[me]) {
@@ -19,13 +77,13 @@ void GeoHierarchy::splitCellParents(uint32_t cellId, std::vector<uint32_t> & dir
 	remainingParents.clear();
 	std::unordered_set<uint32_t> removedParents;
 	const Cell & cell = m_cells[cellId];
-	for(uint32_t cellParent : cell.parents) {
-		if (removedParents.count(cellParent)) {
-			remainingParents.push_back(cellParent);
+	for(auto cPIt(cell.parentsBegin()), cPEnd(cell.parentsEnd()); cPIt != cPEnd; ++cPIt) {
+		if (removedParents.count(*cPIt)) {
+			remainingParents.push_back(*cPIt);
 		}
 		else {
-			directParents.push_back(cellParent);
-			getAncestors(cellParent, removedParents);
+			directParents.push_back(*cPIt);
+			getAncestors(*cPIt, removedParents);
 		}
 	}
 }
@@ -146,14 +204,14 @@ bool GeoHierarchy::checkConsistency() {
 	//cells
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
 		const Cell & c = m_cells.at(i);
-		if (!std::is_sorted(c.items.cbegin(), c.items.cend())) {
+		if (!std::is_sorted(c.itemsBegin(), c.itemsEnd())) {
 			std::cout << "Cell " << i << " has unsorted items" << std::endl;
 			return false;
 		}
 	}
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
 		const Cell & c = m_cells.at(i);
-		if (!std::is_sorted(c.parents.cbegin(), c.parents.cend())) {
+		if (!std::is_sorted(c.parentsBegin(), c.parentsEnd())) {
 			std::cout << "Cell " << i << " has unsorted parents" << std::endl;
 			return false;
 		}
@@ -162,7 +220,7 @@ bool GeoHierarchy::checkConsistency() {
 		const Region & r = m_regions.at(i);
 		for(const auto x : r.cells) {
 			const Cell & c = m_cells.at(x);
-			if (!std::binary_search(c.parents.cbegin(), c.parents.cend(), i)) {
+			if (!std::binary_search(c.parentsBegin(), c.parentsEnd(), i)) {
 				std::cout << "Cell " << x << " has missing parent " << i << std::endl;
 				return false;
 			}
@@ -170,10 +228,10 @@ bool GeoHierarchy::checkConsistency() {
 	}
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
 		const Cell & c = m_cells.at(i);
-		for(const auto x : c.parents) {
-			const Region & r = m_regions.at(x);
+		for(auto cPIt(c.parentsBegin()), cPEnd(c.parentsEnd()); cPIt != cPEnd; ++cPIt) {
+			const Region & r = m_regions.at(*cPIt);
 			if (!std::binary_search(r.cells.cbegin(), r.cells.cend(), i)) {
-				std::cout << "Region " << x << " has missing cell " << i << std::endl;
+				std::cout << "Region " << *cPIt << " has missing cell " << i << std::endl;
 				return false;
 			}
 		}
@@ -336,11 +394,11 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		const Cell & c = m_cells[i];
 		splitCellParents(i, cellDirectParents, cellRemainingParents);
 		bool ok = true;
-		uint32_t itemPtr = idxFactory.addIndex(c.items, &ok);
+		uint32_t itemPtr = idxFactory.addIndex(c.items(), &ok);
 		mcdItemPtr = std::max<uint32_t>(mcdItemPtr, itemPtr);
-		mcdItemCount = std::max<uint32_t>(mcdItemCount, c.items.size());
+		mcdItemCount = std::max<uint32_t>(mcdItemCount, c.itemsSize());
 		mcdDirectParentsCount = std::max<uint32_t>(mcdDirectParentsCount, cellDirectParents.size());
-		curPtrOffset += c.parents.size();
+		curPtrOffset += c.parentsSize();
 		cellItemsIndexPtrs[i] = itemPtr;
 		allOk = allOk && ok;
 	}
@@ -363,13 +421,13 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 			const Cell & c = m_cells[i];
 			splitCellParents(i, cellDirectParents, cellRemainingParents);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, cellItemsIndexPtrs[i]);
-			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_COUNT, c.items.size());
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_COUNT, c.itemsSize());
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN, curPtrOffset);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_DIRECT_PARENTS_OFFSET, cellDirectParents.size());
 			
 			ptrOffsetArray.insert(ptrOffsetArray.end(), cellDirectParents.cbegin(), cellDirectParents.cend());
 			ptrOffsetArray.insert(ptrOffsetArray.end(), cellRemainingParents.cbegin(), cellRemainingParents.cend());
-			curPtrOffset += c.parents.size();
+			curPtrOffset += c.parentsSize();
 		}
 		mvaCreator.set(m_cells.size(), sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, 0);
 		mvaCreator.set(m_cells.size(), sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_COUNT, 0);
@@ -436,7 +494,7 @@ bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, cons
 		std::set<uint32_t> tmp;
 		for(uint32_t cellId : r.cells) {
 			const Cell & c = m_cells.at(cellId);
-			tmp.insert(c.items.cbegin(), c.items.cend());
+			tmp.insert(c.itemsBegin(), c.itemsEnd());
 		}
 		if (idxStore->at(sr.itemsPtr()) != tmp) {
 			std::cout << "Items of region " << i << " differs" << std::endl;
@@ -476,22 +534,22 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy&
 		bool ok = true;
 		const Cell & c = m_cells.at(i);
 		sserialize::Static::spatial::GeoHierarchy::Cell sc = sgh.cell(i);
-		if (c.parents.size() != sc.parentsSize()) {
+		if (c.parentsSize() != sc.parentsSize()) {
 			std::cout << "parent.size of cell " << i << " differ" << std::endl;
 			ok = false;
 		}
-		std::vector<uint32_t> tmp(c.parents.size());
-		for(uint32_t j = 0, js = c.parents.size(); j < js; ++j) {
+		std::vector<uint32_t> tmp(c.parentsSize());
+		for(uint32_t j = 0, js = c.parentsSize(); j < js; ++j) {
 			tmp[j] = sc.parent(j);
 		}
 		std::sort(tmp.begin(), tmp.end());
-		for(uint32_t j = 0, js = c.parents.size(); j < js; ++j) {
-			if (c.parents.at(j) != tmp.at(j)) {
+		for(uint32_t j = 0, js = c.parentsSize(); j < js; ++j) {
+			if (c.parentAt(j) != tmp.at(j)) {
 				std::cout << "parent " << j << " of cell " << i << " differs" << std::endl;
 				ok = false;
 			}
 		}
-		if (idxStore && idxStore->at(sc.itemPtr()) != c.items) {
+		if (idxStore && idxStore->at(sc.itemPtr()) != c.items()) {
 			std::cout << "ItemIndex of cell " << i << " differs" << std::endl;
 			ok = false;
 		}
@@ -527,13 +585,13 @@ std::vector<uint32_t> GeoHierarchy::getRegionsInLevelOrder() const {
 	return d;
 }
 
-std::vector<uint32_t> treeMerge(const std::vector< const std::vector<uint32_t>* > & v, uint32_t begin, uint32_t end) {
-	if (begin ==  end)
-		return *v[begin];
+std::vector<uint32_t> treeMerge(const std::vector< IteratorBasedContainer<const uint32_t*> > & v, uint32_t begin, uint32_t end) {
+	if (begin == end)
+		return std::vector<uint32_t>(v[begin].cbegin(), v[begin].cend());
 	else {
 		std::vector<uint32_t> tmp;
 		if (end-begin == 1) {
-			sserialize::mergeSortedContainer(tmp, *v[begin], *v[end]);
+			sserialize::mergeSortedContainer(tmp, v[begin], v[end]);
 		}
 		else {
 			sserialize::mergeSortedContainer(tmp, treeMerge(v, begin, begin+(end-begin)/2), treeMerge(v, begin+(end-begin)/2+1, end));
@@ -544,7 +602,7 @@ std::vector<uint32_t> treeMerge(const std::vector< const std::vector<uint32_t>* 
 
 std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const {
 	std::vector< std::pair<uint32_t, uint32_t> > res;
-	std::vector< const std::vector<uint32_t> * > tmp;
+	std::vector< IteratorBasedContainer<const uint32_t*> > tmp;
 	std::vector<uint32_t> items;
 	res.resize(m_regions.size()+1, std::pair<uint32_t, uint32_t>(0,0));
 	//if i == m_regions.size() then calculate the index for the rootRegion
@@ -553,7 +611,7 @@ std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemI
 		tmp.clear();
 		tmp.reserve(r->cells.size());
 		for(uint32_t c : r->cells) {
-			tmp.push_back(&cell(c).items);
+			tmp.push_back(cell(c).items());
 		}
 		items.clear();
 		if (tmp.size()) {
@@ -571,14 +629,18 @@ void GeoHierarchy::compactify(bool compactifyCells, bool compactifyRegions) {
 		for(Cell & cell : m_cells) {
 			removedParents.clear();
 			keptParents.clear();
-			for(uint32_t cellParent : cell.parents) {
+			for(uint32_t cellParent : cell.parents()) {
 				if (removedParents.count(cellParent))
 					continue;
 				keptParents.push_back(cellParent);
 				getAncestors(cellParent, removedParents);
 			}
-			using std::swap;
-			swap(cell.parents, keptParents);
+			uint32_t * pIt = cell.parentsBegin();
+			for(uint32_t x : keptParents) {
+				*pIt = x;
+				++*pIt;
+			}
+			cell.m_parentsSize = pIt - cell.parentsBegin();
 		}
 	}
 	if (compactifyRegions) {
