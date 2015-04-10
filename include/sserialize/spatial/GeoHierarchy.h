@@ -40,8 +40,8 @@ public:
 		{}
 		IteratorBasedContainer<uint32_t*> parents() { return IteratorBasedContainer<uint32_t*>(parentsBegin(), parentsEnd());}
 		IteratorBasedContainer<const uint32_t*> parents() const { return IteratorBasedContainer<const uint32_t*>(parentsBegin(), parentsEnd());}
-		IteratorBasedContainer<uint32_t*> items() { return IteratorBasedContainer<uint32_t*>(parentsBegin(), parentsEnd());}
-		IteratorBasedContainer<const uint32_t*> items() const { return IteratorBasedContainer<const uint32_t*>(parentsBegin(), parentsEnd());}
+		IteratorBasedContainer<uint32_t*> items() { return IteratorBasedContainer<uint32_t*>(itemsBegin(), itemsEnd());}
+		IteratorBasedContainer<const uint32_t*> items() const { return IteratorBasedContainer<const uint32_t*>(itemsBegin(), itemsEnd());}
 		
 		inline uint32_t * parentsBegin() { return m_parentsBegin; }
 		inline const uint32_t * parentsBegin() const { return m_parentsBegin; }
