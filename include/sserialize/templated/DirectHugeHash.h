@@ -22,7 +22,7 @@ private:
 	DirectHugeHashMap(const DirectHugeHashMap & other);
 	DirectHugeHashMap & operator=(const DirectHugeHashMap & other);
 public:
-	DirectHugeHashMap() : m_begin(0), m_end(0), m_count(0) {}
+	DirectHugeHashMap() : m_begin(0), m_end(0), m_count(0), m_data(sserialize::MM_PROGRAM_MEMORY) {}
 	DirectHugeHashMap(uint64_t begin, uint64_t end, MmappedMemoryType mmt) :
 	m_begin(std::min<uint64_t>(begin, end)),
 	m_end(std::max<uint64_t>(begin, end)),
@@ -67,10 +67,10 @@ public:
 	void clear() {
 		m_count = 0;
 		//make sure to delete the old data prior allocating new memory in case of very large data
-		m_data = MmappedMemory<TValue>();
+		m_data = MMVector<TValue>(m_data.mmt());
 		m_upperData.clear();
 		m_bitSet = DynamicBitSet();
-		m_data = MmappedMemory<TValue>(m_end-m_begin, m_data.type());
+		m_data.resize(m_end-m_begin);
 		m_bitSet = DynamicBitSet(UByteArrayAdapter(new std::vector<uint8_t>((m_end-m_begin)/8+1, 0), true));
 	}
 	uint64_t beginDirectRange() const { return m_begin; }
