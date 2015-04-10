@@ -752,7 +752,9 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			for(const NodePtr & n : levelNodes) {
 				for(typename Node::const_iterator it(n->cbegin()), end(n->cend()); it != end; ++it) {
 					destLevelNodes.push_back(*it);
+					#ifndef NDEBUG
 					int64_t id = destLevelNodes.back()->rawBegin() - htBegin;
+					#endif
 					assert(id >= 0 && id < htSize);
 					assert(id < size());
 				}
