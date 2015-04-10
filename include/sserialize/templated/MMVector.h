@@ -31,13 +31,21 @@ private:
 		return tSize;
 	}
 public:
-	MMVector(sserialize::MmappedMemoryType mmt) :
+	MMVector(sserialize::MmappedMemoryType mmt = sserialize::MM_PROGRAM_MEMORY) :
 	m_d(1, mmt), m_capacity(1), m_pP(0),
 	m_growFactor(SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR)
 	{
 		m_begin = m_d.data();
 	}
-	MMVector(sserialize::MmappedMemoryType mmt, SizeType size, const TValue & value = TValue()) :
+	explicit MMVector(SizeType size, const TValue & value = TValue(), sserialize::MmappedMemoryType mmt = sserialize::MM_PROGRAM_MEMORY) :
+	m_d(1, mmt), m_capacity(1), m_pP(0),
+	m_growFactor(SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR)
+	{
+		m_begin = m_d.data();
+		if (size)
+			resize(size, value);
+	}
+	explicit MMVector(sserialize::MmappedMemoryType mmt, SizeType size, const TValue & value = TValue()) :
 	m_d(1, mmt), m_capacity(1), m_pP(0),
 	m_growFactor(SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR)
 	{
@@ -89,6 +97,7 @@ public:
 		swap(m_pP, other.m_pP);
 		swap(m_growFactor, other.m_growFactor);
 	}
+	sserialize::MmappedMemoryType mmt() const { return m_d.type(); }
 	SizeType size() const { return m_pP;}
 	SizeType capacity() const { return m_capacity; }
 	double growFactor() const { return m_growFactor; }
