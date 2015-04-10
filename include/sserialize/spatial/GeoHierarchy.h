@@ -73,6 +73,9 @@ public:
 	CellList(const CellList & other);
 	CellList(const CellList && other);
 	~CellList();
+	sserialize::MMVector<uint32_t> & cellItemList() { return m_cellItems;}
+	const sserialize::MMVector<uint32_t> & cellItemList() const { return m_cellItems;}
+	
 	void swap(CellList & other);
 	CellList & operator=(CellList && other);
 	CellList & operator=(const CellList & other);
