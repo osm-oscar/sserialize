@@ -151,6 +151,10 @@ public:
 	m_keyEq(other.m_keyEq)
 	{}
 	virtual ~OADHashTable() {}
+	void clear() {
+		m_valueStorage.clear();
+		m_d.clear();
+	}
 	inline SizeType size() const { return m_valueStorage.size(); }
 	///Capacity of the storage table
 	inline SizeType storageCapacity()  const { return m_valueStorage.capacity();}
