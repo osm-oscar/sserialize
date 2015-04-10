@@ -154,6 +154,7 @@ public:
 	void clear() {
 		m_valueStorage.clear();
 		m_d.clear();
+		m_d.resize(16, 0);
 	}
 	inline SizeType size() const { return m_valueStorage.size(); }
 	///Capacity of the storage table
