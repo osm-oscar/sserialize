@@ -132,6 +132,7 @@ public:
 		operator[](pos);
 	}
 	
+	///thread safe with it self
 	bool count(uint64_t pos) const {
 		if (m_begin <= pos && pos < m_end) {
 			return m_bitSet.isSet(pos-m_begin);
