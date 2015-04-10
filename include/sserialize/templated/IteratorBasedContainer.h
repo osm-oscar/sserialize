@@ -17,10 +17,10 @@ private:
 	T_ITERATOR m_end;
 	std::size_t m_size;
 public:
-	IteratorBasedContainer(T_ITERATOR begin, T_ITERATOR end, std::size_t size) :
+	IteratorBasedContainer(const T_ITERATOR & begin, const T_ITERATOR & end, std::size_t size) :
 	m_begin(begin), m_end(end), m_size(size)
 	{}
-	IteratorBasedContainer(T_ITERATOR begin, T_ITERATOR end) :
+	IteratorBasedContainer(const T_ITERATOR & begin, const T_ITERATOR & end) :
 	m_begin(begin), m_end(end), m_size(std::distance(begin, end))
 	{}
 	~IteratorBasedContainer() {}
