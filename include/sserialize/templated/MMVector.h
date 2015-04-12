@@ -109,6 +109,7 @@ public:
 		}
 	}
 	
+	///deinits the memory and resets the size to 0, capacity is unchanged
 	void clear() {
 		sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::deinitMemory(begin(), end());
 		m_pP = 0;
