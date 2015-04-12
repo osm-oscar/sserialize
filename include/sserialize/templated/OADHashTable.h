@@ -150,7 +150,41 @@ public:
 	m_hash2(other.m_hash2),
 	m_keyEq(other.m_keyEq)
 	{}
+	OADHashTable(OADHashTable && other) :
+	m_valueStorage(std::move(other.m_valueStorage)),
+	m_d(std::move(other.m_d)),
+	m_maxLoad(other.m_maxLoad),
+	m_rehashMult(other.m_rehashMult),
+	m_maxCollisions(other.m_maxCollisions),
+	m_hash1(std::move(other.m_hash1)),
+	m_hash2(std::move(other.m_hash2)),
+	m_keyEq(std::move(other.m_keyEq))
+	{}
+	OADHashTable & operator=(const OADHashTable & other) {
+		m_valueStorage = other.m_valueStorage;
+		m_d = other.m_d;
+		m_maxLoad = other.m_maxLoad;
+		m_rehashMult = other.m_rehashMult;
+		m_maxCollisions = other.m_maxCollisions;
+		m_hash1 = other.m_hash1;
+		m_hash2 = other.m_hash2;
+		m_keyEq = other.m_keyEq;
+		return *this;
+	}
+	OADHashTable & operator=(OADHashTable && other) {
+		m_valueStorage = std::move(other.m_valueStorage);
+		m_d = std::move(other.m_d);
+		m_maxLoad = other.m_maxLoad;
+		m_rehashMult = other.m_rehashMult;
+		m_maxCollisions = other.m_maxCollisions;
+		m_hash1 = std::move(other.m_hash1);
+		m_hash2 = std::move(other.m_hash2);
+		m_keyEq = std::move(other.m_keyEq);
+		return *this;
+	}
+	
 	virtual ~OADHashTable() {}
+	///calls clear on the table and value storage
 	void clear() {
 		m_valueStorage.clear();
 		m_d.clear();
