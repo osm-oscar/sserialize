@@ -242,8 +242,7 @@ public:
 			}
 			uint8_t countType = 0x20 | (bits-1);
 			destination.putUint8(countType);
-			std::array<uint32_t, 1> d({itemId});
-			CompactUintArray::create(d, destination, bits);
+			CompactUintArray::create(&itemId, (&itemId)+1, destination, bits);
 		}
 		else {
 			destination.putUint8(0);
