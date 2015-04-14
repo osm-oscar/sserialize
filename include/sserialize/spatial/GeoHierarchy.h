@@ -101,6 +101,116 @@ inline void swap(CellList & a, CellList & b) {
 	a.swap(b);
 }
 
+/// A list for regions storing cell, parent and child ids in an contigous array
+/// 
+class RegionList {
+private:
+	friend class sserialize::spatial::GeoHierarchy;
+public:
+	typedef sserialize::MMVector<uint32_t> DataContainer;
+
+	//A Region (occupies 72 Bytes of memory)
+	///The order of ids in in the data storage is [children][parents][cells]
+	class Region final {
+	private:
+		friend class sserialize::spatial::GeoHierarchy;
+	public:
+		typedef uint32_t* iterator;
+		typedef const uint32_t* const_iterator;
+		typedef sserialize::IteratorBasedContainer<uint32_t*> DataContainerWrapper;
+		typedef sserialize::IteratorBasedContainer<const uint32_t*> ConstDataContainerWrapper;
+	private:
+		DataContainer * m_d;
+		uint64_t m_off;
+
+		uint32_t m_childrenSize;
+		uint32_t m_parentsSize;
+		uint32_t m_cellsSize;
+	public:
+		uint32_t ghId;
+		uint32_t storeId;
+		sserialize::spatial::GeoShapeType type;
+		GeoRect boundary;
+	public:
+		Region();
+		Region(DataContainer * d, uint64_t off, uint32_t childrenSize, uint32_t parentsSize, uint32_t cellsSize);
+		Region(const Region & other);
+		~Region() {}
+		void swap(Region & other);
+		inline iterator dataBegin() { return m_d->begin()+m_off; }
+		inline const_iterator dataBegin() const { return m_d->begin()+m_off; }
+		inline iterator childrenBegin() { return dataBegin(); }
+		inline const_iterator childrenBegin() const { return dataBegin(); }
+		inline iterator childrenEnd() { return childrenBegin()+m_childrenSize; }
+		inline const_iterator childrenEnd() const { return childrenBegin()+m_childrenSize; }
+		inline DataContainerWrapper children() { return DataContainerWrapper(childrenBegin(), childrenEnd());}
+		inline ConstDataContainerWrapper children() const { return ConstDataContainerWrapper(childrenBegin(), childrenEnd());}
+		inline uint32_t childrenSize() const { return m_childrenSize; }
+		inline const uint32_t & child(uint32_t pos) const { return *(childrenBegin()+pos); }
+		inline uint32_t & child(uint32_t pos) { return *(childrenBegin()+pos); }
+		
+		inline iterator parentsBegin() { return childrenEnd(); }
+		inline const_iterator parentsBegin() const { return childrenEnd(); }
+		inline iterator parentsEnd() { return parentsBegin()+m_parentsSize; }
+		inline const_iterator parentsEnd() const { return parentsBegin()+m_parentsSize; }
+		inline DataContainerWrapper parents() { return DataContainerWrapper(parentsBegin(), parentsEnd());}
+		inline ConstDataContainerWrapper parents() const { return ConstDataContainerWrapper(parentsBegin(), parentsEnd());}
+		inline uint32_t parentsSize() const { return m_parentsSize; }
+		inline const uint32_t & parent(uint32_t pos) const { return *(parentsBegin()+pos); }
+		inline uint32_t & parent(uint32_t pos) { return *(parentsBegin()+pos); }
+
+		inline iterator cellsBegin() { return parentsEnd(); }
+		inline const_iterator cellsBegin() const { return parentsEnd(); }
+		inline iterator cellsEnd() { return cellsBegin()+m_cellsSize; }
+		inline const_iterator cellsEnd() const { return cellsBegin()+m_cellsSize; }
+		inline DataContainerWrapper cells() { return DataContainerWrapper(cellsBegin(), cellsEnd());}
+		inline ConstDataContainerWrapper cells() const { return ConstDataContainerWrapper(cellsBegin(), cellsEnd());}
+		inline uint32_t cellsSize() const { return m_cellsSize; }
+		inline const uint32_t & cell(uint32_t pos) const { return *(cellsBegin()+pos); }
+		inline uint32_t & cell(uint32_t pos) { return *(cellsBegin()+pos); }
+	};
+	typedef sserialize::MMVector<Region> RegionListContainer;
+	typedef RegionListContainer::iterator iterator;
+	typedef RegionListContainer::const_iterator const_iterator;
+	
+private:
+	DataContainer m_data;
+	RegionListContainer m_regions;
+public:
+	RegionList() {}
+	~RegionList() {}
+	void clear();
+	inline uint32_t size() const { return m_regions.size(); }
+	
+	DataContainer & regionData() { return m_data; }
+	const DataContainer & regionData() const { return m_data; }
+	
+	RegionListContainer & regionDescriptions() { return m_regions; }
+	const RegionListContainer & regionDescriptions() const { return m_regions; }
+	
+	const Region & at(uint32_t pos) const { return m_regions.at(pos); }
+	Region & at(uint32_t pos) { return m_regions.at(pos); }
+
+	const Region & operator[](uint32_t pos) const { return m_regions[pos]; }
+	Region & operator[](uint32_t pos) { return m_regions[pos]; }
+	
+	inline iterator begin() { return m_regions.begin(); }
+	inline const_iterator begin() const { return m_regions.begin(); }
+	inline const_iterator cbegin() const { return m_regions.cbegin(); }
+	
+	inline iterator end() { return m_regions.end(); }
+	inline const_iterator end() const { return m_regions.end(); }
+	inline const_iterator cend() const { return m_regions.cend(); }
+	
+};
+
+inline void swap(RegionList::Region & a, RegionList::Region & b) {
+	a.swap(b);
+}
+
+// static_assert(sizeof(RegionList::Region) <= 72, "sserialize::spatial::GeoHierarchy::detail::RegionList::Region is too large");
+
+
 }}//end namespace detail::geohierarchy
 
 //Regions are sorted in ascending order, meaning that children are before parents
@@ -108,20 +218,11 @@ class GeoHierarchy {
 public:
 	//Pointers are sorted
 
-	struct Region {
-		std::vector<uint32_t> children;
-		std::vector<uint32_t> parents;
-		std::vector<uint32_t> cells;
-		sserialize::spatial::GeoShapeType type;
-		uint32_t storeId;
-		uint32_t ghId;
-		GeoRect boundary;
-	};
-
+	typedef detail::geohierarchy::RegionList::Region Region;
 	typedef detail::geohierarchy::CellList::Cell Cell;
 	
 	typedef detail::geohierarchy::CellList CellList;
-	typedef std::vector<Region> RegionList;
+	typedef detail::geohierarchy::RegionList RegionList;
 	
 private:
 	CellList m_cells;
@@ -140,6 +241,7 @@ public:
 	GeoHierarchy() {}
 	virtual ~GeoHierarchy() {}
 	///This sets the root region which has every node without a parent as child
+	///Call this only once
 	void createRootRegion();
 	inline CellList & cells() { return m_cells; }
 	inline RegionList & regions() { return m_regions;}
@@ -170,13 +272,11 @@ public:
 template<typename T_SET_CONTAINER>
 void GeoHierarchy::getAncestors(uint32_t regionId, T_SET_CONTAINER & out) const {
 	const Region & r = m_regions[regionId];
-	out.insert(r.parents.cbegin(), r.parents.cend());
-	for(uint32_t parent : r.parents) {
+	out.insert(r.parentsBegin(), r.parentsEnd());
+	for(uint32_t parent : r.parents()) {
 		getAncestors(parent, out);
 	}
 }
-
-void swap(GeoHierarchy::Region & a, GeoHierarchy::Region & b);
 
 }} //end namespace
 
