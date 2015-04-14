@@ -316,7 +316,7 @@ void GeoHierarchy::printStats(std::ostream & out) const {
 		out << "max parents at " << maxParentsIt-m_regions.cbegin() << " with " << maxParentsIt->parentsSize() << std::endl;
 		out << "#cells: " << m_cells.size() << std::endl;
 		out << "#items in all cells: " << m_cells.cellItemList().size() << std::endl;
-		out << "#child ptrs: " << m_regions.m_data.size();
+		out << "#child ptrs: " << m_regions.m_data.size() << std::endl;
 	}
 	out << "sserialize::spatial::GeoHierarchy--stats-END" << std::endl;
 }
