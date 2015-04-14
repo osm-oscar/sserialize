@@ -31,10 +31,13 @@ public:
 			return *this;
 		}
 		inline difference_type operator-(const Iterator & other) const {
-			return ((int64_t)other.m_v-(int64_t)m_v)/m_stride;
+			return ((int64_t)m_v-(int64_t)other.m_v)/m_stride;
 		}
 		inline bool operator>(const Iterator & other) const {
 			return m_v > other.m_v;
+		}
+		inline bool operator<(const Iterator & other) const {
+			return m_v < other.m_v;
 		}
 	};
 	typedef std::reverse_iterator<Iterator> ReverseIterator;
