@@ -230,6 +230,7 @@ bool GeoHierarchy::checkConsistency() {
 			}
 		}
 	}
+	uint32_t numIncorrectlySampledRegions = 0;
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions.at(i);
 		for(const auto x : r.children()) {
@@ -240,10 +241,14 @@ bool GeoHierarchy::checkConsistency() {
 					return false;
 				}
 				else {
-					std::cout << "Region " << i << " with child " << x << " were not correctly sampled" << std::endl;
+					++numIncorrectlySampledRegions;
+// 					std::cout << "Region " << i << " with child " << x << " were not correctly sampled" << std::endl;
 				}
 			}
 		}
+	}
+	if (numIncorrectlySampledRegions) {
+		std::cout << "There are " << numIncorrectlySampledRegions << " incorrectly sampled regions-child relations" << std::endl;
 	}
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions.at(i);
@@ -311,6 +316,7 @@ void GeoHierarchy::printStats(std::ostream & out) const {
 		out << "max parents at " << maxParentsIt-m_regions.cbegin() << " with " << maxParentsIt->parentsSize() << std::endl;
 		out << "#cells: " << m_cells.size() << std::endl;
 		out << "#items in all cells: " << m_cells.cellItemList().size() << std::endl;
+		out << "#child ptrs: " << m_regions.m_data.size();
 	}
 	out << "sserialize::spatial::GeoHierarchy--stats-END" << std::endl;
 }
