@@ -6,6 +6,22 @@
 
 namespace sserialize {
 
+template<typename T_IT1, typename T_IT2>
+bool is_smaller(T_IT1 begin1, T_IT1 end1, T_IT2 begin2, T_IT2 end2) {
+	for(; begin1 != end1 && begin2 != end2; ++begin1, ++begin2) {
+		if (*begin1 == *begin2) {
+			continue;
+		}
+		if (*begin1 < *begin2) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	return begin1 == end1 && begin2 != end2;
+}
+
 template<typename T_OUT_TYPE, typename T_INPUT_IT, typename T_MAP_FUNC>
 T_OUT_TYPE transform(T_INPUT_IT begin, const T_INPUT_IT & end, T_MAP_FUNC func) {
 	T_OUT_TYPE out;
