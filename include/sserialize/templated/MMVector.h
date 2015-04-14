@@ -102,6 +102,7 @@ public:
 	SizeType capacity() const { return m_capacity; }
 	double growFactor() const { return m_growFactor; }
 	void growFactor(double v) { m_growFactor = v; }
+	///reserve at least size entries
 	void reserve(SizeType size) {
 		if (size > m_capacity) {
 			m_begin = m_d.resize(size);
