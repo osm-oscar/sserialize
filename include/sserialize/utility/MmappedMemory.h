@@ -345,6 +345,7 @@ public:
 	}
 	///use the given file name as base, create if it does not exist or reuse it
 	MmappedMemory(const std::string & fileName) : m_priv(new detail::MmappedMemory::MmappedMemoryFileBased<TValue>(fileName)) {}
+	void swap(MmappedMemory & other) { using std::swap; swap(m_priv, other.m_priv); }
 	virtual ~MmappedMemory() {}
 	MmappedMemoryType type() const { return m_priv->type(); }
 	TValue * data() { return m_priv->data(); }
@@ -354,6 +355,11 @@ public:
 	TValue * begin() { return data(); }
 	TValue * end() { return data()+size();}
 };
+
+template<typename TValue>
+void swap(MmappedMemory<TValue> & a, MmappedMemory<TValue> & b) {
+	a.swap(b);
+}
 
 }//end namespace
 
