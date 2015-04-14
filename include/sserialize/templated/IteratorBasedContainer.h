@@ -1,7 +1,9 @@
 #ifndef SSERIALIZE_ITERATOR_BASED_CONTAINER_H
 #define SSERIALIZE_ITERATOR_BASED_CONTAINER_H
+#include <sserialize/utility/utilfunctional.h>
 #include <limits>
 #include <iterator>
+#include <type_traits>
 
 namespace sserialize {
 
@@ -12,6 +14,8 @@ public:
 	typedef iterator const_iterator;
 	typedef std::reverse_iterator<iterator> reverse_iterator;
 	typedef reverse_iterator const_reverse_iterator;
+	typedef typename std::iterator_traits<T_ITERATOR>::reference reference;
+	typedef typename std::add_const<reference>::type const_reference;
 private:
 	T_ITERATOR m_begin;
 	T_ITERATOR m_end;
@@ -38,8 +42,25 @@ public:
 	reverse_iterator rend() { return reverse_iterator(begin()-1); }
 	const_reverse_iterator rend() const { return const_reverse_iterator(begin()-1); }
 	const_reverse_iterator crend() const { return const_reverse_iterator(cbegin()-1); }
+	bool operator<(const IteratorBasedContainer & other) const {
+		return sserialize::is_smaller(begin(), end(), other.begin(), other.end());
+	}
 };
 
+template<typename T_ITERATOR>
+inline std::ostream & operator<<(std::ostream & out, const IteratorBasedContainer<T_ITERATOR> & c) {
+	typename IteratorBasedContainer<T_ITERATOR>::const_iterator begin(c.cbegin()), end(c.cend());
+	if (begin != end) {
+		out << *begin;
+		++begin;
+		for(; begin != end; ++begin) {
+			out << ',' << *begin;
+		}
+	}
+	return out;
+}
+
 }//end namespace
+
 
 #endif
