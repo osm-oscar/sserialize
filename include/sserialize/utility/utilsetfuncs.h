@@ -261,7 +261,7 @@ void mergeSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const
 void mergeSortedContainer(std::vector<uint32_t> & out, const std::vector<uint32_t> & a, const std::vector<uint32_t> & b);
 
 template<typename T_SORTED_CONTAINER_A, typename T_SORTED_CONTAINER_B = T_SORTED_CONTAINER_A, typename T_OUT_CONTAINER = T_SORTED_CONTAINER_A>
-T_OUT_CONTAINER intersect(const T_SORTED_CONTAINER_A & a, T_SORTED_CONTAINER_B & b) {
+T_OUT_CONTAINER intersect(const T_SORTED_CONTAINER_A & a, const T_SORTED_CONTAINER_B & b) {
 	T_OUT_CONTAINER ret;
 	std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::inserter(ret, ret.end()));
 	return ret;
