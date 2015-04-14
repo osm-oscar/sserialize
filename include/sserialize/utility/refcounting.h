@@ -108,7 +108,12 @@ public:
 	}
 
 	bool operator==(const RCPtrWrapper & other) { return m_priv == other.m_priv; }
-	
+
+	void swap(RCPtrWrapper & other) {
+		using std::swap;
+		swap(m_priv, other.m_priv);
+	}
+
 	inline RefCountObject::RCBaseType privRc() const { return (m_priv ? m_priv->rc() : 0);}
 
 	
@@ -135,6 +140,11 @@ public:
 		m_priv = data;
 	}
 };
+
+template<typename T>
+void swap(RCPtrWrapper<T> & a, RCPtrWrapper<T> & b) {
+	a.swap(b);
+}
 
 template<typename T, typename... Args>
 RCPtrWrapper<T> make_rcptrwp(Args&&... args) {
