@@ -222,6 +222,7 @@ public:
 		if (!newSize) {
 			free(m_data);
 			m_data = 0;
+			m_size = 0;
 			return 0;
 		}
 		TValue * newD = (TValue*) realloc(m_data, sizeof(TValue)*newSize);
@@ -279,11 +280,12 @@ public:
 		}
 	}
 	virtual ~MmappedMemorySharedMemory() override {
-		if (m_data) {
+		if (m_data || m_size == 0) {
 			::munmap(m_data, m_size*sizeof(TValue));
 			::close(m_fd);
 			::shm_unlink(m_name.c_str());
 			m_data = 0;
+			m_size = 0;
 		}
 	}
 	virtual TValue * data() override { return m_data; }
