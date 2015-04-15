@@ -58,7 +58,7 @@ void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::strin
 	else {
 		fbSize = sserialize::UByteArrayAdapter::getTempFilePrefix().size();
 	}
-	char * fileName = new char[fbSize+7];
+	char fileName[fbSize+7];
 	if (fastFile) {
 		::memmove(fileName, sserialize::UByteArrayAdapter::getFastTempFilePrefix().c_str(), sizeof(char)*fbSize);
 	}
