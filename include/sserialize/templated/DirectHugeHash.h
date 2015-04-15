@@ -10,6 +10,8 @@ namespace sserialize {
 ///and the rest into a user provides hashmap
 template<typename TValue, typename THashMap = std::unordered_map<uint64_t, TValue> >
 class DirectHugeHashMap {
+public:
+	typedef THashMap BaseHashMap;
 private:
 	uint64_t m_begin;
 	uint64_t m_end;
