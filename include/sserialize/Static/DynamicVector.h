@@ -2,6 +2,7 @@
 #define SSERIALIZE_DYNAMIC_VECTOR_H
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/templated/MMVector.h>
 
 namespace sserialize {
 namespace Static {
@@ -10,7 +11,7 @@ template<typename TPushValue, typename TGetValue = TPushValue>
 class DynamicVector {
 public:
 	uint32_t m_size;
-	UByteArrayAdapter m_offsets;
+	sserialize::MMVector<OffsetType> m_offsets;
 	UByteArrayAdapter m_data;
 private:
 	DynamicVector(const DynamicVector & other);
@@ -42,9 +43,11 @@ void swap(sserialize::Static::DynamicVector<TPushValue, TGetValue> & a, sseriali
 template<typename TPushValue, typename TGetValue>
 DynamicVector<TPushValue, TGetValue>::DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt ) :
 m_size(0),
-m_offsets(UByteArrayAdapter::createCache(static_cast<OffsetType>(approxItemCount)*UByteArrayAdapter::OffsetTypeSerializedLength(), mmt)),
+m_offsets(mmt),
 m_data(UByteArrayAdapter::createCache(initalDataSize, mmt))
-{}
+{
+	m_offsets.reserve(approxItemCount);
+}
 
 
 template<typename TPushValue, typename TGetValue>
@@ -78,8 +81,8 @@ void DynamicVector<TPushValue, TGetValue>::push_back(const TPushValue & value, c
 template<typename TPushValue, typename TGetValue>
 void DynamicVector<TPushValue, TGetValue>::pop_back() {
 	if (m_size) {
-		OffsetType tmp = m_offsets.getOffset(static_cast<OffsetType>(m_size-1)*UByteArrayAdapter::OffsetTypeSerializedLength());
-		m_offsets.setPutPtr(static_cast<OffsetType>(m_size-1)*UByteArrayAdapter::OffsetTypeSerializedLength());
+		OffsetType tmp = m_offsets.at(m_size-1);
+		m_offsets.pop_back();
 		--m_size;
 		if (!m_size) {
 			m_data.setPutPtr(0);
@@ -92,7 +95,7 @@ void DynamicVector<TPushValue, TGetValue>::pop_back() {
 
 template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::beginRawPush() {
-	m_offsets.putOffset(m_data.tellPutPtr());
+	m_offsets.push_back(m_data.tellPutPtr());
 	return m_data;
 }
 
@@ -113,13 +116,13 @@ template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) const {
 	if (pos >= size())
 		return UByteArrayAdapter();
-	OffsetType begin = m_offsets.getOffset(static_cast<sserialize::UByteArrayAdapter::OffsetType>(pos)*UByteArrayAdapter::OffsetTypeSerializedLength());
+	OffsetType begin = m_offsets.at(pos);
 	OffsetType len;
 	if (pos == m_size-1) {
 		len = m_data.tellPutPtr()-begin;
 	}
 	else {
-		len = m_offsets.getOffset(static_cast<sserialize::UByteArrayAdapter::OffsetType>(pos+1)*UByteArrayAdapter::OffsetTypeSerializedLength())-begin;
+		len = m_offsets.at(pos+1)-begin;
 	}
 	UByteArrayAdapter ret(m_data, begin, len);
 	ret.resetPtrs();
@@ -128,14 +131,34 @@ UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) con
 
 template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toArray(UByteArrayAdapter & dest) const {
-	Static::ArrayCreator<UByteArrayAdapter> dc(dest);
-	dc.reserveOffsets(size());
-	for(uint32_t i = 0, s = size(); i < s; ++i) {
-		dc.beginRawPut();
-		dc.rawPut().put(dataAt(i));
-		dc.endRawPut();
+	#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+	OffsetType oiBegin = dest.tellPutPtr();
+	#endif
+	dest.putUint8(4);
+	dest.putOffset(m_data.size()); //datasize
+	dest.put(m_data);
+	if (sserialize::SerializationInfo<TGetValue>::is_fixed_length) {
+		if (!std::is_integral<TGetValue>::value) {
+			dest.putVlPackedUint32(sserialize::SerializationInfo<TGetValue>::length);
+		}
 	}
-	dc.flush();
+	else {
+		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, dest)) {
+			throw sserialize::CreationException("Array::flush: Creating the offset");
+		}
+		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+		sserialize::UByteArrayAdapter tmp = dest;
+		tmp.setPutPtr(oiBegin);
+		tmp.shrinkToPutPtr();
+		sserialize::Static::SortedOffsetIndex oIndex(tmp);
+		if (oIndex != m_offsets) {
+			throw sserialize::CreationException("Array::flush Offset index is unequal");
+		}
+		if (oIndex.getSizeInBytes() != (dest.tellPutPtr()-oiBegin)) {
+			throw sserialize::CreationException("Array::flush Offset index reports wrong sizeInBytes()");
+		}
+		#endif
+	}
 	return dest;
 }
 
