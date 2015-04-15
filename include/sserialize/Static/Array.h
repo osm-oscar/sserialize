@@ -41,19 +41,20 @@ namespace ArrayCreator {
 	};
 }}
 
-template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator::DefaultStreamingSerializer<TValue> >
+template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator::DefaultStreamingSerializer<TValue>, typename T_OFFSET_STORAGE = std::vector<OffsetType> >
 class ArrayCreator {
 	UByteArrayAdapter * m_dest;
 	uint32_t m_size;
-	std::vector<OffsetType> m_offsets;
+	T_OFFSET_STORAGE m_offsets;
 	OffsetType m_dataLenPtr;
 	OffsetType m_beginOffSet;
 	T_STREAMING_SERIALIZER m_ss;
 public:
 	///create a new Array at tellPutPtr()
-	ArrayCreator(UByteArrayAdapter & destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER() ) :
+	ArrayCreator(UByteArrayAdapter & destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER(), const T_OFFSET_STORAGE & ofs = T_OFFSET_STORAGE()) :
 	m_dest(&destination),
 	m_size(0),
+	m_offsets(ofs),
 	m_ss(ss)
 	{
 		m_dest->putUint8(4);//version
@@ -62,9 +63,10 @@ public:
 		
 		m_beginOffSet = m_dest->tellPutPtr();
 	}
-	ArrayCreator(UByteArrayAdapter * destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER() ) :
+	ArrayCreator(UByteArrayAdapter * destination, const T_STREAMING_SERIALIZER & ss = T_STREAMING_SERIALIZER(), const T_OFFSET_STORAGE & ofs = T_OFFSET_STORAGE() ) :
 	m_dest(destination),
 	m_size(0),
+	m_offsets(ofs),
 	m_ss(ss)
 	{
 		m_dest->putUint8(4);//version
@@ -110,11 +112,9 @@ public:
 	void reserveOffsets(uint32_t size) { m_offsets.reserve(size); }
 	void reserve(uint32_t size) { reserveOffsets(size); }
 	void put(const TValue & value) {
-		if (!sserialize::SerializationInfo<TValue>::is_fixed_length) {
-			m_offsets.push_back(m_dest->tellPutPtr() - m_beginOffSet);
-		}
-		++m_size;
-		m_ss(*m_dest, value);
+		beginRawPut();
+		m_ss(rawPut(), value);
+		endRawPut();
 	}
 	void beginRawPut() {
 		if (!sserialize::SerializationInfo<TValue>::is_fixed_length) {
