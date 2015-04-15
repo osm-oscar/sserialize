@@ -45,17 +45,17 @@ public:
 	virtual ~GeoMultiPolygon();
 	GeoMultiPolygon & operator=(GeoMultiPolygon && other);
 	GeoMultiPolygon & operator=(const GeoMultiPolygon & other);
-	virtual GeoShapeType type() const;
-	virtual uint32_t size() const;
-	virtual GeoRect boundary() const;
-	virtual bool intersects(const GeoRect & boundary) const;
-	virtual bool contains(const GeoPoint & p) const;
+	virtual GeoShapeType type() const override;
+	virtual uint32_t size() const override;
+	virtual GeoRect boundary() const override;
+	virtual bool intersects(const GeoRect & boundary) const override;
+	virtual bool contains(const GeoPoint & p) const override;
 	///@return true if the line p1->p2 intersects this region
-	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
-	virtual bool intersects(const GeoRegion & other) const;
-	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
+	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const override;
+	virtual bool intersects(const GeoRegion & other) const override;
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const override;
 	
-	virtual void recalculateBoundary();
+	virtual void recalculateBoundary() override;
 	
 	bool encloses(const GeoPolygon & polygon) const;
 	
@@ -76,9 +76,9 @@ public:
 	///polygons that define what's inside
 	PolygonList & outerPolygons();
 
-	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const;
+	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const override;
 	
-	virtual sserialize::spatial::GeoShape * copy() const;
+	virtual sserialize::spatial::GeoShape * copy() const override;
 	virtual std::ostream & asString(std::ostream & out) const override;
 };
 

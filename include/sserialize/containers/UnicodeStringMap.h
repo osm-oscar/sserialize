@@ -33,7 +33,7 @@ public:
 	virtual bool count(const std::string & /*str*/, bool /*prefixMatch*/) const override {
 		return false;
 	}
-	virtual std::ostream & printStats(std::ostream & out) const {
+	virtual std::ostream & printStats(std::ostream & out) const override {
 		return out << "sserialize::UnicodeStringMap: Empty string map" << std::endl;
 	}
 	virtual std::string getName() const override {

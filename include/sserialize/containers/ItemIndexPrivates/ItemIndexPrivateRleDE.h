@@ -138,9 +138,9 @@ public:
 	ItemIndexPrivateRleDE(const UByteArrayAdapter & data);
 	ItemIndexPrivateRleDE(const UDWIterator & data);
 	virtual ~ItemIndexPrivateRleDE();
-	virtual ItemIndex::Types type() const;
+	virtual ItemIndex::Types type() const override;
 	
-	virtual int find(uint32_t id) const;
+	virtual int find(uint32_t id) const override;
 
 public:
 	virtual void loadIntoMemory() override;

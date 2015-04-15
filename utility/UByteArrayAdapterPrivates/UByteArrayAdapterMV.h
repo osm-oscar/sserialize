@@ -14,7 +14,7 @@ public:
 	}
 	virtual ~UByteArrayAdapterPrivateMV() {}
 	
-	virtual UByteArrayAdapter::OffsetType size() const { return m_data.size(); }
+	virtual UByteArrayAdapter::OffsetType size() const override { return m_data.size(); }
 	
 	virtual void setDeleteOnClose(bool /*del*/) override {}
 
