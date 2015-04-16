@@ -58,7 +58,7 @@ public:
 	uint8_t & operator[](const SizeType offset);
 	const uint8_t & operator[](const SizeType offset) const;
 	uint8_t * data(const SizeType offset);
-	void read(const SizeType offset, uint8_t* dest, uint32_t& len) const;
+	void read(const SizeType offset, uint8_t* dest, SizeType & len) const;
 	
 	UByteArrayAdapter dataAdapter();
 	void setCacheCount(uint32_t count);
@@ -147,7 +147,7 @@ public:
 	uint8_t * data(const SizeType offset);
 	
 	///copys at most len bytes starting from offset into dest, len contains the read bytes
-	void read(const SizeType offset, uint8_t * dest, uint32_t & len);
+	void read(const SizeType offset, uint8_t * dest, SizeType & len);
 	
 	///This does not do any kind of correctnes checks! 
 	uint8_t * chunkData(const SizeType chunk);

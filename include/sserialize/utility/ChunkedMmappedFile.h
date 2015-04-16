@@ -58,8 +58,8 @@ public:
 	uint8_t & operator[](const SizeType offset);
 	const uint8_t & operator[](const SizeType offset) const;
 	uint8_t * data(const SizeType offset);
-	void read(const sserialize::ChunkedMmappedFile::SizeType offset, uint8_t* dest, uint32_t& len) const;
-	void write(const uint8_t * src, const SizeType destOffset, uint32_t & len);
+	void read(const ChunkedMmappedFile::SizeType offset, uint8_t* dest, SizeType& len) const;
+	void write(const uint8_t * src, const SizeType destOffset, SizeType & len);
 	
 	UByteArrayAdapter dataAdapter();
 
@@ -130,10 +130,10 @@ public:
 	uint8_t * data(const SizeType offset);
 	
 	///copys at most len bytes starting from offset into dest, len contains the read bytes
-	void read(const SizeType offset, uint8_t * dest, uint32_t & len);
+	void read(const ChunkedMmappedFilePrivate::SizeType offset, uint8_t* dest, SizeType& len);
 	
 	///writes src to destOffset at most len bytes, len contains the number of written bytes
-	void write(const uint8_t * src, const SizeType destOffset, uint32_t & len);
+	void write(const uint8_t * src, const SizeType destOffset, SizeType & len);
 	
 	///This does not do any kind of correctnes checks! 
 	uint8_t * chunkData(const SizeType chunk);

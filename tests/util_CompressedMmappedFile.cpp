@@ -1,6 +1,5 @@
 #include <sserialize/utility/CompressedMmappedFile.h>
 #include <sserialize/utility/mmappedfile.h>
-#include <sserialize/utility/filewriter.h>
 #include <cmath>
 #include <limits>
 #include <stdlib.h>
@@ -23,7 +22,7 @@ private:
 	std::string m_fileName;
 	sserialize::CompressedMmappedFile m_file;
 	std::vector<uint8_t> m_realValues;
-	std::vector<uint8_t> m_compressedValues;
+	UByteArrayAdapter m_compressedData;
 public:
 	CompressedMmappedFileTest() {
 		std::stringstream ss;
@@ -45,9 +44,8 @@ public:
 		
 
 		
-		UByteArrayAdapter tmpCmpData(&m_compressedValues, false);
-		CompressedMmappedFile::create(UByteArrayAdapter(&m_realValues, false), tmpCmpData, chunkExponent, 1.0);
-		writeBytesToFile(m_fileName, m_compressedValues.begin(), m_compressedValues.end());
+		m_compressedData = UByteArrayAdapter::createCache(m_realValues.size(), sserialize::MM_FILEBASED);
+		CompressedMmappedFile::create(UByteArrayAdapter(&m_realValues, false), m_compressedData, chunkExponent, 1.0);
 		
 		m_file = CompressedMmappedFile(m_fileName);
 		m_file.setCacheCount(4);
@@ -57,7 +55,6 @@ public:
 
 	virtual void tearDown() {
 		CPPUNIT_ASSERT_MESSAGE("closing", m_file.close());
-		MmappedFile::unlinkFile(m_fileName);
 	}
 
 	void  testStats() {
@@ -86,11 +83,11 @@ public:
 	
 	void testReadFunction() {
 		for(size_t offset = 0; offset < m_realValues.size();) {
-			uint32_t len = (double) std::rand()/RAND_MAX * (1 << 20);
+			SizeType len = (double) std::rand()/RAND_MAX * (1 << 20);
 			uint8_t buf[len];
 			m_file.read(offset, buf, len);
 			for(size_t i = 0; i< len; ++i) {
-				CPPUNIT_ASSERT_EQUAL(static_cast<uint32_t>( m_realValues[offset+i] ), static_cast<uint32_t>(buf[i]) );
+				CPPUNIT_ASSERT_EQUAL(static_cast<SizeType>( m_realValues[offset+i] ), static_cast<SizeType>(buf[i]) );
 			}
 			offset += len;
 		}

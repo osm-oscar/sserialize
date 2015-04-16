@@ -69,7 +69,7 @@ uint8_t * CompressedMmappedFile::data(const SizeType offset) {
 	return priv()->data(offset);
 }
 
-void CompressedMmappedFile::read(const SizeType offset, uint8_t * dest, uint32_t & len) const {
+void CompressedMmappedFile::read(const SizeType offset, uint8_t* dest, SizeType& len) const {
 	priv()->read(offset, dest, len);
 }
 
@@ -95,7 +95,7 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 	sserialize::UByteArrayAdapter::OffsetType beginning = dest.tellPutPtr();
 	std::vector<SizeType> destOffsets;
 	DynamicBitSet chunkTypeBitSet(UByteArrayAdapter(new std::vector<uint8_t>(), true));
-	uint32_t chunkSize = (static_cast<uint32_t>(1) << chunkSizeExponent);
+	SizeType chunkSize = (static_cast<SizeType>(1) << chunkSizeExponent);
 
 	chunkTypeBitSet.data().growStorage(src.size()/chunkSize + ((src.size() % chunkSize) ? 1 : 0));
 
@@ -441,7 +441,7 @@ uint8_t * CompressedMmappedFilePrivate::data(const CompressedMmappedFilePrivate:
 	return data + inChunkOffSet;
 }
 
-void CompressedMmappedFilePrivate::read(const CompressedMmappedFilePrivate::SizeType offset, uint8_t * dest, uint32_t & len) {
+void CompressedMmappedFilePrivate::read(const CompressedMmappedFilePrivate::SizeType offset, uint8_t * dest, SizeType & len) {
 	if (offset > m_size || len == 0) {
 		len = 0;
 		return;
@@ -449,14 +449,14 @@ void CompressedMmappedFilePrivate::read(const CompressedMmappedFilePrivate::Size
 	if (offset+len > m_size)
 		len =  m_size - offset;
 		
-	uint32_t chunkSize = this->chunkSize();
+	SizeType chunkSize = this->chunkSize();
 	
-	uint32_t beginChunk = chunk(offset);
-	uint32_t endChunk = chunk(offset+len-1);
+	SizeType beginChunk = chunk(offset);
+	SizeType endChunk = chunk(offset+len-1);
 
-	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset)));
+	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(offset)));
 	dest += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset));
-	for(uint32_t i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
+	for(SizeType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
 		dest += chunkSize;
 	}

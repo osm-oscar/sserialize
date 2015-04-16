@@ -1,6 +1,5 @@
 #include <sserialize/utility/ChunkedMmappedFile.h>
 #include <sserialize/utility/mmappedfile.h>
-#include <sserialize/utility/filewriter.h>
 #include <cmath>
 #include <limits>
 #include <stdlib.h>
@@ -37,11 +36,12 @@ public:
 		for(size_t i = 0; i < FileSize; ++i) {
 			m_realValues.push_back( rand() );
 		}
-		writeBytesToFile(m_fileName, m_realValues.begin(), m_realValues.end());
 		m_file = ChunkedMmappedFile(m_fileName, chunkExponent, true);
 		m_file.setDeleteOnClose(m_deleteOnClose);
 		m_file.setSyncOnClose(true);
 		m_file.setCacheCount(4);
+		SizeType len = FileSize;
+		m_file.write(&(m_realValues[0]), 0, len);
 		
 		CPPUNIT_ASSERT_MESSAGE("opening", m_file.open());
 	}
@@ -74,7 +74,7 @@ public:
 	
 	void testReadFunction() {
 		for(size_t offset = 0; offset < m_realValues.size();) {
-			uint32_t len = (double) std::rand()/RAND_MAX * (1 << 20);
+			SizeType len = (double) std::rand()/RAND_MAX * (1 << 20);
 			uint8_t buf[len];
 			m_file.read(offset, buf, len);
 			for(size_t i = 0; i< len; ++i) {

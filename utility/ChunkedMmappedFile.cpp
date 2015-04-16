@@ -63,11 +63,11 @@ uint8_t * ChunkedMmappedFile::data(const SizeType offset) {
 	return priv()->data(offset);
 }
 
-void ChunkedMmappedFile::read(const ChunkedMmappedFile::SizeType offset, uint8_t* dest, uint32_t& len) const {
+void ChunkedMmappedFile::read(const ChunkedMmappedFile::SizeType offset, uint8_t* dest, SizeType& len) const {
 	priv()->read(offset, dest, len);
 }
 
-void ChunkedMmappedFile::write(const uint8_t * src, const sserialize::ChunkedMmappedFile::SizeType destOffset, uint32_t & len) {
+void ChunkedMmappedFile::write(const uint8_t* src, const SizeType destOffset, SizeType & len) {
 	priv()->write(src, destOffset, len);
 }
 
@@ -221,7 +221,7 @@ uint8_t * ChunkedMmappedFilePrivate::data(const ChunkedMmappedFilePrivate::SizeT
 	return data + inChunkOffSet;
 }
 
-void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType offset, uint8_t * dest, uint32_t& len) {
+void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType offset, uint8_t * dest, SizeType& len) {
 	if (offset > m_size || len == 0) {
 		len = 0;
 		return;
@@ -229,14 +229,14 @@ void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType o
 	if (offset+len > m_size)
 		len =  m_size - offset;
 		
-	uint32_t chunkSize = this->chunkSize();
+	SizeType chunkSize = this->chunkSize();
 	
-	uint32_t beginChunk = chunk(offset);
-	uint32_t endChunk = chunk(offset+len-1);
+	SizeType beginChunk = chunk(offset);
+	SizeType endChunk = chunk(offset+len-1);
 
-	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset)));
-	dest += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset));
-	for(uint32_t i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
+	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(offset)));
+	dest += sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(offset));
+	for(SizeType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
 		dest += chunkSize;
 	}
@@ -245,7 +245,7 @@ void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType o
 	}
 }
 
-void ChunkedMmappedFilePrivate::write(const uint8_t * src, const sserialize::ChunkedMmappedFilePrivate::SizeType destOffset, uint32_t & len) {
+void ChunkedMmappedFilePrivate::write(const uint8_t* src, const SizeType destOffset, SizeType& len) {
 	if (destOffset > m_size || len == 0) {
 		len = 0;
 		return;
@@ -254,14 +254,14 @@ void ChunkedMmappedFilePrivate::write(const uint8_t * src, const sserialize::Chu
 		len =  m_size - destOffset;
 	}
 		
-	uint32_t chunkSize = this->chunkSize();
+	SizeType chunkSize = this->chunkSize();
 	
-	uint32_t beginChunk = chunk(destOffset);
-	uint32_t endChunk = chunk(destOffset +len-1);
+	SizeType beginChunk = chunk(destOffset);
+	SizeType endChunk = chunk(destOffset +len-1);
 
-	::memmove(chunkData(beginChunk)+inChunkOffSet(destOffset), src, sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(destOffset)));
+	::memmove(chunkData(beginChunk)+inChunkOffSet(destOffset), src, sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(destOffset)));
 	src += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(destOffset));
-	for(uint32_t i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
+	for(SizeType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(chunkData(i), src, sizeof(uint8_t)*chunkSize);
 		src += chunkSize;
 	}
