@@ -10,7 +10,6 @@
 #include <string>
 #include <memory>
 
-//TODO: prevent segfaults of UByteArrayAdapter is empty (m_priv is 0)
 //TODO: split this class into UByteArrayAdapterIterator and UByteArrayAdapter to seperate concepts
 //TODO: get rid of static std::string as that leads to double frees on incorrect linking
 /** This is the main storage abstraction class.
