@@ -336,7 +336,7 @@ StringsItemDBPrivate<ItemType>::absorb(StringsItemDBPrivate< ItemType >& db) {
 	m_itemStrings.reserve(m_itemStrings.size() + db.m_itemStrings.size());
 	for(ItemStringsContainer::iterator it = db.m_itemStrings.begin(); it != db.m_itemStrings.end(); ++it) {
 		m_itemStrings.push_back(*it);
-		remap<uint32_t, uint32_t>(m_itemStrings.back(), m_itemStrings.back(), strIdRemapMap);
+		remap(m_itemStrings.back(), m_itemStrings.back(), strIdRemapMap);
 	}
 	db.m_itemStrings = ItemStringsContainer();
 }
