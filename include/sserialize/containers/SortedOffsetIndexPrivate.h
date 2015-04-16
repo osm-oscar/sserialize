@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SORTED_OFFSET_INDEX_PRIVATE_H
 #define SSERIALIZE_SORTED_OFFSET_INDEX_PRIVATE_H
 #include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/utility/LinearRegressionFunctions.h>
+#include <sserialize/utility/statfuncs.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <iostream>
 
@@ -65,7 +65,7 @@ private:
 	template<class TSortedContainer>
 	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint64_t & slopenom, int64_t & yintercept, uint8_t & bpn, uint64_t & idOffset) {
 		double sloped, yinterceptd;
-		getLinearRegressionParams(ids, sloped, yinterceptd);
+		sserialize::statistics::linearRegression(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
 			yintercept = floor(yinterceptd);

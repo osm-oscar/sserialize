@@ -53,6 +53,27 @@ TValue entropy(TIterator begin, const TIterator & end, TValue initial, TValue to
 }
 
 
+template<typename TIterator>
+void linearRegression(TIterator begin, const TIterator & end, double & slope, double & yintercept) {
+	uint64_t size = 0;
+	uint64_t cysum = 0.0;
+	for(; begin != end; ++begin, ++size) {
+		cysum += *begin;
+	}
+	double meanY = (double)(cysum/size) + static_cast<double>(cysum%size)/size;
+	double meanX = (double)(size-1)/2.0;
+	double count = 0.0;
+	slope = 0.0;
+	for(TIterator it(begin); it != end; ++it, count += 1.0) {
+		slope += (count - meanX)*(*it-meanY);
+	}
+	slope /= size-1; //(n)
+	slope *= 12;
+	slope /= size+1; //(n+2)
+	slope /= size; //(n+1)
+	yintercept = meanY - slope*meanX;//BUG: this sometimes produces very wrong results
+}
+
 
 }}//end namespace
 

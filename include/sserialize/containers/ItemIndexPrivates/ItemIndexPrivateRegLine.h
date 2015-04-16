@@ -2,7 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_REGLINE_H
 #include "ItemIndexPrivate.h"
 #include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/utility/LinearRegressionFunctions.h>
+#include <sserialize/utility/statfuncs.h>
 #include <sserialize/utility/exceptions.h>
 #include <cstdlib>
 
@@ -75,7 +75,7 @@ private: //creation functions
 	template<class TSortedContainer>
 	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint32_t & slopenom, int32_t & yintercept, uint8_t & bpn, uint32_t & idOffset) {
 		double sloped, yinterceptd;
-		getLinearRegressionParams(ids, sloped, yinterceptd);
+		sserialize::statistics::linearRegression(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
 			yintercept = floor(yinterceptd);

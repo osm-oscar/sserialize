@@ -1,5 +1,4 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.h>
-#include <sserialize/utility/LinearRegressionFunctions.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>

@@ -143,7 +143,6 @@ utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateArray.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateMmappedFile.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedFile.cpp
-utility/LinearRegressionFunctions.cpp
 utility/histogram2d.cpp
 utility/log.cpp
 utility/utilfuncs.cpp
