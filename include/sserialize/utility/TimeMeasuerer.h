@@ -5,6 +5,7 @@
 #include <cstdlib> 
 #include <stdint.h>
 #include <string.h>
+#include <iostream>
 
 
 namespace sserialize {
@@ -57,6 +58,8 @@ public:
 		return elapsedSeconds()/60;
 	}
 };
+
+std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm);
 
 }//end namespace
 
