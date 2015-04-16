@@ -5,6 +5,7 @@
 #include <sserialize/containers/KeyValueObjectStore.h>
 #include <sserialize/Static/KeyValueObjectStore.h>
 #include <sserialize/utility/log.h>
+#include <sserialize/utility/RangeGenerator.h>
 #include <algorithm>
 #define EPS 0.000025
 
@@ -101,7 +102,7 @@ public:
 	void testReorder() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
 		
-		std::vector<uint32_t> perm = range< std::vector<uint32_t>, uint32_t >(0, m_items.size(), 1);
+		std::vector<uint32_t> perm(sserialize::RangeGenerator::begin(0, m_items.size()), sserialize::RangeGenerator::end(0, m_items.size()));
 		std::random_shuffle(perm.begin(), perm.end());
 		
 		m_kv.reorder(perm);

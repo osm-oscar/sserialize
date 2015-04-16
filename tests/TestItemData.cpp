@@ -31,7 +31,7 @@ std::deque<TestItemData> createSampleData() {
 	steinhaldenfeld.push_back("Stuttgart");
 	steinhaldenfeld.push_back("Steinhaldenfeld");
 	
-	appendToDeque<std::string>(steinhaldenfeld, tdata.strs);
+	tdata.strs.insert(tdata.strs.end(), steinhaldenfeld.begin(), steinhaldenfeld.end());
 	tdata.strs.push_back("Bäcker"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = polys.poly(POLY_A).points(); tdata.geoId = POLY_A;
 	tdata.strs.push_back("Steinhaldenstraße"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = polys.poly(POLY_B).points(); tdata.geoId = POLY_B;
 	tdata.strs.push_back("Jakob-Böhme-Weg"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = polys.poly(POLY_C).points(); tdata.geoId = POLY_C;
@@ -59,7 +59,7 @@ std::deque<TestItemData> createSampleData() {
 	neugereut.push_back("Neugereut");
 
 	tdata.strs.clear();
-	appendToDeque<std::string>(neugereut, tdata.strs);
+	tdata.strs.insert(tdata.strs.end(), neugereut.begin(), neugereut.end());
 	tdata.strs.push_back("Sailer"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = polys.poly(POLY_B).points(); tdata.geoId = POLY_B;
 	tdata.strs.push_back("Jörg-Ratgeb-Schule"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = polys.poly(POLY_C).points(); tdata.geoId = POLY_C;
 	tdata.strs.push_back("Edeka"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = polys.poly(POLY_D).points(); tdata.geoId = POLY_D;
@@ -88,7 +88,7 @@ std::deque<TestItemData> createSampleData() {
 	blaustein.push_back("Blaustein");
 	
 	tdata.strs.clear();
-	appendToDeque<std::string>(blaustein, tdata.strs);
+	tdata.strs.insert(tdata.strs.end(), blaustein.begin(), blaustein.end());
 	tdata.strs.push_back("Bäcker"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = std::vector<sserialize::spatial::GeoPoint>(); tdata.points.push_back(polys.point(0)); tdata.geoId = 0;
 	tdata.strs.push_back("U-Bahn"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = std::vector<sserialize::spatial::GeoPoint>(); tdata.points.push_back(polys.point(1)); tdata.geoId = 1;
 	tdata.strs.push_back("Ostergasse"); data.push_back(tdata); tdata.strs.pop_back();  tdata.points = std::vector<sserialize::spatial::GeoPoint>(); tdata.points.push_back(polys.point(2)); tdata.geoId = 2;
@@ -110,7 +110,7 @@ std::deque<TestItemData> createSampleData() {
 	erding.push_back("Erding");
 	
 	tdata.strs.clear();
-	appendToDeque<std::string>(erding, tdata.strs);
+	tdata.strs.insert(tdata.strs.end(), erding.begin(), erding.end());
 	tdata.strs.push_back("Bäcker"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = std::vector<sserialize::spatial::GeoPoint>(); tdata.points.push_back(polys.point(1)); tdata.geoId = 1;
 	tdata.strs.push_back("U-Bahn"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = std::vector<sserialize::spatial::GeoPoint>(); tdata.points.push_back(polys.point(2)); tdata.geoId = 2;
 	tdata.strs.push_back("Galaxy"); data.push_back(tdata); tdata.strs.pop_back(); tdata.points = std::vector<sserialize::spatial::GeoPoint>(); tdata.points.push_back(polys.point(3)); tdata.geoId = 3;

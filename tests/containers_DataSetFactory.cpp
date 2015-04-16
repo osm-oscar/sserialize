@@ -6,7 +6,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <sserialize/containers/ItemIndex.h>
-#include <sserialize/containers/DataSetFactory.h>
+#include <staging/containers/DataSetFactory.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/utility/printers.h>

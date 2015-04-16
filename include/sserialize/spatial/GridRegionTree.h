@@ -220,7 +220,11 @@ uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unorde
 	//remove regions that fully enclose this tile;
 	std::vector<uint32_t> enclosed;
 	getEnclosing(maxBounds, sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
-	diffSortedContainer(sortedRegions, sortedRegions, enclosed);
+	{
+		decltype(sortedRegions) tmp;
+		std::set_difference(sortedRegions.begin(), sortedRegions.end(), enclosed.begin(), enclosed.end(), std::back_inserter(tmp));
+		sortedRegions = std::move(tmp);
+	}
 	GeoGrid newGrid;
 	if (refiner(maxBounds, m_regions, sortedRegions, newGrid)) {
 		uint32_t childPtr = NullNodePtr;

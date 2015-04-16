@@ -6,6 +6,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/pack_unpack_functions.h>
 #include <sserialize/utility/mmappedfile.h>
+#include <sserialize/utility/CompactUintArray.h>
 #include "datacreationfuncs.h"
 
 using namespace sserialize;
@@ -152,7 +153,7 @@ bool fillFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 	uint32_t curPos = 0;
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		switch (minStorageBytesOfValue(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
 			adapter.putUint8(curPos, num);
 			curPos += 1;
@@ -181,7 +182,7 @@ bool fillFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 	adapter.resetPtrs();
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		switch (minStorageBytesOfValue(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
 			adapter.putUint8(num);
 			break;
@@ -208,7 +209,7 @@ bool testFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum = 0;
-		switch (minStorageBytesOfValue(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
 			codedNum = adapter.getUint8(curPos);
 			curPos += 1;
@@ -243,7 +244,7 @@ bool testFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum = 0xFEFE;
-		switch (minStorageBytesOfValue(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
 			codedNum = adapter.getUint8();
 			break;
@@ -454,7 +455,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 	uint32_t curPos = 0;
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		switch (minStorageBytesOfValue(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
 			adapter.putUint8(curPos, num);
 			curPos += 1;
@@ -486,7 +487,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum = 0;
-		switch (minStorageBytesOfValue(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
 			codedNum = testAdapter.getUint8(0);
 			testAdapter++;

@@ -37,6 +37,7 @@ Static/TrieNodePrivates/LargeCompactTrieNodePrivate.cpp
 )
 
 set(STAGING_SOURCES_CPP
+staging/containers/DataSetFactory.cpp
 )
 
 set(STATIC_SOURCES_CPP
@@ -81,7 +82,6 @@ containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
 
 set(CONTAINTERS_SOURCES_CPP 
 containers/ItemIndexFactory.cpp
-containers/DataSetFactory.cpp
 containers/SetOpTree.cpp
 containers/SetOpTreePrivateComplex.cpp
 containers/SetOpTreePrivateSimple.cpp
@@ -145,7 +145,6 @@ utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp
 utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedFile.cpp
 utility/histogram2d.cpp
 utility/log.cpp
-utility/utilfuncs.cpp
 utility/FileHandler.cpp
 utility/Compressor.cpp
 utility/detail/Compressor/NoneCompressor.cpp

@@ -4,6 +4,7 @@
 #include <cppunit/Asserter.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/log.h>
+#include <sserialize/utility/RangeGenerator.h>
 #include <algorithm>
 #include "printfunctions.h"
 #define EPS 0.000025
@@ -31,7 +32,7 @@ public:
 
 	void test_reorder() {
 		for(uint32_t i = 0; i < T_TEST_COUNT; ++i) {
-			std::vector<uint32_t> src = sserialize::range< std::vector<uint32_t>, uint32_t, uint32_t >(0, T_ITEM_COUNT, 1);
+			std::vector<uint32_t> src(sserialize::RangeGenerator::begin(0, T_ITEM_COUNT), sserialize::RangeGenerator::begin(0, T_ITEM_COUNT));
 			std::vector<uint32_t> shuffled = src;
 			std::random_shuffle(shuffled.begin(), shuffled.end());
 			reorder(src, shuffled);

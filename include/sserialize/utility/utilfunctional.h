@@ -1,6 +1,5 @@
 #ifndef SSERIALIZE_UTIL_FINCTIONAL_H
 #define SSERIALIZE_UTIL_FINCTIONAL_H
-#include <sserialize/utility/utilmemory.h>
 #include <algorithm>
 #include <assert.h>
 
@@ -130,17 +129,6 @@ void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderM
 	else {
 		detail::reorder<T_RANDOM_ACCESS_CONTAINER, T_REORDER_MAP, uint64_t>(srcDest, reorderMap);
 	}
-}
-
-
-///creates a range starting with begin and ending with end exclusive (if begin + m*inc < end)
-template<typename T_OUT_CONTAINER, typename T_TYPE, typename T_INC = T_TYPE>
-T_OUT_CONTAINER range(T_TYPE begin, const T_TYPE & end, const T_INC & inc) {
-	T_OUT_CONTAINER ret;
-	for(; begin < end; begin += inc) {
-		appendOrInsert(begin, ret);
-	}
-	return ret;
 }
 
 }//end namespace

@@ -105,12 +105,12 @@ public:
 			leadingZeros |= 0x1;
 			dest.putUint32(leadingZeros);
 			curEncWordPos = *src.begin()%31;
-			setBit(curEncWord, curEncWordPos);
+			curEncWord |= static_cast<uint32_t>(1) << curEncWordPos;
 			++curEncWordPos;
 		}
 		else {//it's in the first encWord
 			curEncWordPos += prev;
-			setBit(curEncWord, curEncWordPos);
+			curEncWord |= static_cast<uint32_t>(1) << curEncWordPos;
 			++curEncWordPos;
 		}
 		if (curEncWordPos > 30) {
@@ -146,12 +146,12 @@ public:
 					dest.putUint32(rleCount);
 				}
 				curEncWordPos = bitOffsetToPrev % 31;
-				setBit(curEncWord, curEncWordPos);
+				curEncWord |= static_cast<uint32_t>(1) << curEncWordPos;
 				++curEncWordPos;
 			}
 			else {// fits into current one
 				curEncWordPos += bitOffsetToPrev-1;
-				setBit(curEncWord, curEncWordPos);
+				curEncWord |= static_cast<uint32_t>(1) << curEncWordPos;
 				++curEncWordPos;
 			}
 			

@@ -224,7 +224,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 
 	uint8_t charWidth = 1;
 	if (nodeInfo.childChars.size() > 0) {
-		charWidth = minStorageBytesOfValue(nodeInfo.childChars.back());
+		charWidth = CompactUintArray::minStorageBitsFullBytes(nodeInfo.childChars.back());
 	}
 	uint16_t header = charWidth-1;
 	header <<= 1; //charWidth

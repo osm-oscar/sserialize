@@ -44,10 +44,6 @@ protected: //completion functions
 	void completionRecurse(Node * node, std::string::const_iterator strBegin, const std::string::const_iterator & strEnd, sserialize::StringCompleter::QuerryType qt, std::set<ItemIdType> & destination) const;
 
 protected: //check functions
-	/** This compactifies stl-containers to decrease their size-overhead and removes all exactIndices from suffixIndices
-		It calls at least swap, ItemSetContainer() and diffSortedContainer<ItemSetContainer>()
-	*/
-	void compactify(Node * node);
 	/** Fixes Problems in the trie before serialization. Current Problems: Nodes with a string length > 255, calls swap on the IndexStorageContainer */
 	void trieSerializationProblemFixer(Node * node);
 	bool consistencyCheckRecurse(Node * node) const;
@@ -503,18 +499,6 @@ BaseTrie<IndexStorageContainer>::complete(const std::deque< std::string >& strs,
 }
 
 //private functions
-
-template <class IndexStorageContainer>
-void BaseTrie<IndexStorageContainer>::compactify(Node* node) {
-	if (node) {
-		inplaceDiffSortedContainer(node->subStrValues, node->exactValues);
-		compactifyStlContainer(node->subStrValues);
-		compactifyStlContainer(node->exactValues);
-		for(typename Node::ChildNodeIterator i = node->children.begin(); i != node->children.end(); i++) {
-			compactify(i->second);
-		}
-	}
-}
 
 template <class IndexStorageContainer>
 void BaseTrie<IndexStorageContainer>::trieSerializationProblemFixer(Node* node) {

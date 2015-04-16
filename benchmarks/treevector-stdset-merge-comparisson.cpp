@@ -9,6 +9,65 @@
 #include <vector>
 #include <set>
 
+template<typename T>
+void appendOrInsert(const T & src, std::vector<T> & dest) {
+	dest.push_back(src);
+}
+
+template<typename T_CONTAINER_DEST, typename T_CONTAINER_A, typename T_CONTAINER_B>
+void mergeSortedContainer(T_CONTAINER_DEST & out, const T_CONTAINER_A & a, const T_CONTAINER_B & b, uint64_t & mergeComparisonCount) {
+	if (a.size() == 0) {
+		out = T_CONTAINER_DEST(b.begin(), b.end());
+		return;
+	}
+	if (b.size() == 0) {
+		out = T_CONTAINER_DEST(a.begin(), a.end());
+		return;
+	}
+	T_CONTAINER_DEST result;
+	typename T_CONTAINER_A::const_iterator aIndexIt(a.begin());
+	typename T_CONTAINER_A::const_iterator aEnd(a.end());
+	typename T_CONTAINER_B::const_iterator bIndexIt(b.begin());
+	typename T_CONTAINER_B::const_iterator bEnd(b.end());
+	while (aIndexIt != aEnd && bIndexIt != bEnd) {
+		uint32_t aItemId = *aIndexIt;
+		uint32_t bItemId = *bIndexIt;
+
+		mergeComparisonCount += 2; //access penalty
+		
+		if (aItemId == bItemId) {
+			appendOrInsert(aItemId, result);
+			mergeComparisonCount += 1;
+			++aIndexIt;
+			++bIndexIt;
+		}
+		else if (aItemId < bItemId) {
+			appendOrInsert(aItemId, result);
+			mergeComparisonCount+=2;
+			++aIndexIt;
+		}
+		else { //bItemId is smaller
+			appendOrInsert(bItemId, result);
+			mergeComparisonCount += 3;
+			++bIndexIt;
+		}
+	}
+
+	while (aIndexIt != aEnd) { //if there are still some elements left in aindex
+		appendOrInsert(*aIndexIt, result);
+		++aIndexIt;
+		++mergeComparisonCount;
+	}
+
+	while (bIndexIt != bEnd) { //if there are still some elements left in bindex
+		appendOrInsert(*bIndexIt, result);
+		++bIndexIt;
+		++mergeComparisonCount;
+	}
+	using std::swap;
+	swap(result, out);
+}
+
 std::vector<uint32_t> createNumbersSet(uint32_t count) {
 	std::set<uint32_t> ret;
 	//Fill the first
@@ -91,12 +150,12 @@ std::vector<uint32_t> treeMerge(const std::vector< std::vector<uint32_t> > & v, 
 		return v[begin];
 	else if (end-begin == 1) {
 		std::vector<uint32_t> ret;
-		sserialize::mergeSortedContainer(ret, v[begin], v[end], comparisonCount);
+		mergeSortedContainer(ret, v[begin], v[end], comparisonCount);
 		return ret;
 	}
 	else {
 		std::vector<uint32_t> ret;
-		sserialize::mergeSortedContainer(ret, treeMerge(v, begin, begin+(end-begin)/2, comparisonCount), treeMerge(v, begin+(end-begin)/2+1, end, comparisonCount));
+		mergeSortedContainer(ret, treeMerge(v, begin, begin+(end-begin)/2, comparisonCount), treeMerge(v, begin+(end-begin)/2+1, end, comparisonCount), comparisonCount);
 		return ret;
 	}
 }

@@ -6,6 +6,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <iostream>
 #include <sserialize/Static/TrieNode.h>
+#include <sserialize/utility/CompactUintArray.h>
 
 #define CHILDPTR_STRIPE_SIZE 32
 
@@ -176,7 +177,7 @@ SimpleStaticTrieCreationNode::createNewNode(
 
 	uint8_t charWidth = 1;
 	if (nodeInfo.childChars.size() > 0) {
-		charWidth = minStorageBytesOfValue(nodeInfo.childChars.back());
+		charWidth = CompactUintArray::minStorageBitsFullBytes(nodeInfo.childChars.back());
 	}
 
 	destination.putUint16(childrenCount);

@@ -121,8 +121,7 @@ int main(int argc, char **argv) {
 		std::getline(file, tempstr, ' ');
 		stringSet.insert(tempstr);
 	}
-	std::deque<std::string> strings;
-	insertSetIntoDeque(stringSet, strings);
+	std::deque<std::string> strings(stringSet.begin(), stringSet.end());
 	stringSet.clear();
 
 	for(unsigned int itemCount = 100; itemCount < 10000000; itemCount*=10) {

@@ -11,7 +11,6 @@
 
 namespace sserialize {
 
-
 template<typename TIterator>
 bool is_strong_monotone_ascending(TIterator begin, const TIterator & end) {
 	if (begin == end)
@@ -35,14 +34,6 @@ bool equal(TIterator1 begin1, const TIterator1 & end1, TIterator2 begin2, const 
 		}
 	}
 	return (begin1 == end1 && begin2 == end2);
-}
-
-///uses std::is_sorted to check if the range is already sorted, if not uses std::sort to sort the range
-template<typename TIterator>
-void sort(TIterator begin, TIterator end) {
-	if (! std::is_sorted(begin, end) ) {
-		std::sort(begin, end);
-	}
 }
 
 namespace detail {
@@ -81,13 +72,6 @@ void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThre
 	}
 }
 
-template<typename T>
-void appendToDeque(const std::deque<T> & source, std::deque<T> & dest) {
-	for(typename std::deque<T>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		dest.push_back(*it);
-	}
-}
-
 template<typename T, typename T_CONTAINER>
 void prependToDeque(const T_CONTAINER & source, std::deque<T> & dest) {
 	for(typename T_CONTAINER::const_reverse_iterator it = source.rbegin(); it != source.rend(); ++it) {
@@ -95,212 +79,13 @@ void prependToDeque(const T_CONTAINER & source, std::deque<T> & dest) {
 	}
 }
 
-template<typename T>
-void insertDequeIntoSet(const std::deque<T> & source, std::set<T> & dest) {
-	if (source.size())
-		dest.insert(source.begin(), source.end());
+template<typename T_SOURCE_CONTAINER, typename T_DEST_CONTAINER, typename T_MAP_CONTAINER>
+void remap(const T_SOURCE_CONTAINER & source, T_DEST_CONTAINER & dest, const T_MAP_CONTAINER & map) {
+	T_DEST_CONTAINER newValues;
+	std::insert_iterator<T_DEST_CONTAINER> it(newValues, newValues.end());
+	std::transform(source.begin(), source.end(), it,[&map](const typename T_SOURCE_CONTAINER::value_type & x) { return map.at(x);});
+	dest = std::move(newValues);
 }
-
-template<typename T>
-void insertSetIntoDeque(const std::set<T> & source, std::deque<T> & dest) {
-	for(typename std::set<T>::const_iterator it = source.begin(); it != source.end(); it++) {
-		dest.push_back(*it);
-	}
-}
-
-template<typename T>
-void insertSetIntoSet(const std::set<T> & source, std::set<T> & dest) {
-	if (source.size())
-		dest.insert(source.begin(), source.end());
-}
-
-template<typename T>
-void insertSetIntoSet(const std::unordered_set<T> & source, std::set<T> & dest) {
-	if (source.size())
-		dest.insert(source.begin(), source.end());
-}
-
-
-template<typename T, typename DN>
-void insertMapKeysIntoDeque(const std::map<T, DN> & source, std::deque<T> & dest) {
-	for(typename std::map<T, DN>::const_iterator it = source.begin(); it != source.end(); it++) {
-		dest.push_back(it->first);
-	}
-}
-
-template<typename T, typename DN>
-void insertMapKeysIntoVector(const std::map<T, DN> & source, std::vector<T> & dest) {
-	dest.reserve(dest.size() + source.size());
-	for(typename std::map<T, DN>::const_iterator it = source.begin(); it != source.end(); it++) {
-		dest.push_back(it->first);
-	}
-}
-
-
-template<typename TKEY, typename TVALUE>
-void insertMapValuesIntoSet(const std::map<TKEY, TVALUE> & source, std::set<TVALUE> & dest) {
-	for(typename std::map<TKEY, TVALUE>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		dest.insert(it->second);
-	}
-}
-
-template<typename T_SOURCE_ITERATOR, typename T_DEST>
-void insertSecondIntoContainer(T_SOURCE_ITERATOR begin, const T_SOURCE_ITERATOR & end, T_DEST & dest) {
-	typename T_DEST::iterator destIt(dest.end());
-	for(; begin != end; ++begin) {
-		destIt = dest.insert(destIt, begin->second);
-	}
-}
-
-template<typename T_SOURCE_ITERATOR, typename T_DEST>
-void insertFirstIntoContainer(T_SOURCE_ITERATOR begin, const T_SOURCE_ITERATOR & end, T_DEST & dest) {
-	typename T_DEST::iterator destIt(dest.end());
-	for(; begin != end; ++begin) {
-		destIt = dest.insert(destIt, begin->first);
-	}
-}
-
-/** Remaps everything in source with map into dest, source and dest can be equal */
-template<typename T1, typename T2>
-bool remapSet(const std::set<T1> & source, std::set<T2> & dest, const std::map<T1, T2> & map) {
-	std::set<T2> newValues;
-	bool allOK = true;
-	for(typename std::set<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
-		if (map.count(*it)) {
-			newValues.insert(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest.swap(newValues);
-	return allOK;
-}
-
-template<typename T1, typename T2>
-bool remapSorted(const std::set<T1> & source, std::set<T2> & dest, const std::map<T1, T2> & map) {
-	return remapSet(source, dest, map);
-}
-
-template<typename T1, typename T2>
-bool remapSorted(const std::deque<T1> & source, std::deque<T2> & dest, const std::map<T1, T2> & map) {
-	std::set<T2> newValues;
-	bool allOK = true;
-	for(typename std::deque<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		if (map.count(*it)) {
-			newValues.insert(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest = std::deque<T2>(newValues.begin(), newValues.end());
-	return allOK;
-}
-
-template<typename T1, typename T2>
-bool remapSorted(const std::vector<T1> & source, std::vector<T2> & dest, const std::map<T1, T2> & map) {
-	std::set<T2> newValues;
-	bool allOK = true;
-	for(typename std::vector<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		if (map.count(*it)) {
-			newValues.insert(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest = std::vector<T2>(newValues.begin(), newValues.end());
-	return allOK;
-}
-
-/** Remaps everything in source with map into dest, source and dest can be equal */
-template<typename T1, typename T2>
-bool remapSet(const std::set<T1> & source, std::set<T2> & dest, const std::unordered_map<T1, T2> & map) {
-	std::set<T2> newValues;
-	bool allOK = true;
-	for(typename std::set<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		if (map.count(*it)) {
-			newValues.insert(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest.swap(newValues);
-	return allOK;
-}
-
-
-/** Remaps everything in source with map into dest, source and dest can be equal */
-template<typename T1, typename T2>
-bool remapDeque(const std::deque<T1> & source, std::deque<T2> & dest, const std::unordered_map<T1, T2> & map) {
-	std::deque<T2> newValues;
-	bool allOK = true;
-	for(typename std::deque<T1>::const_iterator it = source.begin(); it != source.end(); it++) {
-		if (map.count(*it)) {
-			newValues.push_back(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest.swap(newValues);
-	return allOK;
-}
-
-template<typename T1, typename T2, template <typename> class SourceDestContainer>
-bool remap(const SourceDestContainer<T1> & source, SourceDestContainer<T2> & dest, const std::unordered_map<T1, T2> & map) {
-	SourceDestContainer<T2> newValues;
-	bool allOK = true;
-	for(typename SourceDestContainer<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		if (map.count(*it)) {
-			newValues.insert(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest.swap(newValues);
-	return allOK;
-}
-
-template<typename T1, typename T2>
-bool remap(const std::vector<T1> & source, std::vector<T2> & dest, const std::unordered_map<T1, T2> & map) {
-	std::vector<T2> newValues;
-	newValues.reserve(source.size());
-	bool allOK = true;
-	for(typename std::vector<T1>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		if (map.count(*it)) {
-			newValues.push_back(map.at(*it));
-		}
-		else
-			allOK = false;
-	}
-	dest.swap(newValues);
-	return allOK;
-}
-
-/** @return false if remapping was not bijective */
-template<typename T1, typename T2>
-bool invert(const std::map<T1, T2> & source, std::map<T2, T1> & dest) {
-	std::map<T2, T1> newValues;
-	bool allOk = true;
-	for(typename std::map<T1, T2>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		allOk = (allOk && (newValues.count(it->second) == 0));
-		newValues[it->second] = it->first;
-	}
-	dest.swap(newValues);
-	return allOk;
-}
-
-/** @return false if remapping was not bijective */
-template<typename T1, typename T2>
-bool invert(const std::unordered_map<T1, T2> & source, std::unordered_map<T2, T1> & dest) {
-	std::unordered_map<T2, T1> newValues;
-	bool allOk = true;
-	for(typename std::unordered_map<T1, T2>::const_iterator it = source.begin(); it != source.end(); ++it) {
-		allOk = (allOk && (newValues.count(it->second) == 0));
-		newValues[it->second] = it->first;
-	}
-	dest.swap(newValues);
-	return allOk;
-}
-
 
 template<typename TContainer>
 bool haveCommonValueOrdered(const TContainer & orderedContainerA, const TContainer & orderedContainerB) {
@@ -347,45 +132,6 @@ template<typename T>
 bool haveCommonValue(const std::set<T> & a, const std::set<T> & b) {
 	return haveCommonValueOrdered(a, b);
 }
-
-template<typename T>
-int find(const std::deque< T > & src, const T & k) {
-	for(size_t i = 0; i < src.size(); i++) {
-		if (src[i] == k)
-			return i;
-	}
-	return -1;
-}
-
-template<typename T_OUT_CONTAINER, typename T, typename TCONTAINER>
-T_OUT_CONTAINER toMapTable(const TCONTAINER & s) {
-	T_OUT_CONTAINER r;
-	for(size_t i = 0; i < s.size(); ++i) {
-		r[ s[i] ] = i;
-	}
-	return r;
-}
-
-///creates for i in 0..s.size: std::unordered_map[s[i]] = i
-template<typename T, typename TCONTAINER>
-std::unordered_map<T, uint32_t> unordered_mapTableFromLinearContainer(const TCONTAINER & s) {
-	std::unordered_map<T, uint32_t> r;
-	for(size_t i = 0; i < s.size(); ++i) {
-		r[ s[i] ] = i;
-	}
-	return r;
-}
-
-///creates for i in 0..s.size: std::map[s[i]] = i
-template<typename T, typename TCONTAINER>
-std::map<T, uint32_t> mapTableFromLinearContainer(const TCONTAINER & s) {
-	std::map<T, uint32_t> r;
-	for(size_t i = 0; i < s.size(); ++i) {
-		r[ s[i] ] = i;
-	}
-	return r;
-}
-
 
 }//end namespace
 
