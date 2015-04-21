@@ -90,7 +90,7 @@ private:
 public:
 	static const uint32_t NullNodePtr;
 	typedef detail::GridRegionTree::FixedSizeRefiner FixedSizeRefiner;
-	template<typename T_GRID_REFINER, typename T_GEOPOLYGON_TYPE, typename T_MULTIGEOPOLYGON_TYPE>
+	template<typename T_GRID_REFINER = FixedSizeRefiner, typename T_GEOPOLYGON_TYPE = sserialize::spatial::GeoPolygon, typename T_MULTIGEOPOLYGON_TYPE = sserialize::spatial::GeoMultiPolygon>
 	struct TypeTraits {
 		typedef T_GRID_REFINER GridRefiner;
 		typedef T_GEOPOLYGON_TYPE GeoPolygon;
