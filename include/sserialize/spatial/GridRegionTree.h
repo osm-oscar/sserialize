@@ -82,12 +82,20 @@ public:
 
 }}//end namespace detail
 
+///A 2D grid based tree allowing for fast point-in-region queries
+///Pointers to regions need to be valid while using an instance of this class
 class GridRegionTree {
 private:
 	typedef detail::GridRegionTree::Node Node;
 public:
 	static const uint32_t NullNodePtr;
 	typedef detail::GridRegionTree::FixedSizeRefiner FixedSizeRefiner;
+	template<typename T_GRID_REFINER, typename T_GEOPOLYGON_TYPE, typename T_MULTIGEOPOLYGON_TYPE>
+	struct TypeTraits {
+		typedef T_GRID_REFINER GridRefiner;
+		typedef T_GEOPOLYGON_TYPE GeoPolygon;
+		typedef T_MULTIGEOPOLYGON_TYPE GeoMultiPolygon;
+	};
 private:
 	std::vector<Node> m_nodes;
 	std::vector<GeoGrid> m_nodeGrids;
@@ -98,38 +106,39 @@ private:
 	mutable std::atomic<uint64_t> m_cumulatedResultSetSize;
 	mutable std::atomic<uint64_t> m_intersectTestCount;
 private:
-	template<typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
+	template<typename T_TYPES_CONTAINER, typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
 	void getEnclosing(const GeoRect & bounds, T_REGION_ID_ITERATOR begin, const T_REGION_ID_ITERATOR & end, T_OUTPUT_ITERATOR out);
-	template<typename T_GRID_REFINER>
-	void create(const GeoGrid & initial, T_GRID_REFINER refiner);
 	
-	template<typename T_GRID_REFINER>
-	uint32_t insert(const T_GRID_REFINER & refiner, const std::unordered_map<GeoRegion*, uint32_t> & rPtr2Id, std::vector<uint32_t> sortedRegions, const sserialize::spatial::GeoRect & maxBounds);
+	template<typename T_TYPES_CONTAINER>
+	void create(const GeoGrid & initial, typename T_TYPES_CONTAINER::GridRefiner refiner);
+	
+	template<typename T_TYPES_CONTAINER>
+	uint32_t insert(const typename T_TYPES_CONTAINER::GridRefiner & refiner, const std::unordered_map<GeoRegion*, uint32_t> & rPtr2Id, std::vector<uint32_t> sortedRegions, const sserialize::spatial::GeoRect & maxBounds);
 public:
 	GridRegionTree();
 	GridRegionTree(GridRegionTree && other);
 	GridRegionTree(const GridRegionTree & other);
 	///@param refiner: refines a given node: bool operator()(GeoRect maxBounds, std::unordered_set<uint32_t> regionids, GeoGrid & newGrid) const,
 	///@return false if no further refinement should happen
-	template<typename T_GEOREGION_ITERATOR, typename T_GRID_REFINER>
-	GridRegionTree(const GeoGrid & initial, T_GEOREGION_ITERATOR begin, T_GEOREGION_ITERATOR end, T_GRID_REFINER refiner) :
+	template<typename T_GEOREGION_ITERATOR, typename T_TYPE_TRAITS = TypeTraits<FixedSizeRefiner, sserialize::spatial::GeoPolygon, sserialize::spatial::GeoMultiPolygon> >
+	GridRegionTree(const GeoGrid & initial, T_GEOREGION_ITERATOR begin, T_GEOREGION_ITERATOR end, T_TYPE_TRAITS /*traits*/, typename T_TYPE_TRAITS::GridRefiner refiner) :
 	m_regions(begin, end),
 	m_cumulatedResultSetSize(0),
 	m_intersectTestCount(0)
 	{
-		create(initial, refiner);
+		create<T_TYPE_TRAITS>(initial, refiner);
 	}
-	template<typename T_GRID_REFINER>
-	GridRegionTree(const GeoGrid & initial, const std::vector<GeoRegion*> & regions, T_GRID_REFINER refiner) :
+	template<typename T_TYPE_TRAITS = TypeTraits<FixedSizeRefiner, sserialize::spatial::GeoPolygon, sserialize::spatial::GeoMultiPolygon> >
+	GridRegionTree(const GeoGrid & initial, const std::vector<GeoRegion*> & regions, T_TYPE_TRAITS /*traits*/, typename T_TYPE_TRAITS::GridRefiner refiner) :
 	m_regions(regions),
 	m_cumulatedResultSetSize(0),
 	m_intersectTestCount(0)
 	{
-		create(initial, refiner);
+		create<T_TYPE_TRAITS>(initial, refiner);
 	}
 	virtual ~GridRegionTree() {}
 	GridRegionTree & operator=(const GridRegionTree & other);
-	GridRegionTree & operator=(GridRegionTree & other);
+	GridRegionTree & operator=(GridRegionTree && other);
 	void shrink_to_fit();
 	GeoRegion * region(uint32_t id) { return m_regions.at(id); }
 	const GeoRegion * region(uint32_t id) const { return m_regions.at(id); }
@@ -138,9 +147,12 @@ public:
 	void printStats(std::ostream & out) const;
 };
 
-template<typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
+template<typename T_TYPES_CONTAINER, typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
 void GridRegionTree::getEnclosing(const sserialize::spatial::GeoRect& bounds, T_REGION_ID_ITERATOR begin, const T_REGION_ID_ITERATOR& end, T_OUTPUT_ITERATOR out) {
-	sserialize::spatial::GeoPolygon boundsPoly(sserialize::spatial::GeoPolygon::fromRect(bounds));
+	typedef typename T_TYPES_CONTAINER::GeoPolygon GeoPolygon;
+	typedef typename T_TYPES_CONTAINER::GeoMultiPolygon GeoMultiPolygon;
+	
+	GeoPolygon boundsPoly(GeoPolygon::fromRect(bounds));
 	for(; begin != end; ++begin) {
 		spatial::GeoRegion * r = m_regions[*begin];
 		switch (r->type()) {
@@ -162,10 +174,10 @@ void GridRegionTree::getEnclosing(const sserialize::spatial::GeoRect& bounds, T_
 	}
 }
 
-template<typename T_GRID_REFINER>
-void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
+template<typename T_TYPES_CONTAINER>
+void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER::GridRefiner refiner) {
 	std::unordered_map<GeoRegion*, uint32_t> rPtr2IdH;
-	rPtr2IdH.reserve(m_regions.capacity());
+	rPtr2IdH.reserve(m_regions.size());
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		rPtr2IdH[ m_regions[i] ] = i;
 	}
@@ -197,7 +209,7 @@ void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
 		}
 		if (tmp.size()) {
 			//put this into a temporary as m_nodePtr will likely change during recursion and therefore the fetched adress on the left is wrong
-			uint32_t tmpRet = insert(refiner, rPtr2IdH, tmp, tmpRect);
+			uint32_t tmpRet = insert<T_TYPES_CONTAINER>(refiner, rPtr2IdH, tmp, tmpRect);
 			#pragma omp critical
 			m_nodePtr[childPtr+gridBin.tile] = tmpRet;
 		}
@@ -209,8 +221,8 @@ void GridRegionTree::create(const GeoGrid & initial, T_GRID_REFINER refiner) {
 }
 
 
-template<typename T_GRID_REFINER>
-uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unordered_map< sserialize::spatial::GeoRegion*, uint32_t >& rPtr2Id, std::vector< uint32_t > sortedRegions, const sserialize::spatial::GeoRect& maxBounds) {
+template<typename T_TYPES_CONTAINER>
+uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & refiner, const std::unordered_map< sserialize::spatial::GeoRegion*, uint32_t >& rPtr2Id, std::vector< uint32_t > sortedRegions, const sserialize::spatial::GeoRect& maxBounds) {
 	uint32_t nodePtr = NullNodePtr;
 	#pragma omp critical
 	{
@@ -219,7 +231,7 @@ uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unorde
 	}
 	//remove regions that fully enclose this tile;
 	std::vector<uint32_t> enclosed;
-	getEnclosing(maxBounds, sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
+	getEnclosing<T_TYPES_CONTAINER>(maxBounds, sortedRegions.begin(), sortedRegions.end(), std::back_insert_iterator< std::vector<uint32_t> >(enclosed));
 	{
 		decltype(sortedRegions) tmp;
 		std::set_difference(sortedRegions.begin(), sortedRegions.end(), enclosed.begin(), enclosed.end(), std::back_inserter(tmp));
@@ -252,7 +264,7 @@ uint32_t GridRegionTree::insert(const T_GRID_REFINER& refiner, const std::unorde
 				}
 			}
 			if (tmp.size()) {
-				uint32_t tmpRet = insert(refiner, rPtr2Id, tmp, tmpRect);
+				uint32_t tmpRet = insert<T_TYPES_CONTAINER>(refiner, rPtr2Id, tmp, tmpRect);
 				#pragma omp critical
 				m_nodePtr[childPtr+gridBin.tile] = tmpRet;
 			}
