@@ -345,7 +345,7 @@ void GeoMultiPolygon<TPolygonContainer, TPolygon>::recalculateBoundary() {
 	m_outerBoundary = calcBoundary(m_outerPolygons.begin(), m_outerPolygons.end());
 	auto c = [](uint32_t v, const GeoPolygon & a) {return v+a.size();};
 	m_size = std::accumulate(m_innerPolygons.cbegin(), m_innerPolygons.cend(), static_cast<uint32_t>(0), c);
-	m_size += std::accumulate(m_outerPolygons.cbegin(), m_outerPolygons.cend(), m_size, c);
+	m_size += std::accumulate(m_outerPolygons.cbegin(), m_outerPolygons.cend(), static_cast<uint32_t>(0), c);
 }
 
 template<typename TPolygonContainer, typename TPolygon>
