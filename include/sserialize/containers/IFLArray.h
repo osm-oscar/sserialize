@@ -12,14 +12,16 @@ class IFLArray {
 public:
 	typedef T_CONST_ITERATOR const_iterator;
 	typedef T_ITERATOR iterator;
+	typedef typename std::reverse_iterator<iterator> reverse_iterator;
+	typedef typename std::reverse_iterator<const_iterator> const_reverse_iterator;
 	typedef typename std::iterator_traits<iterator>::reference reference;
 	typedef typename std::iterator_traits<const_iterator>::reference const_reference;
 	typedef typename std::iterator_traits<iterator>::value_type value_type;
 	typedef uint32_t size_type;
 private:
 	iterator m_begin;
-	uint32_t m_size:31;
-	uint32_t m_delete:1;
+	uint64_t m_size:63;
+	uint64_t m_delete:1;
 public:
 	IFLArray() : m_begin(0) {m_size = 0; m_delete = 0;}
 	IFLArray(size_type size) : m_begin(0) {
@@ -92,6 +94,7 @@ public:
 		o.m_delete = tmp;
 	}
 	inline uint32_t size() const { return m_size; }
+	
 	inline iterator begin() { return m_begin; }
 	inline const_iterator begin() const { return const_iterator(m_begin); }
 	inline const_iterator cbegin() const { return begin(); }
@@ -99,6 +102,14 @@ public:
 	inline iterator end() { return begin()+size(); }
 	inline const_iterator end() const { return begin()+size(); }
 	inline const_iterator cend() const { return cbegin()+size(); }
+	
+	inline reverse_iterator rbegin() { return reverse_iterator(end()); }
+	inline const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+	inline const_reverse_iterator crbegin() const { return const_reverse_iterator(cend()); }
+	inline reverse_iterator rend() { return reverse_iterator(begin()); }
+	inline const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+	inline const_reverse_iterator crend() const { return const_reverse_iterator(cbegin()); }
+	
 	reference operator[](size_type pos) { return *(begin()+pos); }
 	const_reference operator[](size_type pos) const { return *(begin()+pos); }
 	reference at(size_type pos) {
@@ -118,6 +129,11 @@ public:
 
 	inline reference back() { return at(m_size ? m_size-1 : m_size);}
 	inline const_reference back() const { return at(m_size ? m_size-1 : m_size);}
+	
+	bool operator<(const IFLArray & other) const {
+		return sserialize::is_smaller(cbegin(), cend(), other.cbegin(), other.cend());
+	}
+	
 };
 
 template<typename T_ITERATOR, typename T_CONST_ITERATOR>
