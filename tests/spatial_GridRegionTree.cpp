@@ -29,7 +29,7 @@ template<uint32_t T_RINIT_X, uint32_t T_RINIT_Y, uint32_t T_RF_X, uint32_t T_RF_
 class GridRegionTreeTest:public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( GridRegionTreeTest );
 CPPUNIT_TEST( testPointIntersect );
-// CPPUNIT_TEST( testOutOfBounds );
+CPPUNIT_TEST( testOutOfBounds );
 CPPUNIT_TEST_SUITE_END();
 private:
 	SamplePolygonTestData m_data;
