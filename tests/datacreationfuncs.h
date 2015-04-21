@@ -9,6 +9,22 @@
 
 namespace sserialize {
 
+
+template<typename T_OUTPUT_ITERATOR, typename T_TYPE>
+struct TestDataGenerator {
+	static void generate(uint32_t count, T_OUTPUT_ITERATOR out);
+};
+
+template<typename T_OUTPUT_ITERATOR>
+struct TestDataGenerator<T_OUTPUT_ITERATOR, uint32_t> {
+	static void generate(uint32_t count, T_OUTPUT_ITERATOR out) {
+		for(uint32_t i(0); i < count; ++i) {
+			*out = rand();
+			++out;
+		}
+	}
+};
+
 template<typename TCONTAINER>
 void addRange(uint32_t begin, uint32_t end, TCONTAINER & dest) {
 	for(;begin < end; ++begin)
@@ -30,7 +46,6 @@ std::set<uint16_t> createNumbers16Set(uint32_t count);
 void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand);
 void createOverLappingSets(std::set<uint32_t> & a, std::set<uint32_t> & b, uint32_t maxValue, uint32_t minEqual, uint32_t maxUnEqual, uint32_t secondAddRand);
 void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::deque< std::set<uint32_t> > & destination);
-
 void createOverLappingSets(uint32_t count, uint32_t minEqual, uint32_t sizeVariance, std::vector< std::vector<uint32_t> > & destination);
 
 
