@@ -115,12 +115,13 @@ public:
 	}
 };
 
-template<typename TReturnType>
+template<typename TReturnType, typename TReference = TReturnType, typename TConstReference = TReturnType>
 class AbstractArray {
 public:
 	typedef AbstractArrayIterator<TReturnType> const_iterator;
 	typedef const_iterator iterator;
-	typedef TReturnType const_reference;
+	typedef TReference reference;
+	typedef TConstReference const_reference;
 	typedef std::shared_ptr< detail::AbstractArray<TReturnType> > ImpRefType;
 private:
 	ImpRefType m_priv;
@@ -133,9 +134,9 @@ public:
 	template<typename TAbstractArrayType>
 	TAbstractArrayType * get() const { return static_cast<TAbstractArrayType*>(m_priv.get()); }
 	uint32_t size() const { return m_priv->size();}
-	TReturnType at(uint32_t pos) const { return m_priv->at(pos); }
-	TReturnType front() const { return m_priv->at(0); }
-	TReturnType back() const { return m_priv->at(size()-1);}
+	const_reference at(uint32_t pos) const { return m_priv->at(pos); }
+	const_reference front() const { return m_priv->at(0); }
+	const_reference back() const { return m_priv->at(size()-1);}
 	const_iterator cbegin() const { return const_iterator(m_priv->cbegin()); }
 	const_iterator cend() const { return const_iterator(m_priv->cend()); }
 };
