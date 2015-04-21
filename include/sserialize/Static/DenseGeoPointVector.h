@@ -21,7 +21,7 @@ namespace spatial {
 
 class DenseGeoPointVector {
 public:
-	class ForwardIterator {
+	class ForwardIterator: public std::iterator<std::input_iterator_tag, GeoPoint, int> {
 		UByteArrayAdapter m_d;
 		uint32_t m_pos;
 		uint32_t m_size;
