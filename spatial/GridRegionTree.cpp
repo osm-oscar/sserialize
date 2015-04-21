@@ -70,7 +70,7 @@ GridRegionTree & GridRegionTree::operator=(const GridRegionTree & other) {
 	m_intersectTestCount.store(other.m_intersectTestCount.load());
 	return *this;
 }
-GridRegionTree & GridRegionTree::operator=(GridRegionTree & other) {
+GridRegionTree & GridRegionTree::operator=(GridRegionTree && other) {
 	m_nodes.swap(other.m_nodes);
 	m_nodeGrids.swap(other.m_nodeGrids);
 	m_nodePtr.swap(other.m_nodePtr);
@@ -82,10 +82,11 @@ GridRegionTree & GridRegionTree::operator=(GridRegionTree & other) {
 }
 
 void GridRegionTree::shrink_to_fit() {
-	m_leafInfo.shrink_to_fit();
+	m_nodes.shrink_to_fit();
 	m_nodeGrids.shrink_to_fit();
 	m_nodePtr.shrink_to_fit();
-	m_nodes.shrink_to_fit();
+	m_leafInfo.shrink_to_fit();
+	m_regions.shrink_to_fit();
 }
 
 void GridRegionTree::printStats(std::ostream & out) const {
