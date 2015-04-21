@@ -101,7 +101,7 @@ public:
 			spatial::GeoRect initialRect = spatial::GeoShape::bounds(regions.cbegin(), regions.cend());
 // 			spatial::detail::GridRegionTree::FixedSizeRefiner refiner(0.1, 0.1, T_RF_X, T_RF_Y);
 			MyRefiner<spatial::detail::GridRegionTree::FixedSizeRefiner> refiner(0.1, 0.1, T_RF_X, T_RF_Y);
-			m_grt = spatial::GridRegionTree(spatial::GeoGrid(initialRect, T_RINIT_X, T_RINIT_Y), regions.begin(), regions.end(), refiner);
+			m_grt = spatial::GridRegionTree(spatial::GeoGrid(initialRect, T_RINIT_X, T_RINIT_Y), regions.begin(), regions.end(), spatial::GridRegionTree::TypeTraits< MyRefiner<spatial::detail::GridRegionTree::FixedSizeRefiner> >(), refiner);
 		}
 		
 	}

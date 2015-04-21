@@ -35,7 +35,7 @@ int main() {
 			std::cout << "hui" << std::endl;
 		}
 	}
-	m_grt = spatial::GridRegionTree(spatial::GeoGrid(initialRect, 1, 1), regions.begin(), regions.end(), refiner);
+	m_grt = spatial::GridRegionTree(spatial::GeoGrid(initialRect, 1, 1), regions.begin(), regions.end(), spatial::GridRegionTree::TypeTraits<spatial::GridRegionTree::FixedSizeRefiner>(), refiner);
 	
 	return 0;
 }
