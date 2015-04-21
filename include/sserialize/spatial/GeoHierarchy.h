@@ -4,7 +4,7 @@
 #include <sserialize/spatial/GeoShape.h>
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/debug.h>
-#include <sserialize/templated/IteratorBasedContainer.h>
+#include <sserialize/containers/IFLArray.h>
 
 namespace sserialize {
 namespace spatial {
@@ -18,8 +18,10 @@ class CellList {
 public:
 	class Cell {
 	public:
-		typedef IteratorBasedContainer<uint32_t*> ItemsContainer;
-		typedef IteratorBasedContainer<const uint32_t*> ConstItemsContainer;
+		typedef IFLArray<uint32_t*, const uint32_t*> ItemsContainer;
+		typedef ItemsContainer ConstItemsContainer;
+		typedef ItemsContainer ParentsContainer;
+		typedef ItemsContainer ConstParentsContainer;
 	private:
 		friend class CellList;
 		friend class sserialize::spatial::GeoHierarchy;
@@ -38,10 +40,11 @@ public:
 		m_parentsBegin(cellIdBegin), m_itemsBegin(cellItemsBegin),
 		m_parentsSize(cellIdSize), m_itemsSize(cellItemsSize)
 		{}
-		IteratorBasedContainer<uint32_t*> parents() { return IteratorBasedContainer<uint32_t*>(parentsBegin(), parentsEnd());}
-		IteratorBasedContainer<const uint32_t*> parents() const { return IteratorBasedContainer<const uint32_t*>(parentsBegin(), parentsEnd());}
-		IteratorBasedContainer<uint32_t*> items() { return IteratorBasedContainer<uint32_t*>(itemsBegin(), itemsEnd());}
-		IteratorBasedContainer<const uint32_t*> items() const { return IteratorBasedContainer<const uint32_t*>(itemsBegin(), itemsEnd());}
+		ParentsContainer parents() { return (parentsBegin(), parentsSize());}
+		ConstItemsContainer parents() const { return ConstItemsContainer(const_cast<Cell*>(this)->parentsBegin(), parentsSize());}
+		
+		ItemsContainer items() { return ItemsContainer(itemsBegin(), itemsSize());}
+		ConstItemsContainer items() const { return ConstItemsContainer(const_cast<Cell*>(this)->itemsBegin(), itemsSize());}
 		
 		inline uint32_t * parentsBegin() { return m_parentsBegin; }
 		inline const uint32_t * parentsBegin() const { return m_parentsBegin; }
@@ -117,8 +120,8 @@ public:
 	public:
 		typedef uint32_t* iterator;
 		typedef const uint32_t* const_iterator;
-		typedef sserialize::IteratorBasedContainer<uint32_t*> DataContainerWrapper;
-		typedef sserialize::IteratorBasedContainer<const uint32_t*> ConstDataContainerWrapper;
+		typedef sserialize::IFLArray<uint32_t*, const uint32_t*> DataContainerWrapper;
+		typedef sserialize::IFLArray<const uint32_t*, const uint32_t*> ConstDataContainerWrapper;
 	private:
 		DataContainer * m_d;
 		uint64_t m_off;
@@ -143,8 +146,8 @@ public:
 		inline const_iterator childrenBegin() const { return dataBegin(); }
 		inline iterator childrenEnd() { return childrenBegin()+m_childrenSize; }
 		inline const_iterator childrenEnd() const { return childrenBegin()+m_childrenSize; }
-		inline DataContainerWrapper children() { return DataContainerWrapper(childrenBegin(), childrenEnd());}
-		inline ConstDataContainerWrapper children() const { return ConstDataContainerWrapper(childrenBegin(), childrenEnd());}
+		inline DataContainerWrapper children() { return DataContainerWrapper(childrenBegin(), childrenSize());}
+		inline ConstDataContainerWrapper children() const { return ConstDataContainerWrapper(childrenBegin(), childrenSize());}
 		inline uint32_t childrenSize() const { return m_childrenSize; }
 		inline const uint32_t & child(uint32_t pos) const { return *(childrenBegin()+pos); }
 		inline uint32_t & child(uint32_t pos) { return *(childrenBegin()+pos); }
@@ -153,8 +156,8 @@ public:
 		inline const_iterator parentsBegin() const { return childrenEnd(); }
 		inline iterator parentsEnd() { return parentsBegin()+m_parentsSize; }
 		inline const_iterator parentsEnd() const { return parentsBegin()+m_parentsSize; }
-		inline DataContainerWrapper parents() { return DataContainerWrapper(parentsBegin(), parentsEnd());}
-		inline ConstDataContainerWrapper parents() const { return ConstDataContainerWrapper(parentsBegin(), parentsEnd());}
+		inline DataContainerWrapper parents() { return DataContainerWrapper(parentsBegin(), parentsSize());}
+		inline ConstDataContainerWrapper parents() const { return ConstDataContainerWrapper(parentsBegin(), parentsSize());}
 		inline uint32_t parentsSize() const { return m_parentsSize; }
 		inline const uint32_t & parent(uint32_t pos) const { return *(parentsBegin()+pos); }
 		inline uint32_t & parent(uint32_t pos) { return *(parentsBegin()+pos); }
@@ -163,8 +166,8 @@ public:
 		inline const_iterator cellsBegin() const { return parentsEnd(); }
 		inline iterator cellsEnd() { return cellsBegin()+m_cellsSize; }
 		inline const_iterator cellsEnd() const { return cellsBegin()+m_cellsSize; }
-		inline DataContainerWrapper cells() { return DataContainerWrapper(cellsBegin(), cellsEnd());}
-		inline ConstDataContainerWrapper cells() const { return ConstDataContainerWrapper(cellsBegin(), cellsEnd());}
+		inline DataContainerWrapper cells() { return DataContainerWrapper(cellsBegin(), cellsSize());}
+		inline ConstDataContainerWrapper cells() const { return ConstDataContainerWrapper(cellsBegin(), cellsSize());}
 		inline uint32_t cellsSize() const { return m_cellsSize; }
 		inline const uint32_t & cell(uint32_t pos) const { return *(cellsBegin()+pos); }
 		inline uint32_t & cell(uint32_t pos) { return *(cellsBegin()+pos); }
