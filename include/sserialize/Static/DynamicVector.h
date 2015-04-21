@@ -131,10 +131,7 @@ UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) con
 
 template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toArray(UByteArrayAdapter & dest) const {
-	#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
-	OffsetType oiBegin = dest.tellPutPtr();
-	#endif
-	dest.putUint8(4);
+	dest.putUint8(4); //Static::Array version
 	dest.putOffset(m_data.size()); //datasize
 	dest.put(m_data);
 	if (sserialize::SerializationInfo<TGetValue>::is_fixed_length) {
@@ -143,6 +140,9 @@ UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toArray(UByteArrayAdap
 		}
 	}
 	else {
+		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+		OffsetType oiBegin = dest.tellPutPtr();
+		#endif
 		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, dest)) {
 			throw sserialize::CreationException("Array::flush: Creating the offset");
 		}
