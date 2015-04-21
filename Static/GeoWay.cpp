@@ -23,10 +23,4 @@ m_points( sserialize::AbstractArray<sserialize::spatial::GeoPoint>(
 {}
 
 
-template<>
-UByteArrayAdapter & GeoWay< sserialize::Static::spatial::DenseGeoPointVector >::append(UByteArrayAdapter & destination) const {
-	destination << myBoundary();
-	return sserialize::Static::spatial::DenseGeoPointVector::append(cbegin(), cend(), destination);
-}
-
 }}}//end namespace

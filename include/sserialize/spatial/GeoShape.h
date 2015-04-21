@@ -21,6 +21,7 @@ public:
 	GeoShape() {};
 	virtual ~GeoShape() {};
 	virtual GeoShapeType type() const = 0;
+	///number of points this shape is made-up of
 	virtual uint32_t size() const = 0;
 	virtual GeoRect boundary() const = 0;
 	virtual void recalculateBoundary() = 0;

@@ -21,9 +21,6 @@ namespace detail {
 	
 	template<>
 	GeoWay< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::GeoWay(const sserialize::UByteArrayAdapter & d);
-
-	template<>
-	UByteArrayAdapter & GeoWay< sserialize::Static::spatial::DenseGeoPointVector >::append(UByteArrayAdapter & destination) const;
 }}}
 
 namespace sserialize {

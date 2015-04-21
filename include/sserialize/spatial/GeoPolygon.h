@@ -13,6 +13,7 @@ namespace spatial {
 namespace detail {
 
 ///GeoPolygon is just a closed GeoWay where the last node equals the first
+///The TPointsContainer can be change to any container supporting size(), (c)begin, (c)end an the usual typedef
 
 template<typename TPointsContainer>
 class GeoPolygon: public sserialize::spatial::detail::GeoWay<TPointsContainer> {
@@ -29,9 +30,10 @@ public:
 	GeoPolygon();
 	GeoPolygon(const sserialize::UByteArrayAdapter & d);
 	GeoPolygon(const sserialize::spatial::GeoRect & boundary, const TPointsContainer & points);
+	GeoPolygon(const sserialize::spatial::GeoRect & boundary, TPointsContainer && points);
 	GeoPolygon(const TPointsContainer & points);
-	GeoPolygon(const GeoPolygon & other);
 	GeoPolygon(TPointsContainer && points);
+	GeoPolygon(const GeoPolygon & other);
 	GeoPolygon(GeoPolygon && other);
 	virtual ~GeoPolygon();
 	GeoPolygon & operator=(GeoPolygon && other);
@@ -43,22 +45,25 @@ public:
 	using MyBaseClass::end;
 	using MyBaseClass::points;
 	
-	virtual GeoShapeType type() const;
-	virtual bool contains(const GeoPoint & p) const;
-	virtual bool intersects(const sserialize::spatial::GeoRect & rect) const;
+	virtual GeoShapeType type() const override;
+	virtual bool contains(const GeoPoint & p) const override;
+	virtual bool intersects(const sserialize::spatial::GeoRect & rect) const override;
 	///@return true if the line p1->p2 intersects this region
-	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
-	virtual bool intersects(const GeoRegion & other) const;
-	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
+	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const override;
+	virtual bool intersects(const GeoRegion & other) const override;
+	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const override;
 	bool encloses(const GeoPolygon & other) const;
 	bool encloses(const MyGeoWay & other) const;
 	template<typename T_GEO_POINT_ITERATOR>
 	bool contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const;
 
-	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const;
+	///@cond internal calls MyBaseClass::append by default
+	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const override {
+		return MyBaseClass::append(destination);
+	}
 	
-	virtual sserialize::spatial::GeoShape * copy() const;
-	virtual std::ostream & asString(std::ostream & out) const;
+	virtual sserialize::spatial::GeoShape * copy() const override;
+	virtual std::ostream & asString(std::ostream & out) const override;
 	
 	static GeoPolygon fromRect(const GeoRect & rect);
 };
@@ -121,6 +126,11 @@ MyBaseClass(boundary, points)
 {}
 
 template<typename TPointsContainer>
+GeoPolygon<TPointsContainer>::GeoPolygon(const sserialize::spatial::GeoRect & boundary, TPointsContainer && points) :
+MyBaseClass(boundary, std::forward<TPointsContainer>(points))
+{}
+
+template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(const TPointsContainer & points) :
 MyBaseClass(points)
 {
@@ -131,7 +141,7 @@ MyBaseClass(points)
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(TPointsContainer && points) :
-MyBaseClass(points)
+MyBaseClass(std::forward<TPointsContainer>(points))
 {
 	if (points.front() != points.back()) {
 		throw sserialize::CorruptDataException("GeoPolygon");
@@ -140,7 +150,7 @@ MyBaseClass(points)
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(GeoPolygon && other) :
-MyBaseClass(other)
+MyBaseClass(std::forward<GeoPolygon>(other))
 {}
 
 template<typename TPointsContainer>
@@ -209,12 +219,13 @@ bool GeoPolygon<TPointsContainer>::intersects(const sserialize::spatial::GeoRect
 		return false;
 
 	//now check if any of the rect points fall within ourself
-	std::vector<sserialize::spatial::GeoPoint> poly;
-	poly.push_back( GeoPoint(rect.lat()[0], rect.lon()[0]) );
-	poly.push_back( GeoPoint(rect.lat()[1], rect.lon()[0]) );
-	poly.push_back( GeoPoint(rect.lat()[1], rect.lon()[1]) );
-	poly.push_back( GeoPoint(rect.lat()[0], rect.lon()[1]) );
-	if (contains(poly.cbegin(), poly.cend())) { //check if at least one vertex poly lies within us
+	std::array<sserialize::spatial::GeoPoint, 5> poly;
+	poly[0] = GeoPoint(rect.lat()[0], rect.lon()[0]);
+	poly[1] = GeoPoint(rect.lat()[1], rect.lon()[0]);
+	poly[2] = GeoPoint(rect.lat()[1], rect.lon()[1]);
+	poly[3] = GeoPoint(rect.lat()[0], rect.lon()[1]);
+	poly[4] = poly[0];
+	if (contains(poly.cbegin(), poly.cbegin()+4)) { //check if at least one vertex poly lies within us
 		return true;
 	}
 	
@@ -229,7 +240,6 @@ bool GeoPolygon<TPointsContainer>::intersects(const sserialize::spatial::GeoRect
 	}
 
 	//check if any lines intersect
-	poly.push_back(poly.back());//put the last back in
 	it = cbegin();
 	++it;
 	for(const_iterator prev(cbegin()), end(cend()); it != end; ++prev, ++it) {
@@ -309,10 +319,10 @@ double GeoPolygon<TPointsContainer>::distance(const sserialize::spatial::GeoShap
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-template<typename TPointsContainer>
-UByteArrayAdapter & GeoPolygon<TPointsContainer>::append(UByteArrayAdapter & destination) const {
-	return MyBaseClass::append(destination);
-}
+// template<typename TPointsContainer>
+// UByteArrayAdapter & GeoPolygon<TPointsContainer>::append(UByteArrayAdapter & destination) const {
+// 	return MyBaseClass::append(destination);
+// }
 
 template<typename TPointsContainer>
 sserialize::spatial::GeoShape * GeoPolygon<TPointsContainer>::copy() const {
@@ -358,7 +368,6 @@ bool GeoPolygon<TPointsContainer>::encloses(const GeoPolygon<TPointsContainer>::
 	return true;
 }
 
-
 template<typename TPointsContainer>
 template<typename T_GEO_POINT_ITERATOR>
 bool GeoPolygon<TPointsContainer>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const {
@@ -367,6 +376,13 @@ bool GeoPolygon<TPointsContainer>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_PO
 			return true;
 	}
 	return false;
+}
+
+
+///serializes without type info
+template<typename TPointsContainer>
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPolygon<TPointsContainer> & p) {
+	return p.append(destination);
 }
 
 //specializations for std::vector
@@ -379,9 +395,6 @@ GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon< std::vector<
 //specializations for AbstractArray
 template<>
 GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> > GeoPolygon< sserialize::AbstractArray<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
-
-///serializes without type info
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPolygon< std::vector<sserialize::spatial::GeoPoint> > & p);
 
 }//end namespace detail
 

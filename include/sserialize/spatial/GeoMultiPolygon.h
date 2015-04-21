@@ -397,6 +397,16 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::encloses(const TPolygon & pol
 }
 
 template<typename TPolygonContainer, typename TPolygon>
+sserialize::UByteArrayAdapter & GeoMultiPolygon<TPolygonContainer, TPolygon>::append(sserialize::UByteArrayAdapter & dest) const {
+	dest.putVlPackedUint32(m_size);
+	dest << m_outerBoundary;
+	dest << m_innerBoundary;
+	dest << m_outerPolygons;
+	dest << m_innerPolygons;
+	return dest;
+}
+
+template<typename TPolygonContainer, typename TPolygon>
 const GeoRect & GeoMultiPolygon<TPolygonContainer, TPolygon>::innerPolygonsBoundary() const { return m_innerBoundary; }
 
 template<typename TPolygonContainer, typename TPolygon>

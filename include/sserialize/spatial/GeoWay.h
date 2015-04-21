@@ -3,11 +3,14 @@
 #include <sserialize/spatial/GeoRegion.h>
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/Static/DenseGeoPointVector.h>
 
 namespace sserialize {
 namespace spatial {
 
 namespace detail {
+
+//TODO:make sure that instances with a different point_container result in an exception and not a segfault
 
 template<typename TPointsContainer>
 class GeoWay: public GeoRegion {
@@ -26,6 +29,7 @@ protected:
 public:
 	GeoWay();
 	GeoWay(const GeoRect & boundary, const TPointsContainer & points);
+	GeoWay(const GeoRect & boundary, TPointsContainer && points);
 	GeoWay(const sserialize::UByteArrayAdapter & d);
 	GeoWay(const TPointsContainer & points);
 	GeoWay(const GeoWay & other);
@@ -54,8 +58,9 @@ public:
 	virtual bool intersects(const GeoPoint & p1, const GeoPoint & p2) const;
 	virtual bool intersects(const GeoRegion & other) const;
 	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const;
-	virtual UByteArrayAdapter & append(UByteArrayAdapter & /*destination*/) const {
-		throw sserialize::UnimplementedFunctionException("sserialize::spatial::GeoWay<PointsContainer>::append");
+	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const {
+		destination << myBoundary();
+		return sserialize::Static::spatial::DenseGeoPointVector::append(cbegin(), cend(), destination);
 	}
 	
 	virtual sserialize::spatial::GeoShape * copy() const { return new GeoWay(*this); }
@@ -71,7 +76,12 @@ m_boundary(boundary),
 m_points(points)
 {}
 
-	
+template<typename TPointsContainer>
+GeoWay<TPointsContainer>::GeoWay(const GeoRect & boundary, TPointsContainer && points) :
+m_boundary(boundary),
+m_points(std::forward<TPointsContainer>(points))
+{}
+
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(const TPointsContainer & points) : m_points(points) {
 	recalculateBoundary();
@@ -85,7 +95,7 @@ m_points(other.m_points)
 
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(TPointsContainer && points) :
-m_points(points)
+m_points(std::forward<TPointsContainer>(points))
 {
 	recalculateBoundary();
 }
@@ -93,7 +103,7 @@ m_points(points)
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(GeoWay<TPointsContainer> && other) :
 m_boundary(other.m_boundary),
-m_points(other.m_points)
+m_points(std::forward<TPointsContainer>(other.m_points))
 {}
 
 template<typename TPointsContainer>
@@ -265,11 +275,6 @@ GeoRect GeoWay<TPointsContainer>::boundary() const {
 	return m_boundary;
 }
 
-}
-
-namespace detail {
-	template<>
-	UByteArrayAdapter & GeoWay< std::vector<GeoPoint> >::append(UByteArrayAdapter & destination) const;
 }
 
 
