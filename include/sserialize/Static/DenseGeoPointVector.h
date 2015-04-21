@@ -119,7 +119,7 @@ typedef sserialize::AbstractArray<GeoPoint> DenseGeoPointAbstractArray;
 
 template<typename TGeoPointIterator>
 UByteArrayAdapter& DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPointIterator end, sserialize::UByteArrayAdapter& dest) {
-	uint32_t size = end-begin;
+	uint32_t size = std::distance(begin, end);
 	dest.putVlPackedUint32(size);
 	if (size) {
 		std::vector<uint8_t> d;
