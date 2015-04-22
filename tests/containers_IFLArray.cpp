@@ -17,7 +17,7 @@ CPPUNIT_TEST( testSize );
 CPPUNIT_TEST_SUITE_END();
 private:
 	typedef T_TEST_DATA_TYPE value_type;
-	typedef sserialize::IFLArray<value_type*, const value_type*> MyIFLArray;
+	typedef sserialize::IFLArray<value_type> MyIFLArray;
 	std::vector<value_type> m_d;
 public:
 	virtual void setUp() {

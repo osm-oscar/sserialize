@@ -651,7 +651,7 @@ std::vector<uint32_t> GeoHierarchy::getRegionsInLevelOrder() const {
 	return d;
 }
 
-std::vector<uint32_t> treeMerge(const std::vector< IFLArray<uint32_t*, const uint32_t*> > & v, uint32_t begin, uint32_t end) {
+std::vector<uint32_t> treeMerge(const std::vector< IFLArray<uint32_t> > & v, uint32_t begin, uint32_t end) {
 	if (begin == end)
 		return std::vector<uint32_t>(v[begin].cbegin(), v[begin].cend());
 	else {
@@ -668,7 +668,7 @@ std::vector<uint32_t> treeMerge(const std::vector< IFLArray<uint32_t*, const uin
 
 std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemIndex(sserialize::ItemIndexFactory& idxFactory) const {
 	std::vector< std::pair<uint32_t, uint32_t> > res;
-	std::vector< IFLArray<uint32_t*, const uint32_t*> > tmp;
+	std::vector< IFLArray<uint32_t> > tmp;
 	std::vector<uint32_t> items;
 	res.resize(m_regions.size()+1, std::pair<uint32_t, uint32_t>(0,0));
 	//if i == m_regions.size() then calculate the index for the rootRegion

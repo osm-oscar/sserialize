@@ -6,18 +6,17 @@
 
 namespace sserialize {
 
-///Iterator based container that also supports copying. Iterators should be random-access. Use IteratorBasedContainer for InputIterators
-template<typename T_ITERATOR, typename T_CONST_ITERATOR>
+template<typename T_VALUE_TYPE>
 class IFLArray {
 public:
-	typedef T_CONST_ITERATOR const_iterator;
-	typedef T_ITERATOR iterator;
+	typedef T_VALUE_TYPE value_type;
+	typedef const value_type * const_iterator;
+	typedef value_type * iterator;
 	typedef typename std::reverse_iterator<iterator> reverse_iterator;
 	typedef typename std::reverse_iterator<const_iterator> const_reverse_iterator;
-	typedef typename std::iterator_traits<iterator>::reference reference;
-	typedef typename std::iterator_traits<const_iterator>::reference const_reference;
-	typedef typename std::iterator_traits<iterator>::value_type value_type;
-	typedef uint32_t size_type;
+	typedef value_type & reference;
+	typedef const value_type const_reference;
+	typedef uint64_t size_type;
 private:
 	iterator m_begin;
 	uint64_t m_size:63;
@@ -39,7 +38,7 @@ public:
 		std::copy(begin, end, m_begin);
 	}
 	///Create PolygonPointsContainer starting at @begin, does not copy elements
-	IFLArray(const iterator & begin, uint32_t size) : m_begin(begin) {
+	IFLArray(iterator begin, uint32_t size) : m_begin(begin) {
 		m_size = size;
 		m_delete = 0;
 	}
@@ -136,14 +135,14 @@ public:
 	
 };
 
-template<typename T_ITERATOR, typename T_CONST_ITERATOR>
-inline void swap(IFLArray<T_ITERATOR, T_CONST_ITERATOR> & a, IFLArray<T_ITERATOR, T_CONST_ITERATOR> & b) {
+template<typename T_VALUE_TYPE>
+inline void swap(IFLArray<T_VALUE_TYPE> & a, IFLArray<T_VALUE_TYPE> & b) {
 	a.swap(b);
 }
 
-template<typename T_ITERATOR, typename T_CONST_ITERATOR>
-std::ostream & operator<<(std::ostream & out, const IFLArray<T_ITERATOR, T_CONST_ITERATOR> & c) {
-	typename IFLArray<T_ITERATOR, T_CONST_ITERATOR>::const_iterator begin(c.cbegin()), end(c.cend());
+template<typename T_VALUE_TYPE>
+std::ostream & operator<<(std::ostream & out, const IFLArray<T_VALUE_TYPE> & c) {
+	typename IFLArray<T_VALUE_TYPE>::const_iterator begin(c.cbegin()), end(c.cend());
 	if (begin != end) {
 		out << *begin;
 		++begin;
@@ -154,10 +153,10 @@ std::ostream & operator<<(std::ostream & out, const IFLArray<T_ITERATOR, T_CONST
 	return out;
 }
 
-template<typename T_ITERATOR, typename T_CONST_ITERATOR>
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const IFLArray<T_ITERATOR, T_CONST_ITERATOR> & c) {
-	typedef IFLArray<T_ITERATOR, T_CONST_ITERATOR> MyIFLArray;
-	typedef typename IFLArray<T_ITERATOR, T_CONST_ITERATOR>::value_type MyValueType;
+template<typename T_VALUE_TYPE>
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const IFLArray<T_VALUE_TYPE> & c) {
+	typedef IFLArray<T_VALUE_TYPE> MyIFLArray;
+	typedef typename IFLArray<T_VALUE_TYPE>::value_type MyValueType;
 	sserialize::Static::ArrayCreator<MyValueType> ac(dest);;
 	for(typename MyIFLArray::const_iterator begin(c.cbegin()), end(c.cend()); begin != end; ++begin) {
 		ac.put(*begin);

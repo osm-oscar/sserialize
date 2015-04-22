@@ -18,7 +18,7 @@ class CellList {
 public:
 	class Cell {
 	public:
-		typedef IFLArray<uint32_t*, const uint32_t*> ItemsContainer;
+		typedef IFLArray<uint32_t> ItemsContainer;
 		typedef ItemsContainer ConstItemsContainer;
 		typedef ItemsContainer ParentsContainer;
 		typedef ItemsContainer ConstParentsContainer;
@@ -120,8 +120,8 @@ public:
 	public:
 		typedef uint32_t* iterator;
 		typedef const uint32_t* const_iterator;
-		typedef sserialize::IFLArray<uint32_t*, const uint32_t*> DataContainerWrapper;
-		typedef sserialize::IFLArray<const uint32_t*, const uint32_t*> ConstDataContainerWrapper;
+		typedef sserialize::IFLArray<uint32_t> DataContainerWrapper;
+		typedef sserialize::IFLArray<const uint32_t> ConstDataContainerWrapper;
 	private:
 		DataContainer * m_d;
 		uint64_t m_off;
