@@ -221,7 +221,6 @@ ItemIndexPrivate * ItemIndexPrivateWAH::fromBitSet(const DynamicBitSet & bitSet)
 	}
 	if (curEncWord) {
 		tmpData.putUint32(curEncWord);
-		curEncWord = 0;
 	}
 	tmpData.putUint32(0, tmpData.tellPutPtr()-8);
 	tmpData.putUint32(4, count);

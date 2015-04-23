@@ -145,12 +145,12 @@ uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 		if (lLcp == str.size()) {
 			mid = left;
 			mLcp = lLcp;
-			cmp = compare(strData(mid), str, mLcp);
+			compare(strData(mid), str, mLcp); //calc mLcp
 		}
 		else if (rLcp == str.size()) {
 			mid = right;
 			mLcp = rLcp;
-			cmp = compare(strData(mid), str, mLcp);
+			compare(strData(mid), str, mLcp); //calc mLcp
 		}
 	}
 	

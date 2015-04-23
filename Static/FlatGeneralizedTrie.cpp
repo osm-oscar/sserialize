@@ -191,12 +191,12 @@ FlatGST::lowerBound(const std::string& str, sserialize::StringCompleter::QuerryT
 		if (lLcp == str.size()) {
 			mid = left;
 			mLcp = lLcp;
-			cmp = compare(fgstStringAt(mid), str, mLcp);
+			compare(fgstStringAt(mid), str, mLcp);//calc mLcp
 		}
 		else if (rLcp == str.size()) {
 			mid = right;
 			mLcp = rLcp;
-			cmp = compare(fgstStringAt(mid), str, mLcp);
+			compare(fgstStringAt(mid), str, mLcp);//calc mLcp
 		}
 	}
 	

@@ -54,6 +54,7 @@ int main(int argc, char ** argv) {
 			mBitSet32[offset] |= (static_cast<uint32_t>(1) << inByteOffset);
 		}
 		tm.end();
+		delete[] mBitSet32;
 		std::cout << "Conversion from CompactUintArray to ManualBitSet32 took " << tm.elapsedMilliSeconds() << " msec" << std::endl;
 	}
 	
@@ -78,6 +79,7 @@ int main(int argc, char ** argv) {
 			mBitSet8[offset] |= (static_cast<uint8_t>(1) << inByteOffset);
 		}
 		tm.end();
+		delete[] mBitSet8;
 		std::cout << "Conversion to ManualBitSet8 took " << tm.elapsedMilliSeconds() << " msec" << std::endl;
 	}
 	{
@@ -91,6 +93,7 @@ int main(int argc, char ** argv) {
 			mBitSet16[offset] |= (static_cast<uint16_t>(1) << inByteOffset);
 		}
 		tm.end();
+		delete[] mBitSet16;
 		std::cout << "Conversion to ManualBitSet16 took " << tm.elapsedMilliSeconds() << " msec" << std::endl;
 	}
 	{
@@ -104,6 +107,7 @@ int main(int argc, char ** argv) {
 			mBitSet32[offset] |= (static_cast<uint32_t>(1) << inByteOffset);
 		}
 		tm.end();
+		delete[] mBitSet32;
 		std::cout << "Conversion to ManualBitSet32 took " << tm.elapsedMilliSeconds() << " msec" << std::endl;
 	}
 	{
@@ -117,6 +121,7 @@ int main(int argc, char ** argv) {
 			mBitSet64[offset] |= (static_cast<uint64_t>(1) << inByteOffset);
 		}
 		tm.end();
+		delete[] mBitSet64;
 		std::cout << "Conversion to ManualBitSet64 took " << tm.elapsedMilliSeconds() << " msec" << std::endl;
 	}
 	

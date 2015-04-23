@@ -9,6 +9,9 @@ namespace statistics {
 
 template<typename TIterator, typename TValue>
 TValue mean(TIterator begin, const TIterator & end, TValue initial) {
+	if (begin == end) {
+		return initial;
+	}
 	std::size_t count = 0;
 	for(; begin != end; ++begin, ++count) {
 		initial += *begin;
@@ -18,6 +21,9 @@ TValue mean(TIterator begin, const TIterator & end, TValue initial) {
 
 template<typename TIterator, typename TValue>
 TValue variance(TIterator begin, const TIterator & end, TValue initial) {
+	if (begin == end) {
+		return initial;
+	}
 	TValue m = mean(begin, end, initial);
 	std::size_t count = 0;
 	for(;begin != end; ++begin, ++count) {
@@ -55,6 +61,12 @@ TValue entropy(TIterator begin, const TIterator & end, TValue initial, TValue to
 
 template<typename TIterator>
 void linearRegression(TIterator begin, const TIterator & end, double & slope, double & yintercept) {
+	if (begin == end) {
+		slope = 1;
+		yintercept = 0;
+		return;
+	}
+
 	uint64_t size = 0;
 	uint64_t cysum = 0.0;
 	for(; begin != end; ++begin, ++size) {

@@ -770,7 +770,7 @@ bool test(int testCount) {
 		std::cout << "UByteArrayAdapterPrivateArray FAILED tests!" << std::endl;
 		allOk = false;
 	}
-	delete arrayData;
+	delete[] arrayData;
 	
 	UByteArrayAdapter dequeAdap(new std::deque<uint8_t>(), true);
 	dequeAdap.growStorage(4*testCount);

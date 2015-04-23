@@ -207,6 +207,8 @@ struct TestResult {
 };
 
 TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCount, uint32_t testSelect) {
+	if (!testCount)
+		return TestResult();
 	std::cout << "Creating " << bucketCount << " buckets with a fill of " << bucketFillCount << " and testing " << testCount << std::endl;
 
 	std::vector< std::vector<uint32_t> > buckets;
