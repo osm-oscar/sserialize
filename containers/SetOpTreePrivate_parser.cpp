@@ -19,7 +19,7 @@ m_efMap(em)
 SetOpTreePrivateComplex::TreeBuilder::Tokenizer::~Tokenizer() {}
 
 std::string SetOpTreePrivateComplex::TreeBuilder::Tokenizer::sanitize(const std::string& str, const std::map<char, uint32_t>& ops) {
-	int braceCount = 0;
+	uint32_t braceCount = 0;
 	bool beforeWasOp = false;
 	std::string ostr = "";
 	for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
@@ -33,7 +33,7 @@ std::string SetOpTreePrivateComplex::TreeBuilder::Tokenizer::sanitize(const std:
 				break;
 		}
 		else if (*it == ')') {
-			if (braceCount <= 0) {
+			if (braceCount == 0) {
 				continue;
 			}
 			else {

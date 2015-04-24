@@ -92,12 +92,13 @@ bool matchSuffix(const std::string& searchStr, const UByteArrayAdapter & str) {
 
 	std::string::const_reverse_iterator searchStrIt = searchStr.rbegin();
 	std::string::const_reverse_iterator searchStrEnd = searchStr.rend();
-
+	
 	int32_t strPos = str.size()-1;
-	while (searchStrIt != searchStrEnd && strPos >= 0) {
+	//no need to check strPos since str.size() >= searchStr.size()
+	while (searchStrIt != searchStrEnd) {
 		if (static_cast<uint8_t>(*searchStrIt) != str.at(strPos))
 			return false;
-		strPos--;
+		--strPos;
 		++searchStrIt;
 	}
 	return true;

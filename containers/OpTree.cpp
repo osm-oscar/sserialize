@@ -179,7 +179,7 @@ Node * OpTreeParser::parse(const std::string & parseString) {
 }
 
 void SetOpsOpTreeParser::sanitize() {
-	int braceCount = 0;
+	uint32_t braceCount = 0;
 	bool beforeWasOp = false;
 	std::string ostr = "";
 	for(std::string::const_iterator it(m_parseString.cbegin()), end(m_parseString.cend()); it != end; ++it) {
@@ -193,7 +193,7 @@ void SetOpsOpTreeParser::sanitize() {
 				break;
 		}
 		else if (*it == ')') {
-			if (braceCount <= 0) {
+			if (braceCount == 0) {
 				continue;
 			}
 			else {
