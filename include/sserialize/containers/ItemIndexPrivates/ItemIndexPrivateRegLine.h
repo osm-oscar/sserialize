@@ -6,18 +6,17 @@
 #include <sserialize/utility/exceptions.h>
 #include <cstdlib>
 
-//TODO: Möglichkeit, delta-enkodierung zu nutzen
+
 /* Data Layout
  * 
- * v4:
+ * v5:
  * -------------------------------------------------------
  * CONTIDBITS|Y-INTCEPT|SLOPENOM|IDOFFSET|IDS
  * -------------------------------------------------------
- *  1-5 byte |1-5 bytes|1-5 byte|1-5 byte|COMPACTARRAY
+ *  vu32     |vs32     |vu32    |vs32    |COMPACTARRAY
  * -------------------------------------------------------
  * 
  * IDBITS: 5 bits, define the bits per number for IDS: bpn = IDBITS+1;
- * COUNT is encoded with the var_uint32_t function
  * Y-INTERCEPT: int32_t  encoded as uint32_t
  * SLOPENOM: uint32_t, the last y value of the linear regression minus Y-INTERCEPT (comes from f(count-1)-f(0)/(count-1-0) * (count-1) = SLOPENOM
  * Calulating ids:
@@ -35,7 +34,7 @@ private:
 	uint8_t m_bpn;
 	uint32_t m_slopenom;
 	int32_t m_yintercept; 
-	uint32_t m_idOffset;//negative id-offset
+	int32_t m_idOffset;
 
 private:
 	bool init(UByteArrayAdapter index);
@@ -47,33 +46,27 @@ private:
 private: //creation functions
 	
 	template<class TSortedContainer>
-	static uint8_t getNeededBitsForLinearRegression(const TSortedContainer & ids, uint32_t slopenom, int32_t yintercept, uint32_t & idOffset) {
+	static uint8_t getNeededBitsForLinearRegression(const TSortedContainer & ids, uint32_t slopenom, int32_t yintercept, int32_t & idOffset) {
+		sserialize::MinMax<int64_t> minMax;
 		int64_t curOffSetCorrection;
-		int64_t maxPositive = 0;
-		int64_t minNegative = 0;
 		int64_t curDiff;
 		uint64_t count = 0;
 		typename TSortedContainer::const_iterator end( ids.end() );
 		for(typename TSortedContainer::const_iterator it = ids.begin(); it != end; ++it) {
 			curOffSetCorrection = static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, ids.size(), count)) + yintercept; 
-			curDiff = *it - curOffSetCorrection;
-			if (curDiff > maxPositive)
-				maxPositive = curDiff;
-			if (curDiff < minNegative)
-				minNegative = curDiff;
+			curDiff = static_cast<int64_t>(*it) - curOffSetCorrection;
+			minMax.update(curDiff);
 			count++;
 		}
-		uint64_t range = maxPositive - minNegative + 1;
-#ifdef __ANDROID__
-		idOffset = std::abs( (long int) minNegative);
-#else
-		idOffset = std::abs(minNegative);
-#endif
+		uint64_t range = minMax.max() - minMax.min() + 1;
+		//minMax.max = stored + idOffset
+		//minMax.min = stored + idOffset
+		idOffset = minMax.min();
 		return CompactUintArray::minStorageBits(range);
 	}
 
 	template<class TSortedContainer>
-	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint32_t & slopenom, int32_t & yintercept, uint8_t & bpn, uint32_t & idOffset) {
+	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint32_t & slopenom, int32_t & yintercept, uint8_t & bpn, int32_t & idOffset) {
 		double sloped, yinterceptd;
 		sserialize::statistics::linearRegression(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
@@ -88,38 +81,6 @@ private: //creation functions
 	#endif
 		bpn = getNeededBitsForLinearRegression(ids, slopenom, yintercept, idOffset);
 		return true;
-	/*
-		//now test all 4 cases of floor/ceiling combinations:
-		double slopenomd = sloped*(ids.size()-1);
-		uint32_t slopenoms[4] = {
-			uint32_t(floor(slopenomd)),
-			uint32_t(floor(slopenomd)),
-			uint32_t(ceil(slopenomd)),
-			uint32_t(ceil(slopenomd))
-		};
-		int32_t yintercepts[4] = {
-			int32_t(floor(yinterceptd)),
-			int32_t(ceil(yinterceptd)),
-			int32_t(floor(yinterceptd)),
-			int32_t(ceil(yinterceptd))
-		};
-
-		bpn =  33;
-		uint8_t bestMatch = 0;
-		idOffset = 0;
-		for(size_t i = 0; i < 4; i++) {
-			uint32_t tmpIdOffset;
-			uint8_t tmp = getNeededBitsForLinearRegression(ids, slopenoms[i], yintercepts[i], tmpIdOffset);
-			if (bpn > tmp) {
-				bpn = tmp;
-				idOffset = tmpIdOffset;
-				bestMatch = i;
-			}
-		}
-		slopenom = slopenoms[bestMatch];
-		yintercept = yintercepts[bestMatch];
-		return true;
-	*/
 	}
 
 public:
@@ -180,7 +141,7 @@ public:
 			uint32_t slopenom = 0;
 			int32_t yintercept = 0;
 			uint8_t bitsForIds = 32;
-			uint32_t idOffset = 0;
+			int32_t idOffset = 0;
 			if (regLine) {
 				getLinearRegressionParamsInteger(ids, slopenom, yintercept, bitsForIds, idOffset);
 			}
@@ -210,21 +171,21 @@ public:
 			if (destination.putVlPackedUint32(slopenom) < 0)
 				return false;
 
-			if (destination.putVlPackedUint32(idOffset) < 0)
+			if (destination.putVlPackedInt32(idOffset) < 0)
 				return false;
 
 			//push the remaining elements
 			int64_t offSetCorrectedId;
 			int64_t curOffSetCorrection = yintercept;
 			uint32_t count = 0;
-			uint32_t idStorageNeed = CompactUintArray::minStorageBytes(bitsForIds, ids.size());
+			UByteArrayAdapter::OffsetType idStorageNeed = CompactUintArray::minStorageBytes(bitsForIds, ids.size());
 			destination.growStorage(idStorageNeed);
 			CompactUintArray carr(destination+destination.tellPutPtr(), bitsForIds);
 			destination.incPutPtr(idStorageNeed);
 			typename TSortedContainer::const_iterator end (ids.end() );
 			for(typename TSortedContainer::const_iterator i = ids.begin(); i != end; ++i) {
 				curOffSetCorrection = yintercept + static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, ids.size(), count));
-				offSetCorrectedId = static_cast<int64_t>(*i)  - curOffSetCorrection + idOffset;
+				offSetCorrectedId = static_cast<int64_t>(*i)  - curOffSetCorrection - idOffset;
 				carr.set(count, offSetCorrectedId);
 				count++;
 			}

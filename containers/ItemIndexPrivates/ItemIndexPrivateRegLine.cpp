@@ -38,7 +38,7 @@ bool ItemIndexPrivateRegLine::init(UByteArrayAdapter index) {
 		}
 		index += curLen;
 
-		m_idOffset = index.getVlPackedUint32(0, &curLen); //up_vu32(m_index.data(), &curLen);
+		m_idOffset = index.getVlPackedInt32(0, &curLen); //up_vu32(m_index.data(), &curLen);
 		if (curLen < 0) {
 			sserialize::err("ItemIndexPrivateRegLine::init","ERROR: Index is invalid");
 			m_size = 0;
@@ -135,7 +135,7 @@ uint32_t ItemIndexPrivateRegLine::at(uint32_t pos) const {
 		pos = m_size-1; //if size==1 => pos = 0
 	uint32_t id;
 	if (m_size > 1) {
-		id =  getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos) + m_idStore.at(pos) + m_yintercept-m_idOffset;
+		id =  getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos) + m_idStore.at(pos) + m_yintercept+m_idOffset;
 	}
 	else {
 		id = m_idStore.at(0);
@@ -185,7 +185,7 @@ uint32_t ItemIndexPrivateRegLine::getRegressionLineBytes() const {
 	if (m_size > 1) {
 		size += psize_vu32(m_slopenom);
 		size += psize_vs32(m_yintercept);
-		size += psize_vu32(m_idOffset);
+		size += psize_vs32(m_idOffset);
 	}
 	return size;
 }
@@ -207,7 +207,7 @@ void ItemIndexPrivateRegLine::addFixedSizeHeaderRegLine(uint32_t idsInSet, uint8
 
 		adap.putVlPackedPad4Int32(4, lowestId); //y-intercept
 		adap.putVlPackedPad4Uint32(8, 0); // slopenom
-		adap.putVlPackedPad4Uint32(12, 0); //idoffset
+		adap.putVlPackedPad4Int32(12, 0); //idoffset
 	}
 	else {
 		lowestId += carray.at(0);
