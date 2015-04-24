@@ -301,7 +301,7 @@ public:
 	///you can only call this after finalize()
 
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
-	NO_OPTIMIZE_ON_DEBUG bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
+	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
 	
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
 	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
