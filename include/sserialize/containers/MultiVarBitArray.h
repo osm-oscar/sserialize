@@ -64,7 +64,7 @@ public:
 	///This is not valid if you used the second constructor with a given bitConfig
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t at(uint32_t pos, uint32_t subPos) const;
-	NO_OPTIMIZE_ON_DEBUG uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
+	uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
 
 	///return the data without the header
 	const UByteArrayAdapter & data() const;
