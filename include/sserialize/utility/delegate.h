@@ -36,7 +36,7 @@ protected:
 	inline DelegateObj * priv() const { return m_Private; }
 	
 private:
-		DelegateObj * m_Private;
+	DelegateObj * m_Private;
 };
 
 }
