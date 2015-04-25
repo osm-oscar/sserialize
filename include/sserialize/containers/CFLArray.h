@@ -8,20 +8,41 @@
 namespace sserialize {
 namespace detail {
 namespace CFLArray {
+
+	template<typename T_CONTAINER, bool T_IS_CONTAINER = std::is_class<T_CONTAINER>::value >
+	class DefaultPointerGetter;
+	
 	template<typename T_CONTAINER>
-	struct DefaultPointerGetter {
-		typename std::conditional<std::is_class<container_type>, T_CONTAINER::value_type, container_type>::type  * get(T_CONTAINER * container, uint64_t offset) {
+	class DefaultPointerGetter<T_CONTAINER, true> {
+	protected:
+		typedef typename T_CONTAINER::value_type value_type;
+	protected:
+		value_type * get(T_CONTAINER * container, uint64_t offset) {
 			return &((*container)[offset]);
 		}
-		const typename std::conditional<std::is_class<container_type>, T_CONTAINER::value_type, container_type>::type * get(const T_CONTAINER * container, uint64_t offset) const {
+		const value_type * get(const T_CONTAINER * container, uint64_t offset) const {
 			return &((*container)[offset]);
 		}
 	};
-}}
+	
+	template<typename T_CONTAINER>
+	class DefaultPointerGetter<T_CONTAINER, false> {
+	protected:
+		typedef T_CONTAINER value_type;
+	protected:
+		value_type * get(T_CONTAINER * container, uint64_t offset) {
+			return container+offset;
+		}
+		const value_type * get(const T_CONTAINER * container, uint64_t offset) const {
+			return container+offset;
+		}
+	};
+}} //end namespace detail::CFLArray
 
 ///Delegating container
 ///Container needs to provide a continuous storage like an c-array at least for the part where this container is in
 ///@T_POINTER_GETTER: needs to have a function [const] T_CONTAINER::value_type * get([const] T_CONTAINER * container, uint64_t offset) [const]
+///AND needs to define the value_type of the container
 ///It should NOT have any virtual functions in order to save space
 ///If you want to use a simple array of type T pass T as T_CONTAINER
 ///Currenty limits are:
@@ -31,7 +52,7 @@ template<typename T_CONTAINER, typename T_POINTER_GETTER = detail::CFLArray::Def
 class CFLArray final: private T_POINTER_GETTER {
 public:
 	typedef T_CONTAINER container_type;
-	typedef typename std::conditional<std::is_class<container_type>, container_type::value_type, container_type>::type value_type;
+	typedef typename T_POINTER_GETTER::value_type value_type;
 	typedef const value_type * const_iterator;
 	typedef value_type * iterator;
 	typedef std::reverse_iterator<iterator> reverse_iterator;
@@ -125,7 +146,7 @@ public:
 			std::copy(other.begin(), other.end(), m_d.copy);
 		}
 		else {
-			m_d.backend = other.backend;
+			m_d.backend = other.m_d.backend;
 		}
 		return *this;
 	}
@@ -233,6 +254,7 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest,
 	ac.flush();
 	return dest;
 }
+
 }//end namespace sserialize
 
 #endif
