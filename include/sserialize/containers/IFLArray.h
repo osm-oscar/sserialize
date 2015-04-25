@@ -26,7 +26,7 @@ public:
 	IFLArray(size_type size) : m_begin(0) {
 		m_begin = new value_type[size];
 		m_size = size;
-		m_delete = 0;
+		m_delete = 1;
 	}
 	///Create PolygonPointsContainer by copying elements from begin to end
 	template<typename T_INPUT_ITERATOR>
@@ -54,7 +54,7 @@ public:
 		m_size = other.m_size;
 		m_delete = other.m_delete;
 		if (other.m_delete) {
-			other.m_delete = false;
+			other.m_delete = 0;
 		}
 	}
 	~IFLArray() {
@@ -64,6 +64,9 @@ public:
 	}
 	IFLArray & operator=(const IFLArray & other) {
 		m_size = other.m_size;
+		if (m_delete) {
+			delete[] m_begin;
+		}
 		m_delete = other.m_delete;
 		if (m_delete) {
 			m_begin = new value_type[m_size];
@@ -74,8 +77,11 @@ public:
 		}
 		return *this;
 	}
-	IFLArray & operator=(const IFLArray && other) {
+	IFLArray & operator=(IFLArray && other) {
 		m_size = other.m_size;
+		if (m_delete) {
+			delete[] m_begin;
+		}
 		m_delete = other.m_delete;
 		m_begin = other.m_begin;
 		if (m_delete) {
