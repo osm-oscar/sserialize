@@ -10,7 +10,7 @@ namespace sserialize {
 ///This is especially usefull in combination with shared or file-based memory to create large vectors without the overhead of reallocation (the paging will do this for us)
 ///BUG: This together with MmappedMemory is totaly broken. Fix memory allocation and deallocation
 template<typename TValue>
-class MMVector {
+class MMVector final {
 public:
 	typedef TValue value_type;
 	typedef value_type * iterator;
