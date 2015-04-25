@@ -2,22 +2,22 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
-#include <sserialize/containers/IFLArray.h>
+#include <sserialize/containers/CFLArray.h>
 #include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
 #include <functional>
 
 
 template<typename T_TEST_DATA_TYPE, uint32_t T_TEST_COUNT>
-class IFLArrayTest: public CppUnit::TestFixture {
-CPPUNIT_TEST_SUITE( IFLArrayTest );
+class CFLArrayTest: public CppUnit::TestFixture {
+CPPUNIT_TEST_SUITE( CFLArrayTest );
 CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST( testReverseIterator );
 CPPUNIT_TEST( testSize );
 CPPUNIT_TEST_SUITE_END();
 private:
 	typedef T_TEST_DATA_TYPE value_type;
-	typedef sserialize::IFLArray<value_type> MyIFLArray;
+	typedef sserialize::CFLArray<value_type> MyIFLArray;
 	std::vector<value_type> m_d;
 public:
 	virtual void setUp() {
@@ -78,7 +78,7 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  IFLArrayTest<uint32_t, 1042>::suite() );
+	runner.addTest(  CFLArrayTest<uint32_t, 1042>::suite() );
 	runner.run();
 	return 0;
 }

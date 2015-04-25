@@ -58,7 +58,7 @@ ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
 ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
 ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie)
 ADD_TEST_TARGET_SINGLE(containers_DataSetFactory)
-ADD_TEST_TARGET_SINGLE(containers_IFLArray)
+ADD_TEST_TARGET_SINGLE(containers_CFLArray)
 
 #util
 ADD_TEST_TARGET_SINGLE(util_compactuintarray)
