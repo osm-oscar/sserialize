@@ -112,7 +112,7 @@ void RegionList::Region::swap(RegionList::Region & other) {
 	swap(type, other.type);
 	swap(storeId, other.storeId);
 	swap(ghId, other.ghId);
-	swap(other.boundary, other.boundary);
+	swap(boundary, other.boundary);
 }
 
 }}//end namespace detail::geohierarchy
