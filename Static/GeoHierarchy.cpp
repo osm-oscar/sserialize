@@ -629,13 +629,15 @@ void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const
 	}
 	while (queue.size()) {
 		r = region(queue.front());
-		queue.pop_front();
-		if (!rect.overlap(r.boundary())) {
-			continue;
+		if (queue.front() == 13010) {
+			std::cout << "Steinhaldenfeld" << std::endl;
 		}
+		queue.pop_front();
 		if (rect.contains(r.boundary())) {
-			sserialize::ItemIndex idx(idxStore.at(r.cellIndexPtr()));
-			intersectingCells.insert(intersectingCells.end(), idx.cbegin(), idx.cend());
+			if (r.itemsCount()) {
+				sserialize::ItemIndex idx(idxStore.at(r.cellIndexPtr()));
+				intersectingCells.insert(intersectingCells.end(), idx.cbegin(), idx.cend());
+			}
 		}
 		else {
 			for(uint32_t i(0), s(r.childrenSize()); i < s; ++i) {
@@ -646,10 +648,13 @@ void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const
 				}
 			}
 			//check cells that are not part of children regions
-			sserialize::ItemIndex idx(idxStore.at(r.cellIndexPtr()));
-			for(uint32_t cellId : idx) {
-				if (rect.overlap(cellBoundary(cellId))) {
-					intersectingCells.push_back(cellId);
+			uint32_t exclusiveCellIndexPtr = r.exclusiveCellIndexPtr();
+			if (idxStore.idxSize(exclusiveCellIndexPtr)) {
+				sserialize::ItemIndex idx(idxStore.at(exclusiveCellIndexPtr));
+				for(uint32_t cellId : idx) {
+					if (rect.overlap(cellBoundary(cellId))) {
+						intersectingCells.push_back(cellId);
+					}
 				}
 			}
 		}
