@@ -30,21 +30,27 @@ public:
 		uint32_t * m_itemsBegin;
 		uint32_t m_parentsSize;
 		uint32_t m_itemsSize;
+		sserialize::spatial::GeoRect m_boundary;
 	public:
 		Cell() : m_parentsBegin(0), m_itemsBegin(0), m_parentsSize(0), m_itemsSize(0) {}
-		Cell(uint32_t * cellIdBegin, uint32_t * cellIdEnd, uint32_t * cellItemsBegin, uint32_t * cellItemsEnd) :
+		Cell(uint32_t * cellIdBegin, uint32_t * cellIdEnd, uint32_t * cellItemsBegin, uint32_t * cellItemsEnd, const sserialize::spatial::GeoRect & boundary) :
 		m_parentsBegin(cellIdBegin), m_itemsBegin(cellItemsBegin),
-		m_parentsSize(cellIdEnd-cellIdBegin), m_itemsSize(cellItemsEnd-cellItemsBegin)
+		m_parentsSize(cellIdEnd-cellIdBegin), m_itemsSize(cellItemsEnd-cellItemsBegin),
+		m_boundary(boundary)
 		{}
-		Cell(uint32_t * cellIdBegin, uint32_t cellIdSize, uint32_t * cellItemsBegin, uint32_t cellItemsSize) :
+		Cell(uint32_t * cellIdBegin, uint32_t cellIdSize, uint32_t * cellItemsBegin, uint32_t cellItemsSize, const sserialize::spatial::GeoRect & boundary) :
 		m_parentsBegin(cellIdBegin), m_itemsBegin(cellItemsBegin),
-		m_parentsSize(cellIdSize), m_itemsSize(cellItemsSize)
+		m_parentsSize(cellIdSize), m_itemsSize(cellItemsSize),
+		m_boundary(boundary)
 		{}
-		ParentsContainer parents() { return (parentsBegin(), parentsSize());}
-		ConstItemsContainer parents() const { return ConstItemsContainer(const_cast<Cell*>(this)->parentsBegin(), parentsSize());}
+		inline ParentsContainer parents() { return (parentsBegin(), parentsSize());}
+		inline ConstItemsContainer parents() const { return ConstItemsContainer(const_cast<Cell*>(this)->parentsBegin(), parentsSize());}
 		
-		ItemsContainer items() { return ItemsContainer(itemsBegin(), itemsSize());}
-		ConstItemsContainer items() const { return ConstItemsContainer(const_cast<Cell*>(this)->itemsBegin(), itemsSize());}
+		inline ItemsContainer items() { return ItemsContainer(itemsBegin(), itemsSize());}
+		inline ConstItemsContainer items() const { return ConstItemsContainer(const_cast<Cell*>(this)->itemsBegin(), itemsSize());}
+		
+		inline const sserialize::spatial::GeoRect & boundary() const { return m_boundary; }
+		inline sserialize::spatial::GeoRect & boundary() { return m_boundary; }
 		
 		inline uint32_t * parentsBegin() { return m_parentsBegin; }
 		inline const uint32_t * parentsBegin() const { return m_parentsBegin; }
@@ -60,8 +66,8 @@ public:
 
 		inline uint32_t itemsSize() const { return m_itemsSize; }
 		
-		uint32_t parentAt(uint32_t pos) const { return *(parentsBegin()+pos);}
-		uint32_t itemAt(uint32_t pos) const { return *(itemsBegin()+pos);}
+		inline uint32_t parentAt(uint32_t pos) const { return *(parentsBegin()+pos);}
+		inline uint32_t itemAt(uint32_t pos) const { return *(itemsBegin()+pos);}
 	};
 	typedef sserialize::MMVector<Cell>::const_iterator const_iterator;
 	typedef sserialize::MMVector<Cell>::iterator iterator;

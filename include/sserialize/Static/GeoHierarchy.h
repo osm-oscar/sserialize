@@ -5,9 +5,10 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/spatial/GeoShape.h>
 #include <sserialize/containers/CellQueryResult.h>
+#include <sserialize/containers/TreedCQR.h>
 #include <unordered_map>
 
-#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 9
+#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 10
 
 namespace sserialize {
 namespace Static {
@@ -23,10 +24,11 @@ namespace spatial {
   *Version 7: add items count to cells
   *Version 8: add sparse parent ptrs to cells
   *Version 9: add storeIdToGhId map
-  *-------------------------------------------------------------------------------
-  *VERSION|StoreIdToGhId|RegionDesc|RegionPtrs |RegionBoundaries       |CellDesc  |CellPtrs
-  *-------------------------------------------------------------------------------
-  *  1Byte|Array<u32>   |MVBitArray|BCUintArray|(region.size+1)*GeoRect|MVBitArray|BCUintArray
+  *Version 10: add cell boundaries
+  *-------------------------------------------------------------------------------------------------------------------
+  *VERSION|StoreIdToGhId|RegionDesc|RegionPtrs |RegionBoundaries        |CellDesc  |CellPtrs   |CellBoundaries    
+  *--------------------------------------------------------------------------------------------------------------------
+  *  1Byte|Array<u32>   |MVBitArray|BCUintArray|(regions.size+1)*GeoRect|MVBitArray|BCUintArray|cells.size*GeoRect
   *
   * There has to be one Region more than used. The last one defines the end for the RegionPtrs
   *
@@ -197,6 +199,7 @@ private:
 	sserialize::Static::Array<sserialize::spatial::GeoRect> m_regionBoundaries;
 	CellDescriptionType m_cells;
 	CellPtrListType m_cellPtrs;
+	sserialize::Static::Array<sserialize::spatial::GeoRect> m_cellBoundaries;
 public:
 	GeoHierarchy();
 	GeoHierarchy(const UByteArrayAdapter & data);
@@ -224,6 +227,7 @@ public:
 	uint32_t ghIdToStoreId(uint32_t regionId) const;
 	
 	uint32_t regionCellIdxPtr(uint32_t pos) const;
+	uint32_t regionExclusiveCellIdxPtr(uint32_t pos) const;
 	uint32_t regionItemsPtr(uint32_t pos) const;
 	uint32_t regionItemsCount(uint32_t pos) const;
 	uint32_t regionCellSumItemsCount(uint32_t pos) const;
@@ -233,7 +237,8 @@ public:
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
 	
-	sserialize::spatial::GeoRect boundary(uint32_t id) const;
+	sserialize::spatial::GeoRect regionBoundary(uint32_t id) const;
+	sserialize::spatial::GeoRect cellBoundary(uint32_t id) const;
 	
 	SubSet subSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
 	FlatSubSet flatSubSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
@@ -261,12 +266,13 @@ public:
 	uint32_t parentsSize() const;
 	///@return pos of the parent
 	uint32_t parent(uint32_t pos) const;
+	sserialize::spatial::GeoRect boundary() const;
 };
 
 class Region {
 public:
-	typedef enum {RD_CELL_LIST_PTR=0, RD_TYPE=1, RD_STORE_ID=2, RD_CHILDREN_BEGIN=3, RD_PARENTS_OFFSET=4, RD_ITEMS_PTR=5, RD_ITEMS_COUNT=6,
-					RD__ENTRY_SIZE=7} RegionDescriptionAccessors;
+	typedef enum {RD_CELL_LIST_PTR=0, RD_EXCLUSIVE_CELL_LIST_PTR=1, RD_TYPE=2, RD_STORE_ID=3, RD_CHILDREN_BEGIN=4, RD_PARENTS_OFFSET=5, RD_ITEMS_PTR=6, RD_ITEMS_COUNT=7,
+					RD__ENTRY_SIZE=8} RegionDescriptionAccessors;
 private:
 	uint32_t m_pos;
 	RCPtrWrapper<GeoHierarchy> m_db;
@@ -280,6 +286,7 @@ public:
 	uint32_t storeId() const;
 	sserialize::spatial::GeoRect boundary() const;
 	uint32_t cellIndexPtr() const;
+	uint32_t exclusiveCellIndexPtr() const;
 	///Offset into PtrArray
 	uint32_t parentsBegin() const;
 	///Offset into PtrArray
@@ -317,7 +324,8 @@ public:
 	typedef detail::Cell Cell;
 	typedef detail::SubSet SubSet;
 	typedef detail::FlatSubSet FlatSubSet;
-
+private:
+	void cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, sserialize::ItemIndex & fullyMatchedCells) const;
 private:
 	RCPtrWrapper<detail::GeoHierarchy> m_priv;
 public:
@@ -357,16 +365,22 @@ public:
 	inline uint32_t regionCellSumItemsCount(uint32_t pos) const { return m_priv->regionCellSumItemsCount(pos);}
 	
 	inline uint32_t regionCellIdxPtr(uint32_t id) const { return m_priv->regionCellIdxPtr(id); }
+	///These are the cells that are only part of region_id and thus not part of a child
+	inline uint32_t regionExclusiveCellIdxPtr(uint32_t id) const { return m_priv->regionExclusiveCellIdxPtr(id); }
 	inline uint32_t regionParentsBegin(uint32_t id) const { return m_priv->regionParentsBegin(id);}
 	inline uint32_t regionParentsEnd(uint32_t id) const { return m_priv->regionParentsEnd(id); }
 	inline uint32_t regionPtrSize() const { return m_priv->regionPtrSize();}
 	inline uint32_t regionPtr(uint32_t pos) const { return m_priv->regionPtr(pos);}
 	
-	inline sserialize::spatial::GeoRect boundary(uint32_t id) const { return m_priv->boundary(id);}
+	inline sserialize::spatial::GeoRect regionBoundary(uint32_t id) const { return m_priv->regionBoundary(id);}
+	inline sserialize::spatial::GeoRect cellBoundary(uint32_t id) const { return m_priv->cellBoundary(id);}
 	
 	bool consistencyCheck(const sserialize::Static::ItemIndexStore& store) const;
 	
 	std::ostream & printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const;
+	
+	void cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, CellQueryResult & cqr) const;
+	void cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, TreedCellQueryResult & cqr) const;
 
 	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->subSet(cqr, sparse); }
 	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }

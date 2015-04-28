@@ -155,6 +155,10 @@ uint32_t Cell::parent(uint32_t pos) const {
 	return GeoHierarchy::npos;
 }
 
+sserialize::spatial::GeoRect Cell::boundary() const {
+	return m_db->cellBoundary(m_pos);
+}
+
 Region::Region() :
 m_pos(0),
 m_db(0)
@@ -176,11 +180,15 @@ uint32_t Region::storeId() const {
 }
 
 sserialize::spatial::GeoRect Region::boundary() const {
-	return m_db->boundary(m_pos);
+	return m_db->regionBoundary(m_pos);
 }
 
 uint32_t Region::cellIndexPtr() const {
 	return m_db->regions().at(m_pos, RD_CELL_LIST_PTR);
+}
+
+uint32_t Region::exclusiveCellIndexPtr() const {
+	return m_db->regionExclusiveCellIdxPtr(m_pos);
 }
 
 uint32_t Region::parentsBegin() const {
@@ -233,6 +241,7 @@ uint32_t Region::itemsCount() const {
 	return m_db->regionItemsCount(m_pos);
 }
 
+
 GeoHierarchy::GeoHierarchy() {}
 
 GeoHierarchy::GeoHierarchy(const UByteArrayAdapter & data) :
@@ -241,7 +250,8 @@ m_regions(data + (1+m_storeIdToGhId.getSizeInBytes())),
 m_regionPtrs(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes())),
 m_regionBoundaries(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes())),
 m_cells(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_regionBoundaries.getSizeInBytes())),
-m_cellPtrs(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_regionBoundaries.getSizeInBytes()+m_cells.getSizeInBytes()))
+m_cellPtrs(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_regionBoundaries.getSizeInBytes()+m_cells.getSizeInBytes())),
+m_cellBoundaries(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes()+m_regionPtrs.getSizeInBytes()+m_regionBoundaries.getSizeInBytes()+m_cells.getSizeInBytes()+m_cellPtrs.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION, data.at(0), "sserialize::Static::GeoHierarchy");
 }
@@ -249,7 +259,9 @@ m_cellPtrs(data + (1+m_storeIdToGhId.getSizeInBytes()+m_regions.getSizeInBytes()
 GeoHierarchy::~GeoHierarchy() {}
 
 OffsetType GeoHierarchy::getSizeInBytes() const {
-	return 1 + m_regionPtrs.getSizeInBytes() + m_regions.getSizeInBytes() +  m_cells.getSizeInBytes() + m_cellPtrs.getSizeInBytes();
+	return 1 + m_storeIdToGhId.getSizeInBytes() +
+			m_regions.getSizeInBytes() + m_regionPtrs.getSizeInBytes() + m_regionBoundaries.getSizeInBytes() +
+			m_cells.getSizeInBytes() + m_cellPtrs.getSizeInBytes() + m_cellBoundaries.getSizeInBytes();
 }
 
 uint32_t GeoHierarchy::cellSize() const {
@@ -298,6 +310,10 @@ uint32_t GeoHierarchy::regionCellIdxPtr(uint32_t pos) const {
 	return m_regions.at(pos, Region::RD_CELL_LIST_PTR);
 }
 
+uint32_t GeoHierarchy::regionExclusiveCellIdxPtr(uint32_t pos) const {
+	return m_regions.at(pos, Region::RD_EXCLUSIVE_CELL_LIST_PTR);
+}
+
 uint32_t GeoHierarchy::regionItemsPtr(uint32_t pos) const {
 	return m_regions.at(pos, Region::RD_ITEMS_PTR);
 }
@@ -336,8 +352,12 @@ uint32_t GeoHierarchy::ghIdToStoreId(uint32_t regionId) const {
 }
 
 
-sserialize::spatial::GeoRect GeoHierarchy::boundary(uint32_t pos) const {
+sserialize::spatial::GeoRect GeoHierarchy::regionBoundary(uint32_t pos) const {
 	return m_regionBoundaries.at(pos);
+}
+
+sserialize::spatial::GeoRect GeoHierarchy::cellBoundary(uint32_t id) const {
+	return m_cellBoundaries.at(id);
 }
 
 //TODO:implement sparse SubSet creation
@@ -592,6 +612,63 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 		}
 	}
 	return allOk;
+}
+
+
+void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, sserialize::ItemIndex & fullyMatchedCells) const {
+	std::deque<uint32_t> queue;
+	std::vector<uint32_t> intersectingCells;
+	std::unordered_set<uint32_t> visitedRegions;
+	Region r(rootRegion());
+	for(uint32_t i(0), s(r.childrenSize()); i < s; ++i) {
+		uint32_t childId = r.child(i);
+		if (rect.overlap(regionBoundary(childId))) {
+			queue.push_back(childId);
+			visitedRegions.insert(childId);
+		}
+	}
+	while (queue.size()) {
+		r = region(queue.front());
+		queue.pop_front();
+		if (!rect.overlap(r.boundary())) {
+			continue;
+		}
+		if (rect.contains(r.boundary())) {
+			sserialize::ItemIndex idx(idxStore.at(r.cellIndexPtr()));
+			intersectingCells.insert(intersectingCells.end(), idx.cbegin(), idx.cend());
+		}
+		else {
+			for(uint32_t i(0), s(r.childrenSize()); i < s; ++i) {
+				uint32_t childId = r.child(i);
+				if (!visitedRegions.count(childId) && rect.overlap(regionBoundary(childId))) {
+					queue.push_back(childId);
+					visitedRegions.insert(childId);
+				}
+			}
+			//check cells that are not part of children regions
+			sserialize::ItemIndex idx(idxStore.at(r.cellIndexPtr()));
+			for(uint32_t cellId : idx) {
+				if (rect.overlap(cellBoundary(cellId))) {
+					intersectingCells.push_back(cellId);
+				}
+			}
+		}
+	}
+	std::sort(intersectingCells.begin(), intersectingCells.end());
+	intersectingCells.resize(std::unique(intersectingCells.begin(), intersectingCells.end())-intersectingCells.begin());
+	fullyMatchedCells = sserialize::ItemIndex::absorb(intersectingCells);
+}
+
+void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, CellQueryResult & cqr) const {
+	sserialize::ItemIndex tmp;
+	this->cqr(idxStore, rect, tmp);
+	cqr = CellQueryResult(tmp, *this, idxStore);
+}
+
+void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, TreedCellQueryResult & cqr) const {
+	sserialize::ItemIndex tmp;
+	this->cqr(idxStore, rect, tmp);
+	cqr = TreedCellQueryResult(tmp, *this, idxStore);
 }
 
 }}} //end namespace
