@@ -660,7 +660,7 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy&
 			ok = false;
 		}
 		if (c.boundary() != sc.boundary()) {
-			std::cout << "Boundary of region " << i << " differs" << std::endl;
+			std::cout << "Boundary of cell " << i << " differs" << std::endl;
 			ok = false;
 		}
 
