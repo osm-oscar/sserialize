@@ -4,16 +4,14 @@ namespace sserialize {
 
 
 std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
-	long tms[5];
-	tms[0] = tm.elapsedSeconds();//micro
-	tms[1] = tms[0]/1000; //milli
-	tms[2] = tms[1]/1000; //secons
-	tms[3] = tms[2]/60; //minutes
-	tms[4] = tms[3]/60; //hours
-	const char * e = "umsMd";
+	long tms[3];
+	tms[0] = tm.elapsedSeconds()%60; //seconds
+	tms[1] = (tm.elapsedSeconds()/60)%60; //minutes
+	tms[2] = tm.elapsedSeconds()/3600; //hours
+	const char * e = "sMh";
 	
 	bool hasPrev = false;
-	for(int i = 4; i >= 0; ++i) {
+	for(int i = 2; i >= 0; --i) {
 		if (tms[i]) {
 			if (hasPrev)
 				out << " ";
