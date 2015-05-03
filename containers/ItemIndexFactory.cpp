@@ -97,7 +97,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	m_indexStore = m_header;
 	m_indexStore.shrinkToPutPtr();
 	m_header.resetPtrs();
-	addIndex(std::set<uint32_t>(), 0);
+	addIndex(std::set<uint32_t>());
 }
 
 std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemIndexStore& store) {
@@ -184,13 +184,13 @@ bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint32_t id
 	return eq;
 }
 
-uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx, bool * ok, OffsetType * indexOffset) {
+uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx) {
 	std::vector<uint32_t> tmp;
 	idx.putInto(tmp);
-	return addIndex(tmp, ok, indexOffset);
+	return addIndex(tmp);
 }
 
-uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize::OffsetType * indexOffset, uint32_t idxSize) {
+uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize) {
 	uint64_t hv;
 	int64_t id = -1;
 	if (m_useDeduplication) {
@@ -219,9 +219,6 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, sserialize
 	}
 	else {//index is in store, so we have deduplication enabled
 		++m_hitCount;
-	}
-	if (indexOffset) {
-		*indexOffset = m_idToOffsets.at(id);
 	}
 	return id;
 }

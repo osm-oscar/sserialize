@@ -350,8 +350,8 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions[i];
 		bool ok = true;
-		uint32_t cellListIndexPtr = idxFactory.addIndex(r.cells(), &ok);
-		allOk = allOk && ok;
+		uint32_t cellListIndexPtr = idxFactory.addIndex(r.cells());
+		allOk = allOk;
 		uint32_t exclusiveCellListIndexPtr;
 		if (r.childrenSize()) {
 			//get the region exclusive cells
@@ -363,7 +363,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 					tmp.push_back(cellId);
 				}
 			}
-			exclusiveCellListIndexPtr = idxFactory.addIndex(tmp, &ok);
+			exclusiveCellListIndexPtr = idxFactory.addIndex(tmp);
 		}
 		else {
 			exclusiveCellListIndexPtr = cellListIndexPtr;
@@ -484,14 +484,12 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
 		const Cell & c = m_cells[i];
 		splitCellParents(i, cellDirectParents, cellRemainingParents);
-		bool ok = true;
-		uint32_t itemPtr = idxFactory.addIndex(c.items(), &ok);
+		uint32_t itemPtr = idxFactory.addIndex(c.items());
 		mcdItemPtr = std::max<uint32_t>(mcdItemPtr, itemPtr);
 		mcdItemCount = std::max<uint32_t>(mcdItemCount, c.itemsSize());
 		mcdDirectParentsCount = std::max<uint32_t>(mcdDirectParentsCount, cellDirectParents.size());
 		curPtrOffset += c.parentsSize();
 		cellItemsIndexPtrs[i] = itemPtr;
-		allOk = allOk && ok;
 	}
 	mcdParentBegin = curPtrOffset;
 	

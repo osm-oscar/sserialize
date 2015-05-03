@@ -26,11 +26,11 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 	
 	if (node->exactValues.size()) {
 		idxTypes |= Static::TrieNodePrivate::IT_EXACT;
-		nodeInfo.exactIndexPtr = config.indexFactory->addIndex(node->exactValues, &ok);
+		nodeInfo.exactIndexPtr = config.indexFactory->addIndex(node->exactValues);
 	}
 	if (node->subStrValues.size()) {
 		idxTypes |= Static::TrieNodePrivate::IT_SUFFIX;
-		nodeInfo.suffixIndexPtr = config.indexFactory->addIndex(node->subStrValues, &ok);
+		nodeInfo.suffixIndexPtr = config.indexFactory->addIndex(node->subStrValues);
 	}
 	
 	if (node->children.size()) {
@@ -43,7 +43,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 				prefixIndices.push_back( it->second->exactValues );
 			}
 			node->exactValues = ItemSetContainer::uniteSortedInPlace(prefixIndices.begin(), prefixIndices.end());
-			nodeInfo.prefixIndexPtr = config.indexFactory->addIndex(node->exactValues, &ok);
+			nodeInfo.prefixIndexPtr = config.indexFactory->addIndex(node->exactValues);
 			idxTypes |= Static::TrieNodePrivate::IT_PREFIX;
 		}
 		if (m_hasSuffixes) {
@@ -59,7 +59,7 @@ bool SinglePassTrie::handleNodeIndices(Node * node, GeneralizedTrieCreatorConfig
 // 			std::vector<uint32_t> subStrIndex;
 // 			mergeSortedContainer(subStrIndex, node->subStrValues, node->exactValues);
 // 			nodeInfo.suffixPrefixIndexPtr = config.indexFactory.addIndex(subStrIndex, &ok);
-			nodeInfo.suffixPrefixIndexPtr = config.indexFactory->addIndex(node->subStrValues, &ok);
+			nodeInfo.suffixPrefixIndexPtr = config.indexFactory->addIndex(node->subStrValues);
 			idxTypes |= Static::TrieNodePrivate::IT_SUFFIX_PREFIX;
 		}
 	}

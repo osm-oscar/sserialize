@@ -59,10 +59,11 @@ private:
 	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
 	///adds the data of an index to store, @thread-safety: true
-	uint32_t addIndex(const std::vector<uint8_t> & idx, OffsetType * indexOffset = 0, uint32_t idxSize = 0);
-private://deleted functions
-	ItemIndexFactory(const ItemIndexFactory & other);
-	ItemIndexFactory & operator=(const ItemIndexFactory & other);
+	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize = 0);
+	inline ItemIndex indexByOffset(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
+public://deleted functions
+	ItemIndexFactory(const ItemIndexFactory & other) = delete;
+	ItemIndexFactory & operator=(const ItemIndexFactory & other) = delete;
 public:
 	ItemIndexFactory(bool memoryBase = false);
 	ItemIndexFactory(ItemIndexFactory && other);
@@ -83,16 +84,14 @@ public:
 	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
 	//default is on
 	void setDeduplication(bool dedup) { m_useDeduplication  = dedup; }
-	
-	inline ItemIndex indexByOffset(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
-	
+		
 	inline ItemIndex indexById(uint32_t id) const { return indexByOffset(m_idToOffsets.at(id));}
 	inline uint32_t idxSize(uint32_t id) const { return m_idxSizes.at(id); }
 
 	template<class TSortedContainer>
-	uint32_t addIndex(const TSortedContainer & idx, bool * ok = 0, OffsetType * indexOffset = 0);
+	uint32_t addIndex(const TSortedContainer & idx);
 	
-	uint32_t addIndex(const ItemIndex & idx, bool * ok = 0, OffsetType * indexOffset = 0);
+	uint32_t addIndex(const ItemIndex & idx);
 	
 	inline UByteArrayAdapter & getIndexStore() { return m_indexStore;}
 	inline uint32_t hitCount() { return m_hitCount; }
@@ -118,72 +117,14 @@ public:
 };
 
 template<class TSortedContainer>
-uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, OffsetType * indexOffset) {
-	#if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
-	if (!std::is_sorted(idx.cbegin(), idx.cend()) || !sserialize::is_strong_monotone_ascending(idx.cbegin(), idx.cend())) {
-		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted/and or non-strong-monotone index");
-	}
-	#endif
-	bool mok = false;
+uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 	std::vector<uint8_t> s;
-	if (m_type == ItemIndex::T_REGLINE) {
-		mok = ItemIndexPrivateRegLine::create(idx, s, m_bitWidth, m_useRegLine);
-	}
-	else if (m_type == ItemIndex::T_WAH) {
-		mok = true;
-		std::vector<uint8_t> mys;
-		UByteArrayAdapter dest(&mys);
-		ItemIndexPrivateWAH::create(idx, dest);
-		if (m_compressionType == Static::ItemIndexStore::IndexCompressionType::IC_VARUINT32) {
-			UByteArrayAdapter nd(&s);
-			for(std::vector<uint8_t>::const_iterator it(mys.begin()), end(mys.end()); it != end; it += 4) {
-				uint32_t v = up_u32(&(*it));
-				nd.putVlPackedUint32(v);
-			}
-		}
-		else {
-			s.swap(mys);
-		}
-	}
-	else if (m_type == ItemIndex::T_DE) {
-		mok = true;
-		UByteArrayAdapter dest(&s);
-		ItemIndexPrivateDE::create(idx, dest);
-	}
-	else if (m_type == ItemIndex::T_RLE_DE) {
-		mok = true;
-		UByteArrayAdapter dest(&s);
-		ItemIndexPrivateRleDE::create(idx, dest);
-	}
-	else if (m_type == ItemIndex::T_SIMPLE) {
-		mok = true;
-		UByteArrayAdapter dest(&s);
-		ItemIndexPrivateSimple::create(idx, dest);
-	}
-	else if (m_type == ItemIndex::T_NATIVE) {
-		mok = true;
-		UByteArrayAdapter dest(&s);
-		detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx.cbegin(), idx.cend(), dest);
-	}
-	if (ok)
-		*ok = mok;
-#if defined(DEBUG_CHECK_SERIALIZED_INDEX) || defined(DEBUG_CHECK_ALL)
+	UByteArrayAdapter ds(&s, false);
+	bool mok = create(idx, ds, m_type);
+	assert(mok);
 	if (mok) {
-		uint64_t idxOf;
-		uint32_t idxId = addIndex(s, &idxOf, idx.size());
-		sserialize::ItemIndex sIdx = indexByOffset(idxOf);
-		if (sIdx != idx) {
-			std::cerr << "Broken index detected in ItemIndexFactory" << std::endl;
-		}
-		if (indexOffset)
-			*indexOffset = idxOf;
-		return idxId;
+		return addIndex(s, idx.size());
 	}
-#else
-	if (mok) {
-		return addIndex(s, indexOffset, idx.size());
-	}
-#endif
 	else {
 		return 0;
 	}
@@ -191,22 +132,42 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx, bool * ok, Off
 
 template<typename TSortedContainer>
 bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, ItemIndex::Types type) {
+	#if defined(DEBUG_CHECK_INDEX_SERIALIZATION) || defined(DEBUG_CHECK_ALL)
+	if (!std::is_sorted(idx.cbegin(), idx.cend()) || !sserialize::is_strong_monotone_ascending(idx.cbegin(), idx.cend())) {
+		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted/and or non-strong-monotone index");
+	}
+	UByteArrayAdapter::OffsetType destBegin = dest.tellPutPtr();
+	#endif
+	bool ok = false;
 	switch(type) {
 	case ItemIndex::T_NATIVE:
-		return sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx, dest);
+		ok = sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx, dest);
+		break;
 	case ItemIndex::T_SIMPLE:
-		return ItemIndexPrivateSimple::create(idx, dest);
+		ok = ItemIndexPrivateSimple::create(idx, dest);
+		break;
 	case ItemIndex::T_REGLINE:
-		return ItemIndexPrivateRegLine::create(idx, dest, -1, true);
+		ok = ItemIndexPrivateRegLine::create(idx, dest, -1, true);
+		break;
 	case ItemIndex::T_WAH:
-		return ItemIndexPrivateWAH::create(idx, dest);
+		ok = ItemIndexPrivateWAH::create(idx, dest);
+		break;
 	case ItemIndex::T_DE:
-		return ItemIndexPrivateDE::create(idx, dest);
+		ok = ItemIndexPrivateDE::create(idx, dest);
+		break;
 	case ItemIndex::T_RLE_DE:
-		return ItemIndexPrivateRleDE::create(idx ,dest);
+		ok = ItemIndexPrivateRleDE::create(idx ,dest);
+		break;
 	default:
-		return false;
+		break;
 	}
+#if defined(DEBUG_CHECK_INDEX_SERIALIZATION) || defined(DEBUG_CHECK_ALL)
+	if (ok) {
+		sserialize::ItemIndex sIdx(dest+destBegin, type);
+		ok = (sIdx == idx);
+	}
+#endif
+	return ok;
 }
 
 template<typename TSortedContainer>
