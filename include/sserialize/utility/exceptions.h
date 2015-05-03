@@ -99,6 +99,13 @@ public:
 	}
 };
 
+class ConfigurationException: public Exception {
+public:
+	ConfigurationException(const std::string & where, const std::string & what) :
+	Exception("ConfigurationException in " + where + ": " + what)
+	{}
+};
+
 }//end namespace
 
 #define SSERIALIZE_VERSION_MISSMATCH_CHECK(__WANTVERSION, __HAVEVERSION, __MSG) do { if (__WANTVERSION != __HAVEVERSION) throw sserialize::VersionMissMatchException(__MSG, __WANTVERSION, __HAVEVERSION); } while(0);
