@@ -171,6 +171,15 @@ void GeoHierarchy::createRootRegion() {
 bool GeoHierarchy::checkConsistency() {
 	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
 		const Region & r = m_regions.at(i);
+		for(uint32_t x : r.cells()) {
+			if (!r.boundary.contains(m_cells.at(x).boundary())) {
+				std::cout << "Region " << i << " has cells with non-contained boundary" << std::endl;
+				return false;
+			}
+		}
+	}
+	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+		const Region & r = m_regions.at(i);
 		if (r.childrenSize() && !std::is_sorted(r.childrenBegin(), r.childrenEnd())) {
 			std::cout << "Region " << i << " has unsorted children" << std::endl;
 			return false;
