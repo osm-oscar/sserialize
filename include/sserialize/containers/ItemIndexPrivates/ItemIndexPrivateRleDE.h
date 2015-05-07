@@ -9,9 +9,9 @@ namespace sserialize {
 /** This implements a difference run-length encoded index
   *
   *--------------------------------------------------------------------------------------
-  * SIZE |COUNT |DATA
+  * COUNT|SIZE|DATA
   *--------------------------------------------------------------------------------------
-  *uint32|uint32|*
+  * vu32|vu32 |*
   *--------------------------------------------------------------------------------------
   * SIZE is the size of the DATA section
   * COUNT is the number of elements
@@ -19,7 +19,7 @@ namespace sserialize {
   * If data[i] & 0x1 then data is a rle and the next varuint32 tells the difference between the (data[i] >> 1) elements
   *
   *
-  * TODO:get rid of the first 8 Bytes, use vu32 instead, swap SIZE and COUNT, so that for COUNT==1 the size can be dropped
+  * TODO:  make sure that for COUNT==1 the size can be dropped
   *
   */
   
@@ -27,7 +27,8 @@ class ItemIndexPrivateRleDE;
   
 class ItemIndexPrivateRleDECreator {
 public:
-	UByteArrayAdapter & m_data;
+	UByteArrayAdapter & m_dest;
+	UByteArrayAdapter m_data;
 	uint32_t m_beginning;
 	uint32_t m_rle;
 	uint32_t m_lastDiff;
@@ -46,16 +47,22 @@ private:
 		}
 		m_rle = 0;
 	}
-	void flushHeader() {
-		m_data.putUint32(m_beginning, m_data.tellPutPtr() - (m_beginning + 8));
-		m_data.putUint32(m_beginning+4, m_count);
+	//flushed the data and header to m_dest
+	void flushData() {
+		int len = m_dest.putVlPackedUint32(m_beginning, m_count);
+		len += m_dest.putVlPackedUint32(m_beginning+len, m_data.size());
+		m_dest.put(m_beginning+len, m_data);
 	}
 public:
 	ItemIndexPrivateRleDECreator(UByteArrayAdapter & data) :
-	m_data(data), m_beginning(data.tellPutPtr()), m_rle(0), m_lastDiff(0), m_count(0), m_prev(0) {
-		m_data.putUint32(0);
-		m_data.putUint32(0);
-	}
+	m_dest(data),
+	m_data(new std::vector<uint8_t>(), true),
+	m_beginning(data.tellPutPtr()),
+	m_rle(0),
+	m_lastDiff(0),
+	m_count(0),
+	m_prev(0)
+	{}
 	virtual ~ItemIndexPrivateRleDECreator() {}
 	inline uint32_t size() const { return m_count; }
 	///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
@@ -86,17 +93,17 @@ public:
 		flushRle();
 		m_data.put(appendData);
 		m_count += countInData;
-		flushHeader();
+		flushData();
 	}
 	///you need to call this prior to using toIndex() or using the data
 	///you should not push after calling this function
 	void flush() {
 		flushRle();
-		flushHeader();
+		flushData();
 	}
 
 	ItemIndex getIndex() {
-		return ItemIndex(UByteArrayAdapter(m_data, m_beginning), ItemIndex::T_RLE_DE);
+		return ItemIndex(UByteArrayAdapter(m_dest, m_beginning), ItemIndex::T_RLE_DE);
 	}
 	
 	ItemIndexPrivate * getPrivateIndex();

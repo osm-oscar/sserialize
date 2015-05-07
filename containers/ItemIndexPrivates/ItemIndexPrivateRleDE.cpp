@@ -72,11 +72,17 @@ ItemIndexPrivate::const_iterator_base_type * ItemIndexPrivateRleDE::MyIterator::
 
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UByteArrayAdapter & data) :
-m_data(UByteArrayAdapter(data, 8, data.getUint32(0))),
-m_size(data.getUint32(4)),
+m_data(data),
+m_size(m_data.getVlPackedUint32()),
 m_dataOffset(0),
 m_curId(0)
-{}
+{
+	uint32_t myDataSize = m_data.getVlPackedUint32();
+	m_data.shrinkToGetPtr();
+	if (m_data.size() != myDataSize) {
+		m_data.resize(myDataSize);
+	}
+}
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UDWIterator & /*data*/) {
 	throw sserialize::UnimplementedFunctionException("ItemIndexPrivateRleDE with UDWIterator is unsupported as of now!");
@@ -166,7 +172,9 @@ uint8_t ItemIndexPrivateRleDE::bpn() const {
 }
 
 
-uint32_t ItemIndexPrivateRleDE::getSizeInBytes() const { return m_data.size() + 8; }
+uint32_t ItemIndexPrivateRleDE::getSizeInBytes() const {
+	return m_data.size() + sserialize::psize_v<uint32_t>(m_size) + sserialize::psize_v<uint32_t>(m_data.size());
+}
 
 void ItemIndexPrivateRleDE::putInto(DynamicBitSet & bitSet) const {
 	UByteArrayAdapter tmpData(m_data);
