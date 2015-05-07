@@ -10,7 +10,7 @@
 namespace sserialize {
 
 
-template<typename T_OUTPUT_ITERATOR, typename T_TYPE>
+template<typename T_OUTPUT_ITERATOR, typename T_TYPE = typename std::iterator_traits<T_OUTPUT_ITERATOR>::value_type >
 struct TestDataGenerator {
 	static void generate(uint32_t count, T_OUTPUT_ITERATOR out);
 };
