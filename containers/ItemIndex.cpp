@@ -376,6 +376,7 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 	case (ItemIndex::T_REGLINE):
 	case (ItemIndex::T_SIMPLE):
 		return ItemIndex( ItemIndexPrivateSimple::fromBitSet(bitSet) );
+	case (ItemIndex::T_STL_DEQUE):
 	case (ItemIndex::T_STL_VECTOR):
 		return ItemIndex( ItemIndexPrivateStlVector::fromBitSet(bitSet) );
 	case (ItemIndex::T_EMPTY):
