@@ -47,11 +47,12 @@ private:
 		}
 		m_rle = 0;
 	}
-	//flushed the data and header to m_dest
+	//flushes the data and header to m_dest
 	void flushData() {
-		int len = m_dest.putVlPackedUint32(m_beginning, m_count);
-		len += m_dest.putVlPackedUint32(m_beginning+len, m_data.size());
-		m_dest.put(m_beginning+len, m_data);
+		m_dest.setPutPtr(m_beginning);
+		int len = m_dest.putVlPackedUint32(m_count);
+		len += m_dest.putVlPackedUint32(m_data.size());
+		m_dest.put(m_data);
 	}
 public:
 	ItemIndexPrivateRleDECreator(UByteArrayAdapter & data) :
@@ -208,6 +209,8 @@ template<typename TFunc>
 sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize::ItemIndexPrivateRleDE * cother) const {
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
+	aData.resetGetPtr();
+	bData.resetGetPtr();
 	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(dest);
 

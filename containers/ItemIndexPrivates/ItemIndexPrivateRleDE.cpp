@@ -7,7 +7,7 @@
 namespace sserialize {
 
 ItemIndexPrivate * ItemIndexPrivateRleDECreator::getPrivateIndex() {
-	return new ItemIndexPrivateRleDE(UByteArrayAdapter(m_data, m_beginning));
+	return new ItemIndexPrivateRleDE(UByteArrayAdapter(m_dest, m_beginning));
 }
 
 ///ITERATOR
