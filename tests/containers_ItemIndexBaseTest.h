@@ -42,7 +42,9 @@ protected:
 	virtual bool create(const std::set<uint32_t> & srcSet, sserialize::ItemIndex & idx) = 0;
 	virtual bool create(const std::vector<uint32_t> & srcSet, sserialize::ItemIndex & idx) = 0;
 	size_t TEST_RUNS;
+	sserialize::ItemIndex::Types m_idxType;
 public:
+	ItemIndexPrivateBaseTest(sserialize::ItemIndex::Types idxType) : m_idxType(idxType) {}
 	virtual void setUp() {TEST_RUNS = 256;}
 	virtual void tearDown() {}
 	
@@ -317,7 +319,7 @@ public:
 			CPPUNIT_ASSERT_MESSAGE("test index unequal", realValues == idx);
 			
 			idx.putInto(bitSet);
-			CPPUNIT_ASSERT_MESSAGE("index from DynamicBitSet unequal", idx == bitSet.toIndex(ItemIndex::T_RLE_DE));
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("index from DynamicBitSet unequal in testrun=", i), realValues == bitSet.toIndex(m_idxType));
 			
 		}
 	}

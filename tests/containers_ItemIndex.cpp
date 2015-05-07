@@ -33,8 +33,17 @@ protected:
 	virtual bool create(const std::vector<uint32_t> & srcSet, sserialize::ItemIndex & idx) override {
 		return createBase(srcSet, idx);
 	}
+public:
+	ItemIndexPrivateStlContainerTest() : ItemIndexPrivateBaseTest(sserialize::ItemIndex::ItemIndex::T_STL_VECTOR) {}
 };
 
+template<>
+ItemIndexPrivateStlContainerTest< std::vector<uint32_t> >::ItemIndexPrivateStlContainerTest() :
+ItemIndexPrivateBaseTest(sserialize::ItemIndex::ItemIndex::T_STL_VECTOR) {}
+
+template<>
+ItemIndexPrivateStlContainerTest< std::deque<uint32_t> >::ItemIndexPrivateStlContainerTest() :
+ItemIndexPrivateBaseTest(sserialize::ItemIndex::ItemIndex::T_STL_DEQUE) {}
 
 template<ItemIndex::Types T_TYPE>
 class ItemIndexPrivateSerializedTest: public ItemIndexPrivateBaseTest {
@@ -65,6 +74,8 @@ protected:
 	virtual bool create(const std::vector<uint32_t> & srcSet, sserialize::ItemIndex & idx) override {
 		return createBase(srcSet, idx);
 	}
+public:
+	ItemIndexPrivateSerializedTest() : ItemIndexPrivateBaseTest(T_TYPE) {}
 };
 
 int main() {
