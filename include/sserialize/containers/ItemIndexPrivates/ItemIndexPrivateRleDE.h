@@ -29,7 +29,7 @@ class ItemIndexPrivateRleDECreator {
 public:
 	UByteArrayAdapter & m_dest;
 	UByteArrayAdapter m_data;
-	uint32_t m_beginning;
+	sserialize::UByteArrayAdapter::OffsetType m_beginning;
 	uint32_t m_rle;
 	uint32_t m_lastDiff;
 	uint32_t m_count;
