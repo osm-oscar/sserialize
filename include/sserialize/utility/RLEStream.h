@@ -4,10 +4,12 @@
 
 namespace sserialize {
 /**
-  * We have to encode in each byte the following information:
-  * rle-byte => count is unsigned, next code-word is signed
-  * no-rle-byte => remaining bits encode a signed word
-  *
+  * We have to encode in each byte the following information in the first 2 Bits:
+  * 0x0 => no rle, positive delta
+  * 0x1 => no rle, negative delta
+  * 0x2 => no rle, no delta 
+  * 0x3 => rle
+  * If rle => next codeword is signed
   *
   */
 
@@ -32,8 +34,15 @@ public:
 		void flush();
 	};
 public:
+	RLEStream();
+	RLEStream(const RLEStream & other);
+	RLEStream(RLEStream && other);
 	RLEStream(const sserialize::UByteArrayAdapter & begin);
 	~RLEStream() {}
+	RLEStream & operator=(const RLEStream & other);
+	RLEStream & operator=(RLEStream && other);
+	const UByteArrayAdapter & data() const { return m_d; }
+	inline bool hasNext() const { return m_d.getPtrHasNext(); }
 	RLEStream & operator++();
 	inline uint32_t operator*() const {
 		return m_curId;

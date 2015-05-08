@@ -11,6 +11,7 @@ CPPUNIT_TEST_SUITE( TestRLEStream );
 CPPUNIT_TEST( testPositiveRle );
 CPPUNIT_TEST( testNegativeRle );
 CPPUNIT_TEST( testRandom );
+CPPUNIT_TEST( testMixed );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -32,6 +33,40 @@ public:
 		}
 		cto.flush();
 		CPPUNIT_ASSERT(tmpData.size() < 15);
+	}
+	void testMixed() {
+		sserialize::UByteArrayAdapter tmpData(new std::vector<uint8_t>(), true);
+		sserialize::RLEStream::Creator cto(tmpData);
+		std::vector<uint32_t> real;
+		uint32_t value = 0;
+		for(uint32_t c(0); c < 1000000; ++c) {
+			uint32_t num = rand();
+			if ((num & 0x3) == 0x0) {
+				for(uint32_t c2(0); c2 > (num & 0xF); ++c2) {
+					value += (num >> 4) & 0x3F;
+					real.push_back(value);
+				}
+			}
+			else if ((num & 0x3) == 0x1) {
+				for(uint32_t c2(0); c2 > (num & 0xF); ++c2) {
+					value -= (num >> 4) & 0x3F;
+					real.push_back(value);
+				}
+			}
+			else {
+				real.push_back(num);
+			}
+		}
+		for(uint32_t i(0), s(real.size()); i < s; ++i) {
+			cto.put(real[i]);
+		}
+		cto.flush();
+		tmpData.resetPtrs();
+		sserialize::RLEStream rls(tmpData);
+		for(uint32_t i(0), s(real.size()); i < s; ++i) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("At ", i), *rls, real[i]);
+			++rls;
+		}
 	}
 	void testRandom() {
 		sserialize::UByteArrayAdapter tmpData(new std::vector<uint8_t>(), true);
