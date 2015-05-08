@@ -224,17 +224,4 @@ std::ostream & FlatTrie<TValue>::printStats(std::ostream & out) const {
 
 }}}//end namespace
 
-// namespace std {
-// 
-// template<>
-// struct iterator_traits< sserialize::Static::UnicodeTrie::FlatTrieBase::StaticStringsIterator> {
-// 	typedef typename _Iterator::iterator_category iterator_category;
-// 	typedef typename _Iterator::value_type        value_type;
-// 	typedef typename _Iterator::difference_type   difference_type;
-// 	typedef typename _Iterator::pointer           pointer;
-// 	typedef typename _Iterator::reference         reference;
-// };
-// 
-// }
-
 #endif
