@@ -31,7 +31,11 @@ public:
 		Creator(UByteArrayAdapter & dest);
 		~Creator();
 		void put(uint32_t value);
+		///create checkpoint with value, call flush before to get the offset of the checkpoint
+		void checkpoint(uint32_t value);
+		///flush current temp data to dest, but keep last inserted value for further delta encoding
 		void flush();
+
 	};
 public:
 	RLEStream();

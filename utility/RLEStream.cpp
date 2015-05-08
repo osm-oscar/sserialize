@@ -26,6 +26,12 @@ void RLEStream::Creator::put(uint32_t value) {
 	m_prevId = value;
 }
 
+void RLEStream::Creator::checkpoint(uint32_t value) {
+	flush();
+	m_prevId = value;
+	m_dest->putVlPackedUint64((static_cast<uint64_t>(m_prevId) << 2) | 0x2);
+}
+
 void RLEStream::Creator::flush() {
 	if (m_rleCount == 1) {
 		if (m_prevId > (uint32_t)std::abs(m_rleDiff)) {
@@ -36,16 +42,16 @@ void RLEStream::Creator::flush() {
 				m_dest->putVlPackedUint64( (static_cast<uint64_t>(m_rleDiff) << 2) | 0x0);
 			}
 		}
-		else {
+		else { //full id
 			m_dest->putVlPackedUint64((static_cast<uint64_t>(m_prevId) << 2) | 0x2);
 		}
 	}
 	else if (m_rleCount > 1) {
 		m_dest->putVlPackedUint64((m_rleCount << 2) | 0x3);
 		m_dest->putVlPackedInt32(m_rleDiff);
-		m_rleCount = 0;
-		m_rleDiff = 0;
 	}
+	m_rleCount = 0;
+	m_rleDiff = 0;
 }
 
 RLEStream::RLEStream(const UByteArrayAdapter& begin) :
