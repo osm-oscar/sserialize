@@ -2,6 +2,7 @@
 #define SSERIALIZE_CELL_QUERY_RESULT_H
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/utility/RLEStream.h>
 
 namespace sserialize {
 
@@ -71,6 +72,10 @@ public:
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
+					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	CellQueryResult(const ItemIndex & fullMatches,
+					const ItemIndex & partialMatches,
+					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);

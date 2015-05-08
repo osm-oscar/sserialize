@@ -37,6 +37,10 @@ public:
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCellQueryResult(const ItemIndex & fullMatches,
+					const ItemIndex & partialMatches,
+					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
+					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~TreedCellQueryResult();
 	TreedCellQueryResult(const TreedCellQueryResult & other);
 	TreedCellQueryResult & operator=(const TreedCellQueryResult & other);
