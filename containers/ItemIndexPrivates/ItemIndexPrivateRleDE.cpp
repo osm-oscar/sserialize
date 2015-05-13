@@ -259,6 +259,8 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPriv
 
 	UByteArrayAdapter aData(m_data);
 	UByteArrayAdapter bData(cother->m_data);
+	aData.resetGetPtr();
+	bData.resetGetPtr();
 	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(dest);
 
@@ -447,7 +449,7 @@ ItemIndexPrivate* ItemIndexPrivateRleDE::symmetricDifference(const ItemIndexPriv
 struct IndexStates {
 	struct SingleState {
 		SingleState(const UByteArrayAdapter & data) : data(data), rle(0), diff(0), id(0), valid(true) {
-// 			this->data.resetPtrs();
+			this->data.resetPtrs();
 			next();
 		}
 		UByteArrayAdapter data;
@@ -573,11 +575,11 @@ struct IndexStates {
 ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< ItemIndexPrivateRleDE* > & intersect, const std::vector< ItemIndexPrivateRleDE* >& subtract, uint32_t count) {
 	IndexStates intersectStates(intersect.size());
 	for(std::size_t i = 0; i < intersect.size(); ++i) {
-			intersectStates.push_back(intersect[i]->m_data);
+		intersectStates.push_back(intersect[i]->m_data);
 	}
 	IndexStates subtractStates(subtract.size());
 	for(std::size_t i = 0; i < intersect.size(); ++i) {
-			subtractStates.push_back(subtract[i]->m_data);
+		subtractStates.push_back(subtract[i]->m_data);
 	}
 
 
