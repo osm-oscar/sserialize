@@ -107,6 +107,22 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special is broken", unitedReal, unitedIdx);
 		}
 		{
+			std::vector<uint32_t> src[2] = { std::vector<uint32_t>{15310}, std::vector<uint32_t>{13058, 13288} };
+			std::vector<ItemIndex> idcs(2);
+			for(uint32_t i=0; i < 2; ++i) {
+				create(src[i], idcs[i]);
+			}
+			for(uint32_t i(0), s(idcs.size()); i < s; ++i) {
+				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("united special2 created index=",i," is broken"), src[i] == idcs[i]);
+			}
+			ItemIndex unitedIdx = ItemIndex::uniteK(idcs[0], idcs[1], 100);
+			ItemIndex unitedReal(std::vector<uint32_t>{13058, 13288, 15310});
+	
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special2 manual is broken", unitedReal, idcs[0] + idcs[1]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special2 manual is broken", unitedReal, idcs[1] + idcs[0]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special2 is broken", unitedReal, unitedIdx);
+		}
+		{
 			for(uint32_t i(0); i < TEST_RUNS; ++i) {
 				std::set<uint32_t> srcSet = createNumbersSet(rand() % 2048);
 				ItemIndex idx;
