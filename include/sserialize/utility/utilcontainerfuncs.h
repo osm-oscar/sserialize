@@ -13,15 +13,15 @@ namespace sserialize {
 
 template<typename TIterator>
 bool is_strong_monotone_ascending(TIterator begin, const TIterator & end) {
-	if (begin == end)
-		return true;
-	auto x = *begin;
-	for(++begin; begin != end; ++begin) {
-		auto y = *begin;
-		if (y <= x) {
-			return false;
+	if (begin != end) {
+		auto x = *begin;
+		for(++begin; begin != end; ++begin) {
+			auto y = *begin;
+			if (y <= x) {
+				return false;
+			}
+			x = y;
 		}
-		x = y;
 	}
 	return true;
 }
