@@ -73,8 +73,9 @@ public:
 	void putInto(uint32_t * dest) const;
 	
 	uint32_t at(uint32_t pos) const;
-	uint32_t first() const;
-	uint32_t last() const;
+	uint32_t front() const;
+	uint32_t back() const;
+
 	
 	const_iterator cbegin() const;
 	const_iterator cend() const;

@@ -128,11 +128,11 @@ uint32_t ItemIndex::at(uint32_t pos) const {
 	return priv()->at(pos);
 }
 
-uint32_t ItemIndex::first() const {
+uint32_t ItemIndex::front() const {
 	return priv()->first();
 }
 
-uint32_t ItemIndex::last() const {
+uint32_t ItemIndex::back() const {
 	return priv()->last();
 }
 
@@ -209,8 +209,8 @@ std::set<uint32_t> ItemIndex::toSet() const {
 
 void ItemIndex::toDisk() {
 	std::size_t s = size();
-	UByteArrayAdapter dest( ItemIndexPrivateSimpleCreator::createCache(first(), last(), s, true) );
-	ItemIndexPrivateSimpleCreator creator(first(), last(), s, dest);
+	UByteArrayAdapter dest( ItemIndexPrivateSimpleCreator::createCache(front(), back(), s, true) );
+	ItemIndexPrivateSimpleCreator creator(front(), back(), s, dest);
 	for(uint32_t i = 0; i < s; ++i)
 		creator.push_back(at(i));
 	creator.flush();
