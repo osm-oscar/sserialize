@@ -114,6 +114,8 @@ public:
 			}
 			for(uint32_t i(0), s(idcs.size()); i < s; ++i) {
 				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("united special2 created index=",i," is broken"), src[i] == idcs[i]);
+				idcs[0].back();
+				idcs[1].back();
 			}
 			ItemIndex unitedIdx = ItemIndex::uniteK(idcs[0], idcs[1], 100);
 			ItemIndex unitedReal(std::vector<uint32_t>{13058, 13288, 15310});
