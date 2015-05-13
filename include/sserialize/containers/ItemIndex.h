@@ -7,6 +7,7 @@
 #include <set>
 #include <deque>
 #include <ostream>
+#include <type_traits>
 
 namespace sserialize {
 
@@ -144,31 +145,26 @@ public:
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);
 
-bool operator==(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx);
-inline bool operator!=(const sserialize::ItemIndex & set, const sserialize::ItemIndex & idx) {
-	return !operator==(set, idx);
-}
-
 template<class TCONTAINER>
 bool operator==(const sserialize::ItemIndex & idx, const TCONTAINER & set) {
-	if (idx.size() != set.size())
+	if (idx.size() != set.size()) {
 		return false;
-	uint32_t count = 0;
-	for(typename TCONTAINER::const_iterator it = set.begin(); it != set.end(); ++it) {
-		if (*it != idx.at(count)) {
+	}
+	sserialize::ItemIndex::const_iterator idxIt(idx.cbegin());
+	for(typename TCONTAINER::const_iterator it(set.cbegin()), end(set.cend()); it != end; ++it, ++idxIt) {
+		if (*it != *idxIt) {
 			return false;
 		}
-		count++;
 	}
 	return true;
 }
 
-template<class TCONTAINER>
+template<class TCONTAINER, typename TDummy = typename std::enable_if<! std::is_same<TCONTAINER, sserialize::ItemIndex>::value>::type >
 bool operator==(const TCONTAINER & set, const sserialize::ItemIndex & idx) {
 	return idx == set;
 }
 
-template<class TCONTAINER>
+template<class TCONTAINER, typename TDummy = typename std::enable_if<! std::is_same<TCONTAINER, sserialize::ItemIndex>::value>::type >
 bool operator!=(const sserialize::ItemIndex & idx, const TCONTAINER & set) {
 	return !( idx == set);
 }

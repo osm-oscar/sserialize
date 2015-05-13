@@ -445,7 +445,6 @@ ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & i
 	}
 }
 
-
 ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& intersect, uint32_t count, ItemIndex::ItemFilter * filter) {
 	if (! intersect.size())
 		return ItemIndex();
@@ -511,17 +510,6 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 
 ItemIndex ItemIndex::uniteK(const ItemIndex& a, const ItemIndex& b, uint32_t numItems) {
 	return a.priv()->uniteK(b.priv(), numItems);
-}
-
-
-bool operator==(const sserialize::ItemIndex & idxA, const sserialize::ItemIndex & idxB) {
-	if (idxA.size() != idxB.size())
-		return false;
-	uint32_t size = idxA.size();
-	for(uint32_t i = 0; i < size; ++i)
-		if (idxA.at(i) != idxB.at(i))
-			return false;
-	return true;
 }
 
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination) {
