@@ -108,8 +108,11 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 					}
 				}
 			}
-			else {
+			else {//region has no parent -> put into the root-region
 				rootNode->push_back(*it);
+				if (SPARSE) {
+					rootNode->maxItemsSize() += (*it)->maxItemsSize(); //approximate for item size
+				}
 			}
 		}
 	}
