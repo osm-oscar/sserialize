@@ -635,8 +635,11 @@ void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const
 		if (rect.contains(r.boundary())) {
 			//checking the itemsCount of the region does only work if the hierarchy was created with a full region item index
 			//so instead we have check the cellcount
-			sserialize::ItemIndex idx(idxStore.at(r.cellIndexPtr()));
-			intersectingCells.insert(intersectingCells.end(), idx.cbegin(), idx.cend());
+			uint32_t cIdxPtr = r.cellIndexPtr();
+			if (idxStore.idxSize(cIdxPtr)) {
+				sserialize::ItemIndex idx(idxStore.at(cIdxPtr));
+				intersectingCells.insert(intersectingCells.end(), idx.cbegin(), idx.cend());
+			}
 		}
 		else {
 			for(uint32_t i(0), s(r.childrenSize()); i < s; ++i) {
