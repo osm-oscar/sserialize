@@ -172,7 +172,9 @@ sserialize::ItemIndex CellQueryResult::flaten() const {
 }
 
 ItemIndex CellQueryResult::topK(uint32_t numItems) const {
-	auto func = [numItems](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return sserialize::ItemIndex::uniteK(a, b, numItems); };
+	auto func = [numItems](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex {
+		return sserialize::ItemIndex::uniteK(a, b, numItems);
+	};
 	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func);
 }
 
