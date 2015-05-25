@@ -87,6 +87,23 @@ public:
 class GridRegionTree {
 private:
 	typedef detail::GridRegionTree::Node Node;
+	template<typename T_OUTPUT_ITERATOR>
+	struct IteratorWrapper {
+		const sserialize::spatial::GeoPoint & p;
+		T_OUTPUT_ITERATOR & idsIt;
+		const std::vector<sserialize::spatial::GeoRegion*> & m_regions;
+		inline IteratorWrapper(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERATOR & idsIt, const std::vector<sserialize::spatial::GeoRegion*> & regions) :
+		p(p), idsIt(idsIt), m_regions(regions) {}
+		inline IteratorWrapper & operator*() { return *this; }
+		inline IteratorWrapper & operator++() { return *this; }
+		inline IteratorWrapper & operator=(uint32_t regionId) {
+			if (m_regions[regionId]->contains(p)) {
+				*idsIt = regionId;
+				++idsIt;
+			}
+			return *this;
+		}
+	};
 public:
 	static const uint32_t NullNodePtr;
 	typedef detail::GridRegionTree::FixedSizeRefiner FixedSizeRefiner;
@@ -139,12 +156,16 @@ public:
 	virtual ~GridRegionTree() {}
 	GridRegionTree & operator=(const GridRegionTree & other);
 	GridRegionTree & operator=(GridRegionTree && other);
+	
 	void shrink_to_fit();
 	GeoRegion * region(uint32_t id) { return m_regions.at(id); }
 	const GeoRegion * region(uint32_t id) const { return m_regions.at(id); }
+	template<typename T_OUTPUT_ITERATOR1, typename T_OUTPUT_ITERATOR2>
+	void find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITERATOR1 definiteEnclosing, T_OUTPUT_ITERATOR2 candidateEnclosing) const;
 	template<typename T_OUTPUT_ITERATOR>
 	void find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITERATOR ids) const;
 	void printStats(std::ostream & out) const;
+	inline const GeoGrid & rootGrid() const { return m_nodeGrids.at(0); }
 };
 
 template<typename T_TYPES_CONTAINER, typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
@@ -285,8 +306,8 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 	return nodePtr;
 }
 
-template<typename T_OUTPUT_ITERATOR>
-void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERATOR idsIt) const {
+template<typename T_OUTPUT_ITERATOR1, typename T_OUTPUT_ITERATOR2>
+void GridRegionTree::find(const sserialize::spatial::GeoPoint & p, T_OUTPUT_ITERATOR1 definiteEnclosing, T_OUTPUT_ITERATOR2 candidateEnclosing) const {
 	if (!m_nodes.size() || !m_nodeGrids[0].contains(p))
 		return;
 	uint32_t nodePtr = 0;
@@ -301,8 +322,8 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERA
 				std::vector<uint32_t>::const_iterator it(m_leafInfo.cbegin()+n.internal().valueBegin);
 				std::vector<uint32_t>::const_iterator end(it+n.internal().enclosedCount);
 				for(; it != end; ++it) {
-					*idsIt = *it;
-					++idsIt;
+					*definiteEnclosing = *it;
+					++definiteEnclosing;
 				}
 				m_cumulatedResultSetSize += n.internal().enclosedCount;
 			}
@@ -316,16 +337,14 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERA
 			std::vector<uint32_t>::const_iterator it(m_leafInfo.cbegin()+n.leaf().valueBegin);
 			std::vector<uint32_t>::const_iterator end(it+n.leaf().enclosedCount);
 			for(; it != end; ++it) {
-				*idsIt = *it;
-				++idsIt;
+				*definiteEnclosing = *it;
+				++definiteEnclosing;
 			}
 			it = end;
 			end =it + n.leaf().intersectedCount;
 			for(; it != end; ++it) {
-				if (m_regions[*it]->contains(p)) {
-					*idsIt = *it;
-					++idsIt;
-				}
+				*candidateEnclosing = *it;
+				++candidateEnclosing;
 			}
 			m_cumulatedResultSetSize += n.leaf().intersectedCount + n.leaf().enclosedCount;
 			m_intersectTestCount += n.leaf().intersectedCount;
@@ -335,6 +354,11 @@ void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERA
 			return;
 		}
 	}
+}
+
+template<typename T_OUTPUT_ITERATOR>
+void GridRegionTree::find(const sserialize::spatial::GeoPoint& p, T_OUTPUT_ITERATOR idsIt) const {
+	find(p, idsIt, IteratorWrapper<T_OUTPUT_ITERATOR>(p, idsIt, m_regions));
 }
 
 }}//end namespace
