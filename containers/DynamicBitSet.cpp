@@ -66,6 +66,10 @@ DynamicBitSet::DynamicBitSet() : m_data(UByteArrayAdapter::createCache(0, sseria
 DynamicBitSet::DynamicBitSet(const UByteArrayAdapter & data) : m_data(data) {}
 DynamicBitSet::~DynamicBitSet() {}
 
+void DynamicBitSet::resize(UByteArrayAdapter::OffsetType size) {
+	m_data.resize(size/8);
+}
+
 bool DynamicBitSet::align(uint8_t shift) {
 	UByteArrayAdapter::OffsetType newSize = m_data.size() >> shift;
 	if ((newSize << shift) & m_data.size())

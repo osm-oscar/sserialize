@@ -47,6 +47,7 @@ public:
 	///Create DynamicBitSet at the beginning of data
 	DynamicBitSet(const sserialize::UByteArrayAdapter & data);
 	virtual ~DynamicBitSet();
+	void resize(UByteArrayAdapter::OffsetType size);
 	///@param shift: number of bytes to align to expressed as aa power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
 	bool align(uint8_t shift);
 	
@@ -64,6 +65,12 @@ public:
 
 	bool isSet(SizeType pos) const;
 	void set(SizeType pos);
+	template<typename T_IT>
+	void set(T_IT begin, T_IT end) {
+		for(; begin != end; ++begin) {
+			set(*begin);
+		}
+	}
 	void unset(SizeType pos);
 	ItemIndex toIndex(int type) const;
 	
