@@ -185,6 +185,7 @@ GeoShapeType GeoPolygon<TPointsContainer>::type() const {
 }
 
 //http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+///Polygons are not allowed to cut themselves
 template<typename TPointsContainer>
 bool GeoPolygon<TPointsContainer>::contains(const GeoPoint & p) const {
 	if (!MyBaseClass::points().size() || !MyBaseClass::myBoundary().contains(p.lat(), p.lon()))
@@ -204,6 +205,10 @@ bool GeoPolygon<TPointsContainer>::contains(const GeoPoint & p) const {
 		double verty_i = iP.lon();
 		double vertx_j = jP.lat();
 		double verty_j = jP.lon();
+		//polygons are NOT allowed to cut themselves -> points on the boundary are outside of the polygon by definition
+		if (vertx_i == testx && verty_i == testy) {
+			return false;
+		}
 		
 		if ( ((verty_i>testy) != (verty_j>testy)) &&
 			(testx < (vertx_j-vertx_i) * (testy-verty_i) / (verty_j-verty_i) + vertx_i) ) {
