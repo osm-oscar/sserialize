@@ -24,6 +24,9 @@ public:
 	GeoPoint(const GeoPoint & other);
 	virtual ~GeoPoint();
 	GeoPoint& operator=(const GeoPoint & other);
+	
+	operator std::pair<double, double>() const { return std::pair<double, double>(m_lat, m_lon);}
+	
 	bool valid() const;
 	void normalize();
 	inline const double & lat() const { return m_lat; }
