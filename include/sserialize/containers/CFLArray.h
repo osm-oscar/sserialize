@@ -223,7 +223,13 @@ public:
 	bool operator<(const CFLArray & other) const {
 		return sserialize::is_smaller(cbegin(), cend(), other.cbegin(), other.cend());
 	}
-	
+	///compares the values
+	bool operator==(const CFLArray & other) const {
+		if (size() != other.size()) {
+			return false;
+		}
+		return std::equal(begin(), end(), other.begin());
+	}
 };
 
 template<typename T_CONTAINER, typename T_POINTER_GETTER>
