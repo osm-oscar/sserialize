@@ -165,6 +165,7 @@ public:
 		else {
 			m_d.backend = other.m_d.backend;
 		}
+		return *this;
 	}
 	void swap(CFLArray & o) {
 		using std::swap;
