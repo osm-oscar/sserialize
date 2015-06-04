@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/utility/hashspecializations.h>
 
 namespace sserialize {
 namespace detail {
@@ -263,5 +264,23 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest,
 }
 
 }//end namespace sserialize
+
+namespace std {
+
+template<typename T_CONTAINER, typename T_POINTER_GETTER>
+struct hash< sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER> > {
+	typedef typename sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>::value_type value_type;
+	std::hash<value_type> hasher;
+	inline size_t operator()(const sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>& v) const {
+		typedef typename sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>::const_iterator const_iterator;
+		size_t seed = 0;
+		for(const_iterator it(v.cbegin()), end(v.cend()); it != end; ++it) {
+			::hash_combine(seed, *it, hasher);
+		}
+		return seed;
+	}
+};
+
+}//end namespace std
 
 #endif
