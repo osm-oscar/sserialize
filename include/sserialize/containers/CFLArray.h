@@ -168,6 +168,11 @@ public:
 		}
 		return *this;
 	}
+	///rebind container
+	void rebind(container_type * container) {
+		assert(!m_delete);
+		m_d = container;
+	}
 	void swap(CFLArray & o) {
 		using std::swap;
 		swap(m_d, o.m_d);
@@ -184,6 +189,8 @@ public:
 		m_offset = o.m_offset;
 		o.m_offset = tmp;
 	}
+	inline bool isCopy() const { return m_delete; }
+	inline uint64_t offset() const { return m_offset; }
 	inline uint32_t size() const { return m_size; }
 	
 	inline iterator begin() { return (m_delete ? m_d.copy : MyPointerGetter::get(m_d.backend, m_offset)); }
