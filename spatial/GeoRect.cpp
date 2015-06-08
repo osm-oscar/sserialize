@@ -55,6 +55,11 @@ GeoRect::GeoRect(const UByteArrayAdapter & data) {
 }
 
 GeoRect::~GeoRect() {}
+
+bool GeoRect::valid() const {
+	return !( m_lat[0] == 0 && m_lat[1] == 0 && m_lon[0] == 0 && m_lon[1] == 0 );
+}
+
 double* GeoRect::lat() { return m_lat; }
 const double* GeoRect::lat() const { return m_lat; }
 double* GeoRect::lon() { return m_lon; }
@@ -111,11 +116,19 @@ bool GeoRect::clip(const GeoRect & other) {
 
 /** Enlarge this rect so that other will fit into it */
 void GeoRect::enlarge(const GeoRect & other) {
-	m_lat[0] = std::min(m_lat[0], other.m_lat[0]);
-	m_lat[1] = std::max(m_lat[1], other.m_lat[1]);
-	
-	m_lon[0] = std::min(m_lon[0], other.m_lon[0]);
-	m_lon[1] = std::max(m_lon[1], other.m_lon[1]);
+	if (!other.valid()) {
+		return;
+	}
+	if (!valid()) {
+		this->operator=(other);
+	}
+	else {
+		m_lat[0] = std::min(m_lat[0], other.m_lat[0]);
+		m_lat[1] = std::max(m_lat[1], other.m_lat[1]);
+		
+		m_lon[0] = std::min(m_lon[0], other.m_lon[0]);
+		m_lon[1] = std::max(m_lon[1], other.m_lon[1]);
+	}
 }
 
 void GeoRect::resize(double latFactor, double lonFactor) {

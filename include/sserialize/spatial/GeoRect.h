@@ -21,6 +21,8 @@ public:
 	GeoRect(const UByteArrayAdapter & data);
 	virtual ~GeoRect();
 	
+	bool valid() const;
+	
 	double* lat();
 	const double* lat() const;
 	double* lon();
@@ -51,7 +53,10 @@ public:
 	  * @return: returns true if clipping worked => rects overlapped, false if they did not overlap */
 	bool clip(const GeoRect & other);
 	
-	/** Enlarge this rect so that other will fit into it */
+	/** Enlarge this rect so that other will fit into it.
+	    If other is !valid, then the rect stays the same.
+	    If !this.valid() then *this = other
+	*/
 	void enlarge(const GeoRect & other);
 	
 	///Resize this Rect by lat in latitude and lon in longitude
