@@ -43,7 +43,7 @@ public:
 		m_parentsSize(cellIdSize), m_itemsSize(cellItemsSize),
 		m_boundary(boundary)
 		{}
-		inline ParentsContainer parents() { return (parentsBegin(), parentsSize());}
+		inline ParentsContainer parents() { return ParentsContainer(parentsBegin(), parentsSize());}
 		inline ConstItemsContainer parents() const { return ConstItemsContainer(const_cast<Cell*>(this)->parentsBegin(), parentsSize());}
 		
 		inline ItemsContainer items() { return ItemsContainer(itemsBegin(), itemsSize());}
