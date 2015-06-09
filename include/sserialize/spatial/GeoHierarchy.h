@@ -82,6 +82,8 @@ public:
 	CellList(const CellList & other);
 	CellList(const CellList && other);
 	~CellList();
+	sserialize::MMVector<uint32_t> & cellRegionLists() { return m_cellIdData;}
+	const sserialize::MMVector<uint32_t> & cellRegionLists() const { return m_cellIdData;}
 	sserialize::MMVector<uint32_t> & cellItemList() { return m_cellItems;}
 	const sserialize::MMVector<uint32_t> & cellItemList() const { return m_cellItems;}
 	
