@@ -153,6 +153,7 @@ utility/MultiReaderSingleWriterLock.cpp
 utility/ProgreessInfo.cpp
 utility/TimeMeasurer.cpp
 utility/RLEStream.cpp
+utility/ThreadPool.cpp
 )
 
 set(EXTERNAL_SOURCES_CPP
