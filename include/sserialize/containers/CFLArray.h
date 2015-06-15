@@ -171,7 +171,7 @@ public:
 	///rebind container
 	void rebind(container_type * container) {
 		assert(!m_delete);
-		m_d = container;
+		m_d.backend = container;
 	}
 	void swap(CFLArray & o) {
 		using std::swap;
