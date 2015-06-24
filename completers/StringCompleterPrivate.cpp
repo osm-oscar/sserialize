@@ -31,7 +31,7 @@ ItemIndex StringCompleterPrivate::indexFromId(uint32_t /*idxId*/) const {
 }
 
 std::ostream& StringCompleterPrivate::printStats(std::ostream& out) const {
-	out << "StringCompleterPrivate::printStats: empty" << out;
+	out << "StringCompleterPrivate::printStats: empty";
 	return out;
 }
 

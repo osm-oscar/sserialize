@@ -46,7 +46,8 @@ StringCompleter::SupportedQuerries StringCompleterPrivateMulti::getSupportedQuer
 std::ostream& StringCompleterPrivateMulti::printStats(std::ostream& out) const {
 	out << "StringCompleterPrivateMulti::BEGIN" << std::endl;
 	for(std::size_t i = 0; i < m_completers.size(); ++i) {
-		out << m_completers[i]->printStats(out) << std::endl;
+		m_completers[i]->printStats(out);
+		out << std::endl;
 	}
 	out << "StringCompleterPrivateMulti::END" << std::endl;
 	return out;
