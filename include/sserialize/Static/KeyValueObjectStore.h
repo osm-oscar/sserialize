@@ -61,10 +61,10 @@ public:
 	typedef ReadOnlyAtStlIterator<const KeyValueObjectStoreItem*, std::pair<std::string, std::string> > const_iterator;
 	typedef const_iterator iterator;
 private:
-	std::shared_ptr<KeyValueObjectStorePrivate> m_db;
+	RCPtrWrapper<KeyValueObjectStorePrivate> m_db;
 public:
 	KeyValueObjectStoreItem();
-	KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, const sserialize::UByteArrayAdapter & data);
+	KeyValueObjectStoreItem(const RCPtrWrapper<sserialize::Static::KeyValueObjectStorePrivate>& db, const sserialize::UByteArrayAdapter & data);
 	virtual ~KeyValueObjectStoreItem();
 	std::pair<std::string, std::string> at(uint32_t pos) const;
 	std::string key(uint32_t pos) const;
@@ -94,9 +94,9 @@ public:
 	typedef sserialize::Static::SortedStringTable KeyStringTable;
 	typedef sserialize::Static::SortedStringTable ValueStringTable;
 private:
-	std::shared_ptr<KeyValueObjectStorePrivate> m_priv;
-	inline std::shared_ptr<KeyValueObjectStorePrivate> & priv() { return m_priv; }
-	inline const std::shared_ptr<KeyValueObjectStorePrivate> & priv() const { return m_priv; }
+	RCPtrWrapper<KeyValueObjectStorePrivate> m_priv;
+	inline RCPtrWrapper<KeyValueObjectStorePrivate> & priv() { return m_priv; }
+	inline const RCPtrWrapper<KeyValueObjectStorePrivate> & priv() const { return m_priv; }
 public:
 	KeyValueObjectStore();
 	KeyValueObjectStore(const sserialize::UByteArrayAdapter & data);
@@ -120,7 +120,7 @@ public:
 	
 };
 
-class KeyValueObjectStorePrivate {
+class KeyValueObjectStorePrivate: public RefCountObject {
 public:
 	typedef sserialize::Static::KeyValueObjectStore::ValueStringTable ValueStringTable;
 	typedef sserialize::Static::KeyValueObjectStore::KeyStringTable KeyStringTable;

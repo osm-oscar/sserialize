@@ -70,7 +70,7 @@ uint32_t KeyValueObjectStoreItemBase::countValue(uint32_t id) const {
 
 KeyValueObjectStoreItem::KeyValueObjectStoreItem() {}
 
-KeyValueObjectStoreItem::KeyValueObjectStoreItem(const std::shared_ptr< sserialize::Static::KeyValueObjectStorePrivate >& db, const sserialize::UByteArrayAdapter & data) :
+KeyValueObjectStoreItem::KeyValueObjectStoreItem(const sserialize::RCPtrWrapper< sserialize::Static::KeyValueObjectStorePrivate >& db, const sserialize::UByteArrayAdapter& data) :
 KeyValueObjectStoreItemBase(data),
 m_db(db)
 {}
