@@ -12,6 +12,8 @@ class RefCountObject {
 public:
 	typedef uint32_t RCBaseType;
 public:
+	RefCountObject(const RefCountObject & other) = delete;
+	RefCountObject & operator=(const RefCountObject & other) = delete;
 	RefCountObject() : m_rc(0) {}
 	virtual ~RefCountObject() {}
 
@@ -19,15 +21,13 @@ public:
 	inline void rcInc() { ++m_rc; }
 	inline void rcDec() {
 		assert(m_rc);
-		if (m_rc.fetch_sub(1) == 1) //check if we are the last
+		if (m_rc.fetch_sub(1) == 1) { //check if we are the last
 			delete this;
+		}
 	}
 
 	inline RCBaseType rc() const { return m_rc; }
 private:
-	RefCountObject(const RefCountObject & other);
-	RefCountObject & operator=(const RefCountObject & other);
-
 	std::atomic<RCBaseType> m_rc;
 };
 
