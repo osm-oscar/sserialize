@@ -28,7 +28,8 @@ class KeyValueObjectStorePrivate;
   * The keys/values are sorted in ascending order
   *
   */
-  
+
+///key-ids and value-ids are sorted in ascending order
 class KeyValueObjectStoreItemBase {
 public:
 	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();

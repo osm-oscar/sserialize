@@ -48,9 +48,6 @@ private:
 	uint32_t keyId(const std::string & str) const;
 	uint32_t valueId(const std::string & str) const;
 	DynamicKeyValueObjectStore & operator=(const DynamicKeyValueObjectStore & other);
-protected:
-	const KeyStringTable & keyStringTable() const { return m_keyStringTable; }
-	const ValueStringTable & valueStringTable() const { return m_valueStringTable; }
 public:
 	DynamicKeyValueObjectStore();
 	virtual ~DynamicKeyValueObjectStore();
@@ -58,6 +55,8 @@ public:
 	void clear();
 	uint32_t addKey(const std::string & keyStr);
 	uint32_t addValue(const std::string & valueStr);
+	const KeyStringTable & keyStringTable() const { return m_keyStringTable; }
+	const ValueStringTable & valueStringTable() const { return m_valueStringTable; }
 	///This has to be called before adding items, all used item strings have to be added before calling this
 	void finalizeStringTables();
 	inline uint32_t size() const { return m_items.size(); }
