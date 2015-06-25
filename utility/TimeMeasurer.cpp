@@ -19,6 +19,9 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 			out << tms[i] << e[i];
 		}
 	}
+	if (!hasPrev) {
+		out << "0s";
+	}
 	return out;
 }
 
