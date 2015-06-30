@@ -64,6 +64,9 @@ Static/UnicodeTrie/detail/Node.cpp
 Static/UnicodeTrie/detail/EmptyNode.cpp
 Static/UnicodeTrie/FlatTrie.cpp
 Static/GeoHierarchySubSetCreator.cpp
+Static/Triangulation.cpp
+Static/TriangulationGridLocator.cpp
+Static/TriangulationRegionArrangement.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP
