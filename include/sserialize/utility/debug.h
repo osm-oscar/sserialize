@@ -11,4 +11,6 @@
 	#define NO_OPTIMIZE_ON_DEBUG
 #endif
 
+#define NO_OPTIMIZE __attribute__((optimize(0)))
+
 #endif
