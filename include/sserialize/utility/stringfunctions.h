@@ -84,7 +84,7 @@ uint32_t utf8CharCount(octetIterator begin, const octetIterator & end) {
 	return count;
 }
 
-///Split string into multiple strings at every location of separators, but skip those escaped with a codepoint in escapes
+///Split string into multiple strings at every location of unicode separators, but skip those escaped with a unicode codepoint in escapes
 ///@param out output iterator accepting std::string
 ///@return number of consumed chars (NOT codepoints)
 template<typename T_OCTET_ITERATOR, typename T_SEPARATOR_SET, typename T_ESCAPES_SET, typename T_OUTPUT_ITERATOR>
