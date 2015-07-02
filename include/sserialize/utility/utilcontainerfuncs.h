@@ -47,8 +47,9 @@ namespace detail {
 ///multi-threaded sorting, @param numThreads if 0, numThreads = std::thread::hardware_concurrency()
 template<typename TIterator, typename CompFunc = std::less<typename std::iterator_traits<TIterator>::value_type> >
 void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThreads = 0) {
-	if (!numThreads)
+	if (!numThreads) {
 		numThreads = std::max<unsigned int>(std::thread::hardware_concurrency(), 1);
+	}
 	std::size_t numElements = std::distance(begin, end);
 	
 	//improve check of when to sort as this really doesn't make any sense on small data
@@ -61,8 +62,9 @@ void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThre
 			myThreads.push_back( std::thread(detail::mt_sort_wrap<TIterator, CompFunc>, begin, begin+blockSize, comp) );
 			begin += blockSize;
 		}
-		if (begin != end) //if there's someting left, put the rest into an extra thread (there might very well be another sorting thread completed before the other
+		if (begin != end) { //if there's someting left, put the rest into an extra thread (there might very well be another sorting thread completed before the other
 			myThreads.push_back( std::thread(detail::mt_sort_wrap<TIterator, CompFunc>, begin, end, comp) );
+		}
 		for(std::thread & t : myThreads) {
 			t.join();
 		}
