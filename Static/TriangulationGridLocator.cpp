@@ -8,8 +8,8 @@ namespace spatial {
 TriangulationGridLocator::TriangulationGridLocator() {}
 
 TriangulationGridLocator::TriangulationGridLocator(const UByteArrayAdapter& d) :
-m_grid(d+1),
-m_trs(d+(1+m_grid.getSizeInBytes()))
+m_trs(d+1),
+m_grid(d+(1+m_trs.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_GRID_LOCATOR_VERSION, d.at(0), "sserialize::Static::spatial::TriangulationGridLocator::TriangulationGridLocator");
 }
@@ -39,7 +39,7 @@ bool TriangulationGridLocator::contains(double lat, double lon) const {
 uint32_t TriangulationGridLocator::faceId(double lat, double lon) const {
 	if (gridContains(lat, lon)) {
 		uint32_t hint = m_grid.at(lat, lon);
-		return m_trs.locate(lat, lon, hint);
+		return m_trs.locate<void>(lat, lon, hint);
 	}
 	return NullFace;
 }

@@ -4,11 +4,9 @@
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoPoint.h>
 #include <assert.h>
-
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
-#include <CGAL/Unique_hash_map.h>
-
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION 1
+
+#include <CGAL/number_utils.h>
 
 namespace sserialize {
 namespace Static {
@@ -111,10 +109,10 @@ public:
 	uint32_t faceCount() const { return m_fi.size(); }
 	Face face(uint32_t pos) const;
 	Vertex vertex(uint32_t pos) const;
-	template<typename T_GEOMETRY_TRAITS = CGAL::Exact_predicates_exact_constructions_kernel>
+	template<typename T_GEOMETRY_TRAITS>
 	uint32_t locate(double lat, double lon, uint32_t hint = 0) const;
-	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_FACE_TO_FACE_ID>
-	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID & faceToFaceId, sserialize::UByteArrayAdapter & dest);
+	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
+	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
 };
 
 template<typename T_GEOMETRY_TRAITS>
@@ -122,8 +120,9 @@ uint32_t Triangulation::locate(double /*lat*/, double /*lon*/, uint32_t /*hint*/
 	return NullFace;
 }
 
-template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_FACE_TO_FACE_ID>
-sserialize::UByteArrayAdapter & Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID & faceToFaceId, sserialize::UByteArrayAdapter & dest) {
+template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
+sserialize::UByteArrayAdapter &
+Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest) {
 	typedef T_CGAL_TRIANGULATION_DATA_STRUCTURE TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
@@ -131,7 +130,7 @@ sserialize::UByteArrayAdapter & Triangulation::append(T_CGAL_TRIANGULATION_DATA_
 	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
 	
 	faceToFaceId.clear();
-	CGAL::Unique_hash_map<Vertex_handle, uint32_t> vertexToVertexId;
+	vertexToVertexId.clear();
 	
 	uint32_t faceId = 0;
 	uint32_t vertexId = 0;
@@ -153,6 +152,7 @@ sserialize::UByteArrayAdapter & Triangulation::append(T_CGAL_TRIANGULATION_DATA_
 			vertexToVertexId[vt] = vertexId;
 			++vertexId;
 		}
+		va.flush();
 	}
 	{
 		std::vector<uint8_t> bitConfig(Triangulation::Face::FI__NUMBER_ENTRIES);

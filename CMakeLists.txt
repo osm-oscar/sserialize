@@ -67,6 +67,7 @@ Static/GeoHierarchySubSetCreator.cpp
 Static/Triangulation.cpp
 Static/TriangulationGridLocator.cpp
 Static/TriangulationRegionArrangement.cpp
+Static/TriangulationGeoHierarchyArrangement.cpp
 )
 
 set(ITEM_INDEX_SOURCES_CPP

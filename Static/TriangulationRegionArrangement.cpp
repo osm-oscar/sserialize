@@ -9,7 +9,7 @@ constexpr uint32_t TriangulationRegionArrangement::NullCellId;
 
 TriangulationRegionArrangement::TriangulationRegionArrangement() {}
 
-TriangulationRegionArrangement::TriangulationRegionArrangement(const sserialize::UByteArrayAdapter& d, const sserialize::Static::ItemIndexStore&) :
+TriangulationRegionArrangement::TriangulationRegionArrangement(const sserialize::UByteArrayAdapter& d) :
 m_grid(d+1),
 m_baseCellIdToIndexPtr(d+(1+m_grid.getSizeInBytes())),
 m_refinedToBaseCellId(d+(1+m_grid.getSizeInBytes()+m_baseCellIdToIndexPtr.getSizeInBytes())),
@@ -28,8 +28,8 @@ uint32_t TriangulationRegionArrangement::baseCellId(uint32_t cellId) const {
 	return m_refinedToBaseCellId.at(cellId);
 }
 
-ItemIndex TriangulationRegionArrangement::regions(uint32_t cellId) const {
-	return m_idxStore.at(m_baseCellIdToIndexPtr.at(baseCellId(cellId)));
+uint32_t TriangulationRegionArrangement::regionListPtr(uint32_t cellId) const {
+	return m_baseCellIdToIndexPtr.at(baseCellId(cellId));
 }
 
 uint32_t TriangulationRegionArrangement::cellId(const TriangulationRegionArrangement::Point& p) const {

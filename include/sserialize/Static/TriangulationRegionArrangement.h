@@ -1,7 +1,6 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_REGION_ARRANGEMENT_H
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_REGION_ARRANGEMENT_H
 #include <sserialize/Static/TriangulationGridLocator.h>
-#include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/CompactUintArray.h>
 
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_REGION_ARRANGEMENT_VERSION 1
@@ -14,11 +13,10 @@ namespace spatial {
   * {
   *   Version               u8
   *   Grid                  TriangulationGridLocator
-  *   BaseCellIndexPtrs     BoundedCompactUintArray
+  *   RegionListIndexPtrs     BoundedCompactUintArray
   *   RefinedCellToBaseCell BoundedCompactUintArray
   *   FaceIdToRefinedCellId BoundedCompactUintArray
   * }
-  * external: ItemIndexStore holding the BaseCell->Regions mapping
   *
   */
 
@@ -32,16 +30,16 @@ private:
 	BoundedCompactUintArray m_baseCellIdToIndexPtr;
 	BoundedCompactUintArray m_refinedToBaseCellId;
 	BoundedCompactUintArray m_faceIdToRefinedCellId;
-	ItemIndexStore m_idxStore;
 public:
 	TriangulationRegionArrangement();
-	TriangulationRegionArrangement(const sserialize::UByteArrayAdapter & d, const sserialize::Static::ItemIndexStore & idxStore);
+	TriangulationRegionArrangement(const sserialize::UByteArrayAdapter & d);
 	~TriangulationRegionArrangement();
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	uint32_t baseCellId(uint32_t cellId) const;
 	uint32_t cellId(double lat, double lon) const;
 	uint32_t cellId(const Point & p) const;
-	sserialize::ItemIndex regions(uint32_t cellId) const;
+	uint32_t regionListPtr(uint32_t cellId) const;
+	inline uint32_t cellCount() const { return m_refinedToBaseCellId.size(); }
 };
 
 

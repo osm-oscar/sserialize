@@ -11,11 +11,12 @@ namespace spatial {
 /**
   * {
   *   Version          u8
-  *   Grid             sserialize::Static::spatial::RGeoGrid<uint32_t>
   *   Triangulation    sserialize::Static::spatial::Triangulation
+  *   Grid             sserialize::Static::spatial::RGeoGrid<uint32_t>
   *
   * }
   *
+  * Grid: grid-cell -> faceId
   *
   */
 
@@ -26,15 +27,14 @@ public:
 	typedef Triangulation::Point Point;
 	static constexpr uint32_t NullFace = Triangulation::NullFace;
 private:
-	sserialize::Static::spatial::RGeoGrid<uint32_t> MyGrid;
-private:
-	sserialize::Static::spatial::RGeoGrid<uint32_t> m_grid;
 	Triangulation m_trs;
+	sserialize::Static::spatial::RGeoGrid<uint32_t> m_grid;
 public:
 	TriangulationGridLocator();
 	TriangulationGridLocator(const sserialize::UByteArrayAdapter & d);
 	~TriangulationGridLocator();
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
+	inline const Triangulation & tds() const { return m_trs; }
 	bool gridContains(double lat, double lon) const;
 	bool gridContains(const Point & p) const;
 	bool contains(double lat, double lon) const;
