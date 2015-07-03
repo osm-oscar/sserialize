@@ -10,13 +10,13 @@ namespace spatial {
 template<typename TValue, class StorageContainer = std::vector<TValue>>
 class RGeoGrid: public GeoGrid {
 public:
+	typedef GeoGrid MyParentClass;
 	typedef StorageContainer StorageContainerType;
 private:
 	StorageContainerType m_storage;
-protected:
-	typedef GeoGrid MyParentClass;
 public:
 	RGeoGrid() : GeoGrid() {}
+	RGeoGrid(const GeoGrid & gridBase) : GeoGrid(gridBase) {}
 	RGeoGrid(const GeoRect & rect, const uint32_t latcount, const uint32_t loncount) : GeoGrid(rect, latcount, loncount) {}
 	virtual ~RGeoGrid() {}
 	size_t size() const { return m_storage.size(); }
@@ -44,16 +44,6 @@ public:
 		if (tile >= storage().size())
 			return TValue();
 		return m_storage.at( tile );
-	}
-	
-
-	UByteArrayAdapter & serialize(UByteArrayAdapter & destination) const {
-		destination << static_cast<uint8_t>(0);
-		destination << spatial::GeoPoint(MyParentClass::rect().lat()[0], MyParentClass::rect().lon()[0]);
-		destination << spatial::GeoPoint(MyParentClass::rect().lat()[1], MyParentClass::rect().lon()[1]);
-		destination << latCount();
-		destination << lonCount();
-		return destination;
 	}
 };
 
@@ -88,6 +78,14 @@ public:
 	
 	TValue & binAt(uint32_t x, uint32_t y) {
 		return RGeoGrid<TValue, StorageContainer>::storage().at( GeoGrid::selectBin(x, y) );
+	}
+	
+	const TValue & binAt(uint32_t tile) const {
+		return RGeoGrid<TValue, StorageContainer>::storage().at( tile );
+	}
+	
+	TValue & binAt(uint32_t tile) {
+		return RGeoGrid<TValue, StorageContainer>::storage().at( tile );
 	}
 };
 

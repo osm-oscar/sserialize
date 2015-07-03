@@ -62,12 +62,9 @@ public:
 		}
 		return allOk;
 	}
-
-	
-	using MyParentClass::serialize;
 	
 	UByteArrayAdapter & serialize(UByteArrayAdapter & destination, ItemIndexFactory & indexFactory) const {
-		serialize(destination);
+		destination << *(static_cast<const sserialize::spatial::GeoGrid*>(this));
 		ProgressInfo info;
 		info.begin(storage().size());
 		Static::ArrayCreator<uint32_t> dc(destination);
