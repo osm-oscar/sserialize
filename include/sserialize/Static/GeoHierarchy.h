@@ -28,7 +28,7 @@ namespace spatial {
   *-------------------------------------------------------------------------------------------------------------------
   *VERSION|StoreIdToGhId|RegionDesc|RegionPtrs |RegionBoundaries        |CellDesc  |CellPtrs   |CellBoundaries    
   *--------------------------------------------------------------------------------------------------------------------
-  *  1Byte|Array<u32>   |MVBitArray|BCUintArray|(regions.size+1)*GeoRect|MVBitArray|BCUintArray|cells.size*GeoRect
+  *  1Byte|Array<u32>   |MVBitArray|BCUintArray|(regions.size+1)*GeoRect|MVBitArray|BCUintArray|Static::Array<GeoRect>
   *
   * There has to be one Region more than used. The last one defines the end for the RegionPtrs
   *
