@@ -1,4 +1,5 @@
 #include <sserialize/spatial/GeoGrid.h>
+#include <sserialize/utility/pack_unpack_functions.h>
 
 namespace sserialize {
 namespace spatial {
@@ -19,6 +20,24 @@ m_loncount(loncount)
 {
 	m_latStep = (m_rect.lat()[1]-m_rect.lat()[0])/latcount;
 	m_lonStep = (m_rect.lon()[1]-m_rect.lon()[0])/loncount;
+}
+
+GeoGrid::GeoGrid(const UByteArrayAdapter& d) :
+m_rect(d)
+{
+	sserialize::UByteArrayAdapter::OffsetType off = sserialize::SerializationInfo<sserialize::spatial::GeoRect>::sizeInBytes(m_rect);
+	int tmp;
+	m_latcount = d.getVlPackedUint32(off, &tmp);
+	off += tmp;
+	m_loncount = d.getVlPackedUint32(off);
+	m_latStep = (m_rect.lat()[1]-m_rect.lat()[0])/m_latcount;
+	m_lonStep = (m_rect.lon()[1]-m_rect.lon()[0])/m_loncount;
+}
+
+
+
+UByteArrayAdapter::OffsetType GeoGrid::getSizeInBytes() const {
+	return sserialize::SerializationInfo<sserialize::spatial::GeoRect>::sizeInBytes(m_rect) + sserialize::psize_vu32(m_latcount) + sserialize::psize_vu32(m_loncount);
 }
 
 GeoRect GeoGrid::cellBoundary(uint32_t lat, uint32_t lon) const {

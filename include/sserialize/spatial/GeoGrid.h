@@ -7,6 +7,19 @@
 namespace sserialize {
 namespace spatial {
 
+/**
+  *
+  * Serialized Layout:
+  * {
+  *   boundary    sserialize::spatial::Georect
+  *   latcount    vu32
+  *   loncount    vu32
+  * }
+  *
+  *
+  *
+  */
+
 class GeoGrid {
 public:
 	struct GridBin {
@@ -29,7 +42,10 @@ protected:
 public:
 	GeoGrid() : m_latcount(0), m_loncount(0), m_latStep(0), m_lonStep(0) {}
 	GeoGrid(const GeoRect & rect, const uint32_t latcount, const uint32_t loncount);
+	GeoGrid(const sserialize::UByteArrayAdapter & d);
 	virtual ~GeoGrid() {}
+	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
+	
 	inline uint32_t tileCount() const { return m_latcount*m_loncount;}
 	
 	inline const GeoRect & rect() const { return m_rect; }
@@ -66,6 +82,13 @@ public:
 	/** @param enclosed: tiles that are completelty within rect, @param intersected: tiles that intersect, but are not enclosed */
 	void select(const GeoRect & rect, std::vector<uint32_t> & enclosed, std::vector<uint32_t> & intersected) const;
 };
+
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const GeoGrid & src) {
+	dest << src.rect();
+	dest.putVlPackedUint32(src.latCount());
+	dest.putVlPackedUint32(src.lonCount());
+	return dest;
+}
 
 }}
 
