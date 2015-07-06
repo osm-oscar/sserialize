@@ -10,7 +10,7 @@ constexpr uint32_t TriangulationGeoHierarchyArrangement::NullCellId;
 TriangulationGeoHierarchyArrangement::TriangulationGeoHierarchyArrangement() {}
 
 TriangulationGeoHierarchyArrangement::TriangulationGeoHierarchyArrangement(const sserialize::UByteArrayAdapter& d) :
-m_cellCount(d.at(sserialize::SerializationInfo<uint8_t>::length)),
+m_cellCount(d.getUint32(sserialize::SerializationInfo<uint8_t>::length)),
 m_grid(d+(sserialize::SerializationInfo<uint8_t>::length+sserialize::SerializationInfo<uint32_t>::length)),
 m_faceIdToRefinedCellId(d+(sserialize::SerializationInfo<uint8_t>::length+sserialize::SerializationInfo<uint32_t>::length+m_grid.getSizeInBytes()))
 {
