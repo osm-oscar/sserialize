@@ -13,7 +13,7 @@ namespace spatial {
   * {
   *   Version               u8
   *   Grid                  TriangulationGridLocator
-  *   RegionListIndexPtrs     BoundedCompactUintArray
+  *   RegionListIndexPtrs   BoundedCompactUintArray
   *   RefinedCellToBaseCell BoundedCompactUintArray
   *   FaceIdToRefinedCellId BoundedCompactUintArray
   * }
