@@ -54,6 +54,7 @@ public:
 		uint32_t m_pos;
 	private:
 		Vertex(const Triangulation * p, uint32_t pos);
+		inline uint32_t id() const { return m_pos; }
 	public:
 		Vertex();
 		~Vertex();
@@ -70,13 +71,14 @@ public:
 			FI_NEIGHBOR_VALID=0,
 			FI_NEIGHBOR0=1, FI_NEIGHBOR1=2, FI_NEIGHBOR2=3, FI_NEIGHBOR_BEGIN=FI_NEIGHBOR0, FI_NEIGHBOR_END=FI_NEIGHBOR2+1,
 			FI_VERTEX0=4, FI_VERTEX1=5, FI_VERTEX2=6, FI_VERTEX_BEGIN=FI_VERTEX0, FI_VERTEX_END=FI_VERTEX2+1,
-			FI__NUMBER_ENTRIES=FI_VERTEX_END+1
+			FI__NUMBER_ENTRIES=FI_VERTEX_END
 		} FaceInfo;
 	private:
 		const Triangulation * m_p;
 		uint32_t m_pos;
 	private:
 		Face(const Triangulation * p, uint32_t pos);
+		inline uint32_t id() const { return m_pos; }
 	public:
 		Face();
 		~Face();
@@ -86,6 +88,8 @@ public:
 		Face neighbor(uint32_t pos) const;
 		uint32_t vertexId(uint32_t pos) const;
 		Vertex vertex(uint32_t pos) const;
+		void dump(std::ostream & out) const;
+		void dump() const;
 	};
 	typedef sserialize::Static::spatial::GeoPoint Point_2;
 public:
@@ -113,6 +117,11 @@ public:
 	uint32_t locate(double lat, double lon, uint32_t hint = 0) const;
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
+	bool selfCheck() const;
+	//counter-clock-wise next vertex/neighbor as defined in cgal
+	inline static int ccw(const int i) { return (i+1)%3; }
+	//clock-wise next vertex/neighbor as defined in cgal
+	inline static int cw(const int i) { return (i+2)%3; }
 };
 
 template<typename T_GEOMETRY_TRAITS>
@@ -177,14 +186,15 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 					nfhId = faceToFaceId[nfh];
 					validNeighbors |= static_cast<uint8_t>(1) << j;
 				}
-				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+j, nfhId);
+				fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_BEGIN+j, nfhId);
 			}
 			fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_VALID, validNeighbors);
 			
 			for(int j(0); j < 3; ++j) {
-				Vertex_handle vh = fh->vertex(0);
+				Vertex_handle vh = fh->vertex(j);
 				assert(vertexToVertexId.is_defined(vh));
-				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+j, vertexToVertexId[vh]);
+				uint32_t vertexId = vertexToVertexId[vh];
+				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+j, vertexId);
 			}
 			++faceId;
 		}
