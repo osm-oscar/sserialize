@@ -69,6 +69,7 @@ public:
 	public:
 		Vertex();
 		~Vertex();
+		bool valid() const;
 		inline uint32_t id() const { return m_pos; }
 		Point point() const;
 		FaceCirculator faces() const;
@@ -109,6 +110,9 @@ public:
 		Face neighbor(uint32_t pos) const;
 		uint32_t vertexId(uint32_t pos) const;
 		Vertex vertex(uint32_t pos) const;
+		Point point(uint32_t pos) const;
+		///inexact computed centroid
+		Point centroid() const;
 		///index of the vertex, -1 if vertex is not part of this face
 		int index(const Vertex & v) const;
 		void dump(std::ostream & out) const;

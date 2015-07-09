@@ -56,6 +56,17 @@ Triangulation::Vertex Triangulation::Face::vertex(uint32_t pos) const {
 	return Vertex(m_p, vertexId(pos));
 }
 
+Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
+	return m_p->points().at(vertexId(pos));
+}
+
+Triangulation::Point Triangulation::Face::centroid() const {
+	Triangulation::Point p[] = { point(0), point(1), point(2) };
+	double lat = (p[0].lat() + p[1].lat() + p[2].lat()) / 3;
+	double lon = (p[0].lon() + p[1].lon() + p[2].lon()) / 3;
+	return Triangulation::Point(lat, lon);
+}
+
 int Triangulation::Face::index(const Triangulation::Vertex& v) const {
 	uint32_t vertexId = v.id();
 	for(int j(0); j < 3; ++j) {
@@ -107,6 +118,10 @@ m_pos(pos)
 {}
 
 Triangulation::Vertex::~Vertex() {}
+
+bool Triangulation::Vertex::valid() const {
+	return id() != Triangulation::NullVertex;
+}
 
 Triangulation::Point Triangulation::Vertex::point() const {
 	return m_p->points().at(m_pos);
