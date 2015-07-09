@@ -23,12 +23,17 @@ namespace Triangulation {
   * Layout (v1)
   * {
   *   VERSION u8
-  *   VERTICES sserialize::Array<GeoPoint> gp
+  *   POINTS sserialize::Array<GeoPoint> gp (id identical with vertex ids)
+  *   VERTICES sserialize::MultiVarBitArray
+  *   {
+  *      FacesBegin u?
+  *      FacesEnd u?
+  *   }
   *   FACES    sserialize::MultiVarBitArray
   *   {
   *      ValidNeighbor u3
-  *      Neighbors 3*?
-  *      Vertices 3*?
+  *      Neighbors 3*u?
+  *      Vertices 3*u?
   *   }
   * }
   * Changelog:
@@ -38,27 +43,42 @@ namespace Triangulation {
 class Triangulation final {
 public:
 	typedef sserialize::spatial::GeoPoint Point;
-	struct Geom_traits {
-		typedef Point Point_2;
-	};
 
 	class Face;
 	class Vertex;
+	class FaceCirculator;
 	
 	class Vertex final {
 	private:
 		friend class Triangulation;
 		friend class Face;
+		friend class FaceCirculator;
+	private:
+		typedef enum {
+			VI_FACES_BEGIN=0, VI_FACES_END=1, VI__NUMBER_OF_ENTRIES=2
+		} VertexInfo;
 	private:
 		const Triangulation * m_p;
 		uint32_t m_pos;
 	private:
 		Vertex(const Triangulation * p, uint32_t pos);
-		inline uint32_t id() const { return m_pos; }
+		uint32_t beginFaceId() const;
+		uint32_t endFaceId() const;
+		Face beginFace() const;
+		Face endFace() const;
 	public:
 		Vertex();
 		~Vertex();
+		inline uint32_t id() const { return m_pos; }
 		Point point() const;
+		FaceCirculator faces() const;
+		FaceCirculator facesBegin() const;
+		///This iterator points to the LAST face and NOT! one-passed the end
+		FaceCirculator facesEnd() const;
+		bool operator==(const Vertex & other) const;
+		bool operator!=(const Vertex & other) const;
+		void dump(std::ostream & out) const;
+		void dump() const;
 	};
 
 	///A Face has up to 3 neighbors
@@ -66,50 +86,76 @@ public:
 	private:
 		friend class Triangulation;
 		friend class Vertex;
+		friend class FaceCirculator;
 	private:
 		typedef enum {
 			FI_NEIGHBOR_VALID=0,
 			FI_NEIGHBOR0=1, FI_NEIGHBOR1=2, FI_NEIGHBOR2=3, FI_NEIGHBOR_BEGIN=FI_NEIGHBOR0, FI_NEIGHBOR_END=FI_NEIGHBOR2+1,
 			FI_VERTEX0=4, FI_VERTEX1=5, FI_VERTEX2=6, FI_VERTEX_BEGIN=FI_VERTEX0, FI_VERTEX_END=FI_VERTEX2+1,
-			FI__NUMBER_ENTRIES=FI_VERTEX_END
+			FI__NUMBER_OF_ENTRIES=FI_VERTEX_END
 		} FaceInfo;
 	private:
 		const Triangulation * m_p;
 		uint32_t m_pos;
 	private:
 		Face(const Triangulation * p, uint32_t pos);
-		inline uint32_t id() const { return m_pos; }
 	public:
 		Face();
 		~Face();
+		inline uint32_t id() const { return m_pos; }
 		bool valid() const;
 		bool isNeighbor(uint8_t pos) const;
 		uint32_t neighborId(uint8_t pos) const;
 		Face neighbor(uint32_t pos) const;
 		uint32_t vertexId(uint32_t pos) const;
 		Vertex vertex(uint32_t pos) const;
+		///index of the vertex, -1 if vertex is not part of this face
+		int index(const Vertex & v) const;
 		void dump(std::ostream & out) const;
 		void dump() const;
+		bool operator==(const Face & other) const;
+		bool operator!=(const Face & other) const;
 	};
-	typedef sserialize::Static::spatial::GeoPoint Point_2;
+	
+	class FaceCirculator final {
+	private:
+		Face m_f;
+		Vertex m_v;
+	public:
+		FaceCirculator(const Vertex & v, const Face & f);
+		~FaceCirculator();
+		Face operator*() const;
+		Face operator->() const;
+		FaceCirculator & operator++();
+		FaceCirculator operator++(int);
+		FaceCirculator & operator--();
+		FaceCirculator operator--(int);
+		bool operator==(const FaceCirculator & other) const;
+		bool operator!=(const FaceCirculator & other) const;
+		const Vertex & vertex() const;
+		const Face & face() const;
+	};
 public:
 	static constexpr uint32_t NullFace = 0xFFFFFFFF;
 	static constexpr uint32_t NullVertex = 0xFFFFFFFF;
 private:
 	typedef sserialize::MultiVarBitArray FaceInfos;
-	typedef sserialize::Static::Array<Point> VertexInfos;
+	typedef sserialize::MultiVarBitArray VertexInfos;
+	typedef sserialize::Static::Array<Point> PointsContainer;
 private:
-	VertexInfos m_v;
+	PointsContainer m_p;
+	VertexInfos m_vi;
 	FaceInfos m_fi;
 protected:
 	inline const FaceInfos & faceInfo() const { return m_fi; }
-	inline const VertexInfos & vertexInfo() const { return m_v; }
+	inline const VertexInfos & vertexInfos() const { return m_vi; }
+	inline const PointsContainer & points() const { return m_p; }
 public:
 	Triangulation();
 	Triangulation(const sserialize::UByteArrayAdapter & d);
 	~Triangulation();
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	uint32_t vertexCount() const { return m_v.size(); }
+	uint32_t vertexCount() const { return m_vi.size(); }
 	uint32_t faceCount() const { return m_fi.size(); }
 	Face face(uint32_t pos) const;
 	Vertex vertex(uint32_t pos) const;
@@ -137,6 +183,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	typedef typename TDS::Vertex_handle Vertex_handle;
 	typedef typename TDS::Finite_faces_iterator Finite_faces_iterator;
 	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
+	typedef typename TDS::Face_circulator Face_circulator;
 	
 	faceToFaceId.clear();
 	vertexToVertexId.clear();
@@ -144,13 +191,17 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	uint32_t faceId = 0;
 	uint32_t vertexId = 0;
 	
+	uint32_t faceCount = 0;
+	uint32_t vertexCount = 0;
+	
 	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 		faceToFaceId[fh] = faceId;
 		++faceId;
 	}
+	faceCount = faceId;
 	
 	dest.putUint8(1);//VERSION
-	{ //put the vertices
+	{ //put the points
 		sserialize::spatial::GeoPoint gp;
 		sserialize::Static::ArrayCreator<sserialize::spatial::GeoPoint> va(dest);
 		va.reserveOffsets(src.number_of_vertices());
@@ -162,14 +213,84 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 			++vertexId;
 		}
 		va.flush();
+		vertexCount = vertexId;
+	}
+	{//put the vertex info
+		std::vector<uint8_t> bitConfig(Triangulation::Vertex::VI__NUMBER_OF_ENTRIES);
+		bitConfig[Triangulation::Vertex::VI_FACES_BEGIN] = sserialize::CompactUintArray::minStorageBits(faceCount);
+		bitConfig[Triangulation::Vertex::VI_FACES_END] = bitConfig[Triangulation::Vertex::VI_FACES_BEGIN];
+		sserialize::MultiVarBitArrayCreator va(bitConfig, dest);
+		for(Finite_vertices_iterator vt(src.finite_vertices_begin()), vtEnd(src.finite_vertices_end()); vt != vtEnd; ++vt) {
+			assert(vertexToVertexId.is_defined(vt));
+			uint32_t vertexId = vertexToVertexId[vt];
+			uint32_t beginFace, endFace;
+			Face_circulator fc(src.incident_faces(vt));
+			{
+				uint32_t numFinite(0), numInfinite(0);
+				Face_circulator fcIt(fc);
+				++fcIt;
+				for(;fcIt != fc; ++fcIt) {
+					if (src.is_infinite(fcIt)) {
+						++numInfinite;
+					}
+					else {
+						++numFinite;
+					}
+				}
+				if (src.is_infinite(fc)) {
+					++numInfinite;
+				}
+				else {
+					++numFinite;
+				}
+			}
+			for(;src.is_infinite(fc); ++fc) {}
+			assert(!src.is_infinite(fc));
+			//now move forward/backward until we either reach the fc or reach an infite face
+			Face_circulator fcBegin(fc), fcEnd(fc);
+			while(true) {
+				--fcBegin;
+				if (fcBegin == fc) { //we came around once
+					break;
+				}
+				if (src.is_infinite(fcBegin)) {
+					++fcBegin;
+					break;
+				}
+				
+			}
+			while(true) {
+				++fcEnd;
+				if (fcEnd == fc) { //we came around once, prev is the last valid face
+					--fcEnd;
+					break;
+				}
+				if (src.is_infinite(fcEnd)) {
+					--fcEnd;
+					break;
+				}
+			}
+			
+			assert(!src.is_infinite(fcBegin));
+			assert(!src.is_infinite(fcEnd));
+			assert(faceToFaceId.is_defined(fcBegin));
+			assert(faceToFaceId.is_defined(fcEnd));
+			
+			beginFace = faceToFaceId[fcBegin];
+			endFace = faceToFaceId[fcEnd];
+			
+			va.set(vertexId, Triangulation::Vertex::VI_FACES_BEGIN, beginFace);
+			va.set(vertexId, Triangulation::Vertex::VI_FACES_END, endFace);
+		}
+		va.flush();
 	}
 	{
-		std::vector<uint8_t> bitConfig(Triangulation::Face::FI__NUMBER_ENTRIES);
+		std::vector<uint8_t> bitConfig(Triangulation::Face::FI__NUMBER_OF_ENTRIES);
 		bitConfig[Triangulation::Face::FI_NEIGHBOR_VALID] = 3;
-		bitConfig[Triangulation::Face::FI_NEIGHBOR0] = sserialize::CompactUintArray::minStorageBits(faceId);
+		bitConfig[Triangulation::Face::FI_NEIGHBOR0] = sserialize::CompactUintArray::minStorageBits(faceCount);
 		bitConfig[Triangulation::Face::FI_NEIGHBOR1] = bitConfig[Triangulation::Face::FI_NEIGHBOR0];
 		bitConfig[Triangulation::Face::FI_NEIGHBOR2] = bitConfig[Triangulation::Face::FI_NEIGHBOR0];
-		bitConfig[Triangulation::Face::FI_VERTEX0] = sserialize::CompactUintArray::minStorageBits(vertexId);
+		bitConfig[Triangulation::Face::FI_VERTEX0] = sserialize::CompactUintArray::minStorageBits(vertexCount);
 		bitConfig[Triangulation::Face::FI_VERTEX1] = bitConfig[Triangulation::Face::FI_VERTEX0];
 		bitConfig[Triangulation::Face::FI_VERTEX2] = bitConfig[Triangulation::Face::FI_VERTEX0];
 		sserialize::MultiVarBitArrayCreator fa(bitConfig, dest);
@@ -199,6 +320,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 			++faceId;
 		}
 		fa.flush();
+		assert(faceId == faceCount);
 	}
 	return dest;
 }
