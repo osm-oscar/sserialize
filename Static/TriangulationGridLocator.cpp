@@ -1,6 +1,8 @@
 #include <sserialize/Static/TriangulationGridLocator.h>
 #include <sserialize/utility/exceptions.h>
 
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+
 namespace sserialize {
 namespace Static {
 namespace spatial {
@@ -39,7 +41,7 @@ bool TriangulationGridLocator::contains(double lat, double lon) const {
 uint32_t TriangulationGridLocator::faceId(double lat, double lon) const {
 	if (gridContains(lat, lon)) {
 		uint32_t hint = m_grid.at(lat, lon);
-		return m_trs.locate<void>(lat, lon, hint);
+		return m_trs.locate<CGAL::Exact_predicates_exact_constructions_kernel>(lat, lon, hint);
 	}
 	return NullFace;
 }

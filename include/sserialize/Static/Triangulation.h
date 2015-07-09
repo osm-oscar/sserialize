@@ -7,6 +7,7 @@
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION 1
 
 #include <CGAL/number_utils.h>
+#include <CGAL/enum.h>
 
 namespace sserialize {
 namespace Static {
@@ -164,7 +165,7 @@ public:
 	Face face(uint32_t pos) const;
 	Vertex vertex(uint32_t pos) const;
 	template<typename T_GEOMETRY_TRAITS>
-	uint32_t locate(double lat, double lon, uint32_t hint = 0) const;
+	uint32_t locate(double lat, double lon, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
 	bool selfCheck() const;
@@ -176,7 +177,124 @@ public:
 };
 
 template<typename T_GEOMETRY_TRAITS>
-uint32_t Triangulation::locate(double /*lat*/, double /*lon*/, uint32_t /*hint*/) const {
+uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY_TRAITS traits) const {
+	typedef T_GEOMETRY_TRAITS K;
+	typedef typename K::Point_2 Point_2;
+	typedef typename K::Orientation_2 Orientation_2;
+	
+	if (!faceCount()) {
+		return NullFace;
+	}
+	
+	auto getPoint2 = [](const Vertex & v) {
+		Point gp(v.point());
+		return Point_2(gp.lat(), gp.lon());
+	};
+
+	Orientation_2 ot(traits.orientation_2_object());
+	Vertex circleVertex = face(hint).vertex(0);
+	
+	Point_2 q(lat, lon); //target
+	Point_2 p(getPoint2(circleVertex)); //start point
+	
+	//TODO: do initialization step with centroid of face instead of an initial circle step
+
+	Point_2 rp,lp;
+	Vertex rv, lv;
+	Face curFace;
+	
+	while (true) {
+		if (circleVertex.valid()) {
+			//p->q goes through circleVertex, we have to find the right triangle
+			//That triangle has circleVertex as a vertex
+			FaceCirculator fcBegin(circleVertex.facesBegin()), fcEnd(circleVertex.facesEnd());
+			while (true) {
+				const Face & cf = fcBegin.face();
+				int cvId = cf.index(circleVertex);
+				assert(cvId != -1);
+				
+				Vertex myLv(cf.vertex(Triangulation::cw(cvId))), myRv(cf.vertex(Triangulation::ccw(cvId)));
+				Point_2 myLP(getPoint2(myLv)), myRP(getPoint2(myRv));
+				
+				CGAL::Orientation lvOt = ot(p, q, myLP);
+				CGAL::Orientation rvOt = ot(p, q, myRP);
+				
+				//we've found the right triangle
+				if (lvOt == CGAL::Orientation::LEFT_TURN && rvOt == CGAL::Orientation::RIGHT_TURN) {
+					rv = myRv;
+					lv = myLv;
+					rp = myRP;
+					lp = myLP;
+					circleVertex = Vertex();
+					//the next face is the face that shares the edge myLv<->myRv with cf
+					curFace = cf.neighbor(cvId);
+					break;
+				}
+				else if (lvOt == CGAL::Orientation::COLLINEAR) {
+					circleVertex = myLv;
+					break;
+				}
+				else if (rvOt == CGAL::Orientation::COLLINEAR) {
+					circleVertex = myRv;
+					break;
+				}
+				//we've tested all faces and none matched, thus p must be outside of our triangulation
+				//This is only correct, if the triangulation is convex
+				if (fcBegin == fcEnd) {
+					return NullFace;
+				}
+				else {
+					++fcBegin;
+				}
+			}
+			//next iteration
+			continue;
+		}
+		else {
+			//we have a face, r, l, rv and lv are set, find s
+			//p->q does not pass through r or l but may pass through s
+			//p->q intersects l->r with l beeing on the left and r beeing on the right
+			Vertex sv;
+			int lvIndex = curFace.index(lv);
+			int rvIndex;
+			if (curFace.vertexId(Triangulation::cw(lvIndex)) != rv.id()) {
+				sv = curFace.vertex(cw(lvIndex));
+				rvIndex = ccw(lvIndex);
+			}
+			else {
+				sv = curFace.vertex(ccw(lvIndex));
+				rvIndex = cw(lvIndex);
+			}
+			assert(curFace.vertexId(rvIndex) == rv.id());
+			assert(curFace.vertexId(lvIndex) == lv.id());
+			
+			Point_2 sp(getPoint2(sv));
+			CGAL::Orientation sot = ot(p, q, sp);
+			if (CGAL::Orientation::COLLINEAR == sot) {
+				circleVertex = sv;
+			}
+			else if (CGAL::Orientation::LEFT_TURN) {
+				if (!curFace.isNeighbor(lvIndex)) {
+					return NullFace;
+				}
+				lv = sv;
+				lp = sp;
+				curFace = curFace.neighbor(lvIndex);
+			}
+			else if (CGAL::Orientation::RIGHT_TURN) {
+				if (!curFace.isNeighbor(rvIndex)) {
+					return NullFace;
+				}
+				rv = sv;
+				rp = sp;
+				curFace = curFace.neighbor(rvIndex);
+			}
+			else {
+				throw std::runtime_error("sserialize::Static::Triangulation::locate: unexpected error");
+			}
+		}
+	}
+	
 	return NullFace;
 }
 
