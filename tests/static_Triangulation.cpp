@@ -32,7 +32,12 @@ class TriangulationTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( TriangulationTest );
 CPPUNIT_TEST( staticSelfCheck );
 CPPUNIT_TEST( testSerialization );
-CPPUNIT_TEST( testLocate );
+CPPUNIT_TEST( testLocateInStartFace );
+CPPUNIT_TEST( testLocateVertexOfStartFace );
+CPPUNIT_TEST( testLocateFaceCentroidsFromNeighbors );
+// CPPUNIT_TEST( testLocateFaceCentroids );
+// CPPUNIT_TEST( testLocateVertices );
+// CPPUNIT_TEST( testLocate );
 CPPUNIT_TEST_SUITE_END();
 private:
 	double m_discDiameter;
@@ -43,7 +48,7 @@ private:
 	CGAL::Unique_hash_map<CGALTriangulation::Face_handle, uint32_t> m_face2FaceId;
 	CGAL::Unique_hash_map<CGALTriangulation::Vertex_handle, uint32_t> m_vertex2VertexId;
 public:
-	TriangulationTest() : m_discDiameter(150.0) {}
+	TriangulationTest() : m_discDiameter(30.0) {}
 	virtual void setUp() {
 		typedef CGALTriangulation::Point Point;
 		typedef CGAL::Creator_uniform_2<double,Point> Creator;
@@ -134,12 +139,10 @@ public:
 	}
 	
 	void testLocateInStartFace() {
-		for(CGALTriangulation::Finite_faces_iterator fIt(m_ctr.finite_faces_begin()), fEnd(m_ctr.finite_faces_end()); fIt != fEnd; ++fIt) {
-			CPPUNIT_ASSERT(m_face2FaceId.is_defined(fIt));
-			uint32_t fId = m_face2FaceId[fIt];
-			sserialize::Static::spatial::Triangulation::Point ct(m_str.face(fId).centroid());
-			uint32_t sfId = m_str.locate<K>(ct.lat(), ct.lon(), fId);
-			CPPUNIT_ASSERT_EQUAL(fId, sfId);
+		for(uint32_t faceId(0), s(m_str.faceCount()); faceId < s; ++faceId) {
+			sserialize::Static::spatial::Triangulation::Point ct(m_str.face(faceId).centroid());
+			uint32_t sfId = m_str.locate<K>(ct.lat(), ct.lon(), faceId);
+			CPPUNIT_ASSERT_EQUAL(faceId, sfId);
 		}
 	}
 	
@@ -152,9 +155,38 @@ public:
 		}
 	}
 	
+	void testLocateFaceCentroidsFromNeighbors() {
+		for(uint32_t targetFaceId(0), s(m_str.faceCount()); targetFaceId < s; ++targetFaceId) {
+			sserialize::Static::spatial::Triangulation::Face f(m_str.face(targetFaceId));
+			sserialize::Static::spatial::Triangulation::Point ct(f.centroid());
+			for(int j(0); j < 3; ++j) {
+				if (f.isNeighbor(j)) {
+					uint32_t lId = m_str.locate<K>(ct.lat(), ct.lon(), f.neighborId(j));
+					CPPUNIT_ASSERT_EQUAL(targetFaceId, lId);
+				}
+			}
+		}
+	}
+	
 	void testLocateFaceCentroids() {
-		for(uint32_t faceId(0), s(m_str.faceCount()); faceId < s; ++faceId) {
-			
+		for(uint32_t targetFaceId(0), s(m_str.faceCount()); targetFaceId < s; ++targetFaceId) {
+			sserialize::Static::spatial::Triangulation::Face f(m_str.face(targetFaceId));
+			sserialize::Static::spatial::Triangulation::Point ct(f.centroid());
+			for(uint32_t startFaceId(0); startFaceId < s; ++startFaceId) {
+				uint32_t lId = m_str.locate<K>(ct.lat(), ct.lon(), startFaceId);
+				CPPUNIT_ASSERT_EQUAL(targetFaceId, lId);
+			}
+		}
+	}
+	
+	void testLocateVertices() {
+		for(uint32_t vertexId(0), s(m_str.vertexCount()); vertexId < s; ++vertexId) {
+			sserialize::Static::spatial::Triangulation::Vertex v(m_str.vertex(vertexId));
+			sserialize::Static::spatial::Triangulation::Point vp(v.point());
+			for(uint32_t startFaceId(0), faceCount(m_str.faceCount()); startFaceId < faceCount; ++startFaceId) {
+				uint32_t fId = m_str.locate<K>(vp.lat(), vp.lon(), startFaceId);
+				CPPUNIT_ASSERT(m_str.face(fId).index(v) != -1);
+			}
 		}
 	}
 	
