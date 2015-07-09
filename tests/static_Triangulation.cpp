@@ -22,6 +22,10 @@ typedef CGAL::Triangulation_data_structure_2<Vb,Fb> TDS;
 typedef CGAL::Delaunay_triangulation_2<K, TDS> CDT;
 typedef CDT CGALTriangulation;
 
+CGALTriangulation::Point centroid(const CGALTriangulation::Face_handle & fh) {
+	return CGAL::centroid(fh->vertex(0)->point(), fh->vertex(1)->point(), fh->vertex(2)->point());
+}
+
 
 template<uint32_t NUM_TRIANG_POINTS, uint32_t NUM_TEST_POINTS>
 class TriangulationTest: public CppUnit::TestFixture {
@@ -128,6 +132,32 @@ public:
 			CPPUNIT_ASSERT_EQUAL(cgFaces, sfFaces);
 		}
 	}
+	
+	void testLocateInStartFace() {
+		for(CGALTriangulation::Finite_faces_iterator fIt(m_ctr.finite_faces_begin()), fEnd(m_ctr.finite_faces_end()); fIt != fEnd; ++fIt) {
+			CPPUNIT_ASSERT(m_face2FaceId.is_defined(fIt));
+			uint32_t fId = m_face2FaceId[fIt];
+			sserialize::Static::spatial::Triangulation::Point ct(m_str.face(fId).centroid());
+			uint32_t sfId = m_str.locate<K>(ct.lat(), ct.lon(), fId);
+			CPPUNIT_ASSERT_EQUAL(fId, sfId);
+		}
+	}
+	
+	void testLocateVertexOfStartFace() {
+		for(uint32_t vertexId(0), s(m_str.vertexCount()); vertexId < s; ++vertexId) {
+			sserialize::Static::spatial::Triangulation::Vertex v(m_str.vertex(vertexId));
+			sserialize::Static::spatial::Triangulation::Point vp(v.point());
+			uint32_t fId = m_str.locate<K>(vp.lat(), vp.lon(), v.facesBegin().face().id());
+			CPPUNIT_ASSERT(m_str.face(fId).index(v) != -1);
+		}
+	}
+	
+	void testLocateFaceCentroids() {
+		for(uint32_t faceId(0), s(m_str.faceCount()); faceId < s; ++faceId) {
+			
+		}
+	}
+	
 	void testLocate() {
 		typedef CGALTriangulation::Point Point;
 		typedef CGAL::Creator_uniform_2<double,Point> Creator;
@@ -140,7 +170,6 @@ public:
 			double x = CGAL::to_double(testPoints[i].x());
 			double y = CGAL::to_double(testPoints[i].x());
 			CGALTriangulation::Face_handle fh = m_ctr.locate(Point(x, y));
-			uint32_t sfId = m_str.locate<K>(x, y);
 			uint32_t fhId;
 			if (m_face2FaceId.is_defined(fh)) {
 				fhId = m_face2FaceId[fh];
@@ -149,6 +178,7 @@ public:
 				CPPUNIT_ASSERT(!m_ctr.number_of_faces() || m_ctr.is_infinite(fh));
 				fhId = sserialize::Static::spatial::Triangulation::NullFace;
 			}
+			uint32_t sfId = m_str.locate<K>(x, y);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("faces at ", i), fhId, sfId);
 		}
 	}
@@ -159,7 +189,7 @@ int main() {
 	CppUnit::TextUi::TestRunner runner;
 // 	runner.addTest(  TriangulationTest<0, 10>::suite() );
 	runner.addTest(  TriangulationTest<1000, 1000>::suite() );
-	runner.addTest(  TriangulationTest<10000, 1000>::suite() );
+// 	runner.addTest(  TriangulationTest<10000, 1000>::suite() );
 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
