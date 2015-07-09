@@ -69,6 +69,24 @@ std::ostream & operator<<(std::ostream & out, const std::set<T> & s) {
 }
 
 template<typename T>
+std::ostream & operator<<(std::ostream & out, const std::unordered_set<T> & s) {
+	if (!s.size())
+		return out << "std::unordered_set<0>[]";
+	typename std::unordered_set<T>::const_iterator end( s.cend());
+	typename std::unordered_set<T>::const_iterator it = s.cbegin();
+	
+	out << "std::unordered_set<" << s.size() << ">[";
+	while (true) {
+		out << *it;
+		++it;
+		if (it != end)
+			out << ", ";
+		else
+			return out << "]";
+	}
+}
+
+template<typename T>
 std::ostream & operator<<(std::ostream & out, const std::deque<T> & s) {
 	if (!s.size())
 		return out << "std::deque[]";
