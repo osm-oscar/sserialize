@@ -181,7 +181,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 	typedef T_GEOMETRY_TRAITS K;
 	typedef typename K::Point_2 Point_2;
 	typedef typename K::Orientation_2 Orientation_2;
-	
+	typedef typename K::Collinear_are_ordered_along_line_2 Collinear_are_ordered_along_line_2;
 	if (!faceCount()) {
 		return NullFace;
 	}
@@ -192,6 +192,8 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 	};
 
 	Orientation_2 ot(traits.orientation_2_object());
+	//(p,q,r) = 1 iff q is between p and r
+	Collinear_are_ordered_along_line_2 oal(traits.collinear_are_ordered_along_line_2_object());
 	Vertex circleVertex = face(hint).vertex(0);
 	Point_2 cv;
 	
@@ -208,7 +210,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 		if (circleVertex.valid()) {
 			cv = getPoint2(circleVertex);
 			
-			//reset p to cv, since then we don't heve to explicity check if q is inside the active triangle in case s is collinear with p->q
+			//reset p to cv, since then we don't have to explicity check if q is inside the active triangle in case s is collinear with p->q
 			//this has the overhead of going back to the former triangle but simplifies the logic
 			p = cv;
 			
@@ -221,10 +223,10 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 			FaceCirculator fcBegin(circleVertex.facesBegin()), fcEnd(circleVertex.facesEnd());
 			while (true) {
 				const Face & cf = fcBegin.face();
-				int cvId = cf.index(circleVertex);
-				assert(cvId != -1);
+				int cvIdx = cf.index(circleVertex);
+				assert(cvIdx != -1);
 				
-				Vertex myLv(cf.vertex(Triangulation::cw(cvId))), myRv(cf.vertex(Triangulation::ccw(cvId)));
+				Vertex myLv(cf.vertex(Triangulation::cw(cvIdx))), myRv(cf.vertex(Triangulation::ccw(cvIdx)));
 				Point_2 myLP(getPoint2(myLv)), myRP(getPoint2(myRv));
 				
 				CGAL::Orientation lvOt = ot(p, q, myLP);
@@ -245,15 +247,15 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 						lp = myLP;
 						circleVertex = Vertex();
 						//the next face is the face that shares the edge myLv<->myRv with cf
-						curFace = cf.neighbor(cvId);
+						curFace = cf.neighbor(cvIdx);
 						break;
 					}
 				}
-				else if (lvOt == CGAL::Orientation::COLLINEAR) {
+				else if (lvOt == CGAL::Orientation::COLLINEAR && oal(p, myLP, q)) {
 					circleVertex = myLv;
 					break;
 				}
-				else if (rvOt == CGAL::Orientation::COLLINEAR) {
+				else if (rvOt == CGAL::Orientation::COLLINEAR && oal(p, myRP, q)) {
 					circleVertex = myRv;
 					break;
 				}
@@ -296,8 +298,8 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 			else if (CGAL::Orientation::LEFT_TURN == sot) {
 				//check if q is within our face
 				//this is the case if q is to the right of l->s 
-				CGAL::Orientation lsqO = ot(lp,sp, q);
-				if (lsqO == CGAL::Orientation::RIGHT_TURN || lsqO == CGAL::Orientation::COLLINEAR) {
+				CGAL::Orientation rsqO = ot(rp, sp, q);
+				if (rsqO == CGAL::Orientation::LEFT_TURN || rsqO == CGAL::Orientation::COLLINEAR) {
 					return curFace.id();
 				}
 				if (!curFace.isNeighbor(lvIndex)) {
@@ -310,8 +312,8 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 			else if (CGAL::Orientation::RIGHT_TURN == sot) {
 				//check if q is within our face
 				//this is the case if q is to the left of r->s
-				CGAL::Orientation rsqO = ot(rp,sp, q);
-				if (rsqO == CGAL::Orientation::LEFT_TURN || rsqO == CGAL::Orientation::COLLINEAR) {
+				CGAL::Orientation lsqO = ot(lp, sp, q);
+				if (lsqO == CGAL::Orientation::RIGHT_TURN || lsqO == CGAL::Orientation::COLLINEAR) {
 					return curFace.id();
 				}
 				if (!curFace.isNeighbor(rvIndex)) {

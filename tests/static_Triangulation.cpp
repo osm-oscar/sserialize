@@ -35,9 +35,9 @@ CPPUNIT_TEST( testSerialization );
 CPPUNIT_TEST( testLocateInStartFace );
 CPPUNIT_TEST( testLocateVertexOfStartFace );
 CPPUNIT_TEST( testLocateFaceCentroidsFromNeighbors );
-// CPPUNIT_TEST( testLocateFaceCentroids );
-// CPPUNIT_TEST( testLocateVertices );
-// CPPUNIT_TEST( testLocate );
+CPPUNIT_TEST( testLocateFaceCentroids );
+CPPUNIT_TEST( testLocateVertices );
+CPPUNIT_TEST( testLocate );
 CPPUNIT_TEST_SUITE_END();
 private:
 	double m_discDiameter;
@@ -162,6 +162,9 @@ public:
 			for(int j(0); j < 3; ++j) {
 				if (f.isNeighbor(j)) {
 					uint32_t lId = m_str.locate<K>(ct.lat(), ct.lon(), f.neighborId(j));
+					if (lId != targetFaceId) {
+						lId = m_str.locate<K>(ct.lat(), ct.lon(), f.neighborId(j));
+					}
 					CPPUNIT_ASSERT_EQUAL(targetFaceId, lId);
 				}
 			}
@@ -222,7 +225,7 @@ int main() {
 // 	runner.addTest(  TriangulationTest<0, 10>::suite() );
 	runner.addTest(  TriangulationTest<1000, 1000>::suite() );
 // 	runner.addTest(  TriangulationTest<10000, 1000>::suite() );
-	runner.eventManager().popProtector();
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
