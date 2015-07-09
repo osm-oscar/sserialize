@@ -1,5 +1,7 @@
 #include <sserialize/Static/Triangulation.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/printers.h>
+
 
 namespace sserialize {
 namespace Static {
@@ -320,6 +322,16 @@ bool Triangulation::selfCheck() const {
 	}
 	return true;
 }
+
+
+void Triangulation::printStats(std::ostream& out) const {
+	out << "sserialize::Static::spatial::Triangulation::stats {\n";
+	out << "\t#vertices=" << m_p.size() << "\n";
+	out << "\t#faces=" << m_fi.size() << "\n";
+	out << "\tTotal size=" << sserialize::prettyFormatSize(getSizeInBytes()) << "\n";
+	out << "}";
+}
+
 
 
 }}}//end namespace

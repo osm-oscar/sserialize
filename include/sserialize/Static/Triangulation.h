@@ -164,6 +164,7 @@ public:
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
 	bool selfCheck() const;
+	void printStats(std::ostream & out) const;
 	//counter-clock-wise next vertex/neighbor as defined in cgal
 	inline static int ccw(const int i) { return (i+1)%3; }
 	//clock-wise next vertex/neighbor as defined in cgal
