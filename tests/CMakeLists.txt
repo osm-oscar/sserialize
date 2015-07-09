@@ -3,6 +3,7 @@ project(sserializetests)
 find_package(CPPUNIT REQUIRED)
 find_package(ICU 4.9 REQUIRED)
 find_package(Threads)
+find_package(CGAL)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${ICU_INCLUDE_DIRS})
 
 set(TEST_LIB_SOURCES_CPP
@@ -22,14 +23,6 @@ MACRO(ADD_TEST_TARGET_SINGLE _name)
 	target_link_libraries("${PROJECT_NAME}_${_name}" ${TEST_LIB_LINK_LIBS})
 	add_dependencies("${PROJECT_NAME}_${_name}" sserializetests)
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
-
-MACRO(ADD_TEST_TARGET _name)
-	set(extra_macro_args ${ARGV})
-	list(REMOVE_AT extra_macro_args 0)
-	add_executable("${PROJECT_NAME}_${_name}" ${extra_macro_args})
-	target_link_libraries("${PROJECT_NAME}_${_name}" ${TEST_LIB_LINK_LIBS})
-	add_dependencies("${PROJECT_NAME}_${_name}" libosmfind sserialize)
-ENDMACRO(ADD_TEST_TARGET)
 
 # IF (CPPUNIT_FOUND)
 
@@ -113,5 +106,25 @@ add_test_target_single(containers_setoptree)
 
 #staging
 ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
+
+#stuff with cgal deps
+IF(CGAL_FOUND)
+
+#this is not quite the right way, but cgal does nasty stuff with cgal
+#so we do nasty stuff as well
+SET(MY_SSERIALIZE_CGAL_LINK_LIBS
+	${TEST_LIB_LINK_LIBS}
+	"CGAL"
+	"mpfr"
+	"gmp"
+	"boost_thread"
+	"boost_system"
+)
+
+add_executable("${PROJECT_NAME}_static_Triangulation" static_Triangulation.cpp)
+target_link_libraries("${PROJECT_NAME}_static_Triangulation" ${MY_SSERIALIZE_CGAL_LINK_LIBS})
+add_dependencies("${PROJECT_NAME}_static_Triangulation" sserializetests)
+
+ENDIF(CGAL_FOUND)
 
 # ENDIF (CPPUNIT_FOUND)
