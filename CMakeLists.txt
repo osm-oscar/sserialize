@@ -122,6 +122,7 @@ spatial/GeoHierarchy.cpp
 spatial/GridRegionTree.cpp
 spatial/GeoGrid.cpp
 spatial/DistanceCalculator.cpp
+spatial/LatLonCalculations.cpp
 )
 
 set(COMPLETER_SOURCES_CPP

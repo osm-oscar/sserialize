@@ -1,4 +1,5 @@
 #include <sserialize/spatial/DistanceCalculator.h>
+#include <sserialize/spatial/LatLonCalculations.h>
 #include <cmath>
 
 namespace sserialize {
@@ -6,9 +7,11 @@ namespace spatial {
 namespace detail {
 
 inline double sqr(double a) { return a*a;}
+inline double toRadian(double deg) { return (deg*M_PI)/180;}
+
 
 double EuclideanDistanceCalculator::calc(const double lat0, const double lon0, const double lat1, const double lon1) const {
-	return std::sqrt( sqr(lat0-lat1) + sqr(lon0-lon1) );
+	return ::sqrt( sqr(lat0-lat1) + sqr(lon0-lon1) );
 }
 
 GeodesicDistanceCalculator::GeodesicDistanceCalculator(double a, double f) {
@@ -20,5 +23,11 @@ double GeodesicDistanceCalculator::calc(const double lat0, const double lon0, co
 	geod_inverse(&m_geodParams, lat0, lon0, lat1, lon1, &s12, 0, 0);
 	return s12;
 }
+
+//port from http://www.movable-type.co.uk/scripts/latlong.html
+double HaversineDistanceCaluclator::calc(const double lat0, const double lon0, const double lat1, const double lon1) const {
+	return distanceTo(lat0, lon0, lat1, lon1, m_earthRadius);
+}
+
 
 }}}
