@@ -164,8 +164,13 @@ public:
 	uint32_t faceCount() const { return m_fi.size(); }
 	Face face(uint32_t pos) const;
 	Vertex vertex(uint32_t pos) const;
+	///Locate the face the point=(lat, lon) lies in, need exact predicates
 	template<typename T_GEOMETRY_TRAITS>
 	uint32_t locate(double lat, double lon, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	///Explores the triangulation starting at startFace
+	///@param explorer operator()(uint32_t face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
+	template<typename T_EXPLORER>
+	void explore(uint32_t startFace, T_EXPLORER explorer) const;
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
 	bool selfCheck() const;
@@ -331,6 +336,36 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 	
 	return NullFace;
 }
+
+template<typename T_EXPLORER>
+void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
+	std::unordered_set<uint32_t> visitedFaces;
+	std::unordered_set<uint32_t> pendingFaces;
+	pendingFaces.insert(startFace);
+	
+	while (pendingFaces.size()) {
+		uint32_t cfId;
+		{
+			auto tmp(pendingFaces.begin());
+			cfId = *tmp;
+			pendingFaces.erase(tmp);
+		}
+		Face cf(face(cfId));
+		if (explorer(cf)) {
+			for(int j(0); j < 3; ++j) {
+				if (cf.isNeighbor(j)) {
+					uint32_t nId = cf.neighborId(j);
+					if (!visitedFaces.count(nId)) {
+						pendingFaces.insert(nId);
+						//nId is going to be visited in the future
+						visitedFaces.insert(nId);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 sserialize::UByteArrayAdapter &
