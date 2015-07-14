@@ -23,6 +23,7 @@ namespace spatial {
 class TriangulationGridLocator final {
 public:
 	typedef sserialize::Static::spatial::Triangulation Triangulation;
+	typedef sserialize::Static::spatial::RGeoGrid<uint32_t> Grid;
 	typedef Triangulation::Face Face;
 	typedef Triangulation::Point Point;
 	static constexpr uint32_t NullFace = Triangulation::NullFace;
@@ -34,6 +35,7 @@ public:
 	TriangulationGridLocator(const sserialize::UByteArrayAdapter & d);
 	~TriangulationGridLocator();
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
+	inline const Grid & grid() const { return m_grid; }
 	inline const Triangulation & tds() const { return m_trs; }
 	bool gridContains(double lat, double lon) const;
 	bool gridContains(const Point & p) const;
