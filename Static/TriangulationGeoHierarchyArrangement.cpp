@@ -30,7 +30,13 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(const TriangulationGeoHier
 }
 
 uint32_t TriangulationGeoHierarchyArrangement::cellIdFromFaceId(uint32_t faceId) const {
-	return m_faceIdToRefinedCellId.at(faceId);
+	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId);
+	if (tmp != m_cellCount) {
+		return tmp;
+	}
+	else {
+		return NullCellId;
+	}
 }
 
 uint32_t TriangulationGeoHierarchyArrangement::cellId(double lat, double lon) const {
@@ -65,9 +71,14 @@ cellsBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spati
 	
 	tds().explore(startFace, [&wct, radius](const Triangulation::Face & f) {
 		sserialize::spatial::GeoPoint ct(f.centroid());
-		bool ok = wct.dc(ct.lat(), ct.lon()) < radius;
+		double myDist = wct.dc(ct.lat(), ct.lon());
+		myDist = std::fabs<double>(myDist);
+		bool ok = myDist < radius;
 		if (ok) {
-			wct.result.insert(wct.parent->cellIdFromFaceId(f.id()));
+			uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
+			if (cellId != NullCellId) {
+				wct.result.insert(cellId);
+			}
 		}
 		return ok;
 	});
@@ -103,13 +114,15 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 		bool ok = false;
 		typedef const sserialize::spatial::GeoPoint* MyIt;
 		for(MyIt it(wct.beginPts), end(wct.endPts-1); !ok && it != end; ++it) {
-			if (sserialize::spatial::crossTrackDistance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), ct.lat(), ct.lon()) < radius) {
-				
-			}
+			double tmp = sserialize::spatial::crossTrackDistance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), ct.lat(), ct.lon());
+			tmp = std::fabs<double>(tmp);
+			ok = tmp < radius;
 		}
-
 		if (ok) {
-			wct.result.insert(wct.parent->cellIdFromFaceId(f.id()));
+			uint32_t tmp = wct.parent->cellIdFromFaceId(f.id());
+			if (tmp != NullCellId) {
+				wct.result.insert(tmp);
+			}
 		}
 		return ok;
 	});
