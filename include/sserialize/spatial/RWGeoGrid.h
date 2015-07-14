@@ -25,8 +25,6 @@ public:
 	
 	TValue at(double lat, double lon) const {
 		GeoGrid::GridBin bin(  GeoGrid::select(lat, lon) );
-		if (!bin.valid())
-			return TValue();
 		return m_storage.at(bin.tile);
 	}
 	
@@ -34,15 +32,15 @@ public:
 		return at(point.lat(), point.lon());
 	}
 	
+	TValue at(uint32_t tile) const {
+		return m_storage.at(tile);
+	}
+	
 	TValue binAt(uint32_t x, uint32_t y) const {
-		if (this->latCount() <= x || this->lonCount() <= y)
-			return TValue();
 		return m_storage.at( GeoGrid::selectBin(x,y));
 	}
 	
 	TValue binAt(uint32_t tile) const {
-		if (tile >= storage().size())
-			return TValue();
 		return m_storage.at( tile );
 	}
 };
@@ -74,6 +72,14 @@ public:
 			throw std::out_of_range(ss.str());
 		}
 		return RGeoGrid<TValue, StorageContainer>::storage().at(bin.tile);
+	}
+	
+	const TValue & at(uint32_t tile) const {
+		return binAt(tile);
+	}
+	
+	TValue & at(uint32_t tile) {
+		return binAt(tile);
 	}
 	
 	TValue & binAt(uint32_t x, uint32_t y) {
