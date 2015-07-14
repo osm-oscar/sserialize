@@ -50,8 +50,8 @@ private:
 	//flushes the data and header to m_dest
 	void flushData() {
 		m_dest.setPutPtr(m_beginning);
-		int len = m_dest.putVlPackedUint32(m_count);
-		len += m_dest.putVlPackedUint32(m_data.size());
+		m_dest.putVlPackedUint32(m_count);
+		m_dest.putVlPackedUint32(m_data.size());
 		m_dest.put(m_data);
 	}
 public:

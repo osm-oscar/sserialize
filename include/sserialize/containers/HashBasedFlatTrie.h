@@ -17,7 +17,6 @@
 #include <sserialize/Static/DynamicVector.h>
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
 #include <sserialize/utility/printers.h>
-#include <omp.h>
 
 ///WARNING: USING a hash of NodePtr need explicit initialization of the hash function (see bottom of this file)
 
