@@ -21,6 +21,7 @@ m_idxStore(idxStore)
 	for(; fmIt != fmEnd; ++fmIt) {
 		m_desc.push_back( CellDesc(1, 0, *fmIt) );
 	}
+	assert(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
@@ -36,6 +37,7 @@ m_idxStore(idxStore)
 	if (!fullMatch) {
 		idxPtr[0].idxPtr = cellIdxId;
 	}
+	assert(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
@@ -428,6 +430,16 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	assert(r.m_desc.size() <= (m_desc.size() + o.m_desc.size()));
 	return rPtr;
+}
+
+bool CellQueryResult::selfCheck() {
+	uint32_t cellCount = m_gh.cellSize();
+	for(const CellDesc & d : m_desc) {
+		if (d.cellId >= cellCount) {
+			return false;
+		}
+	}
+	return true;
 }
 
 }}//end namespace

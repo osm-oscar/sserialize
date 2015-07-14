@@ -69,6 +69,7 @@ public:
 	CellQueryResult * unite(const CellQueryResult * other) const;
 	CellQueryResult * diff(const CellQueryResult * other) const;
 	CellQueryResult * symDiff(const CellQueryResult * other) const;
+	bool selfCheck();
 };
 
 template<typename T_PMITEMSPTR_IT>
@@ -107,6 +108,7 @@ m_idxStore(idxStore)
 		idxPtr->idxPtr = *pmItemsIt;
 	}
 
+	assert(selfCheck());
 }
 
 
