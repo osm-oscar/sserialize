@@ -163,6 +163,10 @@ public:
 		m_max = std::max<value_type>(m_max, o.m_max);
 		m_min = std::min<value_type>(m_min, o.m_min);
 	}
+	void reset() {
+		m_max = std::numeric_limits<value_type>::min();
+		m_min = std::numeric_limits<value_type>::max();
+	}
 };
 
 template<typename T>
