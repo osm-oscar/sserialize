@@ -47,10 +47,12 @@ public:
 ///A distance calculator to calculate distances
 ///The type of distance depens on the selected calculator
 class DistanceCalculator {
+public:
+	typedef enum { DCT_EUCLIDEAN, DCT_GEODESIC_ACCURATE, DCT_GEODESIC_FAST } DistanceCalculatorTypes;
 private:
 	std::shared_ptr<detail::DistanceCalculator> m_priv;
 public:
-	DistanceCalculator() : m_priv(new detail::EuclideanDistanceCalculator()) {}
+	DistanceCalculator(DistanceCalculatorTypes type);
 	DistanceCalculator(const std::shared_ptr<detail::DistanceCalculator> & d) : m_priv(d) {}
 	virtual ~DistanceCalculator() {}
 	inline double calc(const double lat0, const double lon0, const double lat1, const double lon1) const {

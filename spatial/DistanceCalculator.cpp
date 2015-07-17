@@ -30,4 +30,23 @@ double HaversineDistanceCaluclator::calc(const double lat0, const double lon0, c
 }
 
 
-}}}
+}
+
+DistanceCalculator::DistanceCalculator(sserialize::spatial::DistanceCalculator::DistanceCalculatorTypes type) {
+	switch (type) {
+	case DCT_EUCLIDEAN:
+		m_priv.reset(new detail::EuclideanDistanceCalculator());
+		break;
+	case DCT_GEODESIC_ACCURATE:
+		m_priv.reset(new detail::GeodesicDistanceCalculator());
+		break;
+	case DCT_GEODESIC_FAST:
+		m_priv.reset(new detail::HaversineDistanceCaluclator());
+		break;
+	default:
+		break;
+	}
+}
+
+}}
+
