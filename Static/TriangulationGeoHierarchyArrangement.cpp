@@ -92,6 +92,7 @@ cellsBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spati
 		return ok;
 	});
 	std::vector<uint32_t> tmp(wct.result.begin(), wct.result.end());
+	std::sort(tmp.begin(), tmp.end());
 	return sserialize::ItemIndex::absorb(tmp);
 }
 
@@ -142,6 +143,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 		return ok;
 	});
 	std::vector<uint32_t> tmp(wct.result.begin(), wct.result.end());
+	std::sort(tmp.begin(), tmp.end());
 	return sserialize::ItemIndex::absorb(tmp);
 }
 
