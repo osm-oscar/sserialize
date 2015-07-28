@@ -48,34 +48,22 @@ private:
 	explicit MmappedFile(MmappedFilePrivate * priv) : RCWrapper<MmappedFilePrivate>(priv) {}
 public:
 	MmappedFile() : RCWrapper<MmappedFilePrivate>(new MmappedFilePrivate()) {
-		if (priv()) {
-			priv()->setWriteableFlag(false);
-		}
-		//TODO: Else: throw exception (but android does not support exception handling?)
+		priv()->setWriteableFlag(false);
 	}
 	
 	explicit MmappedFile(bool writable) : RCWrapper<MmappedFilePrivate>(new MmappedFilePrivate()) {
-		if (priv()) {
-			priv()->setWriteableFlag(writable);
-		}
-		//TODO: Else: throw exception (but android does not support exception handling?)
+		priv()->setWriteableFlag(writable);
 	}
 	
 	
 	MmappedFile(const MmappedFile & other) : RCWrapper<MmappedFilePrivate>(other) {}
 	
 	explicit MmappedFile(const char * fileName, bool writable=false) : RCWrapper<MmappedFilePrivate>(new MmappedFilePrivate(std::string(fileName))) {
-		if (priv()) {
-			priv()->setWriteableFlag(writable);
-		}
-		//TODO: Else: throw exception (but android does not support exception handling?)
+		priv()->setWriteableFlag(writable);
 	}
 	
 	MmappedFile(const std::string & fileName, bool writable=false) : RCWrapper<MmappedFilePrivate>(new MmappedFilePrivate(fileName)) {
-		if (priv()) {
-			priv()->setWriteableFlag(writable);
-		}
-		//TODO: Else: throw exception (but android does not support exception handling?)
+		priv()->setWriteableFlag(writable);
 	}
 	
 	MmappedFile & operator=(const MmappedFile & other) {
