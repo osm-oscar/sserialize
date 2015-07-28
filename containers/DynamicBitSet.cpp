@@ -133,16 +133,15 @@ ItemIndex DynamicBitSet::toIndex(int type) const {
 	return ItemIndex::fromBitSet(*this, (ItemIndex::Types) type);
 }
 
-//TODO:SpeedUp!
 SizeType DynamicBitSet::size() const {
 	uint32_t resSize = 0;
 	UByteArrayAdapter::OffsetType s = m_data.size();
 	UByteArrayAdapter::OffsetType i;
 	for(i = 0; i+4 <= s; i += 4) {//we can use this here as the order of the bits is not relevant
-		resSize += popCount( m_data.getUint32(i));
+		resSize += popCount<uint32_t>( m_data.getUint32(i) );
 	}
 	for(; i < s; ++i) {
-		resSize += popCount( m_data.at(i));
+		resSize += popCount<uint8_t>( m_data.at(i));
 	}
 	return resSize;
 }
