@@ -15,6 +15,8 @@ class DynamicBitSet;
 class UByteArrayAdapter;
 class ItemIndexPrivate;
 
+//TODO: implement function to convert between multiple indices
+
 /** This class is an interface for an ItemIndex which is esential a set container of uint32_t,
   * but with different implentations which are all ref-counted, but not cowed
   * The constructors may throw an exception!
@@ -118,7 +120,7 @@ public:
 	static ItemIndex unite(const std::vector< sserialize::ItemIndex >& set);
 
 	static ItemIndex difference(const ItemIndex & a, const ItemIndex & b);
-	static ItemIndex symmetricDifference(const ItemIndex & a, const ItemIndex & b); //TODO: implement
+	static ItemIndex symmetricDifference(const ItemIndex & a, const ItemIndex & b);
 	static ItemIndex unite(const ItemIndex & aindex, const ItemIndex & bindex);
 	static ItemIndex intersect(const ItemIndex & aindex, const ItemIndex & bindex);
 
