@@ -67,7 +67,6 @@ uint32_t CellQueryResult::idxSize(uint32_t pos) const {
 	if (cd.fetched) {
 		return (m_idx+pos)->idx.size();
 	}
-	uint32_t idxId;
 	if (cd.fullMatch) {
 		return m_gh.cellItemsCount(cd.cellId);
 	}
