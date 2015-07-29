@@ -100,7 +100,7 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 		uint64_t pv = ( static_cast<uint64_t>(item.at(i).key-minKey) << valueBits) | (item.at(i).value-minValue);
 		carr.set64(i, pv);
 	}
-	dest.put(carr.data());
+	dest.putData(carr.data());
 #if defined(DEBUG_CHECK_KVSTORE_SERIALIZE) || defined(DEBUG_CHECK_ALL)
 	UByteArrayAdapter tmp(dest);
 	tmp.setPutPtr(putPtr);

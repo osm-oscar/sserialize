@@ -144,7 +144,7 @@ UByteArrayAdapter& DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPoin
 			tempDest.putVlPackedInt32(diffLon);
 		}
 		dest.putVlPackedUint32(d.size());
-		dest.put(d);
+		dest.putData(d);
 	}
 	
 	return dest;

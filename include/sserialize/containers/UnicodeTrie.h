@@ -365,7 +365,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 	pinfo.end();
 	payloadContainerCreator.flush();
 	d.putUint32(nodeCreator->type());
-	d.put(trieData);
+	d.putData(trieData);
 	return d;
 }
 

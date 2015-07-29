@@ -45,7 +45,7 @@ void MultiBitBackInserter::push_back(uint64_t value, uint8_t length) {
 			m_buffer[byteSpan-1] |= value;
 			value >>= 8;
 		}
-		m_data.put(m_buffer.begin(), pushLen);
+		m_data.putData(m_buffer.begin(), pushLen);
 		m_buffer.fill(0);
 		m_buffer[0] = overlap;
 	}

@@ -130,7 +130,7 @@ UByteArrayAdapter LargeCompactTrieNodePrivate::strData() const {
 
 std::string LargeCompactTrieNodePrivate::str() const {
 	uint8_t * str = new uint8_t[m_strLen];
-	m_data.get(m_strBegin, str, m_strLen);
+	m_data.getData(m_strBegin, str, m_strLen);
 	std::string st(reinterpret_cast<char*>(str), m_strLen);
 	delete str;
 	return st;
@@ -249,7 +249,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 		return NODE_STRING_TOO_LONG;
 	destination.putUint8(nodeInfo.nodeStr.size());
 	if (nodeInfo.nodeStr.size() > 0) {
-		destination.put(reinterpret_cast<const uint8_t*>(nodeInfo.nodeStr.c_str()), nodeInfo.nodeStr.size());
+		destination.putData(reinterpret_cast<const uint8_t*>(nodeInfo.nodeStr.c_str()), nodeInfo.nodeStr.size());
 	}
 	
 	if (nodeInfo.childChars.size()) {
@@ -300,7 +300,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 			for(uint32_t i = 1, s = childPtrs.size(); i < s; ++i) {
 				carr.set(i-1, childPtrs[i]);
 			}
-			destination.put(carr.data());
+			destination.putData(carr.data());
 			header |= (static_cast<uint16_t>(childPtrBits-1) << 8);
 		}
 		

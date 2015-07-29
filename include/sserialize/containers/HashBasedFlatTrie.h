@@ -658,7 +658,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	
 	std::cout << "Copying string data(" << sserialize::prettyFormatSize(m_stringData.size()) << ")..." << std::flush;
 	tm.begin();
-	dest.put(reinterpret_cast<const uint8_t*>(m_stringData.begin()), m_stringData.size());
+	dest.putData(reinterpret_cast<const uint8_t*>(m_stringData.begin()), m_stringData.size());
 	tm.end();
 	std::cout << tm.elapsedSeconds() << " seconds" << std::endl;
 	
@@ -804,7 +804,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 							std::unique_lock<std::mutex> dALck(dataAccessMtx);
 							for(uint32_t i(0), s(nodeIds.size()); i < s; ++i) {
 								nodeIdToData.at(nodeIds.at(i)) = tmpPayload.size();
-								tmpPayload.beginRawPush() << myTmpPayload.dataAt(i);
+								tmpPayload.beginRawPush().putData(myTmpPayload.dataAt(i));
 								tmpPayload.endRawPush();
 							}
 						}

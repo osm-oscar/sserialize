@@ -106,8 +106,8 @@ int main(int argc, char ** argv) {
 			sserialize::UByteArrayAdapter::OffsetType readLen = chunkSize;
 			if (dataSize-i < chunkSize)
 				readLen = dataSize - i;
-			sserialize::UByteArrayAdapter::OffsetType inReadLen = inFileData.get(i, inBuf, readLen);
-			sserialize::UByteArrayAdapter::OffsetType outReadLen = outFileData.get(i, outBuf, readLen);
+			sserialize::UByteArrayAdapter::OffsetType inReadLen = inFileData.getData(i, inBuf, readLen);
+			sserialize::UByteArrayAdapter::OffsetType outReadLen = outFileData.getData(i, outBuf, readLen);
 			if (readLen != inReadLen) {
 				std::cout << "Failed to read " << readLen << " from in-file at " << i << std::endl;
 				return 1;

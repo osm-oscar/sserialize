@@ -107,7 +107,7 @@ public:
 	
 	///don't push anything after calling this function
 	inline void flushWithData(const UByteArrayAdapter & src, uint32_t itemcount) {
-		m_data.put(src);
+		m_data.putData(src);
 		m_count += itemcount;
 		flush();
 	}

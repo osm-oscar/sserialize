@@ -191,7 +191,7 @@ SimpleStaticTrieCreationNode::createNewNode(
 		return NODE_STRING_TOO_LONG;
 	destination.putUint8(nodeInfo.nodeStr.size());
 	if (nodeInfo.nodeStr.size() > 0) {
-		destination.put(reinterpret_cast<const uint8_t*>(nodeInfo.nodeStr.c_str()), nodeInfo.nodeStr.size());
+		destination.putData(reinterpret_cast<const uint8_t*>(nodeInfo.nodeStr.c_str()), nodeInfo.nodeStr.size());
 	}
 
 	//Push the child chars and child ptrs

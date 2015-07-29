@@ -17,7 +17,7 @@ enum CODEDNUMTYPES { CT_UINT8, CT_UINT16, CT_UINT24, CT_UINT32, CT_VLUINT32, CT_
 bool fillStrings(std::deque<std::string> & strings, UByteArrayAdapter adapter) {
 	uint32_t curPos = 0;
 	for(size_t i = 0; i < strings.size(); i++) {
-		int len = adapter.put(curPos, strings[i]);
+		int len = adapter.putString(curPos, strings[i]);
 		if (len < 0)
 			return false;
 		curPos += len;
@@ -554,7 +554,7 @@ std::deque<uint32_t> createNumber(int testCount) {
 bool fillAndTestComparissonOperators() {
 	std::deque<uint8_t> ad( createNumbers8(0xFFF));
 	UByteArrayAdapter adap(&ad);
-	if (ad != adap) {
+	if (!adap.equalContent(ad)) {
 		return false;
 	}
 	else {

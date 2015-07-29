@@ -199,7 +199,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 	if (id < 0) {
 		m_dataLock.acquireWriteLock();
 		sserialize::UByteArrayAdapter::OffsetType dataOffset = m_indexStore.tellPutPtr();
-		m_indexStore.put(idx);
+		m_indexStore.putData(idx);
 		id = m_idToOffsets.size();
 		assert((std::size_t)id == m_idToOffsets.size()); //check for wrap around of ids
 		m_idToOffsets.push_back(dataOffset);
@@ -569,7 +569,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 			return 0;
 		}
 		totalOutPutBuffLen += outBufLen;
-		dest.put(outBuf, outBufLen);
+		dest.putData(outBuf, outBufLen);
 		pinfo(i);
 	}
 	pinfo.end();
@@ -598,7 +598,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	if (store.compressionType() == Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN) {
 		UByteArrayAdapter htData = store.getHuffmanTreeData();
 		std::cout << "Adding huffman tree with size: " << htData.size() << std::endl;
-		dest.put(htData);
+		dest.putData(htData);
 	}
 	//now add the table with the uncompressedSizes
 	UByteArrayAdapter bitneed = dest;

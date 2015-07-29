@@ -125,11 +125,11 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 		
 		double cmpRatio = (double)inBufLen / outBufLen;
 		if (cmpRatio >= compressionRatio) {
-			dest.put(outBuf, outBufLen);
+			dest.putData(outBuf, outBufLen);
 			chunkTypeBitSet.set(chunkNum);
 		}
 		else {
-			dest.put(inBuf, inBufLen);
+			dest.putData(inBuf, inBufLen);
 		}
 	}
 	delete[] inBuf;
@@ -140,7 +140,7 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 	sserialize::UByteArrayAdapter::OffsetType dataSize = dest.tellPutPtr() - beginning;
 	
 	Static::SortedOffsetIndexPrivate::create(destOffsets, dest);
-	dest.put(chunkTypeBitSet.data());
+	dest.putData(chunkTypeBitSet.data());
 
 	std::vector<uint8_t> header(COMPRESSED_MMAPPED_FILE_HEADER_SIZE, 0);
 	header[0] = chunkSizeExponent;
@@ -148,7 +148,7 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 	p_u40(dataSize, &header[6]);
 	header[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] = COMPRESSED_MMAPPED_FILE_VERSION;
 	
-	dest.put(header);
+	dest.putData(header);
 	
 	return true;
 }

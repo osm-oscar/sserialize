@@ -72,7 +72,7 @@ UByteArrayAdapter::OffsetType DynamicKeyValueObjectStore::serialize(sserialize::
 	pinfo.begin(m_items.size(), "KeyValueObjectStore::serialize: items");
 	for(uint32_t i = 0, s = m_items.size(); i < s; ++i) {
 		creator.beginRawPut();
-		creator.rawPut().put(m_items.dataAt(i));
+		creator.rawPut().putData(m_items.dataAt(i));
 		creator.endRawPut();
 		pinfo(i);
 	}

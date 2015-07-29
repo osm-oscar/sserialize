@@ -12,8 +12,10 @@ std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_fastTempFilePrefix = TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_logFilePrefix = TEMP_FILE_PREFIX;
 
+namespace detail {
+namespace __UByteArrayAdapter {
 
-UByteArrayAdapter::MemoryView::MemoryViewImp::MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base) :
+MemoryView::MemoryViewImp::MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base) :
 m_dataBase(base),
 m_d(ptr),
 m_off(off),
@@ -21,13 +23,13 @@ m_size(size),
 m_copy(isCopy)
 {}
 
-UByteArrayAdapter::MemoryView::MemoryViewImp::~MemoryViewImp() {
+MemoryView::MemoryViewImp::~MemoryViewImp() {
 	if (isCopy()) {
 		delete[] m_d;
 	}
 }
 
-bool UByteArrayAdapter::MemoryView::MemoryViewImp::flush(OffsetType len, OffsetType off) {
+bool MemoryView::MemoryViewImp::flush(OffsetType len, OffsetType off) {
 	if (isCopy()) {
 		if (off > m_size) {
 			return false;
@@ -38,9 +40,15 @@ bool UByteArrayAdapter::MemoryView::MemoryViewImp::flush(OffsetType len, OffsetT
 	return true;
 }
 
-UByteArrayAdapter UByteArrayAdapter::MemoryView::MemoryViewImp::dataBase() const {
-	return UByteArrayAdapter(m_dataBase, m_off, m_size);
+sserialize::UByteArrayAdapter MemoryView::MemoryViewImp::dataBase() const {
+	return sserialize::UByteArrayAdapter(m_dataBase, m_off, m_size);
 }
+
+sserialize::UByteArrayAdapter MemoryView::dataBase() const {
+	return m_priv->dataBase();
+}
+
+}}//end namespace detail::__UByteArrayAdapter
 
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
 m_priv(priv),
@@ -286,7 +294,7 @@ void UByteArrayAdapter::zero() {
 	uint8_t * zeros = new uint8_t[bufLen];
 	memset(zeros, 0, bufLen);
 	for(OffsetType i = 0; i < m_len; i += bufLen) {
-		put(i, zeros, std::min<OffsetType>(m_len-i, bufLen));
+		putData(i, zeros, std::min<OffsetType>(m_len-i, bufLen));
 	}
 	delete[] zeros;
 }
@@ -298,7 +306,7 @@ bool UByteArrayAdapter::equal(const UByteArrayAdapter& b) const {
 bool UByteArrayAdapter::equalContent(const UByteArrayAdapter& b) const {
 	if (size() != b.size())
 		return false;
-	for(uint32_t i = 0; i < size(); ++i) {
+	for(OffsetType i = 0; i < size(); ++i) {
 		if (at(i) != b.at(i))
 			return false;
 	}
@@ -308,16 +316,11 @@ bool UByteArrayAdapter::equalContent(const UByteArrayAdapter& b) const {
 bool UByteArrayAdapter::equalContent(const std::deque< uint8_t >& b) const {
 	if (size() != b.size())
 		return false;
-	for(uint32_t i = 0; i < size(); ++i) {
+	for(OffsetType i = 0; i < size(); ++i) {
 		if (at(i) != b.at(i))
 			return false;
 	}
 	return true;
-}
-
-
-OffsetType UByteArrayAdapter::tellPutPtr() const {
-	return m_putPtr;
 }
 
 void UByteArrayAdapter::incPutPtr(OffsetType num) {
@@ -350,10 +353,6 @@ UByteArrayAdapter& UByteArrayAdapter::shrinkToPutPtr() {
 	else
 		m_getPtr -= m_putPtr;
 	return *this;
-}
-
-OffsetType UByteArrayAdapter::tellGetPtr() const {
-	return m_getPtr;
 }
 
 bool UByteArrayAdapter::getPtrHasNext() const {
@@ -595,7 +594,7 @@ UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos
 	bool isCopy = !m_priv->isContiguous();
 	if (isCopy) {
 		data = new uint8_t[size];
-		get(pos, data, size);
+		getData(pos, data, size);
 	}
 	else {
 		data = &operator[](pos);
@@ -738,7 +737,7 @@ UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * l
 	return UByteArrayAdapter(*this, pos+len, strLen);
 }
 
-UByteArrayAdapter::OffsetType UByteArrayAdapter::get(const UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
+UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
 	if (pos > m_len)
 		return 0;
 	if (pos+len > m_len)
@@ -850,7 +849,7 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t 
 	return m_priv->putVlPackedPad4Int32(m_offSet+pos, value, m_len-pos);
 }
 
-int UByteArrayAdapter::put(const OffsetType pos, const std::string & str) {
+int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) {
 	UByteArrayAdapter::OffsetType needSize = psize_vu32(str.size()) + str.size();
 	if (m_len < pos+needSize)
 		return -1;
@@ -861,14 +860,14 @@ int UByteArrayAdapter::put(const OffsetType pos, const std::string & str) {
 	return needSize;
 }
 
-bool UByteArrayAdapter::put(OffsetType pos, const uint8_t * data, OffsetType len) {
+bool UByteArrayAdapter::putData(OffsetType pos, const uint8_t * data, OffsetType len) {
 	if (m_len < pos+len)
 		return false;
 	m_priv->put(m_offSet+pos, data, len);
 	return true;
 }
 
-bool UByteArrayAdapter::put(const OffsetType pos, const std::deque< uint8_t >& data) {
+bool UByteArrayAdapter::putData(const OffsetType pos, const std::deque<uint8_t>& data) {
 	if (m_len < pos+data.size())
 		return false;
 	for(size_t i = 0; i < data.size(); i++) {
@@ -877,34 +876,34 @@ bool UByteArrayAdapter::put(const OffsetType pos, const std::deque< uint8_t >& d
 	return true;
 }
 
-bool UByteArrayAdapter::put(const OffsetType pos, const std::vector< uint8_t >& data) {
+bool UByteArrayAdapter::putData(const OffsetType pos, const std::vector< uint8_t >& data) {
 	if (data.size())
-		return put(pos, &data[0], data.size());
+		return putData(pos, &data[0], data.size());
 	return true;
 }
 
-bool UByteArrayAdapter::put(const OffsetType pos, const UByteArrayAdapter & data) {
+bool UByteArrayAdapter::putData(const OffsetType pos, const UByteArrayAdapter & data) {
 	if (m_len < pos+data.size())
 		return false;
 
 	if (m_priv->isContiguous()) {
-		return put(pos, &data[0], data.size());
+		return putData(pos, &data[0], data.size());
 	}
 
 	uint32_t bufLen = std::min<OffsetType>(data.size(), 1024*1024);
 	uint8_t * buf = new uint8_t[bufLen];
 	for(OffsetType i = 0, s = data.size(); i < s;) {
 		OffsetType len = std::min<OffsetType>(s-i, bufLen);
-		data.get(i, buf, len);
-		put(pos+i, buf, len);
+		data.getData(i, buf, len);
+		putData(pos+i, buf, len);
 		i += len;
 	}
 	delete[] buf;
 	return true;
 }
 
-bool UByteArrayAdapter::put(const OffsetType pos, const MemoryView & data) {
-	return put(pos, data.get(), data.size());
+bool UByteArrayAdapter::putData(const OffsetType pos, const MemoryView & data) {
+	return putData(pos, data.get(), data.size());
 }
 
 UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool deleteOnClose) {
@@ -932,9 +931,7 @@ UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool dele
 
 	//Now copy contents
 	uint8_t* tempFileData = tempFile.data();
-	for(uint32_t i = 0; i < m_len; i++) {
-		tempFileData[i] = m_priv->getUint8(i);
-	}
+	m_priv->get(0, tempFileData, m_len);
 	return adap;
 }
 
@@ -1128,8 +1125,8 @@ int32_t UByteArrayAdapter::getVlPackedInt32() {
 	return res;
 }
 
-UByteArrayAdapter::OffsetType UByteArrayAdapter::get(uint8_t * dest, UByteArrayAdapter::OffsetType len) {
-	len = get(m_getPtr, dest, len);
+UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(uint8_t * dest, UByteArrayAdapter::OffsetType len) {
+	len = getData(m_getPtr, dest, len);
 	m_getPtr += len;
 	return len;
 }
@@ -1194,7 +1191,7 @@ int UByteArrayAdapter::__NAME(const __TYPE value) { \
 	int len = __SERFUNC(value, tmp); \
 	if (len < 0) \
 		return -1; \
-	put(tmp, len); \
+	putData(tmp, len); \
 	return len; \
 } \
 
@@ -1228,11 +1225,11 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 	return len;
 }
 
-bool UByteArrayAdapter::put(const std::string& str) {
+bool UByteArrayAdapter::putString(const std::string& str) {
 	UByteArrayAdapter::OffsetType needSize = psize_vu32(str.size()) + str.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
-	int pushedBytes = put(m_putPtr, str);
+	int pushedBytes = putString(m_putPtr, str);
 	if (pushedBytes >= 0) {
 		m_putPtr+= needSize;
 		return true;
@@ -1240,11 +1237,11 @@ bool UByteArrayAdapter::put(const std::string& str) {
 	return false;
 }
 
-bool UByteArrayAdapter::put(const uint8_t * data, UByteArrayAdapter::OffsetType len) {
+bool UByteArrayAdapter::putData(const uint8_t * data, UByteArrayAdapter::OffsetType len) {
 	UByteArrayAdapter::OffsetType needSize = len;
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
-	bool ok = put(m_putPtr, data, len);
+	bool ok = putData(m_putPtr, data, len);
 	if (ok) {
 		m_putPtr += needSize;
 		return true;
@@ -1252,11 +1249,11 @@ bool UByteArrayAdapter::put(const uint8_t * data, UByteArrayAdapter::OffsetType 
 	return false;
 }
 
-bool UByteArrayAdapter::put(const std::deque< uint8_t >& data) {
+bool UByteArrayAdapter::putData(const std::deque< uint8_t >& data) {
 	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
-	bool ok = put(m_putPtr, data);
+	bool ok = putData(m_putPtr, data);
 	if (ok) {
 		m_putPtr+= needSize;
 		return true;
@@ -1264,11 +1261,11 @@ bool UByteArrayAdapter::put(const std::deque< uint8_t >& data) {
 	return false;
 }
 
-bool UByteArrayAdapter::put(const std::vector< uint8_t >& data) {
+bool UByteArrayAdapter::putData(const std::vector< uint8_t >& data) {
 	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
-	bool ok = put(m_putPtr, data);
+	bool ok = putData(m_putPtr, data);
 	if (ok) {
 		m_putPtr+= needSize;
 		return true;
@@ -1276,11 +1273,11 @@ bool UByteArrayAdapter::put(const std::vector< uint8_t >& data) {
 	return false;
 }
 
-bool UByteArrayAdapter::put(const UByteArrayAdapter & data) {
+bool UByteArrayAdapter::putData(const UByteArrayAdapter & data) {
 	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
-	bool ok = put(m_putPtr, data);
+	bool ok = putData(m_putPtr, data);
 	if (ok) {
 		m_putPtr+= needSize;
 		return true;
@@ -1297,21 +1294,21 @@ std::string UByteArrayAdapter::toString() const {
 	return str;
 }
 
-void UByteArrayAdapter::dump(uint32_t byteCount) const {
-	uint32_t dumpLen = byteCount;
+void UByteArrayAdapter::dump(OffsetType byteCount) const {
+	OffsetType dumpLen = byteCount;
 	if (m_len < dumpLen)
 		dumpLen = m_len;
-	for(size_t i = 0; i < dumpLen; i++) {
+	for(OffsetType i = 0; i < dumpLen; i++) {
 		std::cout << static_cast<uint32_t>(at(i)) << ":";
 	}
 	std::cout << std::endl;
 }
 
-void UByteArrayAdapter::dumpAsString(uint32_t byteCount) const {
-	uint32_t dumpLen = byteCount;
+void UByteArrayAdapter::dumpAsString(OffsetType byteCount) const {
+	OffsetType dumpLen = byteCount;
 	if (m_len < dumpLen)
 		dumpLen = m_len;
-	for(size_t i = 0; i < dumpLen; i++) {
+	for(OffsetType i = 0; i < dumpLen; i++) {
 		std::cout << at(i) << ":";
 	}
 	std::cout << std::endl;
@@ -1333,16 +1330,6 @@ STATIC_PUT_FUNCS_MAKRO(putVlPackedInt64, int64_t);
 STATIC_PUT_FUNCS_MAKRO(putVlPackedUint64, uint64_t);
 #undef STATIC_PUT_FUNCS_MAKRO
 
-using namespace sserialize;
-
-// sserialize::UByteArrayAdapter& operator--(sserialize::UByteArrayAdapter& a) {
-// 	return a.operator--(1);
-// }
-// 
-// sserialize::UByteArrayAdapter& operator++(sserialize::UByteArrayAdapter& a) {
-// 	return a.operator--(1);
-// }
-
 bool operator==(const sserialize::UByteArrayAdapter& a, const sserialize::UByteArrayAdapter& b) {
 	return a.equal(b);
 }
@@ -1350,23 +1337,6 @@ bool operator==(const sserialize::UByteArrayAdapter& a, const sserialize::UByteA
 bool operator!=(const sserialize::UByteArrayAdapter & a, const sserialize::UByteArrayAdapter & b) {
 	return ! a.equal(b);
 }
-
-bool operator==(const std::deque<uint8_t> & a, const sserialize::UByteArrayAdapter& b) {
-	return b.equalContent(a);
-}
-
-bool operator!=(const std::deque<uint8_t> & a, const sserialize::UByteArrayAdapter& b) {
-	return !b.equalContent(a);
-}
-
-bool operator==(const UByteArrayAdapter& b, const std::deque< uint8_t >& a) {
-	return b.equalContent(a);
-}
-
-bool operator!=(const UByteArrayAdapter& b, const std::deque< uint8_t >& a) {
-	return !b.equalContent(a);
-}
-
 
 //Streaming operators
 
@@ -1385,15 +1355,12 @@ UBA_OPERATOR_PUT_STREAMING_FUNC(putUint8, uint8_t);
 UBA_OPERATOR_PUT_STREAMING_FUNC(putDouble, double);
 UBA_OPERATOR_PUT_STREAMING_FUNC(putFloat, float);
 UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::string &);
-UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::deque<uint8_t> &);
-UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::vector<uint8_t> &);
-UBA_OPERATOR_PUT_STREAMING_FUNC(put, UByteArrayAdapter &);
 
 #undef UBA_OPERATOR_PUT_STREAMING_FUNC
 
 
 #define UBA_OPERATOR_GET_STREAMING_FUNC(__NAME, __TYPE) \
-UByteArrayAdapter& operator>>(UByteArrayAdapter & data, __TYPE & value) { \
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, __TYPE & value) { \
 	value = data.__NAME(); \
 	return data; \
 } \

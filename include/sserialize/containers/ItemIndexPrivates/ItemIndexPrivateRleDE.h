@@ -52,7 +52,7 @@ private:
 		m_dest.setPutPtr(m_beginning);
 		m_dest.putVlPackedUint32(m_count);
 		m_dest.putVlPackedUint32(m_data.size());
-		m_dest.put(m_data);
+		m_dest.putData(m_data);
 	}
 public:
 	ItemIndexPrivateRleDECreator(UByteArrayAdapter & data) :
@@ -92,7 +92,7 @@ public:
 	///Does a flush and appends the data which has countInData elements (mainly used by set functions)
 	void flushWithData(const UByteArrayAdapter & appendData, uint32_t countInData) {
 		flushRle();
-		m_data.put(appendData);
+		m_data.putData(appendData);
 		m_count += countInData;
 		flushData();
 	}

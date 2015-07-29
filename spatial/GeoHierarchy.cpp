@@ -453,7 +453,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mvaCreator.set(m_regions.size()+1, sserialize::Static::spatial::GeoHierarchy::Region::RD_PARENTS_OFFSET, 0);
 		
 		mvaCreator.flush();
-		dest.put(tmp);
+		dest.putData(tmp);
 	}
 	
 	sserialize::MMVector<uint32_t> ptrOffsetArray(sserialize::MM_FILEBASED);
@@ -533,7 +533,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		mvaCreator.set(m_cells.size(), sserialize::Static::spatial::GeoHierarchy::Cell::CD_DIRECT_PARENTS_OFFSET, 0);
 		
 		mvaCreator.flush();
-		dest.put(tmp);
+		dest.putData(tmp);
 	}
 
 	allOk = allOk && (BoundedCompactUintArray::create(ptrOffsetArray, dest) > 0);

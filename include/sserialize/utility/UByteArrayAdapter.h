@@ -3,14 +3,15 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/utility/constants.h>
 #include <stdint.h>
 #include <iterator>
 #include <deque>
 #include <vector>
 #include <string>
-#include <memory>
 
-//TODO: split this class into UByteArrayAdapterIterator and UByteArrayAdapter to seperate concepts
+//Split this into array slice, streaming, and iterator, there may be multiple iterators (like uint8, uint16., uint32 iterators, any constant sized iterator
+//The underlying UByteArrayAdapterPrivate does not need to be changed
 //TODO: get rid of static std::string as that leads to double frees on incorrect linking
 /** This is the main storage abstraction class.
   * It gives a unified view on an Array of uint8_t.
@@ -33,15 +34,13 @@ class MmappedFile;
 class UByteArrayAdapterPrivate;
 class ChunkedMmappedFile;
 class CompressedMmappedFile;
+class UByteArrayAdapter;
 
-class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, sserialize::SignedOffsetType> {
-public:
-	typedef sserialize::OffsetType OffsetType;
-	typedef sserialize::SignedOffsetType NegativeOffsetType;
-	typedef sserialize::OffsetType SizeType;
-	
+namespace detail {
+namespace __UByteArrayAdapter {
+
 	class MemoryView final {
-		friend class UByteArrayAdapter;
+		friend class sserialize::UByteArrayAdapter;
 	public:
 		typedef const uint8_t * const_iterator;
 		typedef uint8_t * iterator;
@@ -69,47 +68,99 @@ public:
 	public:
 		MemoryView() {}
 		~MemoryView() {}
-		uint8_t * data() { return m_priv->get();}
-		const uint8_t * data() const { return m_priv->get();}
-		uint8_t * get() { return m_priv->get();}
-		const uint8_t * get() const { return m_priv->get();}
-		uint8_t * begin() { return get(); }
-		const uint8_t * cbegin() const { return get(); }
-		const uint8_t * begin() const { return get(); }
-		uint8_t * end() { return get()+size(); }
-		const uint8_t * cend() const { return get()+size(); }
-		const uint8_t * end() const { return get()+size(); }
+		inline uint8_t * data() { return m_priv->get();}
+		inline const uint8_t * data() const { return m_priv->get();}
+		inline uint8_t * get() { return m_priv->get();}
+		inline const uint8_t * get() const { return m_priv->get();}
+		inline uint8_t * begin() { return get(); }
+		inline const uint8_t * cbegin() const { return get(); }
+		inline const uint8_t * begin() const { return get(); }
+		inline uint8_t * end() { return get()+size(); }
+		inline const uint8_t * cend() const { return get()+size(); }
+		inline const uint8_t * end() const { return get()+size(); }
 
-		OffsetType size() const { return m_priv->size();}
+		inline OffsetType size() const { return m_priv->size();}
 		///If this is true, then writes are not passed through to the UBA, call flush() to do that
-		bool isCopy() const { return m_priv->isCopy();}
+		inline bool isCopy() const { return m_priv->isCopy();}
 		///flush up to len bytes starting from off
-		bool flush(OffsetType len, OffsetType off = 0) { return m_priv->flush(len, off); }
-		bool flush() { return flush(size()); }
+		inline bool flush(OffsetType len, OffsetType off = 0) { return m_priv->flush(len, off); }
+		inline bool flush() { return flush(size()); }
 		///storage this memview is based on
-		inline UByteArrayAdapter dataBase() const { return m_priv->dataBase(); }
+		UByteArrayAdapter dataBase() const;
 	};
-	friend class MemoryView;
 	
-private:
-	/** Data is at offset, not at base address **/
-	RCPtrWrapper<UByteArrayAdapterPrivate> m_priv;
-	OffsetType m_offSet;
-	OffsetType m_len;
-	OffsetType m_getPtr;
-	OffsetType m_putPtr;
-
-	static std::string m_tempFilePrefix;
-	static std::string m_fastTempFilePrefix;
-	static std::string m_logFilePrefix;
+	template<typename TValue>
+	struct SerializationSupport {
+		static const bool value = false;
+	};
 	
-private:
-	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv);
-	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
-	bool resizeForPush(OffsetType pos, OffsetType length);
-// 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
+	template<typename TValue>
+	struct StreamingSerializer {
+		void operator()(const TValue & src, UByteArrayAdapter & dest) const {
+			dest << src;
+		}
+	};
+	
+	template<typename TValue>
+	struct Deserializer {
+		TValue operator()(const UByteArrayAdapter & dest) const {
+			return TValue(dest);
+		}
+	};
+	
+}}//end namespace detail::__UByteArrayAdapter
 
+
+class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, sserialize::SignedOffsetType> {
 public:
+	typedef sserialize::OffsetType OffsetType;
+	typedef sserialize::SignedOffsetType NegativeOffsetType;
+	typedef sserialize::OffsetType SizeType;
+	
+	typedef detail::__UByteArrayAdapter::MemoryView MemoryView;
+	
+	template<typename TValue>
+	using SerializationSupport = detail::__UByteArrayAdapter::SerializationSupport<TValue>;
+	
+	template<typename TValue>
+	using Deserializer = detail::__UByteArrayAdapter::Deserializer<TValue>;
+
+	template<typename TValue>
+	using StreamingSerializer = detail::__UByteArrayAdapter::StreamingSerializer<TValue>;
+public: //static functions
+	static UByteArrayAdapter createCache(OffsetType size, sserialize::MmappedMemoryType mmt);
+	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
+	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
+	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = 0xFFFFFFFFFFFFFFFF, uint8_t chunkSizeExponent = 20);
+	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
+	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
+	static std::string getTempFilePrefix();
+	static std::string getFastTempFilePrefix();
+	static std::string getLogFilePrefix();
+	static void setTempFilePrefix(const std::string & path);
+	static void setFastTempFilePrefix(const std::string & path);
+	static void setLogFilePrefix(const std::string & path);
+	
+	static UByteArrayAdapter & makeContigous(UByteArrayAdapter & d);
+	static UByteArrayAdapter makeContigous(const UByteArrayAdapter & d);
+	
+	static inline OffsetType OffsetTypeSerializedLength() { return 5; }
+	enum {S_OffsetTypeSerializedLength=5};
+	
+	static void putUint8(UByteArrayAdapter & dest, uint8_t src);
+	static void putUint16(UByteArrayAdapter & dest, uint16_t src);
+	static void putUint24(UByteArrayAdapter & dest, uint32_t src);
+	static void putUint32(UByteArrayAdapter & dest, uint32_t src);
+	static void putInt32(UByteArrayAdapter & dest, int32_t src);
+	static void putUint64(UByteArrayAdapter & dest, uint64_t src);
+	static void putInt64(UByteArrayAdapter & dest, int64_t src);
+	static void putDouble(UByteArrayAdapter & dest, double src);
+	static void putFloat(UByteArrayAdapter & dest, float src);
+	static void putVlPackedInt32(UByteArrayAdapter & dest, int32_t src);
+	static void putVlPackedUint32(UByteArrayAdapter & dest, uint32_t src);
+	static void putVlPackedInt64(UByteArrayAdapter & dest, int64_t src);
+	static void putVlPackedUint64(UByteArrayAdapter & dest, uint64_t src);
+public://constructors
 	/**len has to be larger than 0! **/
 	UByteArrayAdapter();
 	UByteArrayAdapter(const UByteArrayAdapter & adapter);
@@ -135,9 +186,25 @@ public:
 	UByteArrayAdapter(const MemoryView & mem);
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
-	void zero();
-	uint8_t & operator[](const OffsetType pos);
-	const uint8_t & operator[](const OffsetType pos) const;
+public://templated get/put functions to specify the types via template parameters
+	template<typename TValue>
+	TValue get(UByteArrayAdapter::OffsetType pos) const;
+	
+	template<typename TValue>
+	void get(UByteArrayAdapter::OffsetType pos, TValue & get) const;
+	
+	template<typename TValue>
+	TValue get();
+	
+	template<typename TValue>
+	void get(TValue & v);
+	
+	template<typename TValue>
+	void put(UByteArrayAdapter::OffsetType pos, TValue v);
+	
+	template<typename TValue>
+	void put(TValue v);
+public: //iterator api
 	uint8_t & operator*();
 	const uint8_t & operator*() const;
 	UByteArrayAdapter operator+(OffsetType offSet) const;
@@ -149,60 +216,65 @@ public:
 	UByteArrayAdapter& operator-=(OffsetType offSet);
 	UByteArrayAdapter begin() const;
 	UByteArrayAdapter end() const;
-	
 	bool equal(const sserialize::UByteArrayAdapter& b) const;
+
+public: //comparisson
 	bool equalContent(const sserialize::UByteArrayAdapter & b) const;
 	bool equalContent(const std::deque<uint8_t> & b) const;
+public://state info
+	inline OffsetType size() const { return m_len;};
+	inline OffsetType offset() const { return m_offSet;}
+	inline bool isEmpty() const { return (m_len == 0);}
+	inline OffsetType tellPutPtr() const { return m_putPtr; }
+	inline OffsetType tellGetPtr() const { return m_getPtr; }
+	bool getPtrHasNext() const;
 
-	//ptrs
-	OffsetType tellPutPtr() const;
+public: //state manipulation
 	void incPutPtr(OffsetType num);
 	void decPutPtr(OffsetType num);
 	void setPutPtr(OffsetType pos);
 	void resetPutPtr();
 	/** Moves the offset to the putPtr */
 	UByteArrayAdapter& shrinkToPutPtr();
-
-	OffsetType tellGetPtr() const;
-	bool getPtrHasNext() const;
 	void incGetPtr(OffsetType num);
 	void decGetPtr(OffsetType num);
 	void setGetPtr(OffsetType pos);
 	UByteArrayAdapter& resetGetPtr();
 	/** Moves the offset to the getPtr */
 	UByteArrayAdapter& shrinkToGetPtr();
-
 	UByteArrayAdapter & resetPtrs();
+	void resetToStorage();
+	
+public: //storage manipulation
+	void zero();
 
-
+public://storage manipulation
 	/** tries to shrink the underlying data source, use with caution, others Adapter are not notified of this change */
 	bool shrinkStorage(OffsetType byte);
 	/** tries to grow the storage of this adapter by byte bytes.
 	  * If the underlying storage is already larege enough, then no additional storage will be allocates */
 	bool growStorage(OffsetType byte);
-	
 	///resize to @param byte bytes (grows but does not shrink the underlying storage)
 	bool resize(OffsetType byte);
-
-	void resetToStorage();
-
 	///reserves @bytes bytes beginning at tellPutPtr()
 	bool reserveFromPutPtr(OffsetType bytes);
-
-
 	void setDeleteOnClose(bool del);
-
-	uint8_t at(OffsetType pos) const;
-	inline OffsetType size() const { return m_len;};
-	inline OffsetType offset() const { return m_offSet;}
-	inline bool isEmpty() const { return (m_len == 0);}
+public://conversion functions
 	
+	UByteArrayAdapter writeToDisk(std::string fileName, bool deleteOnClose = true);
+
 	///Returns a read/writable MemoryView. If you don't write to it, then this function behaves like a const function
 	MemoryView getMemView(const OffsetType pos, OffsetType size);
 	const MemoryView getMemView(const OffsetType pos, OffsetType size) const;
 	inline MemoryView asMemView() { return getMemView(0, size());}
 	const MemoryView asMemView() const { return getMemView(0, size());}
 	
+	std::string toString() const;
+	
+public://get functions with offset
+	uint8_t & operator[](const OffsetType pos);
+	const uint8_t & operator[](const OffsetType pos) const;
+	uint8_t at(OffsetType pos) const;
 	int64_t getInt64(const OffsetType pos) const;
 	uint64_t getUint64(const OffsetType pos) const;
 	int32_t getInt32(const OffsetType pos) const;
@@ -213,10 +285,10 @@ public:
 	double getDouble(const OffsetType pos) const;
 	float getFloat(const OffsetType pos) const;
 
-	uint64_t getVlPackedUint64(const OffsetType pos, int* length) const;
-	int64_t getVlPackedInt64(const OffsetType pos, int* length) const;
-	uint32_t getVlPackedUint32(const OffsetType pos, int* length) const;
-	int32_t getVlPackedInt32(const OffsetType pos, int* length) const;
+	uint64_t getVlPackedUint64(const OffsetType pos, int* length = 0) const;
+	int64_t getVlPackedInt64(const OffsetType pos, int* length = 0) const;
+	uint32_t getVlPackedUint32(const OffsetType pos, int* length = 0) const;
+	int32_t getVlPackedInt32(const OffsetType pos, int* length = 0) const;
 	
 	//Offset storage
 	OffsetType getOffset(const OffsetType pos) const;
@@ -227,10 +299,10 @@ public:
 	inline uint32_t getStringLength(const OffsetType pos) { return getVlPackedUint32(pos);}
 	//returns an empty string if length is invalid
 	UByteArrayAdapter getStringData(const OffsetType pos, int * length = 0) const;
-	OffsetType get(const OffsetType pos, uint8_t * dest, OffsetType len) const;
-
-
-	/** If the supplied memory is not writable then you're on your own! **/
+	
+	OffsetType getData(const OffsetType pos, uint8_t * dest, OffsetType len) const;
+	
+public://put functions with offset
 
 	bool putUint64(const OffsetType pos, const uint64_t value);
 	bool putInt64(const OffsetType pos, const int64_t value);
@@ -254,16 +326,16 @@ public:
 	int putVlPackedInt32(const OffsetType pos, const int32_t value);
 	int putVlPackedPad4Int32(const OffsetType pos, const int32_t value);
 
-	//complex objects
 	/** @return number of bytes added, -1 if failed */
-	int put(const OffsetType pos, const std::string & str);
-	bool put(const OffsetType pos, const uint8_t* data, OffsetType len);
-	bool put(const OffsetType pos, const std::deque<uint8_t> & data);
-	bool put(const OffsetType pos, const std::vector<uint8_t> & data);
-	bool put(const OffsetType pos, const UByteArrayAdapter & data);
-	bool put(const OffsetType pos, const MemoryView & data);
+	int putString(const OffsetType pos, const std::string & str);
+	bool putData(const OffsetType pos, const uint8_t* data, OffsetType len);
+	bool putData(const OffsetType pos, const std::deque<uint8_t> & data);
+	bool putData(const OffsetType pos, const std::vector<uint8_t> & data);
+	bool putData(const OffsetType pos, const UByteArrayAdapter & data);
+	bool putData(const OffsetType pos, const MemoryView & data);
 
-//streaming api
+public://streaming get functions
+
 	OffsetType getOffset();
 	NegativeOffsetType getNegativeOffset();
 
@@ -283,12 +355,14 @@ public:
 	int32_t getVlPackedInt32();
 	
 	///@return number of uint8_t read, @param len: maxnumber of uint8_t to read
-	OffsetType get(uint8_t * dest, OffsetType len);
-	
+	OffsetType getData(uint8_t * dest, OffsetType len);
+
 	inline uint32_t getStringLength() { return getVlPackedUint32();}
 	UByteArrayAdapter getStringData();
 	std::string getString();
 
+public://streaming put functions
+	
 	bool putOffset(const OffsetType value);
 	bool putNegativeOffset(const NegativeOffsetType value);
 	
@@ -311,174 +385,126 @@ public:
 	int putVlPackedInt32(const int32_t value);
 	int putVlPackedPad4Int32(const int32_t value);
 
-	bool put(const std::string & str);
-	bool put(const uint8_t * data, OffsetType len);
-	bool put(const std::deque<uint8_t> & data);
-	bool put(const std::vector<uint8_t> & data);
-	bool put(const UByteArrayAdapter & data);
-	
-	std::string toString() const;
-	
-	void dump(uint32_t byteCount) const;
-	void dumpAsString(uint32_t byteCount) const;
+	bool putString(const std::string & str);
+	bool putData(const uint8_t * data, OffsetType len);
+	bool putData(const std::deque<uint8_t> & data);
+	bool putData(const std::vector<uint8_t> & data);
+	bool putData(const UByteArrayAdapter & data);
+public://debugging functions
+	void dump(OffsetType byteCount) const;
+	void dumpAsString(OffsetType byteCount) const;
+/*---------------PRIVATE PART---------------------------*/
+private:
+	friend class detail::__UByteArrayAdapter::MemoryView;
+private:
+	/** Data is at offset, not at base address **/
+	RCPtrWrapper<UByteArrayAdapterPrivate> m_priv;
+	OffsetType m_offSet;
+	OffsetType m_len;
+	OffsetType m_getPtr;
+	OffsetType m_putPtr;
 
-	UByteArrayAdapter writeToDisk(std::string fileName, bool deleteOnClose = true);
-	static UByteArrayAdapter createCache(OffsetType size, sserialize::MmappedMemoryType mmt);
-	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
-	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
-	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = 0xFFFFFFFFFFFFFFFF, uint8_t chunkSizeExponent = 20);
-	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
-	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
-	static std::string getTempFilePrefix();
-	static std::string getFastTempFilePrefix();
-	static std::string getLogFilePrefix();
-	static void setTempFilePrefix(const std::string & path);
-	static void setFastTempFilePrefix(const std::string & path);
-	static void setLogFilePrefix(const std::string & path);
+	static std::string m_tempFilePrefix;
+	static std::string m_fastTempFilePrefix;
+	static std::string m_logFilePrefix;
 	
-	static UByteArrayAdapter & makeContigous(UByteArrayAdapter & d);
-	static UByteArrayAdapter makeContigous(const UByteArrayAdapter & d);
-	
-	static inline OffsetType OffsetTypeSerializedLength() { return 5; }
-	enum {S_OffsetTypeSerializedLength=5};
-
-	//convinience functions
-	
-	inline uint64_t getVlPackedUint64(const OffsetType pos) const { return getVlPackedUint64(pos, 0); }
-	inline int64_t getVlPackedInt64(const OffsetType pos) const { return getVlPackedInt64(pos, 0); }
-	inline uint32_t getVlPackedUint32(const OffsetType pos) const { return getVlPackedUint32(pos, 0); }
-	inline int32_t getVlPackedInt32(const OffsetType pos) const { return getVlPackedInt32(pos, 0); }
-	
-	inline uint64_t getVlPackedUint64(const OffsetType pos, int & length) const { return getVlPackedUint64(pos, &length); }
-	inline int64_t getVlPackedInt64(const OffsetType pos, int & length) const { return getVlPackedInt64(pos, &length); }
-	inline uint32_t getVlPackedUint32(const OffsetType pos, int & length) const { return getVlPackedUint32(pos, &length); }
-	inline int32_t getVlPackedInt32(const OffsetType pos, int & length) const { return getVlPackedInt32(pos, &length); }
-
-	inline void put(UByteArrayAdapter::OffsetType pos, uint8_t value) { putUint8(pos, value); }
-	inline void put(UByteArrayAdapter::OffsetType pos, uint16_t value) { putUint16(pos, value); }
-	inline void put(UByteArrayAdapter::OffsetType pos, uint32_t value) { putUint32(pos, value); }
-	inline void put(UByteArrayAdapter::OffsetType pos, uint64_t value) { putUint64(pos, value); }
-	inline void put(UByteArrayAdapter::OffsetType pos, int32_t value) { putInt32(pos, value); }
-	inline void put(UByteArrayAdapter::OffsetType pos, int64_t value) { putInt64(pos, value); }
-	
-	inline void get(UByteArrayAdapter::OffsetType pos, uint8_t & value) const { value = getUint8(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, uint16_t & value) const { value = getUint16(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, uint32_t & value) const { value = getUint32(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, uint64_t & value) const { value = getUint64(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, int32_t & value) const { value = getInt32(pos); }
-	inline void get(UByteArrayAdapter::OffsetType pos, int64_t & value) const { value = getInt64(pos); }
-	
-	inline void get(uint8_t & value) { value = getUint8(); }
-	inline void get(uint16_t & value) { value = getUint16(); }
-	inline void get(uint32_t & value) { value = getUint32(); }
-	inline void get(uint64_t & value) { value = getUint64(); }
-	inline void get(int32_t & value) { value = getInt32(); }
-	inline void get(int64_t & value) { value = getInt64(); }
-	inline void get(double & value) { value = getDouble(); }
-	inline void get(float & value) { value = getFloat(); }
-	
-	template<typename TValue>
-	TValue get(UByteArrayAdapter::OffsetType pos) const {
-		TValue v;
-		get(pos, v);
-		return v;
-	}
-	
-	template<typename TValue>
-	TValue get() {
-		TValue v;
-		get(v);
-		return v;
-	}
-	
-	template<typename TValue>
-	void put(UByteArrayAdapter::OffsetType pos, TValue v) {
-		put(pos, v);
-	}
-	
-	//BUG: WTF? This will horibly go wrong if put(v) does not exist. Who coded this shit? (you did!)
-	template<typename TValue>
-	void put(TValue v) {
-		put(v);
-	}
-	
-	static void putUint8(UByteArrayAdapter & dest, uint8_t src);
-	static void putUint16(UByteArrayAdapter & dest, uint16_t src);
-	static void putUint24(UByteArrayAdapter & dest, uint32_t src);
-	static void putUint32(UByteArrayAdapter & dest, uint32_t src);
-	static void putInt32(UByteArrayAdapter & dest, int32_t src);
-	static void putUint64(UByteArrayAdapter & dest, uint64_t src);
-	static void putInt64(UByteArrayAdapter & dest, int64_t src);
-	static void putDouble(UByteArrayAdapter & dest, double src);
-	static void putFloat(UByteArrayAdapter & dest, float src);
-	static void putVlPackedInt32(UByteArrayAdapter & dest, int32_t src);
-	static void putVlPackedUint32(UByteArrayAdapter & dest, uint32_t src);
-	static void putVlPackedInt64(UByteArrayAdapter & dest, int64_t src);
-	static void putVlPackedUint64(UByteArrayAdapter & dest, uint64_t src);
-	
-	template<typename TValue>
-	struct SerializationSupport {
-		static const bool value = false;
-	};
-	
-	template<typename TValue>
-	struct StreamingSerializer {
-		void operator()(const TValue & src, UByteArrayAdapter & dest) const {
-			dest << src;
-		}
-	};
-	
-	template<typename TValue>
-	struct Deserializer {
-		TValue operator()(const UByteArrayAdapter & dest) const {
-			return TValue(dest);
-		}
-	};
+private:
+	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv);
+	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
+	bool resizeForPush(OffsetType pos, OffsetType length);
+// 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
 };
 
-template<>
-struct UByteArrayAdapter::SerializationSupport<uint8_t> {
-	static const bool value = true;
+//Streaming operators
+
+/** Iterator equality comparisson, does not check if a contains the same as b */ 
+bool operator==(const sserialize::UByteArrayAdapter& a, const sserialize::UByteArrayAdapter& b);
+
+/** Iterator equality comparisson, does not check if a contains the same as b */ 
+bool operator!=(const sserialize::UByteArrayAdapter& a, const sserialize::UByteArrayAdapter& b);
+
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const int64_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint64_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const int32_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint32_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint16_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint8_t value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const double value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const float value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::string & value);
+
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, int64_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint64_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, int32_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint32_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint16_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint8_t & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, double & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, float & value);
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, std::string & value);
+
+//template specialiazations
+
+#define UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(__TYPE, __GETFUNC, __PUTFUNC) \
+template<> \
+inline void UByteArrayAdapter::put(__TYPE v) { \
+	__PUTFUNC(v); \
+} \
+template<> \
+inline void UByteArrayAdapter::put(UByteArrayAdapter::OffsetType pos, __TYPE v) { \
+	__PUTFUNC(pos, v); \
+} \
+template<> \
+inline __TYPE UByteArrayAdapter::get() { \
+	return __GETFUNC(); \
+} \
+template<> \
+inline void UByteArrayAdapter::get(__TYPE & v) { \
+	v = __GETFUNC(); \
+} \
+template<> \
+inline __TYPE UByteArrayAdapter::get(UByteArrayAdapter::OffsetType pos) const { \
+	return __GETFUNC(pos); \
+} \
+template<> \
+inline void UByteArrayAdapter::get(UByteArrayAdapter::OffsetType pos, __TYPE & v) const { \
+	v = __GETFUNC(pos); \
+} \
+
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint8_t, getUint8, putUint8);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint16_t, getUint16, putUint16);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint32_t, getUint32, putUint32);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(int32_t, getInt32, putInt32);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(int64_t, getInt64, putInt64);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(float, getFloat, putFloat);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(double, getDouble, putDouble);
+UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(std::string, getString, putString);
+
+#undef UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS
+
+namespace detail {
+namespace __UByteArrayAdapter {
+
+#define UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(__TYPE) \
+template<> \
+struct SerializationSupport<__TYPE> { \
+	static const bool value = true; \
 };
 
-template<>
-struct UByteArrayAdapter::SerializationSupport<uint16_t> {
-	static const bool value = true;
-};
-
-template<>
-struct UByteArrayAdapter::SerializationSupport<uint32_t> {
-	static const bool value = true;
-};
-
-template<>
-struct UByteArrayAdapter::SerializationSupport<uint64_t> {
-	static const bool value = true;
-};
-
-template<>
-struct UByteArrayAdapter::SerializationSupport<int32_t> {
-	static const bool value = true;
-};
-
-template<>
-struct UByteArrayAdapter::SerializationSupport<int64_t> {
-	static const bool value = true;
-};
-
-template<>
-struct UByteArrayAdapter::SerializationSupport<double> {
-	static const bool value = true;
-};
-
-template<>
-struct UByteArrayAdapter::SerializationSupport<float> {
-	static const bool value = true;
-};
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(uint8_t);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(uint16_t);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(uint32_t);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(uint64_t);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(int32_t);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(int64_t);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(float);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(double);
+UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS(std::string);
+#undef UBA_SERIALIZATION_SUPPORT_SPECIALICATIONS
 
 #define UBA_DESERIALIZER_SPECIALIZATIONS(__TYPE, __FUNCNAME) \
 template<> \
-struct UByteArrayAdapter::Deserializer<__TYPE> { \
+struct Deserializer<__TYPE> { \
 	inline __TYPE operator()(const UByteArrayAdapter & dest) const { \
 		return dest.__FUNCNAME(0); \
 	} \
@@ -496,48 +522,7 @@ UBA_DESERIALIZER_SPECIALIZATIONS(std::string, getString);
 
 #undef UBA_DESERIALIZER_SPECIALIZATIONS
 
-
-
-//Streaming operators
-
-
-// sserialize::UByteArrayAdapter& operator--(sserialize::UByteArrayAdapter& a);
-// sserialize::UByteArrayAdapter& operator++(sserialize::UByteArrayAdapter& a);
-
-/** Iterator equality comparisson, does not check if a contains the same as b */ 
-bool operator==(const sserialize::UByteArrayAdapter& a, const sserialize::UByteArrayAdapter& b);
-
-/** Iterator equality comparisson, does not check if a contains the same as b */ 
-bool operator!=(const sserialize::UByteArrayAdapter& a, const sserialize::UByteArrayAdapter& b);
-
-bool operator==(const std::deque<uint8_t> & a, const sserialize::UByteArrayAdapter & b);
-bool operator!=(const std::deque<uint8_t> & a, const sserialize::UByteArrayAdapter & b);
-bool operator==(const sserialize::UByteArrayAdapter& b, const std::deque<uint8_t> & a);
-bool operator!=(const sserialize::UByteArrayAdapter& b, const std::deque<uint8_t> & a);
-
-
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const int64_t value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint64_t value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const int32_t value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint32_t value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint16_t value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const uint8_t value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const double value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const float value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::string & value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::deque<uint8_t> & value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::vector<uint8_t> & value);
-sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const sserialize::UByteArrayAdapter & value);
-
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, int64_t & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint64_t & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, int32_t & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint32_t & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint16_t & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint8_t & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, double & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, float & value);
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, std::string & value);
+}}//end namespace detail::__UByteArrayAdapter
 
 }//end namespace
 

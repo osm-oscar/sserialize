@@ -133,7 +133,7 @@ template<typename TPushValue, typename TGetValue>
 UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toArray(UByteArrayAdapter & dest) const {
 	dest.putUint8(4); //Static::Array version
 	dest.putOffset(m_data.size()); //datasize
-	dest.put(m_data);
+	dest.putData(m_data);
 	if (sserialize::SerializationInfo<TGetValue>::is_fixed_length) {
 		if (!std::is_integral<TGetValue>::value) {
 			dest.putVlPackedUint32(sserialize::SerializationInfo<TGetValue>::length);

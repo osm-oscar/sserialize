@@ -35,10 +35,18 @@ namespace detail {
 namespace ArrayCreator {
 	template<typename TValue>
 	struct DefaultStreamingSerializer {
-		void operator()(sserialize::UByteArrayAdapter & dest, const TValue & src) {
+		inline void operator()(sserialize::UByteArrayAdapter & dest, const TValue & src) {
 			dest << src;
 		}
 	};
+	
+	template<>
+	struct DefaultStreamingSerializer<UByteArrayAdapter> {
+		inline void operator()(sserialize::UByteArrayAdapter & dest, const UByteArrayAdapter & src) {
+			dest.putData(src);
+		}
+	};
+	
 }}
 
 template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator::DefaultStreamingSerializer<TValue>, typename T_OFFSET_STORAGE = std::vector<OffsetType> >

@@ -96,7 +96,7 @@ void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & i
 	std::cout << "RTree::sserialize: writing to dest..." <<  std::flush;
 	dest.putUint8(0);
 	dest << rootNode()->rect;
-	dest.put(sData);
+	dest.putData(sData);
 	std::cout << "done" << std::endl;
 }
 

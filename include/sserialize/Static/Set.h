@@ -192,8 +192,8 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destin
 	//Add everything to our adapter
 	destination.putUint8(SSERIALIZE_STATIC_SET_VERSION); //version
 	destination.putUint32(tmpStore.size());
-	destination.put(indexData);
-	destination.put(tmpStore);
+	destination.putData(indexData);
+	destination.putData(tmpStore);
 	return destination;
 }
 

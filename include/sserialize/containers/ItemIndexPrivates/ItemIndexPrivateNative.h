@@ -79,7 +79,7 @@ bool ItemIndexPrivateNative::create(T_UINT32_ITERATOR begin, const T_UINT32_ITER
 		memmove(tmpPtr, &src, sizeof(uint32_t));
 	}
 	dest.putUint32(size);
-	dest.put((uint8_t*)tmp, sizeof(uint32_t)*size);
+	dest.putData((uint8_t*)tmp, sizeof(uint32_t)*size);
 	delete[] tmp;
 	return true;
 }
