@@ -36,7 +36,6 @@ ${LIBRT_LIBRARIES}
 ${CMAKE_THREAD_LIBS_INIT}
 )
 
-
 #containers
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexFactory_Store)
 ADD_TEST_TARGET_SINGLE(containers_ItemIndex)
@@ -89,8 +88,8 @@ ADD_TEST_TARGET_SINGLE(static_GeoShapes)
 ADD_TEST_TARGET_SINGLE(sc_stringsitemdb)
 ADD_TEST_TARGET_SINGLE(sc_ststringsitemdb)
 ADD_TEST_TARGET_SINGLE(sc_SinglePassTrie)
-ADD_TEST_TARGET_SINGLE(UnicodeTrie)
-ADD_TEST_TARGET_SINGLE(StaticUnicodeTrie)
+ADD_TEST_TARGET_SINGLE(UnicodeTrieTest)
+ADD_TEST_TARGET_SINGLE(StaticUnicodeTrieTest)
 
 #spatial
 add_test_target_single(spatial_geopolygon)
