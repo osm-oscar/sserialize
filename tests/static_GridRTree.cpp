@@ -1,6 +1,6 @@
 #include "GeoCompleterTest.h"
 #include <sserialize/Static/RTreeGeoDBCompleter.h>
-#include <sserialize/Static/GeoStringsItemDB.h>
+#include "Static/GeoStringsItemDB.h"
 #include <sserialize/Static/RTree.h>
 #include <sserialize/spatial/GridRTree.h>
 #include "utilalgos.h"

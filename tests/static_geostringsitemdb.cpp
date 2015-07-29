@@ -2,8 +2,8 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/templated/GeoStringsItemDB.h>
-#include <sserialize/Static/GeoStringsItemDB.h>
+#include "containers/GeoStringsItemDB.h"
+#include "Static/GeoStringsItemDB.h"
 #include <sserialize/spatial/GeoWay.h>
 #include "TestItemData.h"
 #include "utilalgos.h"

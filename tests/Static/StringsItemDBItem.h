@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_STRINGS_ITEM_DB_ITEM_H
 #define SSERIALIZE_STATIC_STRINGS_ITEM_DB_ITEM_H
-#include <sserialize/templated/StringsItemDBItem.h>
+#include "../containers/StringsItemDBItem.h"
 #include <sserialize/utility/UByteArrayAdapter.h>
 
 namespace sserialize {

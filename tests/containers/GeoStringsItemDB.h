@@ -2,7 +2,7 @@
 #define SSERIALIZE_GEO_STRINGS_ITEM_DB_H
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/spatial/GeoRect.h>
-#include <sserialize/templated/GeoStringsItem.h>
+#include "GeoStringsItem.h"
 #include <sserialize/Static/Array.h>
 #include "StringsItemDB.h"
 #include <sserialize/utility/ProgressInfo.h>

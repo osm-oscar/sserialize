@@ -6,7 +6,6 @@
 #include <cmath>
 #include <sserialize/utility/histogram2d.h>
 #include <sserialize/Static/StringTable.h>
-#include <sserialize/Static/StringsItemDB.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/GeneralizedTrie.h>
 #include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>

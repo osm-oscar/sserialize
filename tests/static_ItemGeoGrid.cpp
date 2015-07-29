@@ -1,6 +1,6 @@
 #include "GeoCompleterTest.h"
 #include <sserialize/completers/GeoCompleterPrivateProxy.h>
-#include <sserialize/Static/GeoStringsItemDB.h>
+#include "Static/GeoStringsItemDB.h"
 #include <sserialize/Static/ItemGeoGrid.h>
 #include <sserialize/spatial/ItemGeoGrid.h>
 #include "utilalgos.h"

@@ -3,8 +3,8 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/containers/StringsItemDBWrapper.h>
-#include <sserialize/templated/StringsItemDBWrapperPrivateSIDB.h>
+#include "containers/StringsItemDBWrapper.h"
+#include "containers/StringsItemDBWrapperPrivateSIDB.h"
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 

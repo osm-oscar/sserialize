@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <sserialize/Static/StringTable.h>
-#include <sserialize/Static/StringsItemDB.h>
-#include <sserialize/templated/StringsItemDB.h>
+#include "Static/StringsItemDB.h"
+#include "containers/StringsItemDB.h"
 
 
 using namespace std;

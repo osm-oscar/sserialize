@@ -5,7 +5,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/completers/GeoCompleter.h>
-#include <sserialize/templated/GeoStringsItemDB.h>
+#include "containers/GeoStringsItemDB.h"
 #include "TestItemData.h"
 #include "datacreationfuncs.h"
 

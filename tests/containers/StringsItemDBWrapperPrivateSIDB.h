@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STRINGS_ITEMDB_WRAPPER_PRIVATE_SIDB_H
 #define SSERIALIZE_STRINGS_ITEMDB_WRAPPER_PRIVATE_SIDB_H
-#include <sserialize/containers/StringsItemDBWrapper.h>
-#include <sserialize/templated/StringsItemDB.h>
+#include "StringsItemDBWrapper.h"
+#include "StringsItemDB.h"
 
 namespace sserialize {
 

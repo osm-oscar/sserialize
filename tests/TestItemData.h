@@ -5,7 +5,7 @@
 #include <set>
 #include <string>
 #include <sserialize/completers/StringCompleterPrivate.h>
-#include <sserialize/Static/StringsItemDB.h>
+#include "Static/StringsItemDB.h"
 #include <sserialize/containers/ItemSet.h>
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/spatial/GeoWay.h>

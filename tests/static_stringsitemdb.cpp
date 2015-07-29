@@ -2,8 +2,8 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/templated/StringsItemDB.h>
-#include <sserialize/Static/StringsItemDB.h>
+#include "containers/StringsItemDB.h"
+#include "Static/StringsItemDB.h"
 #include "TestItemData.h"
 
 using namespace sserialize;

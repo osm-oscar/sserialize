@@ -2,8 +2,8 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/templated/StringsItemDB.h>
-#include <sserialize/completers/StringCompleterPrivateItemDB.h>
+#include "containers/StringsItemDB.h"
+#include "containers/StringCompleterPrivateItemDB.h"
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"

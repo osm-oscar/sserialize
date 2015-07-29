@@ -1,9 +1,7 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_BASE_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_BASE_TRIE_H
 #include "Helpers.h"
-#include <sserialize/containers/StringsItemDBWrapper.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/templated/StringsItemDBWrapperPrivateSIDB.h>
 #include <sserialize/templated/WindowedArray.h>
 #include <sserialize/utility/UByteArrayAdapter.h>
 #include <sserialize/Static/FlatGeneralizedTrie.h>

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_TESTS_PRINT_FUNCTIONS_H
 #define SSERIALIZE_TESTS_PRINT_FUNCTIONS_H
 #include "TestItemData.h"
-#include <sserialize/containers/StringsItemDBWrapper.h>
+#include "containers/StringsItemDBWrapper.h"
 
 namespace sserialize {
 

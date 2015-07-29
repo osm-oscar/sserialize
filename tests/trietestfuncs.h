@@ -2,7 +2,7 @@
 #define SSERIALIZE_TESTS_TRIE_TEST_FUNCS_H
 #include <deque>
 #include <sserialize/Static/GeneralizedTrie.h>
-#include <sserialize/containers/StringsItemDBWrapper.h>
+#include "containers/StringsItemDBWrapper.h"
 #include "TestItemData.h"
 
 namespace sserialize {

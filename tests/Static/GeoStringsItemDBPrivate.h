@@ -2,7 +2,7 @@
 #define SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_PRIVATE_H
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/Static/Array.h>
-#include <sserialize/Static/StringsItemDBPrivate.h>
+#include "StringsItemDBPrivate.h"
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/Static/GeoWay.h>

@@ -5,7 +5,7 @@
 #include <string>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/AtStlInputIterator.h>
-#include "ItemIndex.h"
+#include <sserialize/containers/ItemIndex.h>
 
 
 namespace sserialize {

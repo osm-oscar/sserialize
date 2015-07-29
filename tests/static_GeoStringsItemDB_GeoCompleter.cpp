@@ -1,6 +1,6 @@
 #include "GeoCompleterTest.h"
 #include <sserialize/completers/GeoCompleterPrivateProxy.h>
-#include <sserialize/Static/GeoStringsItemDB.h>
+#include "Static/GeoStringsItemDB.h"
 #include "utilalgos.h"
 #define EPS 0.000025
 

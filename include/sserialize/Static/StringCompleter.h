@@ -2,7 +2,6 @@
 #define SSERIALIZE_STATIC_STRING_COMPLETER_H
 #include <deque>
 #include <sserialize/completers/StringCompleterPrivate.h>
-#include <sserialize/completers/StringCompleterPrivateStaticDB.h>
 #include <sserialize/Static/ItemIndexStore.h>
 
 #define SSERIALIZE_STATIC_STRING_COMPLETER_HEADER_SIZE 7
@@ -88,10 +87,6 @@ public:
 	
 	virtual ForwardIterator * forwardIterator() const;
 
-	template<typename DataBaseType>
-	static sserialize::StringCompleter fromDB(const DataBaseType & db) {
-		return sserialize::StringCompleter(new StringCompleterPrivateStaticDB<DataBaseType>(db));
-	}
 };
 
 inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & d, const StringCompleter::HeaderInfo & src) {
