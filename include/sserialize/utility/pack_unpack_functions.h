@@ -131,23 +131,18 @@ inline int64_t up_s64(const uint8_t * src) {
 	return up_u64(src);
 }
 
+//Encode as IEEE754 floating point number
 inline double unpack_double_from_uint64_t(const uint64_t src) {
-	union {
-		double d;
-		uint64_t ui;
-	} tmp;
-	tmp.ui = src;
-	return tmp.d;
+	double d;
+	::memmove(&d, &src, sizeof(d));
+	return d;
 }
 
-//BUG: do this right
+//Encode as IEEE754 floating point number
 inline float unpack_float_from_uint32_t(const uint32_t src) {
-	union {
-		float d;
-		uint32_t ui;
-	} tmp;
-	tmp.ui = src;
-	return tmp.d;
+	float d;
+	::memmove(&d, &src, sizeof(d));
+	return d;
 }
 
 template<typename T>
@@ -263,24 +258,16 @@ inline void p_cl(int64_t s, uint8_t * d) {
 	p_s64(s, d);
 }
 
-//BUG: do this right
 inline uint64_t pack_double_to_uint64_t(const double src) {
-	union {
-		double d;
-		uint64_t ui;
-	} tmp;
-	tmp.d = src;
-	return tmp.ui;
+	uint64_t d;
+	::memmove(&d, &src, sizeof(src));
+	return d;
 }
 
-//BUG: do this right
 inline uint32_t pack_float_to_uint32_t(const float src) {
-	union {
-		float d;
-		uint32_t ui;
-	} tmp;
-	tmp.d = src;
-	return tmp.ui;
+	uint32_t d;
+	::memmove(&d, &src, sizeof(src));
+	return d;
 }
 
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
