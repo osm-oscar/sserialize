@@ -2,7 +2,7 @@
 
 namespace sserialize {
 
-UByteArrayAdapterPrivateMmappedFile::UByteArrayAdapterPrivateMmappedFile(sserialize::MmappedFile& file) :
+UByteArrayAdapterPrivateMmappedFile::UByteArrayAdapterPrivateMmappedFile(sserialize::MmappedFile file) :
 UByteArrayAdapterPrivateArray(file.data()), m_file(file)
 {
 	UByteArrayAdapterPrivate::setDeleteOnClose(false);
@@ -13,8 +13,7 @@ UByteArrayAdapterPrivateMmappedFile::~UByteArrayAdapterPrivateMmappedFile() {}
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateMmappedFile::size() const {
 	return m_file.size();
 }
-
-
+7
 void UByteArrayAdapterPrivateMmappedFile::setDeleteOnClose(bool del) {
 	m_file.setDeleteOnClose(del);
 }

@@ -178,14 +178,15 @@ public://constructors
 	UByteArrayAdapter(std::vector<uint8_t> * data);
 	UByteArrayAdapter(std::vector<uint8_t> * data, bool deleteOnClose);
 	
-	UByteArrayAdapter(sserialize::MmappedFile file, OffsetType offSet, OffsetType len);
-	UByteArrayAdapter(sserialize::MmappedFile file);
+	UByteArrayAdapter(const sserialize::MmappedFile& file, OffsetType offSet, OffsetType len);
+	UByteArrayAdapter(const sserialize::MmappedFile& file);
 	UByteArrayAdapter(const ChunkedMmappedFile & file);
 	UByteArrayAdapter(const CompressedMmappedFile & file);
 	UByteArrayAdapter(const sserialize::MmappedMemory<uint8_t> & mem);
 	UByteArrayAdapter(const MemoryView & mem);
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
+	void swap(UByteArrayAdapter & other);
 public://templated get/put functions to specify the types via template parameters
 	template<typename TValue>
 	TValue get(UByteArrayAdapter::OffsetType pos) const;
@@ -411,6 +412,8 @@ private:
 private:
 	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv);
 	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
+	///base ctor which sets all member variables, default init to 0
+	explicit UByteArrayAdapter(UByteArrayAdapterPrivate * priv, OffsetType offSet = 0, OffsetType len = 0, OffsetType getPtr = 0, OffsetType putPtr = 0);
 	bool resizeForPush(OffsetType pos, OffsetType length);
 // 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
 };

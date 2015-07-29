@@ -51,94 +51,64 @@ sserialize::UByteArrayAdapter MemoryView::dataBase() const {
 }}//end namespace detail::__UByteArrayAdapter
 
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
-m_priv(priv),
-m_offSet(0),
-m_len(priv->size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(priv, 0, priv->size())
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len) :
-m_priv(priv),
-m_offSet(offSet),
-m_len(len),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(static_cast<sserialize::UByteArrayAdapterPrivate*>(0), offSet, len)
 {
 	if (!priv.get()) {
 		m_offSet = 0;
 		m_len = 0;
 	}
+	else {
+		m_priv = priv;
+	}
 }
 
+UByteArrayAdapter::UByteArrayAdapter(UByteArrayAdapterPrivate * priv, OffsetType offSet, OffsetType len, OffsetType getPtr, OffsetType putPtr) :
+m_priv(priv),
+m_offSet(offSet),
+m_len(len),
+m_getPtr(getPtr),
+m_putPtr(putPtr)
+{}
+
+
 UByteArrayAdapter::UByteArrayAdapter() :
-m_priv(new UByteArrayAdapterPrivateEmpty()),
-m_offSet(0),
-m_len(0),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateEmpty())
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(uint8_t * data, OffsetType offSet, OffsetType len) :
-m_priv(new UByteArrayAdapterPrivateArray(data)),
-m_offSet(offSet),
-m_len(len),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateArray(data), offSet, len)
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, OffsetType offSet, OffsetType len) :
-m_priv(new UByteArrayAdapterPrivateDeque(data)),
-m_offSet(offSet),
-m_len(len),
-m_getPtr(0),
-m_putPtr(0)
-{
-}
+UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), offSet, len)
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data) :
-m_priv(new UByteArrayAdapterPrivateDeque(data)),
-m_offSet(0),
-m_len(data->size()),
-m_getPtr(0),
-m_putPtr(0)
-{
-}
+UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), 0, data->size())
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, bool deleteOnClose) :
-m_priv(new UByteArrayAdapterPrivateDeque(data)),
-m_offSet(0),
-m_len(data->size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), 0, data->size())
 {
 	m_priv->setDeleteOnClose(deleteOnClose);
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data, OffsetType offSet, OffsetType len) :
-m_priv(new UByteArrayAdapterPrivateVector(data)),
-m_offSet(offSet),
-m_len(len),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateVector(data), offSet, len)
 {
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data) :
-m_priv(new UByteArrayAdapterPrivateVector(data)),
-m_offSet(0),
-m_len(data->size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateVector(data), 0, data->size())
 {
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data, bool deleteOnClose) :
-m_priv(new UByteArrayAdapterPrivateVector(data)),
-m_offSet(0),
-m_len(data->size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateVector(data), 0, data->size())
 {
 	m_priv->setDeleteOnClose(deleteOnClose);
 }
@@ -150,8 +120,7 @@ m_offSet(adapter.m_offSet),
 m_len(adapter.m_len),
 m_getPtr(adapter.m_getPtr),
 m_putPtr(adapter.m_putPtr)
-{
-}
+{}
 
 UByteArrayAdapter::UByteArrayAdapter(const UByteArrayAdapter & adapter, OffsetType addOffset) :
 m_priv(adapter.m_priv),
@@ -229,53 +198,37 @@ m_putPtr(0)
 	}
 }
 
-UByteArrayAdapter::UByteArrayAdapter(MmappedFile file, OffsetType offSet, OffsetType len) :
-m_priv(new UByteArrayAdapterPrivateMmappedFile(file)),
-m_offSet(offSet),
-m_len(len),
-m_getPtr(0),
-m_putPtr(0)
-{}
+UByteArrayAdapter::UByteArrayAdapter(const MmappedFile & file, OffsetType offSet, OffsetType len) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateMmappedFile(file), offSet, len)
+{
+	if (file.size() < m_offSet+m_len) {
+		if (file.size() > m_offSet) {
+			m_len = file.size() - m_offSet;
+		}
+		else {
+			m_len = 0;
+		}
+	}
+}
 
-
-UByteArrayAdapter::UByteArrayAdapter(MmappedFile file) :
-m_priv(new UByteArrayAdapterPrivateMmappedFile(file)),
-m_offSet(0),
-m_len(file.size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter::UByteArrayAdapter(const MmappedFile & file) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateMmappedFile(file), 0, file.size())
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(const ChunkedMmappedFile & file) :
-m_priv(new UByteArrayAdapterPrivateChunkedMmappedFile(file)),
-m_offSet(0),
-m_len(file.size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateChunkedMmappedFile(file), 0, file.size())
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(const CompressedMmappedFile & file) :
-m_priv(new UByteArrayAdapterPrivateCompressedMmappedFile(file)),
-m_offSet(0),
-m_len(file.size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateCompressedMmappedFile(file), 0, file.size())
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(const MmappedMemory<uint8_t> & mem) :
-m_priv(new UByteArrayAdapterPrivateMM(mem)),
-m_offSet(0),
-m_len(mem.size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateMM(mem), 0, mem.size())
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(const MemoryView & mem) :
-m_priv(new UByteArrayAdapterPrivateMV(mem)),
-m_offSet(0),
-m_len(mem.size()),
-m_getPtr(0),
-m_putPtr(0)
+UByteArrayAdapter(new UByteArrayAdapterPrivateMV(mem), 0, mem.size())
 {}
 
 UByteArrayAdapter::~UByteArrayAdapter() {}
@@ -287,6 +240,15 @@ UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapt
 	m_getPtr = adapter.m_getPtr;
 	m_putPtr = adapter.m_putPtr;
 	return *this;
+}
+
+void UByteArrayAdapter::swap(UByteArrayAdapter& other) {
+	using std::swap;
+	swap(m_priv, other.m_priv);
+	swap(m_offSet, other.m_offSet);
+	swap(m_len, other.m_len);
+	swap(m_getPtr, other.m_getPtr);
+	swap(m_putPtr, other.m_putPtr);
 }
 
 void UByteArrayAdapter::zero() {

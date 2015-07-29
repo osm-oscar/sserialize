@@ -8,7 +8,7 @@ namespace sserialize {
 class UByteArrayAdapterPrivateMmappedFile: public UByteArrayAdapterPrivateArray {
 	MmappedFile m_file;
 public:
-	UByteArrayAdapterPrivateMmappedFile(MmappedFile & file);
+	UByteArrayAdapterPrivateMmappedFile(MmappedFile file);
 	virtual ~UByteArrayAdapterPrivateMmappedFile();
 	virtual UByteArrayAdapter::OffsetType size() const;
 	virtual void setDeleteOnClose(bool del);
