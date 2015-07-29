@@ -1,1 +1,18 @@
-Licensed under the LGPLv2/v3 (with the exception of third-party code of course)
+Licensed under the LGPLv2/v3
+
+This project uses code from at least the following pages/projects:
+
+PNPPOLY: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+
+Geodesic calculations:
+http://www.movable-type.co.uk/scripts/latlong.html
+http://geographiclib.sourceforge.net/
+
+Smaller code snippets:
+https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+http://stackoverflow.com/questions/7222143/unordered-map-hash-function-c
+
+It statically links with the following libraries:
+C-legacy code from http://geographiclib.sourceforge.net/
+minilzo from http://www.oberhumer.com/opensource/lzo/
+utf8 iterator from http://sourceforge.net/projects/utfcpp/

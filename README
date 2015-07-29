@@ -1,3 +1,24 @@
-This is a simple framework to serialize data structures into read-only structures which can be store in a file/whatever.
+sserialize is a simple framework to serialize data structures into read-only structures which can be stored in a file/memory/shared-memory/*.
 
-Its main base is the UByteArrayAdapter located in utility. This class abstracts access to a uint8_t array which is used to store the serialization. It has some convinience functions to like streaming operators and integral-type serialization. For every in-memory class there exists a "static" serialization class. This class abstract the access to the serialized version. One example is the std::set container. You can stream any set-container whose Items are serializable by the UByteArrayAdapter into a UByteArrayAdapter. The Serialized version can tah either be completeley reconstructed into memory (if the Item supports this) or be read without reconstruction (if the item supports this). For the latter part there exists a class in Static/ call Static::Set which has some functions the std::set container has (insertion is of course not possible). If you want your Items to be a "static" structure as well, then you have to use the Static::Set with them.
+Almost all classes make use of the the main class UByteArrayAdapter located in utility.
+This class abstracts access to a uint8_t array which is used to store the serialization.
+It provides basic serialization operations for integral-types.
+
+For every in-memory class there exists a "static" serialization class.
+This class abstracts the access to the serialized version.
+One example is the std::set container. You can stream any set-container whose items are serializable. The serialized version can then either be completeley reconstructed into memory (if the item supports this) or be read without reconstruction (if the item supports this).
+For the latter part there exists a class in Static/, called Static::Set, which has some functions the std::set container has (insertion is of course not possible).
+If you want your items to be a "static" structure as well, then you have to use the Static::Set with them.
+
+In order to implement your own serialialization you only have to implement the serialialization streaming operator:
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const T_YOUR_TYPE & src);
+
+Possibly the deserialization operator:
+sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, T_YOUR_TYPE & desc);
+
+And/or a constructor that takes a UByteArrayAdapter as argument
+T_YOUR_TYPE(const sserialize::UByteArrayAdapter & src);
+
+You are encouraged to provide an apropriate overload for the SerializationInfo class.
+
+Make sure to read the documentation of UByteArrayAdapter before implementing your serialization functions
