@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_UNICODE_TRIE_NODE_H
 #define SSERIALIZE_UNICODE_TRIE_NODE_H
 #include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/utility/refcounting.h>
 #include <iostream>
 
 namespace sserialize {
@@ -8,7 +9,7 @@ namespace Static {
 namespace UnicodeTrie {
 namespace detail {
 
-class Node {
+class Node: public sserialize::RefCountObject {
 public:
 	Node() {}
 	virtual ~Node() {}
@@ -48,10 +49,10 @@ public:
 	static const uint32_t npos = 0xFFFFFFFF;
 	typedef enum {NT_SIMPLE=1} NodeTypes;
 private:
-	std::shared_ptr<detail::Node> m_priv;
+	sserialize::RCPtrWrapper<detail::Node> m_priv;
 protected:
-	inline const std::shared_ptr<detail::Node> & priv() const { return m_priv; }
-	inline std::shared_ptr<detail::Node> & priv() { return m_priv; }
+	inline const sserialize::RCPtrWrapper<detail::Node> & priv() const { return m_priv; }
+	inline sserialize::RCPtrWrapper<detail::Node> & priv() { return m_priv; }
 public:
 	Node();
 	Node(detail::Node * node) : m_priv(node) {}
