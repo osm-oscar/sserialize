@@ -220,7 +220,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 			p = cv;
 			
 			if (cv == q) {
-				//BUG: there's currently no way to tell that the point is identical with a vertex
+				//TODO: there's currently no way to tell that the point is identical with a vertex
 				return circleVertex.facesBegin().face().id();
 			}
 			//p->q goes through circleVertex, we have to find the right triangle

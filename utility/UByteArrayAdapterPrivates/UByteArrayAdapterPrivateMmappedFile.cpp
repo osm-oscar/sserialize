@@ -13,7 +13,7 @@ UByteArrayAdapterPrivateMmappedFile::~UByteArrayAdapterPrivateMmappedFile() {}
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateMmappedFile::size() const {
 	return m_file.size();
 }
-7
+
 void UByteArrayAdapterPrivateMmappedFile::setDeleteOnClose(bool del) {
 	m_file.setDeleteOnClose(del);
 }

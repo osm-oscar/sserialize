@@ -83,7 +83,7 @@ void linearRegression(TIterator begin, const TIterator & end, double & slope, do
 	slope *= 12;
 	slope /= size+1; //(n+2)
 	slope /= size; //(n+1)
-	yintercept = meanY - slope*meanX;//BUG: this sometimes produces very wrong results
+	yintercept = meanY - slope*meanX;
 }
 
 

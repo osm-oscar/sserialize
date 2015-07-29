@@ -50,6 +50,8 @@ sserialize::UByteArrayAdapter MemoryView::dataBase() const {
 
 }}//end namespace detail::__UByteArrayAdapter
 
+//CTORS
+
 UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
 UByteArrayAdapter(priv, 0, priv->size())
 {}
@@ -603,7 +605,6 @@ uint8_t UByteArrayAdapter::getUint8(const OffsetType pos) const {
 	return m_priv->getUint8(m_offSet+pos);
 }
 
-//BUG:make this portable!
 double UByteArrayAdapter::getDouble(const OffsetType pos) const {
 	if (m_len < pos+8) return std::numeric_limits<double>::signaling_NaN();
 	return unpack_double_from_uint64_t(m_priv->getUint64(m_offSet+pos));

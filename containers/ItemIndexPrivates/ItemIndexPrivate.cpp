@@ -171,7 +171,7 @@ void ItemIndexPrivate::doPutInto(uint32_t * dest) const {
 }
 
 bool ItemIndexPrivate::is_random_access() const {
-	return true; ///BUG: set default to false
+	return true; //TODO: set default to false
 }
 
 void ItemIndexPrivate::putInto(DynamicBitSet & bitSet) const {

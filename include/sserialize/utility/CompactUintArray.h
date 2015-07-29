@@ -10,7 +10,6 @@
 #include <algorithm>
 
 //TODO: implement random-access-iterator
-//BUG:Overflowbugs for pos m_bpn*pos > 32bit
 //Sub-classes only have to implement the 64 bit functions if needed
 
 namespace sserialize {
