@@ -4,7 +4,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIterator.h>
-#include <sserialize/templated/LFUCache.h>
+#include <sserialize/containers/LFUCache.h>
 #ifdef SSERIALIZE_WITH_THREADS
 #include <mutex>
 #endif

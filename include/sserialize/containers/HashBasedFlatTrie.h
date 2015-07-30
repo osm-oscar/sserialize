@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_HASH_BASED_FLAT_TRIE_H
 #define SSERIALIZE_HASH_BASED_FLAT_TRIE_H
-#include <sserialize/templated/OADHashTable.h>
+#include <sserialize/containers/OADHashTable.h>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/iterator/TransformIterator.h>
 #include <sserialize/mt/GuardedVariable.h>

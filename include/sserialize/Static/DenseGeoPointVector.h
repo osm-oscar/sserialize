@@ -2,7 +2,7 @@
 #define SSERIALIZE_STATIC_DENSE_GEOPOINT_VECTOR_H
 #include <iterator>
 #include <sserialize/Static/GeoPoint.h>
-#include <sserialize/templated/AbstractArray.h>
+#include <sserialize/containers/AbstractArray.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 
 namespace sserialize {

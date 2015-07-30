@@ -3,7 +3,7 @@
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/types.h>
 #include <sserialize/spatial/GeoWay.h>
-#include <sserialize/templated/AbstractArray.h>
+#include <sserialize/containers/AbstractArray.h>
 #include <vector>
 #include <cmath>
 

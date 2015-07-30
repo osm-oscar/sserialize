@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_COMPRESSED_MMAPPED_FILE_H
 #define SSERIALIZE_COMPRESSED_MMAPPED_FILE_H
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/templated/DirectCaches.h>
+#include <sserialize/containers/DirectCaches.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/storage/mmappedfile.h>

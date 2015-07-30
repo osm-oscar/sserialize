@@ -3,7 +3,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <vector>
-#include <sserialize/templated/HuffmanTree.h>
+#include <sserialize/containers/HuffmanTree.h>
 #include <sserialize/Static/HuffmanDecoder.h>
 #include <sserialize/containers/MultiBitBackInserter.h>
 #include <sserialize/containers/MultiBitIterator.h>

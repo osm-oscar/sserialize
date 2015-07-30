@@ -2,7 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_H
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/templated/AbstractArray.h>
+#include <sserialize/containers/AbstractArray.h>
 #include <vector>
 #include <set>
 #include <deque>

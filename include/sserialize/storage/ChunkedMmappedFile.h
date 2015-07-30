@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_CHUNKED_MMAPPED_FILE_H
 #define SSERIALIZE_CHUNKED_MMAPPED_FILE_H
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/templated/DirectRandomCache.h>
+#include <sserialize/containers/DirectRandomCache.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/types.h>
 #include <limits>
