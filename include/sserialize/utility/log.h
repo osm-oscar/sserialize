@@ -1,5 +1,5 @@
-#ifndef OSMFIND_LOG_H
-#define OSMFIND_LOG_H
+#ifndef SSERIALIZE_LOG_H
+#define SSERIALIZE_LOG_H
 #include <sstream>
 #include <vector>
 #include <sserialize/utility/printers.h>
