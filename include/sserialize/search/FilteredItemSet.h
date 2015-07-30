@@ -2,7 +2,7 @@
 #define SSERIALIZE_FILTERED_ITEM_SET_H
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/storage/SerializationInfo.h>
-#include <sserialize/containers/ItemSet.h>
+#include <sserialize/search/ItemSet.h>
 
 namespace sserialize {
 

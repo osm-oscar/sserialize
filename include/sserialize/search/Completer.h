@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_COMPLETER_H
 #define SSERIALIZE_COMPLETER_H
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/containers/ItemSet.h>
+#include <sserialize/search/ItemSet.h>
 #include "CompleterPrivate.h"
 
 namespace sserialize {

@@ -2,8 +2,8 @@
 #define SET_OP_TREE_H
 #include <map>
 
-#include "ItemIndex.h"
-#include "ItemIndexIterator.h"
+#include <sserialize/containers/ItemIndex.h>
+#include <sserialize/containers/ItemIndexIterator.h>
 #include <sserialize/search/StringCompleter.h>
 #include <sserialize/utility/refcounting.h>
 

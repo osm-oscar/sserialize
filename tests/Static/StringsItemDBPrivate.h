@@ -3,7 +3,7 @@
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/containers/ItemIndex.h>
-#include <sserialize/containers/ItemIndexIteratorDB.h>
+#include <sserialize/search/ItemIndexIteratorDB.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/Static/Array.h>

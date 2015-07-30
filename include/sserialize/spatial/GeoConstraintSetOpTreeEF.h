@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SPATIAL_GEO_CONSTRAINT_SET_OP_TREE_EF_H
 #define SSERIALIZE_SPATIAL_GEO_CONSTRAINT_SET_OP_TREE_EF_H
-#include <sserialize/containers/SetOpTree.h>
-#include <sserialize/containers/ItemIndexIteratorGeoDB.h>
+#include <sserialize/search/SetOpTree.h>
+#include <sserialize/search/ItemIndexIteratorGeoDB.h>
 #include <sserialize/strings/stringfunctions.h>
 #include <sserialize/utility/log.h>
 #include "GeoRect.h"

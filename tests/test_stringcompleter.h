@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_TESTS_STRING_COMPLETER_H
 #define SSERIALIZE_TESTS_STRING_COMPLETER_H
 #include <sserialize/search/StringCompleter.h>
-#include <sserialize/containers/ItemSet.h>
+#include <sserialize/search/ItemSet.h>
 #include "TestItemData.h"
 
 namespace sserialize {

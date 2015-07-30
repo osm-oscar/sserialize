@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_H
 #define SSERIALIZE_STATIC_GEO_STRINGS_ITEM_DB_H
-#include <sserialize/containers/ItemIndexIteratorGeoDB.h>
+#include <sserialize/search/ItemIndexIteratorGeoDB.h>
 #include "GeoStringsItemDBPrivate.h"
 #include "StringsItemDB.h"
 #include "GeoStringsItemDBItem.h"

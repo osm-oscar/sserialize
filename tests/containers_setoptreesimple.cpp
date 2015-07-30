@@ -3,8 +3,8 @@
 #include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/algorithm/utilfuncs.h>
-#include <sserialize/containers/SetOpTree.h>
-#include <sserialize/containers/SetOpTreePrivateSimple.h>
+#include <sserialize/search/SetOpTree.h>
+#include <sserialize/search/SetOpTreePrivateSimple.h>
 
 using namespace sserialize;
 

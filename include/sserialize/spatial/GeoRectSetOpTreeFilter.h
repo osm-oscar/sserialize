@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SPATIAL_GEO_RECT_SET_OP_TREE_FILTER_H
 #define SSERIALIZE_SPATIAL_GEO_RECT_SET_OP_TREE_FILTER_H
-#include <sserialize/containers/SetOpTree.h>
-#include <sserialize/containers/ItemIndexIteratorGeoDB.h>
+#include <sserialize/search/SetOpTree.h>
+#include <sserialize/search/ItemIndexIteratorGeoDB.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 #include <sserialize/spatial/GeoRect.h>
 
