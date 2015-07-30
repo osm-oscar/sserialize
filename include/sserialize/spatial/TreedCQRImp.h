@@ -2,7 +2,7 @@
 #define SSERIALIZE_TREED_CELL_QUERY_RESULT_PRIVATE_H
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/GeoHierarchy.h>
-#include <sserialize/containers/CellQueryResultPrivate.h>
+#include <sserialize/spatial/CellQueryResultPrivate.h>
 #include <memory>
 #include <string.h>
 

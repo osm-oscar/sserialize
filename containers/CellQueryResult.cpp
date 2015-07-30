@@ -1,5 +1,5 @@
-#include <sserialize/containers/CellQueryResult.h>
-#include <sserialize/containers/CellQueryResultPrivate.h>
+#include <sserialize/spatial/CellQueryResult.h>
+#include <sserialize/spatial/CellQueryResultPrivate.h>
 
 namespace sserialize {
 namespace detail {

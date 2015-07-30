@@ -1,4 +1,4 @@
-#include <sserialize/containers/TreedCQRImp.h>
+#include <sserialize/spatial/TreedCQRImp.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 

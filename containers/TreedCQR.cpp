@@ -1,5 +1,5 @@
-#include <sserialize/containers/TreedCQR.h>
-#include <sserialize/containers/TreedCQRImp.h>
+#include <sserialize/spatial/TreedCQR.h>
+#include <sserialize/spatial/TreedCQRImp.h>
 
 namespace sserialize {
 

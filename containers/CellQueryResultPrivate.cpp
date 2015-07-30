@@ -1,4 +1,4 @@
-#include <sserialize/containers/CellQueryResultPrivate.h>
+#include <sserialize/spatial/CellQueryResultPrivate.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 

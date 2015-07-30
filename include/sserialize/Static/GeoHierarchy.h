@@ -4,8 +4,8 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/spatial/GeoShape.h>
-#include <sserialize/containers/CellQueryResult.h>
-#include <sserialize/containers/TreedCQR.h>
+#include <sserialize/spatial/CellQueryResult.h>
+#include <sserialize/spatial/TreedCQR.h>
 #include <unordered_map>
 
 #define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 10
