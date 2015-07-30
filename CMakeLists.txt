@@ -30,6 +30,20 @@ set(RAGEL_FLAGS "-G2")
 
 RAGEL_PARSER(containers/SetOpTreePrivateSimple_parser.rl)
 
+set(STORAGE_SOURCES_CPP
+src/storage/mmappedfile.cpp
+src/storage/ChunkedMmappedFile.cpp
+src/storage/CompressedMmappedFile.cpp
+src/storage/UByteArrayAdapter.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivate.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterSeekedFile.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateArray.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateMmappedFile.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedFile.cpp
+src/storage/FileHandler.cpp
+)
+
 set(STATIC_TRIENODE_PRIVATE_SOURCES_CPP
 Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
 Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp
@@ -135,22 +149,11 @@ completers/StringCompleterPrivateGeoHierarchyUnclustered.cpp
 )
 
 set(UTILITY_SOURCES_CPP
-utility/mmappedfile.cpp
-utility/ChunkedMmappedFile.cpp
-utility/CompressedMmappedFile.cpp
 utility/stringfunctions.cpp
 utility/unicode_case_functions.cpp
 utility/CompactUintArray.cpp
-utility/UByteArrayAdapter.cpp
-utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivate.cpp
-utility/UByteArrayAdapterPrivates/UByteArrayAdapterSeekedFile.cpp
-utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateArray.cpp
-utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateMmappedFile.cpp
-utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp
-utility/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedFile.cpp
 utility/histogram2d.cpp
 utility/log.cpp
-utility/FileHandler.cpp
 utility/Compressor.cpp
 utility/detail/Compressor/NoneCompressor.cpp
 utility/detail/Compressor/LZOCompressor.cpp
@@ -167,6 +170,7 @@ vendor/libs/geographiclib/legacy/C/geodesic.c
 )
 
 set(SOURCES_CPP
+${STORAGE_SOURCES_CPP}
 ${COMPLETER_SOURCES_CPP}
 ${STATIC_TRIENODE_PRIVATE_SOURCES_CPP}
 ${STATIC_SOURCES_CPP}
