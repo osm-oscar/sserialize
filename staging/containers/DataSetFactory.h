@@ -3,7 +3,7 @@
 #include <forward_list>
 #include <unordered_map>
 #include <iostream>
-#include <sserialize/utility/MultiReaderSingleWriterLock.h>
+#include <sserialize/mt/MultiReaderSingleWriterLock.h>
 #include <sserialize/templated/MMVector.h>
 #include <sserialize/Static/Array.h>
 

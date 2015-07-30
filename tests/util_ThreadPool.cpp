@@ -2,8 +2,8 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
-#include <sserialize/utility/ThreadPool.h>
-#include <sserialize/templated/GuardedVariable.h>
+#include <sserialize/mt/ThreadPool.h>
+#include <sserialize/mt/GuardedVariable.h>
 
 template<uint32_t T_NUM_THREADS, uint32_t T_NUM_TASKS>
 class TestThreadPool: public CppUnit::TestFixture {

@@ -1,4 +1,4 @@
-#include <sserialize/utility/MultiReaderSingleWriterLock.h>
+#include <sserialize/mt/MultiReaderSingleWriterLock.h>
 
 namespace sserialize {
 

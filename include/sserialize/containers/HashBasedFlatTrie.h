@@ -3,14 +3,14 @@
 #include <sserialize/templated/OADHashTable.h>
 #include <sserialize/templated/MMVector.h>
 #include <sserialize/templated/TransformIterator.h>
-#include <sserialize/templated/GuardedVariable.h>
+#include <sserialize/mt/GuardedVariable.h>
 #include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/utility/CompactUintArray.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/TimeMeasuerer.h>
-#include <sserialize/utility/ThreadPool.h>
+#include <sserialize/mt/ThreadPool.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/utility/debug.h>
 #include <sserialize/Static/Array.h>

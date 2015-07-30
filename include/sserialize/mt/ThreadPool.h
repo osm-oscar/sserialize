@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_THREAD_POOL_H
 #define SSERIALIZE_THREAD_POOL_H
-#include <sserialize/templated/GuardedVariable.h>
+#include <sserialize/mt/GuardedVariable.h>
 #include <queue>
 #include <functional>
 #include <mutex>

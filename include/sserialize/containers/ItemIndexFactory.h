@@ -13,7 +13,7 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/storage/pack_unpack_functions.h>
-#include <sserialize/utility/MultiReaderSingleWriterLock.h>
+#include <sserialize/mt/MultiReaderSingleWriterLock.h>
 #include <sserialize/templated/MMVector.h>
 
 namespace sserialize {

@@ -44,6 +44,11 @@ src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedF
 src/storage/FileHandler.cpp
 )
 
+set(MT_SOURCES_CPP
+src/mt/MultiReaderSingleWriterLock.cpp
+src/mt/ThreadPool.cpp
+)
+
 set(STATIC_TRIENODE_PRIVATE_SOURCES_CPP
 Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
 Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp
@@ -157,11 +162,9 @@ utility/log.cpp
 utility/Compressor.cpp
 utility/detail/Compressor/NoneCompressor.cpp
 utility/detail/Compressor/LZOCompressor.cpp
-utility/MultiReaderSingleWriterLock.cpp
 utility/ProgreessInfo.cpp
 utility/TimeMeasurer.cpp
 utility/RLEStream.cpp
-utility/ThreadPool.cpp
 )
 
 set(EXTERNAL_SOURCES_CPP
@@ -171,6 +174,7 @@ vendor/libs/geographiclib/legacy/C/geodesic.c
 
 set(SOURCES_CPP
 ${STORAGE_SOURCES_CPP}
+${MT_SOURCES_CPP}
 ${COMPLETER_SOURCES_CPP}
 ${STATIC_TRIENODE_PRIVATE_SOURCES_CPP}
 ${STATIC_SOURCES_CPP}
