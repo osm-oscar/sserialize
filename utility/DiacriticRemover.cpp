@@ -1,4 +1,4 @@
-#include <sserialize/utility/DiacriticRemover.h>
+#include <sserialize/strings/DiacriticRemover.h>
 
 namespace sserialize {
 

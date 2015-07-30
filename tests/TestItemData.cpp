@@ -1,5 +1,5 @@
 #include "TestItemData.h"
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 #include "utilalgos.h"
 #include "datacreationfuncs.h"
 

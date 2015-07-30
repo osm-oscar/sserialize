@@ -5,7 +5,7 @@
 #include <sserialize/templated/TransformIterator.h>
 #include <sserialize/mt/GuardedVariable.h>
 #include <sserialize/storage/MmappedMemory.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/ProgressInfo.h>

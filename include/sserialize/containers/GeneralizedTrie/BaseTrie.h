@@ -7,7 +7,7 @@
 #include <sserialize/Static/FlatGeneralizedTrie.h>
 #include <sserialize/utility/debuggerfunctions.h>
 #include <assert.h>
-#include <sserialize/utility/DiacriticRemover.h>
+#include <sserialize/strings/DiacriticRemover.h>
 #define GST_ITEMID_MAX 0xFFFFFFFF
 
 namespace sserialize {

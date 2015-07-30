@@ -7,7 +7,7 @@
 #include <string.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 #include <sserialize/Static/Array.h>
 
 namespace sserialize {

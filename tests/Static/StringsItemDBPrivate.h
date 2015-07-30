@@ -5,7 +5,7 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIteratorDB.h>
 #include <sserialize/stats/TimeMeasuerer.h>
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/utility/refcounting.h>
 #include "StringsItemDBItem.h"

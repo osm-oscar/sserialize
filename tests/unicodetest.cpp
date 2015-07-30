@@ -1,5 +1,5 @@
 #include <sserialize/vendor/utf8.h>
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 #include <iostream>
 
 void test(std::string::const_iterator strIt, const std::string & str) {

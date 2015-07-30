@@ -5,8 +5,8 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/containers/ItemIndexFactory.h>
-#include <sserialize/utility/stringfunctions.h>
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/stringfunctions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/Static/StringCompleter.h>
 #include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 #include <sserialize/Static/GeneralizedTrie.h>

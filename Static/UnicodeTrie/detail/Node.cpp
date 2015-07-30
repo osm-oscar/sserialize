@@ -1,7 +1,7 @@
 #include <sserialize/Static/UnicodeTrie/Node.h>
 #include <sserialize/Static/UnicodeTrie/detail/SimpleNode.h>
 #include <sserialize/Static/UnicodeTrie/detail/EmptyNode.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 
 namespace sserialize {
 namespace Static {

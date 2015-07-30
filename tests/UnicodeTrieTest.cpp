@@ -1,6 +1,6 @@
 #include <sserialize/containers/UnicodeTrie.h>
 #include <sserialize/containers/ItemIndexFactory.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"

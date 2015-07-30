@@ -1,6 +1,6 @@
 #include "utilalgos.h"
 #include <sserialize/completers/StringCompleter.h>
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 
 namespace sserialize {
 

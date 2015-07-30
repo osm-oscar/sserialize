@@ -2,7 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 #include <sserialize/utility/printers.h>
 
 class TestAsciiCharEscaper: public CppUnit::TestFixture {

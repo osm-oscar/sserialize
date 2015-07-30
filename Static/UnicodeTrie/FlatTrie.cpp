@@ -1,5 +1,5 @@
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 
 namespace sserialize {
 namespace Static {

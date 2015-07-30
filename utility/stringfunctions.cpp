@@ -1,5 +1,5 @@
-#include <sserialize/utility/stringfunctions.h>
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/stringfunctions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/vendor/utf8.h>
 #include <set>
 

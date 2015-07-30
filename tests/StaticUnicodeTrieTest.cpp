@@ -3,7 +3,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/UnicodeTrie/Trie.h>
 #include <sserialize/Static/UnicodeTrie/detail/SimpleNode.h>
-#include <sserialize/utility/stringfunctions.h>
+#include <sserialize/strings/stringfunctions.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"

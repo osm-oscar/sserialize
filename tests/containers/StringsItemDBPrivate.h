@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/stats/ProgressInfo.h>
-#include <sserialize/utility/unicode_case_functions.h>
+#include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/utility/refcounting.h>
