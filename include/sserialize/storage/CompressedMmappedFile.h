@@ -4,7 +4,7 @@
 #include <sserialize/containers/DirectCaches.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
-#include <sserialize/storage/mmappedfile.h>
+#include <sserialize/storage/MmappedFile.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <sserialize/utility/types.h>
 #include <limits>

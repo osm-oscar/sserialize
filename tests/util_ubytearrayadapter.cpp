@@ -5,7 +5,7 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/pack_unpack_functions.h>
-#include <sserialize/storage/mmappedfile.h>
+#include <sserialize/storage/MmappedFile.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include "datacreationfuncs.h"
 

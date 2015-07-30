@@ -1,6 +1,6 @@
 #include <sserialize/containers/DynamicBitSet.h>
 #include <sserialize/stats/TimeMeasuerer.h>
-#include <sserialize/storage/mmappedfile.h>
+#include <sserialize/storage/MmappedFile.h>
 #include <iostream>
 
 

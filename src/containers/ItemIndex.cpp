@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/algorithm/utilfuncs.h>
-#include <sserialize/storage/mmappedfile.h>
+#include <sserialize/storage/MmappedFile.h>
 #include <sserialize/utility/exceptions.h>
 
 namespace sserialize {

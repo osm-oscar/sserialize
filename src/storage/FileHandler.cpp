@@ -1,5 +1,5 @@
 #include <sserialize/storage/FileHandler.h>
-#include <sserialize/storage/mmappedfile.h>
+#include <sserialize/storage/MmappedFile.h>
 
 namespace sserialize {
 
