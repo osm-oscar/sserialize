@@ -628,9 +628,6 @@ void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const
 	}
 	while (queue.size()) {
 		r = region(queue.front());
-		if (queue.front() == 13010) {
-			std::cout << "Steinhaldenfeld" << std::endl;
-		}
 		queue.pop_front();
 		if (rect.contains(r.boundary())) {
 			//checking the itemsCount of the region does only work if the hierarchy was created with a full region item index
