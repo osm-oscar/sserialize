@@ -3,7 +3,7 @@
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
 #include "datacreationfuncs.h"
-#include <sserialize/utility/RLEStream.h>
+#include <sserialize/containers/RLEStream.h>
 #include <sserialize/utility/printers.h>
 
 class TestRLEStream: public CppUnit::TestFixture {

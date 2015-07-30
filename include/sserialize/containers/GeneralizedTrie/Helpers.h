@@ -11,7 +11,7 @@
 #include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 #include <sserialize/Static/GeneralizedTrie.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 
 
 namespace sserialize {

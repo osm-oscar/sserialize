@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_UNICODE_TRIE_COMPACT_NODE_H
 #define SSERIALIZE_STATIC_UNICODE_TRIE_COMPACT_NODE_H
 #include <sserialize/Static/UnicodeTrie/Node.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 
 namespace sserialize {
 namespace Static {

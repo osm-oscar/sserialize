@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_GEO_HIERARCHY_ARRANGEMENT_H
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_GEO_HIERARCHY_ARRANGEMENT_H
 #include <sserialize/Static/TriangulationGridLocator.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/containers/CellQueryResult.h>
 #include <sserialize/containers/TreedCQR.h>
 

@@ -1,4 +1,4 @@
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <stdint.h>
 #include <iostream>
 #include <sserialize/storage/pack_unpack_functions.h>

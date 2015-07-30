@@ -2,7 +2,7 @@
 #define SSERIALIZE_TREED_CELL_QUERY_RESULT_H
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/CellQueryResult.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <functional>
 
 namespace sserialize {

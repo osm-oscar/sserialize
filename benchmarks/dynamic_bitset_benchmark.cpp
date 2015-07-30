@@ -1,6 +1,6 @@
 #include <sserialize/containers/DynamicBitSet.h>
 #include <sserialize/stats/TimeMeasuerer.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <iostream>
 
 

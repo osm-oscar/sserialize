@@ -6,7 +6,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <iostream>
 #include <sserialize/Static/TrieNode.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 
 #define CHILDPTR_STRIPE_SIZE 32
 

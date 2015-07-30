@@ -1,7 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/utility/utilmath.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/utility/RangeGenerator.h>

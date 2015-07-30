@@ -1,7 +1,7 @@
 #ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
 #include "UByteArrayAdapterPrivate.h"
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #ifdef SSERIALIZE_WITH_THREADS
 #include <mutex>
 #endif

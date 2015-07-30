@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_REGION_ARRANGEMENT_H
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_REGION_ARRANGEMENT_H
 #include <sserialize/Static/TriangulationGridLocator.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_REGION_ARRANGEMENT_VERSION 1
 

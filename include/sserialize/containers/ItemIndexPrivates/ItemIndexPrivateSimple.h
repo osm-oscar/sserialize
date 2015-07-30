@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_ITEM_INDEX_PRIVATE_SIMPLE_H
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_SIMPLE_H
 #include "ItemIndexPrivate.h"
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 
 
 /* File format:

@@ -7,7 +7,7 @@
 #include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/hashspecializations.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/mt/ThreadPool.h>

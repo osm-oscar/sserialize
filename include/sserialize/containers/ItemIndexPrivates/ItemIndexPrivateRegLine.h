@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_ITEM_INDEX_PRIVATE_REGLINE_H
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_REGLINE_H
 #include "ItemIndexPrivate.h"
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/utility/exceptions.h>
 #include <cstdlib>

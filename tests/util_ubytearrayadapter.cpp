@@ -6,7 +6,7 @@
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/storage/mmappedfile.h>
-#include <sserialize/utility/CompactUintArray.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include "datacreationfuncs.h"
 
 using namespace sserialize;

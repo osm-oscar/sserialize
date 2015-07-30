@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_CELL_QUERY_RESULT_H
 #define SSERIALIZE_CELL_QUERY_RESULT_H
 #include <sserialize/containers/ItemIndex.h>
-#include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/utility/RLEStream.h>
+#include <sserialize/containers/CompactUintArray.h>
+#include <sserialize/containers/RLEStream.h>
 
 namespace sserialize {
 

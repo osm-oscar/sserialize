@@ -1,4 +1,4 @@
-#include <sserialize/utility/RLEStream.h>
+#include <sserialize/containers/RLEStream.h>
 
 namespace sserialize {
 
