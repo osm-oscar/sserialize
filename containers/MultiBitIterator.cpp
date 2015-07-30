@@ -1,4 +1,4 @@
-#include <sserialize/containers/MultiBitIterator.h>
+#include <sserialize/iterator/MultiBitIterator.h>
 #include <sserialize/algorithm/utilfuncs.h>
 
 namespace sserialize {

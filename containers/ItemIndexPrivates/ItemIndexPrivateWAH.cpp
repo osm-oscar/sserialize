@@ -1,6 +1,6 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
-#include <sserialize/containers/UDWIterator.h>
-#include <sserialize/containers/UDWConstrainedIterator.h>
+#include <sserialize/iterator/UDWIterator.h>
+#include <sserialize/iterator/UDWConstrainedIterator.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <iostream>

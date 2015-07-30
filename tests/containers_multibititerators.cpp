@@ -2,8 +2,8 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <vector>
-#include <sserialize/containers/MultiBitBackInserter.h>
-#include <sserialize/containers/MultiBitIterator.h>
+#include <sserialize/iterator/MultiBitBackInserter.h>
+#include <sserialize/iterator/MultiBitIterator.h>
 #include <sserialize/algorithm/utilfuncs.h>
 
 using namespace sserialize;

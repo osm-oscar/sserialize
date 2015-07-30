@@ -1,8 +1,8 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/containers/UDWIterator.h>
-#include <sserialize/containers/UDWIteratorPrivateHD.h>
+#include <sserialize/iterator/UDWIterator.h>
+#include <sserialize/iterator/UDWIteratorPrivateHD.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <vendor/libs/minilzo/minilzo.h>

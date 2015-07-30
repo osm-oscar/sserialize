@@ -5,7 +5,7 @@
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/HuffmanTree.h>
-#include <sserialize/containers/MultiBitBackInserter.h>
+#include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 

@@ -7,7 +7,7 @@
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/containers/HuffmanTree.h>
-#include <sserialize/containers/MultiBitBackInserter.h>
+#include <sserialize/iterator/MultiBitBackInserter.h>
 #include <vendor/libs/minilzo/minilzo.h>
 #include <unordered_map>
 #include <iostream>

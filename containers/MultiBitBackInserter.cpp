@@ -1,4 +1,4 @@
-#include <sserialize/containers/MultiBitBackInserter.h>
+#include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/algorithm/utilfuncs.h>
 
 namespace sserialize {

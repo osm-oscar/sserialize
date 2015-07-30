@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_UDW_ITERATOR_HD_H
 #define SSERIALIZE_UDW_ITERATOR_HD_H
-#include <sserialize/containers/UDWIterator.h>
-#include <sserialize/containers/MultiBitIterator.h>
+#include <sserialize/iterator/UDWIterator.h>
+#include <sserialize/iterator/MultiBitIterator.h>
 #include <sserialize/Static/HuffmanDecoder.h>
 
 namespace sserialize {

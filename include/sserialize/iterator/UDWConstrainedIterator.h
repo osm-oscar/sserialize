@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_UDW_CONSTRAINED_ITERATOR_H
 #define SSERIALIZE_UDW_CONSTRAINED_ITERATOR_H
-#include <sserialize/containers/UDWIterator.h>
+#include <sserialize/iterator/UDWIterator.h>
 
 namespace sserialize {
 

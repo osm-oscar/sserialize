@@ -2,7 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_WAH_H
 #include "ItemIndexPrivate.h"
 #include <sserialize/algorithm/utilfuncs.h>
-#include <sserialize/containers/UDWConstrainedIterator.h>
+#include <sserialize/iterator/UDWConstrainedIterator.h>
 
 namespace sserialize {
 

@@ -5,10 +5,10 @@
 #include <vector>
 #include <sserialize/containers/HuffmanTree.h>
 #include <sserialize/Static/HuffmanDecoder.h>
-#include <sserialize/containers/MultiBitBackInserter.h>
-#include <sserialize/containers/MultiBitIterator.h>
-#include <sserialize/containers/UDWIterator.h>
-#include <sserialize/containers/UDWIteratorPrivateHD.h>
+#include <sserialize/iterator/MultiBitBackInserter.h>
+#include <sserialize/iterator/MultiBitIterator.h>
+#include <sserialize/iterator/UDWIterator.h>
+#include <sserialize/iterator/UDWIteratorPrivateHD.h>
 #include <sserialize/algorithm/utilfuncs.h>
 
 using namespace sserialize;
