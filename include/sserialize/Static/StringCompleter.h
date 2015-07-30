@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_STRING_COMPLETER_H
 #define SSERIALIZE_STATIC_STRING_COMPLETER_H
 #include <deque>
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 #include <sserialize/Static/ItemIndexStore.h>
 
 #define SSERIALIZE_STATIC_STRING_COMPLETER_HEADER_SIZE 7

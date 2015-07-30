@@ -104,6 +104,6 @@ public:
 };
 }//end namespace
 
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 
 #endif

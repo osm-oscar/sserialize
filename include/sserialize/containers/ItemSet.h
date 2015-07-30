@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_ITEM_SET_H
 #define SSERIALIZE_ITEM_SET_H
 #include <sserialize/containers/SetOpTree.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 
 
 //TODO:Sortierfunktion

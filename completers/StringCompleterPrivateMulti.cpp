@@ -1,4 +1,4 @@
-#include <sserialize/completers/StringCompleterPrivateMulti.h>
+#include <sserialize/search/StringCompleterPrivateMulti.h>
 
 namespace sserialize {
 

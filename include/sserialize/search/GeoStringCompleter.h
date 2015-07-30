@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_GEO_STRING_COMPLETER_H
 #define SSERIALIZE_GEO_STRING_COMPLETER_H
 #include "StringCompleter.h"
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 #include <sserialize/spatial/GeoRect.h>
 
 namespace sserialize {

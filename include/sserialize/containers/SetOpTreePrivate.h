@@ -1,7 +1,7 @@
 #ifndef SET_OP_TREE_PRIVATE_H
 #define SET_OP_TREE_PRIVATE_H
 #include <map>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include "SetOpTree.h"
 
 

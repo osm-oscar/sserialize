@@ -3,7 +3,7 @@
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/iterator/AtStlInputIterator.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include <memory>
 #define SSERIALIZE_STATIC_KEY_VALUE_OBJECTSTORE_VERSION 0
 

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STRING_COMPLETER_PRIVATE_ITEM_DB_H
 #define SSERIALIZE_STRING_COMPLETER_PRIVATE_ITEM_DB_H
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 #include "StringsItemDB.h"
 
 namespace sserialize {

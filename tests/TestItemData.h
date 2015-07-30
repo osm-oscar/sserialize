@@ -4,7 +4,7 @@
 #include <deque>
 #include <set>
 #include <string>
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 #include "Static/StringsItemDB.h"
 #include <sserialize/containers/ItemSet.h>
 #include <sserialize/spatial/GeoPoint.h>

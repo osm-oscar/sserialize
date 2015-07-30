@@ -1,6 +1,6 @@
 #ifndef STRING_COMPLETER_PRIVATE_STATIC_GSA_STR_IDS_H
 #define STRING_COMPLETER_PRIVATE_STATIC_GSA_STR_IDS_H
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 #include <sserialize/Static/GeneralizedSuffixArray.h>
 
 namespace sserialize {

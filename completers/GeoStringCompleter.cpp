@@ -1,4 +1,4 @@
-#include <sserialize/completers/GeoStringCompleter.h>
+#include <sserialize/search/GeoStringCompleter.h>
 
 namespace sserialize {
 

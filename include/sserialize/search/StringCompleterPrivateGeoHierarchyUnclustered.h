@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_STRING_COMPLETER_PRIVATE_GEO_HIERARCHY_UNCLUSTERED_H
 #define SSERIALIZE_STATIC_STRING_COMPLETER_PRIVATE_GEO_HIERARCHY_UNCLUSTERED_H
-#include <sserialize/completers/StringCompleterPrivate.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleter.h>
 #include <sserialize/Static/GeoHierarchy.h>
 #define SSERIALIZE_GEOHIERARCHY_UNCLUSTERED_COMPLETER_VERSION 1
 

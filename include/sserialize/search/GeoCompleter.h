@@ -4,7 +4,7 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIterator.h>
 #include <sserialize/spatial/GeoRect.h>
-#include <sserialize/completers/GeoCompleterPrivate.h>
+#include <sserialize/search/GeoCompleterPrivate.h>
 
 namespace sserialize {
 

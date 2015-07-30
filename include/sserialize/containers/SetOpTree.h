@@ -4,7 +4,7 @@
 
 #include "ItemIndex.h"
 #include "ItemIndexIterator.h"
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include <sserialize/utility/refcounting.h>
 
 

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STRING_COMPLETER_PRIVATE_MULTI_H
 #define SSERIALIZE_STRING_COMPLETER_PRIVATE_MULTI_H
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 
 namespace sserialize {
 

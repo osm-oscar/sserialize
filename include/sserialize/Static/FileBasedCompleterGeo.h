@@ -1,9 +1,9 @@
 #ifndef SSERIALIZE_STATIC_FILE_BASED_COMPLETER_GEO_H
 #define SSERIALIZE_STATIC_FILE_BASED_COMPLETER_GEO_H
 #include <sserialize/Static/FileBasedCompleter.h>
-#include <sserialize/completers/GeoCompleter.h>
+#include <sserialize/search/GeoCompleter.h>
 #include <sserialize/Static/ItemGeoGrid.h>
-#include <sserialize/completers/GeoCompleterPrivateProxy.h>
+#include <sserialize/search/GeoCompleterPrivateProxy.h>
 #include <sserialize/spatial/GeoConstraintSetOpTreeEF.h>
 #include <sserialize/utility/types.h>
 

@@ -3,7 +3,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/types.h>
 #include <sserialize/containers/ItemIndex.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 
 namespace sserialize {
 

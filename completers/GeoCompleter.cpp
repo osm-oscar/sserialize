@@ -1,5 +1,5 @@
-#include <sserialize/completers/GeoCompleter.h>
-#include <sserialize/completers/GeoCompleterPrivate.h>
+#include <sserialize/search/GeoCompleter.h>
+#include <sserialize/search/GeoCompleterPrivate.h>
 
 namespace sserialize {
 

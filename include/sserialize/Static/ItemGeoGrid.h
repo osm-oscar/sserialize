@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_ITEM_GEO_GRID_H
 #define SSERIALIZE_STATIC_ITEM_GEO_GRID_H
-#include <sserialize/completers/GeoCompleterPrivateProxy.h>
+#include <sserialize/search/GeoCompleterPrivateProxy.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include "RGeoGrid.h"
 #include "ItemIndexStore.h"

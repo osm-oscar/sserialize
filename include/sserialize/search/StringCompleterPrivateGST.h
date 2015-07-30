@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STRING_COMPLETER_PRIVATE_GST_H
 #define SSERIALIZE_STRING_COMPLETER_PRIVATE_GST_H
-#include <sserialize/completers/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleterPrivate.h>
 #include <sserialize/containers/GeneralizedTrie.h>
 
 namespace sserialize {

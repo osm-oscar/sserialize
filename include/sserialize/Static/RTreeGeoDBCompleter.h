@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_RTREE_GEO_DB_COMPLETER_H
 #define SSERIALIZE_RTREE_GEO_DB_COMPLETER_H
 #include <sserialize/Static/RTree.h>
-#include <sserialize/completers/GeoCompleterPrivate.h>
+#include <sserialize/search/GeoCompleterPrivate.h>
 
 namespace sserialize {
 namespace Static {

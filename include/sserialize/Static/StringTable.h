@@ -2,7 +2,7 @@
 #define SSERIALIZE_STATIC_STRING_TABLE_H
 #include <unordered_set>
 #include <sserialize/Static/Array.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 
 namespace sserialize {
 namespace Static {

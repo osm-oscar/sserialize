@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_GEO_COMPLETER_H
 #define SSERIALIZE_STATIC_GEO_COMPLETER_H
-#include <sserialize/completers/GeoCompleter.h>
-#include <sserialize/completers/GeoCompleterPrivateProxy.h>
+#include <sserialize/search/GeoCompleter.h>
+#include <sserialize/search/GeoCompleterPrivateProxy.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/ItemGeoGrid.h>
 

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STRINGS_ITEM_DB_ITEM_H
 #define SSERIALIZE_STRINGS_ITEM_DB_ITEM_H
 #include <stdint.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include <unordered_set>
 
 namespace sserialize {

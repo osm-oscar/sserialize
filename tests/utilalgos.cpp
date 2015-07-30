@@ -1,5 +1,5 @@
 #include "utilalgos.h"
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include <sserialize/strings/unicode_case_functions.h>
 
 namespace sserialize {

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_TESTS_STRING_COMPLETER_H
 #define SSERIALIZE_TESTS_STRING_COMPLETER_H
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include <sserialize/containers/ItemSet.h>
 #include "TestItemData.h"
 

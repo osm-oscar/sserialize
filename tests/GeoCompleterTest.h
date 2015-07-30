@@ -4,7 +4,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/completers/GeoCompleter.h>
+#include <sserialize/search/GeoCompleter.h>
 #include "containers/GeoStringsItemDB.h"
 #include "TestItemData.h"
 #include "datacreationfuncs.h"

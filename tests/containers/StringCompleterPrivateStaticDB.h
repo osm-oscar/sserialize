@@ -1,7 +1,7 @@
 #ifndef STRING_COMPLETER_PRIVATE_STATIC_DB_H
 #define STRING_COMPLETER_PRIVATE_STATIC_DB_H
-#include <sserialize/completers/StringCompleterPrivate.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleterPrivate.h>
+#include <sserialize/search/StringCompleter.h>
 #include <sserialize/containers/ItemIndexIteratorDB.h>
 #include <unordered_set>
 

@@ -1,4 +1,4 @@
-#include <sserialize/completers/StringCompleterPrivateGeoHierarchyUnclustered.h>
+#include <sserialize/search/StringCompleterPrivateGeoHierarchyUnclustered.h>
 #include <sserialize/Static/StringCompleter.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/containers/DynamicBitSet.h>

@@ -6,7 +6,7 @@
 #include <sserialize/Static/StringCompleter.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/Static/ItemIndexStore.h>
-#include <sserialize/completers/StringCompleter.h>
+#include <sserialize/search/StringCompleter.h>
 #include <sserialize/Static/StringCompleterPrivates.h>
 #include "FlatGeneralizedTrie.h"
 #include <sserialize/completers/StringCompleterPrivateStaticDB.h>
