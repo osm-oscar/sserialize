@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/utility/TimeMeasuerer.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/TimeMeasuerer.h>
+#include <sserialize/stats/ProgressInfo.h>
 
 namespace sserialize {
 

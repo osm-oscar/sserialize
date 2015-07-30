@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/Static/UnicodeTrie/Node.h>
 #include <sserialize/Static/UnicodeTrie/Trie.h>
 

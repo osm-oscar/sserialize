@@ -1,4 +1,4 @@
-#include <sserialize/utility/memusage.h>
+#include <sserialize/stats/memusage.h>
 #include <deque>
 #include <set>
 #include <vector>

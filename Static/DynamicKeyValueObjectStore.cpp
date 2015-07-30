@@ -1,6 +1,6 @@
 #include <sserialize/Static/DynamicKeyValueObjectStore.h>
-#include <sserialize/utility/TimeMeasuerer.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/TimeMeasuerer.h>
+#include <sserialize/stats/ProgressInfo.h>
 
 namespace sserialize {
 namespace Static {

@@ -3,7 +3,7 @@
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/log.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include "vendor/libs/minilzo/minilzo.h"
 #include <sys/types.h>

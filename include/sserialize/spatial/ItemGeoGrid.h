@@ -4,7 +4,7 @@
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoShape.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include "RWGeoGrid.h"
 
 namespace sserialize {

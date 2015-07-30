@@ -1,6 +1,6 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
-#include <sserialize/utility/TimeMeasuerer.h>
-#include <sserialize/utility/statfuncs.h>
+#include <sserialize/stats/TimeMeasuerer.h>
+#include <sserialize/stats/statfuncs.h>
 #include <iostream>
 #include <set>
 #include <limits>

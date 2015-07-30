@@ -1,7 +1,7 @@
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/printers.h>
-#include <sserialize/utility/statfuncs.h>
+#include <sserialize/stats/statfuncs.h>
 
 
 namespace sserialize {

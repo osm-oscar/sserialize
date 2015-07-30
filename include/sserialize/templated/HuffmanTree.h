@@ -3,7 +3,7 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/utility/utilfuncs.h>

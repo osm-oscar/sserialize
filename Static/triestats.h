@@ -4,7 +4,7 @@
 #include <map>
 #include <sstream>
 #include <cmath>
-#include <sserialize/utility/histogram2d.h>
+#include <sserialize/stats/histogram2d.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/GeneralizedTrie.h>

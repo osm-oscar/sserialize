@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SORTED_OFFSET_INDEX_PRIVATE_H
 #define SSERIALIZE_SORTED_OFFSET_INDEX_PRIVATE_H
 #include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/utility/statfuncs.h>
+#include <sserialize/stats/statfuncs.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <iostream>
 

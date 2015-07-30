@@ -4,7 +4,7 @@
 #include <sserialize/spatial/GeoGrid.h>
 #include <sserialize/spatial/GeoPolygon.h>
 #include <sserialize/spatial/GeoMultiPolygon.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <unordered_set>
 
 namespace sserialize {

@@ -5,7 +5,7 @@
 #include <sserialize/spatial/RWGeoGrid.h>
 #include <sserialize/spatial/GeoPolygon.h>
 #include <sserialize/spatial/GeoMultiPolygon.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <iostream>
 #include <fstream>
 #include <atomic>

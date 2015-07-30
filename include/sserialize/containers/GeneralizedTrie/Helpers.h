@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/unicode_case_functions.h>

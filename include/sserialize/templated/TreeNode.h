@@ -2,7 +2,7 @@
 #define TREE_NODE_H
 #include <deque>
 #include <map>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 
 template<typename ChildKeyType, typename ItemType>

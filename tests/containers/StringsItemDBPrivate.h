@@ -3,7 +3,7 @@
 #include <deque>
 #include <algorithm>
 #include <sserialize/storage/UByteArrayAdapter.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.h>
 #include <sserialize/Static/StringTable.h>

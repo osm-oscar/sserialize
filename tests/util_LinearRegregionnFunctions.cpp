@@ -4,7 +4,7 @@
 #include <sserialize/utility/RangeGenerator.h>
 #include <sserialize/utility/printers.h>
 #include <sserialize/utility/utilmath.h>
-#include <sserialize/utility/statfuncs.h>
+#include <sserialize/stats/statfuncs.h>
 #include <iomanip>
 
 bool deq(double a, double b) { return std::abs<double>(a-b) < 0.0001; }

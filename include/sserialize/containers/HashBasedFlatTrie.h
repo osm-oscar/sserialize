@@ -8,8 +8,8 @@
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/utility/ProgressInfo.h>
-#include <sserialize/utility/TimeMeasuerer.h>
+#include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/mt/ThreadPool.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/utility/debug.h>

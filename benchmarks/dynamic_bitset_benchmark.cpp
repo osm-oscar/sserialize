@@ -1,5 +1,5 @@
 #include <sserialize/containers/DynamicBitSet.h>
-#include <sserialize/utility/TimeMeasuerer.h>
+#include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/utility/CompactUintArray.h>
 #include <iostream>
 

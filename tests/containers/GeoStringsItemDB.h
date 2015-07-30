@@ -5,7 +5,7 @@
 #include "GeoStringsItem.h"
 #include <sserialize/Static/Array.h>
 #include "StringsItemDB.h"
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 
 
 namespace sserialize {

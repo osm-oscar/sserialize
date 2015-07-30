@@ -2,7 +2,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/AtStlInputIterator.h>
-#include <sserialize/utility/statfuncs.h>
+#include <sserialize/stats/statfuncs.h>
 #include "ItemIndexSetFunctions.h"
 
 namespace sserialize {

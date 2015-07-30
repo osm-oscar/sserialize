@@ -49,6 +49,12 @@ src/mt/MultiReaderSingleWriterLock.cpp
 src/mt/ThreadPool.cpp
 )
 
+set(STATS_SOURCES_CPP
+src/stats/histogram2d.cpp
+src/stats/ProgreessInfo.cpp
+src/stats/TimeMeasurer.cpp
+)
+
 set(STATIC_TRIENODE_PRIVATE_SOURCES_CPP
 Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
 Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp
@@ -157,13 +163,10 @@ set(UTILITY_SOURCES_CPP
 utility/stringfunctions.cpp
 utility/unicode_case_functions.cpp
 utility/CompactUintArray.cpp
-utility/histogram2d.cpp
 utility/log.cpp
 utility/Compressor.cpp
 utility/detail/Compressor/NoneCompressor.cpp
 utility/detail/Compressor/LZOCompressor.cpp
-utility/ProgreessInfo.cpp
-utility/TimeMeasurer.cpp
 utility/RLEStream.cpp
 )
 
@@ -175,6 +178,7 @@ vendor/libs/geographiclib/legacy/C/geodesic.c
 set(SOURCES_CPP
 ${STORAGE_SOURCES_CPP}
 ${MT_SOURCES_CPP}
+${STATS_SOURCES_CPP}
 ${COMPLETER_SOURCES_CPP}
 ${STATIC_TRIENODE_PRIVATE_SOURCES_CPP}
 ${STATIC_SOURCES_CPP}

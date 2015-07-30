@@ -4,7 +4,7 @@
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/debuggerfunctions.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/templated/HuffmanTree.h>
 #include <sserialize/containers/MultiBitBackInserter.h>
