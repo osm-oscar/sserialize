@@ -3,7 +3,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <vector>
-#include <sserialize/templated/WindowedArray.h>
+#include <sserialize/containers/WindowedArray.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
 

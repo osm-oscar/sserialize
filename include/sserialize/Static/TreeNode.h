@@ -3,7 +3,7 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/Static/Map.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <iostream>
 
 /** File Format:

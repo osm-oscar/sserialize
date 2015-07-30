@@ -1,5 +1,5 @@
 #include <sserialize/storage/CompressedMmappedFile.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/log.h>

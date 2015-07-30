@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_MARKING_CACHE_H
 #define SSERIALIZE_MARKING_CACHE_H
-#include <sserialize/utility/utilmath.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/algorithm/utilmath.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include <unordered_map>
 #include <vector>
 

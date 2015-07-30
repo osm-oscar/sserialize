@@ -1,12 +1,12 @@
 #ifndef SSERIALIZE_HASH_BASED_FLAT_TRIE_H
 #define SSERIALIZE_HASH_BASED_FLAT_TRIE_H
 #include <sserialize/templated/OADHashTable.h>
-#include <sserialize/templated/MMVector.h>
-#include <sserialize/templated/TransformIterator.h>
+#include <sserialize/containers/MMVector.h>
+#include <sserialize/iterator/TransformIterator.h>
 #include <sserialize/mt/GuardedVariable.h>
 #include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/strings/stringfunctions.h>
-#include <sserialize/utility/hashspecializations.h>
+#include <sserialize/algorithm/hashspecializations.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/stats/TimeMeasuerer.h>

@@ -2,8 +2,8 @@
 #define CompactUintArray_H
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/utility/utilcontainerfuncs.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/algorithm/utilcontainerfuncs.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 #include <set>
 #include <deque>
 #include <ostream>

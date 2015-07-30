@@ -2,7 +2,7 @@
 #define GENERALIZED_TRIE_HELPERS_H
 #include <algorithm>
 #include <sserialize/vendor/utf8.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/strings/stringfunctions.h>

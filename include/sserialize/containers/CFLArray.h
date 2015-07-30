@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/Static/Array.h>
-#include <sserialize/utility/hashspecializations.h>
+#include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 namespace detail {

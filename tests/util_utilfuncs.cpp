@@ -2,9 +2,9 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include <algorithm>
 #include "printfunctions.h"
 #define EPS 0.000025

@@ -4,7 +4,7 @@
 #include <sserialize/Static/Array.h>
 #include <sserialize/containers/UnicodeStringMap.h>
 #include <sserialize/vendor/utf8.h>
-#include <sserialize/utility/Iterator.h>
+#include <sserialize/iterator/Iterator.h>
 #define SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_BASE_VERSION 1
 #define SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_VERSION 1
 

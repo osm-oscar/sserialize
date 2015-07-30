@@ -4,7 +4,7 @@
 #include <cppunit/Asserter.h>
 #include <sserialize/containers/ItemIndexIterator.h>
 #include <sserialize/containers/ItemIndexIteratorSetOp.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
 

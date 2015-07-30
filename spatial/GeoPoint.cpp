@@ -1,5 +1,5 @@
 #include <sserialize/spatial/GeoPoint.h>
-#include <sserialize/utility/utilmath.h>
+#include <sserialize/algorithm/utilmath.h>
 #include <cmath>
 #include <vendor/libs/geographiclib/legacy/C/geodesic.h>
 

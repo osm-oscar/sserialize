@@ -1,5 +1,5 @@
 #include "DataSetFactory.h"
-#include <sserialize/utility/hashspecializations.h>
+#include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 

@@ -2,7 +2,7 @@
 #define SSERIALIZE_STATIC_KEY_VALUE_OBJECT_STORE_H
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/containers/CompactUintArray.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 #include <sserialize/completers/StringCompleter.h>
 #include <memory>
 #define SSERIALIZE_STATIC_KEY_VALUE_OBJECTSTORE_VERSION 0

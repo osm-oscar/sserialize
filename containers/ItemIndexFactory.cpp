@@ -2,7 +2,7 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/debuggerfunctions.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/Static/ItemIndexStore.h>

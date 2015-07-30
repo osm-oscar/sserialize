@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/mmappedfile.h>
 #include <sserialize/utility/exceptions.h>
 

@@ -6,7 +6,7 @@
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/storage/pack_unpack_functions.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/strings/stringfunctions.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/Static/StringCompleter.h>

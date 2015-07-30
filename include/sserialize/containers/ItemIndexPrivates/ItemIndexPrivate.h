@@ -3,7 +3,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/DynamicBitSet.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 
 namespace sserialize {
 

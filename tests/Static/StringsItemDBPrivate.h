@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_STRINGS_ITEM_DB_PRIVATE_H
 #define SSERIALIZE_STATIC_STRINGS_ITEM_DB_PRIVATE_H
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIteratorDB.h>

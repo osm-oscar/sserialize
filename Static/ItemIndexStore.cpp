@@ -1,5 +1,5 @@
 #include <sserialize/Static/ItemIndexStore.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/containers/UDWIterator.h>
 #include <sserialize/containers/UDWIteratorPrivateHD.h>

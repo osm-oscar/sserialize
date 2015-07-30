@@ -3,7 +3,6 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
-#include <sserialize/utility/constants.h>
 #include <stdint.h>
 #include <iterator>
 #include <deque>

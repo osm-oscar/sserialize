@@ -1,9 +1,9 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/utility/printers.h>
-#include <sserialize/utility/utilmath.h>
+#include <sserialize/algorithm/utilmath.h>
 #include <sserialize/stats/statfuncs.h>
 #include <iomanip>
 

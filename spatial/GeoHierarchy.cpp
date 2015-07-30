@@ -2,7 +2,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/log.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/iterator/RangeGenerator.h>
 
 namespace sserialize {
 namespace spatial {

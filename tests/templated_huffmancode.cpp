@@ -9,7 +9,7 @@
 #include <sserialize/containers/MultiBitIterator.h>
 #include <sserialize/containers/UDWIterator.h>
 #include <sserialize/containers/UDWIteratorPrivateHD.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 
 using namespace sserialize;
 

@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <functional>
 #include <limits>
-#include <sserialize/utility/utilmath.h>
+#include <sserialize/algorithm/utilmath.h>
 
 /* make sure be32toh and be64toh are present */
 #if defined(__linux__)

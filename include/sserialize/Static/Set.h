@@ -5,7 +5,7 @@
 #include <string>
 #include <set>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 #define SSERIALIZE_STATIC_SET_VERSION 1
 
 /** File format

@@ -8,7 +8,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.h>
 #include <sserialize/Static/StringTable.h>
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include "ItemDB.h"
 
 namespace sserialize {

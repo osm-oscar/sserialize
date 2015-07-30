@@ -5,7 +5,7 @@
 #include <sserialize/containers/KeyValueObjectStore.h>
 #include <sserialize/Static/KeyValueObjectStore.h>
 #include <sserialize/utility/log.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include <algorithm>
 #define EPS 0.000025
 

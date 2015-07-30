@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <limits>
 #include <algorithm>
-#include <sserialize/utility/utilcontainerfuncs.h>
+#include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/utility/log.h>
 
 namespace sserialize {

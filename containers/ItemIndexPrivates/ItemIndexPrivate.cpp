@@ -1,7 +1,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
-#include <sserialize/utility/utilfuncs.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/algorithm/utilfuncs.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 #include <sserialize/stats/statfuncs.h>
 #include "ItemIndexSetFunctions.h"
 

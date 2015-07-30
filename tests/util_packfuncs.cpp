@@ -2,7 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <sserialize/storage/pack_unpack_functions.h>
-#include <sserialize/utility/utilmath.h>
+#include <sserialize/algorithm/utilmath.h>
 #include <sserialize/utility/log.h>
 
 int TestCount = 10000;

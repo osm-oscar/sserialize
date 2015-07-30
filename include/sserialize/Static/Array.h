@@ -6,7 +6,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/storage/SerializationInfo.h>
 #include <sserialize/storage/mmappedfile.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 #include <sserialize/templated/AbstractArray.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <fstream>

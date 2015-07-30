@@ -1,5 +1,5 @@
 #include <sserialize/storage/ChunkedMmappedFile.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
 #include <sys/types.h>
 #include <sys/stat.h>

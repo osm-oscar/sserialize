@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/utility/AtStlInputIterator.h>
+#include <sserialize/iterator/AtStlInputIterator.h>
 #include <sserialize/containers/ItemIndex.h>
 
 

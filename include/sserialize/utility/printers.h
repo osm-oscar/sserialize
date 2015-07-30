@@ -5,7 +5,7 @@
 #include <set>
 #include <deque>
 #include <sstream>
-#include <sserialize/templated/WindowedArray.h>
+#include <sserialize/containers/WindowedArray.h>
 
 namespace std {
 

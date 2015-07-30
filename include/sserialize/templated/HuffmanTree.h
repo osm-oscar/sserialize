@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <vector>
 #include <sserialize/stats/ProgressInfo.h>
-#include <sserialize/utility/hashspecializations.h>
+#include <sserialize/algorithm/hashspecializations.h>
 #include <sserialize/Static/Array.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 
 //TODO:serialization is currently depth first, switch to breadth first
 namespace sserialize {

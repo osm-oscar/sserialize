@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_SPATIAL_POLYGON_H
 #define SSERIALIZE_SPATIAL_POLYGON_H
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/types.h>
 #include <sserialize/spatial/GeoWay.h>
 #include <sserialize/templated/AbstractArray.h>

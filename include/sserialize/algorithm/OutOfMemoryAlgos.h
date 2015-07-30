@@ -3,9 +3,9 @@
 #include <functional>
 #include <type_traits>
 #include <vector>
-#include <sserialize/templated/MMVector.h>
-#include <sserialize/utility/utilcontainerfuncs.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/containers/MMVector.h>
+#include <sserialize/algorithm/utilcontainerfuncs.h>
+#include <sserialize/iterator/RangeGenerator.h>
 
 namespace sserialize {
 namespace detail {

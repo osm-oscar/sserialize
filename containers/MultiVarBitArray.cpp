@@ -1,7 +1,7 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <numeric>
 #include <sserialize/containers/CompactUintArray.h>
-#include <sserialize/utility/utilmath.h>
+#include <sserialize/algorithm/utilmath.h>
 
 namespace sserialize {
 

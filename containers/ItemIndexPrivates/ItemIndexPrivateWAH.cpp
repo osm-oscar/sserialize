@@ -1,7 +1,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
 #include <sserialize/containers/UDWIterator.h>
 #include <sserialize/containers/UDWConstrainedIterator.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <iostream>
 

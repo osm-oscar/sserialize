@@ -2,7 +2,7 @@
 #define LFUCACHE_H
 #include <unordered_map>
 #include <utility>
-#include <sserialize/utility/hashspecializations.h>
+#include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 

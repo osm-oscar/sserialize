@@ -1,9 +1,9 @@
 #include <sserialize/Static/TrieNodePrivates/SimpleTrieNodePrivate.h>
 #include <sserialize/storage/pack_unpack_functions.h>
-#include <sserialize/utility/find_key_in_array_functions.h>
+#include <sserialize/algorithm/find_key_in_array_functions.h>
 #include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/vendor/utf8.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <iostream>
 #include <sserialize/Static/TrieNode.h>
 #include <sserialize/containers/CompactUintArray.h>

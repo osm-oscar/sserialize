@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_BASE_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_BASE_TRIE_H
 #include "Helpers.h"
-#include <sserialize/utility/utilfuncs.h>
-#include <sserialize/templated/WindowedArray.h>
+#include <sserialize/algorithm/utilfuncs.h>
+#include <sserialize/containers/WindowedArray.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/Static/FlatGeneralizedTrie.h>
 #include <sserialize/utility/debuggerfunctions.h>

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
 #define SSERIALIZE_DIRECT_HUGE_HASH_MAP_H
-#include <sserialize/templated/MMVector.h>
+#include <sserialize/containers/MMVector.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <unordered_map>
 

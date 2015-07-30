@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_ITEM_INDEX_PRIVATE_DE_H
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_DE_H
 #include "ItemIndexPrivate.h"
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 
 namespace sserialize {
 

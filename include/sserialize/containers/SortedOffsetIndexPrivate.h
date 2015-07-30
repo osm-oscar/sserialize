@@ -2,7 +2,7 @@
 #define SSERIALIZE_SORTED_OFFSET_INDEX_PRIVATE_H
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/statfuncs.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <iostream>
 
 namespace sserialize {

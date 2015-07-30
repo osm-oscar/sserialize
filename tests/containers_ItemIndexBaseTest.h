@@ -2,7 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <vector>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/DynamicBitSet.h>

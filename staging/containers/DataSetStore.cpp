@@ -1,5 +1,5 @@
 #include <sserialize/Static/DataSetStore.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/exceptions.h>
 #include <vendor/libs/minilzo/minilzo.h>
 

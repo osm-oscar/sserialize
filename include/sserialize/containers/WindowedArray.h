@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_WINDOWED_ARRAY
 #define SSERIALIZE_WINDOWED_ARRAY
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <algorithm>
 #include <iterator>
 

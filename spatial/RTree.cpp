@@ -1,6 +1,6 @@
 #include <sserialize/spatial/RTree.h>
 #include <unordered_map>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/storage/SerializationInfo.h>
 

@@ -3,7 +3,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sstream>
 #include <algorithm>
-#include <sserialize/utility/utilmath.h>
+#include <sserialize/algorithm/utilmath.h>
 
 namespace sserialize {
 namespace spatial {

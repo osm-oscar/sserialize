@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <sserialize/mt/MultiReaderSingleWriterLock.h>
-#include <sserialize/templated/MMVector.h>
+#include <sserialize/containers/MMVector.h>
 #include <sserialize/Static/Array.h>
 
 namespace sserialize {

@@ -4,7 +4,7 @@
 #include <sserialize/Static/KeyValueObjectStore.h>
 #include <algorithm>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/stats/ProgressInfo.h>
 

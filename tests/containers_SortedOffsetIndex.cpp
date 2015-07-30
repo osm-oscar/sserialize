@@ -3,10 +3,10 @@
 #include <cppunit/Asserter.h>
 #include <vector>
 #include <fstream>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
-#include <sserialize/utility/RangeGenerator.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include "datacreationfuncs.h"
 
 using namespace sserialize;

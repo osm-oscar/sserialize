@@ -2,7 +2,7 @@
 #include <iostream>
 #include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/vendor/utf8.h>
-#include <sserialize/utility/find_key_in_array_functions.h>
+#include <sserialize/algorithm/find_key_in_array_functions.h>
 
 namespace sserialize {
 namespace Static {

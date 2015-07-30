@@ -4,7 +4,7 @@
 #include <cppunit/TestResult.h>
 #include <stdlib.h>
 #include <vector>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexFactory.h>

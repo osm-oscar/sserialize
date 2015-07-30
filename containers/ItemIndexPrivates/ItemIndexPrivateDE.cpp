@@ -1,5 +1,5 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateDE.h>
-#include <sserialize/utility/utilfuncs.h>
+#include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 

@@ -7,14 +7,14 @@
 #include <stdint.h>
 #include <iostream>
 #include <sserialize/storage/UByteArrayAdapter.h>
-#include <sserialize/utility/utilcontainerfuncs.h>
+#include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/utility/types.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/mt/MultiReaderSingleWriterLock.h>
-#include <sserialize/templated/MMVector.h>
+#include <sserialize/containers/MMVector.h>
 
 namespace sserialize {
 
