@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_RLE_STREAM_H
 #define SSERIALIZE_STATIC_RLE_STREAM_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 /**

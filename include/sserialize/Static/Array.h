@@ -1,14 +1,14 @@
 #ifndef SSERIALIZE_STATIC_ARRAY_H
 #define SSERIALIZE_STATIC_ARRAY_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/SerializationInfo.h>
-#include <sserialize/utility/mmappedfile.h>
+#include <sserialize/storage/SerializationInfo.h>
+#include <sserialize/storage/mmappedfile.h>
 #include <sserialize/utility/AtStlInputIterator.h>
 #include <sserialize/templated/AbstractArray.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <fstream>
 #include <functional>
 #define SSERIALIZE_STATIC_ARRAY_VERSION 4

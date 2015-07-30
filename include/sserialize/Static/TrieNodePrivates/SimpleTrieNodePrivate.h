@@ -2,7 +2,7 @@
 #define SIMPLE_STATIC_TRIE_NODE_PRIVATE_H
 #include <stdint.h>
 #include <string>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/Static/TrieNodePrivate.h>
 
 /* Data and Layout definitions (v2):

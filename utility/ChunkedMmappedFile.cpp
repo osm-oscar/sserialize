@@ -1,4 +1,4 @@
-#include <sserialize/utility/ChunkedMmappedFile.h>
+#include <sserialize/storage/ChunkedMmappedFile.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/utility/log.h>
 #include <sys/types.h>

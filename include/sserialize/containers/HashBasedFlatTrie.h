@@ -4,7 +4,7 @@
 #include <sserialize/templated/MMVector.h>
 #include <sserialize/templated/TransformIterator.h>
 #include <sserialize/templated/GuardedVariable.h>
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/stringfunctions.h>
 #include <sserialize/utility/hashspecializations.h>
 #include <sserialize/utility/CompactUintArray.h>

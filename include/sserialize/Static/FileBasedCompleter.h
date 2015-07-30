@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_STATIC_FILE_BASED_COMPLETER_H 
 #define SSERIALIZE_STATIC_FILE_BASED_COMPLETER_H
-#include <sserialize/utility/mmappedfile.h>
+#include <sserialize/storage/mmappedfile.h>
 #include <sserialize/Static/Completer.h>
 #include <sserialize/utility/types.h>
 

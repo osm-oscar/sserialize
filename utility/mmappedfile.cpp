@@ -1,4 +1,4 @@
-#include <sserialize/utility/mmappedfile.h>
+#include <sserialize/storage/mmappedfile.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

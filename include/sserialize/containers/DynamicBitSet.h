@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_DYNAMIC_BIT_SET_H
 #define SSERIALIZE_DYNAMIC_BIT_SET_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/templated/AbstractArray.h>
 
 namespace sserialize {

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SPATIAL_RTREE_H
 #define SSERIALIZE_SPATIAL_RTREE_H
 #include <sserialize/spatial/GeoRect.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 
 /** This is a simple implementation of R-Tree like tree (not a real RTree as it doesn't use pages)

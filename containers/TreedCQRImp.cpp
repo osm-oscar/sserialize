@@ -1,6 +1,6 @@
 #include <sserialize/containers/TreedCQRImp.h>
 #include <sserialize/containers/ItemIndexFactory.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 namespace detail {

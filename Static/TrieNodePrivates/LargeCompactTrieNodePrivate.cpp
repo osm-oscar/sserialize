@@ -1,5 +1,5 @@
 #include <sserialize/Static/TrieNodePrivates/LargeCompactTrieNodePrivate.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/find_key_in_array_functions.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/utility/CompactUintArray.h>

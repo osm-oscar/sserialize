@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_UDW_ITERATOR_H
 #define SSERIALIZE_UDW_ITERATOR_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/delegate.h>
 
 namespace sserialize {

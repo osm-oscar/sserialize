@@ -1,5 +1,5 @@
 #include "NoneCompressor.h"
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 namespace detail {

@@ -1,6 +1,6 @@
 #ifndef CompactUintArray_H
 #define CompactUintArray_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/utilcontainerfuncs.h>
 #include <sserialize/utility/AtStlInputIterator.h>

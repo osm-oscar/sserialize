@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_COMPRESSED_MMAPPED_FILE_H
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_COMPRESSED_MMAPPED_FILE_H
 #include "UByteArrayAdapterPrivate.h"
-#include <sserialize/utility/CompressedMmappedFile.h>
+#include <sserialize/storage/CompressedMmappedFile.h>
 #ifdef SSERIALIZE_WITH_THREADS
 #include <mutex>
 #endif

@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_CONTAINERS_HUFFMAN_DECODER_H
 #define SSERIALIZE_CONTAINERS_HUFFMAN_DECODER_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/Static/Array.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/SerializationInfo.h>
 
 /** This is a tablebased huffman decoder.
   * Essentialy its a tree with branching factor B and different child nodes

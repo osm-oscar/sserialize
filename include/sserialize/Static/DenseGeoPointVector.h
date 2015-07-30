@@ -3,7 +3,7 @@
 #include <iterator>
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/templated/AbstractArray.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 
 namespace sserialize {
 namespace Static {

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_SORTED_OFFSET_INDEX_H
 #define SSERIALIZE_SORTED_OFFSET_INDEX_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 
 namespace sserialize {

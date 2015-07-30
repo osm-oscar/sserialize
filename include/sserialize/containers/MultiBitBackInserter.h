@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_MULTI_BIT_BACK_INSERTER_H
 #define SSERIALIZE_MULTI_BIT_BACK_INSERTER_H
 #include <array>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 

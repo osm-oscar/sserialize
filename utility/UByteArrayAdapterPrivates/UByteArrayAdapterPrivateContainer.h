@@ -1,7 +1,7 @@
 #ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_CONTAINER_H
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_CONTAINER_H
 #include "UByteArrayAdapterPrivate.h"
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <array>
 
 namespace sserialize {

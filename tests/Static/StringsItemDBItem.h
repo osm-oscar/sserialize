@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_STRINGS_ITEM_DB_ITEM_H
 #define SSERIALIZE_STATIC_STRINGS_ITEM_DB_ITEM_H
 #include "../containers/StringsItemDBItem.h"
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 namespace Static {

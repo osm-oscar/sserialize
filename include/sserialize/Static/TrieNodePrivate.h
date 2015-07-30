@@ -1,6 +1,6 @@
 #ifndef STATIC_TRIE_NODE_PRIVATE_H
 #define STATIC_TRIE_NODE_PRIVATE_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <string>
 #include <limits>

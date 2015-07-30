@@ -1,7 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 
 class MmappedMemoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( MmappedMemoryTest );

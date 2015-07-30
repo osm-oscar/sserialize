@@ -3,7 +3,7 @@
 #include <deque>
 #include <map>
 #include <sserialize/utility/ProgressInfo.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 template<typename ChildKeyType, typename ItemType>
 class TreeNode {

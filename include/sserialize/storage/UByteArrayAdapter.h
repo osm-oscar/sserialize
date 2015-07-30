@@ -2,7 +2,7 @@
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/constants.h>
 #include <stdint.h>
 #include <iterator>

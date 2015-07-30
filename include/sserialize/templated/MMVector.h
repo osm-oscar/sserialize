@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_MM_VECTOR_H
 #define SSERIALIZE_MM_VECTOR_H
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/Static/Array.h>
 #include <iterator>
 #define SSERIALIZE_MM_VECTOR_DEFAULT_GROW_FACTOR 0.1

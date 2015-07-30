@@ -3,7 +3,7 @@
 #include "Helpers.h"
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/templated/WindowedArray.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/Static/FlatGeneralizedTrie.h>
 #include <sserialize/utility/debuggerfunctions.h>
 #include <assert.h>

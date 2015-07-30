@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_UNICODE_TRIE_NODE_H
 #define SSERIALIZE_UNICODE_TRIE_NODE_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <iostream>
 

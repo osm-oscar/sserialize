@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_MULTI_VAR_BIN_ARRAY_H
 #define SSERIALIZE_MULTI_VAR_BIN_ARRAY_H
 #include <vector>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/debug.h>
 

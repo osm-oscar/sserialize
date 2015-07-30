@@ -1,7 +1,7 @@
 #ifndef STATIC_PAIR_H
 #define STATIC_PAIR_H
 #include <utility>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 namespace Static {

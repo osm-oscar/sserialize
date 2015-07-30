@@ -5,7 +5,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/exceptions.h>
-#include <sserialize/utility/FileHandler.h>
+#include <sserialize/storage/FileHandler.h>
 
 #ifdef __ANDROID__
 #include <sserialize/utility/log.h>

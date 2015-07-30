@@ -1,7 +1,7 @@
 #ifndef SSERILIZE_ITEM_INDEX_ITERATPR_DB_H
 #define SSERILIZE_ITEM_INDEX_ITERATPR_DB_H
 #include <sserialize/containers/ItemIndexIterator.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 

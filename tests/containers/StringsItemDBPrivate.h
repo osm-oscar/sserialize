@@ -2,7 +2,7 @@
 #define STRINGS_ITEM_DB_PRIVATE_H
 #include <deque>
 #include <algorithm>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/utility/unicode_case_functions.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.h>

@@ -1,6 +1,6 @@
-#include <sserialize/utility/CompressedMmappedFile.h>
+#include <sserialize/storage/CompressedMmappedFile.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/utility/ProgressInfo.h>

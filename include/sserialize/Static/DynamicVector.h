@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_DYNAMIC_VECTOR_H
 #define SSERIALIZE_DYNAMIC_VECTOR_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/templated/MMVector.h>
 

@@ -6,13 +6,13 @@
 #include <vector>
 #include <stdint.h>
 #include <iostream>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/utilcontainerfuncs.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <sserialize/utility/types.h>
 #include <sserialize/Static/ItemIndexStore.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/MultiReaderSingleWriterLock.h>
 #include <sserialize/templated/MMVector.h>
 

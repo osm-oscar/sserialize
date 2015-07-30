@@ -1,8 +1,8 @@
 #include <sserialize/utility/CompactUintArray.h>
 #include <stdint.h>
 #include <iostream>
-#include <sserialize/utility/pack_unpack_functions.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/storage/SerializationInfo.h>
 
 namespace sserialize {
 

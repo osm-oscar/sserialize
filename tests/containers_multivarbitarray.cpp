@@ -4,7 +4,7 @@
 #include <vector>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/utility/CompactUintArray.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
 

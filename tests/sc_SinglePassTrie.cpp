@@ -3,7 +3,7 @@
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
 #include "StringCompleterTest.h"
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 #include <cppunit/TestResult.h>
 
 using namespace sserialize;

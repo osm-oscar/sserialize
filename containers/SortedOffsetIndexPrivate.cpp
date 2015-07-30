@@ -1,7 +1,7 @@
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/log.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 
 namespace sserialize {
 namespace Static {

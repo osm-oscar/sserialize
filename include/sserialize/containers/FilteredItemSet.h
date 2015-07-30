@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_FILTERED_ITEM_SET_H
 #define SSERIALIZE_FILTERED_ITEM_SET_H
-#include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/storage/SerializationInfo.h>
 #include <sserialize/containers/ItemSet.h>
 
 namespace sserialize {

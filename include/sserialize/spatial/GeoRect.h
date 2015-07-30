@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_SPATIAL_GEO_RECT_H
 #define SSERIALIZE_SPATIAL_GEO_RECT_H
 #include <ostream>
-#include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/storage/SerializationInfo.h>
 
 namespace sserialize {
 namespace spatial {

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_QUAD_TREE_H
 #define SSERIALIZE_QUAD_TREE_H
 #include <set>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 
 /*

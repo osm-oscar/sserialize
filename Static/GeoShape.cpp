@@ -4,7 +4,7 @@
 #include <sserialize/Static/GeoPolygon.h>
 #include <sserialize/Static/GeoMultiPolygon.h>
 #include <sserialize/Static/Array.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 
 namespace sserialize {

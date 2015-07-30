@@ -1,7 +1,7 @@
 #ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_MM_H
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_MM_H
 #include "UByteArrayAdapterPrivateArray.h"
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 
 namespace sserialize {
 

@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_SPATIAL_GEO_POINT_H
 #define SSERIALIZE_SPATIAL_GEO_POINT_H
-#include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/storage/SerializationInfo.h>
 #include <complex>
 #include <sserialize/spatial/GeoShape.h>
 

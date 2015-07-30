@@ -1,7 +1,7 @@
 #ifndef STATIC_TREE_NODE_H
 #define STATIC_TREE_NODE_H
-#include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/Static/Map.h>
 #include <sserialize/utility/utilfuncs.h>
 #include <iostream>

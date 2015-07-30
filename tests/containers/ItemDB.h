@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_ITEM_DB_H
 #define SSERIALIZE_ITEM_DB_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 
 namespace sserialize {

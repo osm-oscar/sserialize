@@ -4,7 +4,7 @@
 #include <set>
 #include <string>
 #include <functional>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/vendor/utf8.h>
 
 

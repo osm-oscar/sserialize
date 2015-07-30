@@ -2,7 +2,7 @@
 #define SSERIALIZE_MMAPPEDFILE_H
 #include <string>
 #include <stdint.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/types.h>
 #include <sys/stat.h>

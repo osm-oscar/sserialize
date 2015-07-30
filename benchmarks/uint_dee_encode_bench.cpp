@@ -1,4 +1,4 @@
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/TimeMeasuerer.h>
 #include <sserialize/utility/statfuncs.h>
 #include <iostream>

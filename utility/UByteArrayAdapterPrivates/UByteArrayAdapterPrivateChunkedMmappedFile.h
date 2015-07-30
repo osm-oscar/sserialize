@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_CHUNKED_MMAPPED_FILE_H
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_CHUNKED_MMAPPED_FILE_H
 #include "UByteArrayAdapterPrivate.h"
-#include <sserialize/utility/ChunkedMmappedFile.h>
+#include <sserialize/storage/ChunkedMmappedFile.h>
 #ifdef SSERIALIZE_WITH_THREADS
 #include <mutex>
 #endif

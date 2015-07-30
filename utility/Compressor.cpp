@@ -1,5 +1,5 @@
 #include <sserialize/utility/Compressor.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/exceptions.h>
 #include "detail/Compressor/Compressors.h"
 

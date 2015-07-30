@@ -1,7 +1,7 @@
 #ifndef ITEM_INDEX_PRIVATE_NATIVE_H
 #define ITEM_INDEX_PRIVATE_NATIVE_H
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/SerializationInfo.h>
 #include <string.h>
 
 namespace sserialize {

@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/utilfuncs.h>
-#include <sserialize/utility/pack_unpack_functions.h>
-#include <sserialize/utility/mmappedfile.h>
+#include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/storage/mmappedfile.h>
 #include <sserialize/utility/CompactUintArray.h>
 #include "datacreationfuncs.h"
 

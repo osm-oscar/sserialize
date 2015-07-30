@@ -1,5 +1,5 @@
 #include "LZOCompressor.h"
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <vendor/libs/minilzo/minilzo.h>
 
 namespace sserialize {

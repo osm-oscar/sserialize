@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_KEY_VALUE_STORE_H
 #define SSERIALIZE_KEY_VALUE_STORE_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/StringTable.h>
 
 namespace sserialize {

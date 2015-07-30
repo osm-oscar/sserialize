@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/statfuncs.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/templated/HuffmanTree.h>
 #include <sserialize/containers/MultiBitBackInserter.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>

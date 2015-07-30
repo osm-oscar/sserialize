@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <sserialize/utility/utilfuncs.h>
 #include <sserialize/spatial/GeoPoint.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/SerializationInfo.h>
 
 
 namespace sserialize {

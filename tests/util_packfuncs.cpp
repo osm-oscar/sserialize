@@ -1,7 +1,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/utilmath.h>
 #include <sserialize/utility/log.h>
 

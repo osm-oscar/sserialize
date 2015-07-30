@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_STATIC_FIXED_LENGTH_VECTOR_H
 #define SSERIALIZE_STATIC_FIXED_LENGTH_VECTOR_H
 #define SSERIALIZE_STATIC_FIXED_LENGTH_VECTOR_VERSION 0
-#include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/storage/SerializationInfo.h>
 #include <sserialize/utility/exceptions.h>
 #include <type_traits>
 

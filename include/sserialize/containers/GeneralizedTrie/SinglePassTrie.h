@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
 #include <sserialize/containers/GeneralizedTrie/SerializableTrie.h>
-#include <sserialize/utility/MmappedMemory.h>
+#include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/log.h>
 
 namespace sserialize {

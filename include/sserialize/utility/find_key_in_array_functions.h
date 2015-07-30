@@ -2,8 +2,8 @@
 #define COMPLETIONTREE_COMMON_H
 #include <stdint.h>
 #include <type_traits>
-#include <sserialize/utility/pack_unpack_functions.h>
-#include "UByteArrayAdapter.h"
+#include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
 

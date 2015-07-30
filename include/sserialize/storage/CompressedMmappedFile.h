@@ -2,9 +2,9 @@
 #define SSERIALIZE_COMPRESSED_MMAPPED_FILE_H
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/templated/DirectCaches.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
-#include <sserialize/utility/mmappedfile.h>
+#include <sserialize/storage/mmappedfile.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include <sserialize/utility/types.h>
 #include <limits>

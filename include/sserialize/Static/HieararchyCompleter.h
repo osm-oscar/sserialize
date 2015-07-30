@@ -3,7 +3,7 @@
 #include <sserialize/Static/StringCompleter.h>
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/spatial/GeoShape.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/SerializationInfo.h>
 #define SSERIALIZE_STATIC_SPATIAL_HIERARCHY_COMPLETER_VERSION 0
 
 namespace sserialize {

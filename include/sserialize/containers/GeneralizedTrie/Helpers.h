@@ -10,7 +10,7 @@
 #include <sserialize/Static/StringCompleter.h>
 #include <sserialize/Static/TrieNodePrivates/TrieNodePrivates.h>
 #include <sserialize/Static/GeneralizedTrie.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/CompactUintArray.h>
 
 

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_MULTI_BIT_ITERATOR_H
 #define SSERIALIZE_MULTI_BIT_ITERATOR_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <limits>
 
 namespace sserialize {

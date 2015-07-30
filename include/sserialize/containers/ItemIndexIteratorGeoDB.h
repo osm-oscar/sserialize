@@ -1,7 +1,7 @@
 #ifndef SSERILIZE_ITEM_INDEX_ITERATOR_GEODB_H
 #define SSERILIZE_ITEM_INDEX_ITERATOR_GEODB_H
 #include <sserialize/containers/ItemIndexIterator.h>
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/spatial/GeoRect.h>
 
 namespace sserialize {

@@ -1,5 +1,5 @@
 #include "UByteArrayAdapterPrivateArray.h"
-#include <sserialize/utility/pack_unpack_functions.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 
 namespace sserialize {

@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_SPATIAL_GEOSHAPE_H
 #define SSERIALIZE_SPATIAL_GEOSHAPE_H
-#include <sserialize/utility/UByteArrayAdapter.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/spatial/DistanceCalculator.h>
 

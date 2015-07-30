@@ -1,5 +1,5 @@
-#include <sserialize/utility/ChunkedMmappedFile.h>
-#include <sserialize/utility/mmappedfile.h>
+#include <sserialize/storage/ChunkedMmappedFile.h>
+#include <sserialize/storage/mmappedfile.h>
 #include <cmath>
 #include <limits>
 #include <stdlib.h>

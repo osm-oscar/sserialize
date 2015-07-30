@@ -1,6 +1,6 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateNative.h>
 #include <string.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/SerializationInfo.h>
 #include <sserialize/containers/ItemIndex.h>
 
 namespace sserialize {
