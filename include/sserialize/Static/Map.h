@@ -122,8 +122,6 @@ Map<TKey, TValue>::find(const TKey & key) const {
 	}
 }
 
-}}//end namespace
-
 template<typename TKey, typename TValue>
 bool operator==(const sserialize::Static::Map<TKey, TValue> & mapA, const sserialize::Static::Map<TKey, TValue> & mapB) {
 	if (mapA.size() != mapB.size())
@@ -178,6 +176,18 @@ bool operator<(const sserialize::Static::Map<TKey, TValue> & mapA, const sserial
 }
 
 template<typename TKey, typename TValue>
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Map<TKey, TValue> & destination) {
+	sserialize::UByteArrayAdapter d(source);
+	d.shrinkToGetPtr();
+	destination = sserialize::Static::Map<TKey, TValue>(d);
+	source.incGetPtr(destination.getSizeInBytes());
+	return source;
+}
+
+
+}//end namespace Static
+
+template<typename TKey, typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::map<TKey, TValue> & map) {
 	sserialize::Static::ArrayCreator< std::pair<TKey, TValue>  > ac(destination);
 	for(const std::pair<TKey, TValue> & x : map) {
@@ -187,13 +197,6 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destin
 	return destination;
 }
 
-template<typename TKey, typename TValue>
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Map<TKey, TValue> & destination) {
-	sserialize::UByteArrayAdapter d(source);
-	d.shrinkToGetPtr();
-	destination = sserialize::Static::Map<TKey, TValue>(d);
-	source.incGetPtr(destination.getSizeInBytes());
-	return source;
-}
+}//end namespace sserialize
 
 #endif
