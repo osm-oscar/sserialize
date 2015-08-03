@@ -11,9 +11,9 @@ constexpr uint32_t TriangulationGeoHierarchyArrangement::NullCellId;
 TriangulationGeoHierarchyArrangement::TriangulationGeoHierarchyArrangement() {}
 
 TriangulationGeoHierarchyArrangement::TriangulationGeoHierarchyArrangement(const sserialize::UByteArrayAdapter& d) :
-m_cellCount(d.getUint32(sserialize::SerializationInfo<uint8_t>::length)),
-m_grid(d+(sserialize::SerializationInfo<uint8_t>::length+sserialize::SerializationInfo<uint32_t>::length)),
-m_faceIdToRefinedCellId(d+(sserialize::SerializationInfo<uint8_t>::length+sserialize::SerializationInfo<uint32_t>::length+m_grid.getSizeInBytes()))
+m_grid(d+(sserialize::SerializationInfo<uint8_t>::length)),
+m_faceIdToRefinedCellId(d+(sserialize::SerializationInfo<uint8_t>::length+m_grid.getSizeInBytes())),
+m_refinedCellIdToFaceId(d+(sserialize::SerializationInfo<uint8_t>::length+m_grid.getSizeInBytes()+m_faceIdToRefinedCellId.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_GEO_HIERARCHY_ARRANGEMENT_VERSION, d.at(0), "sserialize::Static::spatial::TriangulationRegionArrangement::TriangulationRegionArrangement");
 }
@@ -21,8 +21,8 @@ m_faceIdToRefinedCellId(d+(sserialize::SerializationInfo<uint8_t>::length+sseria
 TriangulationGeoHierarchyArrangement::~TriangulationGeoHierarchyArrangement() {}
 
 UByteArrayAdapter::OffsetType TriangulationGeoHierarchyArrangement::getSizeInBytes() const {
-	return sserialize::SerializationInfo<uint8_t>::length+sserialize::SerializationInfo<uint32_t>::length+
-			m_grid.getSizeInBytes()+m_faceIdToRefinedCellId.getSizeInBytes();
+	return sserialize::SerializationInfo<uint8_t>::length+m_grid.getSizeInBytes()+
+			m_faceIdToRefinedCellId.getSizeInBytes()+m_refinedCellIdToFaceId.getSizeInBytes();
 }
 
 uint32_t TriangulationGeoHierarchyArrangement::cellId(const TriangulationGeoHierarchyArrangement::Point& p) const {
@@ -31,12 +31,28 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(const TriangulationGeoHier
 
 uint32_t TriangulationGeoHierarchyArrangement::cellIdFromFaceId(uint32_t faceId) const {
 	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId);
-	if (tmp != m_cellCount) {
+	if (tmp != cellCount()) {
 		return tmp;
 	}
 	else {
 		return NullCellId;
 	}
+}
+
+uint32_t TriangulationGeoHierarchyArrangement::faceIdFromCellId(uint32_t cellId) const {
+	if (cellId >= cellCount()) {
+		return Triangulation::NullFace;
+	}
+	else {
+		return m_refinedCellIdToFaceId.at(cellId);
+	}
+}
+
+TriangulationGeoHierarchyArrangement::CFGraph TriangulationGeoHierarchyArrangement::cfGraph(uint32_t cellId) const {
+	if (cellId >= cellCount()) {
+		return TriangulationGeoHierarchyArrangement::CFGraph(this, Triangulation::Face());
+	}
+	return TriangulationGeoHierarchyArrangement::CFGraph(this, tds().face(m_refinedCellIdToFaceId.at(cellId)));
 }
 
 uint32_t TriangulationGeoHierarchyArrangement::cellId(double lat, double lon) const {
@@ -45,7 +61,7 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(double lat, double lon) co
 		return NullCellId;
 	}
 	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId);
-	if (tmp >= m_cellCount) {
+	if (tmp >= cellCount()) {
 		return NullCellId;
 	}
 	return tmp;
