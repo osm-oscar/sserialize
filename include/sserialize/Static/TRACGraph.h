@@ -30,6 +30,8 @@ public:
 		inline Node neighbor(uint32_t pos) const { return Node(m_p, neighborId(pos)); }
 		inline uint32_t neighborId(uint32_t pos) const { return m_p->edgeInfo().at( m_p->nodeInfo().at(id(), NI_NEIGHBOR_BEGIN)+pos); }
 	private:
+		friend class TracGraph;
+	private:
 		typedef enum {NI_NEIGHBOR_COUNT=0x0, NI_NEIGHBOR_BEGIN=0x1, NI__ENTRIES=0x2} NodeInfo;
 	private:
 		Node(const TracGraph * p, uint32_t pos) : m_p(p), m_pos(pos) {}
