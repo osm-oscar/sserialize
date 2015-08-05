@@ -61,6 +61,7 @@ public:
 	~TRACFGraph() {}
 	uint32_t size() const;
 	inline Node root() const { return m_root; }
+	uint32_t cellId() const;
 	///visit every node exactly once
 	template<typename T_OUT_ITERATOR>
 	void visit(T_OUT_ITERATOR out) const {
@@ -98,6 +99,11 @@ m_tra(tra),
 m_root(rootFace)
 {
 	m_size.cached = 0;
+}
+
+template<typename T_TRA>
+uint32_t TRACFGraph<T_TRA>::cellId() const {
+	return m_tra->cellIdFromFaceId(m_root.id());
 }
 
 template<typename T_TRA>
