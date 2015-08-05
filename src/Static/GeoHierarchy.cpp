@@ -50,6 +50,19 @@ sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
 	}
 }
 
+ItemIndex SubSet::cells(const SubSet::NodePtr& node) const {
+	if (m_sparse) {
+		std::unordered_set<uint32_t> idcsPos;
+		insertCellPositions(node, idcsPos);
+		std::vector<uint32_t> tmp(idcsPos.cbegin(), idcsPos.cend());
+		std::sort(tmp.begin(), tmp.end());
+		return sserialize::ItemIndex::absorb(tmp);
+	}
+	else {
+		return sserialize::ItemIndex(node->cellPositions());
+	}
+}
+
 sserialize::ItemIndex SubSet::topK(const NodePtr & node, uint32_t numItems) const {
 
 	struct MapFunc {
