@@ -86,6 +86,7 @@ src/Static/Triangulation.cpp
 src/Static/TriangulationGridLocator.cpp
 src/Static/TriangulationRegionArrangement.cpp
 src/Static/TriangulationGeoHierarchyArrangement.cpp
+src/Static/TracGraph.cpp
 )
 
 set(CONTAINTERS_SOURCES_CPP 
