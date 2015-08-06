@@ -17,5 +17,8 @@ m_edgeInfo(d+(sserialize::SerializationInfo<uint8_t>::length+m_nodeInfo.getSizeI
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_TRAC_GRAPH_VERSION, d.at(0), "sserialize::Static::spatial::TracGraph");
 }
 
+UByteArrayAdapter::OffsetType TracGraph::getSizeInBytes() const {
+	return sserialize::SerializationInfo<uint8_t>::length + m_nodeInfo.getSizeInBytes() + m_edgeInfo.getSizeInBytes();
+}
 
 }}}//end namespace sserialize::Static::spatial

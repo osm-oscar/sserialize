@@ -26,6 +26,7 @@ public:
 		///identical with cellId
 		inline uint32_t id() const { return m_pos; }
 		inline uint32_t cellId() const { return id(); }
+		inline uint32_t size() const { return neighborCount(); }
 		inline uint32_t neighborCount() const { return m_p->nodeInfo().at(id(), NI_NEIGHBOR_COUNT); }
 		inline Node neighbor(uint32_t pos) const { return Node(m_p, neighborId(pos)); }
 		inline uint32_t neighborId(uint32_t pos) const { return m_p->edgeInfo().at( m_p->nodeInfo().at(id(), NI_NEIGHBOR_BEGIN)+pos); }
@@ -43,7 +44,8 @@ public:
 	TracGraph();
 	TracGraph(const sserialize::UByteArrayAdapter & d);
 	~TracGraph() {}
-	inline uint32_t nodeCount() const { return nodeInfo().size(); }
+	inline uint32_t size() const { return nodeInfo().size(); }
+	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	inline Node node(uint32_t cellId) const { return Node(this, cellId); }
 private:
 	friend class Node;
