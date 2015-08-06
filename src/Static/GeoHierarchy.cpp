@@ -54,12 +54,21 @@ ItemIndex SubSet::cells(const SubSet::NodePtr& node) const {
 	if (m_sparse) {
 		std::unordered_set<uint32_t> idcsPos;
 		insertCellPositions(node, idcsPos);
-		std::vector<uint32_t> tmp(idcsPos.cbegin(), idcsPos.cend());
+		std::vector<uint32_t> tmp;
+		tmp.reserve(idcsPos.size());
+		for(uint32_t cellPos : idcsPos) {
+			tmp.push_back(cqr().cellId(cellPos));
+		}
 		std::sort(tmp.begin(), tmp.end());
 		return sserialize::ItemIndex::absorb(tmp);
 	}
 	else {
-		return sserialize::ItemIndex(node->cellPositions());
+		std::vector<uint32_t> tmp;
+		tmp.reserve(node->cellPositions().size());
+		for(uint32_t cellPos : node->cellPositions()) {
+			tmp.push_back(cqr().cellId(cellPos));
+		}
+		return sserialize::ItemIndex::absorb(tmp);
 	}
 }
 
