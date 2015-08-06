@@ -86,6 +86,7 @@ public:
 	uint32_t cellCount() const;
 	sserialize::ItemIndex::Types defaultIndexType() const;
 	uint32_t idxSize(uint32_t pos) const;
+	uint32_t cellId(uint32_t pos) const;
 	sserialize::ItemIndex idx(uint32_t pos) const;
 	///This is only correct for (fullMatch || !fetched())
 	uint32_t idxId(uint32_t pos) const;
