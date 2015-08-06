@@ -65,7 +65,7 @@ public:
 	///visit every node exactly once
 	template<typename T_OUT_ITERATOR>
 	void visit(T_OUT_ITERATOR out) const {
-		uint32_t myCellId = m_tra->cellIdFromFaceId(m_root.id());
+		uint32_t myCellId = cellId();
 		std::unordered_set<uint32_t> visitedFaces;
 		std::vector<uint32_t> queuedFaces;
 		queuedFaces.push_back(m_root.id());
@@ -77,7 +77,7 @@ public:
 			++out;
 			for(int j(0); j < 3; ++j) {
 				uint32_t nId = f.neighborId(j);
-				if (!visitedFaces.count(nId) && m_tra->cellIdFromFaceId(f.id()) == myCellId) {
+				if (!visitedFaces.count(nId) && m_tra->cellIdFromFaceId(nId) == myCellId) {
 					visitedFaces.insert(nId);
 					queuedFaces.push_back(nId);
 				}
