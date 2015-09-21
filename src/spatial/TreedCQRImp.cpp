@@ -216,83 +216,85 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 			++oI;
 			continue;
 		}
-		if (!myCD.hasTree() && !oCD.hasTree()) {
-			uint32_t ct = (myCD.fullMatch << 1) | oCD.fullMatch;
-			switch(ct) {
-			case 0x0: //both partial, create tree
-				{
+		else {
+			if (!myCD.hasTree() && !oCD.hasTree()) {
+				uint32_t ct = (myCD.fullMatch << 1) | oCD.fullMatch;
+				switch(ct) {
+				case 0x0: //both partial, create tree
+					{
+						uint32_t treeBegin = r.m_trees.size();
+						r.m_trees.emplace_back(FlatNode::T_INTERSECT);
+						{
+							FlatNode & opNode = r.m_trees.back();
+							opNode.opNode.childB = 2;
+						}
+						
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+						
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
+						
+						r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+					}
+					break;
+				case 0x2: //my full
+					r.m_desc.push_back(oCD);
+					break;
+				case 0x1: //o full
+					r.m_desc.push_back(myCD);
+					break;
+				case 0x3: //both full
+					r.m_desc.emplace_back(1, myCellId, 0);
+					break;
+				default:
+					break;
+				};
+			}
+			else { //at least one has a tree
+				//if any of the two is a full match then we only need to copy the other tree TODO:take care of indexes
+				if (myCD.fullMatch) { //copy tree from other
+					r.m_desc.emplace_back(0, myCellId, 0);
+					r.m_desc.back().treeBegin = r.m_trees.size();
+					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
+					r.m_desc.back().treeEnd = r.m_trees.size();
+				}
+				else if (oCD.fullMatch) { //copy tree from this
+					r.m_desc.emplace_back(0, oCellId, 0);
+					r.m_desc.back().treeBegin = r.m_trees.size();
+					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
+					r.m_desc.back().treeEnd = r.m_trees.size();
+				}
+				else { //this means at least one has a tree and the other is partial or has a tree as well
+
 					uint32_t treeBegin = r.m_trees.size();
 					r.m_trees.emplace_back(FlatNode::T_INTERSECT);
-					{
-						FlatNode & opNode = r.m_trees.back();
-						opNode.opNode.childB = 2;
+					
+					if (myCD.hasTree()) {
+						r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+						r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 					}
-					
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
-					
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
-					
+					else {
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.cellId = myCellId;
+						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+						r.m_trees[treeBegin].opNode.childB = 2;
+					}
+				
+					if (oCD.hasTree()) {
+						r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
+					}
+					else {
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.cellId = oCellId;
+						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
+					}
 					r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
 				}
-				break;
-			case 0x2: //my full
-				r.m_desc.push_back(oCD);
-				break;
-			case 0x1: //o full
-				r.m_desc.push_back(myCD);
-				break;
-			case 0x3: //both full
-				r.m_desc.emplace_back(1, myCellId, 0);
-				break;
-			default:
-				break;
-			};
+			}
+			++myI;
+			++oI;
 		}
-		else { //at least one has a tree
-			//if any of the two is a full match then we only need to copy the other tree TODO:take care of indexes
-			if (myCD.fullMatch) { //copy tree from other
-				r.m_desc.emplace_back(0, myCellId, 0);
-				r.m_desc.back().treeBegin = r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
-			}
-			else if (oCD.fullMatch) { //copy tree from this
-				r.m_desc.emplace_back(0, oCellId, 0);
-				r.m_desc.back().treeBegin = r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
-			}
-			else { //this means at least one has a tree and the other is partial or has a tree as well
-
-				uint32_t treeBegin = r.m_trees.size();
-				r.m_trees.emplace_back(FlatNode::T_INTERSECT);
-				
-				if (myCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
-					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
-				}
-				else {
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = myCellId;
-					r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
-					r.m_trees[treeBegin].opNode.childB = 2;
-				}
-			
-				if (oCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
-				}
-				else {
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = oCellId;
-					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
-				}
-				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
-			}
-		}
-		++myI;
-		++oI;
 	}
 	//unite the rest
 
@@ -330,36 +332,38 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			++oI;
 			continue;
 		}
-		if (myCD.fullMatch || oCD.fullMatch) {
-			r.m_desc.emplace_back(1, myCellId, 0);
-		}
-		else { //none is full match
-			uint32_t treeBegin = r.m_trees.size();
-			r.m_trees.emplace_back(FlatNode::T_UNITE);
+		else {
+			if (myCD.fullMatch || oCD.fullMatch) {
+				r.m_desc.emplace_back(1, myCellId, 0);
+			}
+			else { //none is full match
+				uint32_t treeBegin = r.m_trees.size();
+				r.m_trees.emplace_back(FlatNode::T_UNITE);
+				
+				if (myCD.hasTree()) {
+					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
+				}
+				else {
+					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+					r.m_trees.back().pmNode.cellId = myCellId;
+					r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+					r.m_trees[treeBegin].opNode.childB = 2;
+				}
 			
-			if (myCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
-				r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
+				if (oCD.hasTree()) {
+					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
+				}
+				else {
+					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+					r.m_trees.back().pmNode.cellId = oCellId;
+					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
+				}
+				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
 			}
-			else {
-				r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-				r.m_trees.back().pmNode.cellId = myCellId;
-				r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
-				r.m_trees[treeBegin].opNode.childB = 2;
-			}
-		
-			if (oCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
-			}
-			else {
-				r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-				r.m_trees.back().pmNode.cellId = oCellId;
-				r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
-			}
-			r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+			++myI;
+			++oI;
 		}
-		++myI;
-		++oI;
 	}
 	//unite the rest
 	
@@ -437,48 +441,47 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 			++oI;
 			continue;
 		}
-		if (oCD.fullMatch) {
-			continue;
-		}
-		else {//we definetly have to create a tree, no matter what
-			uint32_t treeBegin = r.m_trees.size();
-			r.m_trees.emplace_back(FlatNode::T_DIFF);
+		else {
+			if (!oCD.fullMatch) {//we definetly have to create a tree, no matter what
+				uint32_t treeBegin = r.m_trees.size();
+				r.m_trees.emplace_back(FlatNode::T_DIFF);
+				
+				if (myCD.hasTree()) {
+					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
+				}
+				else {
+					if (myCD.fullMatch) {
+						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
+						r.m_trees.back().fmNode.cellId = myCellId;
+					}
+					else {
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.cellId = myCellId;
+						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+					}
+					r.m_trees[treeBegin].opNode.childB = 2;
+				}
 			
-			if (myCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
-				r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
-			}
-			else {
-				if (myCD.fullMatch) {
-					r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-					r.m_trees.back().fmNode.cellId = myCellId;
+				if (oCD.hasTree()) {
+					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
 				}
 				else {
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = myCellId;
-					r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+					if (oCD.fullMatch) {
+						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
+						r.m_trees.back().fmNode.cellId = oCellId;
+					}
+					else {
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.cellId = oCellId;
+						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
+					}
 				}
-				r.m_trees[treeBegin].opNode.childB = 2;
+				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
 			}
-		
-			if (oCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
-			}
-			else {
-				if (oCD.fullMatch) {
-					r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-					r.m_trees.back().fmNode.cellId = oCellId;
-				}
-				else {
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = oCellId;
-					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
-				}
-			}
-			r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+			++myI;
+			++oI;
 		}
-		++myI;
-		++oI;
 	}
 	//add the rest
 	if (myI < myEnd) {
@@ -539,48 +542,47 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 			++oI;
 			continue;
 		}
-		if (myCD.fullMatch && oCD.fullMatch) {
-			continue;
-		}
-		else {//we definetly have to create a tree, no matter what
-			uint32_t treeBegin = r.m_trees.size();
-			r.m_trees.emplace_back(FlatNode::T_SYM_DIFF);
+		else {
+			if (!myCD.fullMatch || !oCD.fullMatch) {//we definetly have to create a tree, no matter what
+				uint32_t treeBegin = r.m_trees.size();
+				r.m_trees.emplace_back(FlatNode::T_SYM_DIFF);
+				
+				if (myCD.hasTree()) {
+					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
+				}
+				else {
+					if (myCD.fullMatch) {
+						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
+						r.m_trees.back().fmNode.cellId = myCellId;
+					}
+					else {
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.cellId = myCellId;
+						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+					}
+					r.m_trees[treeBegin].opNode.childB = 2;
+				}
 			
-			if (myCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
-				r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
-			}
-			else {
-				if (myCD.fullMatch) {
-					r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-					r.m_trees.back().fmNode.cellId = myCellId;
+				if (oCD.hasTree()) {
+					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
 				}
 				else {
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = myCellId;
-					r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
+					if (oCD.fullMatch) {
+						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
+						r.m_trees.back().fmNode.cellId = oCellId;
+					}
+					else {
+						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
+						r.m_trees.back().pmNode.cellId = oCellId;
+						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
+					}
 				}
-				r.m_trees[treeBegin].opNode.childB = 2;
+				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
 			}
-		
-			if (oCD.hasTree()) {
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
-			}
-			else {
-				if (oCD.fullMatch) {
-					r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-					r.m_trees.back().fmNode.cellId = oCellId;
-				}
-				else {
-					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = oCellId;
-					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
-				}
-			}
-			r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+			++myI;
+			++oI;
 		}
-		++myI;
-		++oI;
 	}
 	//unite the rest
 	
