@@ -49,6 +49,8 @@ namespace CFLArray {
 ///Currenty limits are:
 ///Max size=2**29-1
 ///Max offset=2**34-1
+//Internal:
+//if m_delete && m_size==0 -> m_d.copy == 0
 template<typename T_CONTAINER, typename T_POINTER_GETTER = detail::CFLArray::DefaultPointerGetter<T_CONTAINER> >
 class CFLArray final: private T_POINTER_GETTER {
 public:
@@ -77,12 +79,15 @@ public:
 		m_d.copy = 0;
 		m_size = 0;
 		m_offset = 0;
-		m_delete = 0;
+		m_delete = 1;
 	}
 	CFLArray(size_type size) {
-		m_d.copy = new value_type[size];
 		m_size = size;
 		m_delete = 1;
+
+		if (m_size) {
+			m_d.copy = new value_type[m_size];
+		}
 	}
 	///Create PolygonPointsContainer by copying elements from begin to end
 	template<typename T_INPUT_ITERATOR>
@@ -90,8 +95,10 @@ public:
 		int size = std::distance(begin, end);
 		m_size = size;
 		m_delete = 1;
-		m_d.copy = new value_type[m_size];
-		std::copy(begin, end, m_d.copy);
+		if (m_size) {
+			m_d.copy = new value_type[m_size];
+			std::copy(begin, end, m_d.copy);
+		}
 	}
 	CFLArray(container_type * container, uint64_t offset, uint32_t size) {
 		m_d.backend = container;
@@ -110,8 +117,13 @@ public:
 		m_delete = other.m_delete;
 		m_offset = other.m_offset;
 		if (other.m_delete) {
-			m_d.copy = new value_type[m_size];
-			std::copy(other.begin(), other.end(), m_d.copy);
+			if (m_size) {
+				m_d.copy = new value_type[m_size];
+				std::copy(other.begin(), other.end(), m_d.copy);
+			}
+			else {
+				m_d.copy = 0;
+			}
 		}
 		else {
 			m_d.backend = other.m_d.backend;
@@ -131,7 +143,7 @@ public:
 		}
 	}
 	~CFLArray() {
-		if (m_delete) {
+		if (m_delete && m_size) {
 			delete[] m_d.copy;
 		}
 	}
