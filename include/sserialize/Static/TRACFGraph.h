@@ -81,7 +81,7 @@ uint32_t TRACFGraph<T_TRA>::size() const {
 			
 			for(int j(0); j < 3; ++j) {
 				uint32_t nId = f.neighborId(j);
-				if (!visitedFaces.count(nId) && m_tra.cellIdFromFaceId(nId) == myCellId) {
+				if (!visitedFaces.count(nId) && m_tra->cellIdFromFaceId(nId) == myCellId) {
 					visitedFaces.insert(nId);
 					queuedFaces.push_back(nId);
 				}
