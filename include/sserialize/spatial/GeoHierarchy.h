@@ -137,6 +137,7 @@ public:
 		uint32_t m_childrenSize;
 		uint32_t m_parentsSize;
 		uint32_t m_cellsSize;
+		uint32_t m_neighborsSize;
 	public:
 		uint32_t ghId;
 		uint32_t storeId;
@@ -144,12 +145,15 @@ public:
 		GeoRect boundary;
 	public:
 		Region();
-		Region(DataContainer * d, uint64_t off, uint32_t childrenSize, uint32_t parentsSize, uint32_t cellsSize);
+		Region(DataContainer * d, uint64_t off, uint32_t childrenSize, uint32_t parentsSize, uint32_t cellsSize, uint32_t neighborsSize);
 		Region(const Region & other);
 		~Region() {}
 		void swap(Region & other);
 		inline iterator dataBegin() { return m_d->begin()+m_off; }
 		inline const_iterator dataBegin() const { return m_d->begin()+m_off; }
+		inline iterator dataEnd() { return m_d->begin()+(m_off+m_childrenSize+m_parentsSize+m_cellsSize+m_neighborsSize); }
+		inline const_iterator dataEnd() const { return m_d->begin()+(m_off+m_childrenSize+m_parentsSize+m_cellsSize+m_neighborsSize); }
+		
 		inline iterator childrenBegin() { return dataBegin(); }
 		inline const_iterator childrenBegin() const { return dataBegin(); }
 		inline iterator childrenEnd() { return childrenBegin()+m_childrenSize; }
@@ -179,6 +183,17 @@ public:
 		inline uint32_t cellsSize() const { return m_cellsSize; }
 		inline const uint32_t & cell(uint32_t pos) const { return *(cellsBegin()+pos); }
 		inline uint32_t & cell(uint32_t pos) { return *(cellsBegin()+pos); }
+		
+
+		inline iterator neighborsBegin() { return cellsEnd(); }
+		inline const_iterator neighborsBegin() const { return cellsEnd(); }
+		inline iterator neighborsEnd() { return neighborsBegin()+m_neighborsSize; }
+		inline const_iterator neighborsEnd() const { return neighborsBegin()+m_neighborsSize; }
+		inline DataContainerWrapper neighbors() { return DataContainerWrapper(neighborsBegin(), neighborsSize());}
+		inline ConstDataContainerWrapper neighbors() const { return ConstDataContainerWrapper(neighborsBegin(), neighborsSize());}
+		inline uint32_t neighborsSize() const { return m_neighborsSize; }
+		inline const uint32_t & neighbor(uint32_t pos) const { return *(neighborsBegin()+pos); }
+		inline uint32_t & neighbor(uint32_t pos) { return *(neighborsBegin()+pos); }
 	};
 	typedef sserialize::MMVector<Region> RegionListContainer;
 	typedef RegionListContainer::iterator iterator;
@@ -254,6 +269,9 @@ public:
 	///This sets the root region which has every node without a parent as child
 	///Call this only once
 	void createRootRegion();
+	///@param cellGraph should have a typedef Node which has a function cellId() and the function begin(), end() which iterate over the node's neighbors
+	template<typename T_CELL_GRAPH>
+	void createNeighborPointers(const T_CELL_GRAPH & cellGraph);
 	inline CellList & cells() { return m_cells; }
 	inline RegionList & regions() { return m_regions;}
 	inline const CellList & cells() const { return m_cells; }
@@ -279,6 +297,85 @@ public:
 	///This should only be called before serialization
 	void compactify(bool compactifyCells, bool compactifyRegions);
 };
+
+template<typename T_CELL_GRAPH>
+inline void GeoHierarchy::createNeighborPointers(const T_CELL_GRAPH & cellGraph) {
+	//since the hierarchy has only about 10M entries, we can do this very inefficient
+	
+	typedef typename T_CELL_GRAPH::Node Node;
+	typedef sserialize::CFLArray< sserialize::MMVector<uint32_t> > RegionNeighbors;
+	
+	
+	std::unordered_set<uint32_t> regionCells;
+	std::unordered_set<uint32_t> regionBoundary;
+	std::unordered_set<uint32_t> overlappingRegions;
+	std::unordered_set<uint32_t> regionNeighborCandidates;
+	std::vector<uint32_t> regionNeighbors;
+	
+	sserialize::MMVector<uint32_t> rnDataList(sserialize::MM_FILEBASED);
+	sserialize::MMVector<RegionNeighbors> rnList(sserialize::MM_FILEBASED); 
+	
+	for(const Region & region : regions()) {
+		regionCells.clear();
+		regionBoundary.clear();
+		overlappingRegions.clear();
+		regionNeighborCandidates.clear();
+		regionNeighbors.clear();
+		
+		regionCells.insert(region.cellsBegin(), region.cellsEnd());
+		
+		for(uint32_t cellId : regionCells) {
+			Node n(cellGraph.node(cellId));
+			for(uint32_t i(0), s(n.neighborCount()); i < s; ++i) {
+				uint32_t neighborCellId = n.neighbor(i).cellId();
+				if (!regionCells.count(neighborCellId)) {
+					regionBoundary.insert(neighborCellId);
+				}
+			}
+		}
+		
+		for(uint32_t cellId : regionCells) {
+			const Cell & c = this->cell(cellId);
+			overlappingRegions.insert(c.parentsBegin(), c.parentsEnd());
+		}
+		
+		for(uint32_t cellId : regionBoundary) {
+			const Cell & c = this->cell(cellId);
+			regionNeighborCandidates.insert(c.parentsBegin(), c.parentsEnd());
+		}
+		
+		for(uint32_t regionId : regionNeighborCandidates) {
+			if (!overlappingRegions.count(regionId)) {
+				regionNeighbors.push_back(regionId);
+			}
+		}
+		
+		std::sort(regionNeighbors.begin(), regionNeighbors.end());
+		
+		rnList.emplace_back(&rnDataList, rnDataList.size(), regionNeighbors.size());
+		rnDataList.push_back(regionNeighbors.begin(), regionNeighbors.end());
+	}
+	//reassemble the region info, we can do this in-place for the region description
+	//and a single copy of the region data (don't do a swap there since the regions have a pointer on the container)
+	sserialize::MMVector<uint32_t> regionDataList;
+	assert(regions().size() == rnList.size());
+	for(uint32_t i(0), s(regions().size()); i < s; ++i) {
+		Region & r = region(i);
+		RegionNeighbors & rn = rnList.at(i);
+		uint64_t off = regionDataList.size();
+		
+		regionDataList.push_back(r.dataBegin(), r.dataEnd()); //the old data
+		regionDataList.push_back(rn.begin(), rn.end()); //the neighbor pointers
+		
+		r.m_off = off; //update to new offset, rest remains the same
+		r.m_neighborsSize = rn.size(); //set the neighbors count
+	}
+	
+	regions().regionData().clear();
+	regions().regionData().push_back(regionDataList.begin(), regionDataList.end());
+	
+}
+
 
 template<typename T_SET_CONTAINER>
 void GeoHierarchy::getAncestors(uint32_t regionId, T_SET_CONTAINER & out) const {

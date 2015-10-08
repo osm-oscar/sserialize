@@ -91,12 +91,13 @@ type(sserialize::spatial::GS_NONE),
 boundary(other.boundary)
 {}
 
-RegionList::Region::Region(DataContainer * d, uint64_t off, uint32_t childrenSize, uint32_t parentsSize, uint32_t cellsSize) :
+RegionList::Region::Region(DataContainer * d, uint64_t off, uint32_t childrenSize, uint32_t parentsSize, uint32_t cellsSize, uint32_t neighborsSize) :
 m_d(d),
 m_off(off),
 m_childrenSize(childrenSize),
 m_parentsSize(parentsSize),
 m_cellsSize(cellsSize),
+m_neighborsSize(neighborsSize),
 ghId(0),
 storeId(0),
 type(sserialize::spatial::GS_NONE)
