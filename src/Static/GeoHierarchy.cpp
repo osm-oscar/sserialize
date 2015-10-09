@@ -222,7 +222,7 @@ uint32_t Region::parentsEnd() const {
 }
 
 uint32_t Region::parentsSize() const {
-	return parentsEnd() - parentsBegin();
+	return m_db->regionParentsSize(m_pos);
 }
 
 uint32_t Region::parent(uint32_t pos) const {
@@ -234,16 +234,37 @@ uint32_t Region::parent(uint32_t pos) const {
 	return GeoHierarchy::npos;
 }
 
+uint32_t Region::neighborsBegin() const {
+	return m_db->regionNeighborsBegin(m_pos);
+}
+
+uint32_t Region::neighborsEnd() const {
+	return m_db->regionNeighborsEnd(m_pos);
+}
+
+uint32_t Region::neighborsSize() const {
+	return m_db->regionNeighborsSize(m_pos);
+}
+
+uint32_t Region::neighbor(uint32_t pos) const {
+	uint32_t nB = neighborsBegin();
+	uint32_t nE = neighborsEnd();
+	if (nB + pos < nE) {
+		return m_db->regionPtrs().at( nB + pos );
+	}
+	return GeoHierarchy::npos;
+}
+
 uint32_t Region::childrenBegin() const {
-	return m_db->regions().at(m_pos, RD_CHILDREN_BEGIN);
+	return m_db->regionChildrenBegin(m_pos);
 }
 
 uint32_t Region::childrenEnd() const {
-	return parentsBegin();
+	return m_db->regionChildrenEnd(m_pos);
 }
 
 uint32_t Region::childrenSize() const {
-	return m_db->regions().at(m_pos, RD_PARENTS_OFFSET);
+	return m_db->regionChildrenSize(m_pos);
 }
 
 uint32_t Region::child(uint32_t pos) const {
@@ -349,12 +370,40 @@ uint32_t GeoHierarchy::regionCellSumItemsCount(uint32_t /*pos*/) const {
 	return 0xFFFFFFFF;
 }
 
+uint32_t GeoHierarchy::regionChildrenBegin(uint32_t id) const {
+	return m_regions.at(id, Region::RD_CHILDREN_BEGIN);
+}
+
+uint32_t GeoHierarchy::regionChildrenEnd(uint32_t id) const {
+	return regionParentsBegin(id);
+}
+
+uint32_t GeoHierarchy::regionChildrenSize(uint32_t id) const {
+	return m_regions.at(id, Region::RD_PARENTS_OFFSET);
+}
+
 uint32_t GeoHierarchy::regionParentsBegin(uint32_t id) const {
-	return m_regions.at(id, Region::RD_CHILDREN_BEGIN) + m_regions.at(id, Region::RD_PARENTS_OFFSET);
+	return regionChildrenBegin(id) + m_regions.at(id, Region::RD_PARENTS_OFFSET);
 }
 
 uint32_t GeoHierarchy::regionParentsEnd(uint32_t id) const {
-	return m_regions.at(id+1, Region::RD_CHILDREN_BEGIN);
+	return regionNeighborsBegin(id);
+}
+
+uint32_t GeoHierarchy::regionParentsSize(uint32_t id) const {
+	return m_regions.at(id, Region::RD_NEIGHBORS_OFFSET);
+}
+
+uint32_t GeoHierarchy::regionNeighborsBegin(uint32_t id) const {
+	return regionParentsBegin(id) + m_regions.at(id, Region::RD_NEIGHBORS_OFFSET);
+}
+
+uint32_t GeoHierarchy::regionNeighborsEnd(uint32_t id) const {
+	return regionChildrenBegin(id+1);
+}
+
+uint32_t GeoHierarchy::regionNeighborsSize(uint32_t id) const {
+	return regionNeighborsEnd(id) - regionNeighborsBegin(id);
 }
 
 uint32_t GeoHierarchy::regionPtrSize() const {
@@ -722,7 +771,9 @@ std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial:
 	out << "sserialize::Static::spatial::GeoHierarchy::Region[";
 	out << r.boundary();
 	out << ", cellIndexPtr=" << r.cellIndexPtr();
+	out << ", parentsSize=" << r.parentsSize();
 	out << ", childrenSize=" << r.childrenSize();
+	out << ", neighborSize=" << r.neighborsSize();
 	out << ", itemsPtr=" << r.itemsPtr();
 	out << ", itemsCount=" << r.itemsCount();
 	out << ", storeId=" << r.storeId();

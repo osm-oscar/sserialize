@@ -8,23 +8,24 @@
 #include <sserialize/spatial/TreedCQR.h>
 #include <unordered_map>
 
-#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 10
+#define SSERIALIZE_STATIC_GEO_HIERARCHY_VERSION 11
 
 namespace sserialize {
 namespace Static {
 namespace spatial {
 
 /**
-  *Version 1: initial draft
-  *Version 2: use offset array for child/parent ptrs, use MVBitArray for node description
-  *Version 3: use offset array for cell parents, use MVBitArray for cell description
-  *Version 4: add boundary to regions
-  *Version 5: add items pointer to regions
-  *Version 6: add items count to regions
-  *Version 7: add items count to cells
-  *Version 8: add sparse parent ptrs to cells
-  *Version 9: add storeIdToGhId map
-  *Version 10: add cell boundaries
+  * Version 1: initial draft
+  * Version 2: use offset array for child/parent ptrs, use MVBitArray for node description
+  * Version 3: use offset array for cell parents, use MVBitArray for cell description
+  * Version 4: add boundary to regions
+  * Version 5: add items pointer to regions
+  * Version 6: add items count to regions
+  * Version 7: add items count to cells
+  * Version 8: add sparse parent ptrs to cells
+  * Version 9: add storeIdToGhId map
+  * Version 10: add cell boundaries
+  * Version 11: add region neighbor pointers
   *-------------------------------------------------------------------------------------------------------------------
   *VERSION|StoreIdToGhId|RegionDesc|RegionPtrs |RegionBoundaries        |CellDesc  |CellPtrs   |CellBoundaries    
   *--------------------------------------------------------------------------------------------------------------------
@@ -34,13 +35,13 @@ namespace spatial {
   *
   *
   *Region
-  *-------------------------------------------------------------------
-  *CellListPtr|type|id|ChildrenBegin|ParentsOffset|ItemsPtr|ItemsCount
-  *-------------------------------------------------------------------
-  *
-  *ParentBegin = offset from childrenBegin where the parent ptrs start
-  *So the number of Children = ParentBegin
-  *An the number of parents = Region[i+1].childrenBegin - (Region[i].childrenBegin + Region[i].ParentBegin)
+  *------------------------------------------------------------------------------------
+  *CellListPtr|type|id|ChildrenBegin|ParentsOffset|NeighborsOffset|ItemsPtr|ItemsCount
+  *------------------------------------------------------------------------------------
+  * 
+  * ParentBegin = Region[i+1].childrenBegin+Region[i].ParentsOffset
+  * And the number of parents = NeighborsOffset
+  * And the number of neighbors = Region[i+1].childrenBegin - (Region[i].childrenBegin + Region[i].ParentsOffset + Region[i].NeighBorsOffset)
   *
   *
   *Cell
@@ -48,6 +49,7 @@ namespace spatial {
   *ItemPtrs|ItemCount|ParentsBegin
   *--------------------------------
   *
+  * RegionPointers order of a single Region: [children][parents][neighbors]
   *
   * The last region is the root of the dag. it has no representation in a db and is not directly accessible
   * If a Region has no parent and is not the root region, then it is a child of the root region
@@ -234,8 +236,18 @@ public:
 	uint32_t regionItemsCount(uint32_t pos) const;
 	uint32_t regionCellSumItemsCount(uint32_t pos) const;
 	
+	uint32_t regionChildrenBegin(uint32_t id) const;
+	uint32_t regionChildrenEnd(uint32_t id) const;
+	uint32_t regionChildrenSize(uint32_t id) const;
+	
 	uint32_t regionParentsBegin(uint32_t id) const;
 	uint32_t regionParentsEnd(uint32_t id) const;
+	uint32_t regionParentsSize(uint32_t id) const;
+	
+	uint32_t regionNeighborsBegin(uint32_t id) const;
+	uint32_t regionNeighborsEnd(uint32_t id) const;
+	uint32_t regionNeighborsSize(uint32_t id) const;
+	
 	uint32_t regionPtrSize() const;
 	uint32_t regionPtr(uint32_t pos) const;
 	
@@ -273,8 +285,10 @@ public:
 
 class Region {
 public:
-	typedef enum {RD_CELL_LIST_PTR=0, RD_EXCLUSIVE_CELL_LIST_PTR=1, RD_TYPE=2, RD_STORE_ID=3, RD_CHILDREN_BEGIN=4, RD_PARENTS_OFFSET=5, RD_ITEMS_PTR=6, RD_ITEMS_COUNT=7,
-					RD__ENTRY_SIZE=8} RegionDescriptionAccessors;
+	typedef enum {RD_CELL_LIST_PTR=0, RD_EXCLUSIVE_CELL_LIST_PTR=1, RD_TYPE=2, RD_STORE_ID=3,
+					RD_CHILDREN_BEGIN=4, RD_PARENTS_OFFSET=5, RD_NEIGHBORS_OFFSET=6,
+					RD_ITEMS_PTR=7, RD_ITEMS_COUNT=8,
+					RD__ENTRY_SIZE=9} RegionDescriptionAccessors;
 private:
 	uint32_t m_pos;
 	RCPtrWrapper<GeoHierarchy> m_db;
@@ -294,8 +308,16 @@ public:
 	///Offset into PtrArray
 	uint32_t parentsEnd() const;
 	uint32_t parentsSize() const;
-	///@return pos of the parent
+	///@return id of the parent
 	uint32_t parent(uint32_t pos) const;
+	
+	///Offset into PtrArray
+	uint32_t neighborsBegin() const;
+	///Offset into PtrArray
+	uint32_t neighborsEnd() const;
+	uint32_t neighborsSize() const;
+	///@return id of the neighbor
+	uint32_t neighbor(uint32_t pos) const;
 
 	uint32_t childrenSize() const;
 	///Offset into PtrArray
@@ -369,6 +391,10 @@ public:
 	inline uint32_t regionCellIdxPtr(uint32_t id) const { return m_priv->regionCellIdxPtr(id); }
 	///These are the cells that are only part of region_id and thus not part of a child
 	inline uint32_t regionExclusiveCellIdxPtr(uint32_t id) const { return m_priv->regionExclusiveCellIdxPtr(id); }
+	
+	inline uint32_t regionChildrenBegin(uint32_t id) const { return m_priv->regionChildrenBegin(id);}
+	inline uint32_t regionChildrenEnd(uint32_t id) const { return m_priv->regionChildrenEnd(id); }
+	
 	inline uint32_t regionParentsBegin(uint32_t id) const { return m_priv->regionParentsBegin(id);}
 	inline uint32_t regionParentsEnd(uint32_t id) const { return m_priv->regionParentsEnd(id); }
 	inline uint32_t regionPtrSize() const { return m_priv->regionPtrSize();}
