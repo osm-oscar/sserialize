@@ -171,13 +171,13 @@ public:
 		if (pos < m_pP) {
 			return *(begin()+pos);
 		}
-		throw std::out_of_range("MMVector::at");
+		throw std::out_of_range("MMVector::at out of range: size=" + std::to_string(size()) + ", pos=" + std::to_string(pos));
 	}
 	inline const_reference at(SizeType pos) const {
 		if (pos < m_pP) {
 			return *(cbegin()+pos);
 		}
-		throw std::out_of_range("MMVector::at");
+		throw std::out_of_range("MMVector::at out of range: size=" + std::to_string(size()) + ", pos=" + std::to_string(pos));
 	}
 	inline iterator begin() { return m_begin; }
 	inline const_iterator begin() const { return m_begin; }
