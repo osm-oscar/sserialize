@@ -120,8 +120,8 @@ private:
 public:
 	typedef sserialize::MMVector<uint32_t> DataContainer;
 
-	//A Region (occupies 72 Bytes of memory)
-	///The order of ids in in the data storage is [children][parents][cells]
+	//A Region (occupies 96 Bytes of memory)
+	///The order of ids in in the data storage is [children][parents][neighbors][cells]
 	class Region final {
 	private:
 		friend class sserialize::spatial::GeoHierarchy;
@@ -136,8 +136,8 @@ public:
 
 		uint32_t m_childrenSize;
 		uint32_t m_parentsSize;
-		uint32_t m_cellsSize;
 		uint32_t m_neighborsSize;
+		uint32_t m_cellsSize;
 	public:
 		uint32_t ghId;
 		uint32_t storeId;
@@ -151,8 +151,6 @@ public:
 		void swap(Region & other);
 		inline iterator dataBegin() { return m_d->begin()+m_off; }
 		inline const_iterator dataBegin() const { return m_d->begin()+m_off; }
-		inline iterator dataEnd() { return m_d->begin()+(m_off+m_childrenSize+m_parentsSize+m_cellsSize+m_neighborsSize); }
-		inline const_iterator dataEnd() const { return m_d->begin()+(m_off+m_childrenSize+m_parentsSize+m_cellsSize+m_neighborsSize); }
 		
 		inline iterator childrenBegin() { return dataBegin(); }
 		inline const_iterator childrenBegin() const { return dataBegin(); }
@@ -174,26 +172,25 @@ public:
 		inline const uint32_t & parent(uint32_t pos) const { return *(parentsBegin()+pos); }
 		inline uint32_t & parent(uint32_t pos) { return *(parentsBegin()+pos); }
 
-		inline iterator cellsBegin() { return parentsEnd(); }
-		inline const_iterator cellsBegin() const { return parentsEnd(); }
-		inline iterator cellsEnd() { return cellsBegin()+m_cellsSize; }
-		inline const_iterator cellsEnd() const { return cellsBegin()+m_cellsSize; }
-		inline DataContainerWrapper cells() { return DataContainerWrapper(cellsBegin(), cellsSize());}
-		inline ConstDataContainerWrapper cells() const { return ConstDataContainerWrapper(cellsBegin(), cellsSize());}
-		inline uint32_t cellsSize() const { return m_cellsSize; }
-		inline const uint32_t & cell(uint32_t pos) const { return *(cellsBegin()+pos); }
-		inline uint32_t & cell(uint32_t pos) { return *(cellsBegin()+pos); }
-		
-
-		inline iterator neighborsBegin() { return cellsEnd(); }
-		inline const_iterator neighborsBegin() const { return cellsEnd(); }
-		inline iterator neighborsEnd() { return neighborsBegin()+m_neighborsSize; }
-		inline const_iterator neighborsEnd() const { return neighborsBegin()+m_neighborsSize; }
+		inline iterator neighborsBegin() { return parentsEnd(); }
+		inline const_iterator neighborsBegin() const { return parentsEnd(); }
+		inline iterator neighborsEnd() { return neighborsBegin()+neighborsSize(); }
+		inline const_iterator neighborsEnd() const { return neighborsBegin()+neighborsSize(); }
 		inline DataContainerWrapper neighbors() { return DataContainerWrapper(neighborsBegin(), neighborsSize());}
 		inline ConstDataContainerWrapper neighbors() const { return ConstDataContainerWrapper(neighborsBegin(), neighborsSize());}
 		inline uint32_t neighborsSize() const { return m_neighborsSize; }
 		inline const uint32_t & neighbor(uint32_t pos) const { return *(neighborsBegin()+pos); }
 		inline uint32_t & neighbor(uint32_t pos) { return *(neighborsBegin()+pos); }
+
+		inline iterator cellsBegin() { return neighborsEnd(); }
+		inline const_iterator cellsBegin() const { return neighborsEnd(); }
+		inline iterator cellsEnd() { return cellsBegin()+cellsSize(); }
+		inline const_iterator cellsEnd() const { return cellsBegin()+cellsSize(); }
+		inline DataContainerWrapper cells() { return DataContainerWrapper(cellsBegin(), cellsSize());}
+		inline ConstDataContainerWrapper cells() const { return ConstDataContainerWrapper(cellsBegin(), cellsSize());}
+		inline uint32_t cellsSize() const { return m_cellsSize; }
+		inline const uint32_t & cell(uint32_t pos) const { return *(cellsBegin()+pos); }
+		inline uint32_t & cell(uint32_t pos) { return *(cellsBegin()+pos); }
 	};
 	typedef sserialize::MMVector<Region> RegionListContainer;
 	typedef RegionListContainer::iterator iterator;
@@ -234,7 +231,7 @@ inline void swap(RegionList::Region & a, RegionList::Region & b) {
 	a.swap(b);
 }
 
-// static_assert(sizeof(RegionList::Region) <= 72, "sserialize::spatial::GeoHierarchy::detail::RegionList::Region is too large");
+static_assert(sizeof(RegionList::Region) <= 96, "sserialize::spatial::GeoHierarchy::detail::RegionList::Region is too large");
 
 
 }}//end namespace detail::geohierarchy
@@ -364,10 +361,12 @@ inline void GeoHierarchy::createNeighborPointers(const T_CELL_GRAPH & cellGraph)
 		RegionNeighbors & rn = rnList.at(i);
 		uint64_t off = regionDataList.size();
 		
-		regionDataList.push_back(r.dataBegin(), r.dataEnd()); //the old data
+		regionDataList.push_back(r.childrenBegin(), r.childrenEnd()); //the old children
+		regionDataList.push_back(r.parentsBegin(), r.parentsEnd()); //the old parents
 		regionDataList.push_back(rn.begin(), rn.end()); //the neighbor pointers
+		regionDataList.push_back(r.cellsBegin(), r.cellsEnd());//the old cells
 		
-		r.m_off = off; //update to new offset, rest remains the same
+		r.m_off = off; //update to new offset, rest has relative addresses
 		r.m_neighborsSize = rn.size(); //set the neighbors count
 	}
 	
