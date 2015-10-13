@@ -127,7 +127,7 @@ MyBaseClass(boundary, points)
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(const sserialize::spatial::GeoRect & boundary, TPointsContainer && points) :
-MyBaseClass(boundary, std::forward<TPointsContainer>(points))
+MyBaseClass(boundary, std::move(points))
 {}
 
 template<typename TPointsContainer>
@@ -141,7 +141,7 @@ MyBaseClass(points)
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(TPointsContainer && points) :
-MyBaseClass(std::forward<TPointsContainer>(points))
+MyBaseClass(std::move(points))
 {
 	if (points.front() != points.back()) {
 		throw sserialize::CorruptDataException("GeoPolygon");
@@ -150,7 +150,7 @@ MyBaseClass(std::forward<TPointsContainer>(points))
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(GeoPolygon && other) :
-MyBaseClass(std::forward<GeoPolygon>(other))
+MyBaseClass(std::move(other))
 {}
 
 template<typename TPointsContainer>
@@ -164,7 +164,7 @@ GeoPolygon<TPointsContainer>::~GeoPolygon()
 
 template<typename TPointsContainer>
 GeoPolygon<TPointsContainer> & GeoPolygon<TPointsContainer>::operator=(GeoPolygon<TPointsContainer> && other) {
-	swap(other);
+	MyGeoWay::operator=(std::move(other));
 	return *this;
 }
 

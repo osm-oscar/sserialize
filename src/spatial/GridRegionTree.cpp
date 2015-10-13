@@ -39,15 +39,15 @@ m_cumulatedResultSetSize(0),
 m_intersectTestCount(0)
 {}
 
-GridRegionTree::GridRegionTree(GridRegionTree && other) {
-	m_nodes.swap(other.m_nodes);
-	m_nodeGrids.swap(other.m_nodeGrids);
-	m_nodePtr.swap(other.m_nodePtr);
-	m_leafInfo.swap(other.m_leafInfo);
-	m_regions.swap(other.m_regions);
-	m_cumulatedResultSetSize.store(other.m_cumulatedResultSetSize.load());
-	m_intersectTestCount.store(other.m_intersectTestCount.load());
-}
+GridRegionTree::GridRegionTree(GridRegionTree && other) :
+m_nodes(std::move(other.m_nodes)),
+m_nodeGrids(std::move(other.m_nodeGrids)),
+m_nodePtr(std::move(other.m_nodePtr)),
+m_leafInfo(std::move(other.m_leafInfo)),
+m_regions(std::move(other.m_regions)),
+m_cumulatedResultSetSize(other.m_cumulatedResultSetSize.load()),
+m_intersectTestCount(other.m_intersectTestCount.load())
+{}
 
 GridRegionTree::GridRegionTree(const GridRegionTree & other) :
 m_nodes(other.m_nodes),
@@ -71,11 +71,11 @@ GridRegionTree & GridRegionTree::operator=(const GridRegionTree & other) {
 	return *this;
 }
 GridRegionTree & GridRegionTree::operator=(GridRegionTree && other) {
-	m_nodes.swap(other.m_nodes);
-	m_nodeGrids.swap(other.m_nodeGrids);
-	m_nodePtr.swap(other.m_nodePtr);
-	m_leafInfo.swap(other.m_leafInfo);
-	m_regions.swap(other.m_regions);
+	m_nodes = std::move(other.m_nodes);
+	m_nodeGrids = std::move(other.m_nodeGrids);
+	m_nodePtr = std::move(other.m_nodePtr);
+	m_leafInfo = std::move(other.m_leafInfo);
+	m_regions = std::move(other.m_regions);
 	m_cumulatedResultSetSize.store(other.m_cumulatedResultSetSize.load());
 	m_intersectTestCount.store(other.m_intersectTestCount.load());
 	return *this;

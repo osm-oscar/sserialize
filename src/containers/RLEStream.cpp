@@ -77,7 +77,7 @@ m_curId(other.m_curId)
 {}
 
 RLEStream::RLEStream(RLEStream&& other) :
-m_d(std::forward<sserialize::UByteArrayAdapter>(other.m_d)),
+m_d(std::move(other.m_d)),
 m_curRleCount(other.m_curRleCount),
 m_curRleDiff(other.m_curRleDiff),
 m_curId(other.m_curId)

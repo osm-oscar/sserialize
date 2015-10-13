@@ -144,9 +144,9 @@ protected:
 public:
 	OpTree() : m_priv(new detail::EmptyOpTree<T_OPERAND>()) {}
 	OpTree(MyImpClass * priv) : m_priv(priv) {}
-	OpTree(std::unique_ptr<MyImpClass> && priv) {m_priv.swap(priv);}
+	OpTree(std::unique_ptr<MyImpClass> && priv) : m_priv(std::move(priv)) {}
 	OpTree(const OpTree & other) : m_priv(other.copy()) {}
-	OpTree(OpTree && other) {m_priv.swap(other.m_priv);}
+	OpTree(OpTree && other) : m_priv(std::move(other.m_priv)) {}
 	virtual ~OpTree() {}
 	inline bool parse(const std::string & query) {
 		return priv()->parse(query);

@@ -47,14 +47,19 @@ public:
 	m_end(other.m_end),
 	m_count(other.m_count)
 	{
-		using std::swap;
-		swap(m_data, other.m_data);
-		swap(m_bitSet, other.m_bitSet);
-		swap(m_upperData, other.m_upperData);
+		m_data = std::move(other.m_data);
+		m_bitSet = std::move(other.m_bitSet);
+		m_upperData = std::move(other.m_upperData);
 	}
 	DirectHugeHashMap & operator=(DirectHugeHashMap && other) {
 		clear();
-		swap(other);
+		m_begin = other.m_begin;
+		m_end = other.m_end;
+		m_count = other.m_count;
+
+		m_data = std::move(other.m_data);
+		m_bitSet = std::move(other.m_bitSet);
+		m_upperData = std::move(other.m_upperData);
 		return *this;
 	}
 	void swap(DirectHugeHashMap & other) {

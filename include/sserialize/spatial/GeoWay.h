@@ -79,7 +79,7 @@ m_points(points)
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(const GeoRect & boundary, TPointsContainer && points) :
 m_boundary(boundary),
-m_points(std::forward<TPointsContainer>(points))
+m_points(std::move(points))
 {}
 
 template<typename TPointsContainer>
@@ -95,7 +95,7 @@ m_points(other.m_points)
 
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(TPointsContainer && points) :
-m_points(std::forward<TPointsContainer>(points))
+m_points(std::move(points))
 {
 	recalculateBoundary();
 }
@@ -103,7 +103,7 @@ m_points(std::forward<TPointsContainer>(points))
 template<typename TPointsContainer>
 GeoWay<TPointsContainer>::GeoWay(GeoWay<TPointsContainer> && other) :
 m_boundary(other.m_boundary),
-m_points(std::forward<TPointsContainer>(other.m_points))
+m_points(std::move(other.m_points))
 {}
 
 template<typename TPointsContainer>
@@ -111,7 +111,7 @@ GeoWay<TPointsContainer>::~GeoWay() {}
 
 template<typename TPointsContainer>
 GeoWay<TPointsContainer> & GeoWay<TPointsContainer>::operator=(GeoWay<TPointsContainer> && other) {
-	m_points.swap(other.m_points);
+	m_points = std::move(other.m_points);
 	m_boundary = other.m_boundary;
 	return *this;
 }

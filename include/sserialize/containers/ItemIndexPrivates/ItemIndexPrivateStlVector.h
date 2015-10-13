@@ -10,6 +10,7 @@ private:
 	std::vector<uint32_t> m_data;
 public:
 	ItemIndexPrivateStlVector();
+	ItemIndexPrivateStlVector(std::vector<uint32_t> && data);
 	ItemIndexPrivateStlVector(const std::vector<uint32_t> & data);
 	virtual ~ItemIndexPrivateStlVector();
 	virtual ItemIndex::Types type() const;

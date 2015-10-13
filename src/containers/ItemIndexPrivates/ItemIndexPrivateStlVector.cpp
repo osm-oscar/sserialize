@@ -2,16 +2,28 @@
 
 namespace sserialize {
 
-ItemIndexPrivateStlVector::ItemIndexPrivateStlVector() : ItemIndexPrivate() {}
-ItemIndexPrivateStlVector::ItemIndexPrivateStlVector(const std::vector<uint32_t> & data) : ItemIndexPrivate(), m_data(data) {}
+ItemIndexPrivateStlVector::ItemIndexPrivateStlVector() :
+ItemIndexPrivate()
+{}
+
+ItemIndexPrivateStlVector::ItemIndexPrivateStlVector(std::vector<uint32_t> && data) :
+ItemIndexPrivate(),
+m_data(std::move(data))
+{}
+
+ItemIndexPrivateStlVector::ItemIndexPrivateStlVector(const std::vector<uint32_t> & data) :
+ItemIndexPrivate(),
+m_data(data)
+{}
+
 ItemIndexPrivateStlVector::~ItemIndexPrivateStlVector() {}
 
 ItemIndex::Types ItemIndexPrivateStlVector::type() const {
 	return ItemIndex::T_STL_VECTOR;
 }
 
-void ItemIndexPrivateStlVector::absorb(std::vector< uint32_t >& data) {
-	m_data.swap(data);
+void ItemIndexPrivateStlVector::absorb(std::vector<uint32_t> & data) {
+	m_data = std::move(data);
 }
 
 uint32_t ItemIndexPrivateStlVector::at(uint32_t pos) const {

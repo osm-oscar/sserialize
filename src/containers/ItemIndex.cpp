@@ -89,9 +89,8 @@ ItemIndex::ItemIndex(const UByteArrayAdapter & index, ItemIndex::Types type) : R
 
 ItemIndex::ItemIndex(const std::deque<uint32_t> & index) : RCWrapper< sserialize::ItemIndexPrivate >(new sserialize::ItemIndexPrivateStlDeque( index ) ) {}
 ItemIndex::ItemIndex(const std::vector< uint32_t >& index) : RCWrapper< sserialize::ItemIndexPrivate >(new sserialize::ItemIndexPrivateStlVector(index)) {}
-ItemIndex::ItemIndex(std::vector< uint32_t > && index) {
-	sserialize::ItemIndexPrivateStlVector * myPriv = new sserialize::ItemIndexPrivateStlVector();
-	myPriv->absorb(index);
+ItemIndex::ItemIndex(std::vector<uint32_t> && index) {
+	sserialize::ItemIndexPrivateStlVector * myPriv = new sserialize::ItemIndexPrivateStlVector(std::move(index));
 	MyBaseClass::setPrivate(myPriv);
 }
 

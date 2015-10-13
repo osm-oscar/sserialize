@@ -17,9 +17,19 @@ public:
 	GuardedVariable() {}
 	GuardedVariable(const T_VALUE & value) : m_value(value) {}
 	GuardedVariable(const GuardedVariable & other) {
-		UniqueLock mylck(m_mtx);
-		UniqueLock olck(other.m_mtx);//this doesn't look good
-		m_value = other.m_value;
+		if (&other != this) {
+			UniqueLock mylck(m_mtx);
+			UniqueLock olck(other.m_mtx);
+			m_value = other.m_value;
+		}
+	}
+	///move the guarded content
+	GuardedVariable(GuardedVariable && other) {
+		if (this != &other) {
+			UniqueLock mylck(m_mtx);
+			UniqueLock olck(other.m_mtx);//this doesn't look good
+			m_value = std::move(other.m_value);
+		}
 	}
 	~GuardedVariable() {}
 	GuardedVariable & operator=(const T_VALUE & value) {

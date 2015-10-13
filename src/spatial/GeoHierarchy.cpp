@@ -45,7 +45,9 @@ CellList::~CellList() {}
 
 
 CellList & CellList::operator=(CellList && other) {
-	this->swap(other);
+	m_cellIdData = std::move(other.m_cellIdData);
+	m_cellItems = std::move(other.m_cellItems);
+	m_d = std::move(other.m_d);
 	return *this;
 }
 

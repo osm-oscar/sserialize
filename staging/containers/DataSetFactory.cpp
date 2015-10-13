@@ -11,23 +11,19 @@ m_hitCount(0)
 }
 
 DataSetFactory::DataSetFactory(DataSetFactory && other) :
+m_data(std::move(other.m_data)),
 m_ac(std::move(other.m_ac)),
+m_hash(std::move(other.m_hash)),
 m_hitCount(other.m_hitCount.load())
-{
-	using std::swap;
-	swap(m_hash, other.m_hash);
-	//default init read-write-lock
-}
+{}
 
 DataSetFactory::~DataSetFactory() {}
 
 DataSetFactory & DataSetFactory::operator=(DataSetFactory && other) {
-	using std::swap;
+	m_data = std::move(other.m_data);
 	m_ac = std::move(other.m_ac);
-
+	m_hash = std::move(other.m_hash);
 	m_hitCount.store(other.m_hitCount.load());
-	swap(m_hash, other.m_hash);
-	//default init read-write-lock
 	return *this;
 }
 

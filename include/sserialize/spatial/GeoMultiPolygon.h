@@ -158,10 +158,10 @@ m_innerBoundary(innerBoundary)
 template<typename TPolygonContainer, typename TPolygon>
 GeoMultiPolygon<TPolygonContainer, TPolygon>::GeoMultiPolygon(GeoMultiPolygon && other) :
 m_size(other.m_size),
-m_outerPolygons(other.m_outerPolygons),
-m_innerPolygons(other.m_innerPolygons),
-m_outerBoundary(other.m_outerBoundary),
-m_innerBoundary(other.m_innerBoundary)
+m_outerPolygons(std::move(other.m_outerPolygons)),
+m_innerPolygons(std::move(other.m_innerPolygons)),
+m_outerBoundary(std::move(other.m_outerBoundary)),
+m_innerBoundary(std::move(other.m_innerBoundary))
 {}
 
 template<typename TPolygonContainer, typename TPolygon>
@@ -178,10 +178,9 @@ GeoMultiPolygon<TPolygonContainer, TPolygon>::~GeoMultiPolygon() {}
 
 template<typename TPolygonContainer, typename TPolygon>
 GeoMultiPolygon<TPolygonContainer, TPolygon> & GeoMultiPolygon<TPolygonContainer, TPolygon>::operator=(GeoMultiPolygon && other) {
-	using std::swap;
 	m_size = other.m_size;
-	swap(m_outerPolygons, other.m_outerPolygons);
-	swap(m_innerPolygons, other.m_innerPolygons);
+	m_outerPolygons = std::move(other.m_outerPolygons);
+	m_innerPolygons = std::move(other.m_innerPolygons);
 	m_outerBoundary = other.m_outerBoundary;
 	m_innerBoundary = other.m_innerBoundary;
 	return *this;

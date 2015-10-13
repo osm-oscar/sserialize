@@ -64,8 +64,7 @@ public:
 	MMVector(MMVector && other) :
 	m_begin(other.m_begin), m_capacity(other.m_capacity), m_pP(other.m_pP), m_growFactor(other.m_growFactor)
 	{
-		using std::swap;
-		swap(m_d, other.m_d);
+		m_d = std::move(other.m_d);
 		other.m_begin = 0;
 		other.m_capacity = 0;
 		other.m_pP = 0;
@@ -81,8 +80,7 @@ public:
 		return *this;
 	}
 	MMVector & operator=(MMVector && other) {
-		using std::swap;
-		swap(m_d, other.m_d);
+		m_d = std::move(other.m_d);
 		m_begin = other.m_begin;
 		m_capacity = other.m_capacity;
 		m_pP = other.m_pP;
@@ -144,6 +142,10 @@ public:
 	
 	void push_back(const TValue & v) {
 		emplace_back(v);
+	}
+	
+	void push_back(TValue && v) {
+		emplace_back(std::move(v));
 	}
 	
 	template<typename T_VALUE_IT>

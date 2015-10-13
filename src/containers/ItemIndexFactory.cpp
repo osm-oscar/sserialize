@@ -44,21 +44,18 @@ m_useDeduplication(other.m_useDeduplication),
 m_type(other.m_type),
 m_compressionType(other.m_compressionType)
 {
-	using std::swap;
-	swap(m_header, other.m_header);
-	swap(m_indexStore, other.m_indexStore);
-	swap(m_hash, other.m_hash);
-	swap(m_dataOffsets, other.m_dataOffsets);
-	swap(m_idToOffsets, other.m_idToOffsets);
-	swap(m_idxSizes, other.m_idxSizes);
+	m_header = std::move(other.m_header);
+	m_indexStore = std::move(other.m_indexStore);
+	m_hash = std::move(other.m_hash);
+	m_dataOffsets = std::move(other.m_dataOffsets);
+	m_idToOffsets = std::move(other.m_idToOffsets);
+	m_idxSizes = std::move(other.m_idxSizes);
 	//default init read-write-lock
 }
 
 ItemIndexFactory::~ItemIndexFactory() {}
 
 ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
-	using std::swap;
-
 	m_hitCount.store(other.m_hitCount.load());
 	m_checkIndex = other.m_checkIndex;
 	m_bitWidth = other.m_bitWidth;
@@ -66,12 +63,12 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	m_useDeduplication = other.m_useDeduplication;
 	m_type = other.m_type;
 	m_compressionType = other.m_compressionType;
-	swap(m_header, other.m_header);
-	swap(m_indexStore, other.m_indexStore);
-	swap(m_hash, other.m_hash);
-	swap(m_dataOffsets, other.m_dataOffsets);
-	swap(m_idToOffsets, other.m_idToOffsets);
-	swap(m_idxSizes, other.m_idxSizes);
+	m_header = std::move(other.m_header);
+	m_indexStore = std::move(other.m_indexStore);
+	m_hash = std::move(other.m_hash);
+	m_dataOffsets = std::move(other.m_dataOffsets);
+	m_idToOffsets = std::move(other.m_idToOffsets);
+	m_idxSizes = std::move(other.m_idxSizes);
 	//default init read-write-lock
 	return *this;
 }

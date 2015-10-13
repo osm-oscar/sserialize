@@ -96,9 +96,8 @@ public:
 	m_dataLenPtr(other.m_dataLenPtr),
 	m_beginOffSet(other.m_beginOffSet)
 	{
-		using std::swap;
-		swap(m_offsets, other.m_offsets);
-		swap(m_ss, other.m_ss);
+		m_offsets = std::move(other.m_offsets);
+		m_ss = std::move(other.m_ss);
 	}
 	virtual ~ArrayCreator() {}
 	ArrayCreator & operator=(ArrayCreator && other) {
@@ -106,9 +105,8 @@ public:
 		m_size = other.m_size;
 		m_dataLenPtr = other.m_dataLenPtr;
 		m_beginOffSet = other.m_beginOffSet;
-		using std::swap;
-		swap(m_offsets, other.m_offsets);
-		swap(m_ss, other.m_ss);
+		m_offsets = std::move(other.m_offsets);
+		m_ss = std::move(other.m_ss);
 		return *this;
 	}
 	void clear() {
