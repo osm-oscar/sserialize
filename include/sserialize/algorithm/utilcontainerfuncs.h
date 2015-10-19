@@ -26,6 +26,22 @@ bool is_strong_monotone_ascending(TIterator begin, const TIterator & end) {
 	return true;
 }
 
+///the range betwen begin and end needs to be sorted
+template<typename TIterator>
+bool is_unique(TIterator begin, const TIterator & end) {
+	if (begin != end) {
+		auto x = *begin;
+		for(++begin; begin != end; ++begin) {
+			auto y = *begin;
+			if (y == x) {
+				return false;
+			}
+			x = y;
+		}
+	}
+	return true;
+}
+
 template<typename TIterator1, typename TIterator2, typename BinaryPredicate>
 bool equal(TIterator1 begin1, const TIterator1 & end1, TIterator2 begin2, const TIterator2 & end2, BinaryPredicate pred = BinaryPredicate()) {
 	for( ;begin1 != end1 && begin2 != end2; ++begin1, ++begin2) {
