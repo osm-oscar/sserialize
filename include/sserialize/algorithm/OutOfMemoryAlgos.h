@@ -2,7 +2,9 @@
 #define SSERIALIZE_OUT_OF_MEMORY_SORTER_H
 #include <functional>
 #include <type_traits>
+#include <iterator>
 #include <vector>
+#include <queue>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/iterator/RangeGenerator.h>
@@ -11,20 +13,24 @@ namespace sserialize {
 namespace detail {
 namespace oom {
 
-template<typename TSourceIterator, typename TValue>
+template<typename TSourceIterator, typename TValue = std::remove_reference<TSourceIterator::value_type>::type >
 class InputBuffer {
+public:
+	typedef typename std::vector<TValue>::iterator iterator;
+private:
 	TSourceIterator m_srcIt;
 	TSourceIterator m_srcEnd;
 	OffsetType m_bufferSize;
 	std::vector<TValue> m_buffer;
-	typename std::vector<TValue>::iterator m_bufferIt;
+	iterator m_bufferIt;
 private:
 	void fillBuffer() {
-		TSourceIterator bufferBeginIt = m_srcIt;
-		for(OffsetType i(0); i < m_bufferSize && m_srcIt != m_srcEnd; ++i, ++m_srcIt) {
-			m_buffer[i] = *m_srcIt;
+		OffsetType copyAmount(0);
+		for(; copyAmount < m_bufferSize && m_srcIt != m_srcEnd; ++copyAmount, ++m_srcIt) {
+			m_buffer[copyAmount] = *m_srcIt;
 		}
-		m_buffer.resize(m_srcIt - bufferBeginIt);
+		m_buffer.resize(copyAmount);
+		m_bufferIt = m_buffer.begin();
 	}
 public:
 	InputBuffer(TSourceIterator srcBegin, TSourceIterator srcEnd, OffsetType bufferSize) :
@@ -34,90 +40,138 @@ public:
 	{
 		fillBuffer();
 	}
-	InputBuffer(InputBuffer && other);
-	InputBuffer & operator=(InputBuffer && other);
-	TValue & top() { return *m_bufferIt; }
-	void pop() { ++m_bufferIt; }
-	bool empty() { return m_bufferIt >= m_buffer.end(); }
+	TValue & get() { return *m_bufferIt; }
+	const TValue & get() const { return *m_bufferIt; }
+	bool next() {
+		if (m_bufferIt != m_buffer.end()) {
+			++m_bufferIt;
+		}
+		if (m_bufferIt == m_buffer.end()) {
+			fillBuffer();
+			return m_buffer.size();
+		}
+		return true;
+	}
 };
 
 }}//end namespace detail::oom
 
-template<typename TValue >
+template<typename TRandomAccessContainer>
 class OutOfMemorySorter final {
 public:
-	typedef TValue value_type;
+	typedef TRandomAccessContainer container;
+	typedef typename container value_type;
+	typedef typename container::iterator container_iterator;
+private:
+	typedef detail::oom::InputBuffer<container_iterator, value_type> InputBuffer;
 private:
 	MmappedMemoryType m_mmt;
-	uint64_t m_mergeBufferSize;
+	OffsetType m_mergeBufferSize;
 private:
-	template<typename TRandomAccessContainer, typename CompFunc>
-	void mergeChunks(TRandomAccessContainer & srcdest, OffsetType begin, OffsetType end, OffsetType chunkSize, CompFunc & comp);
+	template<typename CompFunc>
+	void mergeChunks(std::vector<InputBuffer> & chunks, sserialize::MMVector<value_type> & dest, CompFunc comp);
 public:
-	OutOfMemorySorter(MmappedMemoryType tempStorageType) : m_mmt(tempStorageType) {}
+	OutOfMemorySorter(MmappedMemoryType tempStorageType, OffsetType mergeBufferSize) : m_mmt(tempStorageType), m_mergeBufferSize(mergeBufferSize) {}
 	~OutOfMemorySorter() {}
-	template<typename TRandomAccessContainer, typename CompFunc>
-	void sort(TRandomAccessContainer & srcdest, OffsetType bufferSize, CompFunc comp, unsigned int numThreads = 0);
+	template<typename CompFunc>
+	void sort(container & srcdest, OffsetType bufferSize, CompFunc comp, unsigned int numThreads = 0);
 };
 
 //------ Implementation ---------------
 
-template<typename TValue>
-template<typename TRandomAccessContainer, typename CompFunc>
+template<typename TRandomAccessContainer>
+template<typename CompFunc>
 void
-OutOfMemorySorter<TValue>::
+OutOfMemorySorter<TRandomAccessContainer>::
 sort(TRandomAccessContainer & srcdest, sserialize::OffsetType bufferSize, CompFunc comp, unsigned int numThreads) {
 	OffsetType srcSize = srcdest.size();
 	std::vector<TValue> buffer(bufferSize);
+	std::vector<InputBuffer> chunkBuffers;
 	for(uint64_t i(0); i < srcSize; i += bufferSize) {
 		OffsetType chunkSize = std::min<OffsetType>(bufferSize, srcSize-i);
-		buffer.assign(srcdest.cbegin()+i, srcdest.cbegin(i+chunkSize));
+		auto srcBegin = srcdest.cbegin()+i;
+		auto srcEnd = srcBegin+chunkSize;
+		buffer.assign(srcBegin, srcEnd);
+		chunkBuffers.emplace_back(srcBegin, srcEnd, m_mergeBufferSize);
 		sserialize::mt_sort(buffer.begin(), buffer.begin()+chunkSize, comp, numThreads);
+		//flush back
 		for(uint64_t j(0); j < chunkSize; ++j) {
 			srcdest[j+i] = buffer[j];
 		}
 	}
-	buffer = std::vector<TValue>();
-	//chunks are now sorted, we now have to do the merge
-	
+	sserialize::MMVector<value_type> tmp(sserialize::MM_FILEBASED);
+	tmp.reserve(srcSize);
+	mergeChunks(srcdest, tmp, comp);
+	{
+		auto srcIt = srcdest.begin();
+		for(auto & x : tmp) {
+			*srcIt = std::move(x);
+			++srcIt;
+		}
+	}
 }
 
 
 ///TODO: real world usage data is not! plain old data
-template<typename TValue>
-template<typename TRandomAccessContainer, typename CompFunc>
+///This does a merge without! unique
+template<typename TRandomAccessContainer>
+template<typename CompFunc>
 void
-OutOfMemorySorter<TValue>::
-mergeChunks(TRandomAccessContainer & srcdest, OffsetType begin, OffsetType end, OffsetType chunkSize, CompFunc & comp) {
-	typedef detail::oom::InputBuffer<typename TRandomAccessContainer::iterator, TValue> MyInputBufferType;
-	std::vector< MyInputBufferType > inputBuffers;
-	{
-		OffsetType dataSize = end-begin;
-		OffsetType numChunks = dataSize/chunkSize + (dataSize%chunkSize? 1 : 0);
-		inputBuffers.reserve(numChunks);
-	}
-	typename TRandomAccessContainer::iterator myBegin(srcdest.begin());
-	for(OffsetType i(begin); i < end; i += chunkSize) {
-		OffsetType realChunkSize = std::min<OffsetType>(chunkSize, end-i);
-		inputBuffers.emplace_back(myBegin+i, myBegin+(i+realChunkSize), m_mergeBufferSize);
-	}
-	auto myComp = [&comp, &inputBuffers](const uint32_t a, const uint32_t b) { return comp(inputBuffers[a], inputBuffers[b]); };
-	typedef std::multiset< uint32_t, decltype(myComp)> MyPrioQ;
-	MyPrioQ priQ(sserialize::RangeGenerator(0, inputBuffers.size()).cbegin(), sserialize::RangeGenerator(0, inputBuffers.size()).cend(), myComp);
-	sserialize::MMVector<TValue> outputBuffer(m_mmt);
-	outputBuffer.reserve(end-begin);
-	while (inputBuffers.size()) {
-		typename MyPrioQ::iterator pB = priQ.begin();
-		typename MyPrioQ::iterator pE = priQ.upper_bound(*pB);
-		outputBuffer.push_back(inputBuffers[*pB].top());
-		for(; pB != pE;) {
-			MyInputBufferType & x = inputBuffers[pB->second];
+OutOfMemorySorter<TRandomAccessContainer>::
+mergeChunks(std::vector<InputBuffer> & chunks, sserialize::MMVector<value_type> & dest, CompFunc comp) {
+	auto myComp = [&comp, &chunks](const uint32_t a, const uint32_t b) { return comp(chunks[a], chunks[b]); };
+	typedef std::priority_queue<uint32_t, decltype(myComp)> MyPrioQ;
+	
+	MyPrioQ pq;
+	while (pq.size()) {
+		uint32_t pqMin = pq.top();
+		pq.pop();
+		dest.emplace_back(chunks.at(pqMin).get());
+		if (chunks[pqMin].next()) {
+			pq.push(pqMin);
 		}
-		
 	}
 }
 
+///@param chunkBufferSize: 8 MebiByte
+///@param chunkSize: 256 MebiByte
+template<typename TRandomAccessContainer, typename CompFunc>
+void oom_sort(const TRandomAccessContainer & srcDest,
+				CompFunc comp, OffsetType chunkSize = 0x2000000,
+				OffsetType chunkBufferSize = 0x100000,
+				sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED,
+				uint32_t threadCount = 0
+				)
+{
+	OutOfMemorySorter<TRandomAccessContainer> sorter(mmt, chunkBufferSize);
+	sorter.sort(srcDest, chunkSize, comp, threadCount);
+}
 
+///srcdest needs to be sorted
+template<typename TInputOutputIterator, typename TEqual = std::equal_to< std::iterator_traits<TInputOutputIterator>::value_type > >
+TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator end, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED, TEqual eq = TEqual()) {
+	if (begin == end) {
+		return begin;
+	}
+	sserialize::MMVector<TRandomAccessContainer> tmp;
+	tmp.reserve(std::distance(begin, end));
+	
+	auto it = begin;
+	tmp.emplace_back(std::move(*it));
+	for(++it; it != end; ++it) {
+		if (!eq(*it, tmp.back())) {
+			tmp.emplace_back(std::move(*it));
+		}
+	}
+	
+	auto inIt = tmp.begin();
+	auto inEnd = tmp.end();
+	auto outIt = begin;
+	for(; inIt != inEnd; ++inIt, ++outIt) {
+		*outIt = std::move(*inIt);
+	}
+	return outIt;
+}
 
 }//end namespace
 
