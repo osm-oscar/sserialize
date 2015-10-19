@@ -5,9 +5,11 @@
 #include <iterator>
 #include <vector>
 #include <queue>
+#include <mutex>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/iterator/RangeGenerator.h>
+#include <sserialize/stats/ProgressInfo.h>
 
 namespace sserialize {
 namespace detail {
@@ -43,6 +45,7 @@ public:
 	}
 	TValue & get() { return *m_bufferIt; }
 	const TValue & get() const { return *m_bufferIt; }
+	///return true if has next
 	bool next() {
 		if (m_bufferIt != m_buffer.end()) {
 			++m_bufferIt;
@@ -76,63 +79,126 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 		threadCount = std::thread::hardware_concurrency();
 	}
 	
-	OffsetType srcSize = std::distance(begin, end);
+	struct Config {
+		uint64_t chunkSize;
+		uint64_t chunkBufferSize;
+		CompFunc * comp;
+	};
 	
-	std::vector<value_type> buffer(chunkSize);
-	std::vector<InputBuffer> chunkBuffers;
-	for(uint64_t i(0); i < srcSize; i += chunkSize) {
-		OffsetType myChunkSize = std::min<OffsetType>(chunkSize, srcSize-i);
-		auto chunkBegin = begin+i;
-		auto chunkEnd = chunkBegin+myChunkSize;
-		buffer.assign(chunkBegin, chunkEnd);
-		chunkBuffers.emplace_back(chunkBegin, chunkEnd, chunkBufferSize);
-// 		sserialize::mt_sort(buffer.begin(), buffer.end(), comp, threadCount);
-		std::sort(buffer.begin(), buffer.end(), comp);
-		//flush back
-		for(auto & x : buffer) {
-			*chunkBegin = std::move(x);
-			++chunkBegin;
+	struct State {
+		SrcIterator srcIt;
+		OffsetType srcSize;
+		uint64_t srcOffset;
+		std::mutex ioLock;
+		
+		std::vector<InputBuffer> chunkBuffers;
+		std::mutex chunkBufferLock;
+	};
+	
+	Config cfg;
+	State state;
+	
+	cfg.chunkSize = chunkSize;
+	cfg.chunkBufferSize = chunkBufferSize;
+	cfg.comp = &comp;
+	
+	state.srcIt = begin;
+	state.srcSize = std::distance(begin, end);
+	state.srcOffset = 0;
+	
+	struct Worker {
+		State * state;
+		Config * cfg;
+		std::vector<value_type> buffer;
+		Worker(State * state, Config * cfg) : state(state), cfg(cfg) {}
+		Worker(Worker && other) : state(other.state), cfg(other.cfg), buffer(std::move(other.buffer)) {}
+		void operator()() {
+			while (true) {
+				std::unique_lock<std::mutex> ioLock(state->ioLock);
+				if (state->srcOffset >= state->srcSize) {
+					return; //we're done
+				}
+				OffsetType myChunkSize = std::min<OffsetType>(cfg->chunkSize, state->srcSize-state->srcOffset);
+				auto chunkBegin = state->srcIt;
+				auto chunkEnd = chunkBegin+myChunkSize;
+				state->srcOffset += myChunkSize;
+				state->srcIt = chunkBegin;
+				buffer.assign(chunkBegin, chunkEnd);
+				ioLock.unlock();
+
+				std::sort(buffer.begin(), buffer.end(), *(cfg->comp));
+				
+				ioLock.lock();
+				//flush back
+				auto chunkIt = chunkBegin;
+				for(auto & x : buffer) {
+					*chunkIt = std::move(x);
+					++chunkIt;
+				}
+				assert(chunkIt == chunkEnd);
+				
+				//push the chunk buffer, this needs to be AFTER sorting since the buffer buffers!
+				state->chunkBuffers.emplace_back(chunkBegin, chunkEnd, cfg->chunkBufferSize);
+			}
 		}
-		assert(chunkBegin == chunkEnd);
-		assert(std::is_sorted(begin+i, chunkEnd));
+	};
+	//spawn the threads
+	{
+		std::vector<std::thread> ts;
+		for(uint32_t i(0); i < threadCount; ++i) {
+			ts.emplace_back(std::thread(Worker(&state, &cfg)));
+		}
+		for(std::thread & t : ts) {
+			t.join();
+		}
 	}
+	
 	
 	//now merge the chunks
 	sserialize::MMVector<value_type> tmp(mmt);
-	tmp.reserve(srcSize);
+	tmp.reserve(state.srcSize);
 	
 	struct PrioComp {
 		CompFunc * comp;
 		std::vector<InputBuffer> * chunkBuffers;
-		bool operator()(uint32_t a, uint32_t b) { return (*comp)(chunkBuffers->at(a).get(), chunkBuffers->at(b).get()); }
+		bool operator()(uint32_t a, uint32_t b) { return !( (*comp)(chunkBuffers->at(a).get(), chunkBuffers->at(b).get()) ); }
 		PrioComp(CompFunc * comp, std::vector<InputBuffer> * chunkBuffers) : comp(comp), chunkBuffers(chunkBuffers) {}
 		PrioComp(const PrioComp & other) : comp(other.comp), chunkBuffers(other.chunkBuffers) {}
 	};
 	
 	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
 	
-	MyPrioQ pq(PrioComp(&comp, &chunkBuffers));
+	MyPrioQ pq(PrioComp(&comp, &(state.chunkBuffers)));
 	
 	//fill the queue with the initial data
-	for(uint32_t i(0), s(chunkBuffers.size()); i < s; ++i) {
+	for(uint32_t i(0), s(state.chunkBuffers.size()); i < s; ++i) {
 		pq.push(i);
 	}
+	
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(state.srcSize, "Merging sorted chunks");
 	
 	while (pq.size()) {
 		uint32_t pqMin = pq.top();
 		pq.pop();
-		tmp.emplace_back(std::move( chunkBuffers.at(pqMin).get() ));
-		if (chunkBuffers[pqMin].next()) {
+		InputBuffer & chunkBuffer = state.chunkBuffers[pqMin];
+		value_type & v = chunkBuffer.get();
+		tmp.emplace_back(std::move(v));
+		if (chunkBuffer.next()) {
 			pq.push(pqMin);
 		}
+		if (tmp.size() % 1000 == 0) {
+			pinfo(tmp.size());
+		}
 	}
-	assert(std::is_sorted(tmp.begin(), tmp.end()));
+	pinfo.end();
 
 	///move back to source
 	for(auto & x : tmp) {
 		*begin = std::move(x);
 		++begin;
 	}
+	assert(begin == end);
 }
 
 ///iterators need to point to sorted range
