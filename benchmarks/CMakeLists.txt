@@ -10,11 +10,12 @@ include_directories(
 )
 
 find_package(LIBRT REQUIRED)
+find_package(Threads)
 
 IF(ANDROID)
 	SET(BENCH_LIB_LINK_LIBS "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME}/libsserialize.a")
 ELSE(ANDROID)
-	set(BENCH_LIB_LINK_LIBS ${sserialize_BINARY_DIR}/libsserialize.a ${LIBRT_LIBRARIES})
+	set(BENCH_LIB_LINK_LIBS ${sserialize_BINARY_DIR}/libsserialize.a ${LIBRT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 ENDIF(ANDROID)
 
 
@@ -35,3 +36,4 @@ ADD_BENCH_TARGET_SINGLE(treevector-stdset-merge-comparisson)
 ADD_BENCH_TARGET_SINGLE(dynamic_bitset_benchmark)
 ADD_BENCH_TARGET_SINGLE(dynamic_bitset_file_bench)
 ADD_BENCH_TARGET_SINGLE(uint_dee_encode_bench)
+ADD_BENCH_TARGET_SINGLE(oom_sort)
