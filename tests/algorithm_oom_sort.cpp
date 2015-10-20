@@ -9,6 +9,7 @@
 class OomAlgorithm: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( OomAlgorithm );
 CPPUNIT_TEST( testSort );
+CPPUNIT_TEST( testLargeSort);
 CPPUNIT_TEST( testUnique );
 CPPUNIT_TEST_SUITE_END();
 public:
@@ -29,6 +30,16 @@ public:
 			sserialize::mt_sort(data2.begin(), data2.end(), [](uint32_t a, uint32_t b) { return a < b; });
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corruption in run ", i), std::equal(data2.begin(), data2.end(), data.begin()));
 		}
+	}
+	
+	void testLargeSort() {
+		sserialize::MMVector<uint32_t> data(sserialize::MM_FILEBASED, 1025*1023*1024);
+		std::generate(data.begin(), data.end(), []() { return rand(); });
+		
+		sserialize::oom_sort(data.begin(), data.end(), std::less<uint32_t>(), 1 << 30);
+		CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted"), std::is_sorted(data.begin(), data.end()));
+		
+		//data corruption is difficult to check
 	}
 	
 	void testUnique() {
