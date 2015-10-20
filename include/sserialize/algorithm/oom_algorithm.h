@@ -86,7 +86,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				uint64_t maxMemoryUsage = 0x100000000,
 				uint32_t threadCount = 2,
 				sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED,
-				uint32_t queueDepth = 32)
+				uint32_t queueDepth = 64)
 {
 	typedef TInputOutputIterator SrcIterator;
 	typedef typename std::iterator_traits<SrcIterator>::value_type value_type;
