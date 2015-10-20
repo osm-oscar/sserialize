@@ -105,6 +105,8 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	};
 	
 	struct State {
+		ProgressInfo pinfo;
+		uint64_t sortCompleted;
 		SrcIterator srcIt;
 		uint64_t srcSize;
 		uint64_t srcOffset;
@@ -160,11 +162,16 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 					++chunkIt;
 				}
 				assert(chunkIt == chunkEnd);
+				
+				state->sortCompleted += myChunkSize;
+				state->pinfo(state->sortCompleted);
 			}
 		}
 	};
 	//spawn the threads
 	{
+		state.sortCompleted = 0;
+		state.pinfo.begin(state.srcSize, "Sorting chunks");
 		std::vector<std::thread> ts;
 		for(uint32_t i(0); i < threadCount; ++i) {
 			ts.emplace_back(std::thread(Worker(&state, &cfg)));
@@ -172,6 +179,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		for(std::thread & t : ts) {
 			t.join();
 		}
+		state.pinfo.end();
 	}
 	assert(state.srcOffset == state.srcSize);
 	
@@ -190,14 +198,13 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
 	
 	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBuffers)));
-	sserialize::ProgressInfo pinfo;
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
 		SrcIterator srcIt = begin;
 		std::vector< std::pair<uint64_t, uint64_t> > nextRoundPendingChunks;
 		state.srcOffset = 0;
 		
-		pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
+		state.pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
 		for(uint32_t cbi(0), cbs(state.pendingChunks.size()); cbi < cbs; cbi += queueDepth) {
 			assert(!tmp.size());
 
@@ -227,7 +234,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 					pq.push(pqMin);
 				}
 				if (tmp.size() % 1000 == 0) {
-					pinfo(state.srcOffset+tmp.size());
+					state.pinfo(state.srcOffset+tmp.size());
 				}
 			}
 			
@@ -242,7 +249,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		}
 		assert(srcIt == end);
 		assert(state.srcOffset == state.srcSize);
-		pinfo.end();
+		state.pinfo.end();
 		using std::swap;
 		swap(state.pendingChunks, nextRoundPendingChunks);
 	}
