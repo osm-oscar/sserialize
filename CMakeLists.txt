@@ -56,6 +56,7 @@ src/stats/TimeMeasurer.cpp
 )
 
 set(STATIC_SOURCES_CPP
+src/Static/CellTextCompleter.cpp
 src/Static/TrieNodePrivates/CompactTrieNodePrivate.cpp
 src/Static/TrieNodePrivates/SimpleTrieNodePrivate.cpp
 src/Static/TrieNodePrivates/LargeCompactTrieNodePrivate.cpp
