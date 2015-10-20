@@ -35,6 +35,7 @@ private:
 		m_bufferIt = m_buffer.begin();
 	}
 public:
+	InputBuffer() : m_bufferSize(0), m_bufferIt(m_buffer.begin()) {}
 	InputBuffer(TSourceIterator srcBegin, TSourceIterator srcEnd, OffsetType bufferSize) :
 	m_srcIt(srcBegin),
 	m_srcEnd(srcEnd),
@@ -42,6 +43,20 @@ public:
 	{
 		m_buffer.reserve(m_bufferSize);
 		fillBuffer();
+	}
+	InputBuffer(InputBuffer && other) : m_srcIt(other.m_srcIt), m_srcEnd(other.m_srcEnd), m_bufferSize(other.m_bufferSize) {
+		std::size_t bufferItOffset = other.m_bufferIt - other.m_buffer.begin();
+		m_buffer = std::move(other.m_buffer);
+		m_bufferIt = m_buffer.begin()+bufferItOffset;
+	}
+	InputBuffer & operator=(InputBuffer && other) {
+		m_srcIt = std::move(other.m_srcIt);
+		m_srcEnd = std::move(other.m_srcEnd);
+		m_bufferSize = other.m_bufferSize;
+		std::size_t bufferItOffset = other.m_bufferIt - other.m_buffer.begin();
+		m_buffer = std::move(other.m_buffer);
+		m_bufferIt = m_buffer.begin()+bufferItOffset;
+		return *this;
 	}
 	TValue & get() { return *m_bufferIt; }
 	const TValue & get() const { return *m_bufferIt; }
@@ -67,7 +82,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 				CompFunc comp, OffsetType chunkSize = 0x2000000,
 				OffsetType chunkBufferSize = 0x100000,
 				sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED,
-				uint32_t threadCount = 0)
+				uint32_t threadCount = 0, uint32_t queueDepth = 32)
 {
 	typedef TInputOutputIterator SrcIterator;
 	typedef typename std::iterator_traits<SrcIterator>::value_type value_type;
@@ -92,7 +107,6 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 		std::mutex ioLock;
 		
 		std::vector<InputBuffer> chunkBuffers;
-		std::mutex chunkBufferLock;
 	};
 	
 	Config cfg;
@@ -122,8 +136,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 				auto chunkBegin = state->srcIt;
 				auto chunkEnd = chunkBegin+myChunkSize;
 				state->srcOffset += myChunkSize;
-				state->srcIt = chunkBegin;
+				state->srcIt = chunkEnd;
 				buffer.assign(chunkBegin, chunkEnd);
+				
+				//reserve space for our chunk in chunkBuffer, chunkbuffers need to be contigous
+				//otherwise the multi-level merging would not work
+				uint32_t chunkBufferEntry = state->chunkBuffers.size();
+				state->chunkBuffers.resize(chunkBufferEntry+1);
+				
 				ioLock.unlock();
 
 				std::sort(buffer.begin(), buffer.end(), *(cfg->comp));
@@ -138,7 +158,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 				assert(chunkIt == chunkEnd);
 				
 				//push the chunk buffer, this needs to be AFTER sorting since the buffer buffers!
-				state->chunkBuffers.emplace_back(chunkBegin, chunkEnd, cfg->chunkBufferSize);
+				state->chunkBuffers.at(chunkBufferEntry) = InputBuffer(chunkBegin, chunkEnd, cfg->chunkBufferSize);
 			}
 		}
 	};
@@ -152,7 +172,6 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 			t.join();
 		}
 	}
-	
 	
 	//now merge the chunks
 	sserialize::MMVector<value_type> tmp(mmt);
@@ -169,36 +188,54 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end,
 	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
 	
 	MyPrioQ pq(PrioComp(&comp, &(state.chunkBuffers)));
-	
-	//fill the queue with the initial data
-	for(uint32_t i(0), s(state.chunkBuffers.size()); i < s; ++i) {
-		pq.push(i);
-	}
-	
 	sserialize::ProgressInfo pinfo;
-	pinfo.begin(state.srcSize, "Merging sorted chunks");
 	
-	while (pq.size()) {
-		uint32_t pqMin = pq.top();
-		pq.pop();
-		InputBuffer & chunkBuffer = state.chunkBuffers[pqMin];
-		value_type & v = chunkBuffer.get();
-		tmp.emplace_back(std::move(v));
-		if (chunkBuffer.next()) {
-			pq.push(pqMin);
-		}
-		if (tmp.size() % 1000 == 0) {
-			pinfo(tmp.size());
-		}
-	}
-	pinfo.end();
+	for(uint32_t queueRound(0); state.chunkBuffers.size() > 1; ++queueRound) {
+		SrcIterator srcIt = begin;
+		std::vector<InputBuffer> nextRoundChunkBuffer;
+		OffsetType count = 0;
+		pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
 
-	///move back to source
-	for(auto & x : tmp) {
-		*begin = std::move(x);
-		++begin;
+		for(uint32_t cbi(0), cbs(state.chunkBuffers.size()); cbi < cbs; cbi += queueDepth) {
+			assert(!tmp.size());
+
+			//Fill the queue with the buffers that need to be merged
+			for(uint32_t i(cbi), s(cbi+std::min<uint32_t>(queueDepth, cbs-cbi)); i < s; ++i) {
+				pq.push(i);
+			}
+			
+			while (pq.size()) {
+				uint32_t pqMin = pq.top();
+				pq.pop();
+				InputBuffer & chunkBuffer = state.chunkBuffers[pqMin];
+				value_type & v = chunkBuffer.get();
+				tmp.emplace_back(std::move(v));
+				if (chunkBuffer.next()) {
+					pq.push(pqMin);
+				}
+				if (tmp.size() % 1000 == 0) {
+					pinfo(count+tmp.size());
+				}
+			}
+			
+			assert(std::is_sorted(tmp.begin(), tmp.end()));
+			
+			///move back this part to source
+			auto chunkBegin = srcIt;
+			for(auto & x : tmp) {
+				*srcIt = std::move(x);
+				++srcIt;
+			}
+			count += tmp.size();
+			tmp.clear();
+			nextRoundChunkBuffer.emplace_back(chunkBegin, srcIt, cfg.chunkBufferSize);
+			assert(std::is_sorted(chunkBegin, srcIt));
+		}
+		assert(srcIt == end);
+		pinfo.end();
+		using std::swap;
+		swap(state.chunkBuffers, nextRoundChunkBuffer);
 	}
-	assert(begin == end);
 }
 
 ///iterators need to point to sorted range
