@@ -46,13 +46,16 @@ int main(int argc, char ** argv) {
 	sserialize::MMVector<uint64_t> data(sserialize::MM_FILEBASED);
 	data.reserve(entryCount);
 	
+	sserialize::TimeMeasurer tm;
+	tm.begin();
 	for(int64_t i(entryCount); i > 0; --i) {
 		data.push_back(i);
 	}
-	sserialize::TimeMeasurer tm;
+	tm.end();
+	std::cout << "File creation took " << tm << std::endl;
 	tm.begin();
 	sserialize::oom_sort(data.begin(), data.end(), std::less<uint64_t>(), memorySize, threadCount, sserialize::MM_FILEBASED, queueDepth);
 	tm.end();
-	std::cout << "Took " << tm << std::endl;
+	std::cout << "Sorting took " << tm << std::endl;
 	return 0;
 }
