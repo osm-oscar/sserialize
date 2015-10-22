@@ -1,7 +1,6 @@
 #ifndef SSERIALIZE_OOM_CTC_VALUES_CREATOR_H
 #define SSERIALIZE_OOM_CTC_VALUES_CREATOR_H
 #include <sserialize/containers/MMVector.h>
-#include <sserialize/containers/HashBasedFlatTrie.h>
 #include <sserialize/iterator/TransformIterator.h>
 #include <sserialize/algorithm/oom_algorithm.h>
 #include <limits>
