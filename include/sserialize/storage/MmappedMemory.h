@@ -6,6 +6,7 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/storage/FileHandler.h>
+#include <string.h>
 
 #ifdef __ANDROID__
 #include <sserialize/utility/log.h>
@@ -265,7 +266,7 @@ private:
 public:
 	MmappedMemorySharedMemory(OffsetType size) : m_data(0), m_size(0) {
 		m_name = generateName(size);
-		m_fd = ::shm_open(m_name.c_str(), O_CREAT | O_RDWR | O_EXCL, S_IRWXU);
+		m_fd = FileHandler::shmCreate(m_name);
 		if (m_fd < 0) {
 			throw sserialize::CreationException("sserialize::MmappedMemorySharedMemory unable to create shm region");
 		}
@@ -281,9 +282,7 @@ public:
 	}
 	virtual ~MmappedMemorySharedMemory() override {
 		if (m_data || m_size == 0) {
-			::munmap(m_data, m_size*sizeof(TValue));
-			::close(m_fd);
-			::shm_unlink(m_name.c_str());
+			FileHandler::shmDestroy(m_name, m_fd, m_data, m_size*sizeof(TValue));
 			m_data = 0;
 			m_size = 0;
 		}

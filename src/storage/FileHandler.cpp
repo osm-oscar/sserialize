@@ -1,5 +1,11 @@
 #include <sserialize/storage/FileHandler.h>
 #include <sserialize/storage/MmappedFile.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+
 
 namespace sserialize {
 
@@ -135,5 +141,17 @@ bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 	ok = (::close(fd) < 0) && ok;
 	return ok;
 }
+
+int FileHandler::shmCreate(const std::string& fileName) {
+	return ::shm_open(fileName.c_str(), O_CREAT | O_RDWR | O_EXCL, S_IRWXU);
+}
+
+bool FileHandler::shmDestroy(const std::string& fileName, int fd, void* mem, OffsetType size) {
+	::munmap(mem, size);
+	::close(fd);
+	::shm_unlink(fileName.c_str());
+	return true;
+}
+
 
 }

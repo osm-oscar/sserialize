@@ -1,11 +1,6 @@
 #ifndef SSERIALIZE_UTIL_FILE_HANDLER_H
 #define SSERIALIZE_UTIL_FILE_HANDLER_H
 #include <sserialize/utility/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <fcntl.h>
 #include <string>
 
 namespace sserialize {
@@ -18,6 +13,10 @@ struct FileHandler {
 	static void * resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize, bool prePopulate, bool randomAccess);
 	static bool closeAndUnlink(const std::string & fileName, int fd, void * mem, OffsetType size);
 	static bool close(int fd, void* mem, sserialize::OffsetType size, bool sync = false);
+	
+	///@return fd
+	static int shmCreate(const std::string & fileName);
+	static bool shmDestroy(const std::string & fileName, int fd, void* mem, sserialize::OffsetType size);
 };
 
 }//end namespace
