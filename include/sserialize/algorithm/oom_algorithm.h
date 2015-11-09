@@ -237,7 +237,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 					state.pinfo(state.srcOffset+tmp.size());
 				}
 			}
-			
+			state.pinfo(state.srcOffset+tmp.size());
 			///move back this part to source
 			for(auto & x : tmp) {
 				*srcIt = std::move(x);
