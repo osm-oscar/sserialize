@@ -24,6 +24,7 @@
   * (u)int64: 1-9
   * 
   * All functions that change the size of the underlying storage are NOT thread-safe.
+  * All functions that return references may NOT be thread-safe (depending on the backend)
   * 
   */
 
@@ -205,7 +206,9 @@ public://templated get/put functions to specify the types via template parameter
 	template<typename TValue>
 	void put(TValue v);
 public: //iterator api
+	///This is NOT thread-safe for some backends
 	uint8_t & operator*();
+	///This is NOT thread-safe for some backends
 	const uint8_t & operator*() const;
 	UByteArrayAdapter operator+(OffsetType offSet) const;
 	UByteArrayAdapter operator++(int offSet);
@@ -272,8 +275,12 @@ public://conversion functions
 	std::string toString() const;
 	
 public://get functions with offset
+
+	///This is NOT thread-safe for some backends
 	uint8_t & operator[](const OffsetType pos);
+	///This is NOT thread-safe for some backends
 	const uint8_t & operator[](const OffsetType pos) const;
+	
 	uint8_t at(OffsetType pos) const;
 	int64_t getInt64(const OffsetType pos) const;
 	uint64_t getUint64(const OffsetType pos) const;
