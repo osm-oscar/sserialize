@@ -20,8 +20,7 @@ uint32_t UByteArrayAdapterPrivateSeekedFile::populateCache(sserialize::UByteArra
 	assert(len <= m_bufferSize);
 	uint64_t tmp = pos-m_bufferOffset;
 	if (pos < m_bufferOffset || tmp+len > m_bufferSize) {
-		::lseek64(m_fd, pos, SEEK_SET);
-		::read(m_fd, m_buffer, m_bufferSize);
+		::pread64(m_fd, m_buffer, m_bufferSize, pos);
 		m_bufferOffset = pos;
 		tmp = 0;
 	}
@@ -65,8 +64,7 @@ m_buffer(new uint8_t[m_bufferSize])
 	else {
 		throw sserialize::MissingDataException("UByteArrayAdapterPrivateSeekedFile: could not get file size");
 	}
-	::lseek64(m_fd, 0, SEEK_SET);
-	::read(m_fd, m_buffer, std::min<UByteArrayAdapter::OffsetType>(m_bufferSize, m_size));
+	::pread64(m_fd, m_buffer, std::min<UByteArrayAdapter::OffsetType>(m_bufferSize, m_size), 0);
 }
 
 UByteArrayAdapterPrivateSeekedFile::~UByteArrayAdapterPrivateSeekedFile() {
@@ -177,8 +175,7 @@ int32_t UByteArrayAdapterPrivateSeekedFile::getVlPackedInt32(UByteArrayAdapter::
 }
 
 void UByteArrayAdapterPrivateSeekedFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
-	::lseek64(m_fd, pos, SEEK_SET);
-	::read(m_fd, dest, len);
+	::pread64(m_fd, dest, len, pos);
 }
 
 std::string UByteArrayAdapterPrivateSeekedFile::getString(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const {
@@ -187,8 +184,7 @@ std::string UByteArrayAdapterPrivateSeekedFile::getString(UByteArrayAdapter::Off
 	if (myLen < 1)
 		return std::string();
 	char buf[strLen];
-	::lseek64(m_fd, pos+len, SEEK_SET);
-	::read(m_fd, buf, strLen);
+	::pread64(m_fd, buf, strLen, pos+len);
 	return std::string(buf, strLen);
 }
 
@@ -197,78 +193,68 @@ std::string UByteArrayAdapterPrivateSeekedFile::getString(UByteArrayAdapter::Off
 void UByteArrayAdapterPrivateSeekedFile::putInt64(UByteArrayAdapter::OffsetType pos, int64_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, sizeof(value));
+	::pwrite64(m_fd, buf, sizeof(value), pos);
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putUint64(UByteArrayAdapter::OffsetType pos, uint64_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, sizeof(value));
+	::pwrite64(m_fd, buf, sizeof(value), pos);
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putInt32(UByteArrayAdapter::OffsetType pos, int32_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, sizeof(value));
+	::pwrite64(m_fd, buf, sizeof(value), pos);
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putUint32(UByteArrayAdapter::OffsetType pos, uint32_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, sizeof(value));
+	::pwrite64(m_fd, buf, sizeof(value), pos);
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putUint24(UByteArrayAdapter::OffsetType pos, uint32_t value) {
 	uint8_t buf[3];
 	p_u24(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, 3);
+	::pwrite64(m_fd, buf, 3, pos);
 	updateBufferAfterWrite(pos, buf, 3);
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putUint16(UByteArrayAdapter::OffsetType pos, uint16_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, sizeof(value));
+	::pwrite64(m_fd, buf, sizeof(value), pos);
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putUint8(UByteArrayAdapter::OffsetType pos, uint8_t value) {
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, &value, sizeof(value));
+	::pwrite64(m_fd, &value, sizeof(value), pos);
 	updateBufferAfterWrite(pos, &value, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType value) {
 	uint8_t buf[5];
 	p_u40(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, 5);
+	::pwrite64(m_fd, buf, 5, pos);
 	updateBufferAfterWrite(pos, buf, 5);
 }
 
 void UByteArrayAdapterPrivateSeekedFile::putNegativeOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::NegativeOffsetType value) {
 	uint8_t buf[5];
 	p_s40(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, 5);
+	::pwrite64(m_fd, buf, 5, pos);
 	updateBufferAfterWrite(pos, buf, 5);
 }
 
 int UByteArrayAdapterPrivateSeekedFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, myLen);
+	::pwrite64(m_fd, buf, myLen, pos);
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -276,8 +262,7 @@ int UByteArrayAdapterPrivateSeekedFile::putVlPackedUint64(UByteArrayAdapter::Off
 int UByteArrayAdapterPrivateSeekedFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, myLen);
+	::pwrite64(m_fd, buf, myLen, pos);
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -285,8 +270,7 @@ int UByteArrayAdapterPrivateSeekedFile::putVlPackedInt64(UByteArrayAdapter::Offs
 int UByteArrayAdapterPrivateSeekedFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, myLen);
+	::pwrite64(m_fd, buf, myLen, pos);
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -294,8 +278,7 @@ int UByteArrayAdapterPrivateSeekedFile::putVlPackedUint32(UByteArrayAdapter::Off
 int UByteArrayAdapterPrivateSeekedFile::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_vu32pad4(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, myLen);
+	::pwrite64(m_fd, buf, myLen, pos);
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -303,8 +286,7 @@ int UByteArrayAdapterPrivateSeekedFile::putVlPackedPad4Uint32(UByteArrayAdapter:
 int UByteArrayAdapterPrivateSeekedFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, myLen);
+	::pwrite64(m_fd, buf, myLen, pos);
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -312,15 +294,13 @@ int UByteArrayAdapterPrivateSeekedFile::putVlPackedInt32(UByteArrayAdapter::Offs
 int UByteArrayAdapterPrivateSeekedFile::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_vs32pad4(value, buf);
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, buf, myLen);
+	::pwrite64(m_fd, buf, myLen, pos);
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
 
 void UByteArrayAdapterPrivateSeekedFile::put(UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len) {
-	::lseek64(m_fd, pos, SEEK_SET);
-	::write(m_fd, src, len);
+	::pwrite64(m_fd, src, len, pos);
 	updateBufferAfterWrite(pos, src, len);
 }
 

@@ -4,6 +4,8 @@
 
 namespace sserialize {
 
+//BUG: This class is NOT thread-safe yet, but it should be since all other UBA are thread-safe
+
 class UByteArrayAdapterPrivateSeekedFile: public UByteArrayAdapterPrivate {
 protected:
 	int m_fd;
