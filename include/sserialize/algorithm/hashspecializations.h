@@ -34,8 +34,8 @@ struct hash< std::pair<S, V> > {
 	std::hash<V> hV;
 	inline size_t operator()(const pair<S, V> & v) const {
 		size_t seed = 0;
-		::hash_combine(seed, v.first);
-		::hash_combine(seed, v.second);
+		::hash_combine(seed, v.first, hS);
+		::hash_combine(seed, v.second, hV);
 		return seed;
 	}
 };
