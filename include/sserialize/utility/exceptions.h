@@ -46,6 +46,15 @@ public:
 	}
 };
 
+class IOException: public Exception {
+public:
+	IOException(const std::string & what) :
+	Exception()
+	{
+		setMsg("IOException: " + what);
+	}
+};
+
 class TypeMissMatchException: public Exception {
 public:
 	TypeMissMatchException(const std::string & what) :
