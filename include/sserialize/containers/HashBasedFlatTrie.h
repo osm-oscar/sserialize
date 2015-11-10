@@ -282,7 +282,7 @@ public:
 	StaticString insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 	TValue & operator[](const StaticString & str);
 	///You have to call finalize() before using this @param prefixMatch strIt->strEnd can be a prefix of the path
-	///This is NOT thread-sage
+	///This is NOT thread-safe
 	template<typename T_OCTET_ITERATOR>
 	NodePtr findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch);
 	
@@ -297,8 +297,10 @@ public:
 		return NodePtr( tmp->m_ht.begin(), tmp->m_ht.end(), &m_strHandler);
 	}
 	
-	///you can only call this after finalize()
-
+	///append just the trie, no payload
+	bool append(UByteArrayAdapter & dest);
+	
+	///you can only call this after finalize(), calls payloadHandler in in-order
 	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
 	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
 	
@@ -646,10 +648,10 @@ bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::Fla
 }
 
 template<typename TValue>
-template<typename T_PH, typename T_STATIC_PAYLOAD>
-bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
+bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
+
 #if defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE)
 	UByteArrayAdapter::OffsetType flatTrieBaseBeginOffset = dest.tellPutPtr();
 #endif
@@ -704,9 +706,20 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		std::cout << "Tries are equal" << std::endl;
 	}
 #endif
+	return true;
+}
+
+template<typename TValue>
+template<typename T_PH, typename T_STATIC_PAYLOAD>
+bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
+	if (!append(dest)) {
+		return false;
+	}
+	sserialize::ProgressInfo pinfo;
+	sserialize::TimeMeasurer tm;
 	sserialize::Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> tmpPayload(size(), size());
 	std::vector<uint32_t> nodeIdToData(size(), std::numeric_limits<uint32_t>::max());
-	count = 0;
+	uint32_t count = 0;
 	if (threadCount <= 1) {
 		std::vector<NodePtr> nodesInLevelOrder;
 		nodesInLevelOrder.reserve(size());
