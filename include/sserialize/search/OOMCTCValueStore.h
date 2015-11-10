@@ -5,7 +5,7 @@
 #include <sserialize/algorithm/oom_algorithm.h>
 #include <limits>
 
-namespace oscar_create {
+namespace sserialize {
 namespace detail {
 namespace OOMCTCValuesCreator {
 
@@ -112,7 +112,7 @@ public:
 public:
 	OOMCTCValuesCreator(Traits traits);
 	template<typename TItemIterator, typename TInsertionTraits>
-	bool insert(TItemIterator begin, const TItemIterator & end, const sserialize::Static::ItemIndexStore & idxStore, TInsertionTraits itraits);
+	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits);
 	template<typename TOutputTraits>
 	void append(TOutputTraits otraits);
 private:
@@ -128,7 +128,7 @@ private:
 template<typename TBaseTraits>
 template<typename TItemIterator, typename TInputTraits>
 bool
-OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, const sserialize::Static::ItemIndexStore& idxStore, TInputTraits itraits)
+OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits)
 {
 	typedef typename TInputTraits::ItemDerefer ItemDerefer;
 	typedef typename TInputTraits::FullMatchPredicate FullMatchPredicate;
