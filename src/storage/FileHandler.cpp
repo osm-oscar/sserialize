@@ -56,7 +56,7 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 	return d;
 }
 
-void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess, bool fastFile) {
+int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFileName, bool fastFile) {
 	std::size_t fbSize;
 	if (fastFile) {
 		fbSize = sserialize::UByteArrayAdapter::getFastTempFilePrefix().size();
@@ -74,14 +74,27 @@ void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::strin
 	::memset(fileName+fbSize, 'X', 6);
 	fileName[fbSize+6] = 0;
 	
-	fd = ::mkstemp(fileName);
+	int fd = ::mkstemp(fileName);
 	
-	if (fd < 0)
-		return 0;
+	if (fd < 0) {
+		return -1;
+	}
+	
 	if (::ftruncate(fd, fileSize) < 0) {
 		::close(fd);
 		::unlink(fileName);
-		fd = -1;
+		return -1;
+	}
+	
+	tmpFileName = std::string(fileName);
+	return fd;
+}
+
+
+void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess, bool fastFile) {
+	fd = createTmp(fileSize, tmpFileName, fastFile);
+	
+	if (fd < 0) {
 		return 0;
 	}
 	
@@ -89,12 +102,10 @@ void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::strin
 	
 	if (d == MAP_FAILED) {
 		::close(fd);
-		::unlink(fileName);
+		::unlink(tmpFileName.c_str());
 		fd = -1;
 		return 0;
 	}
-	
-	tmpFileName = std::string(fileName);
 	
 	return d;
 }
