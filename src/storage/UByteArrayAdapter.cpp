@@ -438,7 +438,7 @@ const uint8_t& UByteArrayAdapter::operator*() const {
 
 uint8_t UByteArrayAdapter::at(OffsetType pos) const {
 	if (pos < m_len) {
-		return (*m_priv)[m_offSet+pos];
+		return m_priv->getUint8(m_offSet+pos);
 	}
 	return 0;
 }
