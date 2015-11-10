@@ -15,7 +15,7 @@ struct FileHandler {
 	static bool close(int fd, void* mem, sserialize::OffsetType size, bool sync = false);
 	
 	///@return fd
-	static int shmCreate(const std::string & fileName);
+	static int shmCreate(std::string & fileName);
 	static bool shmDestroy(const std::string & fileName, int fd, void* mem, sserialize::OffsetType size);
 };
 

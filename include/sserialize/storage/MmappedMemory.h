@@ -254,18 +254,8 @@ private:
 	OffsetType m_size;
 	int m_fd;
 	std::string m_name;
-private:
-	std::string generateName(OffsetType size) const {
-		std::stringstream ss;
-		ss << "/sserialize" << size << rand();
-		std::string ret(ss.str());
-		if (ret.size() > 255)
-			ret.resize(255);
-		return ret;
-	}
 public:
 	MmappedMemorySharedMemory(OffsetType size) : m_data(0), m_size(0) {
-		m_name = generateName(size);
 		m_fd = FileHandler::shmCreate(m_name);
 		if (m_fd < 0) {
 			throw sserialize::CreationException("sserialize::MmappedMemorySharedMemory unable to create shm region");

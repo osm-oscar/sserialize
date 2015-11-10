@@ -142,7 +142,13 @@ bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 	return ok;
 }
 
-int FileHandler::shmCreate(const std::string& fileName) {
+int FileHandler::shmCreate(std::string& fileName) {
+	std::stringstream ss;
+	ss << "/sserialize" << rand() << rand();
+	fileName = ss.str();
+	if (fileName.size() > 255) {
+		fileName.resize(255);
+	}
 	return ::shm_open(fileName.c_str(), O_CREAT | O_RDWR | O_EXCL, S_IRWXU);
 }
 
