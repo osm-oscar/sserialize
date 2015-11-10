@@ -36,7 +36,8 @@ src/storage/ChunkedMmappedFile.cpp
 src/storage/CompressedMmappedFile.cpp
 src/storage/UByteArrayAdapter.cpp
 src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivate.cpp
-src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterSeekedFile.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterThreadSafeFile.cpp
+src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterFile.cpp
 src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateArray.cpp
 src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateMmappedFile.cpp
 src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp

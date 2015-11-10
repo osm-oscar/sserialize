@@ -1,25 +1,18 @@
-#ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_SEEKED_FILE_H
-#define UBYTE_ARRAY_ADAPTER_PRIVATE_SEEKED_FILE_H
+#ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_THREAD_SAFE_FILE_H
+#define UBYTE_ARRAY_ADAPTER_PRIVATE_THREAD_SAFE_FILE_H
 #include "UByteArrayAdapterPrivate.h"
 
 namespace sserialize {
 
-//BUG: This class is NOT thread-safe yet, but it should be since all other UBA are thread-safe
-
-class UByteArrayAdapterPrivateSeekedFile: public UByteArrayAdapterPrivate {
+class UByteArrayAdapterPrivateThreadSafeFile: public UByteArrayAdapterPrivate {
 protected:
 	int m_fd;
-	uint32_t m_bufferSize;
 	UByteArrayAdapter::OffsetType m_size;
-	mutable UByteArrayAdapter::OffsetType m_bufferOffset;
-	mutable uint8_t * m_buffer;
-protected:
-	uint32_t populateCache(sserialize::UByteArrayAdapter::OffsetType pos, uint32_t len) const;
-	void updateBufferAfterWrite(sserialize::UByteArrayAdapter::OffsetType pos, const uint8_t * src, uint32_t len);
+	mutable uint8_t m_buffer;
 public:
-	UByteArrayAdapterPrivateSeekedFile();
-	UByteArrayAdapterPrivateSeekedFile(const std::string & filePath, bool writeable = false);
-	virtual ~UByteArrayAdapterPrivateSeekedFile();
+	UByteArrayAdapterPrivateThreadSafeFile();
+	UByteArrayAdapterPrivateThreadSafeFile(const std::string & filePath, bool writeable = false);
+	virtual ~UByteArrayAdapterPrivateThreadSafeFile();
 	virtual UByteArrayAdapter::OffsetType size() const;
 	virtual bool isContiguous() const;
 
@@ -35,7 +28,9 @@ public:
 	virtual void setDeleteOnClose(bool del);
 
 //Access functions
+	///This is NOT thread-safe (and will never be)
 	virtual uint8_t & operator[](UByteArrayAdapter::OffsetType pos);
+	///This is NOT thread-safe (and will never be)
 	virtual const uint8_t & operator[](UByteArrayAdapter::OffsetType pos) const;
 
 	virtual int64_t getInt64(UByteArrayAdapter::OffsetType pos) const;

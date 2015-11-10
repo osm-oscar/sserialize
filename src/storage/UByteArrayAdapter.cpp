@@ -961,7 +961,13 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writable, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
 	if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
 		if (chunkSizeExponent == 0) {
-			return UByteArrayAdapter( sserialize::RCPtrWrapper<UByteArrayAdapterPrivate>( new UByteArrayAdapterPrivateSeekedFile(fileName, writable) ) );
+			return UByteArrayAdapter( sserialize::RCPtrWrapper<UByteArrayAdapterPrivate>(
+			#ifdef SSERIALIZE_WITH_THREADS
+				new UByteArrayAdapterPrivateThreadSafeFile(fileName, writable)
+			#else
+				new UByteArrayAdapterPrivateFile(fileName, writable)
+			#endif
+			));
 		}
 		else {
 			ChunkedMmappedFile file(fileName, chunkSizeExponent, writable);
