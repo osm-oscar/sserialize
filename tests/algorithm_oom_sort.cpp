@@ -5,6 +5,7 @@
 #include "datacreationfuncs.h"
 #include <sserialize/utility/printers.h>
 #include <sserialize/algorithm/oom_algorithm.h>
+#include <sserialize/containers/MMVector.h>
 
 class OomAlgorithm: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( OomAlgorithm );

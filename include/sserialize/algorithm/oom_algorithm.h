@@ -6,7 +6,7 @@
 #include <vector>
 #include <queue>
 #include <mutex>
-#include <sserialize/containers/MMVector.h>
+#include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/stats/ProgressInfo.h>
@@ -184,7 +184,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	assert(state.srcOffset == state.srcSize);
 	
 	//now merge the chunks
-	sserialize::MMVector<value_type> tmp(mmt);
+	sserialize::OOMArray<value_type> tmp(mmt);
 	tmp.reserve(state.srcSize);
 	
 	struct PrioComp {
@@ -239,8 +239,8 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			}
 			state.pinfo(state.srcOffset+tmp.size());
 			///move back this part to source
-			for(auto & x : tmp) {
-				*srcIt = std::move(x);
+			for(auto x : tmp) {
+				*srcIt = x;
 				++srcIt;
 			}
 			state.srcOffset += tmp.size();
@@ -263,7 +263,7 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	}
 	typedef typename std::iterator_traits<TInputOutputIterator>::value_type value_type;
 	
-	sserialize::MMVector<value_type> tmp(mmt);
+	sserialize::OOMArray<value_type> tmp(mmt);
 	tmp.reserve(std::distance(begin, end));
 	
 	auto it = begin;

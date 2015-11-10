@@ -1,6 +1,8 @@
 #include <sserialize/algorithm/oom_algorithm.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/utility/printers.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/containers/MMVector.h>
 
 void help() {
 	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -p <temp-path>" << std::endl;
