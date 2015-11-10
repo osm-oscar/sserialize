@@ -51,6 +51,7 @@ ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
 ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie)
 ADD_TEST_TARGET_SINGLE(containers_DataSetFactory)
 ADD_TEST_TARGET_SINGLE(containers_CFLArray)
+ADD_TEST_TARGET_SINGLE(containers_OOMArray)
 
 #util
 ADD_TEST_TARGET_SINGLE(util_compactuintarray)
