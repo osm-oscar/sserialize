@@ -24,9 +24,13 @@ public:
 	///Buffered InputIterator, calls to set() or push_back/emplace_back invalidate this data
 	class ConstIterator {
 	public:
-		ConstIterator() : m_d(0), m_p(0) {}
-		ConstIterator(ConstIterator && other) : m_d(other.m_d), m_p(other.m_p), m_bufferBegin(other.m_bufferBegin), m_buffer(std::move(other.m_buffer)) {}
-		ConstIterator(const ConstIterator & other) : m_d(other.m_d), m_p(other.m_p), m_bufferBegin(other.m_bufferBegin), m_buffer(other.m_buffer) {}
+		ConstIterator() : m_d(0), m_p(0), m_bufferBegin(0), m_bufferSize(0) {}
+		ConstIterator(ConstIterator && other) :
+			m_d(other.m_d), m_p(other.m_p), m_bufferBegin(other.m_bufferBegin),
+			m_bufferSize(other.m_bufferSize), m_buffer(std::move(other.m_buffer)) {}
+		ConstIterator(const ConstIterator & other) :
+			m_d(other.m_d), m_p(other.m_p), m_bufferBegin(other.m_bufferBegin),
+			m_bufferSize(other.m_bufferSize), m_buffer(other.m_buffer) {}
 		~ConstIterator() {}
 		///The returned reference is invalidated by a call to operator++() or ~ConstIterator()
 		inline const TValue & operator*() const { return m_buffer.at(m_p-m_bufferBegin); }
@@ -37,7 +41,7 @@ public:
 			if (m_bufferBegin + m_buffer.size() <= m_p) {
 				m_bufferBegin += m_buffer.size();
 				m_buffer.clear();
-				m_d->fill(m_p, m_buffer, m_bufferSize);
+				m_d->fill(m_buffer, m_bufferSize, m_p);
 			}
 			return *this;
 		}
@@ -46,8 +50,8 @@ public:
 		inline SizeType bufferSize() const { return m_bufferSize; }
 	protected:
 		friend class OOMArray;
-		ConstIterator(OOMArray * d, SizeType s) : m_d(d), m_p(s), m_bufferBegin(m_p), m_bufferSize((1024*1024)/sizeof(TValue)) {
-			m_d->fill(m_p, m_buffer, m_bufferSize);
+		ConstIterator(OOMArray * d, SizeType p, SizeType bs) : m_d(d), m_p(p), m_bufferBegin(m_p), m_bufferSize(bs) {
+			m_d->fill(m_buffer, m_bufferSize, m_p);
 		}
 		OOMArray * d() { return m_d; }
 		const OOMArray * d() const { return m_d; }
@@ -75,7 +79,7 @@ public:
 		bool operator!=(const Iterator & other) const { return ConstIterator::operator!=(other); }
 	protected:
 		friend class OOMArray;
-		Iterator(OOMArray * d, SizeType s) : ConstIterator(d, s) {}
+		Iterator(OOMArray * d, SizeType p, SizeType bs) : ConstIterator(d, p, bs) {}
 	};
 	
 	typedef ConstIterator const_iterator;
@@ -95,6 +99,11 @@ public:
 	
 	void backBufferSize(sserialize::SizeType s);
 	inline sserialize::SizeType backBufferSize() const { return m_backBufferSize; }
+	
+	///standard read buffer size for iterators
+	inline void readBufferSize(sserialize::SizeType s) { m_readBufferSize = s; }
+	///standard read buffer size for iterators
+	inline sserialize::SizeType readBufferSize() const { return m_readBufferSize; }
 	
 	void flush();
 	
@@ -116,14 +125,14 @@ public:
 		emplace_back(TValue(std::forward<Args>(args)...));
 	}
 	
-	inline iterator begin() { return Iterator(this, 0); }
-	inline iterator end() { return Iterator(this, size()); }
-	inline const_iterator begin() const { return ConstIterator(this, 0); }
+	inline iterator begin() { return Iterator(this, 0, m_readBufferSize); }
+	inline iterator end() { return Iterator(this, size(), 0); }
+	inline const_iterator begin() const { return ConstIterator(this, 0, m_readBufferSize); }
 	inline const_iterator cbegin()  const { return begin(); }
-	inline const_iterator end() const { return ConstIterator(this, size()); }
+	inline const_iterator end() const { return ConstIterator(this, size(), 0); }
 	inline const_iterator cend() const { return end(); }
 private:
-	void fill(SizeType p, std::vector<TValue> & buffer, SizeType bufferSize);
+	void fill(std::vector<TValue> & buffer, SizeType bufferSize, SizeType p);
 private:
 	int m_fd;
 	std::string m_fn;
@@ -134,15 +143,17 @@ private:
 	sserialize::SizeType m_backBufferSize;
 	//write buffer for push_back operations
 	std::vector<TValue> m_backBuffer;
+	sserialize::SizeType m_readBufferSize;
 };
 
 template<typename TValue, typename TEnable>
-void OOMArray<TValue, TEnable>::fill(SizeType p, std::vector<TValue> & buffer, SizeType bufferSize) {
+void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType bufferSize, SizeType p) {
+	buffer.clear();
 	if (p >= size()) {
 		return;
 	}
 	if (p < m_backBufferBegin) {
-		SizeType fileCopyCount = std::min<SizeType>(bufferSize, p-m_backBufferBegin);
+		SizeType fileCopyCount = std::min<SizeType>(bufferSize, m_backBufferBegin-p);
 		buffer.resize(fileCopyCount);
 		
 		::pread64(m_fd, &(buffer[0]), sizeof(TValue)*fileCopyCount, sizeof(TValue)*p);
@@ -165,7 +176,8 @@ OOMArray<TValue, TEnable>::OOMArray(MmappedMemoryType mmt) :
 m_mmt(mmt),
 m_capacity(1024*1024/sizeof(TValue)),
 m_backBufferBegin(0),
-m_backBufferSize(m_capacity)
+m_backBufferSize(m_capacity),
+m_readBufferSize(m_capacity/16)
 {
 	switch(m_mmt) {
 	case sserialize::MM_FAST_FILEBASED:
@@ -194,7 +206,8 @@ m_fn(std::move(other.m_fn)),
 m_capacity(other.m_capacity),
 m_backBufferBegin(other.m_size),
 m_backBufferSize(other.m_backBufferSize),
-m_backBuffer(std::move(other.m_backBuffer))
+m_backBuffer(std::move(other.m_backBuffer)),
+m_readBufferSize(other.m_readBufferSize)
 {
 	other.m_fd = -1;
 	other.m_capacity = 0;
