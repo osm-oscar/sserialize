@@ -185,6 +185,8 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	
 	//now merge the chunks
 	sserialize::OOMArray<value_type> tmp(mmt);
+	tmp.backBufferSize((32*1024*1024)/sizeof(value_type));
+	tmp.readBufferSize((8*1024*1024)/sizeof(value_type));
 	tmp.reserve(state.srcSize);
 	
 	struct PrioComp {
@@ -264,6 +266,9 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	typedef typename std::iterator_traits<TInputOutputIterator>::value_type value_type;
 	
 	sserialize::OOMArray<value_type> tmp(mmt);
+	tmp.backBufferSize((32*1024*1024)/sizeof(value_type));
+	tmp.readBufferSize((8*1024*1024)/sizeof(value_type));
+	
 	tmp.reserve(std::distance(begin, end));
 	
 	auto it = begin;
