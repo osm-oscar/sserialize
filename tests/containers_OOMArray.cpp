@@ -127,9 +127,27 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+
+	bool testLarge = false;
+	if (argc > 1 && std::string(argv[1]) == "-l") {
+		testLarge = true;
+	}
+
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
+
+	runner.addTest(  TestOOMArray<32, 10, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 55, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 123, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 254, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 255, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 256, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 257, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 777, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<32, 1023, sserialize::MM_PROGRAM_MEMORY>::suite() );
+
+
 	runner.addTest(  TestOOMArray<32, 1000, sserialize::MM_PROGRAM_MEMORY>::suite() );
 	runner.addTest(  TestOOMArray<32, 1000, sserialize::MM_SHARED_MEMORY>::suite() );
 	runner.addTest(  TestOOMArray<32, 1000, sserialize::MM_FAST_FILEBASED>::suite() );
@@ -140,16 +158,23 @@ int main() {
 	runner.addTest(  TestOOMArray<16, 2000, sserialize::MM_FAST_FILEBASED>::suite() );
 	runner.addTest(  TestOOMArray<16, 2000, sserialize::MM_SLOW_FILEBASED>::suite() );
 
+	runner.addTest(  TestOOMArray<8, 100000, sserialize::MM_PROGRAM_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<8, 100000, sserialize::MM_SHARED_MEMORY>::suite() );
+	runner.addTest(  TestOOMArray<8, 100000, sserialize::MM_FAST_FILEBASED>::suite() );
+	runner.addTest(  TestOOMArray<8, 100000, sserialize::MM_SLOW_FILEBASED>::suite() );
+
+	
 	runner.addTest(  TestOOMArray<8, 1000000, sserialize::MM_PROGRAM_MEMORY>::suite() );
 	runner.addTest(  TestOOMArray<8, 1000000, sserialize::MM_SHARED_MEMORY>::suite() );
 	runner.addTest(  TestOOMArray<8, 1000000, sserialize::MM_FAST_FILEBASED>::suite() );
 	runner.addTest(  TestOOMArray<8, 1000000, sserialize::MM_SLOW_FILEBASED>::suite() );
 	
-	runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_PROGRAM_MEMORY>::suite() );
-	runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_SHARED_MEMORY>::suite() );
-	runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_FAST_FILEBASED>::suite() );
-	runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_SLOW_FILEBASED>::suite() );
-	
+	if (testLarge) {
+		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_PROGRAM_MEMORY>::suite() );
+		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_SHARED_MEMORY>::suite() );
+		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_FAST_FILEBASED>::suite() );
+		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_SLOW_FILEBASED>::suite() );
+	}
 	runner.run();
 	return 0;
 }
