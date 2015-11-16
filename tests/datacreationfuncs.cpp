@@ -14,6 +14,14 @@ std::string createString(uint32_t maxStrLen) {
 	return newStr;
 }
 
+std::vector<std::string> createStringsVec(uint32_t maxStrLen, uint32_t strCount) {
+	std::vector<std::string> ret;
+	for(size_t i = 0; i< strCount; i++) {
+		ret.push_back(createString(maxStrLen));
+	}
+	return ret;
+}
+
 std::deque<std::string> createStrings(uint32_t maxStrLen, uint32_t strCount) {
 	std::deque<std::string> ret;
 	for(size_t i = 0; i< strCount; i++) {
