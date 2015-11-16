@@ -5,7 +5,7 @@
 #include <sserialize/containers/MMVector.h>
 
 void help() {
-	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -p <temp-path>" << std::endl;
+	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -sp <source tmp path> -tp <tmp path>" << std::endl;
 }
 
 int main(int argc, char ** argv) {
@@ -33,10 +33,12 @@ int main(int argc, char ** argv) {
 			threadCount = atoi(argv[i+1]);
 			++i;
 		}
-		else if (token == "-p" && i+1 < argc) {
+		else if (token == "-sp" && i+1 < argc) {
 			path = std::string(argv[i+1]);
-			sserialize::UByteArrayAdapter::setTempFilePrefix(path);
 			sserialize::UByteArrayAdapter::setFastTempFilePrefix(path);
+		}
+		else if (token == "-tp" && i+1 < argc) {
+			sserialize::UByteArrayAdapter::setTempFilePrefix(std::string(argv[i+1]));
 		}
 		else if (token == "-h" || token == "--help") {
 			help();
@@ -48,13 +50,14 @@ int main(int argc, char ** argv) {
 		return -1;
 	}
 	
-	std::cout << "Creating a file at " << path << "\n";
+	std::cout << "Creating source file at " << path << "\n";
+	std::cout << "Creating tmp file at " << sserialize::UByteArrayAdapter::getTempFilePrefix() << "\n";
 	std::cout << "File size: " << sserialize::prettyFormatSize(size) << "\n";
 	std::cout << "Memory usage: " << sserialize::prettyFormatSize(memorySize) << std::endl;
 	
 	uint64_t entryCount = size/sizeof(uint64_t);
 	
-	sserialize::MMVector<uint64_t> data(sserialize::MM_FILEBASED);
+	sserialize::MMVector<uint64_t> data(sserialize::MM_FAST_FILEBASED);
 	data.reserve(entryCount);
 	
 	sserialize::ProgressInfo pinfo;
@@ -67,11 +70,20 @@ int main(int argc, char ** argv) {
 			pinfo(entryCount-i);
 		}
 	}
-	tm.end();
-	std::cout << "File creation took " << tm << std::endl;
+	pinfo.end();
 	tm.begin();
-	sserialize::oom_sort(data.begin(), data.end(), std::less<uint64_t>(), memorySize, threadCount, sserialize::MM_FILEBASED, queueDepth);
+	sserialize::oom_sort(data.begin(), data.end(), std::less<uint64_t>(), memorySize, threadCount, sserialize::MM_SLOW_FILEBASED, queueDepth);
 	tm.end();
 	std::cout << "Sorting took " << tm << std::endl;
+	pinfo.begin(entryCount, "Verifying");
+	for(uint64_t i(0), s(entryCount); i < s; ++i) {
+		if (data.at(i) != i+1) {
+			std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+		}
+		if (i % 1000 == 0) {
+			pinfo(i);
+		}
+	}
+	pinfo.end();
 	return 0;
 }
