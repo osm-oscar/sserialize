@@ -491,6 +491,16 @@ UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(std::string, getString, putString);
 
 #undef UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS
 
+template<>
+inline void UByteArrayAdapter::put(const sserialize::UByteArrayAdapter & v) {
+	putData(v);
+}
+
+template<>
+inline void UByteArrayAdapter::put(UByteArrayAdapter::OffsetType pos, const sserialize::UByteArrayAdapter & v) { \
+	putData(pos, v);
+}
+
 namespace detail {
 namespace __UByteArrayAdapter {
 
