@@ -60,7 +60,7 @@ ItemIndex SubSet::cells(const SubSet::NodePtr& node) const {
 			tmp.push_back(cqr().cellId(cellPos));
 		}
 		std::sort(tmp.begin(), tmp.end());
-		return sserialize::ItemIndex::absorb(tmp);
+		return sserialize::ItemIndex(std::move(tmp));
 	}
 	else {
 		std::vector<uint32_t> tmp;
@@ -68,7 +68,7 @@ ItemIndex SubSet::cells(const SubSet::NodePtr& node) const {
 		for(uint32_t cellPos : node->cellPositions()) {
 			tmp.push_back(cqr().cellId(cellPos));
 		}
-		return sserialize::ItemIndex::absorb(tmp);
+		return sserialize::ItemIndex(std::move(tmp));
 	}
 }
 
@@ -731,7 +731,7 @@ void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const
 	}
 	std::sort(intersectingCells.begin(), intersectingCells.end());
 	intersectingCells.resize(std::unique(intersectingCells.begin(), intersectingCells.end())-intersectingCells.begin());
-	fullyMatchedCells = sserialize::ItemIndex::absorb(intersectingCells);
+	fullyMatchedCells = sserialize::ItemIndex(std::move(intersectingCells));
 }
 
 void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, CellQueryResult & cqr) const {

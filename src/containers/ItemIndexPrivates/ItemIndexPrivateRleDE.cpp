@@ -597,7 +597,7 @@ ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< Ite
 				resultSet.push_back(id);
 		}
 	}
-	return ItemIndex::absorb(resultSet);
+	return ItemIndex(std::move(resultSet));
 }
 
 
@@ -616,7 +616,7 @@ ItemIndex ItemIndexPrivateRleDE::constrainedIntersect(const std::vector< ItemInd
 			states.next();
 		}
 	}
-	return ItemIndex::absorb(resultSet);
+	return ItemIndex(std::move(resultSet));
 }
 
 }//end namespace

@@ -36,7 +36,7 @@ public:
 	virtual void setUp() {
 		srcRes() = createNumbersSet(T_ITEM_COUNT);
 		std::vector<uint32_t> d(srcRes().begin(), srcRes().end());
-		indexRes() = ItemIndexIterator(ItemIndex::absorb(d));
+		indexRes() = ItemIndexIterator(ItemIndex(std::move(d)));
 	}
 	virtual void tearDown() {}
 };
@@ -55,8 +55,8 @@ public:
 		std::vector<uint32_t> dB(setB.begin(), setB.end());
 		
 		
-		ItemIndexIterator idxItA = ItemIndexIterator(ItemIndex::absorb(dA));
-		ItemIndexIterator idxItB = ItemIndexIterator(ItemIndex::absorb(dB));
+		ItemIndexIterator idxItA = ItemIndexIterator(ItemIndex(std::move(dA)));
+		ItemIndexIterator idxItB = ItemIndexIterator(ItemIndex(std::move(dB)));
 		
 		
 		srcRes().clear();
@@ -93,7 +93,7 @@ public:
 		std::vector<ItemIndexIterator> its;
 		for(size_t i = 0; i < sets.size(); i++) {
 			std::vector<uint32_t> d(sets[i].begin(), sets[i].end());
-			ItemIndexIterator idxIt = ItemIndexIterator( ItemIndex::absorb(d) );
+			ItemIndexIterator idxIt = ItemIndexIterator( ItemIndex(std::move(d)) );
 			its.push_back(idxIt);
 		}
 		indexRes() = ItemIndexIterator(its);

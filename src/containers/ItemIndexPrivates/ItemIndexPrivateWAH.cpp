@@ -810,7 +810,7 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 		bitOffset += 31;
 	}
 	
-	return ItemIndex::absorb(resultIds);
+	return ItemIndex(std::move(resultIds));
 }
 
 ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserialize::ItemIndexPrivateWAH * >& intersect, uint32_t count, sserialize::ItemIndex::ItemFilter * filter) {
@@ -874,7 +874,7 @@ ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserializ
 		bitOffset += 31;
 	}
 	
-	return ItemIndex::absorb(resultIds);
+	return ItemIndex(std::move(resultIds));
 }
 
 

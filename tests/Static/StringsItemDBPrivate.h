@@ -165,7 +165,7 @@ StringsItemDBPrivate<MetaDataDeSerializable>::select(const std::unordered_set<ui
 			arr.push_back(i);
 		}
 	}
-	return ItemIndex::absorb(arr);
+	return ItemIndex(std::move(arr));
 }
 
 template<class MetaDataDeSerializable>

@@ -216,12 +216,6 @@ void ItemIndex::toDisk() {
 	this->operator=(creator.getIndex());
 }
 
-ItemIndex ItemIndex::absorb(std::vector< uint32_t > & vec) {
-	ItemIndexPrivateStlVector * newPriv = new ItemIndexPrivateStlVector();
-	newPriv->absorb(vec);
-	return ItemIndex(newPriv);
-}
-
 void ItemIndex::dump(const char* fileName) const {
 	if (fileName) {
 		std::fstream fout;
@@ -285,7 +279,7 @@ ItemIndex ItemIndex::uniteWithVectorBackend(const ItemIndex & aindex, const Item
 		bIndexIt++;
 	}
 	
-	return ItemIndex::absorb(res);
+	return ItemIndex(std::move(res));
 }
 
 
@@ -438,7 +432,7 @@ ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & i
 				if ((*filter)(id))
 					ids.push_back(id);
 			}
-			idx = ItemIndex::absorb(ids);
+			idx = ItemIndex(std::move(ids));
 		}
 		return idx;
 	}
@@ -501,7 +495,7 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 				if ((*filter)(id))
 					ids.push_back(id);
 			}
-			idx = ItemIndex::absorb(ids);
+			idx = ItemIndex(std::move(ids));
 		}
 		return idx;
 	}

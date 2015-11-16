@@ -113,9 +113,6 @@ public:
 public:
 	static ItemIndex uniteWithVectorBackend(const ItemIndex & a, const ItemIndex & b);
 
-	///Creates am vector-based ItemIndex by absorbing. Doesn't copy. vec is empty afterwards
-	static ItemIndex absorb(std::vector<uint32_t> & vec);
-
 	static ItemIndex intersect(const std::vector< sserialize::ItemIndex >& set);
 	static ItemIndex unite(const std::vector< sserialize::ItemIndex >& set);
 
