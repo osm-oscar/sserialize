@@ -77,6 +77,10 @@ public:
 					const ItemIndex & partialMatches,
 					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	CellQueryResult(const ItemIndex & fullMatches,
+					const ItemIndex & partialMatches,
+					const std::vector<uint32_t>::const_iterator & partialMatchesItemsPtrBegin,
+					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
