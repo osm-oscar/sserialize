@@ -4,13 +4,6 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/ItemIndexIterator.h>
-#include <sserialize/containers/LFUCache.h>
-#ifdef SSERIALIZE_WITH_THREADS
-#include <mutex>
-#endif
-#ifndef SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE
-#define SSERIALIZE_STRING_COMPLETER_DEFAULT_CACHE_SIZE 8
-#endif
 
 
 //TODO:Implement getSizeInBytes by fixing dependency on single file

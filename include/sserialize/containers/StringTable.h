@@ -9,6 +9,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/strings/stringfunctions.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 class StringTable;

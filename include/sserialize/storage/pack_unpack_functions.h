@@ -1,5 +1,5 @@
-#ifndef COMMON_COMMON_H
-#define COMMON_COMMON_H
+#ifndef SSERIALIZE_PACK_UNPACK_FUNCTIONS_H
+#define SSERIALIZE_PACK_UNPACK_FUNCTIONS_H
 /* uint*_t */
 #include <stdint.h>
 /* memcpy */
