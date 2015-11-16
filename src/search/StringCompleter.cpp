@@ -1,5 +1,6 @@
 #include <sserialize/search/StringCompleter.h>
 #include <sserialize/search/StringCompleterPrivate.h>
+#include <sserialize/strings/unicode_case_functions.h>
 
 namespace sserialize {
 
@@ -161,6 +162,47 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 		qt = sserialize::StringCompleter::QT_SUBSTRING;
 	}
 	return (StringCompleter::QuerryType)qt;
+}
+
+bool StringCompleter::matches(const std::string & str, const std::string & qstr, StringCompleter::QuerryType qt) {
+	const std::string * myStr;
+	const std::string * myQStr;
+
+	std::string lStr, lqStr;
+	
+	if (qt & sserialize::StringCompleter::QT_CASE_INSENSITIVE) {
+		lStr = sserialize::unicode_to_lower(str);
+		lqStr = sserialize::unicode_to_lower(qstr);
+		myStr = &lStr;
+		myQStr = &lqStr;
+	}
+	else {
+		myStr = &str;
+		myQStr = &qstr;
+	}
+	
+	if (qt & sserialize::StringCompleter::QT_EXACT || qt & sserialize::StringCompleter::QT_PREFIX) {
+		std::size_t firstPos = myStr->find(*myQStr);
+		if (firstPos == 0) {
+			if (qt & sserialize::StringCompleter::QT_EXACT && myStr->size() == myQStr->size()) {
+				return true;
+			}
+			if (qt & sserialize::StringCompleter::QT_PREFIX) {
+				return true;
+			}
+		}
+	}
+	else {
+		std::size_t lastPos = myStr->rfind(*myQStr);
+		if (lastPos < std::string::npos) {
+			if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
+				return true;
+			}
+			if (qt & sserialize::StringCompleter::QT_SUFFIX && myQStr->size() + lastPos == myStr->size()) {
+				return true;
+			}
+		}
+	}
 }
 
 
