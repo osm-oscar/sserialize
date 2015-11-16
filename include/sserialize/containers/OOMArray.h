@@ -46,8 +46,11 @@ public:
 			return *this;
 		}
 		inline bool operator!=(const ConstIterator & other) const { return m_d != other.m_d || m_p != other.m_p; }
-		inline void bufferSize(SizeType s) { m_bufferSize = s; }
-		inline SizeType bufferSize() const { return m_bufferSize; }
+		///s in bytes
+		inline void bufferSize(SizeType s) { m_bufferSize = s/sizeof(TValue); }
+		
+		///in bytes
+		inline SizeType bufferSize() const { return m_bufferSize*sizeof(TValue); }
 	protected:
 		friend class OOMArray;
 		ConstIterator(OOMArray * d, SizeType p, SizeType bs) : m_d(d), m_p(p), m_bufferBegin(m_p), m_bufferSize(bs) {
@@ -97,13 +100,15 @@ public:
 	void clear();
 	void shrink_to_fit();
 	
+	///in Bytes
 	void backBufferSize(sserialize::SizeType s);
-	inline sserialize::SizeType backBufferSize() const { return m_backBufferSize; }
+	///in Bytes
+	inline sserialize::SizeType backBufferSize() const { return m_backBufferSize*sizeof(TValue); }
 	
-	///standard read buffer size for iterators
-	inline void readBufferSize(sserialize::SizeType s) { m_readBufferSize = s; }
-	///standard read buffer size for iterators
-	inline sserialize::SizeType readBufferSize() const { return m_readBufferSize; }
+	///standard read buffer size for iterators, in Bytes
+	inline void readBufferSize(sserialize::SizeType s) { m_readBufferSize = s/sizeof(TValue); }
+	///standard read buffer size for iterators, in Bytes
+	inline sserialize::SizeType readBufferSize() const { return m_readBufferSize*sizeof(TValue); }
 	
 	void flush();
 	
@@ -125,9 +130,9 @@ public:
 		emplace_back(TValue(std::forward<Args>(args)...));
 	}
 	
-	inline iterator begin() { return Iterator(this, 0, m_readBufferSize); }
+	inline iterator begin() { return Iterator(this, 0, readBufferSize()); }
 	inline iterator end() { return Iterator(this, size(), 0); }
-	inline const_iterator begin() const { return ConstIterator(this, 0, m_readBufferSize); }
+	inline const_iterator begin() const { return ConstIterator(this, 0, readBufferSize()); }
 	inline const_iterator cbegin()  const { return begin(); }
 	inline const_iterator end() const { return ConstIterator(this, size(), 0); }
 	inline const_iterator cend() const { return end(); }
@@ -140,9 +145,11 @@ private:
 	//the number of elements that fit in, not the data size
 	sserialize::SizeType m_capacity;
 	sserialize::SizeType m_backBufferBegin;
+	//number of entries in back buffer
 	sserialize::SizeType m_backBufferSize;
 	//write buffer for push_back operations
 	std::vector<TValue> m_backBuffer;
+	//number of entries in read buffer
 	sserialize::SizeType m_readBufferSize;
 };
 
@@ -182,7 +189,7 @@ m_readBufferSize(m_capacity/16)
 	switch(m_mmt) {
 	case sserialize::MM_FAST_FILEBASED:
 	case sserialize::MM_SLOW_FILEBASED:
-		m_fd = sserialize::FileHandler::createTmp(sizeof(TValue)*m_capacity, m_fn, mmt != MM_SLOW_FILEBASED);
+		m_fd = sserialize::FileHandler::createTmp(sizeof(TValue)*m_capacity, m_fn, mmt == MM_FAST_FILEBASED);
 		break;
 	case sserialize::MM_PROGRAM_MEMORY:
 	case sserialize::MM_SHARED_MEMORY:
