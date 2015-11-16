@@ -78,9 +78,11 @@ public:
 ///A standard out-of-memory sorting algorithm. It first sorts the input in chunks of size maxMemoryUsage/threadCount
 ///These chunks are then merged together in possibly multiple phases. In a single phase up to queueDepth chunks are merged together.
 ///@param maxMemoryUsage default is 4 GB
-///@param threadCount should be no larger than about 4, 2 should be sufficient for standard io-speeds, used fo the initial chunk sorting
+///@param threadCount should be no larger than about 4, 2 should be sufficient for standard io-speeds, used fo the initial chunk sorting, a single chunk then has a size of maxMemoryUsage/threadCount
 ///@param queueDepth the maximum number of chunks to merge in a single round, this directly influences the number of merge rounds
 ///@param comp comparisson operator for strict weak order. This functions needs to be thread-safe <=> threadCount > 1
+///In general: Larger chunks result in a smaller number of rounds and can be processed with a smaller queue depth reducing random access
+///Thus for very large data sizes it may be better use only one thread to create the largest chunks possible
 template<typename TInputOutputIterator, typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type> >
 void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
 				uint64_t maxMemoryUsage = 0x100000000,
@@ -101,6 +103,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	struct Config {
 		uint64_t initialChunkSize;
 		uint64_t maxMemoryUsage;
+		uint64_t tmpBuffferSize;
 		CompFunc * comp;
 	};
 	
@@ -183,11 +186,10 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	}
 	assert(state.srcOffset == state.srcSize);
 	
-	//now merge the chunks
+	//now merge the chunks, use about 1/4 of memory for the temporary storage
+	cfg.tmpBuffferSize = maxMemoryUsage/4;
+	cfg.maxMemoryUsage -= cfg.tmpBuffferSize;
 	sserialize::OOMArray<value_type> tmp(mmt);
-	tmp.backBufferSize((32*1024*1024)/sizeof(value_type));
-	tmp.readBufferSize((8*1024*1024)/sizeof(value_type));
-	tmp.reserve(state.srcSize);
 	
 	struct PrioComp {
 		CompFunc * comp;
@@ -209,12 +211,16 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		state.pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
 		for(uint32_t cbi(0), cbs(state.pendingChunks.size()); cbi < cbs; cbi += queueDepth) {
 			assert(!tmp.size());
-
+			
+			//set the buffer sizes
+			tmp.backBufferSize(cfg.tmpBuffferSize);
+			tmp.readBufferSize(sizeof(value_type));
+			
 			{//fill the activeChunkBuffers and create the chunk for the next round
 				assert(!state.activeChunkBuffers.size());
 				assert(state.srcOffset == state.pendingChunks.at(cbi).first);
 				uint32_t myQueueSize = std::min<uint32_t>(queueDepth, cbs-cbi);
-				uint64_t chunkBufferSize = maxMemoryUsage/(myQueueSize*sizeof(value_type));
+				uint64_t chunkBufferSize = cfg.maxMemoryUsage/(myQueueSize*sizeof(value_type));
 				uint64_t resultChunkBeginOffset = state.srcOffset;
 				uint64_t resultChunkEndOffset = state.pendingChunks.at(cbi+myQueueSize-1).second;
 				for(uint32_t i(0); i < myQueueSize; ++i) {
@@ -240,9 +246,15 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				}
 			}
 			state.pinfo(state.srcOffset+tmp.size());
+			
+			//flush tmp and set a larger read buffer
+			tmp.flush();
+			tmp.backBufferSize(0);
+			tmp.readBufferSize(cfg.tmpBuffferSize);
+			
 			///move back this part to source
 			for(auto x : tmp) {
-				*srcIt = x;
+				*srcIt = std::move(x);
 				++srcIt;
 			}
 			state.srcOffset += tmp.size();
@@ -265,9 +277,10 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	}
 	typedef typename std::iterator_traits<TInputOutputIterator>::value_type value_type;
 	
+	uint64_t tmpBufferSize = (32*1024*1024)/sizeof(value_type);
+	
 	sserialize::OOMArray<value_type> tmp(mmt);
-	tmp.backBufferSize((32*1024*1024)/sizeof(value_type));
-	tmp.readBufferSize((8*1024*1024)/sizeof(value_type));
+	tmp.backBufferSize(tmpBufferSize);
 	
 	tmp.reserve(std::distance(begin, end));
 	
@@ -278,6 +291,10 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 			tmp.emplace_back(std::move(*it));
 		}
 	}
+	
+	tmp.flush();
+	tmp.backBufferSize(0);
+	tmp.readBufferSize(tmpBufferSize);
 	
 	auto inIt = tmp.begin();
 	auto inEnd = tmp.end();
