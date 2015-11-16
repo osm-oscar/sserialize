@@ -201,10 +201,10 @@ public://templated get/put functions to specify the types via template parameter
 	void get(TValue & v);
 	
 	template<typename TValue>
-	void put(UByteArrayAdapter::OffsetType pos, TValue v);
+	void put(UByteArrayAdapter::OffsetType pos, const TValue & v);
 	
 	template<typename TValue>
-	void put(TValue v);
+	void put(const TValue & v);
 public: //iterator api
 	///This is NOT thread-safe for some backends
 	uint8_t & operator*();
@@ -456,11 +456,11 @@ sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, 
 
 #define UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(__TYPE, __GETFUNC, __PUTFUNC) \
 template<> \
-inline void UByteArrayAdapter::put(__TYPE v) { \
+inline void UByteArrayAdapter::put(const __TYPE & v) { \
 	__PUTFUNC(v); \
 } \
 template<> \
-inline void UByteArrayAdapter::put(UByteArrayAdapter::OffsetType pos, __TYPE v) { \
+inline void UByteArrayAdapter::put(UByteArrayAdapter::OffsetType pos, const __TYPE & v) { \
 	__PUTFUNC(pos, v); \
 } \
 template<> \
