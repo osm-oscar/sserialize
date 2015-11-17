@@ -106,6 +106,9 @@ ADD_TEST_TARGET_SINGLE(util_memusage)
 add_test_target_single(containers_itemindex_file)
 add_test_target_single(containers_setoptree)
 
+#search
+add_test_target_single(search_CellTextCompleter)
+
 #staging
 ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
 

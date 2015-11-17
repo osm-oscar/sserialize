@@ -28,8 +28,8 @@ public:
 	const NodeIdentifier & nodeId() const;
 	void nodeId(const NodeIdentifier & n);
 private:
-	constexpr const uint32_t FULL_MATCH = std::numeric_limits<uint32_t>::max();
-	constexpr const uint32_t NULL_CELL = std::numeric_limits<uint32_t>::max();
+	static constexpr const uint32_t FULL_MATCH = std::numeric_limits<uint32_t>::max();
+	static constexpr const uint32_t NULL_CELL = std::numeric_limits<uint32_t>::max();
 private:
 	uint32_t cellId;
 	//stores either the item or FULL_MATCH meaning that this cell is fully matched 
