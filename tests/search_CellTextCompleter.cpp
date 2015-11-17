@@ -275,123 +275,6 @@ public:
 	ItemCells itemCells() { return ItemCells(); }
 };
 
-class OOM_CTC_VS_BaseTraits {
-public:
-	struct NodeIdentifier {
-		uint32_t id;
-		sserialize::StringCompleter::QuerryType matchType;
-	};
-	struct NodeEqualPredicate {
-		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
-			return a.id == b.id && a.matchType == b.matchType;
-		}
-	};
-	struct NodeIdentifierLessThanComparator {
-		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
-			return (a.id == b.id ? a.matchType < b.matchType : a.id < b.id);
-		}
-	};
-public:
-	NodeIdentifier nodeIdentifier() { return NodeIdentifier(); }
-	NodeEqualPredicate nodeEqualPredicate() { return NodeEqualPredicate(); }
-	NodeIdentifierLessThanComparator nodeIdentifierLessThanComparator() { return NodeIdentifierLessThanComparator(); }
-};
-
-class OOM_CTC_VS_InputTraits: public OOM_SA_CTC_Traits {
-public:
-	typedef OOM_SA_CTC_Traits MyBaseTraits;
-	typedef MyBaseTraits::item_type item_type;
-	typedef sserialize::detail::OOMSACTCCreator::MyStaticTrieInfo MyStaticTrieInfo;
-	
-	class FullMatchPredicate {
-	private:
-		bool m_fullMatch;
-	public:
-		FullMatchPredicate(bool fullMatch) : m_fullMatch(fullMatch) {}
-		bool operator()(const item_type & item) { return m_fullMatch; }
-	};
-	class ItemTextSearchNodes {
-	private:
-		const MyStaticTrieInfo * m_ti;
-		MyBaseTraits::ExactStrings m_es;
-		MyBaseTraits::SuffixStrings m_ss;
-	public:
-		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss) :
-		m_ti(ti), m_es(es), m_ss(ss) {}
-		template<typename TOutputIterator>
-		void operator()(const item_type & item, TOutputIterator out) {
-			
-		}
-	};
-private:
-	bool m_fullMatch;
-	MyStaticTrieInfo * m_ti;
-public:
-	OOM_CTC_VS_InputTraits(const MyBaseTraits & baseTraits, bool allAreFullMatch) :
-	MyBaseTraits(baseTraits), m_fullMatch(allAreFullMatch) {}
-
-	FullMatchPredicate fullMatchPredicate() { return FullMatchPredicate(m_fullMatch); }
-	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings()); }
-};
-
-class OOM_CTC_VS_OutputTraits {
-public:
-	typedef OOM_CTC_VS_BaseTraits::NodeIdentifier NodeIdentifier;
-	class IndexFactoryOut {
-		sserialize::ItemIndexFactory * m_idxFactory;
-	public:
-		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
-		template<typename TIterator>
-		uint32_t operator()(const TIterator & begin, const TIterator & end) {
-			std::vector<uint32_t> tmp(begin, end);//BUG:this sucks
-			return m_idxFactory->addIndex(tmp);
-		}
-	};
-	class DataOut {
-	public:
-		typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
-	private:
-		PayloadCreator * m_payloadCreator;
-		uint32_t m_curNodeId;
-		uint32_t m_curTypes;
-		sserialize::UByteArrayAdapter m_curData;
-		std::vector<uint32_t> m_curOffsets;
-	public:
-		DataOut(PayloadCreator * pc) : m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE), m_payloadCreator(pc) {}
-		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
-			assert(m_curNodeId <= ni.id);
-			if (m_curNodeId != ni.id) {//flush
-				//make sure that we push at the right position
-				while(m_curNodeId+1 < m_payloadCreator->size()) {
-					m_payloadCreator->beginRawPut();
-					m_payloadCreator->endRawPut();
-				}
-				m_payloadCreator->beginRawPut();
-				m_payloadCreator->rawPut().put(m_curData);
-				m_payloadCreator->endRawPut();
-				//reset temp data
-				m_curNodeId = ni.id;
-				m_curTypes = sserialize::StringCompleter::QT_NONE;
-				m_curData = sserialize::UByteArrayAdapter(m_curData, 0, 0);
-				m_curOffsets.clear();
-			}
-			assert(m_curTypes < ni.matchType);
-			m_curTypes |= ni.matchType;
-			m_curOffsets += m_curData.tellPutPtr();
-			m_curData.put(data);
-		}
-	};
-private:
-	sserialize::ItemIndexFactory * m_idxFactory;
-	sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> * m_payloadCreator;
-public:
-	OOM_CTC_VS_OutputTraits(sserialize::ItemIndexFactory * idxFactory, sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> * payloadCreator) :
-	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator)
-	{}
-	
-	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
-	inline DataOut dataOut() { return DataOut(m_payloadCreator); }	
-};
 
 class OOMCTCTest: public CTCBaseTest {
 CPPUNIT_TEST_SUITE( OOMCTCTest );
@@ -408,7 +291,11 @@ private:
 	}
 public:
 	virtual void setUp() {
+		sserialize::ItemIndexFactory idxFactory(true);
+		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		
+		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
+								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, idxFactory, dest);
 	}
 	virtual void tearDown() {}
 

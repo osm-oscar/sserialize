@@ -5,6 +5,7 @@
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
 #include <sserialize/search/OOMCTCValueStore.h>
 #include <sserialize/search/StringCompleter.h>
+#include <sserialize/containers/ItemIndexFactory.h>
 
 /**
 
@@ -69,6 +70,124 @@ public:
 private:
 	uint32_t m_nodeId;
 	uint8_t m_qt;
+};
+
+
+class OOM_CTC_VS_BaseTraits {
+public:
+	typedef CTCValueStoreNode NodeIdentifier;
+	struct NodeEqualPredicate {
+		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
+			return a == b;
+		}
+	};
+	struct NodeIdentifierLessThanComparator {
+		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
+			return a < b;
+		}
+	};
+public:
+	NodeIdentifier nodeIdentifier() { return NodeIdentifier(); }
+	NodeEqualPredicate nodeEqualPredicate() { return NodeEqualPredicate(); }
+	NodeIdentifierLessThanComparator nodeIdentifierLessThanComparator() { return NodeIdentifierLessThanComparator(); }
+};
+
+template<typename TOOMSABaseTraits>
+class OOM_CTC_VS_InputTraits: public TOOMSABaseTraits {
+public:
+	typedef TOOMSABaseTraits MyBaseTraits;
+	typedef typename MyBaseTraits::item_type item_type;
+	typedef sserialize::detail::OOMSACTCCreator::MyStaticTrieInfo MyStaticTrieInfo;
+	
+	class FullMatchPredicate {
+	private:
+		bool m_fullMatch;
+	public:
+		FullMatchPredicate(bool fullMatch) : m_fullMatch(fullMatch) {}
+		bool operator()(const item_type & item) { return m_fullMatch; }
+	};
+	
+	class ItemTextSearchNodes {
+	private:
+		const MyStaticTrieInfo * m_ti;
+		MyBaseTraits::ExactStrings m_es;
+		MyBaseTraits::SuffixStrings m_ss;
+	public:
+		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss) :
+		m_ti(ti), m_es(es), m_ss(ss) {}
+		template<typename TOutputIterator>
+		void operator()(const item_type & item, TOutputIterator out) {
+			
+		}
+	};
+private:
+	MyStaticTrieInfo * m_ti;
+	bool m_fullMatch;
+public:
+	OOM_CTC_VS_InputTraits(const MyBaseTraits & baseTraits, MyStaticTrieInfo * ti, bool allAreFullMatch) :
+	MyBaseTraits(baseTraits), m_ti(ti), m_fullMatch(allAreFullMatch) {}
+
+	FullMatchPredicate fullMatchPredicate() { return FullMatchPredicate(m_fullMatch); }
+	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings()); }
+};
+
+class OOM_CTC_VS_OutputTraits {
+public:
+	typedef OOM_CTC_VS_BaseTraits::NodeIdentifier NodeIdentifier;
+	class IndexFactoryOut {
+		sserialize::ItemIndexFactory * m_idxFactory;
+	public:
+		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
+		template<typename TIterator>
+		uint32_t operator()(const TIterator & begin, const TIterator & end) {
+			std::vector<uint32_t> tmp(begin, end);//BUG:this sucks
+			return m_idxFactory->addIndex(tmp);
+		}
+	};
+	class DataOut {
+	public:
+		typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
+	private:
+		PayloadCreator * m_payloadCreator;
+		uint32_t m_curNodeId;
+		uint32_t m_curTypes;
+		sserialize::UByteArrayAdapter m_curData;
+		std::vector<uint32_t> m_curOffsets;
+	public:
+		DataOut(PayloadCreator * pc) : m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE), m_payloadCreator(pc) {}
+		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
+			assert(m_curNodeId <= ni.nodeId());
+			if (m_curNodeId != ni.nodeId()) {//flush
+				//make sure that we push at the right position
+				while(m_curNodeId+1 < m_payloadCreator->size()) {
+					m_payloadCreator->beginRawPut();
+					m_payloadCreator->endRawPut();
+				}
+				m_payloadCreator->beginRawPut();
+				m_payloadCreator->rawPut().put(m_curData);
+				m_payloadCreator->endRawPut();
+				//reset temp data
+				m_curNodeId = ni.nodeId();
+				m_curTypes = sserialize::StringCompleter::QT_NONE;
+				m_curData = sserialize::UByteArrayAdapter(m_curData, 0, 0);
+				m_curOffsets.clear();
+			}
+			assert(m_curTypes < ni.qt());
+			m_curTypes |= ni.qt();
+			m_curOffsets += m_curData.tellPutPtr();
+			m_curData.put(data);
+		}
+	};
+private:
+	sserialize::ItemIndexFactory * m_idxFactory;
+	sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> * m_payloadCreator;
+public:
+	OOM_CTC_VS_OutputTraits(sserialize::ItemIndexFactory * idxFactory, sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> * payloadCreator) :
+	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator)
+	{}
+	
+	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
+	inline DataOut dataOut() { return DataOut(m_payloadCreator); }
 };
 
 
@@ -187,32 +306,68 @@ void ItemDerefer<TTraits>::operator()(const item_type & item, TOutputIterator ou
 	m_allNodes.clear();
 }
 
-template<typename TTraits>
-class Creator {
-public:
-	typedef TTraits Traits;
-public:
-	Creator();
-	void insertStrings();
-	template<typename TInputIterator>
-	void insertRegions(TInputIterator begin, TInputIterator end);
-private:
-	sserialize::HashBasedFlatTrie<uint32_t> m_t;
-};
-
 }}//end namespace detail::OOMSACTCCreator
 
-template<typename TInputIterator, typename TTraits>
-void appendSACTC(TInputIterator begin, TInputIterator end, sserialize::UByteArrayAdapter & dest,
-TTraits traits = TTraits(), uint64_t maxMemoryUsage = static_cast<uint64_t>(1) << 32) {
+template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits>
+void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterator regionsBegin, TRegionIterator regionsEnd,
+					TItemTraits itemTraits, TRegionTraits regionTraits,
+					uint64_t maxMemoryUsage,
+					sserialize::ItemIndexFactory & idxFactory, sserialize::UByteArrayAdapter & dest)
+{
+	typedef TItemTraits ItemTraits;
+	typedef TRegionTraits RegionTraits;
+	typedef detail::OOMSACTCCreator::OOM_CTC_VS_InputTraits<ItemTraits> ItemInputTraits;
+	typedef detail::OOMSACTCCreator::OOM_CTC_VS_InputTraits<RegionTraits> RegionInputTraits;
+
+	typedef typename ItemTraits::ExactStrings ItemExactStrings;
+	typedef typename ItemTraits::SuffixStrings ItemSuffixStrings;
+	typedef typename RegionTraits::ExactStrings RegionExactStrings;
+	typedef typename RegionTraits::SuffixStrings RegionSuffixStrings;
 	
-	typedef TTraits Traits;
-	typedef typename Traits::ExactStringsDerefer ExactStringsDerefer;
-	typedef typename Traits::SuffixStringsDerefer SuffixStringsDerefer;
+	typedef detail::OOMSACTCCreator::OOM_CTC_VS_OutputTraits OutputTraits;
 	
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
 		sserialize::HashBasedFlatTrie<uint32_t> myTrie;
+		
+		struct ExactStringsInserter {
+			sserialize::HashBasedFlatTrie<uint32_t> * m_t;
+			ExactStringsInserter(sserialize::HashBasedFlatTrie<uint32_t> * t) : m_t(t) {}
+			ExactStringsInserter & operator*() { return *this;}
+			ExactStringsInserter & operator=(const std::string & str) {
+				m_t->insert(str);
+			}
+			ExactStringsInserter & operator++() { return *this; }
+		};
+		
+		struct SuffixStringsInserter {
+			sserialize::HashBasedFlatTrie<uint32_t> * m_t;
+			SuffixStringsInserter(sserialize::HashBasedFlatTrie<uint32_t> * t) : m_t(t) {}
+			SuffixStringsInserter & operator*() { return *this;}
+			SuffixStringsInserter & operator=(const std::string & str) {
+				auto sstr = m_t->insert(str);
+				
+			}
+			SuffixStringsInserter & operator++() { return *this; }
+		};
+
+		ExactStringsInserter esi(&myTrie);
+		SuffixStringsInserter ssi(&myTrie);
+
+		//insert the item strings
+		ItemExactStrings itemES(itemTraits.exactStrings());
+		ItemSuffixStrings itemSS(itemTraits.suffixStrings());
+		for(auto it(itemsBegin); it != itemsEnd; ++it) {
+			itemES(*it, esi);
+			itemSS(*it, ssi);
+		}
+		
+		RegionExactStrings regionES(regionTraits.exactStrings());
+		RegionSuffixStrings regionSS(regionTraits.suffixStrings());
+		for(auto it(regionsBegin); it != regionsEnd; ++it) {
+			regionES(*it, esi);
+			regionSS(*it, ssi);
+		}
 		
 		myTrie.finalize();
 		myTrie.append(dest);
@@ -220,9 +375,29 @@ TTraits traits = TTraits(), uint64_t maxMemoryUsage = static_cast<uint64_t>(1) <
 	
 	detail::OOMSACTCCreator::MyStaticTrie mst(sserialize::UByteArrayAdapter(dest, flatTrieBaseBegin));
 	
-	OOMCTCValuesCreator vc;
-	vc.insert(begin, end);
+	detail::OOMSACTCCreator::MyStaticTrieInfo ti(&mst);
 	
+	OOMCTCValuesCreator vc;
+	
+	//insert the regions
+	{
+		RegionInputTraits regionInputTraits(regionTraits, &ti, false);
+		vc.insert(regionsBegin, regionsEnd, regionInputTraits);
+	}
+	//insert the items
+	{
+		ItemInputTraits itemInputTraits(itemTraits, &ti, false);
+		vc.insert(itemsBegin, itemsEnd, itemInputTraits);
+	}
+	
+	//now serialize it
+	{
+		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
+		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
+		OutputTraits outPutTraits(&idxFactory, &pc);
+		vc.append(outPutTraits);
+		pc.flush();
+	}
 }
 
 }//end namespace
