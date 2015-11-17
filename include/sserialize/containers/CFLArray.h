@@ -89,7 +89,7 @@ public:
 			m_d.copy = new value_type[m_size];
 		}
 	}
-	///Create PolygonPointsContainer by copying elements from begin to end
+	///Create CFLArray by copying elements from begin to end
 	template<typename T_INPUT_ITERATOR>
 	CFLArray(const T_INPUT_ITERATOR & begin, const T_INPUT_ITERATOR & end) {
 		int size = std::distance(begin, end);
