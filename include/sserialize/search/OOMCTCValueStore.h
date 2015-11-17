@@ -69,11 +69,6 @@ using sserialize::TransformIterator< ValueEntryItemIteratorMapper<TNodeIdentifie
   * typdef InputIterator::value_type item_type; //the value type the input iterators dereference to
   * 
   * struct InsertionTraits {
-  *   struct ItemDerefer {
-  *     ///TOutputIterator dereferences to NodeIdentifier
-  *     template<typename TOutputIterator>
-  *     void operator()(item_type item, TOutputIterator out);
-  *   };
   *   ///returns if item produces full matches (in essence a region)
   *   struct FullMatchPredicate {
   *     bool operator()(item_type item);
@@ -83,11 +78,11 @@ using sserialize::TransformIterator< ValueEntryItemIteratorMapper<TNodeIdentifie
   *   }
   *   struct ItemCells {
   *     template<typename TOutputIterator>
-  *     void operator()(item_type item);
+  *     void operator()(item_type item, TOutputIterator out);
   *   }
   *   struct ItemTextSearchNodes {
   *     template<typename TOutputIterator>
-  *     void operator()(item_type item);
+  *     void operator()(item_type item, TOutputIterator out);
   *   }
   *   NodeIdentifierLessThanComparator nodeIdentifierLessThanComparator();
   *   NodeIdentifierEqualComparator nodeIdentifierEqualComparator();
@@ -130,7 +125,6 @@ template<typename TItemIterator, typename TInputTraits>
 bool
 OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits)
 {
-	typedef typename TInputTraits::ItemDerefer ItemDerefer;
 	typedef typename TInputTraits::FullMatchPredicate FullMatchPredicate;
 	typedef typename TInputTraits::ItemId ItemIdExtractor;
 	typedef typename TInputTraits::ItemCells ItemCellsExtractor;
@@ -138,7 +132,6 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	typedef TItemIterator ItemIterator;
 	
 	FullMatchPredicate fmPred(itraits.fullMatchPredicate());
-	ItemDerefer itemDerefer(itraits.itemDerefer());
 	ItemIdExtractor itemIdE(itraits.itemId());
 	ItemCellsExtractor itemCellsE(itraits.itemCells());
 	ItemTextSearchNodesExtractor nodesE(itraits.itemTextSearchNodes());
@@ -158,10 +151,10 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 			e.setFullMatch();
 		}
 		else {
-			e.itemId(itemId(item));
+			e.itemId(itemIdE(item));
 		}
-		itemCellsE(std::back_inserter<decltype(itemCells)>(itemCells));
-		nodesE(std::back_inserter<decltype(itemNodes)>(itemNodes));
+		itemCellsE(item, std::back_inserter<decltype(itemCells)>(itemCells));
+		nodesE(item, std::back_inserter<decltype(itemNodes)>(itemNodes));
 		for(const auto & node : itemNodes) {
 			e.nodeId(node);
 			for(uint32_t cellId : itemCells) {
@@ -236,7 +229,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 			rlc.put(x);
 		}
 		rlc.flush();
-		dout(ses.sd);
+		dout(ni, ses.sd);
 	}
 }
 
