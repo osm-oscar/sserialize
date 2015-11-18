@@ -22,6 +22,7 @@ struct Item {
 		isRegion = other.isRegion;
 		strs = other.strs;
 		cells = other.cells;
+		return *this;
 	}
 	
 	Item & operator=(Item && other) {
@@ -29,9 +30,10 @@ struct Item {
 		isRegion = other.isRegion;
 		strs = std::move(other.strs);
 		cells = std::move(other.cells);
+		return *this;
 	}
 	
-	bool matches(const std::string & qstr, sserialize::StringCompleter::QuerryType qt) {
+	bool matches(const std::string & qstr, sserialize::StringCompleter::QuerryType qt) const {
 		for(const auto & x : strs) {
 			if (sserialize::StringCompleter::matches(x, qstr, qt)) {
 				return true;
@@ -51,7 +53,24 @@ std::set<uint32_t> createCellIds(uint32_t count, uint32_t maxCellId) {
 	return res;
 }
 
-struct RegionArrangement {
+class RegionArrangement {
+private:
+	struct Region: sserialize::RefCountObject {
+		std::vector<uint32_t> cells;
+		std::vector< sserialize::RCPtrWrapper<Region> > children;
+		template<typename TVisitor>
+		void visitRec(TVisitor & v) {
+			v(this);
+			for(auto x : children) {
+				x->visitRec(v);
+			}
+		}
+		template<typename TVisitor>
+		void visit(TVisitor v) {
+			visitRec(v);
+		}
+	};
+public:
 	std::unordered_map<uint32_t, std::vector<uint32_t> > cellItems;
 	std::vector<Item> items;
 	std::vector<Item> regions;
@@ -76,21 +95,6 @@ struct RegionArrangement {
 
 	void init(uint32_t maxBranching, uint32_t maxDepth, uint32_t maxRegionCells,
 				uint32_t itemCount, uint32_t minStrs, uint32_t maxStrs, uint32_t minCells, uint32_t maxCells) {
-		struct Region: sserialize::RefCountObject {
-			std::vector<uint32_t> cells;
-			std::vector< sserialize::RCPtrWrapper<Region> > children;
-			template<typename TVisitor>
-			void visitRec(TVisitor & v) {
-				v(this);
-				for(auto x : children) {
-					x->visitRec(v);
-				}
-			}
-			template<typename TVisitor>
-			void visit(TVisitor v) {
-				visitRec(v);
-			}
-		};
 		
 		struct RegionGraphInfo {
 			sserialize::RCPtrWrapper<Region> rgp;
@@ -115,7 +119,7 @@ struct RegionArrangement {
 				crg.rgp->children.emplace_back(new Region());
 				rgi.emplace_back(crg.rgp->children.back(), crg.depth+1);
 			}
-			uint32_t cellCount = (rand() % maxCells) + 1;
+			uint32_t cellCount = (rand() % maxRegionCells) + 1;
 			for(uint32_t i(0); i < cellCount; ++i) {
 				crg.rgp->cells.push_back(cellId);
 				++cellId;
@@ -158,7 +162,7 @@ struct RegionArrangement {
 			}
 		}
 		for(auto & x : cellItems) {
-			std::sort(x.second);
+			std::sort(x.second.begin(), x.second.end());
 		}
 	}
 	
@@ -182,14 +186,17 @@ struct RegionArrangement {
 			}
 		}
 		
-		sserialize::ItemIndex fmi(std::move(fm));
+		std::vector<uint32_t> fmTmp(fm.begin(), fm.end());
+		std::sort(fmTmp.begin(), fmTmp.end());
+		
+		sserialize::ItemIndex fmi(std::move(fmTmp));
 		sserialize::ItemIndex pmi;
 		std::vector<uint32_t> pmil;
 		{
 			std::map<uint32_t, uint32_t> pmc2pml;
 			for(auto & x : pm) {
 				pmc2pml[x.first] = pml.size();
-				pml.push_back(std::move(x.second));
+				pml.emplace_back(std::move(x.second));
 			}
 			
 			std::vector<uint32_t> pmiTmp;
@@ -314,7 +321,7 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  TestTemplate::suite() );
+	runner.addTest(  OOMCTCTest::suite() );
 	runner.run();
 	return 0;
 }
