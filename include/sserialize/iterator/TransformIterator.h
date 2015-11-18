@@ -1,5 +1,6 @@
 #ifndef SSERIALIZE_TRANSFORM_ITERATOR_H
 #define SSERIALIZE_TRANSFORM_ITERATOR_H
+#include <iterator>
 
 
 namespace sserialize {
@@ -20,8 +21,19 @@ public:
 	inline TransformIterator & operator++() { ++m_it; return *this;}
 	inline T_RETURN_TYPE operator*() { return m_func(*m_it);}
 	inline bool operator!=(const TransformIterator & other) const { return m_it != other.m_it;}
+	const T_IT & baseIterator() const { return m_it; }
 };
 
 }//end namespace
+
+namespace std {
+
+template<typename T_UNARY_FUNC, typename T_RETURN_TYPE, typename T_IT>
+inline typename iterator_traits<T_IT>::difference_type
+distance(const sserialize::TransformIterator<T_UNARY_FUNC, T_RETURN_TYPE, T_IT> & a, const sserialize::TransformIterator<T_UNARY_FUNC, T_RETURN_TYPE, T_IT> & b) {
+	return std::distance(a.baseIterator(), b.baseIterator());
+}
+
+}//end namespace std
 
 #endif
