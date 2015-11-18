@@ -178,7 +178,7 @@ void get(sserialize::UByteArrayAdapter & d, const IntegerType & t, IntegerType &
 class UBABaseTest: public CppUnit::TestFixture {
 protected:
 	virtual sserialize::UByteArrayAdapter createUBA() { return sserialize::UByteArrayAdapter(); }
-	virtual sserialize::UByteArrayAdapter createUBA(const sserialize::UByteArrayAdapter & src) { return sserialize::UByteArrayAdapter(); }
+	virtual sserialize::UByteArrayAdapter createUBA(const sserialize::UByteArrayAdapter & /*src*/) { return sserialize::UByteArrayAdapter(); }
 public:
 	UBABaseTest() {}
 	virtual ~UBABaseTest() {}
