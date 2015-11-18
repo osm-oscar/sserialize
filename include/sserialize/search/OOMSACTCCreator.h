@@ -6,6 +6,7 @@
 #include <sserialize/search/OOMCTCValueStore.h>
 #include <sserialize/search/StringCompleter.h>
 #include <sserialize/containers/ItemIndexFactory.h>
+#include <unordered_set>
 
 /**
 
@@ -28,35 +29,6 @@ namespace sserialize {
 namespace detail {
 namespace OOMSACTCCreator {
 
-typedef sserialize::Static::UnicodeTrie::FlatTrieBase MyStaticTrie;
-
-std::vector<uint32_t> calcParents(const sserialize::Static::UnicodeTrie::FlatTrieBase & ft) {
-	struct Calc {
-		std::vector<uint32_t> parents;
-		void calc(const sserialize::Static::UnicodeTrie::FlatTrieBase::Node & node) {
-			uint32_t myNodeId = node.id();
-			for(auto x : node) {
-				parents.at(x.id()) = myNodeId;
-				calc(x);
-			}
-		}
-	} c;
-	c.parents.resize(ft.size(), 0xFFFFFFFF);
-	c.calc(ft.root());
-}
-
-class MyStaticTrieInfo {
-public:
-	MyStaticTrieInfo(MyStaticTrie * t);
-	~MyStaticTrieInfo() {}
-	const MyStaticTrie * trie() const { return m_trie; }
-	const std::vector<uint32_t> & parents() const { return m_parents; }
-	
-private:
-	MyStaticTrie * m_trie;
-	std::vector<uint32_t> m_parents;
-};
-
 class CTCValueStoreNode {
 public:
 	CTCValueStoreNode() : m_nodeId(std::numeric_limits<uint32_t>::max()), m_qt(sserialize::StringCompleter::QT_NONE) {}
@@ -72,130 +44,61 @@ private:
 	uint8_t m_qt;
 };
 
+}}} //end namespace sserialize::detail::OOMSACTCCreator
 
-class OOM_CTC_VS_BaseTraits {
-public:
-	typedef CTCValueStoreNode NodeIdentifier;
-	struct NodeEqualPredicate {
-		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
-			return a == b;
-		}
-	};
-	struct NodeIdentifierLessThanComparator {
-		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
-			return a < b;
-		}
-	};
-public:
-	NodeIdentifier nodeIdentifier() { return NodeIdentifier(); }
-	NodeEqualPredicate nodeEqualPredicate() { return NodeEqualPredicate(); }
-	NodeIdentifierLessThanComparator nodeIdentifierLessThanComparator() { return NodeIdentifierLessThanComparator(); }
+namespace std {
+
+template<>
+struct hash<sserialize::detail::OOMSACTCCreator::CTCValueStoreNode> {
+	std::hash<uint64_t> hS;
+	inline size_t operator()(const sserialize::detail::OOMSACTCCreator::CTCValueStoreNode & v) const {
+		return (static_cast<uint64_t>(v.nodeId()) << 8) | v.qt();
+	}
 };
 
-template<typename TOOMSABaseTraits>
-class OOM_CTC_VS_InputTraits: public TOOMSABaseTraits {
+}//end namespace std
+
+namespace sserialize {
+namespace detail {
+namespace OOMSACTCCreator {
+
+typedef sserialize::Static::UnicodeTrie::FlatTrieBase MyStaticTrie;
+
+class MyStaticTrieInfo {
 public:
-	typedef TOOMSABaseTraits MyBaseTraits;
-	typedef typename MyBaseTraits::item_type item_type;
-	typedef sserialize::detail::OOMSACTCCreator::MyStaticTrieInfo MyStaticTrieInfo;
-	
-	class FullMatchPredicate {
-	private:
-		bool m_fullMatch;
-	public:
-		FullMatchPredicate(bool fullMatch) : m_fullMatch(fullMatch) {}
-		bool operator()(const item_type & item) { return m_fullMatch; }
-	};
-	
-	class ItemTextSearchNodes {
-	private:
-		const MyStaticTrieInfo * m_ti;
-		MyBaseTraits::ExactStrings m_es;
-		MyBaseTraits::SuffixStrings m_ss;
-	public:
-		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss) :
-		m_ti(ti), m_es(es), m_ss(ss) {}
-		template<typename TOutputIterator>
-		void operator()(const item_type & item, TOutputIterator out) {
-			
-		}
-	};
+	typedef MyStaticTrie MyTrieType;
 private:
-	MyStaticTrieInfo * m_ti;
-	bool m_fullMatch;
-public:
-	OOM_CTC_VS_InputTraits(const MyBaseTraits & baseTraits, MyStaticTrieInfo * ti, bool allAreFullMatch) :
-	MyBaseTraits(baseTraits), m_ti(ti), m_fullMatch(allAreFullMatch) {}
-
-	FullMatchPredicate fullMatchPredicate() { return FullMatchPredicate(m_fullMatch); }
-	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings()); }
-};
-
-class OOM_CTC_VS_OutputTraits {
-public:
-	typedef OOM_CTC_VS_BaseTraits::NodeIdentifier NodeIdentifier;
-	class IndexFactoryOut {
-		sserialize::ItemIndexFactory * m_idxFactory;
-	public:
-		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
-		template<typename TIterator>
-		uint32_t operator()(const TIterator & begin, const TIterator & end) {
-			std::vector<uint32_t> tmp(begin, end);//BUG:this sucks
-			return m_idxFactory->addIndex(tmp);
-		}
-	};
-	class DataOut {
-	public:
-		typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
-	private:
-		PayloadCreator * m_payloadCreator;
-		uint32_t m_curNodeId;
-		uint32_t m_curTypes;
-		sserialize::UByteArrayAdapter m_curData;
-		std::vector<uint32_t> m_curOffsets;
-	public:
-		DataOut(PayloadCreator * pc) : m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE), m_payloadCreator(pc) {}
-		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
-			assert(m_curNodeId <= ni.nodeId());
-			if (m_curNodeId != ni.nodeId()) {//flush
-				//make sure that we push at the right position
-				while(m_curNodeId+1 < m_payloadCreator->size()) {
-					m_payloadCreator->beginRawPut();
-					m_payloadCreator->endRawPut();
+	inline std::vector<uint32_t> calcParents(const MyTrieType & ft) {
+		struct Calc {
+			std::vector<uint32_t> parents;
+			void calc(const sserialize::Static::UnicodeTrie::FlatTrieBase::Node & node) {
+				uint32_t myNodeId = node.id();
+				for(auto x : node) {
+					parents.at(x.id()) = myNodeId;
+					calc(x);
 				}
-				m_payloadCreator->beginRawPut();
-				m_payloadCreator->rawPut().put(m_curData);
-				m_payloadCreator->endRawPut();
-				//reset temp data
-				m_curNodeId = ni.nodeId();
-				m_curTypes = sserialize::StringCompleter::QT_NONE;
-				m_curData = sserialize::UByteArrayAdapter(m_curData, 0, 0);
-				m_curOffsets.clear();
 			}
-			assert(m_curTypes < ni.qt());
-			m_curTypes |= ni.qt();
-			m_curOffsets += m_curData.tellPutPtr();
-			m_curData.put(data);
-		}
-	};
-private:
-	sserialize::ItemIndexFactory * m_idxFactory;
-	sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> * m_payloadCreator;
+		} c;
+		c.parents.resize(ft.size(), 0xFFFFFFFF);
+		c.calc(ft.root());
+		return c.parents;
+	}
 public:
-	OOM_CTC_VS_OutputTraits(sserialize::ItemIndexFactory * idxFactory, sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> * payloadCreator) :
-	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator)
-	{}
-	
-	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
-	inline DataOut dataOut() { return DataOut(m_payloadCreator); }
+	MyStaticTrieInfo(MyStaticTrie * t) : m_trie(t), m_parents(calcParents(*t)) {}
+	~MyStaticTrieInfo() {}
+	inline const MyTrieType * trie() const { return m_trie; }
+	inline const std::vector<uint32_t> & parents() const { return m_parents; }
+private:
+	MyTrieType * m_trie;
+	std::vector<uint32_t> m_parents;
 };
 
 
 template<typename TOutPutIterator>
 class ExactStringDerefIterator {
 public:
-	ExactStringDerefIterator() : m_t(0), m_d(0) {}
-	ExactStringDerefIterator (MyStaticTrieInfo * t, TOutPutIterator & out) : m_t(t), m_out(out) {}
+	ExactStringDerefIterator() : m_t(0) {}
+	ExactStringDerefIterator (const MyStaticTrieInfo * t, TOutPutIterator out) : m_t(t), m_out(out) {}
 	ExactStringDerefIterator & operator*() { return *this; }
 	ExactStringDerefIterator & operator++() {
 		++m_out;
@@ -208,15 +111,15 @@ public:
 		return *this;
 	}
 private:
-	MyStaticTrieInfo * m_t;
+	const MyStaticTrieInfo * m_t;
 	TOutPutIterator m_out;
 };
 
 template<typename TOutPutIterator>
 class SuffixStringDerefIterator {
 public:
-	SuffixStringDerefIterator() : m_t(0), m_d(0) {}
-	SuffixStringDerefIterator (MyStaticTrieInfo * t, TOutPutIterator & out) : m_t(t), m_out(out) {}
+	SuffixStringDerefIterator() : m_t(0) {}
+	SuffixStringDerefIterator (const MyStaticTrieInfo * t, TOutPutIterator out) : m_t(t), m_out(out) {}
 	SuffixStringDerefIterator & operator*() { return *this; }
 	SuffixStringDerefIterator & operator++() {
 		++m_out;
@@ -241,70 +144,182 @@ public:
 		return *this;
 	}
 private:
-	MyStaticTrieInfo * m_t;
+	const MyStaticTrieInfo * m_t;
 	TOutPutIterator m_out;
 };
 
-template<typename TTraits>
-class ItemDerefer {
+
+class BaseTraits {
 public:
-	typedef TTraits Traits;
-	typedef typename Traits::item_type item_type;
-	typedef typename Traits::ExactStringsDerefer ExactStringsDerefer;
-	typedef typename Traits::SuffixStringsDerefer SuffixStringsDerefer;
-private:
-	typedef std::insert_iterator< std::unordered_set<uint32_t> > MyInsertIterator;
-	typedef ExactStringDerefIterator<MyInsertIterator> ExactStringDerefIterator;
-	typedef SuffixStringDerefIterator<MyInsertIterator> SuffixStringDerefIterator;
+	typedef CTCValueStoreNode NodeIdentifier;
+	struct NodeIdentifierEqualPredicate {
+		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
+			return a == b;
+		}
+	};
+	struct NodeIdentifierLessThanComparator {
+		bool operator()(const NodeIdentifier & a, const NodeIdentifier & b) {
+			return a < b;
+		}
+	};
 public:
-	ItemDerefer(const Traits & traits, MyStaticTrieInfo * ti) : m_traits(traits), m_t(ti) {}
-	//This is NOT! thread-safe
-	template<typename TOutputIterator>
-	void operator()(const item_type & item, TOutputIterator out);
-private:
-	Traits m_traits;
-	MyStaticTrieInfo * m_t;
-	ExactStringsDerefer m_ed;
-	SuffixStringsDerefer m_sd;
-	std::unordered_set<uint32_t> m_exactNodes;
-	std::unordered_set<uint32_t> m_suffixNodes;
-	ExactStringsDerefer m_edi;
-	SuffixStringsDerefer m_sdi;
-	std::unordered_set<CTCValueStoreNode> m_allNodes;
+	NodeIdentifier nodeIdentifier() { return NodeIdentifier(); }
+	NodeIdentifierEqualPredicate nodeIdentifierEqualPredicate() { return NodeIdentifierEqualPredicate(); }
+	NodeIdentifierLessThanComparator nodeIdentifierLessThanComparator() { return NodeIdentifierLessThanComparator(); }
 };
 
-template<typename TTraits>
-template<typename TOutputIterator>
-void ItemDerefer<TTraits>::operator()(const item_type & item, TOutputIterator out) {
-	m_ed(item, m_edi);
-	m_sd(item, m_sdi);
+template<typename TBaseTraits>
+class InputTraits: public TBaseTraits {
+public:
+	typedef TBaseTraits MyBaseTraits;
+	typedef typename MyBaseTraits::item_type item_type;
+	typedef sserialize::detail::OOMSACTCCreator::MyStaticTrieInfo MyStaticTrieInfo;
 	
-	//now create the parents
-	for(uint32_t x : m_exactNodes) {
-		m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
-		uint32_t nextNode = x;
-		while (nextNode != 0xFFFFFFFF) {
-			m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_PREFIX);
-			m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
-			nextNode = m_t->parents().at(nextNode);
+	typedef typename MyBaseTraits::ExactStrings ExactStrings;
+	typedef typename MyBaseTraits::SuffixStrings SuffixStrings;
+	
+	class FullMatchPredicate {
+	private:
+		bool m_fullMatch;
+	public:
+		FullMatchPredicate(bool fullMatch) : m_fullMatch(fullMatch) {}
+		bool operator()(const item_type & /*item*/) { return m_fullMatch; }
+	};
+	
+	class ItemTextSearchNodes {
+	private:
+		typedef std::insert_iterator< std::unordered_set<uint32_t> > MyInsertIterator;
+		typedef ExactStringDerefIterator<MyInsertIterator> MyExactStringInsertIterator;
+		typedef SuffixStringDerefIterator<MyInsertIterator> MySuffixStringInsertIterator;
+	private:
+		const MyStaticTrieInfo * m_ti;
+		ExactStrings m_es;
+		SuffixStrings m_ss;
+		std::unordered_set<uint32_t> m_exactNodes;
+		std::unordered_set<uint32_t> m_suffixNodes;
+		MyExactStringInsertIterator m_esi;
+		MySuffixStringInsertIterator m_ssi;
+		std::unordered_set<CTCValueStoreNode> m_allNodes;
+	public:
+		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss) :
+		m_ti(ti), m_es(es), m_ss(ss),
+		m_esi(ti, MyInsertIterator(m_exactNodes, m_exactNodes.begin())),
+		m_ssi(ti, MyInsertIterator(m_suffixNodes, m_suffixNodes.begin()))
+		{}
+		template<typename TOutputIterator>
+		void operator()(const item_type & item, TOutputIterator out) {
+			m_es(item, m_esi);
+			m_ss(item, m_ssi);
+			
+			//now create the parents
+			for(uint32_t x : m_exactNodes) {
+				m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
+				uint32_t nextNode = x;
+				while (nextNode != 0xFFFFFFFF) {
+					m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_PREFIX);
+					m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
+					nextNode = m_ti->parents().at(nextNode);
+				}
+			}
+			for(uint32_t x : m_suffixNodes) {
+				m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
+				uint32_t nextNode = x;
+				while (nextNode != 0xFFFFFFFF) {
+					m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
+					nextNode = m_ti->parents().at(nextNode);
+				}
+			}
+			//and out it goes
+			for(const auto & x : m_allNodes) {
+				*out = x;
+				++out;
+			}
+			m_exactNodes.clear();
+			m_suffixNodes.clear();
+			m_allNodes.clear();
 		}
-	}
-	for(uint32_t x : m_suffixNodes) {
-		m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
-		uint32_t nextNode = x;
-		while (nextNode != 0xFFFFFFFF) {
-			m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
-			nextNode = m_t->parents().at(nextNode);
+	};
+private:
+	MyStaticTrieInfo * m_ti;
+	bool m_fullMatch;
+public:
+	InputTraits(const MyBaseTraits & baseTraits, MyStaticTrieInfo * ti, bool allAreFullMatch) :
+	MyBaseTraits(baseTraits), m_ti(ti), m_fullMatch(allAreFullMatch) {}
+
+	FullMatchPredicate fullMatchPredicate() { return FullMatchPredicate(m_fullMatch); }
+	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings()); }
+};
+
+class OutputTraits {
+public:
+	typedef BaseTraits::NodeIdentifier NodeIdentifier;
+	class IndexFactoryOut {
+		sserialize::ItemIndexFactory * m_idxFactory;
+	public:
+		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
+		template<typename TIterator>
+		uint32_t operator()(TIterator begin, TIterator end) {
+			std::vector<uint32_t> tmp;
+			uint32_t dist = std::distance(begin, end);
+			tmp.reserve(dist);
+			for(; begin != end;) {
+				tmp.push_back(*begin);
+			}
+			return m_idxFactory->addIndex(tmp);
 		}
-	}
-	for(const auto & x : m_allNodes) {
-		*out = x;
-		++out;
-	}
-	m_exactNodes.clear();
-	m_suffixNodes.clear();
-	m_allNodes.clear();
-}
+	};
+	class DataOut {
+	public:
+		typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
+	private:
+		PayloadCreator * m_payloadCreator;
+		uint32_t m_curNodeId;
+		uint32_t m_curTypes;
+		sserialize::UByteArrayAdapter m_curData;
+		std::vector<uint32_t> m_curOffsets;
+	public:
+		DataOut(PayloadCreator * pc) : m_payloadCreator(pc), m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE) {}
+		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
+			assert(m_curNodeId <= ni.nodeId());
+			if (m_curNodeId != ni.nodeId()) {//flush
+				//make sure that we push at the right position
+				while(m_curNodeId+1 < m_payloadCreator->size()) {
+					m_payloadCreator->beginRawPut();
+					m_payloadCreator->endRawPut();
+				}
+				m_payloadCreator->beginRawPut();
+				m_payloadCreator->rawPut().put(m_curData);
+				m_payloadCreator->endRawPut();
+				//reset temp data
+				m_curNodeId = ni.nodeId();
+				m_curTypes = sserialize::StringCompleter::QT_NONE;
+				m_curData = sserialize::UByteArrayAdapter(m_curData, 0, 0);
+				m_curOffsets.clear();
+			}
+			assert(m_curTypes < ni.qt());
+			m_curTypes |= ni.qt();
+			m_curOffsets.emplace_back( m_curData.tellPutPtr() );
+			m_curData.put(data);
+		}
+	};
+	typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
+	typedef sserialize::ItemIndexFactory ItemIndexFactory;
+private:
+	ItemIndexFactory * m_idxFactory;
+	PayloadCreator * m_payloadCreator;
+	uint64_t m_maxMemoryUsage;
+	sserialize::MmappedMemoryType m_mmt;
+public:
+	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt) :
+	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator), m_maxMemoryUsage(maxMemoryUsage), m_mmt(mmt)
+	{}
+	
+	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
+	inline DataOut dataOut() { return DataOut(m_payloadCreator); }
+	
+	inline uint64_t maxMemoryUsage() const { return m_maxMemoryUsage; }
+	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
+};
 
 }}//end namespace detail::OOMSACTCCreator
 
@@ -314,17 +329,18 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 					uint64_t maxMemoryUsage,
 					sserialize::ItemIndexFactory & idxFactory, sserialize::UByteArrayAdapter & dest)
 {
+	typedef detail::OOMSACTCCreator::BaseTraits BaseTraits;
 	typedef TItemTraits ItemTraits;
 	typedef TRegionTraits RegionTraits;
-	typedef detail::OOMSACTCCreator::OOM_CTC_VS_InputTraits<ItemTraits> ItemInputTraits;
-	typedef detail::OOMSACTCCreator::OOM_CTC_VS_InputTraits<RegionTraits> RegionInputTraits;
+	typedef detail::OOMSACTCCreator::InputTraits<ItemTraits> ItemInputTraits;
+	typedef detail::OOMSACTCCreator::InputTraits<RegionTraits> RegionInputTraits;
 
 	typedef typename ItemTraits::ExactStrings ItemExactStrings;
 	typedef typename ItemTraits::SuffixStrings ItemSuffixStrings;
 	typedef typename RegionTraits::ExactStrings RegionExactStrings;
 	typedef typename RegionTraits::SuffixStrings RegionSuffixStrings;
 	
-	typedef detail::OOMSACTCCreator::OOM_CTC_VS_OutputTraits OutputTraits;
+	typedef detail::OOMSACTCCreator::OutputTraits OutputTraits;
 	
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
@@ -336,6 +352,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			ExactStringsInserter & operator*() { return *this;}
 			ExactStringsInserter & operator=(const std::string & str) {
 				m_t->insert(str);
+				return *this;
 			}
 			ExactStringsInserter & operator++() { return *this; }
 		};
@@ -346,7 +363,9 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			SuffixStringsInserter & operator*() { return *this;}
 			SuffixStringsInserter & operator=(const std::string & str) {
 				auto sstr = m_t->insert(str);
+				//TODO:implement
 				
+				return *this;
 			}
 			SuffixStringsInserter & operator++() { return *this; }
 		};
@@ -377,7 +396,8 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	
 	detail::OOMSACTCCreator::MyStaticTrieInfo ti(&mst);
 	
-	OOMCTCValuesCreator vc;
+	BaseTraits baseTraits;
+	OOMCTCValuesCreator<BaseTraits> vc(baseTraits);
 	
 	//insert the regions
 	{
@@ -394,7 +414,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	{
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
-		OutputTraits outPutTraits(&idxFactory, &pc);
+		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED);
 		vc.append(outPutTraits);
 		pc.flush();
 	}
@@ -402,16 +422,5 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 
 }//end namespace
 
-namespace std {
-
-template<>
-struct hash<sserialize::detail::OOMSACTCCreator::CTCValueStoreNode> {
-	std::hash<uint64_t> hS;
-	inline size_t operator()(const sserialize::detail::OOMSACTCCreator::CTCValueStoreNode & v) const {
-		return (static_cast<uint64_t>(v.nodeId()) << 8) | v.qt();
-	}
-};
-
-}//end namespace std
 
 #endif

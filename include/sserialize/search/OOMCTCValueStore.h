@@ -3,6 +3,7 @@
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/iterator/TransformIterator.h>
 #include <sserialize/algorithm/oom_algorithm.h>
+#include <sserialize/containers/RLEStream.h>
 #include <limits>
 
 namespace sserialize {
@@ -14,37 +15,37 @@ class ValueEntry {
 public:
 	typedef TNodeIdentifier NodeIdentifier;
 public:
-	ValueEntry();
+	ValueEntry() : m_cellId(0), m_itemId(0) {}
 	~ValueEntry() {}
-	uint32_t cellid() const;
-	void cellId(uint32_t v);
+	uint32_t cellId() const { return m_cellId; }
+	void cellId(uint32_t v) { m_cellId = v; }
 	
-	void setFullMatch();
-	bool fullMatch() const;
+	void setFullMatch() { m_itemId = FULL_MATCH; }
+	bool fullMatch() const { return m_itemId == FULL_MATCH; }
 
-	void itemId(uint32_t itemId);
-	uint32_t itemId() const;
+	void itemId(uint32_t v) { m_itemId = v; }
+	uint32_t itemId() const { return m_itemId; }
 
-	const NodeIdentifier & nodeId() const;
-	void nodeId(const NodeIdentifier & n);
+	const NodeIdentifier & nodeId() const { return m_nodeId; }
+	void nodeId(const NodeIdentifier & v) { m_nodeId = v; }
 private:
 	static constexpr const uint32_t FULL_MATCH = std::numeric_limits<uint32_t>::max();
 	static constexpr const uint32_t NULL_CELL = std::numeric_limits<uint32_t>::max();
 private:
-	uint32_t cellId;
+	uint32_t m_cellId;
 	//stores either the item or FULL_MATCH meaning that this cell is fully matched 
-	uint32_t itemId;
-	TNodeIdentifier node;
+	uint32_t m_itemId;
+	NodeIdentifier m_nodeId;
 };
 
 template<typename TNodeIdentifier>
 class ValueEntryItemIteratorMapper {
 public:
-	uint32_t operator()(ValueEntry<TNodeIdentifier> & e) { return e.cellId(); }
+	uint32_t operator()(ValueEntry<TNodeIdentifier> & e) const { return e.cellId(); }
 };
 
-template<typename TNodeIdentifier, typename TValueEntryIterator>
-using sserialize::TransformIterator< ValueEntryItemIteratorMapper<TNodeIdentifier>, uint32_t,  TValueEntryIterator> = ValueEntryItemIterator;
+// template<typename TNodeIdentifier, typename TValueEntryIterator>
+// using sserialize::TransformIterator< ValueEntryItemIteratorMapper<TNodeIdentifier>, uint32_t,  TValueEntryIterator> = ValueEntryItemIterator;
 
 }}//end namespace detail::OOMCTCValuesCreator
 
@@ -104,6 +105,7 @@ template<typename TBaseTraits>
 class OOMCTCValuesCreator {
 public:
 	typedef TBaseTraits Traits;
+	typedef typename Traits::NodeIdentifier NodeIdentifier;
 public:
 	OOMCTCValuesCreator(Traits traits);
 	template<typename TItemIterator, typename TInsertionTraits>
@@ -111,10 +113,11 @@ public:
 	template<typename TOutputTraits>
 	void append(TOutputTraits otraits);
 private:
-	typedef detail::OOMCTCValuesCreator::ValueEntry ValueEntry;
+	typedef detail::OOMCTCValuesCreator::ValueEntry<NodeIdentifier> ValueEntry;
 	typedef sserialize::MMVector<ValueEntry> TreeValueEntries;
 private:
-	bool finalize();
+	template<typename TOutputTraits>
+	bool finalize(TOutputTraits & otraits);
 private:
 	Traits m_traits;
 	TreeValueEntries m_entries;
@@ -137,7 +140,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	ItemTextSearchNodesExtractor nodesE(itraits.itemTextSearchNodes());
 	
 	std::vector<uint32_t> itemCells;
-	std::vector<ValueEntry::NodeIdentifier> itemNodes;
+	std::vector<NodeIdentifier> itemNodes;
 	std::vector<ValueEntry> itemEntries;
 	
 	for(ItemIterator it(begin); it != end; ++it) {
@@ -173,19 +176,20 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 {
 	typedef TOutputTraits OutputTraits;
 	typedef typename Traits::NodeIdentifier NodeIdentifier;
-	typedef typename Traits::NodeEqualPredicate NodeEqualPredicate;
+	typedef typename Traits::NodeIdentifierEqualPredicate NodeIdentifierEqualPredicate;
 	typedef typename OutputTraits::IndexFactoryOut IndexFactoryOut;
 	typedef typename OutputTraits::DataOut DataOut;
 	
-	typedef typename detail::OOMCTCValuesCreator::ValueEntryItemIterator<NodeIdentifier, TreeValueEntries::const_iterator> VEItemIterator;
+	typedef typename TreeValueEntries::const_iterator TVEConstIterator;
 	
-	finalize();
+	typedef detail::OOMCTCValuesCreator::ValueEntryItemIteratorMapper<NodeIdentifier> VEIteratorMapper;
+	typedef sserialize::TransformIterator<VEIteratorMapper, uint32_t, TVEConstIterator> VEItemIterator;
 	
-	NodeEqualPredicate nep(m_traits.nodeEqualPredicate());
+	finalize(otraits);
+	
+	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
 	IndexFactoryOut ifo(otraits.indexFactoryOut());
 	DataOut dout(otraits.dataOut());
-	
-	
 	
 	struct SingleEntryState {
 		std::vector<uint32_t> fmCellIds;
@@ -200,11 +204,11 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 	} ses;
 	
-	for(TreeValueEntries::const_iterator eIt(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd; ++eIt) {
+	for(TVEConstIterator eIt(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd; ++eIt) {
 		const NodeIdentifier & ni = eIt->nodeId();
 		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
 			//find the end of this cell
-			TreeValueEntries::const_iterator cellBegin(eIt);
+			TVEConstIterator cellBegin(eIt);
 			uint32_t cellId = eIt->cellId();
 			for(;eIt != eEnd && eIt->cellId() == cellId  && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt) {}
 			if (cellBegin != eIt) { //there are partial matches
@@ -236,9 +240,10 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 
 ///Sorts the storage and makes it unique
 template<typename TBaseTraits>
-bool OOMCTCValuesCreator<TBaseTraits>::finalize() {
+template<typename TOutputTraits>
+bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	struct LessThan {
-		typedef Traits::NodeIdentifierLessThanComparator NodeComparator;
+		typedef typename Traits::NodeIdentifierLessThanComparator NodeComparator;
 		NodeComparator nc;
 		LessThan(const NodeComparator & nc) : nc(nc) {}
 		bool operator()(const ValueEntry & a, const ValueEntry & b) {
@@ -262,19 +267,21 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize() {
 		}
 	};
 	struct Equal {
-		typedef Traits::NodeIdentifierEqualPredicate NodeComparator;
-		NodeComparator nc;
-		LessThan(const NodeComparator & nc) : nc(nc) {}
+		typedef typename Traits::NodeIdentifierEqualPredicate NodeComparator;
+		NodeComparator m_nc;
+		Equal(const NodeComparator & nc) : m_nc(nc) {}
 		bool operator()(const ValueEntry & a, const ValueEntry & b) {
-			return (nc(a.nodeId(), b.nodeId()) && a.cellId() == b.cellId() && a.itemId() == b.itemId());
+			return (m_nc.operator()(a.nodeId(), b.nodeId()) && a.cellId() == b.cellId() && a.itemId() == b.itemId());
 		}
 	};
 	
 	LessThan ltp(m_traits.nodeIdentifierLessThanComparator());
-	Equal ep(m_traits.NodeIdentifierEqualPredicate());
+	Equal ep(m_traits.nodeIdentifierEqualPredicate());
 	
-	sserialize::oom_sort(m_entries.begin(), m_entries.end(), ltp, static_cast<uint64_t>(1) << 32, sserialize::MM_FILEBASED, 2);
-	sserialize::oom_unique(m_entries.begin(), m_entries.end(), sserialize::MM_FILEBASED, ep);
+	sserialize::oom_sort(m_entries.begin(), m_entries.end(), ltp, otraits.maxMemoryUsage(), 2, otraits.mmt());
+	auto equalEnd = sserialize::oom_unique(m_entries.begin(), m_entries.end(), otraits.mmt(), ep);
+	m_entries.resize(std::distance(m_entries.begin(), equalEnd));
+	return true;
 }
 
 
