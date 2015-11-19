@@ -222,16 +222,19 @@ uint32_t maxCells = 10;
 
 
 class CTCBaseTest: public CppUnit::TestFixture {
+// CPPUNIT_TEST_SUITE( CTCBaseTest );
+// CPPUNIT_TEST_SUITE_END();
 private:
 	RegionArrangement m_ra;
 protected:
-	virtual const sserialize::Static::CellTextCompleter & sctc();
+	virtual const sserialize::Static::CellTextCompleter & sctc() = 0;
 	const RegionArrangement & ra() const { return m_ra; }
-	virtual void create();
+	virtual void create() {}
 public:
 	CTCBaseTest() {
-		m_ra.init(maxBranching, maxDepth, maxRegionCells, itemCount, minStrs, maxStrs, minCells, maxCells);	
+		m_ra.init(maxBranching, maxDepth, maxRegionCells, itemCount, minStrs, maxStrs, minCells, maxCells);
 	}
+	virtual ~CTCBaseTest() {}
 	
 	void testExact() {
 		
@@ -249,6 +252,7 @@ public:
 	
 	}
 };
+
 
 class OOM_SA_CTC_Traits {
 public:
@@ -297,6 +301,8 @@ private:
 		return m_ctc;
 	}
 public:
+	OOMCTCTest() : CTCBaseTest() {}
+	virtual ~OOMCTCTest() {}
 	virtual void setUp() {
 		sserialize::ItemIndexFactory idxFactory(true);
 		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
@@ -321,6 +327,8 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
+// 	OOMCTCTest test;
+// 	runner.addTest( CTCBaseTest::suite() );
 	runner.addTest(  OOMCTCTest::suite() );
 	runner.run();
 	return 0;
