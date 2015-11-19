@@ -5,18 +5,12 @@
 #include <sserialize/storage/MmappedMemory.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <type_traits>
+#include <sserialize/utility/type_traits.h>
 #include <vector>
-
-#if __GNUG__ && __GNUC__ < 5
-#define IS_TRIVIALLY_COPYABLE(T) __has_trivial_copy(T)
-#else
-#define IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
-#endif
 
 namespace sserialize {
 
-template<typename TValue, typename TEnable = typename std::enable_if< IS_TRIVIALLY_COPYABLE(TValue) >::type >
+template<typename TValue, typename TEnable = typename std::enable_if< sserialize::is_trivially_copyable<TValue>::value >::type >
 class OOMArray {
 public:
 	typedef sserialize::SizeType SizeType;
