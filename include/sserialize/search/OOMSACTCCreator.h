@@ -44,7 +44,14 @@ private:
 	uint8_t m_qt;
 };
 
-}}} //end namespace sserialize::detail::OOMSACTCCreator
+}}
+
+template<>
+struct is_trivially_copyable<detail::OOMSACTCCreator::CTCValueStoreNode> {
+	static constexpr bool value = true;
+};
+
+} //end namespace sserialize::detail::OOMSACTCCreator
 
 namespace std {
 

@@ -41,13 +41,18 @@ private:
 template<typename TNodeIdentifier>
 class ValueEntryItemIteratorMapper {
 public:
-	uint32_t operator()(ValueEntry<TNodeIdentifier> & e) const { return e.cellId(); }
+	uint32_t operator()(const ValueEntry<TNodeIdentifier> & e) const { return e.cellId(); }
 };
 
 // template<typename TNodeIdentifier, typename TValueEntryIterator>
 // using sserialize::TransformIterator< ValueEntryItemIteratorMapper<TNodeIdentifier>, uint32_t,  TValueEntryIterator> = ValueEntryItemIterator;
 
 }}//end namespace detail::OOMCTCValuesCreator
+
+template<typename TNodeIdentifier>
+struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdentifier> > {
+	static constexpr bool value = sserialize::is_trivially_copyable<TNodeIdentifier>::value;
+};
 
 /**
   * This class creates the values stored in a text search data structure
@@ -107,7 +112,7 @@ public:
 	typedef TBaseTraits Traits;
 	typedef typename Traits::NodeIdentifier NodeIdentifier;
 public:
-	OOMCTCValuesCreator(Traits traits);
+	OOMCTCValuesCreator(const Traits & traits);
 	template<typename TItemIterator, typename TInsertionTraits>
 	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits);
 	template<typename TOutputTraits>
@@ -122,6 +127,12 @@ private:
 	Traits m_traits;
 	TreeValueEntries m_entries;
 };
+
+template<typename TBaseTraits>
+OOMCTCValuesCreator<TBaseTraits>::OOMCTCValuesCreator(const TBaseTraits & traits) :
+m_traits(traits),
+m_entries(sserialize::MM_FAST_FILEBASED)
+{}
 
 template<typename TBaseTraits>
 template<typename TItemIterator, typename TInputTraits>
@@ -236,7 +247,6 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		dout(ni, ses.sd);
 	}
 }
-
 
 ///Sorts the storage and makes it unique
 template<typename TBaseTraits>
