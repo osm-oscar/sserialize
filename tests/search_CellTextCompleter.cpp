@@ -167,7 +167,7 @@ public:
 	}
 	
 	void find(const std::string & qstr, sserialize::StringCompleter::QuerryType qt, ItemTypes itemTypes,
-	sserialize::CellQueryResult & cqr, std::vector<sserialize::ItemIndex> & pml)
+	sserialize::CellQueryResult & cqr, std::vector<sserialize::ItemIndex> & pml) const
 	{
 		std::unordered_map<uint32_t, std::vector<uint32_t> > pm;
 		std::unordered_set<uint32_t> fm;
@@ -235,6 +235,7 @@ protected:
 	const RegionArrangement & ra() const { return m_ra; }
 	virtual void create() {}
 public:
+
 	void testCompletion(sserialize::StringCompleter::QuerryType qt, RegionArrangement::ItemTypes it) {
 		std::unordered_set<std::string> baseTestStrings; 
 		if (it & RegionArrangement::IT_ITEM) {
@@ -275,6 +276,40 @@ public:
 			for(const std::string & str : baseTestStrings) {
 				for(std::string::const_iterator it(str.end()), begin(str.begin()); it != begin; utf8::prior(it, begin)) {
 					testStrings.emplace(begin, it);
+				}
+			}
+		}
+		//now do the test
+		for(const std::string & qstr : testStrings) {
+			sserialize::CellQueryResult testCqr, realCqr;
+			std::vector<sserialize::ItemIndex> realPm;
+			std::string baseMessage = "qstr=" + qstr + ",type=";
+			switch(it) {
+			case RegionArrangement::IT_ITEM:
+				testCqr = sctc().items<sserialize::CellQueryResult>(qstr, qt);
+				ra().find(qstr, qt, it, realCqr, realPm);
+				baseMessage += "items";
+				break;
+			case RegionArrangement::IT_REGION:
+				testCqr = sctc().regions<sserialize::CellQueryResult>(qstr, qt);
+				ra().find(qstr, qt, it, realCqr, realPm);
+				baseMessage += "regions";
+				break;
+			case RegionArrangement::IT_ALL:
+				testCqr = sctc().complete<sserialize::CellQueryResult>(qstr, qt);
+				ra().find(qstr, qt, it, realCqr, realPm);
+				baseMessage += "all";
+				break;
+			default:
+				std::runtime_error("Invalid type");
+			};
+			baseMessage += ",";
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("Cqr size", realCqr.cellCount(), testCqr.cellCount());
+			for(uint32_t i(0), s(realCqr.cellCount()); i < s; ++i) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(baseMessage+"cellid at " + std::to_string(i), realCqr.cellId(i), testCqr.cellId(i));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(baseMessage+"fullMatch at " + std::to_string(i), realCqr.fullMatch(i), testCqr.fullMatch(i));
+				if (!realCqr.fullMatch(i)) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE(baseMessage+"pm index at " + std::to_string(i), realPm.at(realCqr.idxId(i)), testCqr.idx(i));
 				}
 			}
 		}
