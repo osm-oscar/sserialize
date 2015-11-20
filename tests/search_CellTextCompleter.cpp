@@ -71,11 +71,11 @@ private:
 		}
 	};
 public:
+	typedef enum {IT_NONE=0x0, IT_ITEM=0x1, IT_REGION=0x2, IT_ALL=0x3} ItemTypes;
+public:
 	std::unordered_map<uint32_t, std::vector<uint32_t> > cellItems;
 	std::vector<Item> items;
 	std::vector<Item> regions;
-	
-	sserialize::Static::spatial::GeoHierarchy gh;
 
 	Item createItem(uint32_t minStrs, uint32_t maxStrs, uint32_t minCells, uint32_t maxCells, uint32_t maxCellId) {
 		uint32_t strCount = (rand() % (maxStrs-minStrs)) + minStrs;
@@ -166,22 +166,26 @@ public:
 		}
 	}
 	
-	void find(const std::string & qstr, sserialize::StringCompleter::QuerryType qt, sserialize::CellQueryResult & cqr, std::vector<sserialize::ItemIndex> & pml) {
+	void find(const std::string & qstr, sserialize::StringCompleter::QuerryType qt, ItemTypes itemTypes,
+	sserialize::CellQueryResult & cqr, std::vector<sserialize::ItemIndex> & pml)
+	{
 		std::unordered_map<uint32_t, std::vector<uint32_t> > pm;
 		std::unordered_set<uint32_t> fm;
 		
-		for(const auto & x : items) {
-			if (x.matches(qstr, qt)) {
-				for(auto c : x.cells) {
-					pm[c].push_back(x.id);
+		if (itemTypes & IT_ITEM) {
+			for(const auto & x : items) {
+				if (x.matches(qstr, qt)) {
+					for(auto c : x.cells) {
+						pm[c].push_back(x.id);
+					}
 				}
 			}
 		}
 		
-		for(const auto & x : items) {
-			if (x.matches(qstr, qt)) {
-				for(auto c : x.cells) {
-					pm[c].push_back(x.id);
+		if (itemTypes & IT_REGION) {
+			for(const auto & x : regions) {
+				if (x.matches(qstr, qt)) {
+					fm.insert(x.cells.begin(), x.cells.end());
 				}
 			}
 		}
@@ -231,25 +235,103 @@ protected:
 	const RegionArrangement & ra() const { return m_ra; }
 	virtual void create() {}
 public:
+	void testCompletion(sserialize::StringCompleter::QuerryType qt, RegionArrangement::ItemTypes it) {
+		std::unordered_set<std::string> baseTestStrings; 
+		if (it & RegionArrangement::IT_ITEM) {
+			for(const Item & item : ra().items) {
+				baseTestStrings.insert(item.strs.begin(), item.strs.end());
+			}
+		}
+		if (it & RegionArrangement::IT_REGION) {
+			for(const Item & item : ra().regions) {
+				baseTestStrings.insert(item.strs.begin(), item.strs.end());
+			}
+		}
+		std::unordered_set<std::string> testStrings;
+		if (qt == sserialize::StringCompleter::QT_EXACT) {
+			testStrings = std::move(baseTestStrings);
+		}
+		else if (qt == sserialize::StringCompleter::QT_PREFIX) {
+			for(const std::string & str : baseTestStrings) {
+				for(std::string::const_iterator it(str.end()), begin(str.begin()); it != begin; utf8::prior(it, begin)) {
+					testStrings.emplace(begin, it);
+				}
+			}
+		}
+		else if (qt == sserialize::StringCompleter::QT_SUFFIX) {
+			for(const std::string & str : baseTestStrings) {
+				for(std::string::const_iterator it(str.begin()), end(str.end()); it != end; utf8::next(it, end)) {
+					testStrings.emplace(it, end);
+				}
+			}
+		}
+		else if (qt == sserialize::StringCompleter::QT_SUBSTRING) {
+			for(const std::string & str : baseTestStrings) {
+				for(std::string::const_iterator it(str.begin()), end(str.end()); it != end; utf8::next(it, end)) {
+					testStrings.emplace(it, end);
+				}
+			}
+			baseTestStrings = std::move(testStrings);
+			for(const std::string & str : baseTestStrings) {
+				for(std::string::const_iterator it(str.end()), begin(str.begin()); it != begin; utf8::prior(it, begin)) {
+					testStrings.emplace(begin, it);
+				}
+			}
+		}
+	}
+
+public:
 	CTCBaseTest() {
 		m_ra.init(maxBranching, maxDepth, maxRegionCells, itemCount, minStrs, maxStrs, minCells, maxCells);
 	}
 	virtual ~CTCBaseTest() {}
 	
-	void testExact() {
-		
+	void testExactItem() {
+		testCompletion(sserialize::StringCompleter::QT_EXACT, RegionArrangement::IT_ITEM);
 	}
 	
-	void testPrefix() {
-		
+	void testExactRegion() {
+		testCompletion(sserialize::StringCompleter::QT_EXACT, RegionArrangement::IT_REGION);
 	}
 	
-	void testSuffix() {
-		
+	void testExactAll() {
+		testCompletion(sserialize::StringCompleter::QT_EXACT, RegionArrangement::IT_ALL);
 	}
 	
-	void testSubString() {
+	void testPrefixItem() {
+		testCompletion(sserialize::StringCompleter::QT_PREFIX, RegionArrangement::IT_ITEM);
+	}
 	
+	void testPrefixRegion() {
+		testCompletion(sserialize::StringCompleter::QT_PREFIX, RegionArrangement::IT_REGION);
+	}
+	
+	void testPrefixAll() {
+		testCompletion(sserialize::StringCompleter::QT_PREFIX, RegionArrangement::IT_ALL);
+	}
+	
+	void testSuffixItem() {
+		testCompletion(sserialize::StringCompleter::QT_SUFFIX, RegionArrangement::IT_ITEM);
+	}
+	
+	void testSuffixRegion() {
+		testCompletion(sserialize::StringCompleter::QT_SUFFIX, RegionArrangement::IT_REGION);
+	}
+	
+	void testSuffixAll() {
+		testCompletion(sserialize::StringCompleter::QT_SUFFIX, RegionArrangement::IT_ALL);
+	}
+	
+	void testSubStringItem() {
+		testCompletion(sserialize::StringCompleter::QT_SUBSTRING, RegionArrangement::IT_ITEM);
+	}
+	
+	void testSubStringRegion() {
+		testCompletion(sserialize::StringCompleter::QT_SUBSTRING, RegionArrangement::IT_REGION);
+	}
+	
+	void testSubStringAll() {
+		testCompletion(sserialize::StringCompleter::QT_SUBSTRING, RegionArrangement::IT_ALL);
 	}
 };
 
@@ -289,10 +371,22 @@ public:
 
 class OOMCTCTest: public CTCBaseTest {
 CPPUNIT_TEST_SUITE( OOMCTCTest );
-CPPUNIT_TEST( testExact );
-CPPUNIT_TEST( testPrefix );
-CPPUNIT_TEST( testSuffix );
-CPPUNIT_TEST( testSubString );
+CPPUNIT_TEST( testExactItem );
+CPPUNIT_TEST( testExactRegion );
+CPPUNIT_TEST( testExactAll );
+
+CPPUNIT_TEST( testPrefixItem );
+CPPUNIT_TEST( testPrefixRegion );
+CPPUNIT_TEST( testPrefixAll );
+
+CPPUNIT_TEST( testSuffixItem );
+CPPUNIT_TEST( testSuffixRegion );
+CPPUNIT_TEST( testSuffixAll );
+
+CPPUNIT_TEST( testSubStringItem );
+CPPUNIT_TEST( testSubStringRegion );
+CPPUNIT_TEST( testSubStringAll );
+
 CPPUNIT_TEST_SUITE_END();
 private:
 	sserialize::Static::CellTextCompleter m_ctc;
