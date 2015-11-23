@@ -13,6 +13,8 @@ class GeoHierarchy;
 
 namespace detail {
 namespace geohierarchy {
+///A List of cells storing parent regions in a contigous space
+/// and storing items in cells in a contigous space
 
 class CellList {
 public:
@@ -82,6 +84,10 @@ public:
 	CellList(const CellList & other);
 	CellList(const CellList && other);
 	~CellList();
+	
+	sserialize::MMVector<Cell> & cells() { return m_d; }
+	const sserialize::MMVector<Cell> & cells() const { return m_d; }
+	
 	sserialize::MMVector<uint32_t> & cellRegionLists() { return m_cellIdData;}
 	const sserialize::MMVector<uint32_t> & cellRegionLists() const { return m_cellIdData;}
 	sserialize::MMVector<uint32_t> & cellItemList() { return m_cellItems;}
