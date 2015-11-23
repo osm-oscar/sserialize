@@ -11,7 +11,7 @@ namespace detail {
 namespace OOMCTCValuesCreator {
 
 template<typename TNodeIdentifier>
-class ValueEntry {
+class ValueEntry final {
 public:
 	typedef TNodeIdentifier NodeIdentifier;
 public:
@@ -39,9 +39,9 @@ private:
 };
 
 template<typename TNodeIdentifier>
-class ValueEntryItemIteratorMapper {
+class ValueEntryItemIdIteratorMapper {
 public:
-	uint32_t operator()(const ValueEntry<TNodeIdentifier> & e) const { return e.cellId(); }
+	uint32_t operator()(const ValueEntry<TNodeIdentifier> & e) const { return e.itemId(); }
 };
 
 // template<typename TNodeIdentifier, typename TValueEntryIterator>
@@ -154,6 +154,9 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	std::vector<NodeIdentifier> itemNodes;
 	std::vector<ValueEntry> itemEntries;
 	
+	auto itemCellsBI = std::back_inserter<decltype(itemCells)>(itemCells);
+	auto itemNodesBI = std::back_inserter<decltype(itemNodes)>(itemNodes);
+	
 	for(ItemIterator it(begin); it != end; ++it) {
 		itemCells.clear();
 		itemNodes.clear();
@@ -167,8 +170,8 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		else {
 			e.itemId(itemIdE(item));
 		}
-		itemCellsE(item, std::back_inserter<decltype(itemCells)>(itemCells));
-		nodesE(item, std::back_inserter<decltype(itemNodes)>(itemNodes));
+		itemCellsE(item, itemCellsBI);
+		nodesE(item, itemNodesBI);
 		for(const auto & node : itemNodes) {
 			e.nodeId(node);
 			for(uint32_t cellId : itemCells) {
@@ -193,8 +196,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	
 	typedef typename TreeValueEntries::const_iterator TVEConstIterator;
 	
-	typedef detail::OOMCTCValuesCreator::ValueEntryItemIteratorMapper<NodeIdentifier> VEIteratorMapper;
-	typedef sserialize::TransformIterator<VEIteratorMapper, uint32_t, TVEConstIterator> VEItemIterator;
+	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
+	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, TVEConstIterator> VEItemIdIterator;
 	
 	finalize(otraits);
 	
@@ -209,6 +212,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		sserialize::UByteArrayAdapter sd;
 		SingleEntryState() : sd(sserialize::UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY)) {}
 		void clear() {
+			fmCellIds.clear();
 			pmCellIds.clear();
 			pmCellIdxPtrs.clear();
 			sd.resize(0);
@@ -221,9 +225,9 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 			//find the end of this cell
 			TVEConstIterator cellBegin(eIt);
 			uint32_t cellId = eIt->cellId();
-			for(;eIt != eEnd && eIt->cellId() == cellId  && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt) {}
+			for(;eIt != eEnd && eIt->cellId() == cellId && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt) {}
 			if (cellBegin != eIt) { //there are partial matches
-				uint32_t indexId = ifo(VEItemIterator(cellBegin), VEItemIterator(eIt));
+				uint32_t indexId = ifo(VEItemIdIterator(cellBegin), VEItemIdIterator(eIt));
 				ses.pmCellIds.push_back(cellId);
 				ses.pmCellIdxPtrs.push_back(indexId);
 			}
@@ -245,6 +249,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 		rlc.flush();
 		dout(ni, ses.sd);
+		ses.clear();
 	}
 }
 

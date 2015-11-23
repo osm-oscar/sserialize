@@ -12,12 +12,12 @@
 
 struct Traits {
 	typedef ItemType item_type;
-	//all strings that should be searchable by exact/prefix search
+	//all strings that should be searchable by exact and possibly prefix search
 	struct ExactStrings {
 		template<typename TOutputIterator>
 		void operator(item_type item, TOutputIterator out);
 	};
-	//all strings that should be searchable by suffix/substring search
+	//all strings that should be searchable by suffix and possibly substring search
 	struct SuffixStrings {
 		template<typename TOutputIterator>
 		void operator(item_type item, TOutputIterator out);
@@ -29,7 +29,7 @@ namespace sserialize {
 namespace detail {
 namespace OOMSACTCCreator {
 
-class CTCValueStoreNode {
+class CTCValueStoreNode final {
 public:
 	CTCValueStoreNode() : m_nodeId(std::numeric_limits<uint32_t>::max()), m_qt(sserialize::StringCompleter::QT_NONE) {}
 	CTCValueStoreNode(uint32_t nodeId, sserialize::StringCompleter::QuerryType qt) : m_nodeId(nodeId), m_qt(qt) {}
@@ -155,7 +155,6 @@ private:
 	TOutPutIterator m_out;
 };
 
-
 class BaseTraits {
 public:
 	typedef CTCValueStoreNode NodeIdentifier;
@@ -170,7 +169,6 @@ public:
 		}
 	};
 public:
-	NodeIdentifier nodeIdentifier() { return NodeIdentifier(); }
 	NodeIdentifierEqualPredicate nodeIdentifierEqualPredicate() { return NodeIdentifierEqualPredicate(); }
 	NodeIdentifierLessThanComparator nodeIdentifierLessThanComparator() { return NodeIdentifierLessThanComparator(); }
 };
@@ -207,33 +205,52 @@ public:
 		MyExactStringInsertIterator m_esi;
 		MySuffixStringInsertIterator m_ssi;
 		std::unordered_set<CTCValueStoreNode> m_allNodes;
+		sserialize::StringCompleter::SupportedQuerries m_sq;
 	public:
-		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss) :
+		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss, sserialize::StringCompleter::SupportedQuerries sq) :
 		m_ti(ti), m_es(es), m_ss(ss),
 		m_esi(ti, MyInsertIterator(m_exactNodes, m_exactNodes.begin())),
-		m_ssi(ti, MyInsertIterator(m_suffixNodes, m_suffixNodes.begin()))
+		m_ssi(ti, MyInsertIterator(m_suffixNodes, m_suffixNodes.begin())),
+		m_sq(sq)
 		{}
 		template<typename TOutputIterator>
 		void operator()(const item_type & item, TOutputIterator out) {
-			m_es(item, m_esi);
-			m_ss(item, m_ssi);
+			if (m_sq & sserialize::StringCompleter::SQ_EP) {
+				m_es(item, m_esi);
+			}
+			if (m_sq & sserialize::StringCompleter::SQ_SSP) {
+				m_ss(item, m_ssi);
+			}
 			
 			//now create the parents
-			for(uint32_t x : m_exactNodes) {
-				m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
-				uint32_t nextNode = x;
-				while (nextNode != 0xFFFFFFFF) {
-					m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_PREFIX);
-					m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
-					nextNode = m_ti->parents().at(nextNode);
+			if (m_sq & sserialize::StringCompleter::SQ_PREFIX) {
+				for(uint32_t x : m_exactNodes) {
+					m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
+					uint32_t nextNode = x;
+					while (nextNode != 0xFFFFFFFF) {
+						m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_PREFIX);
+						nextNode = m_ti->parents().at(nextNode);
+					}
 				}
 			}
-			for(uint32_t x : m_suffixNodes) {
-				m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
-				uint32_t nextNode = x;
-				while (nextNode != 0xFFFFFFFF) {
-					m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
-					nextNode = m_ti->parents().at(nextNode);
+			else {
+				for(uint32_t x : m_exactNodes) {
+					m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
+				}
+			}
+			if (m_sq & StringCompleter::SQ_SUBSTRING) {
+				for(uint32_t x : m_suffixNodes) {
+					m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
+					uint32_t nextNode = x;
+					while (nextNode != 0xFFFFFFFF) {
+						m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
+						nextNode = m_ti->parents().at(nextNode);
+					}
+				}
+			}
+			else {
+				for(uint32_t x : m_suffixNodes) {
+					m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
 				}
 			}
 			//and out it goes
@@ -249,12 +266,13 @@ public:
 private:
 	MyStaticTrieInfo * m_ti;
 	bool m_fullMatch;
+	sserialize::StringCompleter::SupportedQuerries m_sq;
 public:
-	InputTraits(const MyBaseTraits & baseTraits, MyStaticTrieInfo * ti, bool allAreFullMatch) :
-	MyBaseTraits(baseTraits), m_ti(ti), m_fullMatch(allAreFullMatch) {}
+	InputTraits(const MyBaseTraits & baseTraits, MyStaticTrieInfo * ti, bool allAreFullMatch, sserialize::StringCompleter::SupportedQuerries sq) :
+	MyBaseTraits(baseTraits), m_ti(ti), m_fullMatch(allAreFullMatch), m_sq(sq) {}
 
 	FullMatchPredicate fullMatchPredicate() { return FullMatchPredicate(m_fullMatch); }
-	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings()); }
+	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings(), m_sq); }
 };
 
 class OutputTraits {
@@ -266,12 +284,7 @@ public:
 		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
 		template<typename TIterator>
 		uint32_t operator()(TIterator begin, TIterator end) {
-			std::vector<uint32_t> tmp;
-			uint32_t dist = std::distance(begin, end);
-			tmp.reserve(dist);
-			for(; begin != end;) {
-				tmp.push_back(*begin);
-			}
+			std::vector<uint32_t> tmp(begin, end);
 			return m_idxFactory->addIndex(tmp);
 		}
 	};
@@ -333,7 +346,7 @@ public:
 template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits>
 void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterator regionsBegin, TRegionIterator regionsEnd,
 					TItemTraits itemTraits, TRegionTraits regionTraits,
-					uint64_t maxMemoryUsage,
+					uint64_t maxMemoryUsage, sserialize::StringCompleter::SupportedQuerries sq,
 					sserialize::ItemIndexFactory & idxFactory, sserialize::UByteArrayAdapter & dest)
 {
 	typedef detail::OOMSACTCCreator::BaseTraits BaseTraits;
@@ -370,8 +383,15 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			SuffixStringsInserter & operator*() { return *this;}
 			SuffixStringsInserter & operator=(const std::string & str) {
 				auto sstr = m_t->insert(str);
-				//TODO:implement
-				
+				if (!str.size()) {
+					return *this;
+				}
+				std::string::const_iterator strPrev(str.cbegin());
+				std::string::const_iterator strIt(strPrev), strEnd(str.cend());
+				for(utf8::next(strIt, strEnd); strIt != strEnd; utf8::next(strIt, strEnd)) {
+					sstr.addOffset(std::distance(strPrev, strIt));
+					strPrev = strIt;
+				}
 				return *this;
 			}
 			SuffixStringsInserter & operator++() { return *this; }
@@ -408,12 +428,12 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	
 	//insert the regions
 	{
-		RegionInputTraits regionInputTraits(regionTraits, &ti, false);
+		RegionInputTraits regionInputTraits(regionTraits, &ti, true, sq);
 		vc.insert(regionsBegin, regionsEnd, regionInputTraits);
 	}
 	//insert the items
 	{
-		ItemInputTraits itemInputTraits(itemTraits, &ti, false);
+		ItemInputTraits itemInputTraits(itemTraits, &ti, false, sq);
 		vc.insert(itemsBegin, itemsEnd, itemInputTraits);
 	}
 	
