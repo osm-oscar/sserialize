@@ -133,8 +133,11 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 template<typename TSortedContainer>
 bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, ItemIndex::Types type) {
 	#if defined(DEBUG_CHECK_INDEX_SERIALIZATION) || defined(DEBUG_CHECK_ALL)
-	if (!std::is_sorted(idx.cbegin(), idx.cend()) || !sserialize::is_strong_monotone_ascending(idx.cbegin(), idx.cend())) {
-		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted/and or non-strong-monotone index");
+	if (!std::is_sorted(idx.cbegin(), idx.cend())) {
+		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted index");	
+	}
+	if (!sserialize::is_strong_monotone_ascending(idx.cbegin(), idx.cend())) {
+			throw sserialize::CreationException("ItemIndexFactory: trying to add non-strong-monotone index");
 	}
 	UByteArrayAdapter::OffsetType destBegin = dest.tellPutPtr();
 	#endif
