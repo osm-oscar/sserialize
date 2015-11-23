@@ -203,6 +203,7 @@ bool StringCompleter::matches(const std::string & str, const std::string & qstr,
 			}
 		}
 	}
+	return false;
 }
 
 
