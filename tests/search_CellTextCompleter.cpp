@@ -251,6 +251,14 @@ public:
 			
 			gh.createRootRegion();
 			
+			sserialize::UByteArrayAdapter sghD(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
+			sserialize::ItemIndexFactory idxFactory(true);
+			
+			gh.append(sghD, idxFactory, false);
+			
+			idxFactory.flush();
+			
+			this->gh = sserialize::Static::spatial::GeoHierarchy(sghD);
 		}
 		
 		//now kill the regionGraph, remove the cycles created by the parent-pointers
@@ -530,6 +538,11 @@ public:
 		
 		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
 								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, supportedQuerries, idxFactory, dest);
+								
+		idxFactory.flush();
+		sserialize::Static::ItemIndexStore idxStore(idxFactory.getFlushedData());
+// 		m_ctc = sserialize::Static::CellTextCompleter(dest, idxStore, ra().gh);
+		
 	}
 	virtual void tearDown() {}
 };
