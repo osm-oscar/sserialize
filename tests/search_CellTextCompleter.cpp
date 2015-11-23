@@ -2,6 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
+#include <cppunit/TestResult.h>
 #include "datacreationfuncs.h"
 
 #include <sserialize/spatial/GeoHierarchy.h>
@@ -58,6 +59,8 @@ private:
 	struct Region: sserialize::RefCountObject {
 		std::vector<uint32_t> cells;
 		std::vector< sserialize::RCPtrWrapper<Region> > children;
+		std::vector< sserialize::RCPtrWrapper<Region> > parents;
+		uint32_t ghId;
 		template<typename TVisitor>
 		void visitRec(TVisitor & v) {
 			v(this);
@@ -76,6 +79,9 @@ public:
 	std::unordered_map<uint32_t, std::vector<uint32_t> > cellItems;
 	std::vector<Item> items;
 	std::vector<Item> regions;
+	
+	sserialize::Static::ItemIndexStore ghIdxStore;
+	sserialize::Static::spatial::GeoHierarchy gh;
 
 	Item createItem(uint32_t minStrs, uint32_t maxStrs, uint32_t minCells, uint32_t maxCells, uint32_t maxCellId) {
 		uint32_t strCount = (rand() % (maxStrs-minStrs)) + minStrs;
@@ -93,7 +99,7 @@ public:
 	}
 
 
-	void init(uint32_t maxBranching, uint32_t maxDepth, uint32_t maxRegionCells,
+	void init(uint32_t targetCellCount, uint32_t maxBranching, uint32_t maxDepth, uint32_t maxRegionCells,
 				uint32_t itemCount, uint32_t minStrs, uint32_t maxStrs, uint32_t minCells, uint32_t maxCells) {
 		
 		struct RegionGraphInfo {
@@ -104,26 +110,36 @@ public:
 		
 		sserialize::RCPtrWrapper<Region> regionGraph(new Region());
 		
-		std::vector<RegionGraphInfo> rgi;
 		uint32_t cellId = 0;
 		
-		
+		std::vector<RegionGraphInfo> rgi;
 		rgi.emplace_back(regionGraph, 0);
-		while(rgi.size()) {
-			RegionGraphInfo crg = std::move(rgi.back());
-			rgi.pop_back();
-			
-			uint32_t numChildren = rand() % std::min(maxBranching, maxDepth-crg.depth);
-			
-			for(uint32_t i(0); i < numChildren; ++i) {
-				crg.rgp->children.emplace_back(new Region());
-				rgi.emplace_back(crg.rgp->children.back(), crg.depth+1);
+		
+		while (cellId < targetCellCount) {
+			std::vector<RegionGraphInfo> rgQueue;
+			rgQueue.emplace_back(rgi.at(rand() % rgi.size()));
+			while(rgQueue.size()) {
+				RegionGraphInfo crg = std::move(rgQueue.back());
+				rgQueue.pop_back();
+				rgi.emplace_back(crg);
+				
+				uint32_t numChildren = rand() % std::min(maxBranching, maxDepth-crg.depth);
+				
+				for(uint32_t i(0); i < numChildren; ++i) {
+					crg.rgp->children.emplace_back(new Region());
+					crg.rgp->children.back()->parents.push_back(crg.rgp);
+					rgQueue.emplace_back(crg.rgp->children.back(), crg.depth+1);
+				}
+				uint32_t cellCount = (rand() % maxRegionCells) + 1;
+				for(uint32_t i(0); i < cellCount; ++i) {
+					crg.rgp->cells.push_back(cellId);
+					++cellId;
+				}
 			}
-			uint32_t cellCount = (rand() % maxRegionCells) + 1;
-			for(uint32_t i(0); i < cellCount; ++i) {
-				crg.rgp->cells.push_back(cellId);
-				++cellId;
-			}
+		}
+		
+		if (cellId < 10) {
+			std::cout << "BAM";
 		}
 		
 		regionGraph->visit([](Region * r) {
@@ -164,6 +180,81 @@ public:
 		for(auto & x : cellItems) {
 			std::sort(x.second.begin(), x.second.end());
 		}
+		
+		//create the gh
+		sserialize::spatial::GeoHierarchy gh;
+		sserialize::spatial::detail::geohierarchy::CellList & cellList = gh.cells();
+		sserialize::spatial::detail::geohierarchy::RegionList regionList = gh.regions();
+		
+		{//assign gh ids to regions, create the cellList
+			std::unordered_map<uint32_t, std::vector<uint32_t> > cellParents;
+			
+			std::vector< sserialize::RCPtrWrapper<Region> > rgi;
+			rgi.push_back(regionGraph);
+			for(uint32_t i(0); i < rgi.size(); ++i) {
+				auto cr = rgi.at(i);
+				cr->ghId = i;
+				
+				//create cell parents
+				for(uint32_t x : cr->cells) {
+					cellParents[x].push_back(i);
+				}
+				
+				rgi.insert(rgi.end(), cr->children.begin(), cr->children.end());
+			}
+			
+			//we can now create the cellList
+			uint32_t cellParentListSize(0), cellItemListSize(0);
+			for(auto x : cellParents) {
+				cellParentListSize += x.second.size();
+			}
+			
+			for(auto x : cellItems) {
+				cellItemListSize += x.second.size();
+			}
+			
+			assert(cellParents.size() == cellId);
+			
+			cellList.cellRegionLists().resize(cellParentListSize);
+			cellList.cellItemList().resize(cellItemListSize);
+			
+			uint32_t * cellRegionListIt = cellList.cellRegionLists().begin();
+			uint32_t * cellItemListIt = cellList.cellItemList().begin();
+			
+			for(uint32_t cellId(0), s(cellParents.size()); cellId < s; ++cellId) {
+				uint32_t * myCellRegionListBegin = cellRegionListIt;
+				uint32_t * myCellItemListBegin = cellItemListIt;
+				
+				if (cellItems.count(cellId)) {
+					cellItemListIt = std::copy(cellItems[cellId].cbegin(), cellItems[cellId].cend(), cellItemListIt);
+				}
+				assert(cellParents.count(cellId));
+				cellRegionListIt = std::copy(cellParents[cellId].cbegin(), cellParents[cellId].cend(), cellRegionListIt);
+				cellList.cells().emplace_back(myCellRegionListBegin, cellRegionListIt, myCellItemListBegin, cellItemListIt, sserialize::spatial::GeoRect());
+			}
+			
+			//now take care of the region list
+			for(const sserialize::RCPtrWrapper<Region> & rp : rgi) {
+				assert(rp->ghId == regionList.regionDescriptions().size());
+				uint64_t off = regionList.regionData().size();
+				
+				for(auto x : rp->children) {
+					regionList.regionData().push_back(x->ghId);
+				}
+				for(auto x : rp->parents) {
+					regionList.regionData().push_back(x->ghId);
+				}
+				regionList.regionData().push_back(rp->cells.begin(), rp->cells.end());
+				
+				regionList.regionDescriptions().emplace_back(&(regionList.regionData()), off, rp->children.size(), rp->parents.size(), rp->cells.size(), 0);
+			}
+			
+			gh.createRootRegion();
+			
+		}
+		
+		//now kill the regionGraph, remove the cycles created by the parent-pointers
+		regionGraph->visit([](Region * r) { r->parents.clear(); });
 	}
 	
 	void find(const std::string & qstr, sserialize::StringCompleter::QuerryType qt, ItemTypes itemTypes,
@@ -215,6 +306,7 @@ public:
 	}
 };
 
+uint32_t targetCellCount = 100;
 uint32_t maxBranching = 16;
 uint32_t maxDepth = 8;
 uint32_t maxRegionCells = 4;
@@ -223,7 +315,7 @@ uint32_t minStrs = 2;
 uint32_t maxStrs = 10;
 uint32_t minCells = 1;
 uint32_t maxCells = 10;
-
+sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EXACT;
 
 class CTCBaseTest: public CppUnit::TestFixture {
 // CPPUNIT_TEST_SUITE( CTCBaseTest );
@@ -317,7 +409,7 @@ public:
 
 public:
 	CTCBaseTest() {
-		m_ra.init(maxBranching, maxDepth, maxRegionCells, itemCount, minStrs, maxStrs, minCells, maxCells);
+		m_ra.init(targetCellCount, maxBranching, maxDepth, maxRegionCells, itemCount, minStrs, maxStrs, minCells, maxCells);
 	}
 	virtual ~CTCBaseTest() {}
 	
@@ -407,20 +499,20 @@ public:
 class OOMCTCTest: public CTCBaseTest {
 CPPUNIT_TEST_SUITE( OOMCTCTest );
 CPPUNIT_TEST( testExactItem );
-CPPUNIT_TEST( testExactRegion );
-CPPUNIT_TEST( testExactAll );
-
-CPPUNIT_TEST( testPrefixItem );
-CPPUNIT_TEST( testPrefixRegion );
-CPPUNIT_TEST( testPrefixAll );
-
-CPPUNIT_TEST( testSuffixItem );
-CPPUNIT_TEST( testSuffixRegion );
-CPPUNIT_TEST( testSuffixAll );
-
-CPPUNIT_TEST( testSubStringItem );
-CPPUNIT_TEST( testSubStringRegion );
-CPPUNIT_TEST( testSubStringAll );
+// CPPUNIT_TEST( testExactRegion );
+// CPPUNIT_TEST( testExactAll );
+// 
+// CPPUNIT_TEST( testPrefixItem );
+// CPPUNIT_TEST( testPrefixRegion );
+// CPPUNIT_TEST( testPrefixAll );
+// 
+// CPPUNIT_TEST( testSuffixItem );
+// CPPUNIT_TEST( testSuffixRegion );
+// CPPUNIT_TEST( testSuffixAll );
+// 
+// CPPUNIT_TEST( testSubStringItem );
+// CPPUNIT_TEST( testSubStringRegion );
+// CPPUNIT_TEST( testSubStringAll );
 
 CPPUNIT_TEST_SUITE_END();
 private:
@@ -437,25 +529,15 @@ public:
 		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		
 		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
-								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, idxFactory, dest);
+								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, supportedQuerries, idxFactory, dest);
 	}
 	virtual void tearDown() {}
-
-	void testExact() {
-		
-	}
-	void testPrefix() {
-		
-	}
-	void testSuffix() {
-		
-	}
-	void testSubString() {}
 };
 
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
+	runner.eventManager().popProtector();
 // 	OOMCTCTest test;
 // 	runner.addTest( CTCBaseTest::suite() );
 	runner.addTest(  OOMCTCTest::suite() );
