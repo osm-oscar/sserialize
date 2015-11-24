@@ -396,10 +396,11 @@ public:
 		std::sort(myTestStrings.begin(), myTestStrings.end());
 		
 		//now do the test
-		for(const std::string & qstr : myTestStrings) {
+		for(uint32_t i(0), s(myTestStrings.size()); i < s; ++i) {
+			const std::string & qstr  = myTestStrings[i];
 			sserialize::CellQueryResult testCqr, realCqr;
 			std::vector<sserialize::ItemIndex> realPm;
-			std::string baseMessage = "qstr=" + qstr + ",type=";
+			std::string baseMessage = "strs[" + std::to_string(i) + "]=" + qstr + ",type=";
 			switch(it) {
 			case RegionArrangement::IT_ITEM:
 				testCqr = sctc().items<sserialize::CellQueryResult>(qstr, qt);
