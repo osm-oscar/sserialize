@@ -73,6 +73,33 @@ public:
 	}
 };
 
+template<typename TIterator, typename TIteratorCategory = typename std::iterator_traits<TIterator>::iterator_category>
+struct InMemorySort {
+	static constexpr bool canSort = false;
+	template<typename TCompare>
+	inline static void sort(const TIterator &/*begin*/, const TIterator &/*end*/, const TCompare &/*compare*/) {}
+};
+
+template<typename TIterator>
+struct InMemorySort<TIterator, std::random_access_iterator_tag> {
+	static constexpr bool canSort = true;
+	template<typename TCompare>
+	inline static void sort(const TIterator & begin, const TIterator & end, const TCompare & compare) {
+		std::sort(begin, end, compare);
+	}
+};
+/*
+template<
+	typename TIterator,
+	typename TEnable = typename std::enable_if<!std::is_same<typename std::iterator_traits<TIterator>::iterator_category, std::bidirectional_iterator_tag>::value >::type
+>
+struct InMemorySort {
+	static constexpr bool canSort = false;
+	bool inMemorySort(TIterator begin, TIterator end) {
+		return false;
+	}
+};*/
+
 }}//end namespace detail::oom
 
 ///A standard out-of-memory sorting algorithm. It first sorts the input in chunks of size maxMemoryUsage/threadCount
@@ -129,7 +156,13 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	state.srcIt = begin;
 	state.srcSize = std::distance(begin, end);
 	state.srcOffset = 0;
-	
+
+	//now check if we really have to use out-of-memory sorting
+	if (state.srcSize*sizeof(value_type) <= maxMemoryUsage && detail::oom::InMemorySort<TInputOutputIterator>::canSort) {
+		detail::oom::InMemorySort<TInputOutputIterator>::sort(begin, end, comp);
+		return;
+	}
+
 	struct Worker {
 		State * state;
 		Config * cfg;
