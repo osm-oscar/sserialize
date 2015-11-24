@@ -452,6 +452,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED);
 		vc.append(outPutTraits);
 		pc.flush();
+		assert(pc.size() == mst.size());
 	}
 }
 
