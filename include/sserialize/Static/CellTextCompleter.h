@@ -230,7 +230,13 @@ public:
 	CellTextCompleter() : m_priv(new detail::CellTextCompleter()) {}
 	CellTextCompleter(detail::CellTextCompleter * priv) : m_priv(priv) {}
 	CellTextCompleter(const sserialize::RCPtrWrapper<detail::CellTextCompleter> & priv) : m_priv(priv) {}
-	CellTextCompleter(const sserialize::UByteArrayAdapter & d, const sserialize::Static::ItemIndexStore & idxStore, const sserialize::Static::spatial::GeoHierarchy & gh, const sserialize::Static::spatial::TriangulationGeoHierarchyArrangement & ra) :
+	///@param ra this is need to provide the cellsAlongPath and cqrBetween completions (optional)
+	CellTextCompleter(
+		const UByteArrayAdapter & d,
+		const Static::ItemIndexStore & idxStore,
+		const Static::spatial::GeoHierarchy & gh,
+		const Static::spatial::TriangulationGeoHierarchyArrangement & ra = Static::spatial::TriangulationGeoHierarchyArrangement()
+	) :
 	m_priv(new detail::CellTextCompleter(d, idxStore, gh, ra))
 	{}
 	virtual ~CellTextCompleter() {}
