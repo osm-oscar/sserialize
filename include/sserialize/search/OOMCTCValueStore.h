@@ -219,7 +219,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 	} ses;
 	
-	for(TVEConstIterator eIt(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd; ++eIt) {
+	for(TVEConstIterator eIt(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
 		const NodeIdentifier & ni = eIt->nodeId();
 		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
 			//find the end of this cell
@@ -250,6 +250,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		rlc.flush();
 		dout(ni, ses.sd);
 		ses.clear();
+		//eIt now points to the next node or the end
 	}
 }
 
