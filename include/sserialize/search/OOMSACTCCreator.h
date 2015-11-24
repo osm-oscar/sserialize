@@ -297,29 +297,49 @@ public:
 		uint32_t m_curTypes;
 		sserialize::UByteArrayAdapter m_curData;
 		std::vector<uint32_t> m_curOffsets;
-	public:
-		DataOut(PayloadCreator * pc) : m_payloadCreator(pc), m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE) {}
-		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
-			assert(m_curNodeId <= ni.nodeId());
-			if (m_curNodeId != ni.nodeId()) {//flush
+	private:
+		void flush() {
+			if (m_curTypes != sserialize::StringCompleter::QT_NONE) {
 				//make sure that we push at the right position
-				while(m_curNodeId+1 < m_payloadCreator->size()) {
+				while(m_payloadCreator->size() < m_curNodeId) {
 					m_payloadCreator->beginRawPut();
+					m_payloadCreator->rawPut().putUint8(sserialize::StringCompleter::QT_NONE);
 					m_payloadCreator->endRawPut();
 				}
 				m_payloadCreator->beginRawPut();
+				
+				m_payloadCreator->rawPut().putUint8(m_curTypes);
+				for(uint32_t i(1), s(m_curOffsets.size()); i < s; ++i) {
+					m_payloadCreator->rawPut().putVlPackedUint32(m_curOffsets[i]);
+				}
 				m_payloadCreator->rawPut().put(m_curData);
+				
 				m_payloadCreator->endRawPut();
-				//reset temp data
-				m_curNodeId = ni.nodeId();
+				
+				m_curNodeId = 0xFFFFFFFF;
 				m_curTypes = sserialize::StringCompleter::QT_NONE;
 				m_curData = sserialize::UByteArrayAdapter(m_curData, 0, 0);
 				m_curOffsets.clear();
+			}
+		}
+	public:
+		DataOut(PayloadCreator * pc) :
+		m_payloadCreator(pc), m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE),
+		m_curData(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY))
+		{}
+		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
+			assert(m_curNodeId <= ni.nodeId());
+			if (m_curNodeId != ni.nodeId()) {//flush
+				flush();
+				m_curNodeId = ni.nodeId();
 			}
 			assert(m_curTypes < ni.qt());
 			m_curTypes |= ni.qt();
 			m_curOffsets.emplace_back( m_curData.tellPutPtr() );
 			m_curData.put(data);
+		}
+		~DataOut() {
+			flush();
 		}
 	};
 	typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
