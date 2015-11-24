@@ -9,6 +9,22 @@
 #include <sserialize/Static/CellTextCompleter.h>
 #include <sserialize/search/OOMSACTCCreator.h>
 
+//config stuff
+
+uint32_t targetCellCount = 100;
+uint32_t maxBranching = 16;
+uint32_t maxDepth = 8;
+uint32_t maxRegionCells = 4;
+uint32_t itemCount = 1000;
+uint32_t minStrs = 2;
+uint32_t maxStrs = 10;
+uint32_t minCells = 1;
+uint32_t maxCells = 10;
+sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EXACT;
+// sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_PREFIX;
+// sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EPSP;// sserialize::StringCompleter::SQ_PREFIX;
+
+
 struct Item {
 	uint32_t id;
 	bool isRegion;
@@ -61,6 +77,7 @@ private:
 		std::vector< sserialize::RCPtrWrapper<Region> > children;
 		std::vector< sserialize::RCPtrWrapper<Region> > parents;
 		uint32_t ghId;
+		uint32_t storeId;
 		template<typename TVisitor>
 		void visitRec(TVisitor & v) {
 			v(this);
@@ -160,7 +177,9 @@ public:
 			item.isRegion = true;
 			item.id = itemId++;
 			item.strs.assign(strs.begin(), strs.end());
-			item.cells = std::move(r->cells);
+			item.cells = r->cells;
+			
+			r->storeId = this->regions.size();
 			
 			this->regions.emplace_back(std::move(item));
 		});
@@ -184,7 +203,7 @@ public:
 		//create the gh
 		sserialize::spatial::GeoHierarchy gh;
 		sserialize::spatial::detail::geohierarchy::CellList & cellList = gh.cells();
-		sserialize::spatial::detail::geohierarchy::RegionList regionList = gh.regions();
+		sserialize::spatial::detail::geohierarchy::RegionList & regionList = gh.regions();
 		
 		{//assign gh ids to regions, create the cellList
 			std::unordered_map<uint32_t, std::vector<uint32_t> > cellParents;
@@ -259,6 +278,8 @@ public:
 			idxFactory.flush();
 			
 			this->gh = sserialize::Static::spatial::GeoHierarchy(sghD);
+			
+			assert(this->gh.cellSize() == cellId);
 		}
 		
 		//now kill the regionGraph, remove the cycles created by the parent-pointers
@@ -310,20 +331,9 @@ public:
 			pmi = sserialize::ItemIndex( std::move(pmiTmp) );
 		}
 		
-		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), sserialize::Static::spatial::GeoHierarchy(), sserialize::Static::ItemIndexStore());
+		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), gh, sserialize::Static::ItemIndexStore());
 	}
 };
-
-uint32_t targetCellCount = 100;
-uint32_t maxBranching = 16;
-uint32_t maxDepth = 8;
-uint32_t maxRegionCells = 4;
-uint32_t itemCount = 1000;
-uint32_t minStrs = 2;
-uint32_t maxStrs = 10;
-uint32_t minCells = 1;
-uint32_t maxCells = 10;
-sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EXACT;
 
 class CTCBaseTest: public CppUnit::TestFixture {
 // CPPUNIT_TEST_SUITE( CTCBaseTest );
@@ -337,6 +347,9 @@ protected:
 public:
 
 	void testCompletion(sserialize::StringCompleter::QuerryType qt, RegionArrangement::ItemTypes it) {
+		if ((qt & supportedQuerries) == sserialize::StringCompleter::QT_NONE) {
+			return;
+		}
 		std::unordered_set<std::string> baseTestStrings; 
 		if (it & RegionArrangement::IT_ITEM) {
 			for(const Item & item : ra().items) {
@@ -379,8 +392,11 @@ public:
 				}
 			}
 		}
+		std::vector<std::string> myTestStrings(testStrings.begin(), testStrings.end());
+		std::sort(myTestStrings.begin(), myTestStrings.end());
+		
 		//now do the test
-		for(const std::string & qstr : testStrings) {
+		for(const std::string & qstr : myTestStrings) {
 			sserialize::CellQueryResult testCqr, realCqr;
 			std::vector<sserialize::ItemIndex> realPm;
 			std::string baseMessage = "qstr=" + qstr + ",type=";
@@ -404,7 +420,7 @@ public:
 				std::runtime_error("Invalid type");
 			};
 			baseMessage += ",";
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("Cqr size", realCqr.cellCount(), testCqr.cellCount());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(baseMessage+"cqr.cellCount()", realCqr.cellCount(), testCqr.cellCount());
 			for(uint32_t i(0), s(realCqr.cellCount()); i < s; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(baseMessage+"cellid at " + std::to_string(i), realCqr.cellId(i), testCqr.cellId(i));
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(baseMessage+"fullMatch at " + std::to_string(i), realCqr.fullMatch(i), testCqr.fullMatch(i));
@@ -507,9 +523,9 @@ public:
 class OOMCTCTest: public CTCBaseTest {
 CPPUNIT_TEST_SUITE( OOMCTCTest );
 CPPUNIT_TEST( testExactItem );
-// CPPUNIT_TEST( testExactRegion );
-// CPPUNIT_TEST( testExactAll );
-// 
+CPPUNIT_TEST( testExactRegion );
+CPPUNIT_TEST( testExactAll );
+
 // CPPUNIT_TEST( testPrefixItem );
 // CPPUNIT_TEST( testPrefixRegion );
 // CPPUNIT_TEST( testPrefixAll );
@@ -517,7 +533,7 @@ CPPUNIT_TEST( testExactItem );
 // CPPUNIT_TEST( testSuffixItem );
 // CPPUNIT_TEST( testSuffixRegion );
 // CPPUNIT_TEST( testSuffixAll );
-// 
+
 // CPPUNIT_TEST( testSubStringItem );
 // CPPUNIT_TEST( testSubStringRegion );
 // CPPUNIT_TEST( testSubStringAll );
@@ -536,13 +552,18 @@ public:
 		sserialize::ItemIndexFactory idxFactory(true);
 		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		
+		dest.putUint8(2); //ctc version
+		dest.putUint8(supportedQuerries);
+		dest.putUint8(sserialize::Static::detail::CellTextCompleter::TT_FLAT_TRIE);
+		
 		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
 								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, supportedQuerries, idxFactory, dest);
+
+		sserialize::Static::UnicodeTrie::FlatTrie<sserialize::UByteArrayAdapter> trie(dest+3);
 								
 		idxFactory.flush();
 		sserialize::Static::ItemIndexStore idxStore(idxFactory.getFlushedData());
-// 		m_ctc = sserialize::Static::CellTextCompleter(dest, idxStore, ra().gh);
-		
+		m_ctc = sserialize::Static::CellTextCompleter(dest, idxStore, ra().gh);
 	}
 	virtual void tearDown() {}
 };
