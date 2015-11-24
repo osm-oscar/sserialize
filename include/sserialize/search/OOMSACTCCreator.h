@@ -404,15 +404,23 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		ItemExactStrings itemES(itemTraits.exactStrings());
 		ItemSuffixStrings itemSS(itemTraits.suffixStrings());
 		for(auto it(itemsBegin); it != itemsEnd; ++it) {
-			itemES(*it, esi);
-			itemSS(*it, ssi);
+			if (sq & sserialize::StringCompleter::SQ_EP) {
+				itemES(*it, esi);
+			}
+			if (sq & sserialize::StringCompleter::SQ_SSP) {
+				itemSS(*it, ssi);
+			}
 		}
 		
 		RegionExactStrings regionES(regionTraits.exactStrings());
 		RegionSuffixStrings regionSS(regionTraits.suffixStrings());
 		for(auto it(regionsBegin); it != regionsEnd; ++it) {
-			regionES(*it, esi);
-			regionSS(*it, ssi);
+			if (sq & sserialize::StringCompleter::SQ_EP) {
+				regionES(*it, esi);
+			}
+			if (sq & sserialize::StringCompleter::SQ_SSP) {
+				regionSS(*it, ssi);
+			}
 		}
 		
 		myTrie.finalize();
