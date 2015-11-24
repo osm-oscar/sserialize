@@ -387,10 +387,10 @@ bool UByteArrayAdapter::growStorage(OffsetType byte) {
 bool UByteArrayAdapter::resize(OffsetType byte) {
 	if (byte < m_len) {
 		m_len = byte;
-		if (m_getPtr < m_len) {
+		if (m_len < m_getPtr) {
 			m_getPtr = m_len;
 		}
-		if (m_putPtr < m_len) {
+		if (m_len < m_putPtr) {
 			m_putPtr = m_len;
 		}
 		return true;
