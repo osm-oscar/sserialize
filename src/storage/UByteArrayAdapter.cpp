@@ -375,7 +375,7 @@ bool UByteArrayAdapter::shrinkStorage(OffsetType byte) {
 
 bool UByteArrayAdapter::growStorage(OffsetType byte) {
 	bool ok;
-	if (m_offSet+m_len+byte < m_offSet+m_len) //check for wrapp-around
+	if (m_offSet+m_len+byte < m_offSet+m_len) //check for wrapp-around, BUG:do this correctly 
 		ok = false;
 	else
 		ok = m_priv->growStorage(m_offSet+m_len+byte);
