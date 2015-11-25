@@ -143,7 +143,7 @@ public:
 		std::string::const_iterator it(str.cbegin()), end(str.cend());
 		for(utf8::next(it, end); it != end; utf8::next(it, end)) {
 			mstr.assign(it, end);
-			uint32_t p = m_t->trie()->find(str, false);
+			uint32_t p = m_t->trie()->find(mstr, false);
 			assert(p != MyStaticTrie::npos);
 			++m_out;
 			*m_out = p;
@@ -406,11 +406,10 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 				if (!str.size()) {
 					return *this;
 				}
-				std::string::const_iterator strPrev(str.cbegin());
-				std::string::const_iterator strIt(strPrev), strEnd(str.cend());
+				std::string::const_iterator strBegin(str.cbegin());
+				std::string::const_iterator strIt(strBegin), strEnd(str.cend());
 				for(utf8::next(strIt, strEnd); strIt != strEnd; utf8::next(strIt, strEnd)) {
-					sstr.addOffset(std::distance(strPrev, strIt));
-					strPrev = strIt;
+					m_t->insert(sstr.addOffset(std::distance(strBegin, strIt)));
 				}
 				return *this;
 			}
