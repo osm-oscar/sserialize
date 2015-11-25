@@ -226,12 +226,38 @@ public:
 		
 		d.resetGetPtr();
 	}
+	
+	void testPutGetPtrs() {
+		sserialize::UByteArrayAdapter d(createUBA());
+		
+		d.resize(8);
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)8, d.size());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellPutPtr());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellGetPtr());
+		
+		d.putUint32(123);
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)4, d.size());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)4, d.tellPutPtr());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellGetPtr());
+		
+		d.getUint32();
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)8, d.size());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)4, d.tellPutPtr());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)4, d.tellGetPtr());
+		
+		d.resize(0);
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.size());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellGetPtr());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellPutPtr());
+	}
+	
 };
 
 class UBAVec: public UBABaseTest {
 CPPUNIT_TEST_SUITE( UBAVec );
 CPPUNIT_TEST(testStrings);
 CPPUNIT_TEST(testIntegers);
+CPPUNIT_TEST(testPutGetPtrs);
 CPPUNIT_TEST_SUITE_END();
 protected:
 	virtual sserialize::UByteArrayAdapter createUBA() override {
