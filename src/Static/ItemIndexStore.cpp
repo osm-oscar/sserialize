@@ -9,6 +9,11 @@
 
 namespace sserialize {
 namespace Static {
+
+ItemIndexStore::ItemIndexStore() : m_priv(new detail::ItemIndexStore()) {}
+ItemIndexStore::ItemIndexStore(const sserialize::UByteArrayAdapter & data) : m_priv(new detail::ItemIndexStore(data)) {}
+ItemIndexStore::ItemIndexStore(interfaces::ItemIndexStore * base) : m_priv(base) {}
+
 namespace detail {
 
 ItemIndexStore::LZODecompressor::LZODecompressor() {}
@@ -46,7 +51,7 @@ UByteArrayAdapter ItemIndexStore::LZODecompressor::decompress(uint32_t id, const
 
 ItemIndexStore::ItemIndexStore() :
 m_type(ItemIndex::T_EMPTY),
-m_compression(IC_NONE)
+m_compression(sserialize::Static::ItemIndexStore::IC_NONE)
 {}
 
 ItemIndexStore::ItemIndexStore(UByteArrayAdapter data) :
@@ -77,12 +82,12 @@ m_compression((IndexCompressionType) data.getUint8(2))
 		std::cout << "sserialize::ItemIndexStore: version 3 detected, please upgrade to version 4" << std::endl;
 	}
 	
-	if (m_compression & IC_HUFFMAN) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
 		m_hd.reset(new HuffmanDecoder(data) );
 		data += m_hd->getSizeInBytes();
 	}
 	
-	if  (m_compression & IC_LZO) {
+	if  (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		m_lzod.reset(new LZODecompressor(data));
 	}
 	
@@ -100,10 +105,10 @@ OffsetType ItemIndexStore::getSizeInBytes() const {
 	r += UByteArrayAdapter::OffsetTypeSerializedLength();
 	r += m_data.size();
 	r += m_index.getSizeInBytes();
-	if (m_compression & IC_HUFFMAN) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
 		r += m_hd->getSizeInBytes();
 	}
-	if (m_compression & IC_LZO) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		r += m_lzod->getSizeInBytes();
 	}
 	return r;
@@ -142,10 +147,10 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 		return ItemIndex();
 	
 	UByteArrayAdapter idxData = rawDataAt(pos);
-	if (m_compression & IC_LZO) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		idxData = m_lzod->decompress(pos, idxData);
 	}
-	if (m_compression & IC_HUFFMAN) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
 		if (m_type == ItemIndex::T_WAH) {
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
 		}
@@ -153,7 +158,7 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 			return ItemIndex::createInstance<ItemIndexPrivateRleDE>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
 		}
 	}
-	else if (m_compression & IC_VARUINT32) {
+	else if (m_compression & sserialize::Static::ItemIndexStore::IC_VARUINT32) {
 		if (m_type == ItemIndex::T_WAH) {
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(idxData)));
 		}
@@ -165,20 +170,20 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 }
 
 ItemIndex ItemIndexStore::at(uint32_t pos, const ItemIndex& realIdIndex) const {
-	if (pos >= size() || (m_compression & (IC_HUFFMAN | IC_VARUINT32)))
+	if (pos >= size() || (m_compression & (sserialize::Static::ItemIndexStore::IC_HUFFMAN | sserialize::Static::ItemIndexStore::IC_VARUINT32)))
 		return ItemIndex();
 	UByteArrayAdapter rawData = rawDataAt(pos);
-	if (m_compression & IC_LZO) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		rawData = m_lzod->decompress(pos, rawData);
 	}
 	return ItemIndex(rawData, realIdIndex, indexType());
 }
 
 ItemIndex ItemIndexStore::hierachy(const std::deque< uint32_t >& offsets) const {
-	if (offsets.size() == 0 || (m_compression & (IC_HUFFMAN | IC_VARUINT32)) || offsets.front() >= size() )
+	if (offsets.size() == 0 || (m_compression & (sserialize::Static::ItemIndexStore::IC_HUFFMAN | sserialize::Static::ItemIndexStore::IC_VARUINT32)) || offsets.front() >= size() )
 		return ItemIndex();
 	UByteArrayAdapter rawData = rawDataAt(offsets.front());
-	if (m_compression & IC_LZO) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		rawData = m_lzod->decompress(offsets.front(), rawData);
 	}
 	ItemIndex idx(rawData, indexType());
@@ -187,7 +192,7 @@ ItemIndex ItemIndexStore::hierachy(const std::deque< uint32_t >& offsets) const 
 		if (id >= size())
 			return ItemIndex();
 		rawData = rawDataAt(id);
-		if (m_compression & IC_LZO) {
+		if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 			rawData = m_lzod->decompress(id, rawData);
 		}
 		idx = ItemIndex(rawData, idx, indexType());
@@ -197,7 +202,7 @@ ItemIndex ItemIndexStore::hierachy(const std::deque< uint32_t >& offsets) const 
 
 
 UByteArrayAdapter ItemIndexStore::getHuffmanTreeData() const {
-	if (m_compression & IC_HUFFMAN) {
+	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
 		UByteArrayAdapter data = getData();
 		UByteArrayAdapter::OffsetType totalSize = data.size() + m_index.size();
 		data.growStorage(m_index.getSizeInBytes() + m_hd->getSizeInBytes());

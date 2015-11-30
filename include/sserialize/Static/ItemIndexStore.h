@@ -23,12 +23,69 @@
 
 namespace sserialize {
 namespace Static {
+namespace interfaces {
+
+class ItemIndexStore: public RefCountObject {
+public:
+	ItemIndexStore() {}
+	virtual ~ItemIndexStore() {}
+	virtual OffsetType getSizeInBytes() const = 0;
+	virtual uint32_t size() const = 0;
+	virtual ItemIndex::Types indexType() const = 0;
+	virtual uint32_t compressionType() const = 0;
+	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const = 0;
+	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const = 0;
+	virtual ItemIndex at(uint32_t pos) const = 0;
+	virtual ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const = 0;
+	virtual ItemIndex hierachy(const std::deque< uint32_t >& offsets) const = 0;
+	virtual uint32_t idxSize(uint32_t pos) const = 0;
+	virtual std::ostream& printStats(std::ostream& out) const = 0;
+	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const = 0;
+	virtual SortedOffsetIndex & getIndex() = 0;
+	virtual const UByteArrayAdapter & getData() const = 0;
+	virtual RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const = 0;
+	virtual UByteArrayAdapter getHuffmanTreeData() const = 0;
+};
+
+}//end namespace interfaces
+
+class ItemIndexStore {
+public:
+	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_LZO=4} IndexCompressionType;
+private:
+	RCPtrWrapper<interfaces::ItemIndexStore> m_priv;
+protected:
+	const RCPtrWrapper<interfaces::ItemIndexStore> & priv() const { return m_priv; }
+	RCPtrWrapper<interfaces::ItemIndexStore> & priv() { return m_priv; }
+public:
+	ItemIndexStore();
+	ItemIndexStore(const sserialize::UByteArrayAdapter & data);
+	explicit ItemIndexStore(interfaces::ItemIndexStore * base);
+	~ItemIndexStore() {}
+	inline OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
+	inline uint32_t size() const { return priv()->size(); }
+	inline ItemIndex::Types indexType() const { return priv()->indexType(); }
+	inline IndexCompressionType compressionType() const { return (IndexCompressionType) priv()->compressionType(); }
+	inline UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const { return priv()->dataSize(pos); }
+	inline UByteArrayAdapter rawDataAt(uint32_t pos) const { return priv()->rawDataAt(pos); }
+	inline ItemIndex at(uint32_t pos) const { return priv()->at(pos);}
+	inline ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const { return priv()->at(pos, realIdIndex);}
+	inline ItemIndex hierachy(const std::deque< uint32_t >& offsets) const { return priv()->hierachy(offsets); }
+	inline uint32_t idxSize(uint32_t pos) const { return priv()->idxSize(pos); }
+	inline std::ostream& printStats(std::ostream& out) const { return priv()->printStats(out); }
+	inline std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const { return priv()->printStats(out, indexIds);}
+	inline SortedOffsetIndex & getIndex() { return priv()->getIndex();}
+	inline const UByteArrayAdapter & getData() const { return priv()->getData(); }
+	inline RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const { return priv()->getHuffmanTree(); }
+	inline UByteArrayAdapter getHuffmanTreeData() const { return priv()->getHuffmanTreeData();}
+};
+
 namespace detail {
 
 /** The first index id is ALWAYS the empty index*/
-class ItemIndexStore: public RefCountObject {
-public:
-	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_LZO=4} IndexCompressionType;
+class ItemIndexStore: public interfaces::ItemIndexStore {
+private:
+	typedef sserialize::Static::ItemIndexStore::IndexCompressionType IndexCompressionType;
 private:
 	class LZODecompressor: public RefCountObject {
 		CompactUintArray m_data;
@@ -51,55 +108,26 @@ private:
 public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);
-	~ItemIndexStore();
-	OffsetType getSizeInBytes() const;
-	uint32_t size() const;
-	ItemIndex::Types indexType() const { return m_type; }
-	IndexCompressionType compressionType() const { return m_compression; }
-	UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const;
-	UByteArrayAdapter rawDataAt(uint32_t pos) const;
-	ItemIndex at(uint32_t pos) const;
-	ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const;
-	ItemIndex hierachy(const std::deque< uint32_t >& offsets) const;
-	inline uint32_t idxSize(uint32_t pos) const { return m_idxSizes.at(pos); }
-	std::ostream& printStats(std::ostream& out) const;
-	std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const;
-	SortedOffsetIndex & getIndex() { return m_index;}
-	const UByteArrayAdapter & getData() const { return m_data; }
-	RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const { return m_hd; }
-	UByteArrayAdapter getHuffmanTreeData() const;
+	virtual ~ItemIndexStore();
+	virtual OffsetType getSizeInBytes() const override;
+	virtual uint32_t size() const override;
+	virtual inline ItemIndex::Types indexType() const override { return m_type; }
+	virtual uint32_t compressionType() const  override { return m_compression; }
+	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const override;
+	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const override;
+	virtual ItemIndex at(uint32_t pos) const override;
+	virtual ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const override;
+	virtual ItemIndex hierachy(const std::deque< uint32_t >& offsets) const override;
+	virtual inline uint32_t idxSize(uint32_t pos) const override { return m_idxSizes.at(pos); }
+	virtual std::ostream& printStats(std::ostream& out) const override;
+	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const override;
+	virtual inline SortedOffsetIndex & getIndex() override { return m_index;}
+	virtual inline const UByteArrayAdapter & getData() const override { return m_data; }
+	virtual inline RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const override { return m_hd; }
+	virtual UByteArrayAdapter getHuffmanTreeData() const override;
 };
-}
 
-class ItemIndexStore {
-public:
-	typedef detail::ItemIndexStore::IndexCompressionType IndexCompressionType;
-private:
-	RCPtrWrapper<detail::ItemIndexStore> m_priv;
-protected:
-	const RCPtrWrapper<detail::ItemIndexStore> & priv() const { return m_priv; }
-	RCPtrWrapper<detail::ItemIndexStore> & priv() { return m_priv; }
-public:
-	ItemIndexStore() : m_priv(new detail::ItemIndexStore()) {}
-	ItemIndexStore(sserialize::UByteArrayAdapter data) : m_priv(new detail::ItemIndexStore(data)) {}
-	~ItemIndexStore() {}
-	inline OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
-	inline uint32_t size() const { return priv()->size(); }
-	inline ItemIndex::Types indexType() const { return priv()->indexType(); }
-	inline IndexCompressionType compressionType() const { return priv()->compressionType(); }
-	inline UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const { return priv()->dataSize(pos); }
-	inline UByteArrayAdapter rawDataAt(uint32_t pos) const { return priv()->rawDataAt(pos); }
-	inline ItemIndex at(uint32_t pos) const { return priv()->at(pos);}
-	inline ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const { return priv()->at(pos, realIdIndex);}
-	inline ItemIndex hierachy(const std::deque< uint32_t >& offsets) const { return priv()->hierachy(offsets); }
-	inline uint32_t idxSize(uint32_t pos) const { return priv()->idxSize(pos); }
-	inline std::ostream& printStats(std::ostream& out) const { return priv()->printStats(out); }
-	inline std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const { return priv()->printStats(out, indexIds);}
-	inline SortedOffsetIndex & getIndex() { return priv()->getIndex();}
-	inline const UByteArrayAdapter & getData() const { return priv()->getData(); }
-	inline RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const { return priv()->getHuffmanTree(); }
-	inline UByteArrayAdapter getHuffmanTreeData() const { return priv()->getHuffmanTreeData();}
-};
+}//end namespace detail
 
 }}//end namespace
 
