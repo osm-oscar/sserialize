@@ -611,4 +611,80 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	return dest.tellPutPtr()-beginOffset;
 }
 
+namespace detail {
+
+OffsetType ItemIndexStoreFromFactory::getSizeInBytes() const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::getSizeInBytes");
+	return 0;
+}
+
+uint32_t ItemIndexStoreFromFactory::size() const {
+	return m_idxFactory->size();
+}
+
+ItemIndex::Types ItemIndexStoreFromFactory::indexType() const {
+	return m_idxFactory->type();
+}
+
+uint32_t ItemIndexStoreFromFactory::compressionType() const {
+	return m_idxFactory->compressionType();
+}
+
+UByteArrayAdapter::OffsetType ItemIndexStoreFromFactory::dataSize(uint32_t pos) const {
+	return at(pos).getSizeInBytes();
+}
+
+UByteArrayAdapter ItemIndexStoreFromFactory::rawDataAt(uint32_t /*pos*/) const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::rawDataAt");
+	return UByteArrayAdapter();
+}
+
+ItemIndex ItemIndexStoreFromFactory::at(uint32_t pos) const {
+	return m_idxFactory->indexById(pos);
+}
+
+ItemIndex ItemIndexStoreFromFactory::at(uint32_t /*pos*/, const ItemIndex & /*realIdIndex*/) const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::at");
+	return ItemIndex();
+}
+
+ItemIndex ItemIndexStoreFromFactory::hierachy(const std::deque< uint32_t >& /*offsets*/) const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::hierachy");
+	return ItemIndex();
+}
+
+uint32_t ItemIndexStoreFromFactory::idxSize(uint32_t pos) const {
+	return m_idxFactory->idxSize(pos);
+}
+
+std::ostream& ItemIndexStoreFromFactory::printStats(std::ostream& out) const {
+	return out;
+}
+
+std::ostream& ItemIndexStoreFromFactory::printStats(std::ostream& out, const std::unordered_set<uint32_t> & /*indexIds*/) const {
+	return out;
+}
+
+sserialize::Static::SortedOffsetIndex & ItemIndexStoreFromFactory::getIndex() {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::getIndex");
+	return m_dummyOffsets;
+}
+
+const UByteArrayAdapter & ItemIndexStoreFromFactory::getData() const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::getData");
+	return m_idxFactory->getIndexStore();
+}
+
+RCPtrWrapper<Static::HuffmanDecoder> ItemIndexStoreFromFactory::getHuffmanTree() const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::getHuffmanTree");
+	return RCPtrWrapper<Static::HuffmanDecoder>();
+}
+
+UByteArrayAdapter ItemIndexStoreFromFactory::getHuffmanTreeData() const {
+	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::getHuffmanTreeData");
+	return UByteArrayAdapter();
+}
+
+}//end namespace detail
+
 }//end namespace

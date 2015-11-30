@@ -71,6 +71,7 @@ public:
 	ItemIndexFactory & operator=(ItemIndexFactory && other);
 	uint32_t size() { return m_idToOffsets.size();}
 	ItemIndex::Types type() const { return m_type; }
+	Static::ItemIndexStore::IndexCompressionType compressionType() const { return m_compressionType; }
 	UByteArrayAdapter at(OffsetType offset) const;
 	///Sets the type. should not be called after having added indices
 	void setType(ItemIndex::Types type) { m_type = type;}
@@ -183,6 +184,35 @@ ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, ItemIndex::Type
 	return ItemIndex();
 }
 
+namespace detail {
+
+class ItemIndexStoreFromFactory: public sserialize::Static::interfaces::ItemIndexStore {
+private:
+	sserialize::ItemIndexFactory * m_idxFactory;
+	sserialize::Static::SortedOffsetIndex m_dummyOffsets;
+public:
+	ItemIndexStoreFromFactory() : m_idxFactory(0) {}
+	ItemIndexStoreFromFactory(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
+	virtual ~ItemIndexStoreFromFactory() {}
+	virtual OffsetType getSizeInBytes() const override;
+	virtual uint32_t size() const override;
+	virtual ItemIndex::Types indexType() const override;
+	virtual uint32_t compressionType() const override;
+	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const override;
+	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const override;
+	virtual ItemIndex at(uint32_t pos) const override;
+	virtual ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const override;
+	virtual ItemIndex hierachy(const std::deque< uint32_t >& offsets) const override;
+	virtual uint32_t idxSize(uint32_t pos) const override;
+	virtual std::ostream& printStats(std::ostream& out) const override;
+	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const override;
+	virtual sserialize::Static::SortedOffsetIndex & getIndex() override;
+	virtual const UByteArrayAdapter & getData() const override;
+	virtual RCPtrWrapper<Static::HuffmanDecoder> getHuffmanTree() const override;
+	virtual UByteArrayAdapter getHuffmanTreeData() const override;
+};
+
+};
 
 }//end namespace
 
