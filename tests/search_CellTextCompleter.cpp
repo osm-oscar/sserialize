@@ -20,9 +20,10 @@ uint32_t minStrs = 2;
 uint32_t maxStrs = 10;
 uint32_t minCells = 1;
 uint32_t maxCells = 10;
-sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EXACT;
+// sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EXACT;
 // sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_PREFIX;
-// sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EPSP;// sserialize::StringCompleter::SQ_PREFIX;
+// sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_SUFFIX;
+sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EPSP;
 
 
 struct Item {
@@ -189,6 +190,9 @@ public:
 			items.emplace_back(createItem(minStrs, maxStrs, minCells, maxCells, cellId-1));
 			items.back().id = itemId++;
 		}
+		
+		//for debbugging
+		items.front().strs.push_back("debugstr!");
 
 		//init the cell->item lists
 		for(const auto & x : items) {
@@ -497,6 +501,9 @@ public:
 			for(const auto & x : item.strs) {
 				*out = x;
 				++out;
+				if (x == "debugstr!") {
+					std::cout << "Inserting debug string" << std::endl;
+				}
 			}
 		}
 	};
@@ -527,17 +534,17 @@ CPPUNIT_TEST( testExactItem );
 CPPUNIT_TEST( testExactRegion );
 CPPUNIT_TEST( testExactAll );
 
-// CPPUNIT_TEST( testPrefixItem );
-// CPPUNIT_TEST( testPrefixRegion );
-// CPPUNIT_TEST( testPrefixAll );
-// 
-// CPPUNIT_TEST( testSuffixItem );
-// CPPUNIT_TEST( testSuffixRegion );
-// CPPUNIT_TEST( testSuffixAll );
+CPPUNIT_TEST( testPrefixItem );
+CPPUNIT_TEST( testPrefixRegion );
+CPPUNIT_TEST( testPrefixAll );
 
-// CPPUNIT_TEST( testSubStringItem );
-// CPPUNIT_TEST( testSubStringRegion );
-// CPPUNIT_TEST( testSubStringAll );
+CPPUNIT_TEST( testSuffixItem );
+CPPUNIT_TEST( testSuffixRegion );
+CPPUNIT_TEST( testSuffixAll );
+
+CPPUNIT_TEST( testSubStringItem );
+CPPUNIT_TEST( testSubStringRegion );
+CPPUNIT_TEST( testSubStringAll );
 
 CPPUNIT_TEST_SUITE_END();
 private:
