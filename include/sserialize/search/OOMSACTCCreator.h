@@ -310,7 +310,7 @@ public:
 				
 				m_payloadCreator->rawPut().putUint8(m_curTypes);
 				for(uint32_t i(1), s(m_curOffsets.size()); i < s; ++i) {
-					m_payloadCreator->rawPut().putVlPackedUint32(m_curOffsets[i]);
+					m_payloadCreator->rawPut().putVlPackedUint32(m_curOffsets[i]-m_curOffsets[i-1]);
 				}
 				m_payloadCreator->rawPut().put(m_curData);
 				
