@@ -36,7 +36,7 @@ namespace Static {
   * -------------------------------------------------------------------------
   *  u8  |vu32   |RLEStream
   * 
-  * The first offset is always 0 and will not be stored
+  * The first offset is always 0 and will not be stored, offsets are stored in relative distance
   * 
   */
 namespace detail {
