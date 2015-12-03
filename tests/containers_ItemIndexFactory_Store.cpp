@@ -17,14 +17,14 @@ using namespace sserialize;
 template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_TYPE>
 class ItemIndexFactoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
-// CPPUNIT_TEST( testSerializedEquality );
-// CPPUNIT_TEST( testSameId );
+CPPUNIT_TEST( testSerializedEquality );
+CPPUNIT_TEST( testSameId );
 CPPUNIT_TEST( testIdxSize );
 // CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
-// CPPUNIT_TEST( testInitFromStatic );
-// CPPUNIT_TEST( testCompressionVarUint );
-// CPPUNIT_TEST( testIdxFromId );
+CPPUNIT_TEST( testInitFromStatic );
+CPPUNIT_TEST( testCompressionVarUint );
+CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
