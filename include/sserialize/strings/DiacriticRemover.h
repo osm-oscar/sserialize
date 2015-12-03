@@ -18,6 +18,7 @@ public:
 	UErrorCode init();
 
 	void transliterate(std::string & str) const;
+	std::string operator()(const std::string & str) const;
 	static bool isFailure(ErrorCodeType error) { return U_FAILURE(error); }
 	static std::string errorName(ErrorCodeType error) { return std::string(u_errorName(error)); }
 
