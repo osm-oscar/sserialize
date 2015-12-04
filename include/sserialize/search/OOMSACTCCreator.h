@@ -361,12 +361,110 @@ public:
 	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
 };
 
+namespace TrieCreation {
+
+template<typename TIterator, typename TExactOutputIterator, typename TSuffixOutputIterator, bool TWithProgressInfo>
+struct State {
+	TIterator it;
+	TIterator end;
+	std::mutex itemLock;
+	TExactOutputIterator esi;
+	TSuffixOutputIterator ssi;
+	std::mutex flushLock;
+	//stats
+	detail::OOMCTCValuesCreator::ProgressInfo<TIterator, TWithProgressInfo> pinfo;
+	uint32_t counter;
+	//config stuff
+	sserialize::StringCompleter::SupportedQuerries sq;
+	State(const TIterator & begin, const TIterator & end, TExactOutputIterator exactOut, TSuffixOutputIterator suffixOut, sserialize::StringCompleter::SupportedQuerries sq) :
+	it(begin), end(end),
+	esi(exactOut), ssi(suffixOut),
+	pinfo(begin, end), counter(0),
+	sq(sq)
+	{}
+	inline void incCounter() {
+		++counter;
+		if ((counter & 0x1FFFF) == 0) {
+			pinfo(counter);
+		}
+	}
+};
+
+template<typename TState, typename TTraits>
+struct Worker {
+	typedef typename TTraits::ExactStrings ExactStrings;
+	typedef typename TTraits::SuffixStrings SuffixStrings;
+	TState * m_state;
+	std::unordered_set<std::string> m_exactStrings;
+	std::unordered_set<std::string> m_suffixStrings;
+	std::insert_iterator<std::unordered_set<std::string>> m_eit;
+	std::insert_iterator<std::unordered_set<std::string>> m_sit;
+	uint32_t m_bufferSize;
+	ExactStrings m_es;
+	SuffixStrings m_ss;
+	sserialize::StringCompleter::SupportedQuerries m_sq;
+	void flush() {
+		std::unique_lock<std::mutex> lck(m_state->flushLock);
+		for(const std::string & x : m_exactStrings) {
+			*(m_state->esi) = x;
+		}
+		for(const std::string & x : m_suffixStrings) {
+			*(m_state->ssi) = x;
+		}
+		m_exactStrings.clear(),
+		m_suffixStrings.clear();
+	}
+	void operator()() {
+		std::unique_lock<std::mutex> itemLock(m_state->itemLock);
+		itemLock.unlock();
+		while (true) {
+			itemLock.lock();
+			if (m_state->it == m_state->end) {
+				itemLock.unlock();
+				flush();
+				return;
+			}
+			auto item = *(m_state->it);
+			++(m_state->it);
+			itemLock.unlock();
+			m_state->incCounter();
+			if (m_state->sq & sserialize::StringCompleter::SQ_EP) {
+				m_es(item, m_eit);
+			}
+			if (m_state->sq & sserialize::StringCompleter::SQ_SSP) {
+				m_ss(item, m_sit);
+			}
+			if (m_exactStrings.size() + m_suffixStrings.size() > m_bufferSize) {
+				flush();
+			}
+		}
+		flush();
+	}
+	Worker(TState * state, TTraits & traits) :
+	m_state(state),
+	m_eit(m_exactStrings, m_exactStrings.begin()), m_sit(m_suffixStrings, m_suffixStrings.begin()),
+	m_bufferSize(10000),
+	m_es(traits.exactStrings()), m_ss(traits.suffixStrings())  {}
+	Worker(Worker && other) :
+	m_state(other.m_state),
+	m_exactStrings(std::move(other.m_exactStrings)), m_suffixStrings(std::move(other.m_suffixStrings)),
+	m_eit(m_exactStrings, m_exactStrings.begin()), m_sit(m_suffixStrings, m_suffixStrings.begin()),
+	m_bufferSize(other.m_bufferSize),
+	m_es(std::move(other.m_es)), m_ss(std::move(other.m_ss))
+	{}
+	~Worker() {
+	}
+};
+
+}//end namespace TrieCreation
+
 }}//end namespace detail::OOMSACTCCreator
 
 template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits, bool TWithProgressInfo = true>
 void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterator regionsBegin, TRegionIterator regionsEnd,
 					TItemTraits itemTraits, TRegionTraits regionTraits,
-					uint64_t maxMemoryUsage, sserialize::StringCompleter::SupportedQuerries sq,
+					uint64_t maxMemoryUsage, uint32_t threadCount,
+					sserialize::StringCompleter::SupportedQuerries sq,
 					sserialize::ItemIndexFactory & idxFactory, sserialize::UByteArrayAdapter & dest)
 {
 	typedef detail::OOMSACTCCreator::BaseTraits BaseTraits;
@@ -374,24 +472,22 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	typedef TRegionTraits RegionTraits;
 	typedef detail::OOMSACTCCreator::InputTraits<ItemTraits> ItemInputTraits;
 	typedef detail::OOMSACTCCreator::InputTraits<RegionTraits> RegionInputTraits;
-
-	typedef typename ItemTraits::ExactStrings ItemExactStrings;
-	typedef typename ItemTraits::SuffixStrings ItemSuffixStrings;
-	typedef typename RegionTraits::ExactStrings RegionExactStrings;
-	typedef typename RegionTraits::SuffixStrings RegionSuffixStrings;
-	
 	typedef detail::OOMSACTCCreator::OutputTraits OutputTraits;
 	
-
+	if (!threadCount) {
+		threadCount = std::thread::hardware_concurrency();
+	}
 	
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
+		typedef sserialize::HashBasedFlatTrie<uint32_t> MyTrieType;
+	
 		std::cout << "Creating trie" << std::endl;
-		sserialize::HashBasedFlatTrie<uint32_t> myTrie;
+		MyTrieType myTrie;
 		
 		struct ExactStringsInserter {
-			sserialize::HashBasedFlatTrie<uint32_t> * m_t;
-			ExactStringsInserter(sserialize::HashBasedFlatTrie<uint32_t> * t) : m_t(t) {}
+			MyTrieType * m_t;
+			ExactStringsInserter(MyTrieType * t) : m_t(t) {}
 			ExactStringsInserter & operator*() { return *this;}
 			ExactStringsInserter & operator=(const std::string & str) {
 				m_t->insert(str);
@@ -401,8 +497,8 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		};
 		
 		struct SuffixStringsInserter {
-			sserialize::HashBasedFlatTrie<uint32_t> * m_t;
-			SuffixStringsInserter(sserialize::HashBasedFlatTrie<uint32_t> * t) : m_t(t) {}
+			MyTrieType * m_t;
+			SuffixStringsInserter(MyTrieType * t) : m_t(t) {}
 			SuffixStringsInserter & operator*() { return *this;}
 			SuffixStringsInserter & operator=(const std::string & str) {
 				auto sstr = m_t->insert(str);
@@ -418,41 +514,38 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			}
 			SuffixStringsInserter & operator++() { return *this; }
 		};
-		
-		detail::OOMCTCValuesCreator::ProgressInfo<TItemIterator, TWithProgressInfo> ipinfo(itemsBegin, itemsEnd);
-		detail::OOMCTCValuesCreator::ProgressInfo<TRegionIterator, TWithProgressInfo> rpinfo(regionsBegin, regionsEnd);
+		typedef detail::OOMSACTCCreator::TrieCreation::State<TItemIterator, ExactStringsInserter, SuffixStringsInserter, TWithProgressInfo> ItemState;
+		typedef detail::OOMSACTCCreator::TrieCreation::State<TRegionIterator, ExactStringsInserter, SuffixStringsInserter, TWithProgressInfo> RegionState;
+		typedef detail::OOMSACTCCreator::TrieCreation::Worker<ItemState, ItemTraits> ItemWorker;
+		typedef detail::OOMSACTCCreator::TrieCreation::Worker<RegionState, RegionTraits> RegionWorker;
+
 
 		ExactStringsInserter esi(&myTrie);
 		SuffixStringsInserter ssi(&myTrie);
 
-		//insert the item strings
-		ItemExactStrings itemES(itemTraits.exactStrings());
-		ItemSuffixStrings itemSS(itemTraits.suffixStrings());
-		ipinfo.begin("Inserting item strings");
-		for(auto it(itemsBegin); it != itemsEnd; ++it) {
-			if (sq & sserialize::StringCompleter::SQ_EP) {
-				itemES(*it, esi);
-			}
-			if (sq & sserialize::StringCompleter::SQ_SSP) {
-				itemSS(*it, ssi);
-			}
-			ipinfo.inc(1);
+		ItemState itemState(itemsBegin, itemsEnd, esi, ssi, sq);
+		RegionState regionState(regionsBegin, regionsEnd, esi, ssi, sq);
+
+		itemState.pinfo.begin("Inserting item strings");
+		std::vector<std::thread> threads;
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads.emplace_back(ItemWorker(&itemState, itemTraits));
 		}
-		ipinfo.end();
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads[i].join();
+		}
+		threads.clear();
+		itemState.pinfo.end();
 		
-		RegionExactStrings regionES(regionTraits.exactStrings());
-		RegionSuffixStrings regionSS(regionTraits.suffixStrings());
-		rpinfo.begin("Inserting region strings");
-		for(auto it(regionsBegin); it != regionsEnd; ++it) {
-			if (sq & sserialize::StringCompleter::SQ_EP) {
-				regionES(*it, esi);
-			}
-			if (sq & sserialize::StringCompleter::SQ_SSP) {
-				regionSS(*it, ssi);
-			}
-			rpinfo.inc(1);
+		regionState.pinfo.begin("Inserting region strings");
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads.emplace_back(RegionWorker(&regionState, regionTraits));
 		}
-		rpinfo.end();
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads[i].join();
+		}
+		threads.clear();
+		regionState.pinfo.end();
 		
 		myTrie.finalize();
 		myTrie.append(dest);

@@ -565,7 +565,7 @@ public:
 		dest.putUint8(sserialize::Static::detail::CellTextCompleter::TT_FLAT_TRIE);
 		
 		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
-								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, supportedQuerries, idxFactory, dest);
+								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, 0, supportedQuerries, idxFactory, dest);
 
 		sserialize::Static::UnicodeTrie::FlatTrie<sserialize::UByteArrayAdapter> trie(dest+3);
 								
