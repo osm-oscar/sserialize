@@ -128,8 +128,11 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	}
 	
 	struct Config {
+		//chunk size in number of entries
 		uint64_t initialChunkSize;
+		//max memory size in bytes
 		uint64_t maxMemoryUsage;
+		//tmp buffer size in bytes
 		uint64_t tmpBuffferSize;
 		CompFunc * comp;
 	};
