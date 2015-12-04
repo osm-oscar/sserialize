@@ -33,6 +33,11 @@ struct ProgressInfo<TIterator, true> {
 	}
 	inline void end() {pinfo.end();}
 	
+	///like ProgressInfo::operator()()
+	inline void operator()(uint64_t currentCount) {
+		pinfo(currentCount);
+	}
+	
 	inline void inc(uint64_t delta) {
 		counter += delta;
 		if (delta > 0x7F || (counter & 0x7F) == 0) {
@@ -47,6 +52,7 @@ struct ProgressInfo<TIterator, false> {
 	inline void reset() {}
 	inline void begin(const std::string &) {}
 	inline void end() {}
+	inline void operator()(uint64_t) {}
 	inline void inc(uint64_t) {}
 };
 
