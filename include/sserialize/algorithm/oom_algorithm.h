@@ -223,7 +223,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	assert(state.srcOffset == state.srcSize);
 	
 	//now merge the chunks, use about 1/4 of memory for the temporary storage
-	cfg.tmpBuffferSize = maxMemoryUsage/4;
+	cfg.tmpBuffferSize = cfg.maxMemoryUsage/4;
 	cfg.maxMemoryUsage -= cfg.tmpBuffferSize;
 	sserialize::OOMArray<value_type> tmp(mmt);
 	
@@ -249,7 +249,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			assert(!tmp.size());
 			
 			//set the buffer sizes
-			tmp.backBufferSize(cfg.tmpBuffferSize);
+			tmp.backBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
 			tmp.readBufferSize(sizeof(value_type));
 			
 			{//fill the activeChunkBuffers and create the chunk for the next round
@@ -286,7 +286,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			//flush tmp and set a larger read buffer
 			tmp.flush();
 			tmp.backBufferSize(0);
-			tmp.readBufferSize(cfg.tmpBuffferSize);
+			tmp.readBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
 			
 			///move back this part to source
 			for(auto x : tmp) {
