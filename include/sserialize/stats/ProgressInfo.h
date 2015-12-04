@@ -24,6 +24,35 @@ struct ProgressInfo {
 	void operator()(uint64_t currentCount, const std::string & message);
 };
 
+template<bool enable>
+struct OptionalProgressInfo;
+
+template<>
+struct OptionalProgressInfo<false> {
+	inline void begin(uint64_t /*tCount*/, const std::string & /*message*/) {}
+	inline void begin(uint64_t /*tCount*/) {}
+	
+	inline void end() {}
+	inline void end(const std::string & /*message*/) {}
+	
+	inline void operator()(uint64_t /*currentCount*/) {}
+	inline void operator()(uint64_t /*currentCount*/, const std::string & /*message*/) {}
+};
+
+
+template<>
+struct OptionalProgressInfo<true> {
+	sserialize::ProgressInfo base;
+	inline void begin(uint64_t tCount, const std::string & message) {base.begin(tCount, message);}
+	inline void begin(uint64_t tCount) {base.begin(tCount);}
+	
+	inline void end() {base.end();}
+	inline void end(const std::string & message) {base.end(message);}
+	
+	inline void operator()(uint64_t currentCount) {base.operator()(currentCount);}
+	inline void operator()(uint64_t currentCount, const std::string & message) {base.operator()(currentCount, message);}
+};
+
 }//end namespace
 
 #endif
