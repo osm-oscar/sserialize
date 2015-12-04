@@ -419,8 +419,8 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			SuffixStringsInserter & operator++() { return *this; }
 		};
 		
-		detail::OOMCTCValuesCreator::ProgressInfo<TItemIterator, TWithProgressInfo> rpinfo(itemsBegin, itemsEnd);
-		detail::OOMCTCValuesCreator::ProgressInfo<TRegionIterator, TWithProgressInfo> ipinfo(regionsBegin, regionsEnd);
+		detail::OOMCTCValuesCreator::ProgressInfo<TItemIterator, TWithProgressInfo> ipinfo(itemsBegin, itemsEnd);
+		detail::OOMCTCValuesCreator::ProgressInfo<TRegionIterator, TWithProgressInfo> rpinfo(regionsBegin, regionsEnd);
 
 		ExactStringsInserter esi(&myTrie);
 		SuffixStringsInserter ssi(&myTrie);
@@ -469,13 +469,13 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	{
 		std::cout << "Calculating region payload" << std::endl;
 		RegionInputTraits regionInputTraits(regionTraits, &ti, true, sq);
-		vc.insert(regionsBegin, regionsEnd, regionInputTraits);
+		vc.insert<TRegionIterator, RegionInputTraits, TWithProgressInfo>(regionsBegin, regionsEnd, regionInputTraits);
 	}
 	//insert the items
 	{
 		std::cout << "Calculating item payload" << std::endl;
 		ItemInputTraits itemInputTraits(itemTraits, &ti, false, sq);
-		vc.insert(itemsBegin, itemsEnd, itemInputTraits);
+		vc.insert<TItemIterator, ItemInputTraits, TWithProgressInfo>(itemsBegin, itemsEnd, itemInputTraits);
 	}
 	
 	//now serialize it
@@ -484,7 +484,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED);
-		vc.append(outPutTraits);
+		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
 		pc.flush();
 		assert(pc.size() == mst.size());
 	}

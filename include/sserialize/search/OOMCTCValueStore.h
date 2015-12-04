@@ -161,7 +161,7 @@ private:
 	typedef detail::OOMCTCValuesCreator::ValueEntry<NodeIdentifier> ValueEntry;
 	typedef sserialize::MMVector<ValueEntry> TreeValueEntries;
 private:
-	template<typename TOutputTraits>
+	template<typename TOutputTraits, bool TWithProgressInfo>
 	bool finalize(TOutputTraits & otraits);
 private:
 	Traits m_traits;
@@ -198,7 +198,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	
 	auto itemCellsBI = std::back_inserter<decltype(itemCells)>(itemCells);
 	auto itemNodesBI = std::back_inserter<decltype(itemNodes)>(itemNodes);
-	pinfo.begin("Inserting");
+	pinfo.begin("OOMCTCValuesCreator::Inserting");
 	for(ItemIterator it(begin); it != end; ++it) {
 		itemCells.clear();
 		itemNodes.clear();
@@ -222,6 +222,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 			}
 		}
 		m_entries.push_back(itemEntries.cbegin(), itemEntries.cend());
+		pinfo.inc(1);
 	}
 	pinfo.end();
 	return true;
@@ -242,7 +243,10 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
 	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, TVEConstIterator> VEItemIdIterator;
 	
-	finalize(otraits);
+	if (TWithProgressInfo) {
+		std::cout << "OOMCTCValuesCreator: Finalizing" << std::endl;
+	}
+	finalize<OutputTraits, TWithProgressInfo>(otraits);
 	
 	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
 	IndexFactoryOut ifo(otraits.indexFactoryOut());
@@ -303,7 +307,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 
 ///Sorts the storage and makes it unique
 template<typename TBaseTraits>
-template<typename TOutputTraits>
+template<typename TOutputTraits, bool TWithProgressInfo>
 bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	struct LessThan {
 		typedef typename Traits::NodeIdentifierLessThanComparator NodeComparator;
@@ -338,11 +342,13 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 		}
 	};
 	
+	typedef typename TreeValueEntries::iterator TVEIterator;
+	
 	LessThan ltp(m_traits.nodeIdentifierLessThanComparator());
 	Equal ep(m_traits.nodeIdentifierEqualPredicate());
 	
-	sserialize::oom_sort(m_entries.begin(), m_entries.end(), ltp, otraits.maxMemoryUsage(), 2, otraits.mmt());
-	auto equalEnd = sserialize::oom_unique(m_entries.begin(), m_entries.end(), otraits.mmt(), ep);
+	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo>(m_entries.begin(), m_entries.end(), ltp, otraits.maxMemoryUsage(), 2, otraits.mmt());
+	auto equalEnd = sserialize::oom_unique<TVEIterator, Equal, TWithProgressInfo>(m_entries.begin(), m_entries.end(), otraits.mmt(), ep);
 	m_entries.resize(std::distance(m_entries.begin(), equalEnd));
 	return true;
 }
