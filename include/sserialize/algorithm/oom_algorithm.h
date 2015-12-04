@@ -306,7 +306,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 }
 
 ///iterators need to point to sorted range
-template<typename TInputOutputIterator, typename TEqual = std::equal_to< typename std::iterator_traits<TInputOutputIterator>::value_type > >
+template<typename TInputOutputIterator, typename TEqual = std::equal_to< typename std::iterator_traits<TInputOutputIterator>::value_type >, bool TWithProgressInfo = true>
 TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator end, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED, TEqual eq = TEqual()) {
 	if (begin == end) {
 		return begin;
