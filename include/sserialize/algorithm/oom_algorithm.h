@@ -110,7 +110,7 @@ struct InMemorySort {
 ///@param comp comparisson operator for strict weak order. This functions needs to be thread-safe <=> threadCount > 1
 ///In general: Larger chunks result in a smaller number of rounds and can be processed with a smaller queue depth reducing random access
 ///Thus for very large data sizes it may be better use only one thread to create the largest chunks possible
-template<typename TInputOutputIterator, typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type> >
+template<typename TInputOutputIterator, typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>, bool TWithProgressInfo = true>
 void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
 				uint64_t maxMemoryUsage = 0x100000000,
 				uint32_t threadCount = 2,
@@ -135,7 +135,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	};
 	
 	struct State {
-		ProgressInfo pinfo;
+		OptionalProgressInfo<TWithProgressInfo> pinfo;
 		uint64_t sortCompleted;
 		SrcIterator srcIt;
 		uint64_t srcSize;
