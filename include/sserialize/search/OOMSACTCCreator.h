@@ -363,7 +363,7 @@ public:
 
 }}//end namespace detail::OOMSACTCCreator
 
-template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits>
+template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits, bool TWithProgressInfo = true>
 void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterator regionsBegin, TRegionIterator regionsEnd,
 					TItemTraits itemTraits, TRegionTraits regionTraits,
 					uint64_t maxMemoryUsage, sserialize::StringCompleter::SupportedQuerries sq,
@@ -382,8 +382,11 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	
 	typedef detail::OOMSACTCCreator::OutputTraits OutputTraits;
 	
+
+	
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
+		std::cout << "Creating trie" << std::endl;
 		sserialize::HashBasedFlatTrie<uint32_t> myTrie;
 		
 		struct ExactStringsInserter {
@@ -415,6 +418,9 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			}
 			SuffixStringsInserter & operator++() { return *this; }
 		};
+		
+		detail::OOMCTCValuesCreator::ProgressInfo<TItemIterator, TWithProgressInfo> rpinfo(itemsBegin, itemsEnd);
+		detail::OOMCTCValuesCreator::ProgressInfo<TRegionIterator, TWithProgressInfo> ipinfo(regionsBegin, regionsEnd);
 
 		ExactStringsInserter esi(&myTrie);
 		SuffixStringsInserter ssi(&myTrie);
@@ -422,6 +428,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		//insert the item strings
 		ItemExactStrings itemES(itemTraits.exactStrings());
 		ItemSuffixStrings itemSS(itemTraits.suffixStrings());
+		ipinfo.begin("Inserting item strings");
 		for(auto it(itemsBegin); it != itemsEnd; ++it) {
 			if (sq & sserialize::StringCompleter::SQ_EP) {
 				itemES(*it, esi);
@@ -429,10 +436,13 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			if (sq & sserialize::StringCompleter::SQ_SSP) {
 				itemSS(*it, ssi);
 			}
+			ipinfo.inc(1);
 		}
+		ipinfo.end();
 		
 		RegionExactStrings regionES(regionTraits.exactStrings());
 		RegionSuffixStrings regionSS(regionTraits.suffixStrings());
+		rpinfo.begin("Inserting region strings");
 		for(auto it(regionsBegin); it != regionsEnd; ++it) {
 			if (sq & sserialize::StringCompleter::SQ_EP) {
 				regionES(*it, esi);
@@ -440,7 +450,9 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 			if (sq & sserialize::StringCompleter::SQ_SSP) {
 				regionSS(*it, ssi);
 			}
+			rpinfo.inc(1);
 		}
+		rpinfo.end();
 		
 		myTrie.finalize();
 		myTrie.append(dest);
@@ -455,17 +467,20 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	
 	//insert the regions
 	{
+		std::cout << "Calculating region payload" << std::endl;
 		RegionInputTraits regionInputTraits(regionTraits, &ti, true, sq);
 		vc.insert(regionsBegin, regionsEnd, regionInputTraits);
 	}
 	//insert the items
 	{
+		std::cout << "Calculating item payload" << std::endl;
 		ItemInputTraits itemInputTraits(itemTraits, &ti, false, sq);
 		vc.insert(itemsBegin, itemsEnd, itemInputTraits);
 	}
 	
 	//now serialize it
 	{
+		std::cout << "Serializing payload" << std::endl;
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED);

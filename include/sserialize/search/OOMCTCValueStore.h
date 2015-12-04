@@ -10,6 +10,46 @@ namespace sserialize {
 namespace detail {
 namespace OOMCTCValuesCreator {
 
+template<typename TIterator, bool TWithProgressInfo>
+struct ProgressInfo;
+
+template<typename TIterator>
+struct ProgressInfo<TIterator, true> {
+	uint64_t targetCount;
+	uint64_t lastCounter;
+	uint64_t counter;
+	sserialize::ProgressInfo pinfo;
+	ProgressInfo(const TIterator & begin, const TIterator & end) :
+	targetCount(0),
+	counter(0)
+	{
+		using std::distance;
+		targetCount = distance(begin, end);
+	}
+	inline void reset() { counter = 0; }
+	inline void begin(const std::string & message) {
+		reset();
+		pinfo.begin(targetCount, message);
+	}
+	inline void end() {pinfo.end();}
+	
+	inline void inc(uint64_t delta) {
+		counter += delta;
+		if (delta > 0x7F || (counter & 0x7F) == 0) {
+			pinfo(counter);
+		}
+	}
+};
+
+template<typename TIterator>
+struct ProgressInfo<TIterator, false> {
+	ProgressInfo(const TIterator &, const TIterator &) {}
+	inline void reset() {}
+	inline void begin(const std::string &) {}
+	inline void end() {}
+	inline void inc(uint64_t) {}
+};
+
 template<typename TNodeIdentifier>
 class ValueEntry final {
 public:
@@ -113,9 +153,9 @@ public:
 	typedef typename Traits::NodeIdentifier NodeIdentifier;
 public:
 	OOMCTCValuesCreator(const Traits & traits);
-	template<typename TItemIterator, typename TInsertionTraits>
+	template<typename TItemIterator, typename TInsertionTraits, bool TWithProgressInfo = true>
 	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits);
-	template<typename TOutputTraits>
+	template<typename TOutputTraits, bool TWithProgressInfo = true>
 	void append(TOutputTraits otraits);
 private:
 	typedef detail::OOMCTCValuesCreator::ValueEntry<NodeIdentifier> ValueEntry;
@@ -135,7 +175,7 @@ m_entries(sserialize::MM_FAST_FILEBASED)
 {}
 
 template<typename TBaseTraits>
-template<typename TItemIterator, typename TInputTraits>
+template<typename TItemIterator, typename TInputTraits, bool TWithProgressInfo>
 bool
 OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits)
 {
@@ -144,6 +184,8 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	typedef typename TInputTraits::ItemCells ItemCellsExtractor;
 	typedef typename TInputTraits::ItemTextSearchNodes ItemTextSearchNodesExtractor;
 	typedef TItemIterator ItemIterator;
+	
+	detail::OOMCTCValuesCreator::ProgressInfo<ItemIterator, TWithProgressInfo> pinfo(begin, end);
 	
 	FullMatchPredicate fmPred(itraits.fullMatchPredicate());
 	ItemIdExtractor itemIdE(itraits.itemId());
@@ -156,7 +198,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	
 	auto itemCellsBI = std::back_inserter<decltype(itemCells)>(itemCells);
 	auto itemNodesBI = std::back_inserter<decltype(itemNodes)>(itemNodes);
-	
+	pinfo.begin("Inserting");
 	for(ItemIterator it(begin); it != end; ++it) {
 		itemCells.clear();
 		itemNodes.clear();
@@ -181,11 +223,12 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		}
 		m_entries.push_back(itemEntries.cbegin(), itemEntries.cend());
 	}
+	pinfo.end();
 	return true;
 }
 
 template<typename TBaseTraits>
-template<typename TOutputTraits>
+template<typename TOutputTraits, bool TWithProgressInfo>
 void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 {
 	typedef TOutputTraits OutputTraits;
@@ -219,7 +262,9 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 	} ses;
 	
-	for(TVEConstIterator eIt(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
+	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
+	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
+	for(TVEConstIterator eIt(m_entries.begin()), eBegin(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
 		const NodeIdentifier & ni = eIt->nodeId();
 		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
 			//find the end of this cell
@@ -251,7 +296,9 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		dout(ni, ses.sd);
 		ses.clear();
 		//eIt now points to the next node or the end
+		pinfo(std::distance(eBegin, eIt));
 	}
+	pinfo.end();
 }
 
 ///Sorts the storage and makes it unique
