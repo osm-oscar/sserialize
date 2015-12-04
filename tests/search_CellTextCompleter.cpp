@@ -560,10 +560,6 @@ public:
 		sserialize::ItemIndexFactory idxFactory(true);
 		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		
-		dest.putUint8(2); //ctc version
-		dest.putUint8(supportedQuerries);
-		dest.putUint8(sserialize::Static::detail::CellTextCompleter::TT_FLAT_TRIE);
-		
 		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
 								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, 0, supportedQuerries, idxFactory, dest);
 

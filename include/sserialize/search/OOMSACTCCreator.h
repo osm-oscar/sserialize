@@ -6,6 +6,7 @@
 #include <sserialize/search/OOMCTCValueStore.h>
 #include <sserialize/search/StringCompleter.h>
 #include <sserialize/containers/ItemIndexFactory.h>
+#include <sserialize/Static/CellTextCompleter.h>
 #include <unordered_set>
 
 /**
@@ -477,6 +478,11 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	if (!threadCount) {
 		threadCount = std::thread::hardware_concurrency();
 	}
+	
+	dest.putUint8(2); //ctc version
+	dest.putUint8(sq);
+	dest.putUint8(sserialize::Static::detail::CellTextCompleter::TT_FLAT_TRIE);
+
 	
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
