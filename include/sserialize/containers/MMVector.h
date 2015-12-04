@@ -103,6 +103,7 @@ public:
 	///reserve at least size entries
 	void reserve(SizeType size) {
 		if (size > m_capacity) {
+			size = std::max<SizeType>(size, calcNewGrowSize());
 			m_begin = m_d.resize(size);
 			m_capacity = size;
 		}
