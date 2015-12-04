@@ -160,7 +160,7 @@ public:
 public:
 	OOMCTCValuesCreator(const Traits & traits);
 	template<typename TItemIterator, typename TInsertionTraits, bool TWithProgressInfo = true>
-	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits);
+	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits, uint32_t threadCount = 0);
 	template<typename TOutputTraits, bool TWithProgressInfo = true>
 	void append(TOutputTraits otraits);
 private:
@@ -183,7 +183,7 @@ m_entries(sserialize::MM_FAST_FILEBASED)
 template<typename TBaseTraits>
 template<typename TItemIterator, typename TInputTraits, bool TWithProgressInfo>
 bool
-OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits)
+OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits, uint32_t threadCount)
 {
 	typedef typename TInputTraits::FullMatchPredicate FullMatchPredicate;
 	typedef typename TInputTraits::ItemId ItemIdExtractor;
@@ -191,46 +191,143 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	typedef typename TInputTraits::ItemTextSearchNodes ItemTextSearchNodesExtractor;
 	typedef TItemIterator ItemIterator;
 	
-	detail::OOMCTCValuesCreator::ProgressInfo<ItemIterator, TWithProgressInfo> pinfo(begin, end);
-	
-	FullMatchPredicate fmPred(itraits.fullMatchPredicate());
-	ItemIdExtractor itemIdE(itraits.itemId());
-	ItemCellsExtractor itemCellsE(itraits.itemCells());
-	ItemTextSearchNodesExtractor nodesE(itraits.itemTextSearchNodes());
-	
-	std::vector<uint32_t> itemCells;
-	std::vector<NodeIdentifier> itemNodes;
-	std::vector<ValueEntry> itemEntries;
-	
-	auto itemCellsBI = std::back_inserter<decltype(itemCells)>(itemCells);
-	auto itemNodesBI = std::back_inserter<decltype(itemNodes)>(itemNodes);
-	pinfo.begin("OOMCTCValuesCreator::Inserting");
-	for(ItemIterator it(begin); it != end; ++it) {
-		itemCells.clear();
-		itemNodes.clear();
-		itemEntries.clear();
+	struct State {
+		TItemIterator it;
+		TItemIterator end;
+		std::mutex itLock;
 		
-		auto item = *it;
-		ValueEntry e;
-		if (fmPred(item)) {
-			e.setFullMatch();
-		}
-		else {
-			e.itemId(itemIdE(item));
-		}
-		itemCellsE(item, itemCellsBI);
-		nodesE(item, itemNodesBI);
-		for(const auto & node : itemNodes) {
-			e.nodeId(node);
-			for(uint32_t cellId : itemCells) {
-				e.cellId(cellId);
-				itemEntries.push_back(e);
+		//flush
+		TreeValueEntries * entries;
+		std::mutex flushLock;
+		
+		detail::OOMCTCValuesCreator::ProgressInfo<ItemIterator, TWithProgressInfo> pinfo;
+		uint32_t counter;
+		
+		State(TItemIterator begin, TItemIterator end, TreeValueEntries * entries) :
+		it(begin), end(end),
+		entries(entries),
+		pinfo(begin, end),
+		counter(0)
+		{}
+		
+		inline void incCounter() {
+			++counter;
+			if ((counter & 0x1FFFF) == 0) {
+				pinfo(counter);
 			}
 		}
-		m_entries.push_back(itemEntries.cbegin(), itemEntries.cend());
-		pinfo.inc(1);
+	};
+	
+	struct Worker {
+		State * state;
+		std::vector<ValueEntry> outBuffer;
+		uint32_t outBufferSize;
+		
+		//item dependend
+		FullMatchPredicate fmPred;
+		ItemIdExtractor itemIdE;
+		ItemCellsExtractor itemCellsE;
+		ItemTextSearchNodesExtractor nodesE;
+		
+		std::vector<uint32_t> itemCells;
+		std::vector<NodeIdentifier> itemNodes;
+		std::vector<ValueEntry> itemEntries;
+		
+		std::back_insert_iterator< std::vector<uint32_t> > itemCellsBI;
+		std::back_insert_iterator< std::vector<NodeIdentifier> > itemNodesBI;
+
+		void flush() {
+			std::unique_lock<std::mutex> lck(state->itLock);
+			state->entries->push_back(outBuffer.begin(), outBuffer.end());
+			outBuffer.clear();
+		}
+		
+		void operator()() {
+			std::unique_lock<std::mutex> itLock(state->itLock);
+			itLock.unlock();
+			
+			while (true) {
+				itLock.lock();
+				if (state->it == state->end) {
+					itLock.unlock();
+					flush();
+					return;
+				}
+				auto item = *(state->it);
+				++(state->it);
+				itLock.unlock();
+				state->incCounter();
+				
+				itemCells.clear();
+				itemNodes.clear();
+				itemEntries.clear();
+				
+				ValueEntry e;
+				if (fmPred(item)) {
+					e.setFullMatch();
+				}
+				else {
+					e.itemId(itemIdE(item));
+				}
+				itemCellsE(item, itemCellsBI);
+				nodesE(item, itemNodesBI);
+				for(const auto & node : itemNodes) {
+					e.nodeId(node);
+					for(uint32_t cellId : itemCells) {
+						e.cellId(cellId);
+						itemEntries.push_back(e);
+					}
+				}
+				outBuffer.insert(outBuffer.end(), itemEntries.cbegin(), itemEntries.cend());
+				state->incCounter();
+				if (outBuffer.size() > outBufferSize) {
+					flush();
+				}
+			}
+			flush();
+		}
+		Worker(State * state, TInputTraits & itraits) :
+		state(state),
+		outBufferSize(100000),
+		fmPred(itraits.fullMatchPredicate()),
+		itemIdE(itraits.itemId()),
+		itemCellsE(itraits.itemCells()),
+		nodesE(itraits.itemTextSearchNodes()),
+		itemCellsBI(itemCells),
+		itemNodesBI(itemNodes)
+		{}
+		Worker(Worker && other) :
+		state(other.state),
+		outBuffer(std::move(other.outBuffer)),
+		outBufferSize(10000),
+		fmPred(std::move(other.fmPred)),
+		itemIdE(std::move(other.itemIdE)),
+		itemCellsE(std::move(other.itemCellsE)),
+		nodesE(std::move(other.nodesE)),
+		itemCells(std::move(other.itemCells)),
+		itemNodes(std::move(other.itemNodes)),
+		itemEntries(std::move(other.itemEntries)),
+		itemCellsBI(itemCells),
+		itemNodesBI(itemNodes)
+		{}
+	};
+	
+	if (!threadCount) {
+		threadCount = std::thread::hardware_concurrency();
 	}
-	pinfo.end();
+	
+	State state(begin, end, &m_entries);
+	
+	state.pinfo.begin("OOMCTCValuesCreator::Inserting");
+	std::vector<std::thread> threads;
+	for(uint32_t i(0); i < threadCount; ++i) {
+		threads.emplace_back( Worker(&state, itraits) );
+	}
+	for(uint32_t i(0); i < threadCount; ++i) {
+		threads[i].join();
+	}
+	threads.clear();
+	state.pinfo.end();
 	return true;
 }
 
