@@ -14,11 +14,13 @@
 struct Traits {
 	typedef ItemType item_type;
 	//all strings that should be searchable by exact and possibly prefix search
+	//needs to have a valid move ctor, thread-safety for backend (there's one instance per thread)
 	struct ExactStrings {
 		template<typename TOutputIterator>
 		void operator(item_type item, TOutputIterator out);
 	};
 	//all strings that should be searchable by suffix and possibly substring search
+	//needs to have a valid move ctor, thread-safety for backend (there's one instance per thread)
 	struct SuffixStrings {
 		template<typename TOutputIterator>
 		void operator(item_type item, TOutputIterator out);
@@ -184,6 +186,8 @@ public:
 	typedef typename MyBaseTraits::ExactStrings ExactStrings;
 	typedef typename MyBaseTraits::SuffixStrings SuffixStrings;
 	
+	///This class needs to be thread-safe in the backend (one instance per thread
+	///Needs to have a correct move ctor
 	class FullMatchPredicate {
 	private:
 		bool m_fullMatch;
@@ -192,6 +196,8 @@ public:
 		bool operator()(const item_type & /*item*/) { return m_fullMatch; }
 	};
 	
+	///This class needs to be thread-safe in the backend (one instance per thread
+	///Needs to have a correct move ctor
 	class ItemTextSearchNodes {
 	private:
 		typedef std::insert_iterator< std::unordered_set<uint32_t> > MyInsertIterator;
@@ -213,6 +219,14 @@ public:
 		m_esi(ti, MyInsertIterator(m_exactNodes, m_exactNodes.begin())),
 		m_ssi(ti, MyInsertIterator(m_suffixNodes, m_suffixNodes.begin())),
 		m_sq(sq)
+		{}
+		ItemTextSearchNodes(ItemTextSearchNodes && other) : 
+		m_ti(std::move(other.m_ti)), m_es(std::move(other.m_es)), m_ss(std::move(other.m_ss)),
+		m_exactNodes(std::move(other.m_exactNodes)), m_suffixNodes(std::move(other.m_suffixNodes)),
+		m_esi(m_ti, MyInsertIterator(m_exactNodes, m_exactNodes.begin())),
+		m_ssi(m_ti, MyInsertIterator(m_suffixNodes, m_suffixNodes.begin())),
+		m_allNodes(std::move(other.m_allNodes)),
+		m_sq(other.m_sq)
 		{}
 		template<typename TOutputIterator>
 		void operator()(const item_type & item, TOutputIterator out) {

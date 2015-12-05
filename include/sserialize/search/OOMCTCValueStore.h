@@ -256,7 +256,6 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 				auto item = *(state->it);
 				++(state->it);
 				itLock.unlock();
-				state->incCounter();
 				
 				itemCells.clear();
 				itemNodes.clear();
@@ -299,7 +298,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		Worker(Worker && other) :
 		state(other.state),
 		outBuffer(std::move(other.outBuffer)),
-		outBufferSize(10000),
+		outBufferSize(other.outBufferSize),
 		fmPred(std::move(other.fmPred)),
 		itemIdE(std::move(other.itemIdE)),
 		itemCellsE(std::move(other.itemCellsE)),
@@ -316,7 +315,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		threadCount = std::thread::hardware_concurrency();
 	}
 	
-	State state(begin, end, &m_entries);
+	State state(begin, end, &(this->m_entries));
 	
 	state.pinfo.begin("OOMCTCValuesCreator::Inserting");
 	std::vector<std::thread> threads;
