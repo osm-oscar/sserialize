@@ -88,19 +88,10 @@ struct InMemorySort<TIterator, std::random_access_iterator_tag> {
 		std::sort(begin, end, compare);
 	}
 };
-/*
-template<
-	typename TIterator,
-	typename TEnable = typename std::enable_if<!std::is_same<typename std::iterator_traits<TIterator>::iterator_category, std::bidirectional_iterator_tag>::value >::type
->
-struct InMemorySort {
-	static constexpr bool canSort = false;
-	bool inMemorySort(TIterator begin, TIterator end) {
-		return false;
-	}
-};*/
 
 }}//end namespace detail::oom
+
+//TODO: specialise for OOMArray::iterator (special write-back, input buffer size needs to be taken into account)
 
 ///A standard out-of-memory sorting algorithm. It first sorts the input in chunks of size maxMemoryUsage/threadCount
 ///These chunks are then merged together in possibly multiple phases. In a single phase up to queueDepth chunks are merged together.
@@ -157,7 +148,8 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	cfg.comp = &comp;
 	
 	state.srcIt = begin;
-	state.srcSize = std::distance(begin, end);
+	using std::distance;
+	state.srcSize = distance(begin, end);
 	state.srcOffset = 0;
 
 	//now check if we really have to use out-of-memory sorting
@@ -196,17 +188,15 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				buffer.assign(chunkBegin, chunkEnd);
 				
 				ioLock.unlock();
-
-				std::sort(buffer.begin(), buffer.end(), *(cfg->comp));
+				
+				using std::sort;
+				sort(buffer.begin(), buffer.end(), *(cfg->comp));
 				
 				ioLock.lock();
 				//flush back
-				auto chunkIt = chunkBegin;
-				for(auto & x : buffer) {
-					*chunkIt = std::move(x);
-					++chunkIt;
-				}
-				assert(chunkIt == chunkEnd);
+				using std::move;
+				chunkBegin = move(buffer.begin(), buffer.end(), chunkBegin);
+				assert(chunkBegin == chunkEnd);
 				
 				state->sortCompleted += myChunkSize;
 				state->pinfo(state->sortCompleted);
@@ -295,10 +285,8 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			tmp.readBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
 			
 			///move back this part to source
-			for(auto x : tmp) {
-				*srcIt = std::move(x);
-				++srcIt;
-			}
+			using std::move;
+			srcIt = move(tmp.begin(), tmp.end(), srcIt);
 			state.srcOffset += tmp.size();
 			tmp.clear();
 			state.activeChunkBuffers.clear();;
@@ -338,13 +326,9 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	tmp.backBufferSize(0);
 	tmp.readBufferSize(tmpBufferSize);
 	
-	auto inIt = tmp.begin();
-	auto inEnd = tmp.end();
-	auto outIt = begin;
-	for(; inIt != inEnd; ++inIt, ++outIt) {
-		*outIt = std::move(*inIt);
-	}
-	return outIt;
+	//move back
+	using std::move;
+	return move(tmp.begin(), tmp.end(), begin);
 }
 
 }//end namespace
