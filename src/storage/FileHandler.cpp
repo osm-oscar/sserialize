@@ -56,7 +56,7 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 	return d;
 }
 
-int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFileName, bool fastFile) {
+int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFileName, bool fastFile, bool directIo) {
 	std::size_t fbSize;
 	if (fastFile) {
 		fbSize = sserialize::UByteArrayAdapter::getFastTempFilePrefix().size();
@@ -74,7 +74,13 @@ int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFile
 	::memset(fileName+fbSize, 'X', 6);
 	fileName[fbSize+6] = 0;
 	
-	int fd = ::mkstemp(fileName);
+	int fd = -1;
+	if (directIo) {
+		fd = ::mkostemp(fileName, O_DIRECT);
+	}
+	else {
+		fd = ::mkstemp(fileName);
+	}
 	
 	if (fd < 0) {
 		return -1;
