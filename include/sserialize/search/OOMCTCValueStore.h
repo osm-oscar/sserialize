@@ -165,7 +165,7 @@ public:
 	void append(TOutputTraits otraits);
 private:
 	typedef detail::OOMCTCValuesCreator::ValueEntry<NodeIdentifier> ValueEntry;
-	typedef sserialize::MMVector<ValueEntry> TreeValueEntries;
+	typedef sserialize::OOMArray<ValueEntry> TreeValueEntries;
 private:
 	template<typename TOutputTraits, bool TWithProgressInfo>
 	bool finalize(TOutputTraits & otraits);
@@ -177,8 +177,11 @@ private:
 template<typename TBaseTraits>
 OOMCTCValuesCreator<TBaseTraits>::OOMCTCValuesCreator(const TBaseTraits & traits) :
 m_traits(traits),
-m_entries(sserialize::MM_FAST_FILEBASED)
-{}
+m_entries(sserialize::MM_SLOW_FILEBASED)
+{
+	//backbuffer should be at least 100MiB to have enough data on a flush
+	m_entries.backBufferSize(100*1024*1024);
+}
 
 template<typename TBaseTraits>
 template<typename TItemIterator, typename TInputTraits, bool TWithProgressInfo>
