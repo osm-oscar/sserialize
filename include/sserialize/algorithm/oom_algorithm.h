@@ -162,7 +162,13 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 
 	//now check if we really have to use out-of-memory sorting
 	if (state.srcSize*sizeof(value_type) <= maxMemoryUsage && detail::oom::InMemorySort<TInputOutputIterator>::canSort) {
+		if (TWithProgressInfo) {
+			std::cout << "Using in-memory sorting..." << std::flush;
+		}
 		detail::oom::InMemorySort<TInputOutputIterator>::sort(begin, end, comp);
+		if (TWithProgressInfo) {
+			std::cout << "done" << std::endl;
+		}
 		return;
 	}
 
