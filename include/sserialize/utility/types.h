@@ -35,6 +35,7 @@ typedef uint64_t OffsetType;
 typedef int64_t SignedOffsetType;
 typedef uint64_t SizeType;
 typedef int64_t SignedSizeType;
+typedef int64_t DifferenceType;
 typedef uint64_t IdType;
 static_assert(sizeof(std::size_t) == sizeof(OffsetType), "std::size_t and OffsetType differ");
 static_assert(sizeof(double) == sizeof(uint64_t), "uint64_t and double differ");
