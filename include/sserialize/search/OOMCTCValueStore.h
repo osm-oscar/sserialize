@@ -240,7 +240,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		std::back_insert_iterator< std::vector<NodeIdentifier> > itemNodesBI;
 
 		void flush() {
-			std::unique_lock<std::mutex> lck(state->itLock);
+			std::unique_lock<std::mutex> lck(state->flushLock);
 			state->entries->push_back(outBuffer.begin(), outBuffer.end());
 			outBuffer.clear();
 		}
