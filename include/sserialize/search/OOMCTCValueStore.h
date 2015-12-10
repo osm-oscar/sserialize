@@ -371,9 +371,14 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 	} ses;
 	
+	//set a read-buffer size of 100 MiB
+	
 	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
 	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
-	for(TVEConstIterator eIt(m_entries.begin()), eBegin(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
+	
+	TVEConstIterator eIt(m_entries.begin());
+	eIt.bufferSize(100*1024*1024);
+	for(TVEConstIterator eBegin(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
 		const NodeIdentifier & ni = eIt->nodeId();
 		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
 			//find the end of this cell
