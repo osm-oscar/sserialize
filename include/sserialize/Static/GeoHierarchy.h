@@ -88,6 +88,21 @@ public:
 		uint32_t m_ghId;
 		uint32_t m_itemSize;
 		CellPositionsContainer m_cellPositions;
+	private:
+		template<typename TP>
+		void visitImp(TP & p) {
+			p(*this);
+			for(auto x : *this) {
+				x->visit(p);
+			}
+		}
+		template<typename TP>
+		void visitImp(TP & p) const {
+			p(*this);
+			for(auto x : *this) {
+				x->visit(p);
+			}
+		}
 	public:
 		Node(uint32_t ghId, uint32_t itemSize) : m_ghId(ghId), m_itemSize(itemSize) {}
 		virtual ~Node() {}
@@ -111,6 +126,10 @@ public:
 		inline const_iterator cend() const { return m_children.cend(); }
 		void dump(std::ostream & out);
 		void dump();
+		template<typename TP>
+		inline void visit(TP p) { visitImp(p); }
+		template<typename TP>
+		inline void visit(TP p) const { visitImp(p); }
 	};
 	typedef Node::NodePtr NodePtr;
 private:
