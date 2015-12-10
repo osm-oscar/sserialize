@@ -47,6 +47,7 @@ public:
 	inline uint32_t size() const { return m_size; }
 	inline bool isSpecial() const { return m_off == special; }
 	inline bool isInvalid() const { return m_off == special && m_size == special; }
+	///returns a copy with adjusted size
 	StaticString addOffset(OffsetType off) const { return StaticString(m_off + off, m_size-off); }
 };
 
