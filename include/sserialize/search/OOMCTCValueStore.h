@@ -151,6 +151,7 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   *   };
   * };
   */
+// #define IN_MEMORY_TREE_VALUE_ENTRIES
 
 template<typename TBaseTraits>
 class OOMCTCValuesCreator {
@@ -165,7 +166,11 @@ public:
 	void append(TOutputTraits otraits);
 private:
 	typedef detail::OOMCTCValuesCreator::ValueEntry<NodeIdentifier> ValueEntry;
+#ifdef IN_MEMORY_TREE_VALUE_ENTRIES
+	typedef sserialize::MMVector<ValueEntry> TreeValueEntries;
+#else
 	typedef sserialize::OOMArray<ValueEntry> TreeValueEntries;
+#endif
 private:
 	template<typename TOutputTraits, bool TWithProgressInfo>
 	bool finalize(TOutputTraits & otraits);
@@ -177,10 +182,16 @@ private:
 template<typename TBaseTraits>
 OOMCTCValuesCreator<TBaseTraits>::OOMCTCValuesCreator(const TBaseTraits & traits) :
 m_traits(traits),
+#ifdef IN_MEMORY_TREE_VALUE_ENTRIES
 m_entries(sserialize::MM_SLOW_FILEBASED)
+#else
+m_entries(sserialize::MM_FAST_FILEBASED)
+#endif
 {
 	//backbuffer should be at least 100MiB to have enough data on a flush
+#ifndef IN_MEMORY_TREE_VALUE_ENTRIES
 	m_entries.backBufferSize(100*1024*1024);
+#endif
 }
 
 template<typename TBaseTraits>
@@ -375,11 +386,16 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	
 	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
 	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
-	
 	TVEConstIterator eIt(m_entries.begin());
+#ifndef IN_MEMORY_TREE_VALUE_ENTRIES
 	eIt.bufferSize(100*1024*1024);
+#endif
 	for(TVEConstIterator eBegin(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
+#ifdef IN_MEMORY_TREE_VALUE_ENTRIES
 		const NodeIdentifier & ni = eIt->nodeId();
+#else
+		NodeIdentifier ni = eIt->nodeId();
+#endif
 		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
 			//find the end of this cell
 			TVEConstIterator cellBegin(eIt);
