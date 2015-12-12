@@ -391,7 +391,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 				ses.pmCellIdxPtrs.push_back(indexId);
 			}
 			//check if we have full matches
-			if (eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
+			if (eIt != eEnd && eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
 				ses.fmCellIds.push_back(cellId);
 				//skip this entry, it's the only one since other fm were removed by finalize()
 				++eIt;
