@@ -483,7 +483,7 @@ void OOMArray<TValue, TEnable>::push_back(TIterator __begin, TIterator __end) {
 	SizeType count = distance(__begin, __end);
 	//check if count fits into buffer, if not, use replace
 	if (count > m_backBufferSize-m_backBuffer.size()) {
-		replace(begin(), __begin, __end);
+		replace(end(), __begin, __end);
 	}
 	else {
 		m_backBuffer.insert(m_backBuffer.end(), __begin, __end);
