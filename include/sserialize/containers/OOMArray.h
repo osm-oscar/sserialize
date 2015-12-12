@@ -141,6 +141,12 @@ public:
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
 	virtual ~IteratorBuffer() {}
+	///sync buffer from backend
+	void sync() {
+		m_buffer.clear();
+		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
+	}
+	
 	BufferType & buffer() { return m_buffer; }
 	const BufferType & buffer() const { return m_buffer; }
 	SizeType bufferBegin() const { return m_bufferBegin; }
@@ -206,6 +212,8 @@ public:
 		m_p = std::move(other.m_p);
 		return *this;
 	}
+	///sync the buffer of this iterator with the backend
+	void sync() { m_b->sync(); }
 	///The returned reference is invalidated by a call to operator++() or ~ConstIterator()
 	const TValue & operator*() const { return m_b->get(m_p); }
 	///The returned reference is invalidated by a call to operator++() or ~ConstIterator() and changes are not carried through
