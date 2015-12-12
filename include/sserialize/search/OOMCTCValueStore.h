@@ -410,7 +410,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		dout(ni, ses.sd);
 		ses.clear();
 		//eIt now points to the next node or the end
-		pinfo(std::distance(eBegin, eIt));
+		using std::distance;
+		pinfo(distance(eBegin, eIt));
 	}
 	pinfo.end();
 }
