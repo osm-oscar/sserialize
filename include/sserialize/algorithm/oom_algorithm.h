@@ -89,6 +89,24 @@ struct InMemorySort<TIterator, std::random_access_iterator_tag> {
 	}
 };
 
+///This class is needed for buffered iterators 
+template<typename TIterator>
+struct IteratorSyncer {
+	static void sync(TIterator & /*it*/) {}
+};
+
+template<typename TValue>
+struct IteratorSyncer< detail::OOMArray::ConstIterator<TValue> > {
+	static void sync(detail::OOMArray::ConstIterator<TValue> & it) { it.sync(); }
+};
+
+
+template<typename TValue>
+struct IteratorSyncer< detail::OOMArray::Iterator<TValue> > {
+	static void sync(detail::OOMArray::Iterator<TValue> & it) { it.sync(); }
+};
+
+
 }}//end namespace detail::oom
 
 //TODO: specialise for OOMArray::iterator (special write-back, input buffer size needs to be taken into account)
@@ -236,7 +254,9 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBuffers)));
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
+		detail::oom::IteratorSyncer<TInputOutputIterator>::sync(begin);
 		SrcIterator srcIt = begin;
+		
 		std::vector< std::pair<uint64_t, uint64_t> > nextRoundPendingChunks;
 		state.srcOffset = 0;
 		
