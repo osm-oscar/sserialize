@@ -160,7 +160,7 @@ public:
 	const BaseContainerType * d() const { return m_d; }
 
 	const TValue & get(SizeType p) const { return buffer().at(p-bufferBegin()); }
-	TValue & get(SizeType p) { return m_buffer.at(p-m_bufferBegin); }
+	TValue & get(SizeType p) { return m_buffer.at(p-bufferBegin()); }
 	
 	///returns either a new buffer or this buffer if position is within this buffer
 	IteratorBuffer * getRepositioned(SizeType position) {
