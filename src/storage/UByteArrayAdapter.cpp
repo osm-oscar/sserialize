@@ -945,7 +945,7 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 		return UByteArrayAdapter();
 	}
 	MmappedFile tempFile = MmappedFile(fileName, true);
-	if (! tempFile.open() ) { //TODO:delete file if it exists
+	if (! tempFile.open() ) {
 		sserialize::err("UByteArrayAdapter::createFile", "Fatal: could not open file: " + fileName);
 		return UByteArrayAdapter();
 	}

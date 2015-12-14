@@ -9,7 +9,6 @@
 #include <ostream>
 #include <algorithm>
 
-//TODO: implement random-access-iterator
 //Sub-classes only have to implement the 64 bit functions if needed
 
 namespace sserialize {

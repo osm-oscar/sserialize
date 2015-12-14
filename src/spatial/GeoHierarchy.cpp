@@ -379,7 +379,6 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		const Region & r = m_regions[i];
 		bool ok = true;
 		uint32_t cellListIndexPtr = idxFactory.addIndex(r.cells());
-// 		allOk = allOk; //BUG: 
 		uint32_t exclusiveCellListIndexPtr;
 		if (r.childrenSize()) {
 			//get the region exclusive cells
