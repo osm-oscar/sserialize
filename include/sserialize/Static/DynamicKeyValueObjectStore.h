@@ -63,7 +63,6 @@ public:
 	inline Item at(uint32_t pos) const { return Item(this, m_items.dataAt(pos)); }
 	///You have to call finalizeStringTables() and reserve() before adding items
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
-	///TODO:implement the reorder mapper
 	UByteArrayAdapter::OffsetType serialize(sserialize::UByteArrayAdapter & dest) const;
 	std::pair<std::string, std::string> keyValue(uint32_t keyId, uint32_t valueId) const;
 };
