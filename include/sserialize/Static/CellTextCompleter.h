@@ -306,6 +306,8 @@ public:
 	inline std::ostream & printStats(std::ostream & out) const {
 		return priv()->printStats(out);
 	}
+	
+	inline std::string getName() const { return "sserialize::Static::CellTextCompleter"; }
 };
 
 
