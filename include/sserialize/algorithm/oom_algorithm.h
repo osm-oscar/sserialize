@@ -213,8 +213,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				ioLock.lock();
 				//flush back
 				using std::move;
-				chunkBegin = move(buffer.begin(), buffer.end(), chunkBegin);
-				assert(chunkBegin == chunkEnd);
+				
+				auto chunkIt = move(buffer.begin(), buffer.end(), chunkBegin);
+				assert(chunkIt == chunkEnd);
+				{
+					detail::oom::IteratorSyncer<TInputOutputIterator>::sync(chunkIt);
+					using std::is_sorted;
+					assert(is_sorted(chunkIt, chunkEnd, *(cfg->comp)));
+				}
 				
 				state->sortCompleted += myChunkSize;
 				state->pinfo(state->sortCompleted);

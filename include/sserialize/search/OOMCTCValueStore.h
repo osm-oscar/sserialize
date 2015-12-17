@@ -460,6 +460,10 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo>(m_entries.begin(), m_entries.end(), ltp, otraits.maxMemoryUsage(), 2, otraits.mmt());
 	auto equalEnd = sserialize::oom_unique<TVEIterator, Equal, TWithProgressInfo>(m_entries.begin(), m_entries.end(), otraits.mmt(), ep);
 	m_entries.resize(std::distance(m_entries.begin(), equalEnd));
+	{
+		using std::is_sorted;
+		assert(is_sorted(m_entries.begin(), m_entries.end(), ltp));
+	}
 	return true;
 }
 

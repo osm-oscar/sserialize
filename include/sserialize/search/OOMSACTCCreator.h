@@ -39,7 +39,10 @@ public:
 	CTCValueStoreNode(const CTCValueStoreNode & other) : m_nodeId(other.nodeId()), m_qt(other.qt()) {}
 	~CTCValueStoreNode() {}
 	inline bool operator==(const CTCValueStoreNode & other) const { return m_nodeId == other.m_nodeId && m_qt == other.m_qt; }
-	inline bool operator<(const CTCValueStoreNode & other) const { return (m_nodeId == other.m_nodeId ? m_qt < other.m_qt : m_nodeId < other.m_nodeId); }
+	inline bool operator<(const CTCValueStoreNode & other) const {
+		assert(qt() && other.qt());
+		return (m_nodeId == other.m_nodeId ? m_qt < other.m_qt : m_nodeId < other.m_nodeId);
+	}
 	inline uint32_t nodeId() const { return m_nodeId; }
 	inline uint8_t qt() const { return m_qt; }
 private:
@@ -270,6 +273,7 @@ public:
 			}
 			//and out it goes
 			for(const auto & x : m_allNodes) {
+				assert(x.qt() != sserialize::StringCompleter::QT_NONE);
 				*out = x;
 				++out;
 			}
@@ -343,6 +347,7 @@ public:
 		m_curData(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY))
 		{}
 		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
+			assert(ni.qt());
 			assert(m_curNodeId <= ni.nodeId());
 			if (m_curNodeId != ni.nodeId()) {//flush
 				flush();
