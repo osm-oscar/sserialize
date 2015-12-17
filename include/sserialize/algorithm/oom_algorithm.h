@@ -36,7 +36,7 @@ private:
 	}
 public:
 	InputBuffer() : m_bufferSize(0), m_bufferIt(m_buffer.begin()) {}
-	InputBuffer(TSourceIterator srcBegin, TSourceIterator srcEnd, OffsetType bufferSize) :
+	InputBuffer(const TSourceIterator & srcBegin, const TSourceIterator & srcEnd, OffsetType bufferSize) :
 	m_srcIt(srcBegin),
 	m_srcEnd(srcEnd),
 	m_bufferSize(bufferSize)
@@ -44,7 +44,7 @@ public:
 		m_buffer.reserve(m_bufferSize);
 		fillBuffer();
 	}
-	InputBuffer(InputBuffer && other) : m_srcIt(other.m_srcIt), m_srcEnd(other.m_srcEnd), m_bufferSize(other.m_bufferSize) {
+	InputBuffer(InputBuffer && other) : m_srcIt(std::move(other.m_srcIt)), m_srcEnd(std::move(other.m_srcEnd)), m_bufferSize(other.m_bufferSize) {
 		std::size_t bufferItOffset = other.m_bufferIt - other.m_buffer.begin();
 		m_buffer = std::move(other.m_buffer);
 		m_bufferIt = m_buffer.begin()+bufferItOffset;
