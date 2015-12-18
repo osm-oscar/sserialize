@@ -333,7 +333,7 @@ m_readBufferSize(m_backBufferSize/16)
 	switch(m_mmt) {
 	case sserialize::MM_FAST_FILEBASED:
 	case sserialize::MM_SLOW_FILEBASED:
-		m_fd = sserialize::FileHandler::createTmp(sizeof(TValue), m_fn, mmt == MM_FAST_FILEBASED, true);
+		m_fd = sserialize::FileHandler::createTmp(sizeof(TValue), m_fn, mmt == MM_FAST_FILEBASED, false);
 		break;
 	case sserialize::MM_PROGRAM_MEMORY:
 	case sserialize::MM_SHARED_MEMORY:
