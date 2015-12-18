@@ -303,7 +303,11 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 		SizeType fileCopyCount = std::min<SizeType>(bufferSize, m_backBufferBegin-p);
 		buffer.resize(fileCopyCount);
 		
-		::pread64(m_fd, &(buffer[0]), sizeof(TValue)*fileCopyCount, sizeof(TValue)*p);
+		SizeType readSize = sizeof(TValue)*fileCopyCount;
+		ssize_t bytesRead = ::pread64(m_fd, &(buffer[0]), readSize, sizeof(TValue)*p);
+		if (bytesRead < 0 || (SizeType)bytesRead != readSize) {
+			throw IOException("OOMArray::fill");
+		}
 		
 		bufferSize -= fileCopyCount;
 		p = 0;
@@ -419,7 +423,11 @@ void OOMArray<TValue, TEnable>::shrink_to_fit() {
 
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
-	::pwrite64(m_fd, &(m_backBuffer[0]), sizeof(TValue)*m_backBuffer.size(), m_backBufferBegin*sizeof(TValue));
+	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
+	ssize_t writtenSize = ::pwrite64(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
+	if (writtenSize < 0 || (SizeType)writtenSize != writeSize) {
+		throw IOException("OOMArray::flush");
+	}
 	m_backBufferBegin += m_backBuffer.size();
 	m_backBuffer.clear();
 }
@@ -503,7 +511,11 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 		for(; srcBegin != srcEnd && bufIt < myBufferEnd; ++srcBegin, ++bufIt) {
 			*bufIt = *srcBegin;
 		}
-		::pwrite64(m_fd, myBuffer, sizeof(TValue)*(bufIt-myBuffer), offset*sizeof(TValue));
+		SizeType writeSize = sizeof(TValue)*(bufIt-myBuffer);
+		ssize_t writtenSize = ::pwrite64(m_fd, myBuffer, writeSize, offset*sizeof(TValue));
+		if (writtenSize < 0 || (SizeType)writtenSize != writeSize)  {
+			throw IOException("OOMArray::flush");
+		}
 		offset += (bufIt-myBuffer);
 	}
 	delete[] myBuffer;
