@@ -9,6 +9,7 @@ struct FileHandler {
 	static void * mmapFile(int fd, OffsetType size, bool prePopulate, bool randomAccess);
 	//mmap a file and create if it does not exist
 	static void * mmapFile(const std::string & fileName, int & fd, OffsetType & size, bool prePopulate, bool randomAccess);
+	///directIo: you have to make sure that transfer sizes are a multiple of the block size! Use with care!
 	static int createTmp(OffsetType fileSize, std::string & tmpFileName, bool fastFile, bool directIo = false);
 	static void * createAndMmappTemp(OffsetType fileSize, int & fd, std::string & tmpFileName, bool prePopulate, bool randomAccess, bool fastFile);
 	static void * resize(int fd, void * mem, OffsetType oldSize, OffsetType newSize, bool prePopulate, bool randomAccess);
