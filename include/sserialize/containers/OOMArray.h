@@ -42,7 +42,6 @@ public:
 	OOMArray(OOMArray && other);
 	~OOMArray();
 	SizeType size() const { return m_backBufferBegin+m_backBuffer.size(); }
-	SizeType capacity() const { return m_capacity; }
 	void reserve(SizeType reserveSize);
 	void resize(SizeType newSize, const TValue & value = TValue());
 	void clear();
@@ -112,8 +111,6 @@ private:
 	int m_fd;
 	std::string m_fn;
 	sserialize::MmappedMemoryType m_mmt;
-	//the number of elements that fit in, not the data size
-	sserialize::SizeType m_capacity;
 	sserialize::SizeType m_backBufferBegin;
 	//number of entries in back buffer
 	sserialize::SizeType m_backBufferSize;
@@ -324,27 +321,25 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::OOMArray(MmappedMemoryType mmt) :
 m_mmt(mmt),
-m_capacity((1024*1024)/sizeof(TValue)),
 m_backBufferBegin(0),
-m_backBufferSize(m_capacity),
-m_readBufferSize(m_capacity/16)
+m_backBufferSize((1024*1024)/sizeof(TValue)),
+m_readBufferSize(m_backBufferSize/16)
 {
 	switch(m_mmt) {
 	case sserialize::MM_FAST_FILEBASED:
 	case sserialize::MM_SLOW_FILEBASED:
-		m_fd = sserialize::FileHandler::createTmp(sizeof(TValue)*m_capacity, m_fn, mmt == MM_FAST_FILEBASED, true);
+		m_fd = sserialize::FileHandler::createTmp(sizeof(TValue), m_fn, mmt == MM_FAST_FILEBASED, true);
 		break;
 	case sserialize::MM_PROGRAM_MEMORY:
 	case sserialize::MM_SHARED_MEMORY:
 	default:
 		m_mmt = sserialize::MM_SHARED_MEMORY;
 		m_fd = sserialize::FileHandler::shmCreate(m_fn);
-		::ftruncate(m_fd, sizeof(TValue)*m_capacity);
+		::ftruncate(m_fd, sizeof(TValue));
 		break;
 	}
 	
 	if (m_fd < 0) {
-		m_capacity = 0;
 		throw sserialize::IOException("OOMArray could not create backend file");
 	}
 }
@@ -353,14 +348,12 @@ template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::OOMArray(OOMArray<TValue, TEnable> && other) :
 m_fd(other.m_fd),
 m_fn(std::move(other.m_fn)),
-m_capacity(other.m_capacity),
 m_backBufferBegin(other.m_size),
 m_backBufferSize(other.m_backBufferSize),
 m_backBuffer(std::move(other.m_backBuffer)),
 m_readBufferSize(other.m_readBufferSize)
 {
 	other.m_fd = -1;
-	other.m_capacity = 0;
 	other.m_size = 0;
 }
 
@@ -391,16 +384,8 @@ void OOMArray<TValue, TEnable>::backBufferSize(SizeType s) {
 }
 
 template<typename TValue, typename TEnable>
-void OOMArray<TValue, TEnable>::reserve(SizeType reserveSize) {
-	flush();
-	
-	if (m_capacity >= reserveSize) {
-		return;
-	}
-	if (::ftruncate(m_fd, reserveSize*sizeof(TValue)) < 0) {
-		throw sserialize::IOException("OOMArray::reserve");
-	}
-	m_capacity = reserveSize;
+void OOMArray<TValue, TEnable>::reserve(SizeType /*reserveSize*/) {
+	//nothing to reserve here
 }
 
 template<typename TValue, typename TEnable>
@@ -467,9 +452,6 @@ void OOMArray<TValue, TEnable>::set(SizeType pos, const TValue & v) {
 
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::push_back(const TValue & v) {
-	if (m_capacity <= size()) {
-		reserve(size()*2);
-	}
 	m_backBuffer.push_back(v);
 	if (m_backBuffer.size() >= m_backBufferSize) {
 		flush();
