@@ -330,6 +330,8 @@ m_backBufferBegin(0),
 m_backBufferSize((1024*1024)/sizeof(TValue)),
 m_readBufferSize(m_backBufferSize/16)
 {
+	m_backBuffer.reserve(m_backBufferSize);
+
 	switch(m_mmt) {
 	case sserialize::MM_FAST_FILEBASED:
 	case sserialize::MM_SLOW_FILEBASED:
