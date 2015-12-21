@@ -1,6 +1,5 @@
 #ifndef SSERIALIZE_ITEM_INDEX_FACTORY_H
 #define SSERIALIZE_ITEM_INDEX_FACTORY_H
-#include <forward_list>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
