@@ -9,55 +9,74 @@
 
 namespace sserialize {
 
-/** This class is a storage for arbitrary data sets. If you add the same the multiple times, then it get's store only once.
-	Compile-time debug options:
-	DEBUG_CHECK_SERIALIZED_INDEX, DEBUG_CHECK_ALL
+/** This class is a storage for arbitrary data sets.
+	You can enable deduplication on a per-insertion basis
+	Current version flushes to a simple sserialize::Static::Array
+	Future versions may implement compression, though this can already be accomplished by adding the compressed data.
 */
 
 class DataSetFactory {
 public:
-	typedef std::forward_list<uint32_t> DataOffsetContainer;
-	typedef std::unordered_map< uint64_t, DataOffsetContainer > DataHashType;
+	typedef sserialize::UByteArrayAdapter value_type;
+	typedef uint64_t SizeType;
+	typedef SizeType IdType;
+	typedef enum {DDM_FORCE_OFF, DDM_FORCE_ON, DDM_DEFAULT} DeduplicationMode; 
+private:
+	typedef uint64_t HashValue;
+	struct HashListEntry {
+		HashListEntry(uint64_t prev, IdType id) : prev(prev), id(id) {}
+		uint64_t prev;
+		IdType id;
+	} __attribute__ ((packed));
+	typedef std::unordered_map<HashValue, uint64_t> DataHash;//maps from HashValue -> HashList position
+	typedef sserialize::MMVector<HashListEntry> HashList;
+	typedef sserialize::Static::detail::ArrayCreator::DefaultStreamingSerializer<value_type> Serializer;
+	typedef sserialize::Static::ArrayCreator<UByteArrayAdapter, Serializer, sserialize::MMVector<uint64_t> > ArrayCreator;
+private:
+	static constexpr IdType nid = std::numeric_limits<IdType>::max();
 private:
 	UByteArrayAdapter m_data;
-	Static::ArrayCreator<UByteArrayAdapter> m_ac;
-	DataHashType m_hash;
-	std::atomic<uint32_t> m_hitCount;
-	MultiReaderSingleWriterLock m_mapLock;
+	ArrayCreator m_ac;
+	DataHash m_hash;
+	HashList m_hashList;
+	std::atomic<uint64_t> m_hitCount;
+	MultiReaderSingleWriterLock m_hashLock;
 	MultiReaderSingleWriterLock m_dataLock;
+	DeduplicationMode m_ddm;
 	
-	uint64_t hashFunc(const UByteArrayAdapter & v);
-	///returns the position of the data or -1 if none was found @thread-safety: yes
-	int64_t getStoreId(const UByteArrayAdapter & v, uint64_t & hv);
-	bool dataInStore(const UByteArrayAdapter & v, uint32_t id);
+	HashValue hashFunc(const UByteArrayAdapter::MemoryView & v);
+	bool dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id);
+	
+	///returns the id of the data or npos if none was found @thread-safety: yes
+	IdType getStoreId(const UByteArrayAdapter::MemoryView & v, HashValue hv);
 
 private://deleted functions
-	DataSetFactory(const DataSetFactory & /*other*/);
-	DataSetFactory & operator=(const DataSetFactory & /*other*/);
 public:
-	DataSetFactory(bool memoryBase = false);
+	///create the DataSetStore at dest.tellPutPtr()
+	DataSetFactory(sserialize::UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt);
+	DataSetFactory(sserialize::MmappedMemoryType mmt = sserialize::MM_PROGRAM_MEMORY);
 	DataSetFactory(DataSetFactory && other);
+	DataSetFactory(const DataSetFactory & /*other*/) = delete;
 	~DataSetFactory();
 	DataSetFactory & operator=(DataSetFactory && other);
+	DataSetFactory & operator=(const DataSetFactory & /*other*/) = delete;
+	
+	void setDDM(bool useDeduplication);
 
-	///create the DataSetStore at the beginning of data
-	void setDataStoreFile(UByteArrayAdapter data);
+	SizeType size() const;
+	SizeType hitCount() const;
 
+	UByteArrayAdapter at(IdType id) const;
 
-	uint32_t size() const { return m_ac.size();}
-	inline uint32_t hitCount() const { return m_hitCount; }
-
-	UByteArrayAdapter at(uint32_t id) const;
-
-	uint32_t insert(const sserialize::UByteArrayAdapter & data);
-	uint32_t insert(const std::vector<uint8_t> & data);
+	///thread-safe, @param ddm user default or force on/off
+	IdType insert(const sserialize::UByteArrayAdapter & data, DeduplicationMode ddm = DDM_DEFAULT);
 	
 	///Flushes the data, don't add data afterwards
 	///@return number of bytes from the beginning of the dataStoreFile
 	///Flushed to an Static::Array
-	OffsetType flush();
+	void flush();
 	
-	UByteArrayAdapter getFlushedData() const { return m_ac.getFlushedData(); }
+	UByteArrayAdapter getFlushedData() const;
 };
 
 }//end namespace
