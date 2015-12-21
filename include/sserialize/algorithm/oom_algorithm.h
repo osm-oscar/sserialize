@@ -333,24 +333,20 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	}
 	typedef typename std::iterator_traits<TInputOutputIterator>::value_type value_type;
 	
-	uint64_t tmpBufferSize = (32*1024*1024)/sizeof(value_type);
-	
 	sserialize::OOMArray<value_type> tmp(mmt);
-	tmp.backBufferSize(tmpBufferSize);
-	
 	tmp.reserve(std::distance(begin, end));
 	
-	auto it = begin;
+	TInputOutputIterator it(begin);
+	value_type prev = *it;
 	tmp.emplace_back(std::move(*it));
 	for(++it; it != end; ++it) {
-		if (!eq(*it, tmp.back())) {
+		if (!eq(*it, prev)) {
+			prev = *it;
 			tmp.emplace_back(std::move(*it));
 		}
 	}
 	
 	tmp.flush();
-	tmp.backBufferSize(0);
-	tmp.readBufferSize(tmpBufferSize);
 	
 	//move back
 	using std::move;
