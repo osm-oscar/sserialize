@@ -385,9 +385,11 @@ OOMArray<TValue, TEnable>::~OOMArray() {
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::backBufferSize(SizeType s) {
 	m_backBufferSize = s/sizeof(TValue);
-	if (m_backBuffer.size() >= m_backBufferSize) {
+	if (m_backBuffer.size()) {
 		flush();
 	}
+	m_backBuffer.shrink_to_fit();
+	m_backBuffer.reserve(m_backBufferSize);
 }
 
 template<typename TValue, typename TEnable>
