@@ -261,7 +261,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
 		detail::oom::IteratorSyncer<TInputOutputIterator>::sync(begin);
-		SrcIterator srcIt = begin;
+		SrcIterator srcIt(begin);
 		
 		std::vector< std::pair<uint64_t, uint64_t> > nextRoundPendingChunks;
 		state.srcOffset = 0;
