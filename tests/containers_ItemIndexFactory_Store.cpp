@@ -32,8 +32,6 @@ private:
 	std::vector<uint32_t> m_setIds;
 public:
 	ItemIndexFactoryTest() : m_idxFactory(true) {
-		m_idxFactory.setRegline(true);
-		m_idxFactory.setBitWith(-1);
 		m_idxFactory.setType(T_IDX_TYPE);
 	}
 
@@ -181,8 +179,6 @@ public:
 		Static::ItemIndexStore sdb(m_idxFactory.getFlushedData());
 		
 		sserialize::ItemIndexFactory idxFactory;
-		idxFactory.setRegline(true);
-		idxFactory.setBitWith(-1);
 		idxFactory.setType(T_IDX_TYPE);
 		idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, sserialize::MM_PROGRAM_MEMORY) );
 		std::vector<uint32_t> remap = idxFactory.insert(sdb);
