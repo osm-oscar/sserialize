@@ -3,9 +3,10 @@
 #include <sserialize/storage/FileHandler.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/storage/MmappedMemory.h>
+#include <sserialize/utility/type_traits.h>
+#include <sserialize/utility/constants.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sserialize/utility/type_traits.h>
 #include <vector>
 #include <errno.h>
 
@@ -306,7 +307,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 		
 		SizeType readSize = sizeof(TValue)*fileCopyCount;
 		ssize_t bytesRead = ::pread64(m_fd, &(buffer[0]), readSize, sizeof(TValue)*p);
-		if (bytesRead < 0 || (SizeType)bytesRead != readSize) {
+		if (UNLIKELY_BRANCH(bytesRead < 0 || (SizeType)bytesRead != readSize)) {
 			throw IOException("OOMArray::fill: " + std::string(::strerror(errno)));
 		}
 		
@@ -430,7 +431,7 @@ template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
 	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
 	ssize_t writtenSize = ::pwrite64(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
-	if (writtenSize < 0 || (SizeType)writtenSize != writeSize) {
+	if (UNLIKELY_BRANCH(writtenSize < 0 || (SizeType)writtenSize != writeSize)) {
 		throw IOException("OOMArray::flush: " + std::string(::strerror(errno)));
 	}
 	m_backBufferBegin += m_backBuffer.size();
