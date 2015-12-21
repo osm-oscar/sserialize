@@ -45,8 +45,6 @@ private:
 	ItemIndexSizesContainer m_idxSizes;
 	std::atomic<uint32_t> m_hitCount;
 	bool m_checkIndex;
-	int8_t m_bitWidth;
-	bool m_useRegLine;
 	bool m_useDeduplication;
 	ItemIndex::Types m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
@@ -81,8 +79,6 @@ public:
 	std::vector<uint32_t> insert(const sserialize::Static::ItemIndexStore & store);
 	
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
-	void setBitWith(int8_t bitWidth) { m_bitWidth = bitWidth; }
-	void setRegline(bool useRegLine) { m_useRegLine = useRegLine; }
 	//default is on
 	void setDeduplication(bool dedup) { m_useDeduplication  = dedup; }
 		

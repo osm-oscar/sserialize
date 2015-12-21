@@ -21,8 +21,6 @@ m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
 m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(0),
 m_checkIndex(true),
-m_bitWidth(-1),
-m_useRegLine(true),
 m_useDeduplication(true),
 m_type(ItemIndex::T_REGLINE)
 {
@@ -38,8 +36,6 @@ m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
 m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(other.m_hitCount.load()),
 m_checkIndex(other.m_checkIndex),
-m_bitWidth(other.m_bitWidth),
-m_useRegLine(other.m_useRegLine),
 m_useDeduplication(other.m_useDeduplication),
 m_type(other.m_type),
 m_compressionType(other.m_compressionType)
@@ -58,8 +54,6 @@ ItemIndexFactory::~ItemIndexFactory() {}
 ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	m_hitCount.store(other.m_hitCount.load());
 	m_checkIndex = other.m_checkIndex;
-	m_bitWidth = other.m_bitWidth;
-	m_useRegLine = other.m_useRegLine;
 	m_useDeduplication = other.m_useDeduplication;
 	m_type = other.m_type;
 	m_compressionType = other.m_compressionType;
