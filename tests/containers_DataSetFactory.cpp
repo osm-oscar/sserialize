@@ -18,17 +18,17 @@ template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_T
 class DataSetFactoryTest: public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE( DataSetFactoryTest );
 CPPUNIT_TEST( testSerializedEquality );
-CPPUNIT_TEST( testSameId );
+CPPUNIT_TEST( testSameIdDedup );
+CPPUNIT_TEST( testSameIdNoDedup );
 CPPUNIT_TEST_SUITE_END();
 private:
 	DataSetFactory m_dsFactory;
 	std::vector< std::set<uint32_t> > m_sets;
 	std::vector<uint32_t> m_setIds;
 public:
-	DataSetFactoryTest() : m_dsFactory(true) {}
+	DataSetFactoryTest() : m_dsFactory(sserialize::MM_PROGRAM_MEMORY) {}
 
 	virtual void setUp() {
-		m_dsFactory.setDataStoreFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, sserialize::MM_PROGRAM_MEMORY) );
 		m_sets.reserve(T_SET_COUNT);
 		m_setIds.reserve(T_SET_COUNT);
 		
@@ -41,31 +41,41 @@ public:
 		for(uint32_t i = 0; i< m_sets.size(); ++i) {
 			sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
 			sserialize::ItemIndexFactory::create(m_sets[i], tmp, T_IDX_TYPE);
-			uint32_t id = m_dsFactory.insert(tmp);
+			uint32_t id = m_dsFactory.insert(tmp, DataSetFactory::DDM_FORCE_ON);
 			m_setIds.push_back(id);
 		}
 	}
 	virtual void tearDown() {}
 	
-	void testSameId() {
+	void testSameIdDedup() {
 		for(uint32_t i = 0; i < m_sets.size(); ++i) {
 			sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
 			sserialize::ItemIndexFactory::create(m_sets[i], tmp, T_IDX_TYPE);
-			uint32_t id = m_dsFactory.insert(tmp);
-			CPPUNIT_ASSERT_EQUAL(m_setIds[i], id);
+			uint32_t id = m_dsFactory.insert(tmp, DataSetFactory::DDM_FORCE_ON);
+			if (id != m_setIds[i]) {
+				m_dsFactory.insert(tmp, DataSetFactory::DDM_FORCE_ON);
+			}
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(std::string("at ") + std::to_string(i), m_setIds[i], id);
+		}
+	}
+	
+	void testSameIdNoDedup() {
+		for(uint32_t i = 0; i < m_sets.size(); ++i) {
+			sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
+			sserialize::ItemIndexFactory::create(m_sets[i], tmp, T_IDX_TYPE);
+			uint32_t expectId = m_dsFactory.size();
+			uint32_t id = m_dsFactory.insert(tmp, DataSetFactory::DDM_FORCE_OFF);
+			CPPUNIT_ASSERT_EQUAL(expectId, id);
 		}
 	}
 	
 	void testSerializedEquality() {
-		
-		CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_dsFactory.flush());
+		m_dsFactory.flush();
 
 		UByteArrayAdapter dataAdap( m_dsFactory.getFlushedData());
-
-
 		Static::Array<sserialize::UByteArrayAdapter> sdb(dataAdap);
 		
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("DataSetFactory.size() != DataSetFactory.size()", m_dsFactory.size(), sdb.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("DataSetFactory.size() != DataSetFactory.size()", m_dsFactory.size(), (DataSetFactory::SizeType) sdb.size());
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
 			ItemIndex idx(sdb.at( m_setIds[i] ), T_IDX_TYPE);
