@@ -1,5 +1,5 @@
-#ifndef SSERIALIZE_DATA_SET_FACTORY_H
-#define SSERIALIZE_DATA_SET_FACTORY_H
+#ifndef SSERIALIZE_VARIANT_STORE_H
+#define SSERIALIZE_VARIANT_STORE_H
 #include <forward_list>
 #include <unordered_map>
 #include <iostream>
@@ -15,7 +15,7 @@ namespace sserialize {
 	Future versions may implement compression, though this can already be accomplished by adding the compressed data.
 */
 
-class DataSetFactory {
+class VariantStore {
 public:
 	typedef sserialize::UByteArrayAdapter value_type;
 	typedef uint64_t SizeType;
@@ -53,13 +53,13 @@ private:
 private://deleted functions
 public:
 	///create the DataSetStore at dest.tellPutPtr()
-	DataSetFactory(sserialize::UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt);
-	DataSetFactory(sserialize::MmappedMemoryType mmt = sserialize::MM_PROGRAM_MEMORY);
-	DataSetFactory(DataSetFactory && other);
-	DataSetFactory(const DataSetFactory & /*other*/) = delete;
-	~DataSetFactory();
-	DataSetFactory & operator=(DataSetFactory && other);
-	DataSetFactory & operator=(const DataSetFactory & /*other*/) = delete;
+	VariantStore(sserialize::UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt);
+	VariantStore(sserialize::MmappedMemoryType mmt = sserialize::MM_PROGRAM_MEMORY);
+	VariantStore(VariantStore && other);
+	VariantStore(const VariantStore &) = delete;
+	~VariantStore();
+	VariantStore & operator=(VariantStore && other);
+	VariantStore & operator=(const VariantStore &) = delete;
 	
 	void setDDM(bool useDeduplication);
 

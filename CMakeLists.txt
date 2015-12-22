@@ -102,6 +102,7 @@ src/containers/DynamicBitSet.cpp
 src/containers/SortedOffsetIndex.cpp
 src/containers/SortedOffsetIndexPrivate.cpp
 src/containers/KeyValueObjectStore.cpp
+src/containers/VariantStore.cpp
 src/containers/RLEStream.cpp
 src/containers/ItemIndex.cpp
 src/containers/ItemIndexPrivates/ItemIndexPrivate.cpp
@@ -170,7 +171,6 @@ src/utility/detail/Compressor/LZOCompressor.cpp
 )
 
 set(STAGING_SOURCES_CPP
-staging/containers/DataSetFactory.cpp
 )
 
 set(EXTERNAL_SOURCES_CPP

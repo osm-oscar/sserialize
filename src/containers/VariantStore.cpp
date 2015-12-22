@@ -1,9 +1,9 @@
-#include "DataSetFactory.h"
+#include <sserialize/containers/VariantStore.h>
 #include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 
-DataSetFactory::DataSetFactory(UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt) :
+VariantStore::VariantStore(UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt) :
 m_data(dest),
 m_ac(&m_data, Serializer(), sserialize::MMVector<uint64_t>(mmt)),
 m_hashList(mmt),
@@ -11,11 +11,11 @@ m_hitCount(0)
 {}
 
 
-DataSetFactory::DataSetFactory(sserialize::MmappedMemoryType mmt) :
-DataSetFactory(sserialize::UByteArrayAdapter::createCache(1024, mmt), mmt)
+VariantStore::VariantStore(sserialize::MmappedMemoryType mmt) :
+VariantStore(sserialize::UByteArrayAdapter::createCache(1024, mmt), mmt)
 {}
 
-DataSetFactory::DataSetFactory(DataSetFactory && other) :
+VariantStore::VariantStore(VariantStore && other) :
 m_data(std::move(other.m_data)),
 m_ac(std::move(other.m_ac)),
 m_hash(std::move(other.m_hash)),
@@ -23,9 +23,9 @@ m_hashList(std::move(other.m_hashList)),
 m_hitCount(other.m_hitCount.load())
 {}
 
-DataSetFactory::~DataSetFactory() {}
+VariantStore::~VariantStore() {}
 
-DataSetFactory & DataSetFactory::operator=(DataSetFactory && other) {
+VariantStore & VariantStore::operator=(VariantStore && other) {
 	m_data = std::move(other.m_data);
 	m_ac = std::move(other.m_ac);
 	m_hash = std::move(other.m_hash);
@@ -34,7 +34,7 @@ DataSetFactory & DataSetFactory::operator=(DataSetFactory && other) {
 	return *this;
 }
 
-void DataSetFactory::setDDM(bool useDeduplication) {
+void VariantStore::setDDM(bool useDeduplication) {
 	if (useDeduplication) {
 		m_ddm = DDM_FORCE_ON;
 	}
@@ -43,15 +43,15 @@ void DataSetFactory::setDDM(bool useDeduplication) {
 	}
 }
 
-DataSetFactory::SizeType DataSetFactory::size() const {
+VariantStore::SizeType VariantStore::size() const {
 	return m_ac.size();
 }
 
-DataSetFactory::SizeType DataSetFactory::hitCount() const {
+VariantStore::SizeType VariantStore::hitCount() const {
 	return m_hitCount.load();
 }
 
-DataSetFactory::HashValue DataSetFactory::hashFunc(const UByteArrayAdapter::MemoryView & v) {
+VariantStore::HashValue VariantStore::hashFunc(const UByteArrayAdapter::MemoryView & v) {
 	uint64_t h = 0;
 	for(UByteArrayAdapter::MemoryView::const_iterator it(v.cbegin()), end(v.cend()); it != end; ++it) {
 		hash_combine(h, *it);
@@ -59,7 +59,7 @@ DataSetFactory::HashValue DataSetFactory::hashFunc(const UByteArrayAdapter::Memo
 	return h;
 }
 
-bool DataSetFactory::dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id) {
+bool VariantStore::dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id) {
 	m_dataLock.acquireReadLock();
 	UByteArrayAdapter tmp = m_ac.dataAt(id);
 	if (tmp.size() != v.size()) {
@@ -74,7 +74,7 @@ bool DataSetFactory::dataInStore(const UByteArrayAdapter::MemoryView & v, IdType
 	}
 }
 
-DataSetFactory::IdType DataSetFactory::getStoreId(const UByteArrayAdapter::MemoryView & v, uint64_t hv) {
+VariantStore::IdType VariantStore::getStoreId(const UByteArrayAdapter::MemoryView & v, uint64_t hv) {
 	m_hashLock.acquireReadLock();
 	if (m_hash.count(hv) == 0) {
 		m_hashLock.releaseReadLock();
@@ -100,14 +100,14 @@ DataSetFactory::IdType DataSetFactory::getStoreId(const UByteArrayAdapter::Memor
 	return nid;
 }
 
-DataSetFactory::IdType DataSetFactory::insert(const sserialize::UByteArrayAdapter & data, DeduplicationMode ddm) {
+VariantStore::IdType VariantStore::insert(const sserialize::UByteArrayAdapter & data, DeduplicationMode ddm) {
 	if (ddm == DDM_DEFAULT) {
 		ddm = m_ddm;
 	}
 	sserialize::UByteArrayAdapter::MemoryView mv(data.asMemView());
 	HashValue hv = hashFunc(mv);
 	IdType id = (ddm == DDM_FORCE_ON ? getStoreId(mv, hv) : nid);
-	if (id == DataSetFactory::nid) {
+	if (id == VariantStore::nid) {
 		m_dataLock.acquireWriteLock();
 		id = m_ac.size();
 		m_ac.put(data);
@@ -128,18 +128,18 @@ DataSetFactory::IdType DataSetFactory::insert(const sserialize::UByteArrayAdapte
 	return id;
 }
 
-UByteArrayAdapter DataSetFactory::at(IdType id) const {
+UByteArrayAdapter VariantStore::at(IdType id) const {
 	if (id >= size()) {
 		throw sserialize::OutOfBoundsException("sserialize::DataSetFactory::at");
 	}
 	return m_ac.dataAt(id);
 }
 
-void DataSetFactory::flush() {
+void VariantStore::flush() {
 	m_ac.flush();
 }
 
-UByteArrayAdapter DataSetFactory::getFlushedData() const {
+UByteArrayAdapter VariantStore::getFlushedData() const {
 	return m_ac.getFlushedData();
 }
 
