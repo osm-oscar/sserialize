@@ -49,7 +49,7 @@ ADD_TEST_TARGET_SINGLE(containers_multibititerators)
 ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
 ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
 ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie)
-ADD_TEST_TARGET_SINGLE(containers_DataSetFactory)
+ADD_TEST_TARGET_SINGLE(containers_VariantStore)
 ADD_TEST_TARGET_SINGLE(containers_CFLArray)
 ADD_TEST_TARGET_SINGLE(containers_OOMArray)
 
