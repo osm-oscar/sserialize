@@ -13,15 +13,20 @@
 #include <limits>
 #include <iostream>
 #include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/utility/constants.h>
+#include <sserialize/utility/exceptions.h>
 
 #define BUFFER_SIZE 4096
+
+#define EXCEPT_ON_UNEQUAL(__IS, __SHOULD, __MESSAGE) \
+if ( UNLIKELY_BRANCH( __SHOULD != __IS ) ) { throw sserialize::IOException("sserialize::UByteArrayAdapterPrivateFile::" __MESSAGE); }
 
 namespace sserialize {
 uint32_t UByteArrayAdapterPrivateFile::populateCache(sserialize::UByteArrayAdapter::OffsetType pos, uint32_t len) const {
 	assert(len <= m_bufferSize);
 	uint64_t tmp = pos-m_bufferOffset;
 	if (pos < m_bufferOffset || tmp+len > m_bufferSize) {
-		::pread64(m_fd, m_buffer, m_bufferSize, pos);
+		EXCEPT_ON_UNEQUAL(::pread64(m_fd, m_buffer, m_bufferSize, pos), m_bufferSize, "populateCache")
 		m_bufferOffset = pos;
 		tmp = 0;
 	}
@@ -57,16 +62,17 @@ m_buffer(new uint8_t[m_bufferSize])
 	int mode = (writable ? O_RDWR : O_RDONLY);
 	m_fd = ::open64(filePath.c_str(), mode);
 	if (m_fd < 0) {
-		throw sserialize::MissingDataException("UByteArrayAdapterPrivateSeekedFile: could not open file");
+		throw sserialize::MissingDataException("UByteArrayAdapterPrivateFile: could not open file");
 	}
 	struct ::stat64 stFileInfo;
 	if (::fstat64(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<OffsetType>(stFileInfo.st_size) < std::numeric_limits<OffsetType>::max()) {
 		m_size = stFileInfo.st_size;
 	}
 	else {
-		throw sserialize::MissingDataException("UByteArrayAdapterPrivateSeekedFile: could not get file size");
+		throw sserialize::MissingDataException("UByteArrayAdapterPrivateFile: could not get file size");
 	}
-	::pread64(m_fd, m_buffer, std::min<UByteArrayAdapter::OffsetType>(m_bufferSize, m_size), 0);
+	SignedOffsetType readSize = std::min<UByteArrayAdapter::OffsetType>(m_bufferSize, m_size);
+	EXCEPT_ON_UNEQUAL(::pread64(m_fd, m_buffer, readSize, 0), readSize, "UByteArrayAdapterPrivateFile");
 }
 
 UByteArrayAdapterPrivateFile::~UByteArrayAdapterPrivateFile() {
@@ -177,7 +183,7 @@ int32_t UByteArrayAdapterPrivateFile::getVlPackedInt32(UByteArrayAdapter::Offset
 }
 
 void UByteArrayAdapterPrivateFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
-	::pread64(m_fd, dest, len, pos);
+	EXCEPT_ON_UNEQUAL(::pread64(m_fd, dest, len, pos), (SignedOffsetType)len, "get");
 }
 
 std::string UByteArrayAdapterPrivateFile::getString(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const {
@@ -186,7 +192,7 @@ std::string UByteArrayAdapterPrivateFile::getString(UByteArrayAdapter::OffsetTyp
 	if (myLen < 1)
 		return std::string();
 	char buf[strLen];
-	::pread64(m_fd, buf, strLen, pos+len);
+	EXCEPT_ON_UNEQUAL(::pread64(m_fd, buf, strLen, pos+len), strLen, "getString");
 	return std::string(buf, strLen);
 }
 
@@ -195,68 +201,68 @@ std::string UByteArrayAdapterPrivateFile::getString(UByteArrayAdapter::OffsetTyp
 void UByteArrayAdapterPrivateFile::putInt64(UByteArrayAdapter::OffsetType pos, int64_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, sizeof(value), pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, sizeof(value), pos), sizeof(value), "putInt64");
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateFile::putUint64(UByteArrayAdapter::OffsetType pos, uint64_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, sizeof(value), pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, sizeof(value), pos), sizeof(value), "putUint64");
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateFile::putInt32(UByteArrayAdapter::OffsetType pos, int32_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, sizeof(value), pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, sizeof(value), pos), sizeof(value), "putInt32");
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateFile::putUint32(UByteArrayAdapter::OffsetType pos, uint32_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, sizeof(value), pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, sizeof(value), pos), sizeof(value), "putUint32");
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateFile::putUint24(UByteArrayAdapter::OffsetType pos, uint32_t value) {
 	uint8_t buf[3];
 	p_u24(value, buf);
-	::pwrite64(m_fd, buf, 3, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, 3, pos), 3, "putUint24");
 	updateBufferAfterWrite(pos, buf, 3);
 }
 
 void UByteArrayAdapterPrivateFile::putUint16(UByteArrayAdapter::OffsetType pos, uint16_t value) {
 	uint8_t buf[sizeof(value)];
 	p_cl<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, sizeof(value), pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, sizeof(value), pos), sizeof(value), "putUint16");
 	updateBufferAfterWrite(pos, buf, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateFile::putUint8(UByteArrayAdapter::OffsetType pos, uint8_t value) {
-	::pwrite64(m_fd, &value, sizeof(value), pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, &value, sizeof(value), pos), sizeof(value), "putUint8");
 	updateBufferAfterWrite(pos, &value, sizeof(value));
 }
 
 void UByteArrayAdapterPrivateFile::putOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType value) {
 	uint8_t buf[5];
 	p_u40(value, buf);
-	::pwrite64(m_fd, buf, 5, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, 5, pos), 5, "putOffset");
 	updateBufferAfterWrite(pos, buf, 5);
 }
 
 void UByteArrayAdapterPrivateFile::putNegativeOffset(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::NegativeOffsetType value) {
 	uint8_t buf[5];
 	p_s40(value, buf);
-	::pwrite64(m_fd, buf, 5, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, 5, pos), 5, "putNegativeOffset");
 	updateBufferAfterWrite(pos, buf, 5);
 }
 
 int UByteArrayAdapterPrivateFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, myLen, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, myLen, pos), myLen, "putVlPackedUint64");
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -264,7 +270,7 @@ int UByteArrayAdapterPrivateFile::putVlPackedUint64(UByteArrayAdapter::OffsetTyp
 int UByteArrayAdapterPrivateFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, myLen, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, myLen, pos), myLen, "putVlPackedInt64");
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -272,7 +278,7 @@ int UByteArrayAdapterPrivateFile::putVlPackedInt64(UByteArrayAdapter::OffsetType
 int UByteArrayAdapterPrivateFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, myLen, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, myLen, pos), myLen, "putVlPackedUint32");
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -280,7 +286,7 @@ int UByteArrayAdapterPrivateFile::putVlPackedUint32(UByteArrayAdapter::OffsetTyp
 int UByteArrayAdapterPrivateFile::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_vu32pad4(value, buf);
-	::pwrite64(m_fd, buf, myLen, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, myLen, pos), myLen, "putVlPackedPad4Uint32");
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -288,7 +294,7 @@ int UByteArrayAdapterPrivateFile::putVlPackedPad4Uint32(UByteArrayAdapter::Offse
 int UByteArrayAdapterPrivateFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_v<decltype(value)>(value, buf);
-	::pwrite64(m_fd, buf, myLen, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, myLen, pos), myLen, "putVlPackedInt32");
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
@@ -296,13 +302,13 @@ int UByteArrayAdapterPrivateFile::putVlPackedInt32(UByteArrayAdapter::OffsetType
 int UByteArrayAdapterPrivateFile::putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[sizeof(value)+1];
 	int myLen = p_vs32pad4(value, buf);
-	::pwrite64(m_fd, buf, myLen, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, buf, myLen, pos), myLen, "putVlPackedPad4Int32");
 	updateBufferAfterWrite(pos, buf, myLen);
 	return myLen;
 }
 
 void UByteArrayAdapterPrivateFile::put(UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len) {
-	::pwrite64(m_fd, src, len, pos);
+	EXCEPT_ON_UNEQUAL(::pwrite64(m_fd, src, len, pos), (SignedOffsetType)len, "put");
 	updateBufferAfterWrite(pos, src, len);
 }
 
