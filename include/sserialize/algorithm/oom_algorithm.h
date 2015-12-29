@@ -333,18 +333,27 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	}
 	typedef typename std::iterator_traits<TInputOutputIterator>::value_type value_type;
 	
+	using std::distance;
+	uint64_t srcSize = distance(begin, end);
+	
 	sserialize::OOMArray<value_type> tmp(mmt);
-	tmp.reserve(std::distance(begin, end));
+	tmp.reserve(srcSize);
+	
+	OptionalProgressInfo<TWithProgressInfo> pinfo;
+	pinfo.begin(srcSize, "OOMUnique");
 	
 	TInputOutputIterator it(begin);
+	uint64_t count = 0;
 	value_type prev = *it;
 	tmp.emplace_back(std::move(*it));
-	for(++it; it != end; ++it) {
+	for(++it; it != end; ++it, ++count) {
 		if (!eq(*it, prev)) {
 			prev = *it;
 			tmp.emplace_back(std::move(*it));
 		}
+		pinfo(count);
 	}
+	pinfo.end();
 	
 	tmp.flush();
 	
