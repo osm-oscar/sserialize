@@ -61,6 +61,7 @@ public:
 	
 	void flush();
 	
+	inline TValue at(SizeType pos) const { return get(pos); }
 	TValue get(SizeType pos) const;
 	void set(SizeType pos, const TValue & v);
 	
@@ -434,8 +435,8 @@ void OOMArray<TValue, TEnable>::flush() {
 	if (UNLIKELY_BRANCH(writtenSize < 0 || (SizeType)writtenSize != writeSize)) {
 		throw IOException("OOMArray::flush: " + std::string(::strerror(errno)));
 	}
-// 	::fdatasync(m_fd);
-	::fsync(m_fd);
+	::fdatasync(m_fd);
+// 	::fsync(m_fd);
 	m_backBufferBegin += m_backBuffer.size();
 	m_backBuffer.clear();
 }
@@ -529,8 +530,8 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	delete[] myBuffer;
 	assert(position.p()+count == offset);
 	
-// 	::fdatasync(m_fd);
-	fsync(m_fd);
+	::fdatasync(m_fd);
+// 	fsync(m_fd);
 	
 	return iterator(this, offset, position.bufferSize());
 }
