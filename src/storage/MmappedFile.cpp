@@ -380,7 +380,9 @@ bool MmappedFile::createSymlink(const std::string & src, const std::string & des
 std::string MmappedFile::realPath(const std::string & path) {
 	char buf[PATH_MAX];
 	buf[0] = 0;
-	::realpath(path.c_str(), buf);
+	if (!::realpath(path.c_str(), buf)) {
+		throw std::runtime_error("sserialize::MmappedFile::realPath");
+	}
 	return std::string(buf);
 }
 
