@@ -504,7 +504,7 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	if (offset+count > m_backBufferBegin) {
 		//flush back buffer, makes everything easier
 		flush();
-		m_backBufferBegin = offset+count;
+		m_backBufferBegin = std::max<uint64_t>(offset+count, m_backBufferBegin);
 	}
 	
 	SizeType myBufferSize = std::min<SizeType>(m_backBufferSize, count);
