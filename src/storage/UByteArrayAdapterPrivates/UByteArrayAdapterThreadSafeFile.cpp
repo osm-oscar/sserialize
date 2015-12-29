@@ -86,7 +86,7 @@ uint8_t & UByteArrayAdapterPrivateThreadSafeFile::operator[](UByteArrayAdapter::
 }
 
 const uint8_t & UByteArrayAdapterPrivateThreadSafeFile::operator[](UByteArrayAdapter::OffsetType pos) const {
-	::pread64(m_fd, &m_buffer, 1, pos);
+	EXCEPT_ON_UNEQUAL(::pread64(m_fd, &m_buffer, 1, pos), 1, "operator[]");
 	return m_buffer;
 }
 
