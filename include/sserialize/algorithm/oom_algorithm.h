@@ -322,6 +322,11 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		state.pinfo.end();
 		using std::swap;
 		swap(state.pendingChunks, nextRoundPendingChunks);
+		if (tmp.size() > state.srcSize) {
+			std::cout << std::endl;
+			std::cout << "Broken sort" << std::endl;
+			std::cout << std::endl;
+		}
 	}
 }
 
@@ -356,6 +361,12 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	pinfo.end();
 	
 	tmp.flush();
+	
+	if (tmp.size() > srcSize) {
+			std::cout << std::endl;
+			std::cout << "Broken unique" << std::endl;
+			std::cout << std::endl;
+	}
 	
 	//move back
 	using std::move;
