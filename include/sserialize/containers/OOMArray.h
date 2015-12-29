@@ -308,8 +308,11 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 		
 		SizeType readSize = sizeof(TValue)*fileCopyCount;
 		ssize_t bytesRead = ::pread64(m_fd, &(buffer[0]), readSize, sizeof(TValue)*p);
-		if (UNLIKELY_BRANCH(bytesRead < 0 || (SizeType)bytesRead != readSize)) {
+		if (UNLIKELY_BRANCH(bytesRead < 0)) {
 			throw IOException("OOMArray::fill: " + std::string(::strerror(errno)));
+		}
+		if (UNLIKELY_BRANCH((SizeType)bytesRead != readSize)) {
+			throw IOException("OOMArray::fill: requested " + std::to_string(fileCopyCount) + " but got " + std::to_string(bytesRead));
 		}
 		
 		bufferSize -= fileCopyCount;
