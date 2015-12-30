@@ -34,9 +34,11 @@ private:
 public:
 	typedef sserialize::SizeType SizeType;
 	typedef sserialize::DifferenceType DifferenceType;
+	
+	typedef TValue value_type;
 
-	typedef detail::OOMArray::ConstIterator<TValue> const_iterator;
-	typedef detail::OOMArray::Iterator<TValue> iterator;
+	typedef detail::OOMArray::ConstIterator<value_type> const_iterator;
+	typedef detail::OOMArray::Iterator<value_type> iterator;
 	
 public:
 	OOMArray(MmappedMemoryType mmt);
@@ -45,39 +47,39 @@ public:
 	~OOMArray();
 	SizeType size() const { return m_backBufferBegin+m_backBuffer.size(); }
 	void reserve(SizeType reserveSize);
-	void resize(SizeType newSize, const TValue & value = TValue());
+	void resize(SizeType newSize, const value_type & value = value_type());
 	void clear();
 	void shrink_to_fit();
 	
 	///in Bytes
 	void backBufferSize(sserialize::SizeType s);
 	///in Bytes
-	sserialize::SizeType backBufferSize() const { return m_backBufferSize*sizeof(TValue); }
+	sserialize::SizeType backBufferSize() const { return m_backBufferSize*sizeof(value_type); }
 	
 	///standard read buffer size for iterators, in Bytes
-	void readBufferSize(sserialize::SizeType s) { m_readBufferSize = s/sizeof(TValue); }
+	void readBufferSize(sserialize::SizeType s) { m_readBufferSize = s/sizeof(value_type); }
 	///standard read buffer size for iterators, in Bytes
-	sserialize::SizeType readBufferSize() const { return m_readBufferSize*sizeof(TValue); }
+	sserialize::SizeType readBufferSize() const { return m_readBufferSize*sizeof(value_type); }
 	
 	void flush();
 	
-	inline TValue at(SizeType pos) const { return get(pos); }
-	TValue get(SizeType pos) const;
-	void set(SizeType pos, const TValue & v);
+	inline value_type at(SizeType pos) const { return get(pos); }
+	value_type get(SizeType pos) const;
+	void set(SizeType pos, const value_type & v);
 	
-	TValue back() const { return get(size()-1); }
+	value_type back() const { return get(size()-1); }
 	
 	///buffered io
-	void push_back(const TValue & v);
+	void push_back(const value_type & v);
 	
 	///buffered io
 	template<typename TIterator>
 	void push_back(TIterator __begin, TIterator __end);
 	
 	///buffered io
-	void emplace_back(TValue && v) { push_back(v); }
+	void emplace_back(value_type && v) { push_back(v); }
 	///buffered io
-	void emplace_back(const TValue & v) { push_back(v); }
+	void emplace_back(const value_type & v) { push_back(v); }
 	
 	///invalidates iterators, unbuffered io
 	template<typename TSourceIterator>
@@ -109,16 +111,16 @@ public:
 	}
 	
 private:
-	void fill(std::vector<TValue> & buffer, SizeType bufferSize, SizeType p);
+	void fill(std::vector<value_type> & buffer, SizeType bufferSize, SizeType p);
 private:
 	int m_fd;
 	std::string m_fn;
 	sserialize::MmappedMemoryType m_mmt;
-	sserialize::SizeType m_backBufferBegin;
-	//number of entries in back buffer
+	sserialize::SizeType m_backBufferBegin; //number of entries before back buffer
+	//maximum number of entries in back buffer
 	sserialize::SizeType m_backBufferSize;
 	//write buffer for push_back operations
-	std::vector<TValue> m_backBuffer;
+	std::vector<value_type> m_backBuffer;
 	//number of entries in read buffer
 	sserialize::SizeType m_readBufferSize;
 };
@@ -133,11 +135,12 @@ public:
 	typedef sserialize::OOMArray<TValue> BaseContainerType;
 private:
 	BaseContainerType * m_d;
-	SizeType m_bufferBegin;
-	SizeType m_bufferSize;
+	SizeType m_bufferBegin; //in entries
+	SizeType m_bufferSize; //in entries
 	BufferType m_buffer;
 public:
-	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs) {
+	///@param bs in Bytes
+	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs/sizeof(TValue)) {
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
 	virtual ~IteratorBuffer() {}
@@ -151,9 +154,9 @@ public:
 	const BufferType & buffer() const { return m_buffer; }
 	SizeType bufferBegin() const { return m_bufferBegin; }
 
-	///s in bytes
+	///s in Bytes
 	void bufferSize(SizeType s) { m_bufferSize = s/sizeof(TValue); }
-	///in bytes
+	///in Bytes
 	SizeType bufferSize() const { return m_bufferSize*sizeof(TValue); }
 
 	BaseContainerType * d() { return m_d; }
@@ -165,7 +168,7 @@ public:
 	///returns either a new buffer or this buffer if position is within this buffer
 	IteratorBuffer * getRepositioned(SizeType position) {
 		if (position < m_bufferBegin || position-m_bufferBegin >= m_buffer.size()) {
-			return new IteratorBuffer(m_d, position, m_bufferSize);
+			return new IteratorBuffer(m_d, position, bufferSize());
 		}
 		return this;
 	}
@@ -182,7 +185,7 @@ public:
 				m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 			}
 			else {
-				return new IteratorBuffer(m_d, position, m_bufferSize);
+				return new IteratorBuffer(m_d, position, bufferSize());
 			}
 		}
 		return 0;
@@ -237,13 +240,14 @@ public:
 	bool operator<(const ConstIterator & other) const { return d() == other.d() && m_p < other.m_p; }
 	bool operator!=(const ConstIterator & other) const { return d() != other.d() || m_p != other.m_p; }
 	bool operator==(const ConstIterator & other) const { return d() == other.d() && m_p == other.m_p; }
-	///s in bytes
+	///s in Bytes
 	void bufferSize(SizeType s) { m_b->bufferSize(s); }
 	
-	///in bytes
+	///in Bytes
 	SizeType bufferSize() const { return m_b->bufferSize(); }
 protected:
 	friend class sserialize::OOMArray<TValue>;
+	///@bs in Bytes
 	ConstIterator(sserialize::OOMArray<TValue> * d, SizeType p, SizeType bs) : m_b(new MyIteratorBuffer(d, p, bs)), m_p(p) {}
 	ConstIterator(MyIteratorBufferPtr b, SizeType p) : m_b(b->getRepositioned(p)), m_p(p) {}
 
@@ -291,6 +295,7 @@ public:
 protected:
 	friend class sserialize::OOMArray<TValue>;
 	Iterator(MyBaseClass && otherBase) : MyBaseClass(std::move(otherBase)) {}
+	///@param bs in Bytes
 	Iterator(sserialize::OOMArray<TValue> * d, SizeType p, SizeType bs) : MyBaseClass(d, p, bs) {}
 };
 
@@ -330,6 +335,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 
 template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::OOMArray(MmappedMemoryType mmt) :
+m_fd(-1),
 m_mmt(mmt),
 m_backBufferBegin(0),
 m_backBufferSize((1024*1024)/sizeof(TValue)),
@@ -347,7 +353,16 @@ m_readBufferSize(m_backBufferSize/16)
 	default:
 		m_mmt = sserialize::MM_SHARED_MEMORY;
 		m_fd = sserialize::FileHandler::shmCreate(m_fn);
-		::ftruncate(m_fd, sizeof(TValue));
+		if (m_fd < 0) {
+			throw sserialize::IOException("OOMArray could not create backend file: " + std::string(::strerror(errno)));
+		}
+			
+		if (::ftruncate(m_fd, sizeof(TValue)) < 0) {
+			std::string errmsg(::strerror(errno));
+			::close(m_fd);
+			::shm_unlink(m_fn.c_str());
+			throw sserialize::IOException("OOMArray could not create backend file: " + errmsg);
+		}
 		break;
 	}
 	
@@ -439,7 +454,6 @@ void OOMArray<TValue, TEnable>::flush() {
 		throw IOException("OOMArray::flush: " + std::string(::strerror(errno)));
 	}
 	::fdatasync(m_fd);
-// 	::fsync(m_fd);
 	m_backBufferBegin += m_backBuffer.size();
 	m_backBuffer.clear();
 }
@@ -534,8 +548,6 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	assert(position.p()+count == offset);
 	
 	::fdatasync(m_fd);
-// 	fsync(m_fd);
-	
 	return iterator(this, offset, position.bufferSize());
 }
 
