@@ -231,12 +231,18 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	{
 		state.sortCompleted = 0;
 		state.pinfo.begin(state.srcSize, "Sorting chunks");
-		std::vector<std::thread> ts;
-		for(uint32_t i(0); i < threadCount; ++i) {
-			ts.emplace_back(std::thread(Worker(&state, &cfg)));
+		if (threadCount > 1) {
+			std::vector<std::thread> ts;
+			for(uint32_t i(0); i < threadCount; ++i) {
+				ts.emplace_back(std::thread(Worker(&state, &cfg)));
+			}
+			for(std::thread & t : ts) {
+				t.join();
+			}
 		}
-		for(std::thread & t : ts) {
-			t.join();
+		else {
+			Worker w(&state, &cfg);
+			w.operator()();
 		}
 		state.pinfo.end();
 	}
