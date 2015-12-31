@@ -5,6 +5,7 @@
 #include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/type_traits.h>
 #include <sserialize/utility/constants.h>
+#include <sserialize/storage/MmappedFile.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <vector>
@@ -43,6 +44,7 @@ public:
 	typedef detail::OOMArray::Iterator<value_type> iterator;
 	
 public:
+	OOMArray(const std::string & fileName);
 	OOMArray(MmappedMemoryType mmt);
 	OOMArray(const OOMArray & other) = delete;
 	OOMArray(OOMArray && other);
@@ -117,6 +119,7 @@ private:
 private:
 	int m_fd;
 	std::string m_fn;
+	bool m_delete;
 	sserialize::MmappedMemoryType m_mmt;
 	sserialize::SizeType m_backBufferBegin; //number of entries before back buffer
 	//maximum number of entries in back buffer
@@ -336,8 +339,36 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 }
 
 template<typename TValue, typename TEnable>
+OOMArray<TValue, TEnable>::OOMArray(const std::string & fileName) :
+m_fd(-1),
+m_fn(fileName),
+m_delete(false),
+m_mmt(sserialize::MM_INVALID),
+m_backBufferBegin(0),
+m_backBufferSize((1024*1024)/sizeof(TValue)),
+m_readBufferSize(m_backBufferSize/16)
+{
+	if (!MmappedFile::fileExists(fileName)) {
+		throw sserialize::IOException("sserialize::OOMArray: input file " + fileName + " does not exist");
+	}
+	m_backBufferBegin = sserialize::MmappedFile::fileSize(fileName);
+
+	if (m_backBufferBegin % sizeof(value_type)) {
+		throw sserialize::IOException("sserialize::OOMArray: input file " + fileName + " is not a multiple of sizeof(value_type)");
+	}
+	
+	m_fd = FileHandler::open(fileName);
+	if (m_fd < 0) {
+		throw sserialize::IOException("OOMArray could not open backend file " + std::string(::strerror(errno)));
+	}
+
+	m_backBuffer.reserve(m_backBufferSize);
+}
+
+template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::OOMArray(MmappedMemoryType mmt) :
 m_fd(-1),
+m_delete(true),
 m_mmt(mmt),
 m_backBufferBegin(0),
 m_backBufferSize((1024*1024)/sizeof(TValue)),
@@ -377,6 +408,7 @@ template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::OOMArray(OOMArray<TValue, TEnable> && other) :
 m_fd(other.m_fd),
 m_fn(std::move(other.m_fn)),
+m_delete(other.m_delete),
 m_backBufferBegin(other.m_size),
 m_backBufferSize(other.m_backBufferSize),
 m_backBuffer(std::move(other.m_backBuffer)),
@@ -384,11 +416,12 @@ m_readBufferSize(other.m_readBufferSize)
 {
 	other.m_fd = -1;
 	other.m_size = 0;
+	other.m_delete = false;
 }
 
 template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::~OOMArray() {
-	if (m_fd >= 0) {
+	if (m_delete && m_fd >= 0) {
 		::close(m_fd);
 		switch(m_mmt) {
 		case sserialize::MM_FAST_FILEBASED:
