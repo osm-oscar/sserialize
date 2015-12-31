@@ -49,7 +49,7 @@ void printCompletionSet(const std::set<unsigned int> & set, const std::deque<Tes
 			for(std::deque<std::string>::const_iterator sit = items.at(i).strs.begin(); sit != items.at(i).strs.end(); sit++) {
 				std::cout << *sit << ",";
 			}
-			std::cout << "):" << items.at(i).id << std::cout << "]";
+			std::cout << "):" << items.at(i).id << "]";
 		}
 	}
 }
