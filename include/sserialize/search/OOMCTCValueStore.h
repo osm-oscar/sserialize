@@ -181,6 +181,7 @@ m_entries(sserialize::MM_SLOW_FILEBASED)
 {
 	//backbuffer should be at least 100MiB to have enough data on a flush
 	m_entries.backBufferSize(100*1024*1024);
+	m_entries.readBufferSize(10*1024*1024);
 }
 
 template<typename TBaseTraits>
