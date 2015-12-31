@@ -322,6 +322,14 @@ OffsetType MmappedFile::fileSize(const std::string& fileName) {
 		return 0;
 }
 
+OffsetType MmappedFile::fileSize(int fd) {
+	struct ::stat64 stFileInfo;
+	if (::fstat64(fd,&stFileInfo) == 0)
+		return stFileInfo.st_size;
+	else
+		return 0;
+}
+
 std::string findLockFilePathPrivate(const std::string & fileNamePrefix, uint32_t maxTest) {
 	std::string fn;
 	char buf[32];

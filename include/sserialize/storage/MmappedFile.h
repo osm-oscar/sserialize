@@ -105,6 +105,7 @@ public:
 	static bool truncateFile(const std::string & fileName, OffsetType size);
 	static bool fileExists(const std::string & fileName);
 	static OffsetType fileSize(const std::string & fileName);
+	static OffsetType fileSize(int fd);
 	/** Not thread-safe **/
 	static std::string findLockFilePath(const std::string & fileNamePrefix, uint32_t maxTest);
 	
