@@ -105,7 +105,6 @@ ADD_TEST_TARGET_SINGLE(unicodetest)
 ADD_TEST_TARGET_SINGLE(util_memusage)
 add_test_target_single(containers_itemindex_file)
 add_test_target_single(containers_setoptree)
-add_test_target_single(sort_oom_sactc_data)
 
 #staging
 ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
@@ -123,6 +122,10 @@ SET(MY_SSERIALIZE_CGAL_LINK_LIBS
 	"boost_thread"
 	"boost_system"
 )
+
+add_executable("${PROJECT_NAME}_sort_oom_sactc_data" sort_oom_sactc_data.cpp)
+target_link_libraries("${PROJECT_NAME}_sort_oom_sactc_data" ${MY_SSERIALIZE_CGAL_LINK_LIBS})
+add_dependencies("${PROJECT_NAME}_sort_oom_sactc_data" sserializetests)
 
 add_executable("${PROJECT_NAME}_search_CellTextCompleter" search_CellTextCompleter.cpp)
 target_link_libraries("${PROJECT_NAME}_search_CellTextCompleter" ${MY_SSERIALIZE_CGAL_LINK_LIBS})
