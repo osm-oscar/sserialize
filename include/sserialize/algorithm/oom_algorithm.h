@@ -308,6 +308,12 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				if (tmp.size() % 1000 == 0) {
 					state.pinfo(state.srcOffset+tmp.size());
 				}
+				if (tmp.size() > state.srcSize) {
+					std::cout << std::endl;
+					std::cout << "Broken sort" << std::endl;
+					std::cout << std::endl;
+					throw sserialize::CreationException("oom_sort or is broken or an iterator");
+				}
 			}
 			state.pinfo(state.srcOffset+tmp.size());
 			
