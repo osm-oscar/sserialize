@@ -10,6 +10,8 @@
 #include <vector>
 #include <errno.h>
 
+#include <sserialize/utility/debug.h>
+
 namespace sserialize {
 namespace detail {
 namespace OOMArray {
@@ -238,8 +240,8 @@ public:
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
 	bool operator<(const ConstIterator & other) const { return d() == other.d() && m_p < other.m_p; }
-	bool operator!=(const ConstIterator & other) const { return d() != other.d() || m_p != other.m_p; }
-	bool operator==(const ConstIterator & other) const { return d() == other.d() && m_p == other.m_p; }
+	NO_INLINE NO_OPTIMIZE bool operator!=(const ConstIterator & other) const { return d() != other.d() || m_p != other.m_p; }
+	NO_INLINE NO_OPTIMIZE bool operator==(const ConstIterator & other) const { return d() == other.d() && m_p == other.m_p; }
 	///s in Bytes
 	void bufferSize(SizeType s) { m_b->bufferSize(s); }
 	
