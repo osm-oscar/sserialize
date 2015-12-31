@@ -148,6 +148,8 @@ public:
 	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs/sizeof(TValue)) {
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
+	IteratorBuffer(const IteratorBuffer & other) = delete;
+	IteratorBuffer & operator=(const IteratorBuffer & other) = delete;
 	virtual ~IteratorBuffer() {}
 	///sync buffer from backend
 	void sync() {
