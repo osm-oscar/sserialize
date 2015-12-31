@@ -68,6 +68,16 @@ int main(int argc, char ** argv) {
 		return -1;
 	}
 	
+	std::cout << "Inputfile: " << fileName << std::endl;
+	std::cout << "MaxMemoryUsage: " << sserialize::prettyFormatSize(maxMemoryUsage) << std::endl;
+	
+	std::string ok;
+	std::cout << "OK?[yes|NO]" << std::endl;
+	std::cin >> ok;
+	if (ok != "yes") {
+		return 0;
+	}
+	
 	MyEntriesContainer entries(fileName);
 	
 	MyNodeIdentifierLessThanComparator nltp;
