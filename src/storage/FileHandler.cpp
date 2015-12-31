@@ -56,6 +56,10 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 	return d;
 }
 
+int FileHandler::open(const std::string& fileName) {
+	return ::open(fileName.c_str(), O_RDWR);
+}
+
 int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFileName, bool fastFile, bool directIo) {
 	std::size_t fbSize;
 	if (fastFile) {
