@@ -79,6 +79,8 @@ int main(int argc, char ** argv) {
 	}
 	
 	MyEntriesContainer entries(fileName);
+	entries.backBufferSize(100*1024*1024);
+	entries.readBufferSize(10*1024*1024);
 	
 	MyNodeIdentifierLessThanComparator nltp;
 	MyLessThan ltp(nltp);
