@@ -11,7 +11,10 @@
 #include <vector>
 #include <errno.h>
 
+#include <iostream>
 #include <sserialize/utility/debug.h>
+
+#define MY_ASSERT(__X) if (!((bool)(__X))) { while (true) std::cout << "FUTSCH" << std::endl; }
 
 namespace sserialize {
 namespace detail {
@@ -150,7 +153,9 @@ public:
 	}
 	IteratorBuffer(const IteratorBuffer & other) = delete;
 	IteratorBuffer & operator=(const IteratorBuffer & other) = delete;
-	virtual ~IteratorBuffer() {}
+	virtual ~IteratorBuffer() {
+		m_d = 0;
+	}
 	///sync buffer from backend
 	void sync() {
 		m_buffer.clear();
@@ -209,17 +214,24 @@ protected:
 	typedef sserialize::OOMArray<TValue> BaseContainerType;
 public:
 	ConstIterator() : m_b(0), m_p(0) {}
-	ConstIterator(ConstIterator && other) : m_b(std::move(other.m_b)), m_p(other.m_p) {}
-	ConstIterator(const ConstIterator & other) : m_b(other.m_b), m_p(other.m_p) {}
+	ConstIterator(ConstIterator && other) : m_b(std::move(other.m_b)), m_p(other.m_p) {
+		MY_ASSERT(d()->size() >= m_p);
+	}
+	ConstIterator(const ConstIterator & other) : m_b(other.m_b), m_p(other.m_p)
+	{
+		MY_ASSERT(d()->size() >= m_p);
+	}
 	~ConstIterator() {}
 	ConstIterator & operator=(const ConstIterator & other) {
 		m_b = other.m_b;
 		m_p = other.m_p;
+		MY_ASSERT(d()->size() >= m_p);
 		return *this;
 	}
 	ConstIterator & operator=(ConstIterator && other) {
 		m_b = std::move(other.m_b);
 		m_p = std::move(other.m_p);
+		MY_ASSERT(d()->size() >= m_p);
 		return *this;
 	}
 	///sync the buffer of this iterator with the backend
@@ -238,15 +250,25 @@ public:
 		if (tmp) {
 			m_b.reset(tmp);
 		}
+		MY_ASSERT(d()->size() >= m_p);
 		return *this;
 	}
 	ConstIterator operator+(uint32_t count) const {
 		return ConstIterator(m_b, m_p+count);
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
-	bool operator<(const ConstIterator & other) const { return d() == other.d() && m_p < other.m_p; }
-	NO_INLINE NO_OPTIMIZE bool operator!=(const ConstIterator & other) const { return d() != other.d() || m_p != other.m_p; }
-	NO_INLINE NO_OPTIMIZE bool operator==(const ConstIterator & other) const { return d() == other.d() && m_p == other.m_p; }
+	bool operator<(const ConstIterator & other) const {
+		MY_ASSERT(d() == other.d());
+		return d() == other.d() && m_p < other.m_p;
+	}
+	NO_INLINE NO_OPTIMIZE bool operator!=(const ConstIterator & other) const {
+		MY_ASSERT(d() == other.d());
+		return d() != other.d() || m_p != other.m_p;
+	}
+	NO_INLINE NO_OPTIMIZE bool operator==(const ConstIterator & other) const {
+		MY_ASSERT(d() == other.d());
+		return d() == other.d() && m_p == other.m_p;
+	}
 	///s in Bytes
 	void bufferSize(SizeType s) { m_b->bufferSize(s); }
 	
@@ -256,7 +278,9 @@ protected:
 	friend class sserialize::OOMArray<TValue>;
 	///@bs in Bytes
 	ConstIterator(sserialize::OOMArray<TValue> * d, SizeType p, SizeType bs) : m_b(new MyIteratorBuffer(d, p, bs)), m_p(p) {}
-	ConstIterator(MyIteratorBufferPtr b, SizeType p) : m_b(b->getRepositioned(p)), m_p(p) {}
+	ConstIterator(MyIteratorBufferPtr b, SizeType p) : m_b(b->getRepositioned(p)), m_p(p) {
+		MY_ASSERT(d()->size() >= m_p);
+	}
 
 	BufferType & buffer() { return m_b->buffer(); }
 	const BufferType & buffer() const { return m_b->buffer(); }
@@ -310,6 +334,7 @@ protected:
 
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType bufferSize, SizeType p) {
+	MY_ASSERT(sserialize::MmappedFile::fileSize(m_fd) == m_backBufferBegin);
 	buffer.clear();
 	if (p >= size()) {
 		return;
@@ -324,7 +349,8 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 			throw IOException("OOMArray::fill: " + std::string(::strerror(errno)));
 		}
 		if (UNLIKELY_BRANCH((SizeType)bytesRead != readSize)) {
-			throw IOException("OOMArray::fill: requested " + std::to_string(fileCopyCount) + " but got " + std::to_string(bytesRead));
+			std::cout << "Trying to read " << readSize << " bytes starting from " << p*sizeof(TValue) << " from file with size " << sserialize::MmappedFile::fileSize(m_fn) << std::endl;
+			throw IOException("OOMArray::fill: requested " + std::to_string(readSize) + " but got " + std::to_string(bytesRead));
 		}
 		
 		bufferSize -= fileCopyCount;
@@ -493,6 +519,7 @@ void OOMArray<TValue, TEnable>::flush() {
 	::fdatasync(m_fd);
 	m_backBufferBegin += m_backBuffer.size();
 	m_backBuffer.clear();
+	MY_ASSERT(sserialize::MmappedFile::fileSize(m_fd) == m_backBufferBegin);
 }
 
 template<typename TValue, typename TEnable>
@@ -583,8 +610,10 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	}
 	delete[] myBuffer;
 	assert(position.p()+count == offset);
+	MY_ASSERT(position.p()+count == offset);
 	
 	::fdatasync(m_fd);
+	MY_ASSERT(sserialize::MmappedFile::fileSize(m_fd) == m_backBufferBegin);
 	return iterator(this, offset, position.bufferSize());
 }
 
