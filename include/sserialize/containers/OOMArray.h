@@ -153,6 +153,7 @@ private:
 public:
 	///@param bs in Bytes
 	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs/sizeof(TValue)) {
+		MY_ASSERT(d()->size() >= bb);
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
 	IteratorBuffer(const IteratorBuffer & other) = delete;
@@ -178,8 +179,14 @@ public:
 	BaseContainerType * d() { return m_d; }
 	const BaseContainerType * d() const { return m_d; }
 
-	const TValue & get(SizeType p) const { return buffer().at(p-bufferBegin()); }
-	TValue & get(SizeType p) { return m_buffer.at(p-bufferBegin()); }
+	const TValue & get(SizeType p) const {
+		MY_ASSERT(d()->size() > p);
+		return buffer().at(p-bufferBegin());
+	}
+	TValue & get(SizeType p) {
+		MY_ASSERT(d()->size() > p);
+		return m_buffer.at(p-bufferBegin());
+	}
 	
 	///returns either a new buffer or this buffer if position is within this buffer
 	IteratorBuffer * getRepositioned(SizeType position) {
