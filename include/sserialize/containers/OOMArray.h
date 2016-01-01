@@ -384,6 +384,7 @@ m_readBufferSize(m_backBufferSize/16)
 	if (m_backBufferBegin % sizeof(value_type)) {
 		throw sserialize::IOException("sserialize::OOMArray: input file " + fileName + " is not a multiple of sizeof(value_type)");
 	}
+	m_backBufferBegin /= sizeof(value_type);
 	
 	m_fd = FileHandler::open(fileName);
 	if (m_fd < 0) {
