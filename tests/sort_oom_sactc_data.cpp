@@ -38,13 +38,14 @@ struct MyLessThan {
 };
 
 void help() {
-	std::cout << "prg -i inputfile -m <maxMemoryUsage in MiB" << std::endl;
+	std::cout << "prg -i inputfile -m <maxMemoryUsage in MiB -st <path to slow files> -st <path to fast files> -a" << std::endl;
 }
 
 int main(int argc, char ** argv) {
 	uint64_t maxMemoryUsage = 0;
 	std::string fileName;
 	bool ask = false;
+	
 	for(int i(0); i < argc; ++i) {
 		std::string token(argv[i]);
 		if (token == "-i" && i+1 < argc) {
@@ -53,6 +54,16 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "-m" && i+1 < argc) {
 			maxMemoryUsage = ::atoi(argv[i+1]);
+			++i;
+		}
+		else if (token == "-st" && i+1 < argc) {
+			token = std::string(argv[i+1]);
+			sserialize::UByteArrayAdapter::setTempFilePrefix(token);
+			++i;
+		}
+		else if (token == "-ft" && i+1 < argc) {
+			token = std::string(argv[i+1]);
+			sserialize::UByteArrayAdapter::setFastTempFilePrefix(token);
 			++i;
 		}
 		else if (token == "-a") {
