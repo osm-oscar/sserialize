@@ -304,6 +304,9 @@ public:
 template<typename TValue>
 class MmappedMemory {
 public:
+	typedef TValue value_type;
+	typedef value_type * iterator;
+	typedef const value_type * const_iterator;
 private:
 	typedef typename detail::MmappedMemory::MmappedMemoryInterface<TValue>  MyInterface;
 	sserialize::RCPtrWrapper< MyInterface > m_priv;
@@ -337,12 +340,17 @@ public:
 	void swap(MmappedMemory & other) { using std::swap; swap(m_priv, other.m_priv); }
 	virtual ~MmappedMemory() {}
 	MmappedMemoryType type() const { return m_priv->type(); }
-	TValue * data() { return m_priv->data(); }
+	iterator data() { return m_priv->data(); }
+	const_iterator data() const { return m_priv->data(); }
 	///Invalidates pointers when data() before != data() afterwards, initializes memory
-	TValue * resize(OffsetType newSize) { return m_priv->resize(newSize); }
+	iterator resize(OffsetType newSize) { return m_priv->resize(newSize); }
 	OffsetType size() const { return m_priv->size(); }
-	TValue * begin() { return data(); }
-	TValue * end() { return data()+size();}
+	iterator begin() { return data(); }
+	iterator end() { return data()+size();}
+	const_iterator begin() const { return data(); }
+	const_iterator end() const { return data()+size();}
+	const_iterator cbegin() const { return data(); }
+	const_iterator cend() const { return data()+size();}
 };
 
 template<typename TValue>
