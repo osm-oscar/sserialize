@@ -30,7 +30,22 @@ private:
 		m_buffer.clear();
 		OffsetType copyAmount(0);
 		for(; copyAmount < m_bufferSize && m_srcIt != m_srcEnd; ++copyAmount, ++m_srcIt) {
-			m_buffer.push_back(*m_srcIt);
+			if (!(m_srcIt < m_srcEnd)) {
+				throw std::runtime_error("kacke");
+			}
+			try {
+				auto x = *m_srcIt;
+				m_buffer.push_back(x);
+			}
+			catch(const std::exception & e) {
+				std::cout << "BAM" << std::endl;
+				if (m_srcIt < m_srcEnd) {
+					std::cout << "m_srcIt < m_srcEnd" << std::endl;
+				}
+				if (m_srcIt != m_srcEnd) {
+					std::cout << "m_srcIt != m_srcEnd" << std::endl;
+				}
+			}
 		}
 		m_bufferIt = m_buffer.begin();
 	}
@@ -203,7 +218,17 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				auto chunkEnd = chunkBegin+myChunkSize;
 				state->srcOffset += myChunkSize;
 				state->srcIt = chunkEnd;
-				buffer.assign(chunkBegin, chunkEnd);
+				if (state->srcOffset == 15728640) {
+					std::cout << "Fast da mit state->srcSize=" << state->srcSize << std::endl;
+				}
+				try {
+					buffer.assign(chunkBegin, chunkEnd);
+				}
+				catch (const std::exception & e) {
+					std::cout << "assign failed with " << e.what() << std::endl;
+					std::cout << "State src offset is: " << state->srcOffset << std::endl;
+					throw e;
+				}
 				
 				ioLock.unlock();
 				

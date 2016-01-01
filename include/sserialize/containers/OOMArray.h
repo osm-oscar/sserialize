@@ -268,7 +268,7 @@ public:
 		return ConstIterator(m_b, m_p+count);
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
-	bool operator<(const ConstIterator & other) const {
+	NO_INLINE NO_OPTIMIZE bool operator<(const ConstIterator & other) const {
 		MY_ASSERT(d() == other.d());
 		MY_ASSERT(d()->size() >= m_p);
 		return d() == other.d() && m_p < other.m_p;
