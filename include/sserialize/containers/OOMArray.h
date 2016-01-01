@@ -14,7 +14,11 @@
 #include <iostream>
 #include <sserialize/utility/debug.h>
 
-#define MY_ASSERT(__X) if (!((bool)(__X))) { while (true) std::cout << "FUTSCH" << std::endl; }
+NO_INLINE NO_OPTIMIZE void MY_ASSERT(bool x) {
+	while (!x) {
+		std::cout << "FUTSCH" << std::endl;
+	}
+}
 
 namespace sserialize {
 namespace detail {
