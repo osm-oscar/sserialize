@@ -153,7 +153,7 @@ private:
 public:
 	///@param bs in Bytes
 	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs/sizeof(TValue)) {
-		MY_ASSERT(d()->size() >= bb);
+		MY_ASSERT(m_d->size() >= bb);
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
 	IteratorBuffer(const IteratorBuffer & other) = delete;
