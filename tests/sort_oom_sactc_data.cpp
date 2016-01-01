@@ -37,14 +37,37 @@ struct MyLessThan {
 	}
 };
 
+enum SrcFileType {
+	SFT_INVALID, SFT_MEM, SFT_MMAP, SFT_OOM_ARRAY
+};
+
+struct State {
+	uint64_t maxMemoryUsage = 0;
+};
+
 void help() {
-	std::cout << "prg -i inputfile -m <maxMemoryUsage in MiB -st <path to slow files> -st <path to fast files> -a" << std::endl;
+	std::cout << "prg -i inputfile -m <maxMemoryUsage in MiB> -st (oomarray|mmap) -ff <path to slow files> -sf <path to fast files> -a" << std::endl;
+}
+
+template<typename TC>
+void work(TC & entries, State & state) {
+	typedef typename TC::iterator MyIterator;
+	MyNodeIdentifierLessThanComparator nltp;
+	MyLessThan ltp(nltp);
+	sserialize::oom_sort<MyIterator, MyLessThan, true>(entries.begin(), entries.end(), ltp, state.maxMemoryUsage, 2, sserialize::MM_SLOW_FILEBASED);
+	using std::is_sorted;
+	if(!is_sorted(entries.begin(), entries.end(), ltp)) {
+		std::cout << std::endl;
+		std::cout << "Entries are not sorted" << std::endl;
+		std::cout << std::endl;
+	}
 }
 
 int main(int argc, char ** argv) {
-	uint64_t maxMemoryUsage = 0;
+	State state;
 	std::string fileName;
 	bool ask = false;
+	SrcFileType sft;
 	
 	for(int i(0); i < argc; ++i) {
 		std::string token(argv[i]);
@@ -53,7 +76,7 @@ int main(int argc, char ** argv) {
 			++i;
 		}
 		else if (token == "-m" && i+1 < argc) {
-			maxMemoryUsage = ::atoi(argv[i+1]);
+			state.maxMemoryUsage = ::atoi(argv[i+1]);
 			++i;
 		}
 		else if (token == "-st" && i+1 < argc) {
@@ -66,14 +89,30 @@ int main(int argc, char ** argv) {
 			sserialize::UByteArrayAdapter::setFastTempFilePrefix(token);
 			++i;
 		}
+		else if (token == "-mt" && i+1 < argc) {
+			token = std::string(argv[i+1]);
+			if (token == "mmap") {
+				sft = SFT_MMAP;
+			}
+			else if (token == "mem") {
+				sft = SFT_MEM;
+			}
+			else if (token == "oomarray") {
+				sft = SFT_OOM_ARRAY;
+			}
+			else {
+				sft = SFT_INVALID;
+			}
+			++i;
+		}
 		else if (token == "-a") {
 			ask = true;
 		}
 	}
 	
-	maxMemoryUsage <<= 20;
+	state.maxMemoryUsage <<= 20;
 	
-	if (!maxMemoryUsage) {
+	if (!state.maxMemoryUsage) {
 		help();
 		return -1;
 	}
@@ -84,7 +123,7 @@ int main(int argc, char ** argv) {
 	}
 	
 	std::cout << "Inputfile: " << fileName << std::endl;
-	std::cout << "MaxMemoryUsage: " << sserialize::prettyFormatSize(maxMemoryUsage) << std::endl;
+	std::cout << "MaxMemoryUsage: " << sserialize::prettyFormatSize(state.maxMemoryUsage) << std::endl;
 	
 	if (ask) {
 		std::string ok;
@@ -95,17 +134,18 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
-	MyEntriesContainer entries(fileName);
-	entries.backBufferSize(100*1024*1024);
-	entries.readBufferSize(10*1024*1024);
-	
-	MyNodeIdentifierLessThanComparator nltp;
-	MyLessThan ltp(nltp);
-	sserialize::oom_sort<MyTVEIterator, MyLessThan, true>(entries.begin(), entries.end(), ltp, maxMemoryUsage, 2, sserialize::MM_SLOW_FILEBASED);
-	using std::is_sorted;
-	if(!is_sorted(entries.begin(), entries.end(), ltp)) {
-		std::cout << std::endl;
-		std::cout << "Entries are not sorted" << std::endl;
-		std::cout << std::endl;
+	if (sft == SFT_OOM_ARRAY) {
+		MyEntriesContainer entries(fileName);
+		entries.backBufferSize(100*1024*1024);
+		entries.readBufferSize(10*1024*1024);
+		work(entries, state);
 	}
+	else if (sft == SFT_MMAP) {
+		sserialize::MmappedMemory<MyValueEntry> entries(fileName);
+		work(entries, state);
+	}
+	else {
+		std::cout << "Unsupported storage type" << std::endl;
+	}
+	return 0;
 }
