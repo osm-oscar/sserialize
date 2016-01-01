@@ -31,6 +31,13 @@ private:
 		OffsetType copyAmount(0);
 		for(; copyAmount < m_bufferSize && m_srcIt != m_srcEnd; ++copyAmount, ++m_srcIt) {
 			if (!(m_srcIt < m_srcEnd)) {
+				std::cout << "BAM" << std::endl;
+				if (m_srcIt < m_srcEnd) {
+					std::cout << "m_srcIt < m_srcEnd" << std::endl;
+				}
+				if (m_srcIt != m_srcEnd) {
+					std::cout << "m_srcIt != m_srcEnd" << std::endl;
+				}
 				throw std::runtime_error("kacke");
 			}
 			try {
