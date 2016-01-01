@@ -67,7 +67,7 @@ int main(int argc, char ** argv) {
 	State state;
 	std::string fileName;
 	bool ask = false;
-	SrcFileType sft;
+	SrcFileType sft = SFT_INVALID;
 	
 	for(int i(0); i < argc; ++i) {
 		std::string token(argv[i]);
@@ -79,17 +79,17 @@ int main(int argc, char ** argv) {
 			state.maxMemoryUsage = ::atoi(argv[i+1]);
 			++i;
 		}
-		else if (token == "-st" && i+1 < argc) {
+		else if (token == "-sf" && i+1 < argc) {
 			token = std::string(argv[i+1]);
 			sserialize::UByteArrayAdapter::setTempFilePrefix(token);
 			++i;
 		}
-		else if (token == "-ft" && i+1 < argc) {
+		else if (token == "-ff" && i+1 < argc) {
 			token = std::string(argv[i+1]);
 			sserialize::UByteArrayAdapter::setFastTempFilePrefix(token);
 			++i;
 		}
-		else if (token == "-mt" && i+1 < argc) {
+		else if (token == "-st" && i+1 < argc) {
 			token = std::string(argv[i+1]);
 			if (token == "mmap") {
 				sft = SFT_MMAP;
