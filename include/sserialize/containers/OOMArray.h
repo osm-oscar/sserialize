@@ -518,8 +518,11 @@ template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
 	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
 	ssize_t writtenSize = ::pwrite64(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
-	if (UNLIKELY_BRANCH(writtenSize < 0 || (SizeType)writtenSize != writeSize)) {
+	if (UNLIKELY_BRANCH(writtenSize < 0)) {
 		throw IOException("OOMArray::flush: " + std::string(::strerror(errno)));
+	}
+	if ((SizeType)writtenSize != writeSize) {
+		throw IOException("OOMArray::flush: Need to write " + std::to_string(writeSize) + " bytes but wrote " + std::to_string(writtenSize));
 	}
 	::fdatasync(m_fd);
 	m_backBufferBegin += m_backBuffer.size();
