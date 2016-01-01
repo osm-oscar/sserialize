@@ -44,6 +44,7 @@ void help() {
 int main(int argc, char ** argv) {
 	uint64_t maxMemoryUsage = 0;
 	std::string fileName;
+	bool ask = false;
 	for(int i(0); i < argc; ++i) {
 		std::string token(argv[i]);
 		if (token == "-i" && i+1 < argc) {
@@ -53,6 +54,9 @@ int main(int argc, char ** argv) {
 		else if (token == "-m" && i+1 < argc) {
 			maxMemoryUsage = ::atoi(argv[i+1]);
 			++i;
+		}
+		else if (token == "-a") {
+			ask = true;
 		}
 	}
 	
@@ -71,11 +75,13 @@ int main(int argc, char ** argv) {
 	std::cout << "Inputfile: " << fileName << std::endl;
 	std::cout << "MaxMemoryUsage: " << sserialize::prettyFormatSize(maxMemoryUsage) << std::endl;
 	
-	std::string ok;
-	std::cout << "OK?[yes|NO]" << std::endl;
-	std::cin >> ok;
-	if (ok != "yes") {
-		return 0;
+	if (ask) {
+		std::string ok;
+		std::cout << "OK?[yes|NO]" << std::endl;
+		std::cin >> ok;
+		if (ok != "yes") {
+			return 0;
+		}
 	}
 	
 	MyEntriesContainer entries(fileName);
