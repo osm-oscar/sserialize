@@ -103,9 +103,10 @@ public:
 	}
 	
 	iterator begin() { return iterator(this, 0, readBufferSize()); }
-	iterator end() { return iterator(this, size(), 0); }
 	const_iterator begin() const { return const_iterator(this, 0, readBufferSize()); }
 	const_iterator cbegin()  const { return begin(); }
+
+	iterator end() { return iterator(this, size(), 0); }
 	const_iterator end() const { return const_iterator(this, size(), 0); }
 	const_iterator cend() const { return end(); }
 	
