@@ -265,7 +265,7 @@ public:
 		MY_ASSERT(d()->size() >= m_p);
 		return *this;
 	}
-	ConstIterator operator+(uint32_t count) const {
+	ConstIterator operator+(SizeType count) const {
 		return ConstIterator(m_b, m_p+count);
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
@@ -335,7 +335,7 @@ public:
 		MyBaseClass::operator*() = v;
 	}
 	Iterator & operator++() { MyBaseClass::operator++(); return *this; }
-	Iterator operator+(uint32_t count) const { return Iterator( MyBaseClass::operator+(count) ); }
+	Iterator operator+(SizeType count) const { return Iterator( MyBaseClass::operator+(count) ); }
 	bool operator<(const Iterator & other) const { return MyBaseClass::operator<(other); }
 	sserialize::DifferenceType operator-(const Iterator & other) const { return MyBaseClass::operator-(other); }
 	bool operator!=(const Iterator & other) const { return MyBaseClass::operator!=(other); }
