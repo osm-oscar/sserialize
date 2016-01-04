@@ -13,12 +13,7 @@
 
 #include <iostream>
 #include <sserialize/utility/debug.h>
-
-NO_INLINE NO_OPTIMIZE void MY_ASSERT(bool x) {
-	while (!x) {
-		std::cout << "FUTSCH" << std::endl;
-	}
-}
+#include <sserialize/utility/assert.h>
 
 namespace sserialize {
 namespace detail {
@@ -154,7 +149,7 @@ private:
 public:
 	///@param bs in Bytes
 	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs/sizeof(TValue)) {
-		MY_ASSERT(m_d->size() >= bb);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(m_d->size(), bb);
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
 	IteratorBuffer(const IteratorBuffer & other) = delete;
@@ -181,11 +176,11 @@ public:
 	const BaseContainerType * d() const { return m_d; }
 
 	const TValue & get(SizeType p) const {
-		MY_ASSERT(d()->size() > p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER(d()->size(), p);
 		return buffer().at(p-bufferBegin());
 	}
 	TValue & get(SizeType p) {
-		MY_ASSERT(d()->size() > p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER(d()->size(), p);
 		return m_buffer.at(p-bufferBegin());
 	}
 	
@@ -201,7 +196,7 @@ public:
 	///if it is outside a buffer fill is done if only one parent is present
 	///if there are multiple present, then a new buffer is created
 	IteratorBuffer * incTo(SizeType position) {
-		assert(position >= m_bufferBegin);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(position, m_bufferBegin);
 		if (position-m_bufferBegin >= m_buffer.size()) {
 			if (rc() == 1) {
 				m_bufferBegin = position;
@@ -227,23 +222,23 @@ protected:
 public:
 	ConstIterator() : m_b(0), m_p(0) {}
 	ConstIterator(ConstIterator && other) : m_b(std::move(other.m_b)), m_p(other.m_p) {
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 	}
 	ConstIterator(const ConstIterator & other) : m_b(other.m_b), m_p(other.m_p)
 	{
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 	}
 	~ConstIterator() {}
 	ConstIterator & operator=(const ConstIterator & other) {
 		m_b = other.m_b;
 		m_p = other.m_p;
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return *this;
 	}
 	ConstIterator & operator=(ConstIterator && other) {
 		m_b = std::move(other.m_b);
 		m_p = std::move(other.m_p);
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return *this;
 	}
 	///sync the buffer of this iterator with the backend
@@ -262,7 +257,7 @@ public:
 		if (tmp) {
 			m_b.reset(tmp);
 		}
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return *this;
 	}
 	ConstIterator operator+(SizeType count) const {
@@ -270,20 +265,20 @@ public:
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
 	NO_INLINE NO_OPTIMIZE bool operator<(const ConstIterator & other) const {
-		MY_ASSERT(d() == other.d());
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(d(), other.d());
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return d() == other.d() && m_p < other.m_p;
 	}
 	NO_INLINE NO_OPTIMIZE bool operator!=(const ConstIterator & other) const {
-		MY_ASSERT(d() == other.d());
-		MY_ASSERT(d()->size() >= m_p);
-		MY_ASSERT(d()->size() >= other.m_p);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(d(), other.d());
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), other.m_p);
 		return d() != other.d() || m_p != other.m_p;
 	}
 	NO_INLINE NO_OPTIMIZE bool operator==(const ConstIterator & other) const {
-		MY_ASSERT(d() == other.d());
-		MY_ASSERT(d()->size() >= m_p);
-		MY_ASSERT(d()->size() >= other.m_p);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(d(), other.d());
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), other.m_p);
 		return d() == other.d() && m_p == other.m_p;
 	}
 	///s in Bytes
@@ -296,7 +291,7 @@ protected:
 	///@bs in Bytes
 	ConstIterator(sserialize::OOMArray<TValue> * d, SizeType p, SizeType bs) : m_b(new MyIteratorBuffer(d, p, bs)), m_p(p) {}
 	ConstIterator(MyIteratorBufferPtr b, SizeType p) : m_b(b->getRepositioned(p)), m_p(p) {
-		MY_ASSERT(d()->size() >= m_p);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 	}
 
 	BufferType & buffer() { return m_b->buffer(); }
@@ -351,7 +346,7 @@ protected:
 
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType bufferSize, SizeType p) {
-	MY_ASSERT(sserialize::MmappedFile::fileSize(m_fd) == m_backBufferBegin*sizeof(value_type));
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 	buffer.clear();
 	if (p >= size()) {
 		return;
@@ -540,7 +535,7 @@ void OOMArray<TValue, TEnable>::flush() {
 	::fdatasync(m_fd);
 	m_backBufferBegin += m_backBuffer.size();
 	m_backBuffer.clear();
-	MY_ASSERT(sserialize::MmappedFile::fileSize(m_fd) == m_backBufferBegin*sizeof(value_type));
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 }
 
 template<typename TValue, typename TEnable>
@@ -631,10 +626,10 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	}
 	delete[] myBuffer;
 	assert(position.p()+count == offset);
-	MY_ASSERT(position.p()+count == offset);
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(position.p()+count, offset);
 	
 	::fdatasync(m_fd);
-	MY_ASSERT(sserialize::MmappedFile::fileSize(m_fd) == m_backBufferBegin*sizeof(value_type));
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 	return iterator(this, offset, position.bufferSize());
 }
 
