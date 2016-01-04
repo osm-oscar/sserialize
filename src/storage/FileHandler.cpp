@@ -89,11 +89,12 @@ int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFile
 	if (fd < 0) {
 		return -1;
 	}
-	
-	if (::ftruncate(fd, fileSize) < 0) {
-		::close(fd);
-		::unlink(fileName);
-		return -1;
+	if (fileSize) {
+		if (::ftruncate(fd, fileSize) < 0) {
+			::close(fd);
+			::unlink(fileName);
+			return -1;
+		}
 	}
 	
 	tmpFileName = std::string(fileName);
@@ -107,7 +108,6 @@ void * FileHandler::createAndMmappTemp(OffsetType fileSize, int & fd, std::strin
 	if (fd < 0) {
 		return 0;
 	}
-	
 	void * d = mmapFile(fd, fileSize, prePopulate, randomAccess);
 	
 	if (d == MAP_FAILED) {
