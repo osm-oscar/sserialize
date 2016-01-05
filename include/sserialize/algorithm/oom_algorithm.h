@@ -141,7 +141,7 @@ struct IteratorSyncer< detail::OOMArray::Iterator<TValue> > {
 ///@param queueDepth the maximum number of chunks to merge in a single round, this directly influences the number of merge rounds
 ///@param comp comparisson operator for strict weak order. This functions needs to be thread-safe <=> threadCount > 1
 ///In general: Larger chunks result in a smaller number of rounds and can be processed with a smaller queue depth reducing random access
-///Thus for very large data sizes it may be better use only one thread to create the largest chunks possible
+///Thus for very large data sizes it may be better to use only one thread to create the largest chunks possible
 template<typename TInputOutputIterator, typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>, bool TWithProgressInfo = true>
 void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
 				uint64_t maxMemoryUsage = 0x100000000,
