@@ -365,8 +365,10 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 }
 
 ///iterators need to point to sorted range
+///Has one additional copy to begin
+///Total memory size is then about 3*sizeof(TInputOutputIterator)+maxMemoryUsage+c
 template<typename TInputOutputIterator, typename TEqual = std::equal_to< typename std::iterator_traits<TInputOutputIterator>::value_type >, bool TWithProgressInfo = true>
-TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator end, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED, TEqual eq = TEqual()) {
+TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator end, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED, uint64_t maxMemoryUsage = 100*1024*1024, TEqual eq = TEqual()) {
 	if (begin == end) {
 		return begin;
 	}
@@ -376,6 +378,7 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	uint64_t srcSize = distance(begin, end);
 	
 	sserialize::OOMArray<value_type> tmp(mmt);
+	tmp.backBufferSize(maxMemoryUsage);
 	tmp.reserve(srcSize);
 	
 	OptionalProgressInfo<TWithProgressInfo> pinfo;
@@ -398,6 +401,9 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	
 	SSERIALIZE_CHEAP_ASSERT_MESSAGE(srcSize >= tmp.size(), "tmp.size() > srcSize");
 	
+	//set larger read buffers
+	tmp.backBufferSize(sizeof(value_type));
+	tmp.readBufferSize(maxMemoryUsage);
 	
 	//move back
 	using std::move;
