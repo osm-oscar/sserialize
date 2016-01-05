@@ -302,14 +302,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			SSERIALIZE_CHEAP_ASSERT(!tmp.size());
 			
 			//set the buffer sizes
-			tmp.backBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
+			tmp.backBufferSize(cfg.tmpBuffferSize);
 			tmp.readBufferSize(sizeof(value_type));
 			
 			{//fill the activeChunkBuffers and create the chunk for the next round
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBuffers.size());
 				SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.pendingChunks.at(cbi).first);
 				uint32_t myQueueSize = std::min<uint32_t>(queueDepth, cbs-cbi);
-				uint64_t chunkBufferSize = cfg.maxMemoryUsage/(myQueueSize*sizeof(value_type));
+				uint64_t chunkBufferSize = cfg.maxMemoryUsage/(myQueueSize);
 				uint64_t resultChunkBeginOffset = state.srcOffset;
 				uint64_t resultChunkEndOffset = state.pendingChunks.at(cbi+myQueueSize-1).second;
 				for(uint32_t i(0); i < myQueueSize; ++i) {
