@@ -226,17 +226,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				auto chunkEnd = chunkBegin+myChunkSize;
 				state->srcOffset += myChunkSize;
 				state->srcIt = chunkEnd;
-				if (state->srcOffset == 15728640) {
-					std::cout << "Fast da mit state->srcSize=" << state->srcSize << std::endl;
-				}
-				try {
-					buffer.assign(chunkBegin, chunkEnd);
-				}
-				catch (const std::exception & e) {
-					std::cout << "assign failed with " << e.what() << std::endl;
-					std::cout << "State src offset is: " << state->srcOffset << std::endl;
-					throw e;
-				}
+				buffer.assign(chunkBegin, chunkEnd);
 				
 				ioLock.unlock();
 				
