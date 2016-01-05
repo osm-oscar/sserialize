@@ -167,8 +167,17 @@ public:
 	const BufferType & buffer() const { return m_buffer; }
 	SizeType bufferBegin() const { return m_bufferBegin; }
 
-	///s in Bytes
-	void bufferSize(SizeType s) { m_bufferSize = s/sizeof(TValue); }
+	///@param s in Bytes
+	///@return 0 if single parent, new IteratorBuffer otherwise
+	IteratorBuffer * bufferSize(SizeType s) {
+		if (rc() == 1) {
+			m_bufferSize = s/sizeof(TValue);
+			return 0;
+		}
+		else {
+			return new IteratorBuffer(d(), m_bufferBegin, s);
+		}
+	}
 	///in Bytes
 	SizeType bufferSize() const { return m_bufferSize*sizeof(TValue); }
 
@@ -282,7 +291,12 @@ public:
 		return d() == other.d() && m_p == other.m_p;
 	}
 	///s in Bytes
-	void bufferSize(SizeType s) { m_b->bufferSize(s); }
+	void bufferSize(SizeType s) {
+		MyIteratorBuffer * tmp = m_b->bufferSize(s);
+		if (UNLIKELY_BRANCH(tmp)) {
+			m_b.reset(tmp);
+		}
+	}
 	
 	///in Bytes
 	SizeType bufferSize() const { return m_b->bufferSize(); }
