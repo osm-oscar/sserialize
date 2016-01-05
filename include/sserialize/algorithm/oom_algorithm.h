@@ -10,6 +10,7 @@
 #include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/utility/assert.h>
 
 namespace sserialize {
 namespace detail {
@@ -152,7 +153,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	typedef typename std::iterator_traits<SrcIterator>::value_type value_type;
 	typedef detail::oom::InputBuffer<SrcIterator> InputBuffer;
 	
-	assert(begin < end);
+	SSERIALIZE_CHEAP_ASSERT(begin < end);
 	
 	if (!threadCount) {
 		threadCount = std::thread::hardware_concurrency();
@@ -247,12 +248,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				using std::move;
 				
 				auto chunkIt = move(buffer.begin(), buffer.end(), chunkBegin);
-				assert(chunkIt == chunkEnd);
+				SSERIALIZE_CHEAP_ASSERT(chunkIt == chunkEnd);
+				#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 				{
 					detail::oom::IteratorSyncer<TInputOutputIterator>::sync(chunkIt);
 					using std::is_sorted;
-					assert(is_sorted(chunkIt, chunkEnd, *(cfg->comp)));
+					SSERIALIZE_EXPENSIVE_ASSERT(is_sorted(chunkIt, chunkEnd, *(cfg->comp)));
 				}
+				#endif
 				
 				state->sortCompleted += myChunkSize;
 				state->pinfo(state->sortCompleted);
@@ -278,7 +281,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		}
 		state.pinfo.end();
 	}
-	assert(state.srcOffset == state.srcSize);
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.srcSize);
 	
 	//now merge the chunks, use about 1/4 of memory for the temporary storage
 	cfg.tmpBuffferSize = cfg.maxMemoryUsage/4;
@@ -306,22 +309,23 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		
 		state.pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
 		for(uint32_t cbi(0), cbs(state.pendingChunks.size()); cbi < cbs; cbi += queueDepth) {
-			assert(!tmp.size());
+			SSERIALIZE_CHEAP_ASSERT(!tmp.size());
 			
 			//set the buffer sizes
 			tmp.backBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
 			tmp.readBufferSize(sizeof(value_type));
 			
 			{//fill the activeChunkBuffers and create the chunk for the next round
-				assert(!state.activeChunkBuffers.size());
-				assert(state.srcOffset == state.pendingChunks.at(cbi).first);
+				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBuffers.size());
+				SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.pendingChunks.at(cbi).first);
 				uint32_t myQueueSize = std::min<uint32_t>(queueDepth, cbs-cbi);
 				uint64_t chunkBufferSize = cfg.maxMemoryUsage/(myQueueSize*sizeof(value_type));
 				uint64_t resultChunkBeginOffset = state.srcOffset;
 				uint64_t resultChunkEndOffset = state.pendingChunks.at(cbi+myQueueSize-1).second;
 				for(uint32_t i(0); i < myQueueSize; ++i) {
 					const std::pair<uint64_t, uint64_t> & pendingChunk = state.pendingChunks.at(cbi+i);
-					assert(pendingChunk.second <= state.srcSize && pendingChunk.first <= pendingChunk.second);
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(pendingChunk.second, state.srcSize);
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(pendingChunk.first, pendingChunk.second);
 					state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, begin+pendingChunk.second, chunkBufferSize);
 					pq.push(i);
 				}
@@ -361,16 +365,12 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			tmp.clear();
 			state.activeChunkBuffers.clear();;
 		}
-		assert(srcIt == end);
-		assert(state.srcOffset == state.srcSize);
+		SSERIALIZE_CHEAP_ASSERT(srcIt == end);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.srcSize);
 		state.pinfo.end();
 		using std::swap;
 		swap(state.pendingChunks, nextRoundPendingChunks);
-		if (tmp.size() > state.srcSize) {
-			std::cout << std::endl;
-			std::cout << "Broken sort" << std::endl;
-			std::cout << std::endl;
-		}
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.srcSize, tmp.size());
 	}
 }
 
@@ -406,11 +406,8 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	
 	tmp.flush();
 	
-	if (tmp.size() > srcSize) {
-			std::cout << std::endl;
-			std::cout << "Broken unique" << std::endl;
-			std::cout << std::endl;
-	}
+	SSERIALIZE_CHEAP_ASSERT_MESSAGE(srcSize >= tmp.size(), "tmp.size() > srcSize");
+	
 	
 	//move back
 	using std::move;
