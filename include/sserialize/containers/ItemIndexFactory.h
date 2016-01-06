@@ -90,6 +90,7 @@ public:
 	uint32_t addIndex(const ItemIndex & idx);
 	
 	inline UByteArrayAdapter & getIndexStore() { return m_indexStore;}
+	sserialize::Static::ItemIndexStore asItemIndexStore();
 	inline uint32_t hitCount() { return m_hitCount; }
 	
 	UByteArrayAdapter getFlushedData();

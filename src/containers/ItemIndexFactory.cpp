@@ -181,6 +181,10 @@ uint32_t ItemIndexFactory::addIndex(const ItemIndex & idx) {
 	return addIndex(tmp);
 }
 
+Static::ItemIndexStore ItemIndexFactory::asItemIndexStore() {
+	return sserialize::Static::ItemIndexStore( new sserialize::detail::ItemIndexStoreFromFactory(this) );
+}
+
 uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize) {
 	uint64_t hv;
 	int64_t id = -1;
