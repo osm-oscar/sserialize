@@ -506,4 +506,16 @@ UByteArrayAdapter::OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
 	return psize_vu64(sb) + minStorageBytes(bits, m_size);
 }
 
+std::ostream & operator<<(std::ostream & out, const BoundedCompactUintArray & src) {
+	out << "BoundedCompactUintArray[size=" << src.size() << ", bpn=" << (uint32_t)src.bpn() << "]{";
+	if (src.size()) {
+		out << src.at(0);
+		for(uint32_t i(1), s(src.size()); i < s; ++i) {
+			out << "," << src.at(i);
+		}
+	}
+	out << "}";
+	return out;
+}
+
 }//end namespace
