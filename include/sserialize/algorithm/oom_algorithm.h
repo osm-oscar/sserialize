@@ -31,29 +31,7 @@ private:
 		m_buffer.clear();
 		OffsetType copyAmount(0);
 		for(; copyAmount < m_bufferSize && m_srcIt != m_srcEnd; ++copyAmount, ++m_srcIt) {
-			if (!(m_srcIt < m_srcEnd)) {
-				std::cout << "BAM" << std::endl;
-				if (m_srcIt < m_srcEnd) {
-					std::cout << "m_srcIt < m_srcEnd" << std::endl;
-				}
-				if (m_srcIt != m_srcEnd) {
-					std::cout << "m_srcIt != m_srcEnd" << std::endl;
-				}
-				throw std::runtime_error("kacke");
-			}
-			try {
-				auto x = *m_srcIt;
-				m_buffer.push_back(x);
-			}
-			catch(const std::exception & e) {
-				std::cout << "BAM" << std::endl;
-				if (m_srcIt < m_srcEnd) {
-					std::cout << "m_srcIt < m_srcEnd" << std::endl;
-				}
-				if (m_srcIt != m_srcEnd) {
-					std::cout << "m_srcIt != m_srcEnd" << std::endl;
-				}
-			}
+			m_buffer.push_back(*m_srcIt);
 		}
 		m_bufferIt = m_buffer.begin();
 	}
@@ -236,8 +214,13 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				ioLock.lock();
 				//flush back
 				using std::move;
+				//capture return value if need be
+				#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+				auto chunkIt =
+				#endif
 				
-				auto chunkIt = move(buffer.begin(), buffer.end(), chunkBegin);
+				move(buffer.begin(), buffer.end(), chunkBegin);
+				
 				SSERIALIZE_CHEAP_ASSERT(chunkIt == chunkEnd);
 				#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 				{
@@ -334,12 +317,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				if (tmp.size() % 1000 == 0) {
 					state.pinfo(state.srcOffset+tmp.size());
 				}
-				if (tmp.size() > state.srcSize) {
-					std::cout << std::endl;
-					std::cout << "Broken sort" << std::endl;
-					std::cout << std::endl;
-					throw sserialize::CreationException("oom_sort or is broken or an iterator");
-				}
+				SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
 			}
 			state.pinfo(state.srcOffset+tmp.size());
 			
