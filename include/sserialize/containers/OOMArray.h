@@ -108,13 +108,32 @@ public:
 	///invalidates iterators
 	template<typename TSourceIterator>
 	static iterator copy(const TSourceIterator & srcBegin, const TSourceIterator & srcEnd, iterator destBegin) {
-		return destBegin.m_d->replace(destBegin, srcBegin, srcEnd);
+		return destBegin.d()->replace(destBegin, srcBegin, srcEnd);
 	}
 	
 	///invalidates iterators
 	template<typename TSourceIterator>
 	static iterator move(const TSourceIterator & srcBegin, const TSourceIterator & srcEnd, iterator destBegin) {
 		return destBegin.d()->replace(destBegin, srcBegin, srcEnd);
+	}
+
+	///invalidates iterators
+	static iterator copy(iterator srcBegin, const iterator & srcEnd, iterator destBegin) {
+		return destBegin.d()->replace(destBegin, std::move(srcBegin), srcEnd);
+	}
+	///invalidates iterators
+	static iterator copy(const_iterator srcBegin, const const_iterator & srcEnd, iterator destBegin) {
+		return destBegin.d()->replace(destBegin, std::move(srcBegin), srcEnd);
+	}
+	
+	///invalidates iterators
+	static iterator move(iterator srcBegin, const iterator & srcEnd, iterator destBegin) {
+		return destBegin.d()->replace(destBegin, std::move(srcBegin), srcEnd);
+	}
+	
+	///invalidates iterators
+	static iterator move(const_iterator srcBegin, const const_iterator & srcEnd, iterator destBegin) {
+		return destBegin.d()->replace(destBegin, std::move(srcBegin), srcEnd);
 	}
 	
 private:
@@ -676,22 +695,22 @@ move(
 template<typename TValue>
 sserialize::detail::OOMArray::Iterator<TValue>
 copy(
-	const sserialize::detail::OOMArray::Iterator<TValue> & srcBegin,
+	sserialize::detail::OOMArray::Iterator<TValue> srcBegin,
 	const sserialize::detail::OOMArray::Iterator<TValue> & srcEnd,
 	const sserialize::detail::OOMArray::Iterator<TValue> & targetBegin)
 {
-	return sserialize::OOMArray<TValue>::copy(srcBegin, srcEnd, targetBegin);
+	return sserialize::OOMArray<TValue>::copy(std::move(srcBegin), srcEnd, targetBegin);
 }
 
 ///Move into OOMArray, this invalidates other iterators that have the range within their cache
 template<typename TValue>
 sserialize::detail::OOMArray::Iterator<TValue>
 move(
-	const sserialize::detail::OOMArray::Iterator<TValue> & srcBegin,
+	sserialize::detail::OOMArray::Iterator<TValue> srcBegin,
 	const sserialize::detail::OOMArray::Iterator<TValue> & srcEnd,
 	const sserialize::detail::OOMArray::Iterator<TValue> & targetBegin)
 {
-	return sserialize::OOMArray<TValue>::move(srcBegin, srcEnd, targetBegin);
+	return sserialize::OOMArray<TValue>::move(std::move(srcBegin), srcEnd, targetBegin);
 }
 
 template<typename TValue>
