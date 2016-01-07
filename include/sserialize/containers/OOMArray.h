@@ -379,6 +379,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 	SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 	buffer.clear();
 	if (p >= size()) {
+		buffer.shrink_to_fit();
 		return;
 	}
 	if (p < m_backBufferBegin) {
@@ -405,6 +406,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 		pe = std::min(pe, m_backBuffer.size());
 		buffer.insert(buffer.end(), m_backBuffer.begin()+p, m_backBuffer.begin()+pe);
 	}
+	buffer.shrink_to_fit();
 }
 
 template<typename TValue, typename TEnable>
