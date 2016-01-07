@@ -189,17 +189,19 @@ public:
 	typedef typename MyBaseTraits::ExactStrings ExactStrings;
 	typedef typename MyBaseTraits::SuffixStrings SuffixStrings;
 	
-	///This class needs to be thread-safe in the backend (one instance per thread
+	///This class needs to be thread-safe in the backend (one instance per thread)
 	///Needs to have a correct move ctor
 	class FullMatchPredicate {
 	private:
 		bool m_fullMatch;
 	public:
 		FullMatchPredicate(bool fullMatch) : m_fullMatch(fullMatch) {}
-		bool operator()(const item_type & /*item*/) { return m_fullMatch; }
+		bool operator()(const item_type &) {
+			return m_fullMatch;
+		}
 	};
 	
-	///This class needs to be thread-safe in the backend (one instance per thread
+	///This class needs to be thread-safe in the backend (one instance per thread)
 	///Needs to have a correct move ctor
 	class ItemTextSearchNodes {
 	private:
