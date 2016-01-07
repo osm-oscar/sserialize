@@ -6,14 +6,11 @@
 #include <sserialize/utility/type_traits.h>
 #include <sserialize/utility/constants.h>
 #include <sserialize/storage/MmappedFile.h>
+#include <sserialize/utility/assert.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <vector>
 #include <errno.h>
-
-#include <iostream>
-#include <sserialize/utility/debug.h>
-#include <sserialize/utility/assert.h>
 
 namespace sserialize {
 namespace detail {
@@ -292,18 +289,18 @@ public:
 		return ConstIterator(m_b, m_p+count);
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
-	NO_INLINE NO_OPTIMIZE bool operator<(const ConstIterator & other) const {
+	bool operator<(const ConstIterator & other) const {
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(d(), other.d());
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return d() == other.d() && m_p < other.m_p;
 	}
-	NO_INLINE NO_OPTIMIZE bool operator!=(const ConstIterator & other) const {
+	bool operator!=(const ConstIterator & other) const {
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(d(), other.d());
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), other.m_p);
 		return d() != other.d() || m_p != other.m_p;
 	}
-	NO_INLINE NO_OPTIMIZE bool operator==(const ConstIterator & other) const {
+	bool operator==(const ConstIterator & other) const {
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(d(), other.d());
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), other.m_p);
@@ -394,7 +391,6 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 			throw IOException("OOMArray::fill: " + std::string(::strerror(errno)));
 		}
 		if (UNLIKELY_BRANCH((SizeType)bytesRead != readSize)) {
-			std::cout << "Trying to read " << readSize << " bytes starting from " << p*sizeof(TValue) << " from file with size " << sserialize::MmappedFile::fileSize(m_fn) << std::endl;
 			throw IOException("OOMArray::fill: requested " + std::to_string(readSize) + " but got " + std::to_string(bytesRead));
 		}
 		
