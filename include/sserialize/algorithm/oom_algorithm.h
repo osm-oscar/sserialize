@@ -381,7 +381,7 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	
 	//set larger read buffers
 	tmp.backBufferSize(sizeof(value_type));
-	tmp.readBufferSize(maxMemoryUsage);
+	tmp.readBufferSize(maxMemoryUsage/2);
 	
 	//move back
 	using std::move;
