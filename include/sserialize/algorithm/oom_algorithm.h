@@ -20,9 +20,11 @@ template<typename TSourceIterator, typename TValue = typename std::iterator_trai
 class InputBuffer {
 public:
 	typedef typename std::vector<TValue>::iterator iterator;
+	typedef TValue value_type;
 private:
 	TSourceIterator m_srcIt;
 	TSourceIterator m_srcEnd;
+	//in number of entries
 	OffsetType m_bufferSize;
 	std::vector<TValue> m_buffer;
 	iterator m_bufferIt;
@@ -37,10 +39,11 @@ private:
 	}
 public:
 	InputBuffer() : m_bufferSize(0), m_bufferIt(m_buffer.begin()) {}
+	///@param bufferSize bufferSize in bytes
 	InputBuffer(const TSourceIterator & srcBegin, const TSourceIterator & srcEnd, OffsetType bufferSize) :
 	m_srcIt(srcBegin),
 	m_srcEnd(srcEnd),
-	m_bufferSize(bufferSize)
+	m_bufferSize(bufferSize/sizeof(value_type))
 	{
 		m_buffer.reserve(m_bufferSize);
 		fillBuffer();
