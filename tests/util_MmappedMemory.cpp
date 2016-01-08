@@ -23,7 +23,7 @@ public:
 };
 
 
-int main(int argc, char ** argv) {
+int main(int /*argc*/, char ** /*argv*/) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( MmappedMemoryTest::suite() );
