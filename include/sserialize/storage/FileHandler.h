@@ -21,6 +21,13 @@ struct FileHandler {
 	///@return fd
 	static int shmCreate(std::string & fileName);
 	static bool shmDestroy(const std::string & fileName, int fd, void* mem, sserialize::OffsetType size);
+	
+	///Throws IOException on error
+	static void pwrite(int fd, const void * src, OffsetType size, OffsetType offset);
+
+	///Throws IOException on error
+	static void pread(int fd, void * dest, OffsetType size, OffsetType offset);
+	
 };
 
 }//end namespace

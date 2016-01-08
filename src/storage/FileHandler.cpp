@@ -1,5 +1,6 @@
 #include <sserialize/storage/FileHandler.h>
 #include <sserialize/storage/MmappedFile.h>
+#include <sserialize/utility/constants.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -180,5 +181,46 @@ bool FileHandler::shmDestroy(const std::string& fileName, int fd, void* mem, Off
 	return true;
 }
 
+void FileHandler::pwrite(int fd, const void * src, OffsetType size, OffsetType offset) {
+	while (size) {
+		::ssize_t writtenSize = ::pwrite64(fd, src, size, offset);
+		if (UNLIKELY_BRANCH(writtenSize < 0)) {
+			int e = errno;
+			if (UNLIKELY_BRANCH(e != EINTR)) { //not interrupted by signal, real error
+				throw IOException(std::string(::strerror(e)));
+			}
+			//else interrupted by signal, nothing was written
+		}
+		else if (UNLIKELY_BRANCH((OffsetType)writtenSize != size)) { //only some parts were written, try to write the rest
+			size -= (OffsetType)writtenSize;
+			offset += (OffsetType)writtenSize;
+			src = static_cast<const char*>(src)+writtenSize;
+		}
+		else {
+			return;
+		}
+	}
+}
+
+void FileHandler::pread(int fd, void * dest, OffsetType size, OffsetType offset) {
+	while (size) {
+		::ssize_t readSize = ::pread64(fd, dest, size, offset);
+		if (UNLIKELY_BRANCH(readSize < 0)) {
+			int e = errno;
+			if (UNLIKELY_BRANCH(e != EINTR)) { //not interrupted by signal, real error
+				throw IOException(std::string(::strerror(e)));
+			}
+			//else interrupted by signal, nothing was written
+		}
+		else if (UNLIKELY_BRANCH((OffsetType)readSize != size)) { //only some parts were written, try to write the rest
+			size -= (OffsetType)readSize;
+			offset += (OffsetType)readSize;
+			dest = static_cast<char *>(dest)+readSize;
+		}
+		else {
+			return;
+		}
+	}
+}
 
 }
