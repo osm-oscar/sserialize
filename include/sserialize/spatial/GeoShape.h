@@ -26,7 +26,7 @@ public:
 	virtual GeoRect boundary() const = 0;
 	virtual void recalculateBoundary() = 0;
 	virtual bool intersects(const GeoRect & boundary) const = 0;
-	///return the distance to each other (only consider the distance to the border of the object, use intersects for  collision testing)
+	///return the distance to each other (only consider the distance to the border of the object, use intersects for collision testing)
 	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const  = 0;
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const = 0;
 	virtual GeoShape * copy() const = 0;
