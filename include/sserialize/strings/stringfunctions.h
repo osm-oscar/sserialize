@@ -204,6 +204,8 @@ public:
 		}
 	}
 	std::string escape(const std::string & str) const;
+	
+	static AsciiCharEscaper regexEscaper();
 };
 
 class JsonEscaper final {

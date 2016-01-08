@@ -130,6 +130,10 @@ std::string AsciiCharEscaper::escape(const std::string & str) const {
 	return tmp;
 }
 
+AsciiCharEscaper AsciiCharEscaper::regexEscaper() {
+	return AsciiCharEscaper({'(', ')', '[', ']', '{', '}','|', '*', '.', '+', '?', '$', '^', '\\', ':', '='});
+}
+
 JsonEscaper::JsonEscaper() :
 //escapes as per http://stackoverflow.com/questions/7123908/javascript-json-parser-that-tells-error-position
 m_escaper({'"', '\\', '/', '\b', '\f', '\n', '\r', '\t'})
