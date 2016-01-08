@@ -2,6 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
+#include <cppunit/TestResult.h>
 #include <sserialize/containers/OOMArray.h>
 
 struct TestData {
@@ -249,6 +250,7 @@ int main(int argc, char ** argv) {
 		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_FAST_FILEBASED>::suite() );
 		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_SLOW_FILEBASED>::suite() );
 	}
+// 	runner.eventManager().popProtector();
 	runner.run();
 	return 0;
 }
