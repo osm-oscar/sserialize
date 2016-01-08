@@ -387,13 +387,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 		buffer.resize(fileCopyCount);
 		
 		SizeType readSize = sizeof(TValue)*fileCopyCount;
-		ssize_t bytesRead = ::pread64(m_fd, &(buffer[0]), readSize, sizeof(TValue)*p);
-		if (UNLIKELY_BRANCH(bytesRead < 0)) {
-			throw IOException("OOMArray::fill: " + std::string(::strerror(errno)));
-		}
-		if (UNLIKELY_BRANCH((SizeType)bytesRead != readSize)) {
-			throw IOException("OOMArray::fill: requested " + std::to_string(readSize) + " but got " + std::to_string(bytesRead));
-		}
+		FileHandler::pread(m_fd, &(buffer[0]), readSize, sizeof(TValue)*p);
 		
 		bufferSize -= fileCopyCount;
 		p = 0;
@@ -556,13 +550,7 @@ void OOMArray<TValue, TEnable>::shrink_to_fit() {
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
 	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
-	ssize_t writtenSize = ::pwrite64(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
-	if (UNLIKELY_BRANCH(writtenSize < 0)) {
-		throw IOException("OOMArray::flush: " + std::string(::strerror(errno)));
-	}
-	if ((SizeType)writtenSize != writeSize) {
-		throw IOException("OOMArray::flush: Need to write " + std::to_string(writeSize) + " bytes but wrote " + std::to_string(writtenSize));
-	}
+	FileHandler::pwrite(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
 	::fdatasync(m_fd);
 	m_backBufferBegin += m_backBuffer.size();
 	m_backBuffer.clear();
@@ -573,9 +561,7 @@ template<typename TValue, typename TEnable>
 TValue OOMArray<TValue, TEnable>::get(SizeType pos) const {
 	if (pos < m_backBufferBegin) {
 		TValue tmp;
-		if (::pread64(m_fd, &tmp, sizeof(TValue), pos*sizeof(TValue)) != sizeof(TValue)) {
-			throw sserialize::IOException("OOMArray::get" + std::string(::strerror(errno)));
-		}
+		FileHandler::pread(m_fd, &tmp, sizeof(TValue), pos*sizeof(TValue));
 		return tmp;
 	}
 	else {
@@ -586,9 +572,7 @@ TValue OOMArray<TValue, TEnable>::get(SizeType pos) const {
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::set(SizeType pos, const TValue & v) {
 	if (pos < m_backBufferBegin) {
-		if (::pwrite64(m_fd, &v, sizeof(TValue), pos*sizeof(TValue)) != sizeof(TValue)) {
-			throw IOException("OOMArray::set" + std::string(::strerror(errno)));
-		}
+		FileHandler::pwrite(m_fd, &v, sizeof(TValue), pos*sizeof(TValue));
 	}
 	else {
 		m_backBuffer[pos - m_backBufferBegin] = v;
@@ -649,10 +633,7 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 			*bufIt = *srcBegin;
 		}
 		SizeType writeSize = sizeof(TValue)*(bufIt-myBuffer);
-		ssize_t writtenSize = ::pwrite64(m_fd, myBuffer, writeSize, offset*sizeof(TValue));
-		if (writtenSize < 0 || (SizeType)writtenSize != writeSize)  {
-			throw IOException("OOMArray::flush" + std::string(::strerror(errno)));
-		}
+		FileHandler::pwrite(m_fd, myBuffer, writeSize, offset*sizeof(TValue));
 		offset += (bufIt-myBuffer);
 	}
 	delete[] myBuffer;
