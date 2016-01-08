@@ -109,6 +109,14 @@ public:
 private:
 	sserialize::UByteArrayAdapter m_strData;
 	sserialize::MultiVarBitArray m_trie;
+private:
+	template<typename TVISITOR>
+	void visitDF(const Node & node, TVISITOR & visitor) {
+		visitor(node);
+		for(auto x : node) {
+			visitDF(x, visitor);
+		}
+	}
 public:
 	FlatTrieBase();
 	FlatTrieBase(const sserialize::UByteArrayAdapter & src);
@@ -128,6 +136,9 @@ public:
 	uint32_t find(const std::string & str, bool prefixMatch) const;
 	Node root() const;
 	std::ostream & printStats(std::ostream & out) const;
+	///visit all nodes in depth-first search
+	template<typename TVISITOR>
+	inline void visitDF(TVISITOR visitor) { visitDF(root(), visitor); }
 };
 
 /** Layout:
