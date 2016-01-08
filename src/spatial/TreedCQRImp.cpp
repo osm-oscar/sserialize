@@ -2,6 +2,16 @@
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 
+
+/* Potential Reordering:
+
+	(a+b) / d ==d klein=> (a/d) + (b/d)
+	(a-b) / d ==d klein=> (a/d) - b
+	(a/b) / d => (min(a,b,d) / max(a,b,d)) / mid(a,b,d)
+
+
+
+*/
 namespace sserialize {
 namespace detail {
 namespace TreedCellQueryResult  {
