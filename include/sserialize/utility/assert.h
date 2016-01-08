@@ -7,7 +7,7 @@
 
 namespace sserialize {
 
-void __assert_function(const std::string & message) {
+inline void __assert_function(const std::string & message) {
 	while (true) {
 		std::cout << message << std::endl;
 		::sleep(1);
@@ -21,7 +21,7 @@ void assert_true_message(bool value, T_STRING_CONVERTIBLE msg) {
 	}
 }
 
-void assert_true(bool value) {
+inline void assert_true(bool value) {
 	if (UNLIKELY_BRANCH(!value)) {
 		__assert_function("ASSERTION FAILED");
 	}
