@@ -619,11 +619,12 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 		m_backBufferBegin = std::max<uint64_t>(offset+count, m_backBufferBegin);
 	}
 	
-	SizeType myBufferSize = std::min<SizeType>(m_backBufferSize, count);
+	//set buffer size to be between sizeof(value_type) and 1 GiB
+	SizeType myBufferSize = std::max<SizeType>(1, std::min<SizeType>(std::min<SizeType>(m_backBufferSize, (1024*1024*1024)/sizeof(value_type)), count));
 	TValue * myBuffer = new TValue[myBufferSize];
 	
 	if (!myBuffer) {
-		throw std::bad_alloc();
+		throw sserialize::IOException("OOMArray::replace: could not allocate memory for buffer");
 	}
 	
 	TValue * myBufferEnd = myBuffer+myBufferSize;
