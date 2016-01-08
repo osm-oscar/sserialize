@@ -10,13 +10,13 @@ namespace sserialize {
 class UByteArrayAdapterPrivateFile: public UByteArrayAdapterPrivate {
 protected:
 	int m_fd;
-	uint32_t m_bufferSize;
+	UByteArrayAdapter::OffsetType m_bufferSize;
 	UByteArrayAdapter::OffsetType m_size;
 	mutable UByteArrayAdapter::OffsetType m_bufferOffset;
 	mutable uint8_t * m_buffer;
 protected:
-	uint32_t populateCache(sserialize::UByteArrayAdapter::OffsetType pos, uint32_t len) const;
-	void updateBufferAfterWrite(sserialize::UByteArrayAdapter::OffsetType pos, const uint8_t * src, uint32_t len);
+	UByteArrayAdapter::OffsetType populateCache(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const;
+	void updateBufferAfterWrite(sserialize::UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len);
 public:
 	UByteArrayAdapterPrivateFile();
 	UByteArrayAdapterPrivateFile(const std::string & filePath, bool writeable = false);
