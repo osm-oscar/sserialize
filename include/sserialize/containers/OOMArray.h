@@ -7,9 +7,8 @@
 #include <sserialize/utility/constants.h>
 #include <sserialize/storage/MmappedFile.h>
 #include <sserialize/utility/assert.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <vector>
+#include <sys/mman.h>
 #include <errno.h>
 
 namespace sserialize {
@@ -522,6 +521,9 @@ template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::resize(SizeType newSize, const TValue & v) {
 	if (newSize <= size()) {
 		flush();
+		if (::ftruncate(m_fd, newSize*sizeof(value_type)) < 0) {
+			throw sserialize::IOException("OOMArray::resize: " + std::string(::strerror(errno)));
+		}
 		m_backBufferBegin = newSize;
 	}
 	else {
