@@ -552,11 +552,13 @@ void OOMArray<TValue, TEnable>::shrink_to_fit() {
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
 	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
-	FileHandler::pwrite(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
-	::fdatasync(m_fd);
-	m_backBufferBegin += m_backBuffer.size();
-	m_backBuffer.clear();
-	SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	if (writeSize) {
+		FileHandler::pwrite(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
+		::fdatasync(m_fd);
+		m_backBufferBegin += m_backBuffer.size();
+		m_backBuffer.clear();
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	}
 }
 
 template<typename TValue, typename TEnable>
