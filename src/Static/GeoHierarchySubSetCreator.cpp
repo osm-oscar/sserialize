@@ -7,47 +7,13 @@ namespace detail {
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator() {}
 
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh) :
-m_gh(gh)
-{
-	m_cellParentsPtrs.reserve(m_gh.cellPtrsSize());
-	m_regionParentsPtrs.reserve(m_gh.regionPtrSize());
-	m_regionDesc.reserve(m_gh.regionSize());
-	m_cellDesc.reserve(m_gh.cellSize());
-	
-	const sserialize::Static::spatial::GeoHierarchy::RegionPtrListType & ghRegionPtrs = m_gh.regionPtrs();
-	const sserialize::Static::spatial::GeoHierarchy::CellPtrListType & ghCellPtrs = m_gh.cellPtrs();
-	
-	for(uint32_t i(0), s(m_gh.regionSize()); i < s; ++i) {
-		m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), m_gh.region(i).storeId()) );
-		
-		for(uint32_t rPIt(m_gh.regionParentsBegin(i)), rPEnd(m_gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
-			m_regionParentsPtrs.push_back( ghRegionPtrs.at(rPIt) );
-		}
-	}
-	
-	for(uint32_t i(0), s(m_gh.cellSize()); i < s; ++i) {
-		
-		
-		uint32_t cPIt(m_gh.cellParentsBegin(i));
-		uint32_t cdPEnd(m_gh.cellDirectParentsEnd(i));
-		uint32_t cPEnd(m_gh.cellParentsEnd(i));
-		
-		m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), m_cellParentsPtrs.size() + (cdPEnd-cPIt), m_gh.cellItemsCount(i)));
-		
-		for(; cPIt != cPEnd; ++cPIt) {
-			m_cellParentsPtrs.push_back( ghCellPtrs.at(cPIt) );
-		}
-
-	}
-	//dummy end regions
-	m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), 0) );
-	m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), 0, 0) );
-}
+GeoHierarchySubSetCreator(gh, [](uint32_t) { return true; })
+{}
 
 GeoHierarchySubSetCreator::~GeoHierarchySubSetCreator() {}
 
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
-GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) {
+GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > m_cellDesc.size()*0.5 || sparse) {
 		std::vector<SubSet::Node*> nodes(m_regionDesc.size()+1, 0);
