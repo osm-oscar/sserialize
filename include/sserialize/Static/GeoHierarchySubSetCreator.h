@@ -29,12 +29,10 @@ private:
 public:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
 private:
-	sserialize::Static::spatial::GeoHierarchy m_gh;
 	std::vector<uint32_t> m_cellParentsPtrs;
 	std::vector<uint32_t> m_regionParentsPtrs;
 	std::vector<RegionDesc> m_regionDesc;
 	std::vector<CellDesc> m_cellDesc;
-	sserialize::Static::ItemIndexStore m_idxStore;
 private:
 	template<bool SPARSE>
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
@@ -50,22 +48,21 @@ public:
 };
 
 template<typename TFilter>
-GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter) :
-m_gh(gh)
+GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter)
 {
-	m_cellParentsPtrs.reserve(m_gh.cellPtrsSize());
-	m_regionParentsPtrs.reserve(m_gh.regionPtrSize());
-	m_regionDesc.reserve(m_gh.regionSize());
-	m_cellDesc.reserve(m_gh.cellSize());
+	m_cellParentsPtrs.reserve(gh.cellPtrsSize());
+	m_regionParentsPtrs.reserve(gh.regionPtrSize());
+	m_regionDesc.reserve(gh.regionSize());
+	m_cellDesc.reserve(gh.cellSize());
 	
-	const sserialize::Static::spatial::GeoHierarchy::RegionPtrListType & ghRegionPtrs = m_gh.regionPtrs();
-	const sserialize::Static::spatial::GeoHierarchy::CellPtrListType & ghCellPtrs = m_gh.cellPtrs();
+	const sserialize::Static::spatial::GeoHierarchy::RegionPtrListType & ghRegionPtrs = gh.regionPtrs();
+	const sserialize::Static::spatial::GeoHierarchy::CellPtrListType & ghCellPtrs = gh.cellPtrs();
 	
-	for(uint32_t i(0), s(m_gh.regionSize()); i < s; ++i) {
+	for(uint32_t i(0), s(gh.regionSize()); i < s; ++i) {
 		
-		m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), m_gh.region(i).storeId()) );
+		m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), gh.region(i).storeId()) );
 		
-		for(uint32_t rPIt(m_gh.regionParentsBegin(i)), rPEnd(m_gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
+		for(uint32_t rPIt(gh.regionParentsBegin(i)), rPEnd(gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
 			uint32_t rId = ghRegionPtrs.at(rPIt);
 			if (filter(rId)) {
 				m_regionParentsPtrs.push_back(rId);
@@ -73,15 +70,15 @@ m_gh(gh)
 		}
 	}
 	
-	for(uint32_t i(0), s(m_gh.cellSize()); i < s; ++i) {
+	for(uint32_t i(0), s(gh.cellSize()); i < s; ++i) {
 		
-		uint32_t cPIt(m_gh.cellParentsBegin(i));
-		uint32_t cdPEnd(m_gh.cellDirectParentsEnd(i));
-		uint32_t cPEnd(m_gh.cellParentsEnd(i));
+		uint32_t cPIt(gh.cellParentsBegin(i));
+		uint32_t cdPEnd(gh.cellDirectParentsEnd(i));
+		uint32_t cPEnd(gh.cellParentsEnd(i));
 		
 		CellDesc cd;
 		cd.parentsBegin = m_cellParentsPtrs.size();
-		cd.itemsCount = m_gh.cellItemsCount(i);
+		cd.itemsCount = gh.cellItemsCount(i);
 		
 		for(; cPIt != cdPEnd; ++cPIt) {
 			uint32_t rId = ghCellPtrs.at(cPIt);
