@@ -12,11 +12,14 @@ namespace detail {
 
 class GeoHierarchySubSetCreator: public RefCountObject {
 private:
+	typedef std::vector<uint32_t> PointerContainer;
+	
 	struct RegionDesc {
 		RegionDesc() : parentsBegin(0xFFFFFFFF), storeId(0xFFFFFFFF) {}
 		RegionDesc(uint32_t parentsBegin, uint32_t storeId) : parentsBegin(parentsBegin), storeId(storeId) {}
 		uint32_t parentsBegin;
-		uint32_t storeId;
+		uint32_t storeId; //0xFFFFFFFF indicates that this region is not in our hierarchy
+		inline bool valid() const { return storeId != 0xFFFFFFFF; }
 	};
 	struct CellDesc {
 		CellDesc() : parentsBegin(0xFFFFFFFF), directParentsEnd(0xFFFFFFFF), itemsCount(0xFFFFFFFF) {}
@@ -25,6 +28,17 @@ private:
 		uint32_t parentsBegin;
 		uint32_t directParentsEnd;
 		uint32_t itemsCount;
+	};
+	
+	struct TempRegionInfos {
+		TempRegionInfos(const sserialize::Static::spatial::GeoHierarchy & gh);
+		//pointers are stored in reverse order: the arrays of regionptrs are sored from highest to lowest region
+		//arrays themselves are stored from lowest to highest parent
+		std::vector<uint32_t> regionParentsPtrs;
+		std::vector<RegionDesc> regionDesc;
+		void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
+		GeoHierarchySubSetCreator::PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
+		GeoHierarchySubSetCreator::PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
 	};
 public:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
@@ -37,6 +51,10 @@ private:
 	template<bool SPARSE>
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
+private://used during construction
+// 	void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
+	PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
+	PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
 public:
 	GeoHierarchySubSetCreator();
 	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh);
@@ -47,29 +65,101 @@ public:
 	SubSet::Node * subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
 };
 
+//This is broken! If a parent is remove from the set of parents, then the parents of that parent need to be considered
+
 template<typename TFilter>
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter)
 {
-	m_cellParentsPtrs.reserve(gh.cellPtrsSize());
-	m_regionParentsPtrs.reserve(gh.regionPtrSize());
-	m_regionDesc.reserve(gh.regionSize());
-	m_cellDesc.reserve(gh.cellSize());
-	
+	if (!gh.regionSize()) {
+		return;
+	}
 	const sserialize::Static::spatial::GeoHierarchy::RegionPtrListType & ghRegionPtrs = gh.regionPtrs();
 	const sserialize::Static::spatial::GeoHierarchy::CellPtrListType & ghCellPtrs = gh.cellPtrs();
 	
-	for(uint32_t i(0), s(gh.regionSize()); i < s; ++i) {
-		
-		m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), gh.region(i).storeId()) );
-		
-		for(uint32_t rPIt(gh.regionParentsBegin(i)), rPEnd(gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
-			uint32_t rId = ghRegionPtrs.at(rPIt);
-			if (filter(rId)) {
-				m_regionParentsPtrs.push_back(rId);
+	//now check regions that are added in reverse
+	//We do this in reverse since regions that are higher up in the hierarchy have higher ids
+	//so if we take care of a region we use the fact that all ancestors have been taken care of already
+	{
+		TempRegionInfos regionInfo(gh);
+		std::vector<uint32_t> added, removed;
+		for(int64_t i(gh.regionSize()-1); i >= 0; --i) {
+			added.clear();
+			removed.clear();
+			
+			RegionDesc & rd = regionInfo.regionDesc.at((std::size_t)i);
+			rd.parentsBegin = regionInfo.regionParentsPtrs.size();
+
+			if (!filter(i)) { //region is not part of the hierarchy
+				//use storeId to indicate that a region is not part of the hierarchy
+				continue;
 			}
+			else {
+				rd.storeId = gh.region(i).storeId();
+			}
+			
+			//first find all the parents that are part of this hierarchy and that are removed
+			for(uint32_t rPIt(gh.regionParentsBegin(i)), rPEnd(gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
+				uint32_t rId = ghRegionPtrs.at(rPIt);
+				if (filter(rId)) {
+					added.push_back(rId);
+				}
+				else {
+					removed.push_back(rId);
+				}
+			}
+			SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(added.begin(), added.end()));
+			
+			//we now have to check if we need to find a new parent for the removed parent
+			//to do this, we have to find for each removed parent an ancestor that is part of our remaining parents
+			//to simplify this, we first gather all ancestors from our remaining parents
+			if (removed.size()) {
+				std::unordered_set<uint32_t> ancestors;
+				for(auto x : added) {
+					regionInfo.getAncestors(x, ancestors);
+				}
+				
+				for(uint32_t i(0); i < removed.size(); ++i) {
+					uint32_t candidateParent = removed[i];
+					if (ancestors.count(candidateParent)) { //already an ancestor
+						continue;
+					}
+					if (filter(candidateParent)) { //found a valid parent
+						//add as ancestor and add all of its ancestors aswell
+						ancestors.insert(candidateParent);
+						regionInfo.getAncestors(candidateParent, ancestors);
+						added.push_back(candidateParent);
+					}
+					else {//add its parents into our queue
+						//here we have to use the parents from the original gh since these parents may have been removed aswell
+						for(uint32_t rPIt(gh.regionParentsBegin(candidateParent)), rPEnd(gh.regionParentsEnd(candidateParent)); rPIt != rPEnd; ++rPIt) {
+							uint32_t rId = ghRegionPtrs.at(rPIt);
+							removed.push_back(rId);
+						}
+					}
+				}
+				std::sort(added.begin(), added.end());
+				SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(added.begin(), added.end()));
+			}
+			
+			regionInfo.regionParentsPtrs.insert(regionInfo.regionParentsPtrs.end(), added.begin(), added.end());
+		}
+		//now move them to the real hierarchy
+		SSERIALIZE_CHEAP_ASSERT(regionInfo.regionDesc.size() == gh.regionSize());
+		for(uint32_t rId(0), s(regionInfo.regionDesc.size()); rId < s; ++rId) {
+			m_regionDesc.emplace_back(m_regionParentsPtrs.size(), regionInfo.regionDesc.at(rId).storeId);
+			m_regionParentsPtrs.insert(m_regionParentsPtrs.end(), regionInfo.parentsBegin(rId), regionInfo.parentsEnd(rId));
 		}
 	}
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	for(uint32_t rid(0), s(m_regionDesc.size()); rid != s; ++rid) {
+		SSERIALIZE_NORMAL_ASSERT(m_regionDesc.at(rid).valid() || (parentsEnd(rid)-parentsBegin(rid)) == 0);
+		for(PointerContainer::const_iterator it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
+			SSERIALIZE_CHEAP_ASSERT(m_regionDesc.at(*it).valid());
+		}
+	}
+	#endif
 	
+	//BUG: take care of directParent
 	for(uint32_t i(0), s(gh.cellSize()); i < s; ++i) {
 		
 		uint32_t cPIt(gh.cellParentsBegin(i));
@@ -96,8 +186,8 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::s
 		m_cellDesc.push_back(cd);
 	}
 	//dummy end regions
-	m_regionDesc.push_back( RegionDesc( m_regionParentsPtrs.size(), 0) );
-	m_cellDesc.push_back( CellDesc( m_cellParentsPtrs.size(), 0, 0) );
+	m_regionDesc.emplace_back(m_regionParentsPtrs.size(), 0);
+	m_cellDesc.emplace_back(m_cellParentsPtrs.size(), 0, 0);
 
 	m_cellParentsPtrs.shrink_to_fit();
 	m_regionParentsPtrs.shrink_to_fit();

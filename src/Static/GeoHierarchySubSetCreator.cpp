@@ -4,6 +4,35 @@ namespace sserialize {
 namespace spatial {
 namespace detail {
 
+
+GeoHierarchySubSetCreator::TempRegionInfos::TempRegionInfos(const sserialize::Static::spatial::GeoHierarchy & gh) :
+regionDesc(gh.regionSize())
+{}
+
+void GeoHierarchySubSetCreator::TempRegionInfos::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
+	SSERIALIZE_CHEAP_ASSERT(regionDesc.at(rid).valid());
+	
+	SSERIALIZE_CHEAP_ASSERT(rid < regionDesc.size());
+	for(PointerContainer::const_iterator it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
+		getAncestors(*it, dest);
+		dest.insert(*it);
+	}
+}
+
+GeoHierarchySubSetCreator::PointerContainer::const_iterator 
+GeoHierarchySubSetCreator::TempRegionInfos::parentsBegin(uint32_t rid) const {	
+	uint32_t parentsBegin = regionDesc.at(rid).parentsBegin;
+	SSERIALIZE_CHEAP_ASSERT(parentsBegin <= regionParentsPtrs.size());
+	return regionParentsPtrs.begin()+parentsBegin;
+}
+
+GeoHierarchySubSetCreator::PointerContainer::const_iterator
+GeoHierarchySubSetCreator::TempRegionInfos::parentsEnd(uint32_t rid) const {
+	uint32_t parentsEnd = (rid == 0 ? regionParentsPtrs.size() : regionDesc.at(rid-1).parentsBegin);
+	SSERIALIZE_CHEAP_ASSERT(parentsEnd <= regionParentsPtrs.size());
+	return regionParentsPtrs.begin()+parentsEnd;
+}
+
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator() {}
 
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh) :
@@ -80,5 +109,29 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 	}
 	return rootNode;
 }
+
+// void GeoHierarchySubSetCreator::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
+// 	SSERIALIZE_CHEAP_ASSERT(rid < m_regionDesc.size());
+// 	for(PointerContainer::const_iterator it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
+// 		getAncestors(*it, dest);
+// 		dest.insert(*it);
+// 	}
+// }
+
+GeoHierarchySubSetCreator::PointerContainer::const_iterator 
+GeoHierarchySubSetCreator::parentsBegin(uint32_t rid) const {	
+	uint32_t parentsBegin = m_regionDesc.at(rid).parentsBegin;
+	SSERIALIZE_CHEAP_ASSERT(parentsBegin <= m_regionParentsPtrs.size());
+	return m_regionParentsPtrs.begin()+parentsBegin;
+}
+
+GeoHierarchySubSetCreator::PointerContainer::const_iterator
+GeoHierarchySubSetCreator::parentsEnd(uint32_t rid) const {
+	uint32_t parentsEnd = (rid+1 == m_regionDesc.size() ? m_regionParentsPtrs.size() : m_regionDesc.at(rid+1).parentsBegin);
+	SSERIALIZE_CHEAP_ASSERT(parentsEnd <= m_regionParentsPtrs.size());
+	return m_regionParentsPtrs.begin()+parentsEnd;
+}
+
+
 
 }}}//end namespace
