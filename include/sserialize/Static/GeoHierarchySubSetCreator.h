@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_GEO_HIERARCHY_SUB_SET_CREATOR_H
 #define SSERIALIZE_GEO_HIERARCHY_SUB_SET_CREATOR_H
 #include <sserialize/Static/GeoHierarchy.h>
+#include <sserialize/utility/assert.h>
 
 //TODO: sparse hiearchy support:
 //if only direct parents are available, then to calculate aproximate counts,
