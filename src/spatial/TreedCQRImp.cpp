@@ -29,6 +29,18 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 	case FlatNode::T_FM_LEAF:
 		frt = FT_FM;
 		return;
+	case FlatNode::T_TO_FM:
+	{
+		sserialize::ItemIndex aIdx;
+		FlattenResultType frtA;
+		uint32_t pmIdxIdA;
+		flattenCell(n+1, cellId, aIdx, pmIdxIdA, frtA);
+		if (frtA == FT_PM || (frtA == FT_FETCHED && aIdx.size())) {
+			frtA = FT_FM;
+		}
+		//else: frtA is either FT_FM or FT_EMPTY
+	}
+		return;
 	case FlatNode::T_INTERSECT:
 	case FlatNode::T_DIFF:
 	case FlatNode::T_UNITE:
@@ -647,5 +659,27 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 	return rPtr;
 }
 
+TreedCQRImp* TreedCQRImp::allToFull() const {
+	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
+	TreedCQRImp & r = *rPtr;
+	r.m_desc.reserve(m_desc.size());
+	r.m_trees.reserve(m_trees.size()+m_desc.size());
+	
+	for(std::size_t myI(0), myEnd(m_desc.size()); myI < myEnd; ++myI) {
+		const CellDesc & myCD = m_desc[myI];
+		std::size_t treeBegin = r.m_trees.size();
+		if (myCD.hasTree()) {
+			r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+			r.m_desc.emplace_back(0, myCD.cellId, 0, treeBegin, r.m_trees.size());
+		}
+		else {
+			r.m_desc.emplace_back(1, myCD.cellId, 0);
+		}
+	}
+	
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(m_desc.size(), rPtr->m_desc.size());
+	
+	return rPtr;
+}
 
 }}}//end namespace

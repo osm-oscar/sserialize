@@ -101,6 +101,7 @@ public:
 	CellQueryResult operator+(const CellQueryResult & other) const;
 	CellQueryResult operator-(const CellQueryResult & other) const;
 	CellQueryResult operator^(const CellQueryResult & other) const;
+	CellQueryResult allToFull() const;
 	
 	const_iterator begin() const;
 	const_iterator cbegin() const;

@@ -158,6 +158,10 @@ CellQueryResult CellQueryResult::operator^(const CellQueryResult & o) const {
 	return CellQueryResult(m_priv->symDiff(o.m_priv.priv()));
 }
 
+CellQueryResult CellQueryResult::allToFull() const {
+	return CellQueryResult(m_priv->allToFull());
+}
+
 CellQueryResult::const_iterator CellQueryResult::begin() const {
 	return const_iterator(m_priv, 0);
 }

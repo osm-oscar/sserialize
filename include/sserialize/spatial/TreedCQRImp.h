@@ -16,7 +16,7 @@ namespace TreedCellQueryResult  {
 	//Need?: if there are too many cells that might get pruned away beforehand by the tree operations then we could periodically flatten it
 
 	union FlatNode {
-		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_INTERSECT=4, T_UNITE=5, T_DIFF=6, T_SYM_DIFF=7} Type;
+		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_TO_FM=4, T_INTERSECT=5, T_UNITE=6, T_DIFF=7, T_SYM_DIFF=8} Type;
 		uint64_t raw;
 		struct {
 			uint64_t type:3;
@@ -100,6 +100,7 @@ public:
 	TreedCQRImp * unite(const TreedCQRImp * other) const;
 	TreedCQRImp * diff(const TreedCQRImp * other) const;
 	TreedCQRImp * symDiff(const TreedCQRImp * other) const;
+	TreedCQRImp * allToFull() const;
 	///@pf progress function pf(uint32_t numFinishedCells, uint32_t currentResultCellCount)
 	template<typename T_PROGRESS_FUNCION>
 	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf) const;

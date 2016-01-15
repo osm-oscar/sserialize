@@ -55,6 +55,7 @@ public:
 	TreedCellQueryResult operator+(const TreedCellQueryResult & other) const;
 	TreedCellQueryResult operator-(const TreedCellQueryResult & other) const;
 	TreedCellQueryResult operator^(const TreedCellQueryResult & other) const;
+	TreedCellQueryResult allToFull() const;
 	
 	sserialize::CellQueryResult toCQR() const;
 	sserialize::CellQueryResult toCQR(std::function<bool(uint32_t)> progressFunction) const;

@@ -69,6 +69,7 @@ public:
 	CellQueryResult * unite(const CellQueryResult * other) const;
 	CellQueryResult * diff(const CellQueryResult * other) const;
 	CellQueryResult * symDiff(const CellQueryResult * other) const;
+	CellQueryResult * allToFull() const;
 	bool selfCheck();
 };
 

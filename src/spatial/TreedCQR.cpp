@@ -69,6 +69,10 @@ TreedCellQueryResult TreedCellQueryResult::operator^(const TreedCellQueryResult 
 	return TreedCellQueryResult(m_priv->symDiff(o.m_priv.priv()));
 }
 
+TreedCellQueryResult TreedCellQueryResult::allToFull() const {
+	return TreedCellQueryResult(m_priv->allToFull());
+}
+
 void TreedCellQueryResult::dump(std::ostream & out) const {
 	out << "TreedCQR<" << cellCount() << ">";
 	if (!cellCount()) {

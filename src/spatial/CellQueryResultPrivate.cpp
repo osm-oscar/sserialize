@@ -431,6 +431,20 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	return rPtr;
 }
 
+CellQueryResult * CellQueryResult::allToFull() const {
+	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
+	
+	uint32_t totalSize = cellCount();
+	rPtr->m_desc.reserve(totalSize);
+	rPtr->m_desc = m_desc;
+	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
+	for(CellDesc & cd : rPtr->m_desc) {
+		cd.fetched = 0;
+		cd.fullMatch = 1;
+	}
+	return rPtr;
+}
+
 bool CellQueryResult::selfCheck() {
 	uint32_t cellCount = m_gh.cellSize();
 	for(const CellDesc & d : m_desc) {
