@@ -53,7 +53,7 @@ private:
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
 private://used during construction
-// 	void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
+	void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
 	PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
 	PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
 public:
@@ -80,9 +80,10 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::s
 	//now check regions that are added in reverse
 	//We do this in reverse since regions that are higher up in the hierarchy have higher ids
 	//so if we take care of a region we use the fact that all ancestors have been taken care of already
+	std::vector<uint32_t> added, removed;
+	std::unordered_set<uint32_t> ancestors;
 	{
 		TempRegionInfos regionInfo(gh);
-		std::vector<uint32_t> added, removed;
 		for(int64_t i(gh.regionSize()-1); i >= 0; --i) {
 			added.clear();
 			removed.clear();
@@ -114,7 +115,7 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::s
 			//to do this, we have to find for each removed parent an ancestor that is part of our remaining parents
 			//to simplify this, we first gather all ancestors from our remaining parents
 			if (removed.size()) {
-				std::unordered_set<uint32_t> ancestors;
+				ancestors.clear();
 				for(auto x : added) {
 					regionInfo.getAncestors(x, ancestors);
 				}
@@ -160,8 +161,10 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::s
 	}
 	#endif
 	
-	//BUG: take care of directParent
+	std::vector<uint32_t> nonDirectParents;
 	for(uint32_t i(0), s(gh.cellSize()); i < s; ++i) {
+		added.clear();
+		removed.clear();
 		
 		uint32_t cPIt(gh.cellParentsBegin(i));
 		uint32_t cdPEnd(gh.cellDirectParentsEnd(i));
@@ -171,17 +174,49 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::s
 		cd.parentsBegin = m_cellParentsPtrs.size();
 		cd.itemsCount = gh.cellItemsCount(i);
 		
+		
 		for(; cPIt != cdPEnd; ++cPIt) {
 			uint32_t rId = ghCellPtrs.at(cPIt);
 			if (filter(rId)) {
-				m_cellParentsPtrs.push_back( rId );
+				added.push_back(rId);
+			}
+			else {
+				removed.push_back(rId);
 			}
 		}
-		cd.directParentsEnd = m_cellParentsPtrs.size();
-		for(cPIt = cdPEnd; cPIt != cPEnd; ++cPIt) {
-			uint32_t rId = ghCellPtrs.at(cPIt);
-			if (filter(rId)) {
-				m_cellParentsPtrs.push_back( rId );
+		if (removed.size()) {
+			nonDirectParents.clear();
+			ancestors.clear();
+			for(uint32_t rId : added) {
+				getAncestors(rId, ancestors);
+			}
+			
+			for(cPIt = cdPEnd; cPIt != cPEnd; ++cPIt) {
+				uint32_t rId = ghCellPtrs.at(cPIt);
+				if (filter(rId)) {
+					if (ancestors.count(rId)) { //this is an ancestor of our direct parents
+						nonDirectParents.push_back(rId);
+					}
+					else { //not an ancestor of our direct parents, so this is also a direct parent
+						added.push_back(rId);
+						getAncestors(rId, ancestors);
+					}
+				}
+			}
+			std::sort(added.begin(), added.end());
+			
+			m_cellParentsPtrs.insert(m_cellParentsPtrs.end(), added.begin(), added.end());
+			cd.directParentsEnd = m_cellParentsPtrs.size();
+			m_cellParentsPtrs.insert(m_cellParentsPtrs.end(), nonDirectParents.begin(), nonDirectParents.end());
+		}
+		else {
+			m_cellParentsPtrs.insert(m_cellParentsPtrs.end(), added.begin(), added.end());
+			cd.directParentsEnd = m_cellParentsPtrs.size();
+			for(cPIt = cdPEnd; cPIt != cPEnd; ++cPIt) {
+				uint32_t rId = ghCellPtrs.at(cPIt);
+				if (filter(rId)) {
+					m_cellParentsPtrs.push_back( rId );
+				}
 			}
 		}
 		m_cellDesc.push_back(cd);

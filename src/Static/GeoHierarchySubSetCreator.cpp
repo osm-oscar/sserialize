@@ -110,13 +110,13 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 	return rootNode;
 }
 
-// void GeoHierarchySubSetCreator::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
-// 	SSERIALIZE_CHEAP_ASSERT(rid < m_regionDesc.size());
-// 	for(PointerContainer::const_iterator it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
-// 		getAncestors(*it, dest);
-// 		dest.insert(*it);
-// 	}
-// }
+void GeoHierarchySubSetCreator::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
+	SSERIALIZE_CHEAP_ASSERT(rid < m_regionDesc.size());
+	for(PointerContainer::const_iterator it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
+		getAncestors(*it, dest);
+		dest.insert(*it);
+	}
+}
 
 GeoHierarchySubSetCreator::PointerContainer::const_iterator 
 GeoHierarchySubSetCreator::parentsBegin(uint32_t rid) const {	
