@@ -79,6 +79,24 @@ double inline logTo2(double num) {
 #endif
 }
 
+//from http://stereopsis.com/log2.html
+inline int32_t fastLog2(uint32_t x)  {
+//enable if bsr not available
+// 	float y = x;
+// 	uint32_t ix = (uint32_t&)x;
+// 	uint32_t exp = (ix >> 23) & 0xFF;
+// 	int32_t log2 = int32_t(exp) - 127;
+// 	return log2;
+
+	int32_t retval;
+	asm("bsr %%eax, %1;"
+		"mov %0, %%eax"
+		: "=r"(retval)
+		: "r"(x)
+		: "%eax"
+	);
+	return retval;
+}
 inline uint32_t createMask(uint8_t bpn) {
 	return ((bpn == 32) ? std::numeric_limits<uint32_t>::max() : ((static_cast<uint32_t>(1) << bpn) - 1));
 }
