@@ -104,6 +104,7 @@ src/containers/SortedOffsetIndexPrivate.cpp
 src/containers/KeyValueObjectStore.cpp
 src/containers/VariantStore.cpp
 src/containers/RLEStream.cpp
+src/containers/SimpleBitVector.cpp
 src/containers/ItemIndex.cpp
 src/containers/ItemIndexPrivates/ItemIndexPrivate.cpp
 src/containers/ItemIndexPrivates/ItemIndexPrivateRegLine.cpp
