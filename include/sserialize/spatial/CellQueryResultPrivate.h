@@ -48,7 +48,8 @@ public:
 	CellQueryResult();
 	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId);
-	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const { return m_gh; }
+	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
+	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
 	
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>

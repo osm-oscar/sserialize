@@ -85,7 +85,8 @@ public:
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
 	
-	const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
+	const GeoHierarchy & geoHierarchy() const;
+	const ItemIndexStore & idxStore() const;
 	
 	uint32_t cellCount() const;
 	sserialize::ItemIndex::Types defaultIndexType() const;

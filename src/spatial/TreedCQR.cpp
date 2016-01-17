@@ -37,8 +37,12 @@ TreedCellQueryResult & TreedCellQueryResult::operator=(const TreedCellQueryResul
 	return *this;
 }
 
-const Static::spatial::GeoHierarchy& TreedCellQueryResult::geoHierarchy() const {
+const TreedCellQueryResult::GeoHierarchy& TreedCellQueryResult::geoHierarchy() const {
 	return m_priv->geoHierarchy();
+}
+
+const TreedCellQueryResult::ItemIndexStore& TreedCellQueryResult::idxStore() const {
+	return m_priv->idxStore();
 }
 
 uint32_t TreedCellQueryResult::cellCount() const {

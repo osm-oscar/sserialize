@@ -110,6 +110,10 @@ const Static::spatial::GeoHierarchy& CellQueryResult::geoHierarchy() const {
 	return m_priv->geoHierarchy();
 }
 
+const CellQueryResult::ItemIndexStore& CellQueryResult::idxStore() const {
+	return m_priv->idxStore();
+}
+
 uint32_t CellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }

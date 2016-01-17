@@ -45,7 +45,8 @@ public:
 	TreedCellQueryResult(const TreedCellQueryResult & other);
 	TreedCellQueryResult & operator=(const TreedCellQueryResult & other);
 	
-	const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
+	const GeoHierarchy & geoHierarchy() const;
+	const ItemIndexStore & idxStore() const;
 	
 	uint32_t cellCount() const;
 	sserialize::ItemIndex::Types defaultIndexType() const;
