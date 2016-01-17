@@ -172,7 +172,7 @@ void GeoHierarchy::createRootRegion() {
 		}
 		m_rootRegion.boundary.enlarge(r.boundary);
 	}
-	m_regions.m_data.push_back(sserialize::RangeGenerator::begin(0, m_cells.size()), sserialize::RangeGenerator::end(0, m_cells.size()));
+	m_regions.m_data.push_back(sserialize::RangeGenerator<uint32_t>::begin(0, m_cells.size()), sserialize::RangeGenerator<uint32_t>::end(0, m_cells.size()));
 }
 
 bool GeoHierarchy::checkConsistency() {
