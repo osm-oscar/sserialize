@@ -1,7 +1,7 @@
 #include <sserialize/spatial/TreedCQRImp.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
-
+#include <sserialize/utility/assert.h>
 
 /* Potential Reordering:
 
@@ -320,7 +320,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 	}
 	//unite the rest
 
-	assert(r.m_desc.size() <= std::min<uint32_t>(m_desc.size(), o.m_desc.size()));
+	SSERIALIZE_CHEAP_ASSERT(r.m_desc.size() <= std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
 
@@ -435,7 +435,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			}
 		}
 	}
-	assert(r.m_desc.size() >= std::max<uint32_t>(m_desc.size(), o.m_desc.size()));
+	SSERIALIZE_CHEAP_ASSERT(r.m_desc.size() >= std::max<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
 
@@ -530,7 +530,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 		}
 	}
 
-	assert(r.m_desc.size() <= m_desc.size());
+	SSERIALIZE_CHEAP_ASSERT(r.m_desc.size() <= m_desc.size());
 	return rPtr;
 }
 
@@ -655,7 +655,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 		}
 	}
 	
-	assert(r.m_desc.size() <= m_desc.size() + o.m_desc.size());
+	SSERIALIZE_CHEAP_ASSERT(r.m_desc.size() <= m_desc.size() + o.m_desc.size());
 	return rPtr;
 }
 
