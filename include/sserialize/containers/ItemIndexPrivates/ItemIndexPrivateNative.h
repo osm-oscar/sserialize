@@ -2,6 +2,7 @@
 #define ITEM_INDEX_PRIVATE_NATIVE_H
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
 #include <sserialize/storage/SerializationInfo.h>
+#include <sserialize/utility/checks.h>
 #include <string.h>
 
 namespace sserialize {
@@ -71,7 +72,8 @@ public:
 
 template<typename T_UINT32_ITERATOR>
 bool ItemIndexPrivateNative::create(T_UINT32_ITERATOR begin, const T_UINT32_ITERATOR & end, UByteArrayAdapter & dest) {
-	uint32_t size = std::distance(begin, end);
+	using std::distance;
+	uint32_t size = narrow_check<uint32_t>(distance(begin, end));
 	uint8_t * tmp = new uint8_t[sizeof(uint32_t)*size];
 	uint8_t * tmpPtr = tmp;
 	for(; begin != end; ++begin, tmpPtr += sizeof(uint32_t)) {
