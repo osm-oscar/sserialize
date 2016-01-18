@@ -193,16 +193,18 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 	std::cout << "Serializing Trie:" << std::endl;
 	
 	std::deque< std::deque< Node * >  > trieNodeQue;
-	if (m_nodeCount < 200 * 1000 * 1000)
+	if (m_nodeCount < 200 * 1000 * 1000) {
 		rootNode()->addNodesSorted(0, trieNodeQue);
-	else
+	}
+	else {
 		trieNodeQue.resize(depth);
-	for(int curLevel = depth-1; curLevel >= 0; curLevel--) {
-		std::deque< Node * > & nodeQue = trieNodeQue.at(curLevel);
+	}
+	for(int curLevel((int)depth-1); curLevel >= 0; curLevel--) {
+		std::deque<Node *> & nodeQue = trieNodeQue.at((uint32_t)curLevel);
 
-		if (nodeQue.size() == 0)
-			rootNode()->addNodesSortedInLevel(curLevel, 0, nodeQue);
-
+		if (nodeQue.size() == 0) {
+			rootNode()->addNodesSortedInLevel((uint16_t)curLevel, 0, nodeQue);
+		}
 		uint32_t curNodeCount = 0;
 		for(std::deque< Node * >::const_reverse_iterator it = nodeQue.rbegin(); it != nodeQue.rend(); ++it) {
 			Node * curNode = *it;
@@ -228,7 +230,7 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 
 				//now do the remapping for the relative ptrs. stored ptrs offsets from the end of the list
 				for(size_t i = 0; i < tmp.size(); i++) {
-					nodeInfo.childPtrs.push_back(config.trieList->size() - tmp[i]);
+					nodeInfo.childPtrs.push_back((uint32_t)(config.trieList->size() - tmp[i]));
 				}
 			}
 			
@@ -253,7 +255,7 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 					parentTempStorage = new ParentTPNS();
 					curNode->parent->temporalPrivateStorage = parentTempStorage;
 				}
-				uint32_t nodeOffset = config.trieList->size();
+				uint32_t nodeOffset = (uint32_t) config.trieList->size();
 				parentTempStorage->staticChildPointers.push_front(nodeOffset);
 			}
 

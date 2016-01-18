@@ -98,7 +98,7 @@ checkTrieEqualityRecurse(Node * curNode, Static::TrieNode curStaticNode, std::st
 	}
 
 	for(size_t i = 0; i < curStaticNode.childCount(); i++) {
-		uint16_t childChar = curStaticNode.childCharAt(i);
+		uint32_t childChar = curStaticNode.childCharAt(i);
 		std::string childCharStr = "";
 		utf8::append(childChar, std::back_inserter(childCharStr));
 		if (curNode->children.count(childChar) == 0) {
@@ -172,7 +172,7 @@ checkIndexEqualityRecurse(Node* curNode, sserialize::Static::TrieNode curStaticN
 	}
 
 	for(size_t i = 0; i < curStaticNode.childCount(); i++) {
-		uint16_t childChar = curStaticNode.childCharAt(i);
+		uint32_t childChar = curStaticNode.childCharAt(i);
 		if (curNode->children.count(childChar) == 0) {
 			return false;
 		}

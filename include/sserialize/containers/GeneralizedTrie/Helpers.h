@@ -79,7 +79,7 @@ public:
 		std::deque<uint16_t> childrenList;
 		for(ChildNodeIterator i = children.begin(); i != children.end(); ++i) {
 			if (i->first <= 0xFFFF)
-				childrenList.push_back(i->first);
+				childrenList.push_back((uint16_t)(i->first));
 		}
 		return childrenList;
 	}
