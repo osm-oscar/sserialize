@@ -131,7 +131,7 @@ void GeoWay<TPointsContainer>::swap(GeoWay<TPointsContainer> & other) {
 }
 
 template<typename TPointsContainer>
-uint32_t GeoWay<TPointsContainer>::size() const { return m_points.size();}
+uint32_t GeoWay<TPointsContainer>::size() const { return (uint32_t)m_points.size();}
 
 template<typename TPointsContainer>
 bool GeoWay<TPointsContainer>::intersects(const GeoRect & rect) const {
