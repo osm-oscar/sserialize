@@ -14,7 +14,9 @@ UDWIteratorPrivateHD::~UDWIteratorPrivateHD() {}
 uint32_t UDWIteratorPrivateHD::next() {
 	uint32_t v = m_bitIterator.get32();
 	int len = m_decoder->decode(v, v);
-	m_bitIterator += std::max<int>(0, len);
+	if (len > 0) {
+		m_bitIterator += (uint32_t) len;
+	}
 	return v;
 }
 
