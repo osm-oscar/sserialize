@@ -66,7 +66,7 @@ public:
 	ItemIndexFactory(ItemIndexFactory && other);
 	~ItemIndexFactory();
 	ItemIndexFactory & operator=(ItemIndexFactory && other);
-	uint32_t size() { return m_idToOffsets.size();}
+	uint32_t size() { return (uint32_t)m_idToOffsets.size();}
 	ItemIndex::Types type() const { return m_type; }
 	Static::ItemIndexStore::IndexCompressionType compressionType() const { return m_compressionType; }
 	UByteArrayAdapter at(OffsetType offset) const;
