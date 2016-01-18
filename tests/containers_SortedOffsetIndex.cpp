@@ -141,7 +141,7 @@ public:
 	void testRegularOffsets() {
 		for(uint64_t size = 10000; size < 10000000; size *= 10) {
 			for(uint64_t stride = 1; stride < 15; ++stride) {
-				sserialize::RangeGenerator realValues(0, size*stride, stride);
+				sserialize::RangeGenerator<uint64_t> realValues(0, size*stride, stride);
 				UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 				CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
 				Static::SortedOffsetIndex idx(dest);
@@ -162,7 +162,7 @@ public:
 	void testSpecialOffsets() {
 		uint64_t size = 1500000000;
 		uint64_t stride = 4;
-		sserialize::RangeGenerator realValues(0, size*stride, stride);
+		sserialize::RangeGenerator<uint64_t> realValues(0, size*stride, stride);
 		UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
 		Static::SortedOffsetIndex idx(dest);
