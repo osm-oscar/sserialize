@@ -77,7 +77,7 @@ public:
 			BoundedCompactUintArray::create(compSrcArrays[bits], d);
 			d.resetPtrs();
 			BoundedCompactUintArray bcarr(d);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("for bits=", bits+1), compSrcArrays[bits].size(), bcarr.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("for bits=", bits+1), compSrcArrays[bits].size(), (std::size_t)bcarr.size());
 			for(uint32_t i = 0, s = compSrcArrays[bits].size(); i < s; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), compSrcArrays[bits][i], bcarr.at64(i));
 			}

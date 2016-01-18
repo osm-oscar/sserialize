@@ -23,7 +23,7 @@ public:
 		uint8_t buf[16];
 		memset(buf, 1, 16);
 		for(int i=0; i < TestCount; ++i) {
-			uint16_t num = rand() & mask;
+			uint16_t num = (uint16_t)(rand() & mask);
 			int16_t sNum = num;
 			sserialize::p_u16(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u16", num, sserialize::up_u16(buf));
@@ -31,13 +31,13 @@ public:
 			sserialize::p_s16(static_cast<int16_t>(num), buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("s16+", sNum, sserialize::up_s16(buf));
 			
-			sNum = -sNum;
+			sNum = (int16_t)-sNum;
 			sserialize::p_s16(sNum, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("s16-", sNum, sserialize::up_s16(buf));
 		}
 		
 		for(uint8_t bpn = 0; bpn <= 16; ++bpn) {
-			uint16_t num = sserialize::createMask(bpn);
+			uint16_t num = (uint16_t)sserialize::createMask(bpn);
 			int16_t sNum = num;
 			sserialize::p_u16(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u16", num, sserialize::up_u16(buf));
@@ -46,7 +46,7 @@ public:
 				sserialize::p_s16(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("s16+", sNum, sserialize::up_s16(buf));
 			
-				sNum = -sNum;
+				sNum = (int16_t)-sNum;
 				sserialize::p_s16(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("s16-", sNum, sserialize::up_s16(buf));
 			}
@@ -106,13 +106,13 @@ public:
 		}
 		
 		for(uint8_t bpn = 0; bpn <= 32; ++bpn) {
-			int realLen = bpn/7 + ((bpn % 7 || bpn == 0) ? 1 : 0);
+			uint32_t realLen = bpn/7 + ((bpn % 7 || bpn == 0) ? 1 : 0);
 			uint32_t num = sserialize::createMask(bpn);
 			int32_t sNum = num;
 			sserialize::p_u32(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u32", num, sserialize::up_u32(buf));
 			
-			int len = sserialize::p_v<uint32_t>(num, buf);
+			uint32_t len = sserialize::p_v<uint32_t>(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32 len", realLen, len);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32", sserialize::up_v<uint32_t>(buf, 0), num);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), len, sserialize::psize_vu32(num));
@@ -126,7 +126,7 @@ public:
 				sserialize::p_s32(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("s32-", sNum, sserialize::up_s32(buf));
 				
-				int len = sserialize::p_v<int32_t>(sNum, buf);
+				uint32_t len = sserialize::p_v<int32_t>(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_sv32", sserialize::up_v<int32_t>(buf, 0), sNum);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), len, sserialize::psize_vs32(sNum));
 			}
@@ -172,13 +172,13 @@ public:
 		}
 		
 		for(uint8_t bpn = 0; bpn <= 64; ++bpn) {
-			int realLen = bpn/7 + ((bpn % 7 || bpn == 0) ? 1 : 0);
+			uint32_t realLen = bpn/7 + ((bpn % 7 || bpn == 0) ? 1 : 0);
 			uint64_t num = sserialize::createMask64(bpn);
 			int64_t sNum = num;
 			sserialize::p_u64(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u64", num, sserialize::up_u64(buf));
 			
-			int len = sserialize::p_v<uint64_t>(num, buf);
+			uint32_t len = sserialize::p_v<uint64_t>(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64 len", realLen, len);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64", sserialize::up_v<uint64_t>(buf, 0), num);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), len, sserialize::psize_v<uint64_t>(num));
@@ -192,7 +192,7 @@ public:
 				sserialize::p_s64(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("s64-", sNum, sserialize::up_s64(buf));
 				
-				int len = sserialize::p_v<int64_t>(sNum, buf);
+				uint32_t len = sserialize::p_v<int64_t>(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("pack/unpack", sserialize::up_v<int64_t>(buf, 0), sNum);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), len, sserialize::psize_v<int64_t>(sNum));
 			}

@@ -89,7 +89,10 @@ public:
 		uint32_t entry0 = 2011012750;
 		uint32_t entry1 = 747;
 		UByteArrayAdapter dest(UByteArrayAdapter::createCache(1, MM_PROGRAM_MEMORY));
-		MultiVarBitArrayCreator tsCreator(std::vector<uint8_t>({CompactUintArray::minStorageBits(entry0), CompactUintArray::minStorageBits(entry1)}), dest);
+		MultiVarBitArrayCreator tsCreator(
+			std::vector<uint8_t>({(uint8_t)CompactUintArray::minStorageBits(entry0),
+									(uint8_t)CompactUintArray::minStorageBits(entry1)}
+		), dest);
 		tsCreator.set(0, 0, 1891253);
 		tsCreator.set(0, 1, 0);
 		tsCreator.set(104755300, 0, 1242567038);

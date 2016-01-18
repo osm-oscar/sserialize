@@ -155,19 +155,19 @@ bool fillFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 		uint32_t num = realNumbers.at(i);
 		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
-			adapter.putUint8(curPos, num);
+			adapter.putUint8(curPos, (uint8_t)num);
 			curPos += 1;
 			break;
 		case(2):
-			adapter.putUint16(curPos, num);
+			adapter.putUint16(curPos, (uint16_t)num);
 			curPos += 2;
 			break;
 		case(3):
-			adapter.putUint24(curPos, num);
+			adapter.putUint24(curPos, (uint32_t)num);
 			curPos += 3;
 			break;
 		case(4):
-			adapter.putUint32(curPos, num);
+			adapter.putUint32(curPos, (uint32_t)num);
 			curPos += 4;
 			break;
 		default:
@@ -184,16 +184,16 @@ bool fillFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 		uint32_t num = realNumbers.at(i);
 		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
-			adapter.putUint8(num);
+			adapter.putUint8((uint8_t)num);
 			break;
 		case(2):
-			adapter.putUint16(num);
+			adapter.putUint16((uint16_t)num);
 			break;
 		case(3):
-			adapter.putUint24(num);
+			adapter.putUint24((uint32_t)num);
 			break;
 		case(4):
-			adapter.putUint32(num);
+			adapter.putUint32((uint32_t)num);
 			break;
 		default:
 			std::cout << "ERROR" << std::endl;
@@ -457,11 +457,11 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 		uint32_t num = realNumbers.at(i);
 		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
 		case(1):
-			adapter.putUint8(curPos, num);
+			adapter.putUint8(curPos, (uint8_t)num);
 			curPos += 1;
 			break;
 		case(2):
-			adapter.putUint16(curPos, num);
+			adapter.putUint16(curPos, (uint16_t)num);
 			curPos += 2;
 			break;
 		case(3):
@@ -544,7 +544,7 @@ std::deque<uint32_t> createNumber(int testCount) {
 	uint32_t mask;
 	for(int i = 0; i < testCount; i++) {
 		rndNum = rand();
-		rndMask = (double)rand()/RAND_MAX * 31; 
+		rndMask = (uint32_t)((double)rand()/RAND_MAX * 31); 
 		mask = ((rndMask+1 == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << (rndMask+1)) - 1));
 		realNumbers.push_back(rndNum & mask);
 	}

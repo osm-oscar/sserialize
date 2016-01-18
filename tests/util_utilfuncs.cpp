@@ -15,7 +15,7 @@ using namespace sserialize;
 std::vector<std::string> testStrings;
 
 std::string getRandomString() {
-	uint32_t pos = ((double)rand())/RAND_MAX*testStrings.size();
+	uint32_t pos = (uint32_t)(((double)rand())/RAND_MAX*(double)testStrings.size());
 	return testStrings.at(pos);
 }
 

@@ -108,27 +108,27 @@ void createIntegers(int32_t count, TOutputIterator out) {
 bool put(sserialize::UByteArrayAdapter & d, const IntegerType & t) {
 	switch (t.type) {
 	case IntegerType::U8:
-		return d.putUint8(t.value);
+		return d.putUint8((uint8_t)t.value);
 	case IntegerType::U16:
-		return d.putUint16(t.value);
+		return d.putUint16((uint16_t)t.value);
 	case IntegerType::U24:
-		return d.putUint24(t.value);
+		return d.putUint24((uint32_t)t.value);
 	case IntegerType::U32:
-		return d.putUint32(t.value);
+		return d.putUint32((uint32_t)t.value);
 	case IntegerType::U64:
-		return d.putUint64(t.value);
+		return d.putUint64((uint64_t)t.value);
 	case IntegerType::S32:
-		return d.putInt32(t.value);
+		return d.putInt32((int32_t)t.value);
 	case IntegerType::S64:
-		return d.putInt64(t.value);
+		return d.putInt64((int64_t)t.value);
 	case IntegerType::VU32:
-		return d.putVlPackedUint32(t.value);
+		return d.putVlPackedUint32((uint32_t)t.value);
 	case IntegerType::VS32:
-		return d.putVlPackedInt32(t.value);
+		return d.putVlPackedInt32((int32_t)t.value);
 	case IntegerType::VU64:
-		return d.putVlPackedUint64(t.value);
+		return d.putVlPackedUint64((uint64_t)t.value);
 	case IntegerType::VS64:
-		return d.putVlPackedInt64(t.value);
+		return d.putVlPackedInt64((int64_t)t.value);
 	default:
 		return false;
 	}
