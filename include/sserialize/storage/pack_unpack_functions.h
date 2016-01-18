@@ -100,11 +100,11 @@ inline uint64_t up_u40(const uint8_t * src) {
 }
 
 inline int8_t up_s8(const uint8_t * src) {
-	return *src;
+	return (int8_t) (*src);
 }
 
 inline int16_t up_s16(const uint8_t * src) {
-	return up_u16(src);
+	return (int16_t) up_u16(src);
 }
 
 inline int32_t up_s24(const uint8_t * src) {
@@ -116,7 +116,7 @@ inline int32_t up_s24(const uint8_t * src) {
 }
 
 inline int32_t up_s32(const uint8_t * src) {
-	return up_u32(src);
+	return (int32_t) up_u32(src);
 }
 
 inline int64_t up_s40(const uint8_t * src) {
@@ -128,7 +128,7 @@ inline int64_t up_s40(const uint8_t * src) {
 }
 
 inline int64_t up_s64(const uint8_t * src) {
-	return up_u64(src);
+	return (int64_t) up_u64(src);
 }
 
 //Encode as IEEE754 floating point number
@@ -207,11 +207,11 @@ inline void p_u40(uint64_t src, unsigned char * dest) {
 }
 
 inline void p_s8(int8_t src, uint8_t * d) {
-	*d = src;
+	*d = (uint8_t)src;
 }
 
 inline void p_s16(int16_t src, uint8_t * d) {
-	p_u16(src, d);
+	p_u16((uint16_t)src, d);
 }
 
 inline void p_s24(int32_t src, uint8_t * d) {
@@ -219,7 +219,7 @@ inline void p_s24(int32_t src, uint8_t * d) {
 }
 
 inline void p_s32(int32_t s, uint8_t * d) {
-	p_u32(s, d);
+	p_u32((uint32_t)s, d);
 }
 
 inline void p_s40(int64_t s, uint8_t * d) {
@@ -227,7 +227,7 @@ inline void p_s40(int64_t s, uint8_t * d) {
 }
 
 inline void p_s64(int64_t s, uint8_t * d) {
-	p_u64(s, d);
+	p_u64((uint64_t)s, d);
 }
 
 template<typename T>
@@ -271,15 +271,15 @@ inline uint32_t pack_float_to_uint32_t(const float src) {
 }
 
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
-typedef int(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
-typedef int(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
+typedef uint32_t(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
+typedef uint32_t(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
 
 typedef uint32_t(*VlUnPackUint32FunctionsFuncPtr)(uint8_t * s, int * len);
 typedef int32_t(*VlUnPackInt32FunctionsFuncPtr)(int8_t * s, int * len);
 
 template<typename UnsignedType>
-int p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s, uint8_t * d) {
-	int8_t i = 0;
+uint32_t p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s, uint8_t * d) {
+	uint32_t i = 0;
 	do {
 		d[i] = s & 0x7F;
 		s = s >> 7;
@@ -291,28 +291,29 @@ int p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is
 }
 
 template<typename SignedType>
-int p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s, uint8_t * d) {
+uint32_t p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s, uint8_t * d) {
 	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
 	UnsignedType tmp;
+	assert(s != std::numeric_limits<SignedType>::min());
 	if (s < 0) {
-		tmp = -s;
+		tmp = (UnsignedType) -s;
 		tmp <<= 1;
 		tmp |= 0x1;
 	}
 	else {
-		tmp = s;
+		tmp = (UnsignedType) s;
 		tmp <<= 1;
 	}
 	return p_v<UnsignedType>(tmp, d);
 }
 
 
-inline int p_vu32(uint32_t s, uint8_t * d) { return p_v<uint32_t>(s, d);}
+inline uint32_t p_vu32(uint32_t s, uint8_t * d) { return p_v<uint32_t>(s, d);}
 
-inline int p_vu32pad4(uint32_t s, uint8_t * d) {
-	int8_t i = 0;
+inline uint32_t p_vu32pad4(uint32_t s, uint8_t * d) {
+	uint32_t i = 0;
 	while (i < 4) {
-		d[i] = (s & 0x7F) | 0x80;
+		d[i] = (uint8_t)((s & 0x7F) | 0x80);
 		s = s >> 7;
 		++i;
 	}
@@ -320,24 +321,24 @@ inline int p_vu32pad4(uint32_t s, uint8_t * d) {
 	return i;
 }
 
-inline int p_vu64(uint64_t s, uint8_t * d) { return p_v<uint64_t>(s, d);}
+inline uint32_t p_vu64(uint64_t s, uint8_t * d) { return p_v<uint64_t>(s, d);}
 
-inline int p_vs32(int32_t s, uint8_t * d) { return p_v<int32_t>(s, d);}
+inline uint32_t p_vs32(int32_t s, uint8_t * d) { return p_v<int32_t>(s, d);}
 
-inline int p_vs32pad4(int32_t s, uint8_t * d) {
+inline uint32_t p_vs32pad4(int32_t s, uint8_t * d) {
 	uint32_t tmp;
 	if (s < 0) {
-		tmp = -s;
+		tmp = (uint32_t) -s;
 		tmp = (tmp << 1) | 0x1;
 	}
 	else {
-		tmp = s;
+		tmp = (uint32_t)s;
 		tmp = (tmp << 1);
 	}
 	return p_vu32pad4(tmp, d);
 }
 
-inline int p_vs64(int64_t s, uint8_t * d) { return p_v<int64_t>(s, d);}
+inline uint32_t p_vs64(int64_t s, uint8_t * d) { return p_v<int64_t>(s, d);}
 
 template<typename UnsignedType>
 typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type up_v(uint8_t * s, int * len) {
@@ -375,8 +376,8 @@ inline int32_t up_vs32(uint8_t * s, int * len) { return up_v<int32_t>(s, len);}
 inline int64_t up_vs64(uint8_t* s, int* len) { return up_v<int64_t>(s, len);}
 
 template<typename UnsignedType>
-int psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s) {
-	int8_t i = 0;
+uint32_t psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s) {
+	uint32_t i = 0;
 	do {
 		s >>= 7;
 		++i;
@@ -385,34 +386,34 @@ int psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std
 }
 
 template<typename SignedType>
-int psize_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s) {
+uint32_t psize_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s) {
 	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
 	UnsignedType tmp;
 	if (s < 0) {
-		tmp = -s;
+		tmp = (UnsignedType) -s;
 		tmp <<= 1;
 		tmp |= 0x1;
 	}
 	else {
-		tmp = s;
+		tmp = (UnsignedType) s;
 		tmp <<= 1;
 	}
 	return psize_v<UnsignedType>(tmp);
 }
 
-inline int psize_vu32(uint32_t s) {
+inline uint32_t psize_vu32(uint32_t s) {
 	return psize_v<uint32_t>(s);
 }
 
-inline int psize_vs32(int32_t s) {
+inline uint32_t psize_vs32(int32_t s) {
 	return psize_v<int32_t>(s);
 }
 
-inline int psize_vu64(uint64_t s) {
+inline uint32_t psize_vu64(uint64_t s) {
 	return psize_v<uint64_t>(s);
 }
 
-inline int psize_vs64(int64_t s) {
+inline uint32_t psize_vs64(int64_t s) {
 	return psize_v<int64_t>(s);
 }
 
