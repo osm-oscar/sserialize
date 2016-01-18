@@ -676,7 +676,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 		throw sserialize::OutOfBoundsException("String data is too large");
 	}
 	
-	MultiVarBitArrayCreator tsCreator(std::vector<uint8_t>({CompactUintArray::minStorageBits(maxOffset), CompactUintArray::minStorageBits(maxLen)}), dest);
+	MultiVarBitArrayCreator tsCreator(std::vector<uint8_t>({(uint8_t)CompactUintArray::minStorageBits(maxOffset), (uint8_t)CompactUintArray::minStorageBits(maxLen)}), dest);
 	uint32_t count = 0;
 	const char * strDataBegin = m_stringData.begin();
 	pinfo.begin(m_ht.size(), "sserialize::HashBasedFlatTrie serializing trie");
