@@ -4,6 +4,7 @@
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/containers/AbstractArray.h>
 #include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/utility/checks.h>
 
 namespace sserialize {
 namespace Static {
@@ -50,7 +51,7 @@ public:
 		}
 		
 		inline int32_t operator-(const ForwardIterator & o) {
-			return m_pos - o.m_pos;
+			return (int32_t)(m_pos - o.m_pos);
 		}
 		
 	};
@@ -72,11 +73,11 @@ public:
 		}
 	} 
 	virtual ~DenseGeoPointVector() {}
-	inline uint32_t getSizeInBytes() const {
-		uint32_t res = psize_vu32(m_size);
+	inline UByteArrayAdapter::OffsetType getSizeInBytes() const {
+		UByteArrayAdapter::OffsetType res = psize_vu32(m_size);
 		if (m_size) {
 			res += m_data.size();
-			res += psize_vu32(m_data.size());
+			res += psize_vu32((uint32_t)m_data.size());
 		}
 		return res;
 	}
@@ -119,7 +120,8 @@ typedef sserialize::AbstractArray<GeoPoint> DenseGeoPointAbstractArray;
 
 template<typename TGeoPointIterator>
 UByteArrayAdapter& DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPointIterator end, sserialize::UByteArrayAdapter& dest) {
-	uint32_t size = std::distance(begin, end);
+	using std::distance;
+	uint32_t size = narrow_check<uint32_t>(distance(begin, end) );
 	dest.putVlPackedUint32(size);
 	if (size) {
 		std::vector<uint8_t> d;
@@ -128,8 +130,8 @@ UByteArrayAdapter& DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPoin
 		int64_t prevLat = gp.toIntLat(gp.lat());
 		int64_t prevLon = gp.toIntLon(gp.lon());
 		
-		tempDest.putVlPackedUint32(prevLat);
-		tempDest.putVlPackedUint32(prevLon);
+		tempDest.putVlPackedUint32((uint32_t)prevLat);
+		tempDest.putVlPackedUint32((uint32_t)prevLon);
 		
 		for(++begin; begin != end; ++begin) {
 			gp = *begin;
@@ -140,10 +142,10 @@ UByteArrayAdapter& DenseGeoPointVector::append(TGeoPointIterator begin, TGeoPoin
 			
 			prevLat = intLat;
 			prevLon = intLon;
-			tempDest.putVlPackedInt32(diffLat);
-			tempDest.putVlPackedInt32(diffLon);
+			tempDest.putVlPackedInt32((int32_t)diffLat);
+			tempDest.putVlPackedInt32((int32_t)diffLon);
 		}
-		dest.putVlPackedUint32(d.size());
+		dest.putVlPackedUint32((uint32_t)d.size());
 		dest.putData(d);
 	}
 	
