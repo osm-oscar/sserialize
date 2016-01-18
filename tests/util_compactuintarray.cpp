@@ -91,7 +91,7 @@ public:
 			uint64_t mask = createMask64(bits);
 			CompactUintArray carr(d, bits);
 			carr.reserve(count);
-			sserialize::RangeGenerator rg(0, count);
+			sserialize::RangeGenerator<uint64_t> rg(0, count);
 			for(uint64_t x : rg) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
 			}
@@ -110,7 +110,7 @@ public:
 			uint64_t mask = createMask64(bits);
 			CompactUintArray carr(d, bits);
 			carr.reserve(count);
-			sserialize::RangeGenerator rg(0, count);
+			sserialize::RangeGenerator<uint32_t> rg(0, count);
 			for(uint64_t x : rg) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
 			}
