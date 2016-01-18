@@ -90,7 +90,7 @@ public:
 		friend class Vertex;
 		friend class FaceCirculator;
 	private:
-		typedef enum {
+		typedef enum : uint32_t {
 			FI_NEIGHBOR_VALID=0,
 			FI_NEIGHBOR0=1, FI_NEIGHBOR1=2, FI_NEIGHBOR2=3, FI_NEIGHBOR_BEGIN=FI_NEIGHBOR0, FI_NEIGHBOR_END=FI_NEIGHBOR2+1,
 			FI_VERTEX0=4, FI_VERTEX1=5, FI_VERTEX2=6, FI_VERTEX_BEGIN=FI_VERTEX0, FI_VERTEX_END=FI_VERTEX2+1,
@@ -106,8 +106,8 @@ public:
 		~Face();
 		inline uint32_t id() const { return m_pos; }
 		bool valid() const;
-		bool isNeighbor(uint8_t pos) const;
-		uint32_t neighborId(uint8_t pos) const;
+		bool isNeighbor(uint32_t pos) const;
+		uint32_t neighborId(uint32_t pos) const;
 		Face neighbor(uint32_t pos) const;
 		uint32_t vertexId(uint32_t pos) const;
 		Vertex vertex(uint32_t pos) const;
@@ -179,6 +179,11 @@ public:
 	inline static int ccw(const int i) { return (i+1)%3; }
 	//clock-wise next vertex/neighbor as defined in cgal
 	inline static int cw(const int i) { return (i+2)%3; }
+	
+	//counter-clock-wise next vertex/neighbor as defined in cgal
+	inline static uint32_t ccw(const uint32_t i) { return (i+1)%3; }
+	//clock-wise next vertex/neighbor as defined in cgal
+	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
 };
 
 template<typename T_GEOMETRY_TRAITS>
@@ -231,7 +236,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 				int cvIdx = cf.index(circleVertex);
 				assert(cvIdx != -1);
 				
-				Vertex myLv(cf.vertex(Triangulation::cw(cvIdx))), myRv(cf.vertex(Triangulation::ccw(cvIdx)));
+				Vertex myLv(cf.vertex((uint32_t)Triangulation::cw(cvIdx))), myRv(cf.vertex((uint32_t)Triangulation::ccw(cvIdx)));
 				Point_2 myLP(getPoint2(myLv)), myRP(getPoint2(myRv));
 				
 				CGAL::Orientation lvOt = ot(p, q, myLP);
@@ -252,7 +257,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 						lp = myLP;
 						circleVertex = Vertex();
 						//the next face is the face that shares the edge myLv<->myRv with cf
-						curFace = cf.neighbor(cvIdx);
+						curFace = cf.neighbor((uint32_t)cvIdx);
 						break;
 					}
 				}
@@ -283,16 +288,16 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 			Vertex sv;
 			int lvIndex = curFace.index(lv);
 			int rvIndex;
-			if (curFace.vertexId(Triangulation::cw(lvIndex)) != rv.id()) {
-				sv = curFace.vertex(cw(lvIndex));
+			if (curFace.vertexId((uint32_t)Triangulation::cw(lvIndex)) != rv.id()) {
+				sv = curFace.vertex((uint32_t)cw(lvIndex));
 				rvIndex = ccw(lvIndex);
 			}
 			else {
-				sv = curFace.vertex(ccw(lvIndex));
+				sv = curFace.vertex((uint32_t)ccw(lvIndex));
 				rvIndex = cw(lvIndex);
 			}
-			assert(curFace.vertexId(rvIndex) == rv.id());
-			assert(curFace.vertexId(lvIndex) == lv.id());
+			assert(curFace.vertexId((uint32_t)rvIndex) == rv.id());
+			assert(curFace.vertexId((uint32_t)lvIndex) == lv.id());
 			
 			Point_2 sp(getPoint2(sv));
 			CGAL::Orientation sot = ot(p, q, sp);
@@ -307,12 +312,12 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 				if (rsqO == CGAL::Orientation::LEFT_TURN || rsqO == CGAL::Orientation::COLLINEAR) {
 					return curFace.id();
 				}
-				if (!curFace.isNeighbor(lvIndex)) {
+				if (!curFace.isNeighbor((uint32_t)lvIndex)) {
 					return NullFace;
 				}
 				lv = sv;
 				lp = sp;
-				curFace = curFace.neighbor(lvIndex);
+				curFace = curFace.neighbor((uint32_t)lvIndex);
 			}
 			else if (CGAL::Orientation::RIGHT_TURN == sot) {
 				//check if q is within our face
@@ -321,12 +326,12 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 				if (lsqO == CGAL::Orientation::RIGHT_TURN || lsqO == CGAL::Orientation::COLLINEAR) {
 					return curFace.id();
 				}
-				if (!curFace.isNeighbor(rvIndex)) {
+				if (!curFace.isNeighbor((uint32_t)rvIndex)) {
 					return NullFace;
 				}
 				rv = sv;
 				rp = sp;
-				curFace = curFace.neighbor(rvIndex);
+				curFace = curFace.neighbor((uint32_t)rvIndex);
 			}
 			else {
 				throw std::runtime_error("sserialize::Static::Triangulation::locate: unexpected error");
@@ -352,7 +357,7 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 		}
 		Face cf(face(cfId));
 		if (explorer(cf)) {
-			for(int j(0); j < 3; ++j) {
+			for(uint32_t j(0); j < 3; ++j) {
 				if (cf.isNeighbor(j)) {
 					uint32_t nId = cf.neighborId(j);
 					if (!visitedFaces.count(nId)) {
@@ -409,7 +414,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	}
 	{//put the vertex info
 		std::vector<uint8_t> bitConfig(Triangulation::Vertex::VI__NUMBER_OF_ENTRIES);
-		bitConfig[Triangulation::Vertex::VI_FACES_BEGIN] = sserialize::CompactUintArray::minStorageBits(faceCount);
+		bitConfig[Triangulation::Vertex::VI_FACES_BEGIN] = (uint8_t) sserialize::CompactUintArray::minStorageBits(faceCount);
 		bitConfig[Triangulation::Vertex::VI_FACES_END] = bitConfig[Triangulation::Vertex::VI_FACES_BEGIN];
 		sserialize::MultiVarBitArrayCreator va(bitConfig, dest);
 		for(Finite_vertices_iterator vt(src.finite_vertices_begin()), vtEnd(src.finite_vertices_end()); vt != vtEnd; ++vt) {
@@ -479,10 +484,10 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	{
 		std::vector<uint8_t> bitConfig(Triangulation::Face::FI__NUMBER_OF_ENTRIES);
 		bitConfig[Triangulation::Face::FI_NEIGHBOR_VALID] = 3;
-		bitConfig[Triangulation::Face::FI_NEIGHBOR0] = sserialize::CompactUintArray::minStorageBits(faceCount);
+		bitConfig[Triangulation::Face::FI_NEIGHBOR0] = (uint8_t)sserialize::CompactUintArray::minStorageBits(faceCount);
 		bitConfig[Triangulation::Face::FI_NEIGHBOR1] = bitConfig[Triangulation::Face::FI_NEIGHBOR0];
 		bitConfig[Triangulation::Face::FI_NEIGHBOR2] = bitConfig[Triangulation::Face::FI_NEIGHBOR0];
-		bitConfig[Triangulation::Face::FI_VERTEX0] = sserialize::CompactUintArray::minStorageBits(vertexCount);
+		bitConfig[Triangulation::Face::FI_VERTEX0] = (uint8_t)sserialize::CompactUintArray::minStorageBits(vertexCount);
 		bitConfig[Triangulation::Face::FI_VERTEX1] = bitConfig[Triangulation::Face::FI_VERTEX0];
 		bitConfig[Triangulation::Face::FI_VERTEX2] = bitConfig[Triangulation::Face::FI_VERTEX0];
 		sserialize::MultiVarBitArrayCreator fa(bitConfig, dest);
@@ -499,7 +504,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 					nfhId = faceToFaceId[nfh];
 					validNeighbors |= static_cast<uint8_t>(1) << j;
 				}
-				fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_BEGIN+j, nfhId);
+				fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_BEGIN+(uint32_t)j, nfhId);
 			}
 			fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_VALID, validNeighbors);
 			
@@ -507,7 +512,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 				Vertex_handle vh = fh->vertex(j);
 				assert(vertexToVertexId.is_defined(vh));
 				uint32_t vertexId = vertexToVertexId[vh];
-				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+j, vertexId);
+				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+(uint32_t)j, vertexId);
 			}
 			++faceId;
 		}

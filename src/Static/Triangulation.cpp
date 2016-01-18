@@ -1,6 +1,7 @@
 #include <sserialize/Static/Triangulation.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/printers.h>
+#include <sserialize/utility/assert.h>
 
 
 namespace sserialize {
@@ -26,11 +27,11 @@ bool Triangulation::Face::valid() const {
 	return m_p;
 }
 
-bool Triangulation::Face::isNeighbor(uint8_t pos) const {
+bool Triangulation::Face::isNeighbor(uint32_t pos) const {
 	return (m_p->faceInfo().at(m_pos, FI_NEIGHBOR_VALID) & (static_cast<uint8_t>(1) << pos));
 }
 
-uint32_t Triangulation::Face::neighborId(uint8_t pos) const {
+uint32_t Triangulation::Face::neighborId(uint32_t pos) const {
 	if (!isNeighbor(pos)) {
 		return Triangulation::NullFace;
 	}
@@ -69,7 +70,7 @@ Triangulation::Point Triangulation::Face::centroid() const {
 
 int Triangulation::Face::index(const Triangulation::Vertex& v) const {
 	uint32_t vertexId = v.id();
-	for(int j(0); j < 3; ++j) {
+	for(uint32_t j(0); j < 3; ++j) {
 		if (this->vertexId(j) == vertexId) {
 			return j;
 		}
@@ -89,13 +90,13 @@ void Triangulation::Face::dump(std::ostream& out) const {
 	out << "Triangulation::Face {\n";
 	out << "\tid=" << id() << "\n";
 	out << "\tneighbor_valid=" << m_p->faceInfo().at(m_pos, FI_NEIGHBOR_VALID) << "\n";
-	for(int j(0); j < 3; ++j) {
+	for(uint32_t j(0); j < 3; ++j) {
 		out << "\tneighbor[" << j << "]=" << neighborId(j)  << "\n";
 	}
-	for(int j(0); j < 3; ++j) {
+	for(uint32_t j(0); j < 3; ++j) {
 		out << "\tvertex[" << j << "]=" << vertexId(j)  << "\n";
 	}
-	for(int j(0); j < 3; ++j) {
+	for(uint32_t j(0); j < 3; ++j) {
 		out << "\tpoint[" << j << "]=" << vertex(j).point()  << "\n";
 	}
 	out << "}";
@@ -180,7 +181,7 @@ Triangulation::FaceCirculator::FaceCirculator(const Triangulation::Vertex& v, co
 m_f(f),
 m_v(v)
 {
-	assert(m_f.index(m_v) != -1);
+	SSERIALIZE_NORMAL_ASSERT(m_f.index(m_v) != -1);
 }
 
 Triangulation::FaceCirculator::~FaceCirculator() {}
@@ -204,7 +205,8 @@ bool Triangulation::FaceCirculator::operator!=(const Triangulation::FaceCirculat
 Triangulation::FaceCirculator& Triangulation::FaceCirculator::operator++() {
 	if (m_f.id() != m_v.endFaceId()) {
 		int i = m_f.index(m_v);
-		m_f = m_f.neighbor(Triangulation::ccw(i));
+		assert(i >= 0);
+		m_f = m_f.neighbor((uint32_t) Triangulation::ccw(i));
 	}
 	else {
 		m_f = m_v.beginFace();
@@ -221,7 +223,8 @@ Triangulation::FaceCirculator Triangulation::FaceCirculator::operator++(int) {
 Triangulation::FaceCirculator& Triangulation::FaceCirculator::operator--() {
 	if (m_f.id() != m_v.beginFaceId()) {
 		int i = m_f.index(m_v);
-		m_f = m_f.neighbor(Triangulation::cw(i));
+		assert(i >= 0);
+		m_f = m_f.neighbor((uint32_t)Triangulation::cw(i));
 	}
 	else {
 		m_f = m_v.endFace();
@@ -252,7 +255,7 @@ m_fi(d+(1+m_p.getSizeInBytes()+m_vi.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION, d.at(0), "sserialize::Static::spatial::Triangulation::Triangulation");
 	SSERIALIZE_EQUAL_LENGTH_CHECK(m_p.size(), m_vi.size(), "sserialize::Static::spatial::Triangulation::Triangulation: m_vi != m_p");
-	assert(selfCheck());
+	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
 
 Triangulation::~Triangulation() {}
@@ -279,13 +282,13 @@ bool Triangulation::selfCheck() const {
 	//check face-neigbor relations
 	for(uint32_t faceId(0), s(faceCount()); faceId < s; ++faceId) {
 		Face f(face(faceId));
-		for(int j(0); j < 3; ++j) {
+		for(uint32_t j(0); j < 3; ++j) {
 			if (!f.isNeighbor(j)) {
 				continue;
 			}
 			Face fn(f.neighbor(j));
 			bool ok = false;
-			for(int k(0); k < 3; ++k) {
+			for(uint32_t k(0); k < 3; ++k) {
 				if (fn.neighborId(k) == faceId) {
 					ok = true;
 				}
@@ -301,7 +304,7 @@ bool Triangulation::selfCheck() const {
 	//See Figure 36.2, the functions ccw(i) and cw(i) shown on this figure compute respectively i+1 and i−1 modulo 3
 	for(uint32_t faceId(0), s(faceCount()); faceId < s; ++faceId) {
 		Face f(face(faceId));
-		for(int j(0); j < 3; ++j) {
+		for(uint32_t j(0); j < 3; ++j) {
 			Vertex vs(f.vertex(j)), ve(f.vertex(cw(j)));
 			if (f.isNeighbor(ccw(j))) {
 				Face fn(f.neighbor(ccw(j)));
