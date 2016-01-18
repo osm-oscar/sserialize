@@ -107,10 +107,10 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 	const CellQueryResult & o = *oPtr;
 	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
 	CellQueryResult & r = *rPtr;
-	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * std::min<uint32_t>(m_desc.size(), o.m_desc.size()));
+	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	
 
-	for(uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size()); myI < myEnd && oI < oEnd;) {
+	for(std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size()); myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
 		uint32_t myCellId = myCD.cellId;
@@ -123,7 +123,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 			++oI;
 			continue;
 		}
-		uint32_t ct = (myCD.fullMatch << 1) | oCD.fullMatch;
+		int ct = (myCD.fullMatch << 1) | oCD.fullMatch;
 		switch(ct) {
 		case 0x0: //both partial
 			{
@@ -131,14 +131,14 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 				const sserialize::ItemIndex & oPIdx = o.idx(oI);
 				sserialize::ItemIndex res(myPIdx / oPIdx);
 				if (res.size()) {
-					r.uncheckedSet(r.m_desc.size(), res);
+					r.uncheckedSet((uint32_t)r.m_desc.size(), res);
 					r.m_desc.push_back(CellDesc(0, 1, myCellId));
 				}
 			}
 			break;
 		case 0x1: //o full
 			if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -147,7 +147,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 			break;
 		case 0x2: //my full
 			if (oCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), o.m_idx[oI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), o.m_idx[oI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
@@ -156,10 +156,10 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 			break;
 		case 0x3:
 			if (oCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), o.idx(oI));
+				r.uncheckedSet((uint32_t)r.m_desc.size(), o.idx(oI));
 			}
 			else if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), idx(myI));
+				r.uncheckedSet((uint32_t)r.m_desc.size(), idx(myI));
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
@@ -182,7 +182,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
-	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -191,7 +191,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		if (myCellId < oCellId) {
 			//do copy
 			if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -203,7 +203,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		else if ( oCellId < myCellId ) {
 			//do copy
 			if (oCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), o.m_idx[oI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), o.m_idx[oI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
@@ -212,7 +212,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 			++oI;
 			continue;
 		}
-		uint32_t ct = (myCD.fullMatch << 1) | oCD.fullMatch;
+		int ct = (myCD.fullMatch << 1) | oCD.fullMatch;
 		switch(ct) {
 		case 0x0: //both partial
 			{
@@ -224,14 +224,14 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 					r.m_desc.push_back(CellDesc(1, 0, myCellId));
 				}
 				else {
-					r.uncheckedSet(r.m_desc.size(), res);
+					r.uncheckedSet((uint32_t)r.m_desc.size(), res);
 					r.m_desc.push_back(CellDesc(0, 1, myCellId));
 				}
 			}
 			break;
 		case 0x2: //my full
 			if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -240,7 +240,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 			break;
 		case 0x1: //o full
 			if (oCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), o.m_idx[oI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), o.m_idx[oI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
@@ -249,10 +249,10 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 			break;
 		case 0x3: //both full
 			if (oCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), o.idx(oI));
+				r.uncheckedSet((uint32_t)r.m_desc.size(), o.idx(oI));
 			}
 			else if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), idx(myI));
+				r.uncheckedSet((uint32_t)r.m_desc.size(), idx(myI));
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -269,7 +269,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 	for(; myI < myEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		if (myCD.fetched) {
-			r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+			r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 		}
 		else {
 			r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -281,7 +281,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 	for(; oI < oEnd;) {
 		const CellDesc & oCD = o.m_desc[oI];
 		if (oCD.fetched) {
-			r.uncheckedSet(r.m_desc.size(), o.m_idx[oI].idx);
+			r.uncheckedSet((uint32_t)r.m_desc.size(), o.m_idx[oI].idx);
 		}
 		else {
 			r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
@@ -290,7 +290,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		++oI;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
-	assert(r.m_desc.size() >= std::max<uint32_t>(m_desc.size(), o.m_desc.size()));
+	assert(r.m_desc.size() >= std::max<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
 
@@ -300,15 +300,15 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * m_desc.size());
 	
-	uint32_t myI(0), myEnd(m_desc.size());
-	for(uint32_t oI(0), oEnd(o.m_desc.size()); myI < myEnd && oI < oEnd;) {
+	std::size_t myI(0), myEnd(m_desc.size());
+	for(std::size_t oI(0), oEnd(o.m_desc.size()); myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
 		uint32_t myCellId = myCD.cellId;
 		uint32_t oCellId = oCD.cellId;
 		if (myCellId < oCellId) {
 			if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -326,7 +326,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 			const sserialize::ItemIndex & oPIdx = o.idx(oI);
 			sserialize::ItemIndex res(myPIdx - oPIdx);
 			if (res.size()) {
-				r.uncheckedSet(r.m_desc.size(), res);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), res);
 				r.m_desc.push_back(CellDesc(0, 1, myCellId));
 			}
 		}
@@ -337,7 +337,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 	for(; myI < myEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		if (myCD.fetched) {
-			r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+			r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 		}
 		else {
 			r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -357,7 +357,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
-	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -366,7 +366,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 		if (myCellId < oCellId) {
 			//do copy
 			if (myCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -378,7 +378,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 		else if ( oCellId < myCellId ) {
 			//do copy
 			if (oCD.fetched) {
-				r.uncheckedSet(r.m_desc.size(), o.m_idx[oI].idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), o.m_idx[oI].idx);
 			}
 			else {
 				r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;
@@ -387,13 +387,13 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 			++oI;
 			continue;
 		}
-		uint32_t ct = (myCD.fullMatch << 1) | oCD.fullMatch;
+		int ct = (myCD.fullMatch << 1) | oCD.fullMatch;
 		if (ct != 0x3) {
 			const sserialize::ItemIndex & myPIdx = idx(myI);
 			const sserialize::ItemIndex & oPIdx = o.idx(oI);
 			sserialize::ItemIndex res(myPIdx ^ oPIdx);
 			if (res.size()) {
-				r.uncheckedSet(r.m_desc.size(), res);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), res);
 				r.m_desc.push_back(CellDesc(0, 1, myCellId));
 			}
 		}
@@ -404,7 +404,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	for(; myI < myEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		if (myCD.fetched) {
-			r.uncheckedSet(r.m_desc.size(), m_idx[myI].idx);
+			r.uncheckedSet((uint32_t)r.m_desc.size(), m_idx[myI].idx);
 		}
 		else {
 			r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
@@ -417,7 +417,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	for(; oI < oEnd;) {
 		const CellDesc & oCD = o.m_desc[oI];
 		if (oCD.fetched) {
-			r.uncheckedSet(r.m_desc.size(), o.m_idx[oI].idx);
+			r.uncheckedSet((uint32_t)r.m_desc.size(), o.m_idx[oI].idx);
 		}
 		else {
 			r.m_idx[r.m_desc.size()].idxPtr = o.m_idx[oI].idxPtr;

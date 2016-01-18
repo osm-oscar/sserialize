@@ -62,7 +62,8 @@ CellQueryResultIterator & CellQueryResultIterator::operator++() {
 }
 
 CellQueryResultIterator CellQueryResultIterator::operator+(differnce_type v) const {
-	return CellQueryResultIterator(m_d, m_pos+v);
+	SSERIALIZE_CHEAP_ASSERT(v >= 0);
+	return CellQueryResultIterator(m_d, m_pos+(uint32_t)v);
 }
 
 }//end namespace detail

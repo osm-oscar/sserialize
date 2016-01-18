@@ -29,7 +29,7 @@ private:
 		uint32_t fetched:1;
 		uint32_t cellId:30;
 		///raw data in the format (cellId|fetched|fullMatch) least-significant bit to the right
-		uint32_t raw() const { return (cellId << 2 | fetched << 1 | fullMatch); }
+		uint32_t raw() const { return (uint32_t)(cellId << 2 | fetched << 1 | fullMatch); }
 	};
 	
 	union IndexDesc {
@@ -63,7 +63,7 @@ public:
 	uint32_t idxId(uint32_t pos) const;
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
-	inline uint32_t cellCount() const { return m_desc.size();}
+	inline uint32_t cellCount() const { return (uint32_t)m_desc.size();}
 	inline bool fetched(uint32_t pos) const { return m_desc[pos].fetched; }
 	inline uint32_t rawDesc(uint32_t pos) const { return m_desc[pos].raw(); }
 	CellQueryResult * intersect(const CellQueryResult * other) const;
@@ -96,7 +96,7 @@ m_idxStore(idxStore)
 		}
 		else {
 			m_desc.emplace_back(0, 0, pCellId);
-			idxPtr->idxPtr = *pmItemsIt;
+			idxPtr->idxPtr = (sserialize::Static::ItemIndexStore::IdType)*pmItemsIt;
 			++pmIt;
 			++pmItemsIt;
 		}
@@ -107,7 +107,7 @@ m_idxStore(idxStore)
 	
 	for(; pmIt != pmEnd; ++idxPtr, ++pmIt, ++pmItemsIt) {
 		m_desc.emplace_back(0, 0, *pmIt);
-		idxPtr->idxPtr = *pmItemsIt;
+		idxPtr->idxPtr = (sserialize::Static::ItemIndexStore::IdType)*pmItemsIt;
 	}
 
 	assert(selfCheck());
