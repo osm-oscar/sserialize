@@ -189,8 +189,8 @@ T_CQR_TYPE CellTextCompleter::fromCellId(uint32_t cellId) const {
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::cqrFromRect(const sserialize::spatial::GeoRect & rect) const {
 	T_CQR_TYPE retCQR;
-	m_gh.cqr(idxStore(), rect, retCQR);
-	return retCQR;
+	sserialize::ItemIndex tmp = m_gh.intersectingCells(idxStore(), rect);
+	return T_CQR_TYPE(tmp, m_gh, m_idxStore);
 }
 
 template<typename T_CQR_TYPE>
