@@ -37,7 +37,7 @@ public:
 		Cell() : m_parentsBegin(0), m_itemsBegin(0), m_parentsSize(0), m_itemsSize(0) {}
 		Cell(uint32_t * cellIdBegin, uint32_t * cellIdEnd, uint32_t * cellItemsBegin, uint32_t * cellItemsEnd, const sserialize::spatial::GeoRect & boundary) :
 		m_parentsBegin(cellIdBegin), m_itemsBegin(cellItemsBegin),
-		m_parentsSize(cellIdEnd-cellIdBegin), m_itemsSize(cellItemsEnd-cellItemsBegin),
+		m_parentsSize((uint32_t)(cellIdEnd-cellIdBegin)), m_itemsSize((uint32_t)(cellItemsEnd-cellItemsBegin)),
 		m_boundary(boundary)
 		{}
 		Cell(uint32_t * cellIdBegin, uint32_t cellIdSize, uint32_t * cellItemsBegin, uint32_t cellItemsSize, const sserialize::spatial::GeoRect & boundary) :
@@ -97,7 +97,7 @@ public:
 	CellList & operator=(CellList && other);
 	CellList & operator=(const CellList & other);
 	
-	inline uint32_t size() const { return m_d.size(); }
+	inline uint32_t size() const { return (uint32_t)m_d.size(); }
 	
 	inline Cell & operator[](uint32_t pos) { return m_d[pos]; }
 	inline const Cell & operator[](uint32_t pos) const { return m_d[pos]; }
@@ -209,7 +209,7 @@ public:
 	RegionList() {}
 	~RegionList() {}
 	void clear();
-	inline uint32_t size() const { return m_regions.size(); }
+	inline uint32_t size() const { return (uint32_t) m_regions.size(); }
 	
 	DataContainer & regionData() { return m_data; }
 	const DataContainer & regionData() const { return m_data; }

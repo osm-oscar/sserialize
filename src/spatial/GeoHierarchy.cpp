@@ -428,8 +428,8 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	}
 	
 	std::vector<uint8_t> bitConfig;
-	for(uint32_t i = 0, s = maxValues.size(); i < s; ++i) {
-		bitConfig.push_back( CompactUintArray::minStorageBits(maxValues[i]) );
+	for(auto x : maxValues) {
+		bitConfig.push_back( (uint8_t) CompactUintArray::minStorageBits(x) );
 	}
 	curPtrOffset = 0;
 	
@@ -519,15 +519,15 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 		uint32_t itemPtr = idxFactory.addIndex(c.items());
 		mcdItemPtr = std::max<uint32_t>(mcdItemPtr, itemPtr);
 		mcdItemCount = std::max<uint32_t>(mcdItemCount, c.itemsSize());
-		mcdDirectParentsCount = std::max<uint32_t>(mcdDirectParentsCount, cellDirectParents.size());
+		mcdDirectParentsCount = std::max<uint32_t>(mcdDirectParentsCount, (uint32_t) cellDirectParents.size());
 		curPtrOffset += c.parentsSize();
 		cellItemsIndexPtrs[i] = itemPtr;
 	}
 	mcdParentBegin = curPtrOffset;
 	
 	bitConfig.clear();
-	for(uint32_t i = 0, s = maxValues.size(); i < s; ++i) {
-		bitConfig.push_back( CompactUintArray::minStorageBits(maxValues[i]) );
+	for(auto x : maxValues) {
+		bitConfig.push_back( (uint8_t) CompactUintArray::minStorageBits(x) );
 	}
 	ptrOffsetArray.clear();
 	ptrOffsetArray.reserve(curPtrOffset);
@@ -544,7 +544,7 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_PTR, cellItemsIndexPtrs[i]);
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_ITEM_COUNT, c.itemsSize());
 			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_PARENTS_BEGIN, curPtrOffset);
-			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_DIRECT_PARENTS_OFFSET, cellDirectParents.size());
+			mvaCreator.set(i, sserialize::Static::spatial::GeoHierarchy::Cell::CD_DIRECT_PARENTS_OFFSET, (uint32_t) cellDirectParents.size());
 			
 			ptrOffsetArray.push_back(cellDirectParents.cbegin(), cellDirectParents.cend());
 			ptrOffsetArray.push_back(cellRemainingParents.cbegin(), cellRemainingParents.cend());
@@ -765,7 +765,7 @@ std::vector< std::pair<uint32_t, uint32_t> > GeoHierarchy::createFullRegionItemI
 		}
 		items.clear();
 		if (tmp.size()) {
-			items = treeMerge(tmp, 0, tmp.size()-1);
+			items = treeMerge(tmp, 0, (uint32_t) tmp.size()-1);
 		}
 		res.at(i) = std::pair<uint32_t, uint32_t>(idxFactory.addIndex(items), items.size());
 	}
@@ -790,7 +790,7 @@ void GeoHierarchy::compactify(bool compactifyCells, bool compactifyRegions) {
 				*pIt = x;
 				++*pIt;
 			}
-			cell.m_parentsSize = pIt - cell.parentsBegin();
+			cell.m_parentsSize = (uint32_t)(pIt - cell.parentsBegin());
 		}
 	}
 	if (compactifyRegions) {
