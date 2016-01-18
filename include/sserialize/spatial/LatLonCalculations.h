@@ -6,9 +6,9 @@ namespace spatial {
 
 //most of the calulations are based on http://www.movable-type.co.uk/scripts/latlong.html
 
-///Simple distance calulation between (lat0, lon0)->(lat1, lon1), use DistanceCalculator for mor advanced calculations
+///Simple distance calulation between (lat0, lon0)->(lat1, lon1), use DistanceCalculator for more advanced calculations
 ///@return distance in meters
-double distanceTo(double lat0, double lon0, double lat1, double lon1, double earthRadius);
+double distanceTo(double lat0, double lon0, double lat1, double lon1, double earthRadius = 6371000);
 
 ///initial bearing in degrees
 double bearingTo(double lat0, double lon0, double lat1, double lon1);
