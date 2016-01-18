@@ -114,8 +114,9 @@ m_header(m_tree)
 	m_tree += SerializationInfo<HeaderInfo>::length;
 
 	m_sq = (sserialize::StringCompleter::SQ_EP | sserialize::StringCompleter::SQ_CASE_INSENSITIVE);
-	if (m_header.trieOptions & STO_CASE_SENSITIVE)
+	if (m_header.trieOptions & STO_CASE_SENSITIVE) {
 		m_sq |= sserialize::StringCompleter::SQ_CASE_SENSITIVE;
+	}
 
 	if (m_header.trieOptions & STO_SUFFIX) {
 		m_sq |= (sserialize::StringCompleter::SQ_SSP);
@@ -145,8 +146,9 @@ void GeneralizedTrie::insertIndexRecursive(const sserialize::Static::TrieNode & 
 	IndexMergeType nextType = IT_NONE;
 	if (node.hasMergeIndex()) {
 		if (type & IT_PREFIX) {
-			if (node.hasExactIndex())
+			if (node.hasExactIndex()) {
 				indexFromId(node.getExactIndexPtr()).putInto(dest);
+			}
 
 			if (node.hasPrefixIndex()) {
 				indexFromId(node.getPrefixIndexPtr()).putInto(dest);
@@ -156,10 +158,12 @@ void GeneralizedTrie::insertIndexRecursive(const sserialize::Static::TrieNode & 
 			}
 		}
 		if (type & IT_SUFFIXPREFIX) {
-			if (node.hasExactIndex())
+			if (node.hasExactIndex()) {
 				indexFromId(node.getExactIndexPtr()).putInto(dest);
-			if (node.hasSuffixIndex())
+			}
+			if (node.hasSuffixIndex()) {
 				indexFromId(node.getSuffixIndexPtr()).putInto(dest);
+			}
 
 			if (node.hasPrefixIndex()) {
 				indexFromId(node.getPrefixIndexPtr()).putInto(dest);
@@ -179,8 +183,9 @@ void GeneralizedTrie::insertIndexRecursive(const sserialize::Static::TrieNode & 
 				indexFromId(node.getPrefixIndexPtr()).putInto(dest);
 			}
 			else {
-				if (node.hasExactIndex())
+				if (node.hasExactIndex()) {
 					indexFromId(node.getExactIndexPtr()).putInto(dest);
+				}
 				nextType = (IndexMergeType) (nextType | IT_PREFIX);
 			}
 		}
@@ -189,18 +194,20 @@ void GeneralizedTrie::insertIndexRecursive(const sserialize::Static::TrieNode & 
 				indexFromId(node.getSuffixPrefixIndexPtr()).putInto(dest);
 			}
 			else {
-				if (node.hasExactIndex())
+				if (node.hasExactIndex()) {
 					indexFromId(node.getExactIndexPtr()).putInto(dest);
-				if (node.hasSuffixIndex())
+				}
+				if (node.hasSuffixIndex()) {
 					indexFromId(node.getSuffixIndexPtr()).putInto(dest);
+				}
 				nextType = (IndexMergeType) (nextType | IT_SUFFIXPREFIX);
 			}
 		}
 	}
 	if (nextType  != IT_NONE) {
-		uint16_t childCount = node.childCount();
-		for(uint16_t i = 0; i < childCount; ++i)
+		for(uint32_t i(0), s(node.childCount()); i < s; ++i) {
 			insertIndexRecursive(node.childAt(i), nextType, dest);
+		}
 	}
 }
 
