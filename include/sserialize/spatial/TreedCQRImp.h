@@ -19,26 +19,26 @@ namespace TreedCellQueryResult  {
 		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_TO_FM=4, T_INTERSECT=5, T_UNITE=6, T_DIFF=7, T_SYM_DIFF=8} Type;
 		uint64_t raw;
 		struct {
-			uint64_t type:3;
-			uint64_t value:61;
+			uint64_t type:4;
+			uint64_t value:60;
 		} common;
 		struct {
-			uint64_t type:3;
+			uint64_t type:4;
 			uint64_t childB:61;//offset to child B from the position of THIS node of the tree, childA is always at position 1
 		} opNode;
 		struct {
-			uint64_t type:3;
-			uint64_t cellId:29;
-			uint64_t pmIdxId:32;//29 bits is not be enough if ItemIndexStore has no deduplication
+			uint64_t type:4;
+			uint64_t cellId:28; //around 250M Cells which is more than enough
+			uint64_t pmIdxId:32;//29 bits is not enough if ItemIndexStore has no deduplication
 		} pmNode;
 		struct {
-			uint64_t type:3;
-			uint64_t cellId:29;
+			uint64_t type:4;
+			uint64_t cellId:28;
 			uint64_t padding:32;
 		} fmNode;
 		struct {
-			uint64_t type:3;
-			uint64_t internalIdxId:61;
+			uint64_t type:4;
+			uint64_t internalIdxId:60;
 		} fetchedNode;
 		FlatNode(Type t) {
 			common.type = t;
