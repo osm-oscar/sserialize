@@ -94,7 +94,7 @@ public:
 	template<typename TCONTAINER>
 	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest) {
 		if (src.size()) {
-			ItemIndexPrivateSimpleCreator creator(*src.begin(), *src.rbegin(), src.size(), dest);
+			ItemIndexPrivateSimpleCreator creator(*src.begin(), *src.rbegin(), narrow_check<uint32_t>(src.size()), dest);
 			typename TCONTAINER::const_iterator srcIt = src.begin();
 			typename TCONTAINER::const_iterator srcEnd = src.end();
 			for(; srcIt != srcEnd; ++srcIt)

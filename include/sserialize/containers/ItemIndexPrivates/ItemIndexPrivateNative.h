@@ -127,17 +127,17 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIn
 		}
 	}
 	if (TFunc::pushFirstRemainder && myDEnd-myD > 0) {
-		uint32_t remainderSize = myDEnd-myD;
+		uint32_t remainderSize = (uint32_t)(myDEnd-myD);
 		::memmove(tmpResultIt, myD, remainderSize);
 		tmpResultIt += remainderSize;
 	}
 	else if (TFunc::pushSecondRemainder && oDEnd-oD > 0) {
-		uint32_t remainderSize = oDEnd - oD;
+		uint32_t remainderSize = (uint32_t)(oDEnd - oD);
 		::memmove(tmpResultIt, oD, remainderSize);
 		tmpResultIt += remainderSize;
 	}
 	
-	uint32_t tmpResultSize = (tmpResultIt - (mm.begin()+sizeof(uint32_t)))/sizeof(uint32_t);
+	uint32_t tmpResultSize = (uint32_t)((uint64_t)(tmpResultIt - (mm.begin()+sizeof(uint32_t)))/sizeof(uint32_t));
 	assert(tmpResultSize <= maxResultSize);
 	mm.resize((tmpResultSize+1)*sizeof(uint32_t));
 	

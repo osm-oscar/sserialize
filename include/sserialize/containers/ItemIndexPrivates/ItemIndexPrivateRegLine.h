@@ -4,6 +4,7 @@
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/utility/assert.h>
 #include <cstdlib>
 
 
@@ -46,33 +47,34 @@ private:
 private: //creation functions
 	
 	template<class TSortedContainer>
-	static uint8_t getNeededBitsForLinearRegression(const TSortedContainer & ids, uint32_t slopenom, int32_t yintercept, int32_t & idOffset) {
+	static uint32_t getNeededBitsForLinearRegression(const TSortedContainer & ids, uint32_t slopenom, int32_t yintercept, int32_t & idOffset) {
+		SSERIALIZE_CHEAP_ASSERT(ids.size() < std::numeric_limits<uint32_t>::max());
 		sserialize::MinMax<int64_t> minMax;
 		int64_t curOffSetCorrection;
 		int64_t curDiff;
 		uint64_t count = 0;
 		typename TSortedContainer::const_iterator end( ids.end() );
 		for(typename TSortedContainer::const_iterator it = ids.begin(); it != end; ++it) {
-			curOffSetCorrection = static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, ids.size(), count)) + yintercept; 
+			curOffSetCorrection = static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, (uint32_t)ids.size(), (uint32_t)count)) + yintercept; 
 			curDiff = static_cast<int64_t>(*it) - curOffSetCorrection;
 			minMax.update(curDiff);
 			count++;
 		}
-		uint64_t range = minMax.max() - minMax.min() + 1;
+		uint64_t range = (uint64_t)(minMax.max() - minMax.min() + 1);
 		//minMax.max = stored + idOffset
 		//minMax.min = stored + idOffset
-		idOffset = minMax.min();
-		return CompactUintArray::minStorageBits(range);
+		idOffset = narrow_check<int32_t>(minMax.min());
+		return CompactUintArray::minStorageBits(narrow_check<uint32_t>(range));
 	}
 
 	template<class TSortedContainer>
-	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint32_t & slopenom, int32_t & yintercept, uint8_t & bpn, int32_t & idOffset) {
+	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint32_t & slopenom, int32_t & yintercept, uint32_t & bpn, int32_t & idOffset) {
 		double sloped, yinterceptd;
 		sserialize::statistics::linearRegression(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
-			yintercept = floor(yinterceptd);
-			slopenom = floor(sloped) * (ids.size()-1);
+			yintercept = narrow_check<int32_t>(::floor(yinterceptd));
+			slopenom = narrow_check<uint32_t>(::floor(sloped) * (ids.size()-1));
 		}
 		else {
 			slopenom = 0;
@@ -103,7 +105,7 @@ public:
 	virtual uint8_t bpn() const { return m_bpn;}
 	virtual uint32_t slopenom() const { return m_slopenom; }
 	virtual int32_t yintercept() const { return m_yintercept; }
-	virtual uint32_t idOffSet() const { return m_idOffset;}
+	virtual int32_t idOffSet() const { return m_idOffset;}
 
 	virtual uint32_t rawIdAt(const uint32_t pos) const;
 	virtual uint32_t getSizeInBytes() const;
@@ -140,26 +142,28 @@ public:
 		if (ids.size() > 1) {
 			uint32_t slopenom = 0;
 			int32_t yintercept = 0;
-			uint8_t bitsForIds = 32;
+			uint32_t bitsForIds = 32;
 			int32_t idOffset = 0;
 			if (regLine) {
 				getLinearRegressionParamsInteger(ids, slopenom, yintercept, bitsForIds, idOffset);
 			}
 			else {
 				slopenom = 0;
-				yintercept = *(ids.begin());
+				yintercept = (int32_t)*(ids.begin());
 				bitsForIds = CompactUintArray::minStorageBits(*(ids.rbegin()) - *(ids.begin()));
 				idOffset = 0;
 			}
 
 			if (fixedBitWith > 0) {
-				if (fixedBitWith > bitsForIds)
-					bitsForIds = fixedBitWith;
-				else
+				if ((uint32_t)fixedBitWith > bitsForIds) {
+					bitsForIds = (uint32_t)fixedBitWith;
+				}
+				else {
 					return false;
+				}
 			}
 
-			uint32_t countTypeHeader = ids.size() << 5;
+			uint32_t countTypeHeader = (uint32_t)(ids.size() << 5);
 			countTypeHeader |= (bitsForIds-1);
 
 			if (destination.putVlPackedUint32(countTypeHeader) < 0)
@@ -184,25 +188,25 @@ public:
 			destination.incPutPtr(idStorageNeed);
 			typename TSortedContainer::const_iterator end (ids.end() );
 			for(typename TSortedContainer::const_iterator i = ids.begin(); i != end; ++i) {
-				curOffSetCorrection = yintercept + static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, ids.size(), count));
+				curOffSetCorrection = yintercept + static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, (uint32_t)ids.size(), count));
 				offSetCorrectedId = static_cast<int64_t>(*i)  - curOffSetCorrection - idOffset;
-				carr.set(count, offSetCorrectedId);
+				carr.set(count, narrow_check<uint32_t>(offSetCorrectedId));
 				count++;
 			}
 		}
 		else if (ids.size() == 1) { //a single element
 			uint32_t itemId = *(ids.begin());
-			uint8_t bits = CompactUintArray::minStorageBits(itemId);
+			uint32_t bits = CompactUintArray::minStorageBits(itemId);
 			if (fixedBitWith > 0) {
-				if (fixedBitWith > bits) {
-					bits = fixedBitWith;
+				if ((uint32_t)fixedBitWith > bits) {
+					bits = (uint32_t)fixedBitWith;
 				}
 				else {
 					return false;
 				}
 			}
-			uint8_t countType = 0x20 | (bits-1);
-			destination.putUint8(countType);
+			uint32_t countType = 0x20 | (bits-1);
+			destination.putUint8((uint8_t)countType);
 			CompactUintArray::create(&itemId, (&itemId)+1, destination, bits);
 		}
 		else {

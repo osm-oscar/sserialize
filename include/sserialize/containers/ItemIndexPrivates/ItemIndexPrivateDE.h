@@ -114,7 +114,7 @@ public:
 	}
 	
 	inline void flush() {
-		m_data.putUint32(m_beginning, m_data.tellPutPtr() - (m_beginning + 8));
+		m_data.putUint32(m_beginning, (uint32_t)(m_data.tellPutPtr() - (m_beginning + 8)));
 		m_data.putUint32(m_beginning+4, m_count);
 	}
 

@@ -15,8 +15,7 @@ void intersectWithBinarySearch(const ItemIndexPrivate * aindex, const ItemIndexP
 		largerIndex = aindex;
 	}
 	uint32_t curId;
-	uint32_t size = smallerIndex->size();
-	for(size_t i = 0; i < size; i++) {
+	for(uint32_t i (0), s(smallerIndex->size()); i < s; ++i) {
 		curId = smallerIndex->at(i);
 		if (largerIndex->find(curId) >= 0 ) {
 			creator.push_back(curId);

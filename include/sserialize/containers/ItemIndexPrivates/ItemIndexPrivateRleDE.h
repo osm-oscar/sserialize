@@ -51,7 +51,7 @@ private:
 	void flushData() {
 		m_dest.setPutPtr(m_beginning);
 		m_dest.putVlPackedUint32(m_count);
-		m_dest.putVlPackedUint32(m_data.size());
+		m_dest.putVlPackedUint32((uint32_t)m_data.size());
 		m_dest.putData(m_data);
 	}
 public:
