@@ -30,9 +30,20 @@ DEALINGS IN THE SOFTWARE.
 
 #include "core.h"
 #include <stdexcept>
+#include <type_traits>
+
 
 namespace utf8
 {
+	template<typename octet_iterator>
+	struct iterator_value_type {
+		typedef typename std::conditional<
+				std::is_same<typename std::iterator_traits<octet_iterator>::value_type, void>::value,
+				char,
+				typename std::iterator_traits<octet_iterator>::value_type
+			>::type type;
+	};
+    
     // Base for the exceptions that may be thrown from the library
     class exception : public ::std::exception {
     };
@@ -72,25 +83,26 @@ namespace utf8
     template <typename octet_iterator>
     octet_iterator append(uint32_t cp, octet_iterator result)
     {
+		typedef typename iterator_value_type<octet_iterator>::type value_type;
         if (!utf8::internal::is_code_point_valid(cp))
             throw invalid_code_point(cp);
 
         if (cp < 0x80)                        // one octet
-            *(result++) = static_cast<uint8_t>(cp);
+            *(result++) = (value_type) static_cast<uint8_t>(cp);
         else if (cp < 0x800) {                // two octets
-            *(result++) = static_cast<uint8_t>((cp >> 6)            | 0xc0);
-            *(result++) = static_cast<uint8_t>((cp & 0x3f)          | 0x80);
+            *(result++) = (value_type) static_cast<uint8_t>((cp >> 6)            | 0xc0);
+            *(result++) = (value_type) static_cast<uint8_t>((cp & 0x3f)          | 0x80);
         }
         else if (cp < 0x10000) {              // three octets
-            *(result++) = static_cast<uint8_t>((cp >> 12)           | 0xe0);
-            *(result++) = static_cast<uint8_t>(((cp >> 6) & 0x3f)   | 0x80);
-            *(result++) = static_cast<uint8_t>((cp & 0x3f)          | 0x80);
+            *(result++) = (value_type) static_cast<uint8_t>((cp >> 12)           | 0xe0);
+            *(result++) = (value_type) static_cast<uint8_t>(((cp >> 6) & 0x3f)   | 0x80);
+            *(result++) = (value_type) static_cast<uint8_t>((cp & 0x3f)          | 0x80);
         }
         else {                                // four octets
-            *(result++) = static_cast<uint8_t>((cp >> 18)           | 0xf0);
-            *(result++) = static_cast<uint8_t>(((cp >> 12) & 0x3f)  | 0x80);
-            *(result++) = static_cast<uint8_t>(((cp >> 6) & 0x3f)   | 0x80);
-            *(result++) = static_cast<uint8_t>((cp & 0x3f)          | 0x80);
+            *(result++) = (value_type) static_cast<uint8_t>((cp >> 18)           | 0xf0);
+            *(result++) = (value_type) static_cast<uint8_t>(((cp >> 12) & 0x3f)  | 0x80);
+            *(result++) = (value_type) static_cast<uint8_t>(((cp >> 6) & 0x3f)   | 0x80);
+            *(result++) = (value_type) static_cast<uint8_t>((cp & 0x3f)          | 0x80);
         }
         return result;
     }
@@ -98,13 +110,14 @@ namespace utf8
     template <typename octet_iterator, typename output_iterator>
     output_iterator replace_invalid(octet_iterator start, octet_iterator end, output_iterator out, uint32_t replacement)
     {
+		typedef typename iterator_value_type<output_iterator>::type value_type;
         while (start != end) {
             octet_iterator sequence_start = start;
             internal::utf_error err_code = utf8::internal::validate_next(start, end);
             switch (err_code) {
                 case internal::UTF8_OK :
                     for (octet_iterator it = sequence_start; it != start; ++it)
-                        *out++ = *it;
+                        *out++ = (value_type)*it;
                     break;
                 case internal::NOT_ENOUGH_ROOM:
                     throw not_enough_room();
@@ -146,7 +159,7 @@ namespace utf8
             case internal::INVALID_LEAD :
             case internal::INCOMPLETE_SEQUENCE :
             case internal::OVERLONG_SEQUENCE :
-                throw invalid_utf8(*it);
+                throw invalid_utf8((uint8_t)*it);
             case internal::INVALID_CODE_POINT :
                 throw invalid_code_point(cp);
         }
@@ -170,7 +183,7 @@ namespace utf8
         // Go back until we hit either a lead octet or start
         while (utf8::internal::is_trail(*(--it)))
             if (it == start)
-                throw invalid_utf8(*it); // error - no lead byte in the sequence
+                throw invalid_utf8((uint8_t)*it); // error - no lead byte in the sequence
         return utf8::peek_next(it, end);
     }
 
@@ -181,7 +194,7 @@ namespace utf8
         octet_iterator end = it;
         while (utf8::internal::is_trail(*(--it)))
             if (it == pass_start)
-                throw invalid_utf8(*it); // error - no lead byte in the sequence
+                throw invalid_utf8((uint8_t)*it); // error - no lead byte in the sequence
         octet_iterator temp = it;
         return utf8::next(temp, end);
     }
