@@ -65,7 +65,7 @@ std::unordered_map<uint32_t, uint32_t> createRemap(const T & src) {
 }
 
 void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemData & item, sserialize::UByteArrayAdapter & dest) {
-#if defined(DEBUG_CHECK_KVSTORE_SERIALIZE) || defined(DEBUG_CHECK_ALL)
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	sserialize::OffsetType putPtr = dest.tellPutPtr();
 #endif
 	if(item.size() > (std::numeric_limits<uint32_t>::max() >> 10)) {
@@ -101,7 +101,7 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 		carr.set64(i, pv);
 	}
 	dest.putData(carr.data());
-#if defined(DEBUG_CHECK_KVSTORE_SERIALIZE) || defined(DEBUG_CHECK_ALL)
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	UByteArrayAdapter tmp(dest);
 	tmp.setPutPtr(putPtr);
 	tmp.shrinkToPutPtr();
@@ -112,7 +112,6 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 		SSERIALIZE_ASSERT_EQUAL_CREATION(item.at(i).key, sitem.keyId(i), "sserialize::KeyValueObjectStore::serialize: keyId");
 		SSERIALIZE_ASSERT_EQUAL_CREATION(item.at(i).value, sitem.valueId(i), "sserialize::KeyValueObjectStore::serialize: valueId");
 	}
-	
 #endif
 
 }

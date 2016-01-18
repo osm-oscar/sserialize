@@ -596,7 +596,7 @@ bool HashBasedFlatTrie<TValue>::valid(uint32_t & offendingString) const {
 template<typename TValue>
 void HashBasedFlatTrie<TValue>::finalize() {
 	const StringHandler * strHandler = &m_strHandler;
-	#if defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE) || defined(DEBUG_CHECK_ALL)
+	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	std::cout << "Finalizing HashBasedFlatTrie with size=" << size() << std::endl;
 	uint32_t brokenString = 0;
 	if (!valid(brokenString)) {
@@ -653,7 +653,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
 
-#if defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE)
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	UByteArrayAdapter::OffsetType flatTrieBaseBeginOffset = dest.tellPutPtr();
 #endif
 	dest.putUint8(1); //version of FlatTrieBase
@@ -680,7 +680,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	uint32_t count = 0;
 	const char * strDataBegin = m_stringData.begin();
 	pinfo.begin(m_ht.size(), "sserialize::HashBasedFlatTrie serializing trie");
-#if (defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE))
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	uint64_t debugCheckOffsetEntry = m_strHandler.strBegin(m_ht.begin()->first)-strDataBegin;
 	uint64_t debugCheckSizeEntry = m_ht.begin()->first.size();
 #endif
@@ -690,14 +690,14 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 		assert(ok);
 		++count;
 		pinfo(count);
-#if (defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE))
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 		assert(tsCreator.at(0,0) == debugCheckOffsetEntry);
 		assert(tsCreator.at(0,1) == debugCheckSizeEntry);
 #endif
 	}
 	tsCreator.flush();
 	pinfo.end();
-#if defined(DEBUG_CHECK_ALL) || defined(DEBUG_CHECK_HASH_BASED_FLAT_TRIE)
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	{
 		UByteArrayAdapter tmp(dest);
 		tmp.setPutPtr(flatTrieBaseBeginOffset);

@@ -55,7 +55,7 @@ public:
 		sserialize::Static::spatial::DenseGeoPointVector dgpv(dA);
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), dgpv.size());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (uint32_t)d.size(), dgpv.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (sserialize::UByteArrayAdapter::OffsetType)d.size(), dgpv.getSizeInBytes());
 		
 		for(uint32_t i = 0, s = testPoints.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("point at ", i), tr(testPoints.at(i)), dgpv.at(i));
@@ -72,7 +72,7 @@ public:
 		sserialize::Static::spatial::DenseGeoPointVector dgpv(dA);
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), dgpv.size());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (uint32_t)d.size(), dgpv.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (sserialize::UByteArrayAdapter::OffsetType)d.size(), dgpv.getSizeInBytes());
 		
 		uint32_t pos = 0;
 		for(sserialize::Static::spatial::DenseGeoPointVector::const_iterator it(dgpv.cbegin()), end(dgpv.cend()); it != end; ++it) {

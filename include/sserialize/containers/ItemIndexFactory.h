@@ -20,9 +20,6 @@ namespace sserialize {
 /** This class is a storage for multiple ItemIndex. It can create a file suitable for the Static::IndexStore.
 	Live-Compression is currenty only available for VARUINT.
 	If you want to create a store with HUFFMAN and/or LZO you have to do it afterwards.
-	
-	Compile-time debug options:
-	DEBUG_CHECK_SERIALIZED_INDEX, DEBUG_CHECK_ALL
 */
 
 class ItemIndexFactory {
@@ -129,7 +126,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 
 template<typename TSortedContainer>
 bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, ItemIndex::Types type) {
-	#if defined(DEBUG_CHECK_INDEX_SERIALIZATION) || defined(DEBUG_CHECK_ALL)
+	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	if (!std::is_sorted(idx.cbegin(), idx.cend())) {
 		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted index");	
 	}
@@ -161,7 +158,7 @@ bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & 
 	default:
 		break;
 	}
-#if defined(DEBUG_CHECK_INDEX_SERIALIZATION) || defined(DEBUG_CHECK_ALL)
+#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	if (ok) {
 		sserialize::ItemIndex sIdx(dest+destBegin, type);
 		ok = (sIdx == idx);

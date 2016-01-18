@@ -154,7 +154,7 @@ public:
 	}
 	///@return data to create the Array (NOT dest data)
 	UByteArrayAdapter flush() {
-		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+		#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 		OffsetType oiBegin = m_dest->tellPutPtr();
 		#endif
 		m_dest->putOffset(m_dataLenPtr, m_dest->tellPutPtr() - m_dataBegin); //datasize
@@ -167,7 +167,7 @@ public:
 			if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, *m_dest)) {
 				throw sserialize::CreationException("Array::flush: Creating the offset");
 			}
-			#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+			#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 			sserialize::UByteArrayAdapter tmp = *m_dest;
 			tmp.setPutPtr(oiBegin);
 			tmp.shrinkToPutPtr();

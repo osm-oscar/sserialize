@@ -140,13 +140,13 @@ UByteArrayAdapter & DynamicVector<TPushValue, TGetValue>::toArray(UByteArrayAdap
 		}
 	}
 	else {
-		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+		#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 		OffsetType oiBegin = dest.tellPutPtr();
 		#endif
 		if (!sserialize::Static::SortedOffsetIndexPrivate::create(m_offsets, dest)) {
 			throw sserialize::CreationException("Array::flush: Creating the offset");
 		}
-		#if defined(DEBUG_CHECK_ARRAY_OFFSET_INDEX) || defined(DEBUG_CHECK_ALL)
+		#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 		sserialize::UByteArrayAdapter tmp = dest;
 		tmp.setPutPtr(oiBegin);
 		tmp.shrinkToPutPtr();
