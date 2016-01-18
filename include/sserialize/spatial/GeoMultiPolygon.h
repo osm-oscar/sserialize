@@ -58,6 +58,7 @@ public:
 	virtual void recalculateBoundary() override;
 	
 	bool encloses(const GeoPolygon & polygon) const;
+	bool enclosed(const GeoPolygon & polygon) const;
 	
 	sserialize::spatial::GeoPoint at(uint32_t pos) const;
 	
@@ -393,6 +394,19 @@ bool GeoMultiPolygon<TPolygonContainer, TPolygon>::encloses(const TPolygon & pol
 		}
 	}
 	return enclosed;
+}
+
+template<typename TPolygonContainer, typename TPolygon>
+bool GeoMultiPolygon<TPolygonContainer, TPolygon>::enclosed(const TPolygon & polygon) const {
+	if (!polygon.boundary().contains(m_outerBoundary)) {
+		return false;
+	}
+	for(typename PolygonList::const_iterator it(outerPolygons().cbegin()), end(outerPolygons().cend()); it != end; ++it) {
+		if (!polygon.encloses(*it)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 template<typename TPolygonContainer, typename TPolygon>
