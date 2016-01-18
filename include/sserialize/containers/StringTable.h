@@ -53,6 +53,10 @@ namespace std {
 namespace sserialize {
 
 class StringTable {
+public:
+	typedef uint32_t SizeType;
+	typedef uint32_t StringSizeType;
+	typedef uint64_t DataSizeType;
 private:
 	typedef detail::StringTable::StaticString StaticString;
 private:
@@ -65,7 +69,7 @@ private:
 				return str.begin();
 			}
 			else {
-				return &((*strData)[0])+reinterpret_cast<uint64_t>(str.begin());
+				return &((*strData)[0])+reinterpret_cast<DataSizeType>(str.begin());
 			}
 		}
 		inline const char * cend(const StaticString & str) const {
@@ -73,7 +77,7 @@ private:
 				return str.end();
 			}
 			else {
-				return &((*strData)[0])+reinterpret_cast<uint64_t>(str.end());
+				return &((*strData)[0])+reinterpret_cast<DataSizeType>(str.end());
 			}
 		}
 	};
@@ -81,7 +85,7 @@ private:
 	struct MyHasher: public MyHTFuncs {
 		MyHasher(const std::vector<char> * strData) : MyHTFuncs(strData) {}
 		std::hash<StaticString> hasher;
-		inline size_t operator()(const StaticString & str) const {
+		inline std::size_t operator()(const StaticString & str) const {
 			return hasher(cbegin(str), cend(str));
 		}
 	};
@@ -115,15 +119,17 @@ private:
 public:
 	StringTable() : m_map(0, MyHasher(&m_strData), MyEq(&m_strData)) {}
 	~StringTable() {}
-	inline std::size_t size() const { return m_strings.size(); }
-	inline uint32_t insert(const std::string & str) {
-		MyMap::iterator it(m_map.find(StaticString(const_cast<char*>(str.c_str()), str.size(), true)));
-		if (it != m_map.end())
+	inline SizeType size() const { return (SizeType) m_strings.size(); }
+	inline SizeType insert(const std::string & str) {
+		SizeType strSize(narrow_check<StringSizeType>(str.size()));
+		MyMap::iterator it(m_map.find(StaticString(const_cast<char*>(str.c_str()), strSize, true)));
+		if (it != m_map.end()) {
 			return it->second;
+		}
 		else {
-			StaticString istr((char*)m_strData.size(), str.size(), false);
+			StaticString istr((char*)m_strData.size(), strSize, false);
 			m_strData.insert(m_strData.end(), str.cbegin(), str.cend());
-			uint32_t id = m_strings.size();
+			SizeType id = (SizeType)m_strings.size();
 			m_strings.push_back(istr);
 			m_map[istr] = id;
 			return id;
@@ -134,8 +140,8 @@ public:
 	template<typename T_OLD_TO_NEW_MAP>
 	void sort(T_OLD_TO_NEW_MAP & oldToNew) {
 		std::sort(m_strings.begin(), m_strings.end(), MySmaller(&m_strData));
-		for(uint32_t i = 0, s = m_strings.size(); i < s; ++i) {
-			uint32_t & old = m_map[ m_strings[i] ];
+		for(SizeType i(0), s((SizeType)m_strings.size()); i < s; ++i) {
+			SizeType & old = m_map[ m_strings[i] ];
 			oldToNew[old] = i;
 			old = i;
 		}
@@ -143,7 +149,7 @@ public:
 
 	inline void sort() {
 		std::sort(m_strings.begin(), m_strings.end(), MySmaller(&m_strData));
-		for(uint32_t i = 0, s = m_strings.size(); i < s; ++i) {
+		for(SizeType i(0), s(m_strings.size()); i < s; ++i) {
 			m_map[ m_strings[i] ] = i;
 		}
 	}
@@ -160,8 +166,9 @@ public:
 	
 	uint32_t at(const std::string & str) const {
 		MyMap::const_iterator it = m_map.find(StaticString(const_cast<char*>(str.c_str()), str.size(), true));
-		if (it != m_map.end())
+		if (it != m_map.end()) {
 			return it->second;
+		}
 		throw sserialize::OutOfBoundsException("sserialize::StringTable::at");
 	}
 	
