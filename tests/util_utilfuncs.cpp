@@ -32,7 +32,7 @@ public:
 
 	void test_reorder() {
 		for(uint32_t i = 0; i < T_TEST_COUNT; ++i) {
-			std::vector<uint32_t> src(sserialize::RangeGenerator::begin(0, T_ITEM_COUNT), sserialize::RangeGenerator::begin(0, T_ITEM_COUNT));
+			std::vector<uint32_t> src(sserialize::RangeGenerator<uint32_t>::begin(0, T_ITEM_COUNT), sserialize::RangeGenerator<uint32_t>::begin(0, T_ITEM_COUNT));
 			std::vector<uint32_t> shuffled = src;
 			std::random_shuffle(shuffled.begin(), shuffled.end());
 			reorder(src, shuffled);
