@@ -44,7 +44,7 @@ public:
 	const sserialize::ItemIndex & operator*() const;
 	inline bool operator!=(const CellQueryResultIterator & other) const { return m_pos != other.m_pos; }
 	inline differnce_type operator-(const CellQueryResultIterator & other) const { return m_pos - other.m_pos; }
-	CellQueryResultIterator operator++(int );
+	CellQueryResultIterator operator++(int);
 	CellQueryResultIterator & operator++();
 	CellQueryResultIterator operator+(differnce_type v) const;
 };

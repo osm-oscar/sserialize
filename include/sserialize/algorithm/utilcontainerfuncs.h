@@ -11,6 +11,7 @@
 
 namespace sserialize {
 
+
 template<typename TIterator>
 bool is_strong_monotone_ascending(TIterator begin, const TIterator & end) {
 	if (begin != end) {
