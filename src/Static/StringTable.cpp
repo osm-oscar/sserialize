@@ -262,13 +262,14 @@ std::ostream& StringTable::printStats(std::ostream& out) const {
 	out << "size: " << size() << std::endl;
 	out << "storage size: " << getSizeInBytes() << std::endl;
 	if (size()) {
-		uint32_t longestStringLength = 0;
-		uint32_t totallen = 0;
+		std::string::size_type longestStringLength = 0;
+		std::string::size_type totallen = 0;
 		for(uint32_t i = 0; i <size(); i++) {
-			uint32_t len = at(i).size();
+			std::string::size_type len = at(i).size();
 			totallen += len;
-			if (len > longestStringLength)
+			if (len > longestStringLength) {
 				longestStringLength = len;
+			}
 		}
 		out << "longest string length: " << longestStringLength << std::endl;
 		out << "Average string length: " << (double)totallen/size() << std::endl;
