@@ -120,7 +120,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 	bool mok = create(idx, ds, m_type);
 	assert(mok);
 	if (mok) {
-		return addIndex(s, idx.size());
+		return addIndex(s, narrow_check<uint32_t>(idx.size()));
 	}
 	else {
 		return 0;
