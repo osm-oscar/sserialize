@@ -13,12 +13,12 @@ private:
 	template<typename T_UINT_TYPE>
 	typename std::enable_if< std::is_unsigned<T_UINT_TYPE>::value, T_UINT_TYPE>::type getN() const {
 		UByteArrayAdapter::OffsetType getPtr = m_data.tellGetPtr();
-		T_UINT_TYPE res = static_cast<T_UINT_TYPE>(m_data.getUint8(getPtr)) << 8;
+		T_UINT_TYPE res = (T_UINT_TYPE) (static_cast<T_UINT_TYPE>(m_data.getUint8(getPtr)) << 8);
 		++getPtr;
 		uint8_t headerLength = 8-m_bitOffset;
 		int remainingBits = std::numeric_limits<T_UINT_TYPE>::digits - headerLength;
 		do {
-			uint8_t srcRShift = (remainingBits > 8 ? 0 : 8-remainingBits);
+			uint8_t srcRShift = (uint8_t)(remainingBits > 8 ? 0 : 8-remainingBits);
 			uint8_t byte = m_data.getUint8(getPtr);
 			++getPtr;
 			byte >>= srcRShift;
