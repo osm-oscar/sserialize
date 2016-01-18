@@ -8,22 +8,22 @@
 //from http://stackoverflow.com/questions/7222143/unordered-map-hash-function-c, which is from boost
 
 inline void hash_combine(uint64_t & seed, const char v) {
-	seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	seed ^= static_cast<uint64_t>(v) + static_cast<uint64_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
+}
+
+inline void hash_combine(uint64_t & seed, const unsigned char v) {
+	seed ^= static_cast<uint64_t>(v) + static_cast<uint64_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
 }
 
 template <class T>
-inline void hash_combine(std::size_t & seed, const T & v, const std::hash<T> & hasher) {
-	seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+inline void hash_combine(uint64_t & seed, const T & v, const std::hash<T> & hasher) {
+	seed ^= static_cast<uint64_t>(hasher(v)) + static_cast<uint64_t>(0x9e3779b9) + (seed << 6) + (seed >> 2);
 }
 
 template <class T>
-inline void hash_combine(std::size_t & seed, const T & v) {
+inline void hash_combine(uint64_t & seed, const T & v) {
 	std::hash<T> hasher;
 	hash_combine(seed, v, hasher);
-}
-
-inline void hash_combine(uint64_t & seed, const uint8_t v) {
-	seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
 namespace std {
