@@ -224,7 +224,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 	const TreedCQRImp & o = *other;
 	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
 	TreedCQRImp & r = *rPtr;
-	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for( ;myI < myEnd && oI < oEnd; ) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -240,11 +240,11 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 		}
 		else {
 			if (!myCD.hasTree() && !oCD.hasTree()) {
-				uint32_t ct = (myCD.fullMatch << 1) | oCD.fullMatch;
+				int ct = (myCD.fullMatch << 1) | oCD.fullMatch;
 				switch(ct) {
 				case 0x0: //both partial, create tree
 					{
-						uint32_t treeBegin = r.m_trees.size();
+						std::size_t treeBegin = r.m_trees.size();
 						r.m_trees.emplace_back(FlatNode::T_INTERSECT);
 						{
 							FlatNode & opNode = r.m_trees.back();
@@ -277,19 +277,19 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 				//if any of the two is a full match then we only need to copy the other tree TODO:take care of indexes
 				if (myCD.fullMatch) { //copy tree from other
 					r.m_desc.emplace_back(0, myCellId, 0);
-					r.m_desc.back().treeBegin = r.m_trees.size();
+					r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
-					r.m_desc.back().treeEnd = r.m_trees.size();
+					r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 				}
 				else if (oCD.fullMatch) { //copy tree from this
 					r.m_desc.emplace_back(0, oCellId, 0);
-					r.m_desc.back().treeBegin = r.m_trees.size();
+					r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
-					r.m_desc.back().treeEnd = r.m_trees.size();
+					r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 				}
 				else { //this means at least one has a tree and the other is partial or has a tree as well
 
-					uint32_t treeBegin = r.m_trees.size();
+					std::size_t treeBegin = r.m_trees.size();
 					r.m_trees.emplace_back(FlatNode::T_INTERSECT);
 					
 					if (myCD.hasTree()) {
@@ -328,7 +328,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 	const TreedCQRImp & o = *other;
 	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
 	TreedCQRImp & r = *rPtr;
-	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -337,9 +337,9 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 		if (myCellId < oCellId) {
 			r.m_desc.push_back(myCD);
 			if (myCD.hasTree()) {//adjust tree info
-				r.m_desc.back().treeBegin = r.m_trees.size();
+				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
+				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++myI;
 			continue;
@@ -347,9 +347,9 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 		else if ( oCellId < myCellId ) {
 			r.m_desc.push_back(oCD);
 			if (oCD.hasTree()) {//adjust tree info
-				r.m_desc.back().treeBegin = r.m_trees.size();
+				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
+				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++oI;
 			continue;
@@ -359,7 +359,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				r.m_desc.emplace_back(1, myCellId, 0);
 			}
 			else { //none is full match
-				uint32_t treeBegin = r.m_trees.size();
+				std::size_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_UNITE);
 				
 				if (myCD.hasTree()) {
@@ -390,47 +390,47 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 	//unite the rest
 	
 	if (myI < myEnd) {
-		uint32_t rDescBegin = r.m_desc.size();
+		std::size_t rDescBegin = r.m_desc.size();
 		
 		r.m_desc.insert(r.m_desc.end(), m_desc.cbegin()+myI, m_desc.cend());
 		//move to cell with a tree
-		for(uint32_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++myI) {}
+		for(std::size_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++myI) {}
 		
 		if (myI < myEnd) {
-			uint32_t rTreesBegin = r.m_trees.size();
+			std::size_t rTreesBegin = r.m_trees.size();
 			uint32_t lastTreeBegin = m_desc[myI].treeBegin;
 			int64_t treeOffsetCorrection = (int64_t)lastTreeBegin - (int64_t)rTreesBegin; //rTreesBegin+treeOffsetCorrection = lastTreeBegin
 
 			r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+m_desc[myI].treeBegin, m_trees.cend());
 			//adjust tree pointers
-			for(uint32_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
+			for(std::size_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
 				CellDesc & cd = r.m_desc[i];
 				if (cd.hasTree()) {
-					cd.treeBegin = ((int64_t)(cd.treeBegin) - treeOffsetCorrection);
-					cd.treeEnd = ((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
+					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
 				}
 			}
 		}
 	}
 	else if (oI < oEnd) {
-		uint32_t rDescBegin = r.m_desc.size();
+		std::size_t rDescBegin = r.m_desc.size();
 		
 		r.m_desc.insert(r.m_desc.end(), o.m_desc.cbegin()+oI, o.m_desc.cend());
 		//move to cell with a tree
-		for(uint32_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++oI) {}
+		for(std::size_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++oI) {}
 		
 		if (oI < oEnd) {
-			uint32_t rTreesBegin = r.m_trees.size();
+			std::size_t rTreesBegin = r.m_trees.size();
 			uint32_t lastTreeBegin = o.m_desc[oI].treeBegin;
 			int64_t treeOffsetCorrection = (int64_t)lastTreeBegin - (int64_t)rTreesBegin; //rTreesBegin+treeOffsetCorrection = lastTreeBegin
 
 			r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+o.m_desc[oI].treeBegin, o.m_trees.cend());
 			//adjust tree pointers
-			for(uint32_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
+			for(std::size_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
 				CellDesc & cd = r.m_desc[i];
 				if (cd.hasTree()) {
-					cd.treeBegin = ((int64_t)(cd.treeBegin) - treeOffsetCorrection);
-					cd.treeEnd = ((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
+					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
 				}
 			}
 		}
@@ -443,7 +443,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 	const TreedCQRImp & o = *other;
 	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
 	TreedCQRImp & r = *rPtr;
-	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -452,9 +452,9 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 		if (myCellId < oCellId) {
 			r.m_desc.push_back(myCD);
 			if (myCD.hasTree()) {//adjust tree info
-				r.m_desc.back().treeBegin = r.m_trees.size();
+				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
+				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++myI;
 			continue;
@@ -465,7 +465,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 		}
 		else {
 			if (!oCD.fullMatch) {//we definetly have to create a tree, no matter what
-				uint32_t treeBegin = r.m_trees.size();
+				std::size_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_DIFF);
 				
 				if (myCD.hasTree()) {
@@ -507,24 +507,24 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 	}
 	//add the rest
 	if (myI < myEnd) {
-		uint32_t rDescBegin = r.m_desc.size();
+		std::size_t rDescBegin = r.m_desc.size();
 		
 		r.m_desc.insert(r.m_desc.end(), m_desc.cbegin()+myI, m_desc.cend());
 		//move to cell with a tree
-		for(uint32_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++myI) {}
+		for(std::size_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++myI) {}
 		
 		if (myI < myEnd) {
-			uint32_t rTreesBegin = r.m_trees.size();
+			std::size_t rTreesBegin = r.m_trees.size();
 			uint32_t lastTreeBegin = m_desc[myI].treeBegin;
 			int64_t treeOffsetCorrection = (int64_t)lastTreeBegin - (int64_t)rTreesBegin; //rTreesBegin+treeOffsetCorrection = lastTreeBegin
 
 			r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+m_desc[myI].treeBegin, m_trees.cend());
 			//adjust tree pointers
-			for(uint32_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
+			for(std::size_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
 				CellDesc & cd = r.m_desc[i];
 				if (cd.hasTree()) {
-					cd.treeBegin = ((int64_t)(cd.treeBegin) - treeOffsetCorrection);
-					cd.treeEnd = ((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
+					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
 				}
 			}
 		}
@@ -538,7 +538,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 	const TreedCQRImp & o = *other;
 	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
 	TreedCQRImp & r = *rPtr;
-	uint32_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -547,9 +547,9 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 		if (myCellId < oCellId) {
 			r.m_desc.push_back(myCD);
 			if (myCD.hasTree()) {//adjust tree info
-				r.m_desc.back().treeBegin = r.m_trees.size();
+				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
+				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++myI;
 			continue;
@@ -557,16 +557,16 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 		else if ( oCellId < myCellId ) {
 			r.m_desc.push_back(oCD);
 			if (oCD.hasTree()) {//adjust tree info
-				r.m_desc.back().treeBegin = r.m_trees.size();
+				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
 				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
-				r.m_desc.back().treeEnd = r.m_trees.size();
+				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++oI;
 			continue;
 		}
 		else {
 			if (!myCD.fullMatch || !oCD.fullMatch) {//we definetly have to create a tree, no matter what
-				uint32_t treeBegin = r.m_trees.size();
+				std::size_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_SYM_DIFF);
 				
 				if (myCD.hasTree()) {
@@ -609,47 +609,47 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 	//unite the rest
 	
 	if (myI < myEnd) {
-		uint32_t rDescBegin = r.m_desc.size();
+		std::size_t rDescBegin = r.m_desc.size();
 		
 		r.m_desc.insert(r.m_desc.end(), m_desc.cbegin()+myI, m_desc.cend());
 		//move to cell with a tree
-		for(uint32_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++myI) {}
+		for(std::size_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++myI) {}
 		
 		if (myI < myEnd) {
-			uint32_t rTreesBegin = r.m_trees.size();
+			std::size_t rTreesBegin = r.m_trees.size();
 			uint32_t lastTreeBegin = m_desc[myI].treeBegin;
 			int64_t treeOffsetCorrection = (int64_t)lastTreeBegin - (int64_t)rTreesBegin; //rTreesBegin+treeOffsetCorrection = lastTreeBegin
 
 			r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+m_desc[myI].treeBegin, m_trees.cend());
 			//adjust tree pointers
-			for(uint32_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
+			for(std::size_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
 				CellDesc & cd = r.m_desc[i];
 				if (cd.hasTree()) {
-					cd.treeBegin = ((int64_t)(cd.treeBegin) - treeOffsetCorrection);
-					cd.treeEnd = ((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
+					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
 				}
 			}
 		}
 	}
 	else if (oI < oEnd) {
-		uint32_t rDescBegin = r.m_desc.size();
+		std::size_t rDescBegin = r.m_desc.size();
 		
 		r.m_desc.insert(r.m_desc.end(), o.m_desc.cbegin()+oI, o.m_desc.cend());
 		//move to cell with a tree
-		for(uint32_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++oI) {}
+		for(std::size_t s(r.m_desc.size()); rDescBegin < s && !r.m_desc[rDescBegin].hasTree(); ++rDescBegin, ++oI) {}
 		
 		if (oI < oEnd) {
-			uint32_t rTreesBegin = r.m_trees.size();
+			std::size_t rTreesBegin = r.m_trees.size();
 			uint32_t lastTreeBegin = o.m_desc[oI].treeBegin;
 			int64_t treeOffsetCorrection = (int64_t)lastTreeBegin - (int64_t)rTreesBegin; //rTreesBegin+treeOffsetCorrection = lastTreeBegin
 
 			r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+o.m_desc[oI].treeBegin, o.m_trees.cend());
 			//adjust tree pointers
-			for(uint32_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
+			for(std::size_t i(rDescBegin), s(r.m_desc.size()); i < s; ++i) {
 				CellDesc & cd = r.m_desc[i];
 				if (cd.hasTree()) {
-					cd.treeBegin = ((int64_t)(cd.treeBegin) - treeOffsetCorrection);
-					cd.treeEnd = ((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
+					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
 				}
 			}
 		}

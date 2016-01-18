@@ -96,7 +96,7 @@ public:
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline bool hasTree(uint32_t pos) const { return m_desc[pos].hasTree();}
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
-	inline uint32_t cellCount() const { return m_desc.size();}
+	inline uint32_t cellCount() const { return (uint32_t)m_desc.size();}
 	TreedCQRImp * intersect(const TreedCQRImp * other) const;
 	TreedCQRImp * unite(const TreedCQRImp * other) const;
 	TreedCQRImp * diff(const TreedCQRImp * other) const;
@@ -145,14 +145,14 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf)
 	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
 	CellQueryResult & r = *rPtr;
 	r.m_desc.reserve(cellCount());
-	r.m_idx = (detail::CellQueryResult::IndexDesc*) malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
+	r.m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
 	
 
 	sserialize::ItemIndex idx;
 	uint32_t pmIdxId;
 	FlattenResultType frt = FT_NONE;
 	
-	for(uint32_t i(0), s(m_desc.size()); i < s && pf(i, m_desc.size()); ++i) {
+	for(std::size_t i(0), s(m_desc.size()); i < s && pf(i, m_desc.size()); ++i) {
 		const CellDesc & cd = m_desc[i];
 		if (m_desc[i].hasTree()) {
 			flattenCell((&m_trees[0])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
@@ -165,7 +165,7 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf)
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
 			}
 			else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
-				r.uncheckedSet(r.m_desc.size(), idx);
+				r.uncheckedSet((uint32_t)r.m_desc.size(), idx);
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
 			}
 			//frt == FT_EMPTY
