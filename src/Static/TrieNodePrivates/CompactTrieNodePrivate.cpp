@@ -77,7 +77,7 @@ uint32_t CompactTrieNodePrivate::childCharAt(uint32_t pos) const {
 uint32_t CompactTrieNodePrivate::getExactIndexPtr() const {
 	if (hasExactIndex()) {
 		CompactUintArray arr(m_data + m_indexPtrStart, indexArrBpn());
-		return arr.at(0);
+		return arr.at((uint32_t)0);
 	}
 	else {
 		return 0;
