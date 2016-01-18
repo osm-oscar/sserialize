@@ -5,7 +5,9 @@
 namespace sserialize {
 
 inline int binarySearchCase(uint16_t * arrayStart, int len, uint16_t key) {
-	if (len == 0) return -1;
+	if (len == 0) {
+		return -1;
+	}
 	int left = 0;
 	int right = len-1;
 	int mid = (right-left)/2+left;
@@ -24,7 +26,7 @@ inline int binarySearchCase(uint16_t * arrayStart, int len, uint16_t key) {
 
 uint32_t unicode32_to_lower(uint32_t code_point) {
 	if (code_point <= 0xFF) {
-		int pos = binarySearchCase(unicode_source_case_table, UNICODE_CASE_TABLE_SIZE, code_point);
+		int pos = binarySearchCase(unicode_source_case_table, UNICODE_CASE_TABLE_SIZE, (uint16_t)code_point);
 		if (pos >= 0 && unicode_lower_case_table[pos] > 0) {
 			return unicode_lower_case_table[pos];
 		}
@@ -37,7 +39,7 @@ uint32_t unicode32_to_lower(uint32_t code_point) {
 
 uint32_t unicode32_to_upper(uint32_t code_point) {
 	if (code_point <= 0xFF) {
-		int pos = binarySearchCase(unicode_source_case_table, UNICODE_CASE_TABLE_SIZE, code_point);
+		int pos = binarySearchCase(unicode_source_case_table, UNICODE_CASE_TABLE_SIZE, (uint16_t)code_point);
 		if (pos >= 0 && unicode_upper_case_table[pos] > 0) {
 			return unicode_upper_case_table[pos];
 		}

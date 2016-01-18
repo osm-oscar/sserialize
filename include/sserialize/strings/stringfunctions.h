@@ -66,12 +66,13 @@ inline bool unicodeIsSmaller(T_OCTET_ITERATOR1 itA, const T_OCTET_ITERATOR1 & en
 bool oneIsPrefix(const std::string& a, const std::string& b);
 
 /** @param strA: string without header */
-uint16_t calcLcp(const UByteArrayAdapter & strA, const std::string & strB);
+std::string::size_type calcLcp(const UByteArrayAdapter & strA, const std::string & strB);
 
 /** @return: -1 if strA < strB; 0 if eq; 1 strA > strB 
   * @param lcp: searches with offset of lcp and updates lcp for equal chars
   */
 int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t& lcp);
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint32_t & lcp);
 
 /** Returns the number of utf8 characters (NOT encoding chars) */ 
 template<typename octetIterator>
