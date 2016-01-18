@@ -109,18 +109,21 @@ UByteArrayAdapter::OffsetType FlatTrieBase::getSizeInBytes() const {
 }
 
 uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
-	if (size() == 0)
+// 	std::cout << "FlatTrie::find: searching for " << str << " with prefixMatch=" << (prefixMatch ? "true" : "false") << std::endl;
+	if (size() == 0) {
 		return npos;
+	}
 
 	uint32_t left = 0;
 	uint32_t right = size()-1;
 	uint32_t mid  = (right-left)/2 + left;
 
-	uint16_t lLcp = calcLcp(strData(left), str);
-	if (lLcp == str.size()) //first is match
+	uint32_t lLcp = calcLcp(strData(left), str);
+	if (lLcp == str.size()) {//first is match
 		return 0;
-	uint16_t rLcp = calcLcp(strData(right), str);
-	uint16_t mLcp = 0;
+	}
+	uint32_t rLcp = calcLcp(strData(right), str);
+	uint32_t mLcp = 0;
 	int8_t cmp = compare(strData(mid), str, mLcp);
 	
 	while(right-left > 1) {
