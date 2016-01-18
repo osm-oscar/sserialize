@@ -27,7 +27,9 @@ private:
 	double m_growFactor;
 private:
 	SizeType calcNewGrowSize() {
-		SizeType tSize = m_capacity + std::max<SizeType>( std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1), m_capacity*m_growFactor);
+		SizeType minimumAdd = std::max<SizeType>(sizeof(TValue)/SSERIALIZE_SYSTEM_PAGE_SIZE, 1);
+		SizeType addByGrowFactor = (SizeType)((double)m_capacity*m_growFactor);
+		SizeType tSize = m_capacity + std::max<SizeType>(minimumAdd, addByGrowFactor);
 		return tSize;
 	}
 public:
@@ -151,15 +153,14 @@ public:
 	
 	template<typename T_VALUE_IT>
 	void push_back(T_VALUE_IT begin, const T_VALUE_IT & end) {
-		if ( end > begin) {
-			std::size_t pushSize = (end-begin);
-			reserve(pushSize+size());
-			TValue * dP = m_begin+m_pP;
-			for(; begin != end; ++begin, ++dP) {
-				new(dP) TValue(*begin);
-			}
-			m_pP += pushSize;
+		using std::distance;
+		SizeType pushSize = narrow_check<SizeType>(distance(begin, end));
+		reserve(pushSize+size());
+		TValue * dP = m_begin+m_pP;
+		for(; begin != end; ++begin, ++dP) {
+			new(dP) TValue(*begin);
 		}
+		m_pP += pushSize;
 	}
 
 	void pop_back() {
@@ -209,8 +210,13 @@ void swap(MMVector<TValue> & a, MMVector<TValue> & b) {
 
 template<typename TValue>
 UByteArrayAdapter & operator<<(UByteArrayAdapter & dest, const MMVector<TValue> & src) {
-	sserialize::Static::ArrayCreator<TValue> ac(dest);
-	ac.reserve(src.size());
+	typedef sserialize::Static::ArrayCreator<TValue> ArrayCreator;
+	typedef typename ArrayCreator::SizeType ArraySizeType;
+	if (src.size() > std::numeric_limits<ArraySizeType>::max()) {
+		throw sserialize::TypeOverflowException("MMVector -> Static::Array serialization");
+	}
+	ArrayCreator ac(dest);
+	ac.reserve((ArraySizeType)src.size());
 	for(typename MMVector<TValue>::const_iterator it(src.cbegin()), end(src.cend()); it != end; ++it) {
 		ac.put(*it);
 	}
