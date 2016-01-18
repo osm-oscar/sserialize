@@ -83,15 +83,15 @@ public:
 	virtual void tearDown() {}
 
 	void testSize() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size of KeyValueObjectStore does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size of KeyValueObjectStore does not match", static_cast<uint32_t>( m_items.size() ), (uint32_t)m_kv.size());
 	}
 	
 	void testEquality() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), (uint32_t)m_kv.size());
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[i];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), (uint32_t)kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
@@ -100,7 +100,7 @@ public:
 	}
 	
 	void testReorder() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), (uint32_t)m_kv.size());
 		
 		std::vector<uint32_t> perm(sserialize::RangeGenerator<uint32_t>::begin(0, m_items.size()), sserialize::RangeGenerator<uint32_t>::end(0, m_items.size()));
 		std::random_shuffle(perm.begin(), perm.end());
@@ -110,7 +110,7 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[perm[i]];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), (uint32_t)kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);
@@ -119,7 +119,7 @@ public:
 	}
 	
 	void testSort() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), (uint32_t)m_kv.size());
 		
 		m_kv.sort();
 		
@@ -128,7 +128,7 @@ public:
 		for(uint32_t i = 0; i < m_items.size(); ++i) {
 			SourceItem & item = m_items[i];
 			KeyValueObjectStore::Item kvitem = m_kv.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), kvitem.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of item", i, "does not match"), static_cast<uint32_t>( item.size() ), (uint32_t)kvitem.size());
 			for(uint32_t j = 0; j < item.size(); ++j) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].key[", j, "] does not match"), item[j].first, kvitem.at(j).first);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item[", i, "].value[", j, "] does not match"), item[j].second, kvitem.at(j).second);

@@ -17,8 +17,11 @@ public:
 		}
 	};
 	typedef std::vector< KeyValue > ItemData;
-
+	typedef ItemData::size_type SizeType;
 	class Item {
+	public:
+		typedef ItemData::size_type SizeType;
+	private:
 		const KeyValueObjectStore * m_store;
 		uint32_t m_id;
 	protected:
@@ -28,9 +31,9 @@ public:
 	public:
 		Item(const KeyValueObjectStore * store, uint32_t id) : m_store(store), m_id(id) {}
 		~Item() {}
-		inline uint32_t size() const { return itemData().size(); }
-		inline std::pair<std::string, std::string> at(uint32_t pos) const {
-			return store()->keyValue(itemData()[pos].key, itemData()[pos].value);
+		inline SizeType size() const { return itemData().size(); }
+		inline std::pair<std::string, std::string> at(SizeType pos) const {
+			return store()->keyValue(itemData().at(pos).key, itemData().at(pos).value);
 		}
 	};
 	
@@ -54,10 +57,10 @@ public:
 	virtual ~KeyValueObjectStore();
 	void clear();
 	///Pre-allocate space for items
-	void reserve(uint32_t size);
-	uint32_t size() const { return m_items.size(); }
-	inline const ItemData & itemDataAt(uint32_t pos) const { return m_items[pos]; }
-	inline Item at(uint32_t pos) const { return Item(this, pos); }
+	void reserve(SizeType size);
+	SizeType size() const { return m_items.size(); }
+	inline const ItemData & itemDataAt(SizeType pos) const { return m_items[pos]; }
+	inline Item at(SizeType pos) const { return Item(this, pos); }
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
 	
 	///This remaps the strings ids ot the items and orders the keys of the item in ascending order
