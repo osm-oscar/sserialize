@@ -89,7 +89,6 @@ public:
 	virtual uint32_t size() const;
 
 	virtual uint8_t bpn() const;
-	virtual double entropy() const;
 
 	virtual uint32_t getSizeInBytes() const;
 

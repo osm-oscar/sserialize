@@ -245,8 +245,4 @@ uint32_t ItemIndexPrivateEmpty::getSizeInBytes() const {
 	return 0;
 }
 
-double ItemIndexPrivateEmpty::entropy() const {
-	return 0;
-}
-
 }//end namespace
