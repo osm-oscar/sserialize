@@ -20,7 +20,7 @@ public:
 		for(uint64_t size = 10000; size < 10000000; size *= 10) {
 			for(uint64_t stride = 1; stride < 15; ++stride) {
 				double slope, yintercept;
-				sserialize::RangeGenerator rg(0, size*stride, stride);
+				sserialize::RangeGenerator<uint64_t> rg(0, size*stride, stride);
 				sserialize::statistics::linearRegression(rg.begin(), rg.end(), slope, yintercept);
 				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("slope with size=", size, " stride=", stride," was=", slope), deq(slope, stride));
 				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("yintercept with size=", size, " stride=", stride," was=", yintercept), deq(yintercept, 0));
