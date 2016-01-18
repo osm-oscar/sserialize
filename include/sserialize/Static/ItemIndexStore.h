@@ -52,6 +52,8 @@ public:
 class ItemIndexStore {
 public:
 	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_LZO=4} IndexCompressionType;
+	typedef uint32_t SizeType;
+	typedef SizeType IdType;
 private:
 	RCPtrWrapper<interfaces::ItemIndexStore> m_priv;
 protected:
