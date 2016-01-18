@@ -103,12 +103,14 @@ public:
 	CellTextCompleter();
 	CellTextCompleter(const sserialize::UByteArrayAdapter & d, const sserialize::Static::ItemIndexStore & idxStore, const sserialize::Static::spatial::GeoHierarchy & gh, const sserialize::Static::spatial::TriangulationGeoHierarchyArrangement & ra);
 	virtual ~CellTextCompleter();
-	const Trie & trie() const { return m_trie;}
-	Trie & trie() { return m_trie;}
+	inline const Trie & trie() const { return m_trie;}
+	inline Trie & trie() { return m_trie;}
+	inline const Static::spatial::GeoHierarchy & geoHierarchy() const { return m_gh;}
+	inline const sserialize::Static::ItemIndexStore & idxStore() const { return m_idxStore; }
+	
 	bool count(const std::string::const_iterator& begin, const std::string::const_iterator& end) const;
 	Payload::Type typeFromCompletion(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const;
 	sserialize::StringCompleter::SupportedQuerries getSupportedQuerries() const;
-	inline const sserialize::Static::ItemIndexStore & idxStore() const { return m_idxStore; }
 	std::ostream & printStats(std::ostream & out) const;
 	
 	template<typename T_CQR_TYPE>
@@ -240,11 +242,19 @@ public:
 	m_priv(new detail::CellTextCompleter(d, idxStore, gh, ra))
 	{}
 	virtual ~CellTextCompleter() {}
-	const Trie & trie() const {
+	inline const Trie & trie() const {
 		return priv()->trie();
 	}
-	Trie & trie() {
+	inline Trie & trie() {
 		return priv()->trie();
+	}
+	
+	inline const Static::spatial::GeoHierarchy & geoHierarchy() const {
+		return priv()->geoHierarchy();
+	}
+	
+	inline const sserialize::Static::ItemIndexStore & idxStore() const {
+		return priv()->idxStore();
 	}
 	
 	inline Payload::Type typeFromCompletion(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const {
@@ -297,10 +307,6 @@ public:
 	
 	inline sserialize::StringCompleter::SupportedQuerries getSupportedQuerries() const {
 		return priv()->getSupportedQuerries();
-	}
-	
-	inline const sserialize::Static::ItemIndexStore & idxStore() const {
-		return priv()->idxStore();
 	}
 	
 	inline std::ostream & printStats(std::ostream & out) const {
