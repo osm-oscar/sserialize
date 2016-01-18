@@ -18,7 +18,7 @@ std::vector<RTree::Node*> RTree::nodesInLevelOrder() const {
 	while ( i < nodes.size()) {
 		if (!nodes[i]->leafNode) {
 			InnerNode * n = static_cast<InnerNode*>(nodes[i]);
-			for(uint32_t j = 0, s = n->children.size(); j < s; ++j) {
+			for(std::size_t j(0), s(n->children.size()); j < s; ++j) {
 				nodes.push_back(n->children[j]);
 			}
 		}
@@ -48,7 +48,7 @@ bool prependSerializedNode(SerializationInfo & info, std::deque<uint8_t> & dest)
 	std::vector<uint8_t> tmpData;
 	UByteArrayAdapter tmp(&tmpData, false);
 	tmp.putVlPackedUint32(info.indexId);
-	tmp.putVlPackedUint32(info.children.size());
+	tmp.putVlPackedUint32((uint32_t)info.children.size());
 	for(uint32_t i = 0; i < info.children.size(); ++i) {
 		tmp << info.rects[i];
 		tmp.putVlPackedUint32(info.children[i]);
@@ -76,13 +76,13 @@ void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & i
 		else { //inner node, set childPtrs and child rects and collect items
 			NodeInfo & curNodeInfo = nodeToNodeInfo[curNode];
 			InnerNode * in = static_cast<InnerNode*>(curNode);
-			si.reserve(in->children.size());
-			for(uint32_t i = 0, s = in->children.size(); i < s; ++i) {
+			si.reserve((uint32_t)in->children.size());
+			for(std::size_t i(0), s(in->children.size()); i < s; ++i) {
 				Node * curChildNode = in->children.at(i);
 				NodeInfo & childNodeInfo = nodeToNodeInfo[curChildNode];
 				
 				si.rects.push_back(curChildNode->rect);
-				si.children.push_back(sData.size() - childNodeInfo.offset);
+				si.children.push_back((uint32_t)(sData.size() - childNodeInfo.offset));
 				mergeSortedContainer(curNodeInfo.items, curNodeInfo.items, childNodeInfo.items);
 				
 				nodeToNodeInfo.erase(curChildNode);
@@ -91,7 +91,7 @@ void RTree::serialize(sserialize::UByteArrayAdapter & dest, ItemIndexFactory & i
 		
 		si.indexId = indexFactory.addIndex(nodeToNodeInfo[curNode].items);
 		prependSerializedNode(si, sData);
-		nodeToNodeInfo[curNode].offset = sData.size();
+		nodeToNodeInfo[curNode].offset = (uint32_t)sData.size();
 	}
 	std::cout << "RTree::sserialize: writing to dest..." <<  std::flush;
 	dest.putUint8(0);
