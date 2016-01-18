@@ -38,7 +38,7 @@ public:
 		long mtime, seconds, useconds;
 		seconds  = m_end.tv_sec  - m_begin.tv_sec;
 		useconds = m_end.tv_usec - m_begin.tv_usec;
-		mtime = ((seconds) * 1000*1000 + useconds) + 0.5;
+		mtime = (long)((double)((seconds) * 1000*1000 + useconds) + 0.5);
 		return mtime;
 	}
 	
