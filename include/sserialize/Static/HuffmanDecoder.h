@@ -51,6 +51,9 @@ public:
 	};
 private:
 	class StaticNode {
+	public:
+		typedef uint32_t SizeType;
+	private:
 		UByteArrayAdapter m_data;
 		uint8_t m_bitLength;
 		uint32_t m_initialChildPtr;
@@ -62,7 +65,7 @@ private:
 		uint32_t entryCount() const { return static_cast<uint32_t>(1) << bitLength(); }
 		uint8_t bitLength() const { return m_bitLength;}
 		uint32_t initialChildPtr() const { return m_initialChildPtr;}
-		HuffmanCodePointInfo at(uint32_t pos) const;
+		HuffmanCodePointInfo at(SizeType pos) const;
 		bool valid() const { return m_data.size(); }
 	};
 	
@@ -84,7 +87,7 @@ private:
 		T_UINT_TYPE selectionBits = selectBits(src, nodeBitLength);
 		src <<= nodeBitLength;
 		
-		HuffmanCodePointInfo cpInfo = m_root.at(selectionBits);
+		HuffmanCodePointInfo cpInfo = m_root.at(narrow_check<uint32_t>(selectionBits));
 
 		if (!cpInfo.hasChild()) { //we definetly end here (otheriwse the data is corrupt)
 			decodedValue = cpInfo.value();
@@ -97,7 +100,7 @@ private:
 			selectionBits = selectBits(src, nodeBitLength);
 			src <<= nodeBitLength;
 
-			cpInfo = node.at(selectionBits);
+			cpInfo = node.at((uint32_t)selectionBits);
 			if (!cpInfo.hasChild()) {
 				decodedValue = cpInfo.value();
 				return cpInfo.length() + decodedBitsCount;
@@ -127,6 +130,7 @@ public:
 		return decodeImp<uint32_t>(src, decodedValue);
 	};
 	
+	///@return on success  the bit length, on error -1
 	inline int decode(uint64_t src, uint32_t & decodedValue) const {
 		return decodeImp<uint64_t>(src, decodedValue);
 	}
