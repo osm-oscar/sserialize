@@ -12,9 +12,9 @@ namespace Static {
 
 FlatGST::StringEntry::StringEntry() {}
 FlatGST::StringEntry::StringEntry(const sserialize::MultiVarBitArray& data, uint32_t pos) :
-m_strId( data.at(pos, 0) ),
-m_strBegin( data.at(pos, 1) ),
-m_strLen( data.at(pos, 2) )
+m_strId((uint32_t) data.at(pos, 0) ),
+m_strBegin((uint16_t) data.at(pos, 1) ),
+m_strLen((uint16_t) data.at(pos, 2) )
 {}
 
 FlatGST::StringEntry::~StringEntry() {}
@@ -162,10 +162,10 @@ FlatGST::lowerBound(const std::string& str, sserialize::StringCompleter::QuerryT
 	uint32_t right = m_strEntries.size()-1;
 	uint32_t mid  = (right-left)/2 + left;
 
-	uint16_t lLcp = calcLcp(fgstStringAt(left), str);
+	uint16_t lLcp = (uint16_t)calcLcp(fgstStringAt(left), str);
 	if (lLcp == str.size()) //first is match
 		return 0;
-	uint16_t rLcp = calcLcp(fgstStringAt(right), str);
+	uint16_t rLcp = (uint16_t)calcLcp(fgstStringAt(right), str);
 	uint16_t mLcp = 0;
 	int8_t cmp = compare(fgstStringAt(mid), str, mLcp);
 	
@@ -202,7 +202,7 @@ FlatGST::lowerBound(const std::string& str, sserialize::StringCompleter::QuerryT
 	
 	if (mLcp == str.size()) {
 		if (qt & sserialize::StringCompleter::QT_PREFIX || qt & sserialize::StringCompleter::QT_SUBSTRING || fgstStringAt(mid).size() == str.size()) {
-			return mid;
+			return narrow_check<int32_t>( mid );
 		}
 	}
 	return -1;
@@ -221,17 +221,17 @@ int32_t FlatGST::getStringEntryPos(const std::string& str, sserialize::StringCom
 
 
 ItemIndex FlatGST::complete(const std::string& str, sserialize::StringCompleter::QuerryType qtype) const {
-	int pos = getStringEntryPos(str, qtype);
+	int32_t pos = getStringEntryPos(str, qtype);
 	if (pos > 0) {
-		return indexFromPosition(pos, qtype);
+		return indexFromPosition((uint32_t)pos, qtype);
 	}
 	return ItemIndex();
 }
 
 ItemIndexIterator FlatGST::partialComplete(const std::string& str, sserialize::StringCompleter::QuerryType qtype) const {
-	int pos = getStringEntryPos(str, qtype);
+	int32_t pos = getStringEntryPos(str, qtype);
 	if (pos > 0) {
-		return indexIteratorFromPosition(pos, qtype);
+		return indexIteratorFromPosition((uint32_t)pos, qtype);
 	}
 	return ItemIndexIterator();
 }
