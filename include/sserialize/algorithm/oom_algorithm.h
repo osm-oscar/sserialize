@@ -8,7 +8,6 @@
 #include <mutex>
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
-#include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/utility/assert.h>
 
@@ -218,7 +217,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				//flush back
 				using std::move;
 				//capture return value if need be
-				#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+				#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED) || defined(SSERIALIZE_CHEAP_ASSERT_ENABLED)
 				auto chunkIt =
 				#endif
 				
