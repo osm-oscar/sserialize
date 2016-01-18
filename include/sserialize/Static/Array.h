@@ -9,6 +9,7 @@
 #include <sserialize/iterator/AtStlInputIterator.h>
 #include <sserialize/containers/AbstractArray.h>
 #include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/utility/assert.h>
 #include <fstream>
 #include <functional>
 #define SSERIALIZE_STATIC_ARRAY_VERSION 4
@@ -53,6 +54,7 @@ template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator
 class ArrayCreator {
 public:
 	typedef T_OFFSET_STORAGE OffsetContainer;
+	typedef uint32_t SizeType;
 private:
 	UByteArrayAdapter * m_dest;
 	uint32_t m_size;
@@ -224,8 +226,9 @@ public:
 	ArrayOffsetIndex() {}
 	ArrayOffsetIndex(const MyType & other) : m_size(other.m_size) {}
 	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType dataSize, const sserialize::UByteArrayAdapter & d) :
-	m_size(dataSize/sserialize::SerializationInfo<TValue>::length)
+	m_size((uint32_t)(dataSize/sserialize::SerializationInfo<TValue>::length))
 	{
+		SSERIALIZE_CHEAP_ASSERT((sserialize::UByteArrayAdapter::OffsetType)m_size*sserialize::SerializationInfo<TValue>::length == dataSize);
 		if (!std::is_integral<TValue>::value) {
 			if (d.getVlPackedUint32(0) != sserialize::SerializationInfo<TValue>::length) {
 				throw sserialize::CorruptDataException("Entry sizes do not match.");
@@ -272,7 +275,8 @@ public:
 	typedef value_type const_reference;
 	typedef value_type reference;
 	typedef enum {TI_FIXED_LENGTH=1} TypeInfo;
-	static constexpr uint32_t npos = 0xFFFFFFFF;
+	typedef uint32_t SizeType;
+	static constexpr SizeType npos = 0xFFFFFFFF;
 private:
 	UByteArrayAdapter m_data;
 	detail::ArrayOffsetIndex<TValue> m_index;
@@ -297,13 +301,13 @@ public:
 		return *this;
 	}
 	
-	uint32_t size() const { return m_index.size();}
+	SizeType size() const { return m_index.size();}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const {return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_index.getSizeInBytes()+m_data.size();}
-	TValue at(uint32_t pos) const;
-	TValue operator[](uint32_t pos) const;
-	UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const;
-	UByteArrayAdapter dataAt(uint32_t pos) const;
-	uint32_t find(const TValue & value) const;
+	TValue at(SizeType pos) const;
+	TValue operator[](SizeType pos) const;
+	UByteArrayAdapter::OffsetType dataSize(SizeType pos) const;
+	UByteArrayAdapter dataAt(SizeType pos) const;
+	SizeType find(const TValue & value) const;
 	TValue front() const;
 	TValue back() const;
 
@@ -312,7 +316,7 @@ public:
 	
 	template<typename T_ORDER_MAP>
 	static void reorder(const Array & src, const T_ORDER_MAP & /*order*/, ArrayCreator<TValue> & dest) {
-		for(uint32_t i = 0; i < src.size(); ++i) {
+		for(SizeType i(0), s(src.size()); i < s; ++i) {
 			dest.beginRawPut();
 			dest.rawPut().put(src.dataAt(i));
 			dest.endRawPut();
@@ -599,10 +603,15 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destin
 
 template<typename TValue, typename T_STREAMING_SERIALIZER = sserialize::Static::detail::ArrayCreator::DefaultStreamingSerializer<TValue> >
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::vector<TValue> & source) {
-	sserialize::Static::ArrayCreator<TValue, T_STREAMING_SERIALIZER> dc(destination);
-	dc.reserveOffsets(source.size());
-	for(std::size_t i = 0, s = source.size(); i < s; ++i) {
-		dc.put(source[i]);
+	typedef sserialize::Static::ArrayCreator<TValue, T_STREAMING_SERIALIZER> ArrayCreator;
+	typedef typename ArrayCreator::SizeType SizeType;
+	if (source.size() > std::numeric_limits<SizeType>::max()) {
+		throw sserialize::TypeOverflowException("std::vector -> Static::Array serialization");
+	}
+	ArrayCreator dc(destination);
+	dc.reserveOffsets((SizeType)source.size());
+	for(const auto & x : source) {
+		dc.put(x);
 	}
 	dc.flush();
 	return destination;
