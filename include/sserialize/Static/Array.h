@@ -231,7 +231,9 @@ public:
 		SSERIALIZE_CHEAP_ASSERT((sserialize::UByteArrayAdapter::OffsetType)m_size*sserialize::SerializationInfo<TValue>::length == dataSize);
 		if (!std::is_integral<TValue>::value) {
 			if (d.getVlPackedUint32(0) != sserialize::SerializationInfo<TValue>::length) {
-				throw sserialize::CorruptDataException("Entry sizes do not match.");
+				throw sserialize::CorruptDataException("sserialize::Static::Array: sizeof(value_type) - WANT=" +
+					std::to_string(sserialize::SerializationInfo<TValue>::length) +
+					", IS=" + std::to_string(d.getVlPackedUint32(0)));
 			}
 		}
 	}
