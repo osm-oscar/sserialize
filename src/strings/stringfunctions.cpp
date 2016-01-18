@@ -75,23 +75,32 @@ bool oneIsPrefix(const std::string& a, const std::string& b) {
 	return true;
 }
 
-uint16_t calcLcp(const UByteArrayAdapter & strA, const std::string & strB) {
-	uint16_t len = strA.size();
-	if (strB.size() < len)
+std::string::size_type calcLcp(const UByteArrayAdapter & strA, const std::string & strB) {
+	std::string::size_type len = (std::string::size_type) strA.size();
+	if (strB.size() < len) {
 		len = strB.size();
-	for(size_t i = 0; i < len; i++) {
-		if (strA.at(i) != static_cast<uint8_t>(strB.at(i)))
+	}
+	for(std::string::size_type i(0); i < len; ++i) {
+		if (strA.at(i) != static_cast<uint8_t>(strB.at(i))) {
 			return i;
+		}
 	}
 	return len;
 }
 
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t & lcp) {
+	uint32_t tmpLcp;
+	int8_t ret = compare(strA, strB, tmpLcp);
+	lcp = tmpLcp;
+	return ret;
+}
 
-int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t& lcp) {
-	uint16_t len = strA.size();
-	if (strB.size() < len)
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint32_t & lcp) {
+	UByteArrayAdapter::OffsetType len = strA.size();
+	if (strB.size() < len) {
 		len = strB.size();
-	for(uint16_t i = lcp; i < len; i++, lcp++) {
+	}
+	for(UByteArrayAdapter::OffsetType i = lcp; i < len; i++, lcp++) {
 		if (strA.at(i) < static_cast<uint8_t>(strB.at(i))) {
 			return -1;
 		}
