@@ -475,6 +475,7 @@ struct Worker {
 	m_es(std::move(other.m_es)), m_ss(std::move(other.m_ss))
 	{}
 	~Worker() {
+		flush();
 	}
 };
 
