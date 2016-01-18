@@ -59,7 +59,7 @@ public:
 	virtual ~Node() {}
 	virtual bool valid() const { return priv()->valid(); }
 
-	inline uint8_t strLen() const { return priv()->strLen(); }
+	inline uint32_t strLen() const { return priv()->strLen(); }
 	inline UByteArrayAdapter strData() const { return priv()->strData(); }
 	inline std::string str() const { return priv()->str(); }
 
