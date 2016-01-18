@@ -14,6 +14,7 @@ public:
 	typedef const T_VALUE * const_iterator;
 	typedef std::reverse_iterator<iterator> reverse_iterator;
 	typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+	typedef std::size_t SizeType;
 private:
 	T_VALUE * m_begin;
 	T_VALUE * m_end;
@@ -30,10 +31,10 @@ public:
 		return *this;
 	}
 	
-	std::size_t size() const { return m_push - m_begin; }
-	std::size_t capacity() const { return m_end - m_begin; }
+	SizeType size() const { return (SizeType)(m_push - m_begin); }
+	SizeType capacity() const { return m_end - m_begin; }
 	///This does not check if the new size is valid!
-	void reserve(std::size_t newCap) {
+	void reserve(SizeType newCap) {
 		m_end = m_begin+newCap;
 	}
 	
@@ -61,8 +62,8 @@ public:
 		return ++it;
 	}
 	
-	T_VALUE & operator[](std::size_t pos) { return *(m_begin+pos); }
-	const T_VALUE & operator[](std::size_t pos) const { return *(m_begin+pos); }
+	T_VALUE & operator[](SizeType pos) { return *(m_begin+pos); }
+	const T_VALUE & operator[](SizeType pos) const { return *(m_begin+pos); }
 	
 	void pop_back() {
 		if (m_push > m_begin)
@@ -106,7 +107,7 @@ public:
 		assert( m_push <= m_end );
 	}
 	
-	WindowedArray<T_VALUE> slice(std::size_t begin, std::size_t end) {
+	WindowedArray<T_VALUE> slice(SizeType begin, SizeType end) {
 		return WindowedArray(m_begin+begin, m_begin+end);
 	}
 	
