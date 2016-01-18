@@ -25,7 +25,7 @@ int64_t LzoCompressor::compress(const sserialize::UByteArrayAdapter & src, sseri
 	}
 	else {
 		destD.flush(destLen);
-		return destLen;
+		return (int64_t) destLen;
 	}
 }
 
@@ -39,7 +39,7 @@ int64_t LzoCompressor::decompress(const sserialize::UByteArrayAdapter & src, sse
 	}
 	else {
 		destD.flush(destLen);
-		return destLen;
+		return (int64_t) destLen;
 	}
 }
 
