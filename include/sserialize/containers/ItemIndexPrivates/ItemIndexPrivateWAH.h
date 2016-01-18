@@ -37,7 +37,7 @@ public:
 	ItemIndexPrivateWAH(const UByteArrayAdapter & data);
 	virtual ~ItemIndexPrivateWAH();
 	virtual ItemIndex::Types type() const;
-	virtual int find(uint32_t id) const;
+	virtual uint32_t find(uint32_t id) const override;
 
 public:
 	virtual uint32_t at(uint32_t pos) const;

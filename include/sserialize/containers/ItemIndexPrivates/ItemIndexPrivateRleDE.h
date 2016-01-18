@@ -148,7 +148,7 @@ public:
 	virtual ~ItemIndexPrivateRleDE();
 	virtual ItemIndex::Types type() const override;
 	
-	virtual int find(uint32_t id) const override;
+	virtual uint32_t find(uint32_t id) const override;
 
 public:
 	virtual void loadIntoMemory() override;

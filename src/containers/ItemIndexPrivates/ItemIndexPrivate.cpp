@@ -135,17 +135,20 @@ ItemIndexPrivate * ItemIndexPrivate::doSymmetricDifference(const ItemIndexPrivat
 }
 
 
-int ItemIndexPrivate::find(uint32_t id) const {
+uint32_t ItemIndexPrivate::find(uint32_t id) const {
 	uint32_t len = size();
-	if (len == 0)
+	if (len == 0) {
 		return -1;
-	int left = 0;
-	int right = len-1;
-	int mid = (right-left)/2+left;
+	}
+	int64_t left = 0;
+	int64_t right = len-1;
+	int64_t mid = (right-left)/2+left;
 	uint32_t curId;
 	while( left < right ) {
 		curId = at(mid);
-		if (curId == id) return mid;
+		if (curId == id) {
+			return (uint32_t)mid;
+		}
 		if (curId < id) { // key should be to the right
 			left = mid+1;
 		}
@@ -154,8 +157,8 @@ int ItemIndexPrivate::find(uint32_t id) const {
 		}
 		mid = (right-left)/2+left;
 	}
-	curId = at(mid);
-	return ((curId == id) ? mid : -1);
+	curId = at((uint32_t)mid);
+	return ((curId == id) ? mid : npos);
 }
 
 void ItemIndexPrivate::doPutInto(DynamicBitSet & bitSet) const {
@@ -211,8 +214,8 @@ ItemIndex::Types ItemIndexPrivateEmpty::type() const {
 	return ItemIndex::T_EMPTY;
 }
 
-int ItemIndexPrivateEmpty::find(uint32_t /*id*/) const {
-    return -1;
+uint32_t ItemIndexPrivateEmpty::find(uint32_t /*id*/) const {
+    return npos;
 }
 
 

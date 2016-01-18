@@ -96,7 +96,7 @@ ItemIndex::Types ItemIndexPrivateRleDE::type() const {
 	return ItemIndex::T_RLE_DE;
 }
 
-int ItemIndexPrivateRleDE::find(uint32_t id) const {
+uint32_t ItemIndexPrivateRleDE::find(uint32_t id) const {
 	return sserialize::ItemIndexPrivate::find(id);
 }
 

@@ -34,7 +34,7 @@ public:
 	virtual ~ItemIndexPrivateDE();
 	virtual ItemIndex::Types type() const override;
 	
-	virtual int find(uint32_t id) const override;
+	virtual uint32_t find(uint32_t id) const override;
 
 public:
 	virtual uint32_t at(uint32_t pos) const override;

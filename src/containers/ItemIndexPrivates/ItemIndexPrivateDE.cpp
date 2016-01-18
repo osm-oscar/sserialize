@@ -27,7 +27,7 @@ ItemIndex::Types ItemIndexPrivateDE::type() const {
 }
 
 
-int ItemIndexPrivateDE::find(uint32_t id) const {
+uint32_t ItemIndexPrivateDE::find(uint32_t id) const {
 	return sserialize::ItemIndexPrivate::find(id);
 }
 

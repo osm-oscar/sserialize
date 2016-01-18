@@ -12,6 +12,7 @@ public:
 	typedef detail::AbstractArrayIterator<uint32_t> const_iterator_base_type;
 	typedef detail::AbstractArrayIterator<uint32_t> * const_iterator;
 	typedef const_iterator iterator;
+	static constexpr uint32_t npos = 0xFFFFFFFF;
 public:
 	ItemIndexPrivate();
 	virtual ~ItemIndexPrivate();
@@ -19,7 +20,7 @@ public:
 	
 	virtual ItemIndex::Types type() const = 0;
 	
-	virtual int find(uint32_t id) const;
+	virtual uint32_t find(uint32_t id) const;
 protected:
 	///Convinience unite which uses a ItemIndexPrivateSimple as storage backend
 	ItemIndexPrivate * doIntersect(const sserialize::ItemIndexPrivate * other) const;
@@ -78,7 +79,7 @@ public:
 	virtual ~ItemIndexPrivateEmpty();
 	virtual ItemIndex::Types type() const;
 
-	virtual int find(uint32_t id) const;
+	virtual uint32_t find(uint32_t id) const override;
 
 public:
 	virtual uint32_t at(uint32_t pos) const;

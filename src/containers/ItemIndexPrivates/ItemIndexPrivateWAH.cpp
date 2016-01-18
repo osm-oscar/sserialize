@@ -33,7 +33,7 @@ ItemIndex::Types ItemIndexPrivateWAH::type() const {
 	return ItemIndex::T_WAH;
 }
 
-int ItemIndexPrivateWAH::find(uint32_t id) const {
+uint32_t ItemIndexPrivateWAH::find(uint32_t id) const {
 	return sserialize::ItemIndexPrivate::find(id);
 }
 
