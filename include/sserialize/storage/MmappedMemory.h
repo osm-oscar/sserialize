@@ -39,7 +39,8 @@ struct MmappedMemoryHelper<TValue, typename std::enable_if< std::is_integral<TVa
 		}
 	}
 	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
-		memmove(dest, srcBegin, (srcEnd-srcBegin)*sizeof(TValue));
+		assert(srcEnd >= srcBegin);
+		memmove(dest, srcBegin, (::size_t)(srcEnd-srcBegin)*sizeof(TValue));
 	}
 	static void deinitMemory(TValue * /*begin*/, TValue * /*end*/) {}
 static void deinitMemory(TValue * /*data*/) {}
