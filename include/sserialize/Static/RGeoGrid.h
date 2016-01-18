@@ -29,7 +29,7 @@ public:
 		MyParentClass::storage() = sserialize::Static::Array<TValue>(d+baseGridSize);
 		SSERIALIZE_EQUAL_LENGTH_CHECK(MyParentClass::MyParentClass::tileCount(), MyParentClass::storage().size(), "sserialize::Static::spatial::RGeoGrid");
 	}
-	uint32_t getSizeInBytes() const {
+	UByteArrayAdapter::OffsetType getSizeInBytes() const {
 		return MyParentClass::storage().getSizeInBytes() + sserialize::SerializationInfo<sserialize::spatial::GeoGrid>::sizeInBytes(*this);
 	}
 };
