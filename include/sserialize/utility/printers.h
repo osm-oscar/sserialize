@@ -173,7 +173,7 @@ inline std::string prettyFormatSize(uint64_t bytes) {
 		char prefixes[] = {'N', 'K', 'M', 'G'};
 		std::stringstream ss;
 		for(int i = 3; i >= 0; --i) {
-			uint8_t shift = 10*i;
+			int shift = 10*i;
 			uint64_t tmp = bytes >> shift;
 			if (tmp) {
 				ss << tmp << prefixes[i] << "iB ";
