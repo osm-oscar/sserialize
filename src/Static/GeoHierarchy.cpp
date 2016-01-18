@@ -685,7 +685,7 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 	return allOk;
 }
 
-void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, sserialize::ItemIndex & fullyMatchedCells) const {
+sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect) const {
 	std::deque<uint32_t> queue;
 	std::vector<uint32_t> intersectingCells;
 	std::unordered_set<uint32_t> visitedRegions;
@@ -731,19 +731,7 @@ void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const
 	}
 	std::sort(intersectingCells.begin(), intersectingCells.end());
 	intersectingCells.resize(std::unique(intersectingCells.begin(), intersectingCells.end())-intersectingCells.begin());
-	fullyMatchedCells = sserialize::ItemIndex(std::move(intersectingCells));
-}
-
-void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, CellQueryResult & cqr) const {
-	sserialize::ItemIndex tmp;
-	this->cqr(idxStore, rect, tmp);
-	cqr = CellQueryResult(tmp, *this, idxStore);
-}
-
-void GeoHierarchy::cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, TreedCellQueryResult & cqr) const {
-	sserialize::ItemIndex tmp;
-	this->cqr(idxStore, rect, tmp);
-	cqr = TreedCellQueryResult(tmp, *this, idxStore);
+	return sserialize::ItemIndex(std::move(intersectingCells));
 }
 
 }}} //end namespace

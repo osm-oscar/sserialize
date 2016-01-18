@@ -368,8 +368,6 @@ public:
 	typedef detail::SubSet SubSet;
 	typedef detail::FlatSubSet FlatSubSet;
 private:
-	void cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, sserialize::ItemIndex & fullyMatchedCells) const;
-private:
 	RCPtrWrapper<detail::GeoHierarchy> m_priv;
 public:
 	GeoHierarchy() : m_priv(new detail::GeoHierarchy()) {}
@@ -426,8 +424,8 @@ public:
 	
 	std::ostream & printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const;
 	
-	void cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, CellQueryResult & cqr) const;
-	void cqr(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, TreedCellQueryResult & cqr) const;
+	///@return cells whose bbox intersects @param rect
+	sserialize::ItemIndex intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect) const;
 
 	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->subSet(cqr, sparse); }
 	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }
