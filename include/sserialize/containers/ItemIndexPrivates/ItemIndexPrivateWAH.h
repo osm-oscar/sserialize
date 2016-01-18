@@ -3,6 +3,7 @@
 #include "ItemIndexPrivate.h"
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/iterator/UDWConstrainedIterator.h>
+#include <sserialize/utility/checks.h>
 
 namespace sserialize {
 
@@ -72,9 +73,9 @@ public:
 
 	template<typename TCONTAINER>
 	static bool create(const TCONTAINER & src, UByteArrayAdapter & dest) {
-		uint32_t beginning = dest.tellPutPtr();
-		dest.putUint32(0);
-		dest.putUint32(src.size());
+		UByteArrayAdapter::OffsetType beginning = dest.tellPutPtr();
+		dest.putUint32((uint32_t)0);
+		dest.putUint32(narrow_check<uint32_t>(src.size()));
 		if (!src.size())
 			return true;
 		if (src.size() == 1) {
@@ -185,8 +186,8 @@ public:
 		if (curEncWord)
 			dest.putUint32(curEncWord << 1);
 		
-		uint32_t dataSize =  dest.tellPutPtr() - beginning - 8;
-		dest.putUint32(beginning, dataSize);
+		UByteArrayAdapter::OffsetType dataSize =  dest.tellPutPtr() - beginning - 8;
+		dest.putUint32(beginning, narrow_check<uint32_t>(dataSize));
 		return true;
 	}
 };
