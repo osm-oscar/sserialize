@@ -81,7 +81,7 @@ public:
 		SizeType id = 0;
 		for(; i < s; ++i) {
 			uint8_t d = m_data.getUint8(i);
-			for(uint32_t curId = id; d; ++curId, d >>= 1) {
+			for(SizeType curId(id); d; ++curId, d >>= 1) {
 				if (d & 0x1) {
 					*out = curId;
 					++out;
