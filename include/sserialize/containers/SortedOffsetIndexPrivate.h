@@ -3,6 +3,7 @@
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/algorithm/utilfuncs.h>
+#include <cmath>
 #include <iostream>
 
 namespace sserialize {
@@ -46,20 +47,20 @@ private:
 		typename TSortedContainer::const_iterator end( ids.end() );
 		for(typename TSortedContainer::const_iterator it = ids.begin(); it != end; ++it) {
 			curOffSetCorrection = static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, ids.size(), count)) + yintercept; 
-			curDiff = *it - curOffSetCorrection;
+			curDiff = static_cast<int64_t>(*it) - curOffSetCorrection;
 			if (curDiff > maxPositive)
 				maxPositive = curDiff;
 			if (curDiff < minNegative)
 				minNegative = curDiff;
 			count++;
 		}
-		uint64_t range = maxPositive - minNegative + 1;
+		uint64_t range = narrow_check<uint64_t>(maxPositive - minNegative + 1);
 #ifdef __ANDROID__
-		idOffset = std::abs( (long int) minNegative);
+		idOffset = (uint64_t)std::abs( (long int) minNegative);
 #else
-		idOffset = std::abs(minNegative);
+		idOffset = (uint64_t)std::abs(minNegative);
 #endif
-		return CompactUintArray::minStorageBits64(range);
+		return (uint8_t) CompactUintArray::minStorageBits64(range);
 	}
 
 	template<class TSortedContainer>
@@ -68,9 +69,9 @@ private:
 		sserialize::statistics::linearRegression(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
-			yintercept = floor(yinterceptd);
+			yintercept = narrow_check<int64_t>(yinterceptd);
 			double slopenomd = floor(sloped) * (ids.size()-1);
-			slopenom = slopenomd;
+			slopenom = narrow_check<uint64_t>(slopenomd);
 			if (slopenomd >= floor((double)std::numeric_limits<uint64_t>::max()) || yinterceptd >= floor((double)std::numeric_limits<uint64_t>::max())) {
 				return false;
 			}
@@ -114,7 +115,7 @@ public:
 			}
 			
 			if (bitsForIds >= CompactUintArray::minStorageBits64(*src.rbegin())) {
-				bitsForIds = CompactUintArray::minStorageBits64(*src.rbegin());
+				bitsForIds = (uint8_t)CompactUintArray::minStorageBits64(*src.rbegin());
 				slopenom = 0;
 				yintercept = 0;
 				idOffset = 0;
@@ -146,8 +147,8 @@ public:
 			typename TSortedContainer::const_iterator end (src.end() );
 			for(typename TSortedContainer::const_iterator i = src.begin(); i != end; ++i) {
 				curOffSetCorrection = yintercept + static_cast<int64_t>(getRegLineSlopeCorrectionValue(slopenom, src.size(), count));
-				offSetCorrectedId = static_cast<int64_t>(*i)  - curOffSetCorrection + idOffset;
-				carr.set64(count, offSetCorrectedId);
+				offSetCorrectedId = static_cast<int64_t>(*i)  - curOffSetCorrection + (int64_t)idOffset;
+				carr.set64(count, (uint64_t)offSetCorrectedId);
 				++count;
 			}
 		}
