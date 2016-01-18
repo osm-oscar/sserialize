@@ -97,11 +97,11 @@ void reorder(T_RANDOM_ACCESS_CONTAINER & srcDest, const T_REORDER_MAP & reorderM
 	using std::swap;
 	std::vector<SizeType> itemToCurPos;
 	itemToCurPos.reserve(srcDest.size());
-	for(std::size_t i = 0, s = srcDest.size(); i < s; ++i) {
+	for(SizeType i(0), s((SizeType)srcDest.size()); i < s; ++i) {
 		itemToCurPos.push_back(i);
 	}
 	std::vector<SizeType> posToItem(itemToCurPos);
-	for(SizeType i = 0, s = srcDest.size(); i < s; ++i) {
+	for(SizeType i(0), s((SizeType)srcDest.size()); i < s; ++i) {
 		SizeType initialItemPos = reorderMap.at(i);
 		SizeType realSrcItemPos = itemToCurPos[initialItemPos];
 		SizeType itemInCurDest = posToItem[i];
