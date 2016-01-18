@@ -10,9 +10,9 @@ m_types(d.getUint8(0)),
 m_offsets{0,0,0},
 m_data(d)
 {
-	uint8_t typeCount = sserialize::popCount<unsigned int>(m_types & 0xF);
+	uint32_t typeCount = sserialize::popCount<unsigned int>(m_types & 0xF);
 	m_data += sserialize::SerializationInfo<uint8_t>::length;
-	for(uint8_t i=1; i < typeCount; ++i) {
+	for(uint32_t i(1); i < typeCount; ++i) {
 		m_offsets[i-1] = m_data.getVlPackedUint32();
 	}
 	m_data.shrinkToGetPtr();
@@ -41,13 +41,13 @@ sserialize::UByteArrayAdapter CellTextCompleter::Payload::typeData(sserialize::S
 	uint32_t pos = sserialize::popCount((static_cast<uint32_t>(qt)-1) & types());
 	
 	uint32_t totalOffset = 0;
-	uint32_t dataLength;
+	UByteArrayAdapter::OffsetType dataLength;
 	for(uint32_t i(1); i <= pos; ++i) {
 		totalOffset += m_offsets[i-1];
 	}
 	assert(pos < 4);
 	if (pos == 3 || m_offsets[pos] == 0) {
-		dataLength = m_data.size() - totalOffset;
+		dataLength = (UByteArrayAdapter::OffsetType)(m_data.size() - totalOffset);
 	}
 	else {
 		dataLength = m_offsets[pos];
