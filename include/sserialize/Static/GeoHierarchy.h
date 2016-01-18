@@ -108,7 +108,7 @@ public:
 		virtual ~Node() {}
 		inline uint32_t ghId() const { return m_ghId; }
 		//number of chilren
-		inline uint32_t size() const { return m_children.size(); }
+		inline std::size_t size() const { return m_children.size(); }
 		inline NodePtr & operator[](uint32_t pos) { return m_children[pos]; }
 		inline const NodePtr & at(uint32_t pos) { return m_children.at(pos);}
 		inline const NodePtr & operator[](uint32_t pos) const { return m_children[pos]; }
@@ -187,7 +187,7 @@ public:
 	inline const NodePtrContainer & nodePtrs() const { return m_d->nodePtrs;}
 	inline CellsContainer & cells() { return m_d->cells; }
 	inline const CellsContainer & cells() const { return m_d->cells; }
-	inline uint32_t size() const { return nodes().size()-1;}
+	inline std::size_t size() const { return nodes().size()-1;}
 	inline const Node & at(uint32_t pos) const { return nodes().at(pos); }
 	inline NodeChilrenIterator childrenBegin(uint32_t nodePos) const { return nodePtrs().cbegin() + at(nodePos).m_childrenBegin; }
 	inline NodeChilrenIterator childrenEnd(uint32_t nodePos) const { return nodePtrs().cbegin() + at(nodePos+1).m_childrenBegin; }
@@ -198,7 +198,7 @@ public:
 template<typename T_HASH_CONTAINER>
 void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const {
 	idcsPos.insert(node->cellPositions().cbegin(), node->cellPositions().cend());
-	for(uint32_t i(0), s(node->size()); i < s; ++i) {
+	for(std::size_t i(0), s(node->size()); i < s; ++i) {
 		insertCellPositions(node->at(i), idcsPos);
 	}
 }
