@@ -13,12 +13,12 @@ namespace sserialize {
 
 ///does a*b/c correctly if the result is smaller thant uint32_t
 inline uint32_t multiplyDiv32(uint32_t a, uint32_t b, uint32_t c) {
-	return (static_cast<uint64_t>(a)*b)/c;
+	return (uint32_t)((static_cast<uint64_t>(a)*b)/c);
 }
 
 ///does (a*b)%c correctly if the result is smaller than uint32_t
 inline uint32_t multiplyMod32(uint32_t a, uint32_t b, uint32_t c) {
-	return (static_cast<uint64_t>(a)*b)%c;
+	return (uint32_t)((static_cast<uint64_t>(a)*b)%c);
 }
 
 inline uint64_t multiplyDiv64(uint64_t a, uint64_t b, uint32_t c) {
@@ -44,31 +44,31 @@ template <typename T> int sgn(T val) {
 }
 
 template<typename T>
-inline int popCount(T v);
+inline uint32_t popCount(T v);
 
 template<>
-inline int popCount<int>(int v) {
-	return __builtin_popcount((unsigned int)v);
+inline uint32_t popCount<int>(int v) {
+	return (uint32_t) __builtin_popcount((unsigned int)v);
 }
 
 template<>
-inline int popCount<uint8_t>(uint8_t v) {
-	return __builtin_popcount(v);
+inline uint32_t popCount<uint8_t>(uint8_t v) {
+	return (uint32_t) __builtin_popcount(v);
 }
 
 template<>
-inline int popCount<uint16_t>(uint16_t v) {
-	return __builtin_popcount(v);
+inline uint32_t popCount<uint16_t>(uint16_t v) {
+	return (uint32_t) __builtin_popcount(v);
 }
 
 template<>
-inline int popCount<uint32_t>(uint32_t v) {
-	return __builtin_popcount(v);
+inline uint32_t popCount<uint32_t>(uint32_t v) {
+	return (uint32_t) __builtin_popcount(v);
 }
 
 template<>
-inline int popCount<uint64_t>(uint64_t v) {
-	return __builtin_popcountll(v);
+inline uint32_t popCount<uint64_t>(uint64_t v) {
+	return (uint32_t) __builtin_popcountll(v);
 }
 
 double inline logTo2(double num) {
@@ -97,11 +97,12 @@ inline int32_t fastLog2(uint32_t x)  {
 	);
 	return retval;
 }
-inline uint32_t createMask(uint8_t bpn) {
+
+inline uint32_t createMask(uint32_t bpn) {
 	return ((bpn == 32) ? std::numeric_limits<uint32_t>::max() : ((static_cast<uint32_t>(1) << bpn) - 1));
 }
 
-inline uint64_t createMask64(uint8_t bpn) {
+inline uint64_t createMask64(uint64_t bpn) {
 	return ((bpn == 64) ? std::numeric_limits<uint64_t>::max() : ((static_cast<uint64_t>(1) << bpn) - 1));
 }
 
@@ -111,9 +112,9 @@ inline uint32_t saturatedAdd32(const uint32_t a, const uint32_t b) {
 
 template<typename TValue>
 inline
-typename std::enable_if<std::is_integral<TValue>::value && std::is_unsigned<TValue>::value, uint8_t>::type 
+typename std::enable_if<std::is_integral<TValue>::value && std::is_unsigned<TValue>::value, uint32_t>::type 
 msb(TValue num) {
-	uint8_t r = 0;
+	uint32_t r = 0;
 	while (num >>= 1) {
 		++r;
 	}
