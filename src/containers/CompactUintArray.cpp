@@ -1,14 +1,15 @@
 #include <sserialize/containers/CompactUintArray.h>
-#include <stdint.h>
-#include <iostream>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/storage/SerializationInfo.h>
+#include <sserialize/utility/assert.h>
+#include <stdint.h>
+#include <iostream>
 
 namespace sserialize {
 
-void CompactUintArrayPrivate::calcBegin(const uint32_t pos, UByteArrayAdapter::OffsetType & posStart, uint8_t & initShift, uint8_t bpn) const {
+void CompactUintArrayPrivate::calcBegin(const uint32_t pos, sserialize::UByteArrayAdapter::OffsetType& posStart, uint8_t & initShift, uint32_t bpn) const {
 	posStart = sserialize::multiplyDiv64(pos, bpn, 8);
-	initShift = (pos == 0 ? 0 : sserialize::multiplyMod64(pos, bpn, 8));
+	initShift = (pos == 0 ? 0 : narrow_check<uint8_t>(sserialize::multiplyMod64(pos, bpn, 8)));
 }
 
 CompactUintArrayPrivate::CompactUintArrayPrivate() : RefCountObject() {}
@@ -20,7 +21,7 @@ m_data(adap)
 
 CompactUintArrayPrivate::~CompactUintArrayPrivate() {}
 
-uint8_t CompactUintArrayPrivate::bpn() const {
+uint32_t CompactUintArrayPrivate::bpn() const {
 	return 0;
 }
 
@@ -31,12 +32,12 @@ uint64_t CompactUintArrayPrivate::at64(uint32_t pos) const {
 
 
 uint64_t CompactUintArrayPrivate::set64(const uint32_t pos, uint64_t value) {
-	return set(pos, value);
+	return set(pos, narrow_check<uint32_t>(value));
 }
 
 CompactUintArrayPrivateEmpty::CompactUintArrayPrivateEmpty(): CompactUintArrayPrivate() {}
 
-uint8_t CompactUintArrayPrivateEmpty::bpn() const {
+uint32_t CompactUintArrayPrivateEmpty::bpn() const {
 	return 0;
 }
 
@@ -50,9 +51,9 @@ uint32_t CompactUintArrayPrivateEmpty::set(const uint32_t /*pos*/, uint32_t valu
 }
 
 
-CompactUintArrayPrivateVarBits::CompactUintArrayPrivateVarBits(const UByteArrayAdapter & array, uint8_t bitsPerNumber) :
-CompactUintArrayPrivate(array),
-m_bpn(bitsPerNumber)
+CompactUintArrayPrivateVarBits::CompactUintArrayPrivateVarBits(const sserialize::UByteArrayAdapter& adap, uint32_t bpn) :
+CompactUintArrayPrivate(adap),
+m_bpn(bpn)
 {
 	if (m_bpn == 0)
 		m_bpn = 1;
@@ -63,7 +64,7 @@ m_bpn(bitsPerNumber)
 	else m_mask = (static_cast<uint32_t>(1) << m_bpn) - 1;
 }
 
-uint8_t CompactUintArrayPrivateVarBits::bpn() const {
+uint32_t CompactUintArrayPrivateVarBits::bpn() const {
 	return m_bpn;
 }
 
@@ -73,9 +74,9 @@ uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
 	calcBegin(pos, posStart, initShift, m_bpn);
 	uint32_t res = static_cast<uint32_t>(m_data.at(posStart)) >> initShift;
 
-	uint8_t byteShift = 8 - initShift;
+	uint32_t byteShift = 8 - initShift;
 	posStart++;
-	for(uint8_t bitsRead = 8 - initShift, i  = 0; bitsRead < m_bpn; bitsRead+=8, i++) {
+	for(uint32_t bitsRead = 8 - initShift, i  = 0; bitsRead < m_bpn; bitsRead+=8, i++) {
 		uint32_t newByte = m_data.at(posStart+i);
 		newByte = (newByte << (8*i+byteShift));
 		res |= newByte;
@@ -94,57 +95,62 @@ uint32_t CompactUintArrayPrivateVarBits::set(const uint32_t pos, uint32_t value)
 	calcBegin(pos, startPos, initShift, m_bpn);
 
 	if (initShift+m_bpn <= 8) { //everything is within the first
-		uint8_t mask = createMask(initShift); //sets the lower bits
-		mask |= (~ static_cast<uint8_t>(createMask(initShift+m_bpn))); //sets the higher bits
-		m_data[startPos] &= mask;
-		m_data[startPos] |= (value << initShift);
+		uint8_t mask = (uint8_t)createMask(initShift); //sets the lower bits
+		mask = (uint8_t)(mask | (~createMask(initShift+m_bpn))); //sets the higher bits
+		uint8_t & d = m_data[startPos];
+		d = (uint8_t) (d & mask);
+		d = (uint8_t)(d | (value << initShift));
 	}
 	else { //we have to set multiple bytes
-		uint8_t bitsSet = 0;
-		uint8_t mask = createMask(initShift); //sets the lower bits
-		m_data[startPos] &= mask;
-		m_data[startPos] |= ((value << initShift) & 0xFF);
+		uint32_t bitsSet = 0;
+		uint8_t mask = (uint8_t)createMask((uint8_t)initShift); //sets the lower bits
+		uint8_t & d = m_data[startPos];
+		d = (uint8_t)(d & mask);
+		d = (uint8_t)(d | ((value << initShift) & 0xFF));
 		bitsSet += 8-initShift;
-		uint8_t lastByteBitCount = (m_bpn+initShift) % 8;
+		uint8_t lastByteBitCount = (uint8_t)( (m_bpn+initShift) % 8 );
 
 		//Now set all the midd bytes:
-		uint8_t curShift = bitsSet;
-		uint8_t count = 1;
+		uint32_t curShift = bitsSet;
+		uint32_t count = 1;
 		for(; curShift+lastByteBitCount < m_bpn; curShift+=8, count++) {
-			m_data[startPos+count] = (value >> curShift) & 0xFF;
+			m_data[startPos+count] = (uint8_t)( (value >> curShift) & 0xFF );
 		}
 
 		//Now set the remaining bits
 		if (lastByteBitCount > 0) {
-			m_data[startPos+count] &= (~ static_cast<uint8_t>( createMask(lastByteBitCount) ));
-			m_data[startPos+count] |= (value >> (m_bpn-lastByteBitCount) );
+			uint8_t & d = m_data[startPos+count];
+			d = (uint8_t)( d & ( ~createMask(lastByteBitCount) ) );
+			d = (uint8_t)(d | ( value >> (m_bpn-lastByteBitCount) ) );
 		}
 
 	}
 	return value;
 }
 
-CompactUintArrayPrivateVarBits64::CompactUintArrayPrivateVarBits64(const UByteArrayAdapter & adap, uint8_t bpn) :
+CompactUintArrayPrivateVarBits64::CompactUintArrayPrivateVarBits64(const UByteArrayAdapter & adap, uint32_t bpn) :
 CompactUintArrayPrivate(adap),
 m_bpn(bpn)
 {
-	if (m_bpn == 0)
+	if (m_bpn == 0) {
 		m_bpn = 1;
-	else if (m_bpn > 64)
+	}
+	else if (m_bpn > 64) {
 		m_bpn = 64;
+	}
 	m_mask = createMask64(m_bpn);
 }
 
-uint8_t CompactUintArrayPrivateVarBits64::bpn() const {
+uint32_t CompactUintArrayPrivateVarBits64::bpn() const {
 	return m_bpn;
 }
 
 uint32_t CompactUintArrayPrivateVarBits64::at(const uint32_t pos) const {
-	return CompactUintArrayPrivateVarBits64::at64(pos);
+	return (uint32_t)CompactUintArrayPrivateVarBits64::at64(pos);
 }
 
 uint32_t CompactUintArrayPrivateVarBits64::set(const uint32_t pos, uint32_t value) {
-	return CompactUintArrayPrivateVarBits64::set64(pos, value);
+	return (uint32_t)CompactUintArrayPrivateVarBits64::set64(pos, value);
 }
 
 uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
@@ -153,9 +159,9 @@ uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
 	calcBegin(pos, posStart, initShift, m_bpn);
 	uint64_t res = static_cast<uint64_t>(m_data.at(posStart)) >> initShift;
 
-	uint8_t byteShift = 8 - initShift;
+	uint8_t byteShift = (uint8_t)(8 - initShift);
 	posStart++;
-	for(uint8_t bitsRead = 8 - initShift, i  = 0; bitsRead < m_bpn; bitsRead+=8, i++) {
+	for(uint32_t bitsRead = byteShift, i  = 0; bitsRead < m_bpn; bitsRead+=8, i++) {
 		uint64_t newByte = m_data.at(posStart+i);
 		newByte = (newByte << (8*i+byteShift));
 		res |= newByte;
@@ -171,30 +177,33 @@ uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t va
 	calcBegin(pos, startPos, initShift, m_bpn);
 
 	if (initShift+m_bpn <= 8) { //everything is within the first
-		uint8_t mask = createMask(initShift); //sets the lower bits
-		mask |= (~ static_cast<uint8_t>(createMask(initShift+m_bpn))); //sets the higher bits
-		m_data[startPos] &= mask;
-		m_data[startPos] |= (value << initShift);
+		uint8_t mask = (uint8_t)createMask(initShift); //sets the lower bits
+		mask = (uint8_t) (mask | ( ~createMask(initShift+m_bpn) ) ); //sets the higher bits
+		uint8_t & d = m_data[startPos];
+		d = (uint8_t)( d & mask );
+		d = (uint8_t)( d | ( value << initShift ) );
 	}
 	else { //we have to set multiple bytes
-		uint8_t bitsSet = 0;
-		uint8_t mask = createMask(initShift); //sets the lower bits
-		m_data[startPos] &= mask;
-		m_data[startPos] |= ((value << initShift) & 0xFF);
+		uint32_t bitsSet = 0;
+		uint8_t mask = (uint8_t)createMask(initShift); //sets the lower bits
+		uint8_t & d = m_data[startPos];
+		d = (uint8_t)( d & mask );
+		d = (uint8_t)( d | ( (value << initShift) & 0xFF ) );
 		bitsSet += 8-initShift;
-		uint8_t lastByteBitCount = (m_bpn+initShift) % 8;
+		uint8_t lastByteBitCount = (uint8_t)( (m_bpn+initShift) % 8 );
 
 		//Now set all the midd bytes:
-		uint8_t curShift = bitsSet;
-		uint8_t count = 1;
+		uint32_t curShift = bitsSet;
+		uint32_t count = 1;
 		for(; curShift+lastByteBitCount < m_bpn; curShift+=8, count++) {
-			m_data[startPos+count] = (value >> curShift) & 0xFF;
+			m_data[startPos+count] = (uint8_t)( (value >> curShift) & 0xFF );
 		}
 
 		//Now set the remaining bits
 		if (lastByteBitCount > 0) {
-			m_data[startPos+count] &= (~ static_cast<uint8_t>( createMask(lastByteBitCount) ));
-			m_data[startPos+count] |= (value >> (m_bpn-lastByteBitCount) );
+			uint8_t & d = m_data[startPos+count];
+			d = (uint8_t)( d & ( ~createMask(lastByteBitCount) ) );
+			d = (uint8_t)( d | ( value >> (m_bpn-lastByteBitCount) ) );
 		}
 
 	}
@@ -205,7 +214,7 @@ uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t va
 CompactUintArrayPrivateU8::CompactUintArrayPrivateU8(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
-uint8_t CompactUintArrayPrivateU8::bpn() const{
+uint32_t CompactUintArrayPrivateU8::bpn() const{
 	return 8;
 }
 
@@ -215,31 +224,38 @@ uint32_t CompactUintArrayPrivateU8::at(uint32_t pos) const {
 }
 
 uint32_t CompactUintArrayPrivateU8::set(const uint32_t pos, uint32_t value) {
-	m_data.putUint8(pos, value);
-	return value;
+	if (m_data.putUint8(pos, (uint8_t)value)) {
+		return value;
+	}
+	else {
+		return ~value;
+	}
 }
 
 CompactUintArrayPrivateU16::CompactUintArrayPrivateU16(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
-uint8_t CompactUintArrayPrivateU16::bpn() const {
+uint32_t CompactUintArrayPrivateU16::bpn() const {
 	return 16;
 }
-
 
 uint32_t CompactUintArrayPrivateU16::at(uint32_t pos) const {
     return m_data.getUint16( SerializationInfo<uint16_t>::length*pos);
 }
 
 uint32_t CompactUintArrayPrivateU16::set(const uint32_t pos, uint32_t value) {
-    m_data.putUint16(SerializationInfo<uint16_t>::length*pos, value);
-	return value;
+	if (m_data.putUint16(SerializationInfo<uint16_t>::length*pos, (uint16_t)value)) {
+		return value;
+	}
+	else {
+		return ~value;
+	}
 }
 
 CompactUintArrayPrivateU24::CompactUintArrayPrivateU24(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
-uint8_t CompactUintArrayPrivateU24::bpn() const {
+uint32_t CompactUintArrayPrivateU24::bpn() const {
 	return 24;
 }
 
@@ -257,7 +273,7 @@ uint32_t CompactUintArrayPrivateU24::set(const uint32_t pos, uint32_t value) {
 CompactUintArrayPrivateU32::CompactUintArrayPrivateU32(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
-uint8_t CompactUintArrayPrivateU32::bpn() const {
+uint32_t CompactUintArrayPrivateU32::bpn() const {
 	return 32;
 }
 
@@ -275,13 +291,13 @@ CompactUintArray::CompactUintArray(CompactUintArrayPrivate * priv) :
 RCWrapper< sserialize::CompactUintArrayPrivate >(priv)
 {}
 
-void CompactUintArray::setPrivate(const UByteArrayAdapter & array, uint8_t bitsPerNumber) {
+void CompactUintArray::setPrivate(const sserialize::UByteArrayAdapter& array, uint32_t bitsPerNumber) {
 	if (bitsPerNumber == 0)
 		bitsPerNumber = 1;
 	else if (bitsPerNumber > 64)
 		bitsPerNumber = 64;
 
-	m_maxCount = (static_cast<uint64_t>(array.size())*8)/bitsPerNumber;
+	m_maxCount = (uint32_t)(static_cast<uint64_t>(array.size())*8)/bitsPerNumber;
 
 
 	switch(bitsPerNumber) {
@@ -312,17 +328,17 @@ m_maxCount(0)
 {
 }
 
-CompactUintArray::CompactUintArray(const UByteArrayAdapter & array, uint8_t bitsPerNumber) :
+CompactUintArray::CompactUintArray(const UByteArrayAdapter & array, uint32_t bitsPerNumber) :
 RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 {
 	setPrivate(array, bitsPerNumber);
 }
 
-CompactUintArray::CompactUintArray(const UByteArrayAdapter & array, uint8_t bitsPerNumber, uint32_t max_count) :
+CompactUintArray::CompactUintArray(const sserialize::UByteArrayAdapter& array, uint32_t bitsPerNumber, uint32_t max_size) :
 RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 {
 	setPrivate(array, bitsPerNumber);
-	m_maxCount = max_count;
+	m_maxCount = max_size;
 }
 
 CompactUintArray::CompactUintArray(const CompactUintArray & other) :
@@ -344,19 +360,21 @@ CompactUintArray& CompactUintArray::operator=(const CompactUintArray & other) {
 }
 
 uint8_t CompactUintArray::bpn() const{
-	return priv()->bpn();
+	return (uint8_t) priv()->bpn();
 }
 
-int32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
-	if (len == 0)
+uint32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
+	if (len == 0) {
 		return npos;
+	}
 	int32_t left = 0;
 	int32_t right = len-1;
 	int32_t mid = (right-left)/2+left;
-	uint32_t tk = priv()->at(mid);
+	uint32_t tk = priv()->at((uint32_t)mid);
 	while( left < right ) {
-		if (tk == key)
-			return mid;
+		if (tk == key) {
+			return (uint32_t)mid;
+		}
 		if (tk < key) { // key should be to the right
 			left = mid+1;
 		}
@@ -364,13 +382,13 @@ int32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
 			right = mid-1;
 		}
 		mid = (right-left)/2+left;
-		tk = priv()->at(mid);
+		tk = priv()->at((uint32_t)mid);
 	}
-	return (tk == key ? mid : npos);
+	return (tk == key ? (uint32_t)mid : npos);
 }
 
 
-uint32_t CompactUintArray::at(uint32_t pos) const {
+uint32_t CompactUintArray::at(sserialize::CompactUintArray::SizeType pos) const {
 	if (m_maxCount == 0)
 		return 0;
 	if (pos >= m_maxCount)
@@ -378,7 +396,7 @@ uint32_t CompactUintArray::at(uint32_t pos) const {
 	return priv()->at(pos);
 }
 
-uint64_t CompactUintArray::at64(uint32_t pos) const {
+uint64_t CompactUintArray::at64(sserialize::CompactUintArray::SizeType pos) const {
 	if (m_maxCount == 0)
 		return 0;
 	if (pos >= m_maxCount)
@@ -426,7 +444,7 @@ std::ostream & CompactUintArray::dump(std::ostream& out, uint32_t len) {
 		len = maxCount();
 
 	out << "(";
-	for(size_t i = 0; i < len; i++) {
+	for(uint32_t i(0); i < len; i++) {
 		out << at(i) << ", ";
 	}
 	out << ")" << std::endl;
@@ -437,16 +455,16 @@ void CompactUintArray::dump() {
 	dump(std::cout, maxCount());
 }
 
-uint8_t CompactUintArray::minStorageBits(const uint32_t number) {
-	return std::max<uint8_t>(1, msb(number)+1);
+uint32_t CompactUintArray::minStorageBits(const uint32_t number) {
+	return std::max<uint32_t>(1, msb(number)+1);
 }
 
-uint8_t CompactUintArray::minStorageBits64(const uint64_t number) {
-	return std::max<uint8_t>(1, msb(number)+1);
+uint32_t CompactUintArray::minStorageBits64(const uint64_t number) {
+	return std::max<uint32_t>(1, msb(number)+1);
 }
 
 
-uint8_t CompactUintArray::minStorageBitsFullBytes(const uint32_t number) {
+uint32_t CompactUintArray::minStorageBitsFullBytes(const uint32_t number) {
 	if (number <= 0xFF)
 		return 8;
 	else if (number <= 0xFFFF)
@@ -456,8 +474,8 @@ uint8_t CompactUintArray::minStorageBitsFullBytes(const uint32_t number) {
 	else return 32;
 }
 
-uint8_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
-	uint8_t res = 0; 
+uint32_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
+	uint32_t res = 0; 
 	do {
 		number >>= 8;
 		res += 8;
@@ -465,7 +483,7 @@ uint8_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
 	return res;
 }
 
-UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint8_t bpn, uint32_t count) {
+UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint32_t bpn, UByteArrayAdapter::OffsetType count) {
 	uint64_t bits = static_cast<uint64_t>(count)*bpn;
 	return bits/8 + (bits % 8 ? 1 : 0);
 }
@@ -474,12 +492,17 @@ BoundedCompactUintArray::BoundedCompactUintArray(const sserialize::UByteArrayAda
 CompactUintArray(0)
 {
 	int len;
-	m_size = d.getVlPackedUint64(0, &len);
-	uint8_t bits = (m_size & 0x3F) +1;
+	m_size = (uint32_t) d.getVlPackedUint64(0, &len);
+	
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw sserialize::IOException("BoundedCompactUintArray::BoundedCompactUintArray");
+	}
+	
+	uint8_t bits = (uint8_t)((m_size & 0x3F) + 1);
 	m_size >>= 6;
 	UByteArrayAdapter::OffsetType dSize = minStorageBytes(bits, m_size);
 	if (m_size) {
-		CompactUintArray::setPrivate(UByteArrayAdapter(d, len, dSize), bits);
+		CompactUintArray::setPrivate(UByteArrayAdapter(d, (uint32_t)len, dSize), bits);
 	}
 	else {
 		CompactUintArray::MyBaseClass::setPrivate(new CompactUintArrayPrivateEmpty());
@@ -503,7 +526,7 @@ BoundedCompactUintArray & BoundedCompactUintArray::operator=(const BoundedCompac
 UByteArrayAdapter::OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
 	uint8_t bits = bpn();
 	UByteArrayAdapter::OffsetType sb = (m_size << 6) | (bits-1);
-	return psize_vu64(sb) + minStorageBytes(bits, m_size);
+	return (uint32_t) psize_vu64(sb) + minStorageBytes(bits, m_size);
 }
 
 std::ostream & operator<<(std::ostream & out, const BoundedCompactUintArray & src) {
