@@ -77,20 +77,20 @@ class ItemIndexPrivateEmpty: public ItemIndexPrivate {
 public:
 	ItemIndexPrivateEmpty();
 	virtual ~ItemIndexPrivateEmpty();
-	virtual ItemIndex::Types type() const;
+	virtual ItemIndex::Types type() const override;
 
 	virtual uint32_t find(uint32_t id) const override;
 
 public:
-	virtual uint32_t at(uint32_t pos) const;
-	virtual uint32_t first() const;
-	virtual uint32_t last() const;
+	virtual uint32_t at(uint32_t pos) const override;
+	virtual uint32_t first() const override;
+	virtual uint32_t last() const override;
 	
-	virtual uint32_t size() const;
+	virtual uint32_t size() const override;
 
-	virtual uint8_t bpn() const;
+	virtual uint8_t bpn() const override;
 
-	virtual uint32_t getSizeInBytes() const;
+	virtual uint32_t getSizeInBytes() const override;
 
 };
 
