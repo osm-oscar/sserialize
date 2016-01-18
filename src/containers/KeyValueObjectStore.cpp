@@ -13,7 +13,7 @@ namespace sserialize {
 KeyValueObjectStore::KeyValueObjectStore() {}
 KeyValueObjectStore::~KeyValueObjectStore() {}
 
-void KeyValueObjectStore::reserve(uint32_t size) {
+void KeyValueObjectStore::reserve(SizeType size) {
 	m_items.reserve(size);
 }
 
@@ -86,7 +86,7 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 	uint32_t keyBits = sserialize::CompactUintArray::minStorageBits((maxKey - minKey) + 1);
 	uint32_t valueBits = sserialize::CompactUintArray::minStorageBits((maxValue - minValue) + 1);
 	
-	uint32_t countBPKV = item.size() << 10;
+	uint32_t countBPKV = (uint32_t)(item.size() << 10); //overflow checked above
 	countBPKV |= (keyBits-1) << 5;
 	countBPKV |= (valueBits-1);
 
@@ -95,8 +95,8 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 	dest.putVlPackedUint32(minValue);
 	
 	CompactUintArray carr(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY), keyBits+valueBits);
-	carr.reserve(item.size());
-	for(uint32_t i = 0; i < item.size(); ++i) {
+	carr.reserve((uint32_t)item.size()); //overflow checked above
+	for(SizeType i(0), s(item.size()); i < s; ++i) {
 		uint64_t pv = ( static_cast<uint64_t>(item.at(i).key-minKey) << valueBits) | (item.at(i).value-minValue);
 		carr.set64(i, pv);
 	}
@@ -108,7 +108,7 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 	tmp.resetPtrs();
 	sserialize::Static::KeyValueObjectStoreItemBase sitem(tmp);
 	SSERIALIZE_ASSERT_EQUAL_CREATION(item.size(), sitem.size(), "sserialize::KeyValueObjectStore::serialize: item.size()");
-	for(uint32_t i = 0, s = item.size(); i < s; ++i) {
+	for(SizeType i(0), s(item.size()); i < s; ++i) {
 		SSERIALIZE_ASSERT_EQUAL_CREATION(item.at(i).key, sitem.keyId(i), "sserialize::KeyValueObjectStore::serialize: keyId");
 		SSERIALIZE_ASSERT_EQUAL_CREATION(item.at(i).value, sitem.valueId(i), "sserialize::KeyValueObjectStore::serialize: valueId");
 	}
