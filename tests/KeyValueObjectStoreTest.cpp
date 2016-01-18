@@ -102,7 +102,7 @@ public:
 	void testReorder() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), m_kv.size());
 		
-		std::vector<uint32_t> perm(sserialize::RangeGenerator::begin(0, m_items.size()), sserialize::RangeGenerator::end(0, m_items.size()));
+		std::vector<uint32_t> perm(sserialize::RangeGenerator<uint32_t>::begin(0, m_items.size()), sserialize::RangeGenerator<uint32_t>::end(0, m_items.size()));
 		std::random_shuffle(perm.begin(), perm.end());
 		
 		m_kv.reorder(perm);
