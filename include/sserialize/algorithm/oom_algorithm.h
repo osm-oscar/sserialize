@@ -283,7 +283,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		state.srcOffset = 0;
 		
 		state.pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
-		for(uint32_t cbi(0), cbs(state.pendingChunks.size()); cbi < cbs; cbi += queueDepth) {
+		for(uint32_t cbi(0), cbs((uint32_t)state.pendingChunks.size()); cbi < cbs; cbi += queueDepth) {
 			SSERIALIZE_CHEAP_ASSERT(!tmp.size());
 			
 			//set the buffer sizes
