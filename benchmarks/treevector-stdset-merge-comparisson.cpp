@@ -395,15 +395,16 @@ int main(int argc, char ** argv) {
 	uint32_t testCount = 0;
 	uint32_t testSelect = std::numeric_limits<uint32_t>::max();
 	if (argc > 3) {
-		testCount = atol(argv[1]);
-		bucketCount = atol(argv[2]);
-		bucketFillCountStart = atol(argv[3]);
+		testCount = (uint32_t) ::atol(argv[1]);
+		bucketCount = (uint32_t) ::atol(argv[2]);
+		bucketFillCountStart = (uint32_t) ::atol(argv[3]);
 		if (argc > 5) {
-			bucketFillCountMultIncrement = atol(argv[4]);
-			bucketFillCountEnd = atol(argv[5]);
+			bucketFillCountMultIncrement = (uint32_t) ::atol(argv[4]);
+			bucketFillCountEnd = (uint32_t) ::atol(argv[5]);
 		}
-		if (argc > 6)
-			testSelect = atol(argv[6]);
+		if (argc > 6) {
+			testSelect = (uint32_t) ::atol(argv[6]);
+		}
 	}
 	else {
 		std::cout << "Arguments given: " << std::endl;

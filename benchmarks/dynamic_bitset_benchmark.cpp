@@ -46,7 +46,7 @@ int main(int argc, char ** argv) {
 		uint32_t mBitSetLen32 = max/32+1;
 		uint32_t * mBitSet32 = new uint32_t[mBitSetLen32];
 		tm.begin();
-		uint32_t cs = values.size();
+		uint32_t cs = (uint32_t) values.size();
 		for(uint32_t i = 0; i < cs; ++i) {
 			uint32_t pos = carr.at(i);
 			uint32_t offset = pos / 32;

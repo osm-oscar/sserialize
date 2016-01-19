@@ -42,8 +42,8 @@ int main(int argc, char ** argv) {
 		
 		sserialize::TimeMeasurer tm;
 		tm.begin();
-		uint32_t size = inAdap.size()/4 - 1;
-		for(uint32_t i = 0; i < size; ++i) {
+		sserialize::UByteArrayAdapter::OffsetType size = inAdap.size()/4 - 1;
+		for(sserialize::UByteArrayAdapter::OffsetType i = 0; i < size; ++i) {
 			uint32_t id = inAdap.getUint32();
 			bitSet.set(id);
 		}

@@ -41,18 +41,18 @@ std::vector<uint64_t> createNumbersSet64(uint32_t count) {
 
 
 std::vector<long int> test32UBA(const std::vector<uint32_t> & nums, int testCount) {
-	int testLength = nums.size();
+	std::size_t testLength = nums.size();
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 	for(int testNum = 0; testNum < testCount; ++testNum) {
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
 		uba.resize(testLength*4);
 		tm.begin();
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			uba.putUint32(4*i, nums[i]);
 		}
 		uint32_t num = 0;
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			num += uba.getUint32(4*i);
 		}
 		tm.end();
@@ -147,7 +147,7 @@ std::vector<long int> test64VLUBA(const std::vector<uint64_t> & nums, int testCo
 }
 
 std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCount) {
-	int testLength = nums.size();
+	std::size_t testLength = nums.size();
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 
@@ -155,11 +155,11 @@ std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCoun
 		std::vector<uint64_t> vec;
 		vec.reserve(testLength);
 		tm.begin();
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			vec.push_back(nums[i]);
 		}
 		uint64_t num = 0;
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			num += vec[i];
 		}
 		tm.end();
