@@ -370,7 +370,7 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 	TestResult result;
 	result.bucketFill = bucketFillCount;
 	result.comparisonCount = comparisonCount;
-	result.setSize = setSize;
+	result.setSize = (uint32_t) setSize;
 	result.setTime = setTime;
 	result.vecTime = vecTime;
 	result.indexTime = indexTime;
@@ -433,7 +433,7 @@ int main(int argc, char ** argv) {
 	
 	std::vector<TestResult> results;
 	for(std::size_t i = bucketFillCountStart; i < bucketFillCountEnd; i *= bucketFillCountMultIncrement) {
-		results.push_back( bench(bucketCount, i, testCount, testSelect) );
+		results.push_back( bench(bucketCount, (uint32_t)i, testCount, testSelect) );
 	}
 	
 	for(std::size_t i = 0; i < results.size(); ++i)
