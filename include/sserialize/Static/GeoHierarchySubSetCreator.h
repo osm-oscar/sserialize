@@ -9,9 +9,31 @@
 
 namespace sserialize {
 namespace spatial {
-namespace detail {
+namespace interface {
 
 class GeoHierarchySubSetCreator: public RefCountObject {
+public:
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
+public:
+	GeoHierarchySubSetCreator() {}
+	virtual ~GeoHierarchySubSetCreator() {}
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const = 0;
+};
+
+}//end namespace interface
+
+namespace detail {
+
+class PassThroughGeoHierarchySubSetCreator: public interface::GeoHierarchySubSetCreator {
+public:
+	PassThroughGeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh);
+	virtual ~PassThroughGeoHierarchySubSetCreator();
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
+private:
+	sserialize::Static::spatial::GeoHierarchy m_gh;
+};
+
+class GeoHierarchySubSetCreator: public interface::GeoHierarchySubSetCreator {
 private:
 	typedef std::vector<uint32_t> PointerContainer;
 	
@@ -62,11 +84,9 @@ public:
 	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
 	template<typename TFilter>
 	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter);
-	~GeoHierarchySubSetCreator();
-	SubSet::Node * subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
+	virtual ~GeoHierarchySubSetCreator();
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
 };
-
-//This is broken! If a parent is remove from the set of parents, then the parents of that parent need to be considered
 
 template<typename TFilter>
 GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter)
@@ -308,23 +328,21 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 
 }//end namespace detail
 
-class GeoHierarchySubSetCreator {
-private:
-	RCPtrWrapper<detail::GeoHierarchySubSetCreator> m_ghs;
+class GeoHierarchySubSetCreator final {
 public:
-	GeoHierarchySubSetCreator() {}
+	enum Type {T_PASS_THROUGH, T_IN_MEMORY};
+private:
+	RCPtrWrapper<interface::GeoHierarchySubSetCreator> m_ghs;
+public:
+	GeoHierarchySubSetCreator();
 	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
 	template<typename TFilter>
 	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter) :
 	m_ghs(new detail::GeoHierarchySubSetCreator(gh, filter))
 	{}
-	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh) : 
-	m_ghs(new detail::GeoHierarchySubSetCreator(gh))
-	{}
-	~GeoHierarchySubSetCreator() {}
-	inline sserialize::Static::spatial::GeoHierarchy::SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const {
-		return sserialize::Static::spatial::GeoHierarchy::SubSet(m_ghs->subSet(cqr, sparse), cqr, sparse);
-	}
+	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, Type t = T_IN_MEMORY);
+	~GeoHierarchySubSetCreator();
+	sserialize::Static::spatial::GeoHierarchy::SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
 };
 
 

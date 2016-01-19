@@ -4,6 +4,15 @@ namespace sserialize {
 namespace spatial {
 namespace detail {
 
+PassThroughGeoHierarchySubSetCreator::PassThroughGeoHierarchySubSetCreator(const Static::spatial::GeoHierarchy& gh) :
+m_gh(gh)
+{}
+
+PassThroughGeoHierarchySubSetCreator::~PassThroughGeoHierarchySubSetCreator() {}
+
+interface::GeoHierarchySubSetCreator::SubSet PassThroughGeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
+	return m_gh.subSet(cqr, sparse);
+}
 
 GeoHierarchySubSetCreator::TempRegionInfos::TempRegionInfos(const sserialize::Static::spatial::GeoHierarchy & gh) :
 regionDesc(gh.regionSize())
@@ -41,7 +50,7 @@ GeoHierarchySubSetCreator(gh, [](uint32_t) { return true; })
 
 GeoHierarchySubSetCreator::~GeoHierarchySubSetCreator() {}
 
-sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
+sserialize::Static::spatial::GeoHierarchy::SubSet
 GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > m_cellDesc.size()*0.5 || sparse) {
@@ -57,7 +66,7 @@ GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool s
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
 		rootNode = createSubSet(cqr, nodes);
 	}
-	return rootNode;
+	return SubSet(rootNode, cqr, sparse);
 }
 
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
@@ -134,4 +143,27 @@ GeoHierarchySubSetCreator::parentsEnd(uint32_t rid) const {
 
 
 
-}}}//end namespace
+}//end namespace detail
+
+GeoHierarchySubSetCreator::GeoHierarchySubSetCreator() {}
+
+GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, Type t) {
+	switch(t) {
+	case T_IN_MEMORY:
+		m_ghs.reset(new detail::GeoHierarchySubSetCreator(gh) );
+		break;
+	case T_PASS_THROUGH:
+		m_ghs.reset(new detail::PassThroughGeoHierarchySubSetCreator(gh) );
+		break;
+	default:
+		throw sserialize::TypeMissMatchException("GeoHierarchySubSetCreator");
+		break;
+	};
+}
+GeoHierarchySubSetCreator::~GeoHierarchySubSetCreator() {}
+
+sserialize::Static::spatial::GeoHierarchy::SubSet GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult & cqr, bool sparse) const {
+	return m_ghs->subSet(cqr, sparse);
+}
+
+}}//end namespace sserialize::spatial
