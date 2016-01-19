@@ -46,8 +46,6 @@ double crossTrackDistance(double lat0, double lon0, double lat1, double lon1, do
 CrossTrackDistanceCalculator::CrossTrackDistanceCalculator(double lat0, double lon0, double lat1, double lon1) :
 m_lat0(lat0),
 m_lon0(lon0),
-m_lat1(lat1),
-m_lon1(lon1),
 m_theta12(toRadian( bearingTo(lat0, lon0, lat1, lon1) ))
 {}
 
