@@ -154,6 +154,12 @@ public:
 	sserialize::ItemIndex topK(const NodePtr & node, uint32_t numItems) const;
 	uint32_t storeId(const NodePtr & node) const;
 	NodePtr regionByStoreId(uint32_t storeId) const;
+	///Get a path to the first region where the result set branches into different regions
+	///@param fraction path ends if less than @fraction elements are within the next region
+	///@param globalFraction calculate fraction relative to all results or relative to the local region
+	///@param out : operator()(const NodePtr & node);
+	template<typename TOutputIterator>
+	void pathToBranch(TOutputIterator out, double fraction = 0.95, bool globalFraction = true);
 };
 
 class FlatSubSet {
@@ -202,6 +208,37 @@ void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPo
 		insertCellPositions(node->at(i), idcsPos);
 	}
 }
+
+template<typename TOutputIterator>
+void SubSet::pathToBranch(TOutputIterator out, double fraction, bool globalFraction) {
+	typedef Node::iterator NodeIterator;
+	NodePtr rPtr = root();
+	double referenceItemCount = rPtr->maxItemsSize();
+	uint32_t curMax = 0;
+	while (rPtr->size()) {
+		curMax = 0;
+		NodeIterator curMaxChild = rPtr->begin();
+		for(NodeIterator it(rPtr->begin()), end(rPtr->end()); it != end; ++it) {
+			uint32_t tmp = (*it)->maxItemsSize();
+			if ( tmp > curMax ) {
+				curMax = tmp;
+				curMaxChild = it;
+			}
+		}
+		if ((double)(curMax)/referenceItemCount >= fraction) {
+			rPtr = *curMaxChild;
+			*out = rPtr;
+			++out;
+			if (!globalFraction) {
+				referenceItemCount = curMax;
+			}
+		}
+		else {
+			break;
+		}
+	}
+}
+
  
 class GeoHierarchy: public RefCountObject {
 public:
