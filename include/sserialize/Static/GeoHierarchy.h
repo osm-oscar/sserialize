@@ -159,7 +159,7 @@ public:
 	///@param globalFraction calculate fraction relative to all results or relative to the local region
 	///@param out : operator()(const NodePtr & node);
 	template<typename TOutputIterator>
-	void pathToBranch(TOutputIterator out, double fraction = 0.95, bool globalFraction = true);
+	void pathToBranch(TOutputIterator out, double fraction = 0.95, bool globalFraction = true) const;
 };
 
 class FlatSubSet {
@@ -210,7 +210,7 @@ void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPo
 }
 
 template<typename TOutputIterator>
-void SubSet::pathToBranch(TOutputIterator out, double fraction, bool globalFraction) {
+void SubSet::pathToBranch(TOutputIterator out, double fraction, bool globalFraction) const {
 	typedef Node::iterator NodeIterator;
 	NodePtr rPtr = root();
 	double referenceItemCount = rPtr->maxItemsSize();
