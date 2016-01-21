@@ -59,13 +59,32 @@ bool GeoPoint::valid() const {
 	return -90.0 <= lat() && lat() <= 90.0 && -180.0 <= lon() && lon() <= 180.0;
 }
 
-void GeoPoint::normalize() {
-	if (lat() < -90.0 || lat() > 90.0)
-		lat() = fmod(lat()+90.0, 180.0)-90.0;
-	if (lon() < -180.0 || lon() > 180.0) {
-		lon() = fmod(lon()+180.0, 360.0)-180.0;
+void GeoPoint::normalize(sserialize::spatial::GeoPoint::NormalizationType nt) {
+	if (nt == NT_CLIP) {
+		if (lat() > 90.0) {
+			lat() = 90.0;
+		}
+		if (lat() < -90.0) {
+			lat() = -90.0;
+		}
+		if (lon() > 180.0) {
+			lon() = 180.0;
+		}
+		if (lon() < -180.0) {
+			lon() = -180.0;
+		}
+	}
+	else {
+		if (lat() < -90.0 || lat() > 90.0) {
+			lat() = fmod(lat()+90.0, 180.0)-90.0;
+		}
+		if (lon() < -180.0 || lon() > 180.0) {
+			lon() = fmod(lon()+180.0, 360.0)-180.0;
+		}
 	}
 }
+
+
 
 GeoRect GeoPoint::boundary() const {
 	return GeoRect(lat(), lat(), lon(), lon());

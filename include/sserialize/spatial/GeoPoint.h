@@ -10,6 +10,8 @@ namespace spatial {
 
 
 class GeoPoint: public GeoShape {
+public:
+	typedef enum NormalizationType {NT_CLIP, NT_WRAP};
 private:
 	double m_lat;
 	double m_lon;
@@ -28,7 +30,7 @@ public:
 	operator std::pair<double, double>() const { return std::pair<double, double>(m_lat, m_lon);}
 	
 	bool valid() const;
-	void normalize();
+	void normalize(NormalizationType nt = NT_WRAP);
 	inline const double & lat() const { return m_lat; }
 	inline const double & lon() const {return m_lon;}
 	///lat is betweern -90 and 90 degrees
