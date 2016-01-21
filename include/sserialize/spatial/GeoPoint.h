@@ -11,7 +11,7 @@ namespace spatial {
 
 class GeoPoint: public GeoShape {
 public:
-	typedef enum NormalizationType {NT_CLIP, NT_WRAP};
+	typedef enum {NT_CLIP, NT_WRAP} NormalizationType;
 private:
 	double m_lat;
 	double m_lon;
