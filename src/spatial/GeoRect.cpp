@@ -77,6 +77,15 @@ double & GeoRect::maxLat() { return m_lat[1]; }
 double & GeoRect::minLon() { return m_lon[0]; }
 double & GeoRect::maxLon() { return m_lon[1]; }
 
+
+double GeoRect::midLat() const {
+	return minLat()+(maxLat()-minLat())/2.0;
+}
+
+double GeoRect::midLon() const {
+	return minLon()+(maxLon()-minLon())/2.0;
+}
+
 ///TODO:check how fast it would be to calculate the real length
 double GeoRect::length() const {
 	return 2*(m_lat[0]-m_lat[1])+2*(m_lon[0]-m_lon[1]);

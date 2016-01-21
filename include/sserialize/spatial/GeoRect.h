@@ -34,6 +34,9 @@ public:
 	double minLon() const;
 	double maxLon() const;
 	
+	double midLat() const;
+	double midLon() const;
+	
 	double & minLat();
 	double & maxLat();
 	
