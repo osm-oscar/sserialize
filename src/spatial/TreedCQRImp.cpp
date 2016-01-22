@@ -149,11 +149,14 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 }
 
 
-TreedCQRImp::TreedCQRImp() {}
+TreedCQRImp::TreedCQRImp() :
+m_hasFetchedNodes(false)
+{}
 
 TreedCQRImp::TreedCQRImp(const ItemIndex & fmIdx, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
 m_gh(gh),
-m_idxStore(idxStore)
+m_idxStore(idxStore),
+m_hasFetchedNodes(false)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend());
 
@@ -166,7 +169,8 @@ m_idxStore(idxStore)
 
 TreedCQRImp::TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
 m_gh(gh),
-m_idxStore(idxStore)
+m_idxStore(idxStore),
+m_hasFetchedNodes(false)
 {
 	uint32_t totalSize = 1;
 	m_desc.reserve(totalSize);
@@ -175,7 +179,8 @@ m_idxStore(idxStore)
 
 TreedCQRImp::TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
 m_gh(gh),
-m_idxStore(idxStore)
+m_idxStore(idxStore),
+m_hasFetchedNodes(false)
 {}
 
 TreedCQRImp::~TreedCQRImp() {}

@@ -76,6 +76,7 @@ private:
 	std::vector<CellDesc> m_desc;
 	std::vector<FlatNode> m_trees;
 	std::vector<ItemIndex> m_fetchedIdx;
+	bool m_hasFetchedNodes;
 private:
 	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	///flattens a cell tree, @pmIdxId set iff frt == FT_PM, @idx set iff frt == FT_FETCHED
@@ -111,7 +112,8 @@ template<typename T_PMITEMSPTR_IT>
 TreedCQRImp::TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 				T_PMITEMSPTR_IT pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
 m_gh(gh),
-m_idxStore(idxStore)
+m_idxStore(idxStore),
+m_hasFetchedNodes(false)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
 
