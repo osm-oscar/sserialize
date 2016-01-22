@@ -62,8 +62,8 @@ private:
 		inline bool hasTree() const { return treeSize(); }
 		uint64_t fullMatch:1;
 		uint64_t hasFetchedNode:1;
-		uint64_t cellId:30;
-		uint64_t pmIdxId:32;
+		uint64_t cellId:28;
+		uint64_t pmIdxId:34;
 		//by definition: if this is 0xFFFFFFFF then the start is invalid
 		uint32_t treeBegin;
 		uint32_t treeEnd; //this is needed for fast copying of trees (and alignment gives it for free)
