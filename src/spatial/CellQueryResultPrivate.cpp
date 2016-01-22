@@ -44,7 +44,8 @@ m_idxStore(idxStore)
 	}
 	
 	m_desc.shrink_to_fit();
-	::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
+	//return should stay the same since gthis is just a shrink
+	m_idx = (IndexDesc*) ::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
 	assert(selfCheck());
 }
