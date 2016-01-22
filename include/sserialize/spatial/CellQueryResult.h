@@ -37,6 +37,7 @@ public:
 	uint32_t idxSize() const;
 	//This is only correct for (fullMatch() || !fetched())
 	uint32_t idxId() const;
+	inline const sserialize::ItemIndex & idx() const { return this->operator*(); }
 	bool fetched() const;
 	///raw data in the format (cellId|fetched|fullMatch) least-significant bit to the right
 	uint32_t rawDesc() const;
