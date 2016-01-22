@@ -183,6 +183,68 @@ m_idxStore(idxStore),
 m_hasFetchedNodes(false)
 {}
 
+
+TreedCQRImp::TreedCQRImp(
+	const sserialize::ItemIndex & fmIdx,
+	const sserialize::ItemIndex & pmIdx,
+	std::vector<sserialize::ItemIndex>::const_iterator pmItemsIt,
+	const GeoHierarchy & gh,
+	const ItemIndexStore & idxStore) :
+m_gh(gh),
+m_idxStore(idxStore),
+m_hasFetchedNodes(pmIdx.size())
+{
+	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
+
+	uint32_t totalSize = fmIdx.size() + pmIdx.size();
+	m_desc.reserve(totalSize);
+
+	for(; fmIt != fmEnd && pmIt != pmEnd;) {
+		uint32_t fCellId = *fmIt;
+		uint32_t pCellId = *pmIt;
+		if(fCellId <= pCellId) {
+			m_desc.emplace_back(1, fCellId, 0);
+			++fmIt;
+		}
+		else {
+			m_desc.emplace_back(0, pCellId, 0);
+			CellDesc & cd = m_desc.back();
+			cd.hasFetchedNode = 1;
+			
+			//create the node
+			cd.treeBegin = m_trees.size();
+			m_trees.push_back(FlatNode::T_FETCHED_LEAF);
+			cd.treeEnd = m_trees.size();
+			
+			//add the index
+			m_trees.back().fetchedNode.internalIdxId = m_fetchedIdx.size();
+			m_fetchedIdx.push_back(*pmItemsIt);
+			
+			++pmIt;
+			++pmItemsIt;
+		}
+	}
+	for(; fmIt != fmEnd; ++fmIt) {
+		m_desc.emplace_back(1, *fmIt, 0);
+	}
+	
+	for(; pmIt != pmEnd; ++pmIt, ++pmItemsIt) {
+		m_desc.emplace_back(0, *pmIt, 0);
+		CellDesc & cd = m_desc.back();
+		cd.hasFetchedNode = 1;
+		
+		//create the node
+		cd.treeBegin = m_trees.size();
+		m_trees.push_back(FlatNode::T_FETCHED_LEAF);
+		cd.treeEnd = m_trees.size();
+		
+		//add the index
+		m_trees.back().fetchedNode.internalIdxId = m_fetchedIdx.size();
+		m_fetchedIdx.push_back(*pmItemsIt);
+	}
+}
+
+
 TreedCQRImp::~TreedCQRImp() {}
 
 TreedCQRImp::CellDesc::CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId) :

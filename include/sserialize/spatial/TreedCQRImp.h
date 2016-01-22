@@ -92,6 +92,8 @@ public:
 	template<typename T_PMITEMSPTR_IT>
 	TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
+					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~TreedCQRImp();
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
