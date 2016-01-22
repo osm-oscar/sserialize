@@ -252,6 +252,27 @@ treeBegin(notree),
 treeEnd(notree)
 {
 	this->fullMatch = fullMatch;
+	this->hasFetchedNode = 0;
+	this->cellId = cellId;
+	this->pmIdxId = pmIdxId;
+}
+
+TreedCQRImp::CellDesc::CellDesc(uint32_t fullMatch, uint32_t hasFetchedNode, uint32_t cellId, uint32_t pmIdxId) :
+treeBegin(notree),
+treeEnd(notree)
+{
+	this->fullMatch = fullMatch;
+	this->hasFetchedNode = hasFetchedNode;
+	this->cellId = cellId;
+	this->pmIdxId = pmIdxId;
+}
+
+TreedCQRImp::CellDesc::CellDesc(uint32_t fullMatch, uint32_t hasFetchedNode, uint32_t cellId, uint32_t pmIdxId, uint32_t treeBegin, uint32_t treeEnd) :
+treeBegin(treeBegin),
+treeEnd(treeEnd)
+{
+	this->fullMatch = fullMatch;
+	this->hasFetchedNode = hasFetchedNode;
 	this->cellId = cellId;
 	this->pmIdxId = pmIdxId;
 }
@@ -261,17 +282,9 @@ treeBegin(other.treeBegin),
 treeEnd(other.treeEnd)
 {
 	fullMatch = other.fullMatch;
+	hasFetchedNode = other.hasFetchedNode;
 	pmIdxId = other.pmIdxId;
 	cellId = other.cellId;
-}
-
-TreedCQRImp::CellDesc::CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId, uint32_t treeBegin, uint32_t treeEnd) :
-treeBegin(treeBegin),
-treeEnd(treeEnd)
-{
-	this->fullMatch = fullMatch;
-	this->cellId = cellId;
-	this->pmIdxId = pmIdxId;
 }
 
 TreedCQRImp::CellDesc::~CellDesc() {}
@@ -286,6 +299,37 @@ TreedCQRImp::CellDesc& TreedCQRImp::CellDesc::operator=(const TreedCQRImp::CellD
 	return *this;
 }
 
+
+void TreedCQRImp::copyTree(const TreedCQRImp& src, const CellDesc & cd, TreedCQRImp& dest) {
+	uint32_t dTreeBegin = dest.m_trees.size();
+	dest.m_trees.insert(dest.m_trees.end(), src.m_trees.begin()+cd.treeBegin, src.m_trees.begin()+cd.treeEnd);
+	if (cd.hasFetchedNode) { //adjust internalIdxId and copy index
+		for(auto it(dest.m_trees.begin()+dTreeBegin), end(dest.m_trees.end()); it != end; ++it) {
+			FlatNode & n = *it;
+			if (n.common.type == FlatNode::T_FETCHED_LEAF) {
+				uint64_t srcInternalIdxId = n.fetchedNode.internalIdxId;
+				n.fetchedNode.internalIdxId = dest.m_fetchedIdx.size();
+				dest.m_fetchedIdx.push_back(src.m_fetchedIdx.at(srcInternalIdxId));
+			}
+		}
+		dest.m_hasFetchedNodes = true;
+	}
+}
+
+void TreedCQRImp::copyFetchedIndices(const TreedCQRImp& src, TreedCQRImp & dest, TreedCQRImp::CellDesc & destCD) {
+	if (!destCD.hasFetchedNode) {
+		return;
+	}
+	for(auto it(dest.m_trees.begin()+destCD.treeBegin), end(dest.m_trees.begin()+destCD.treeEnd); it != end; ++it) {
+		FlatNode & n = *it;
+		if (n.common.type == FlatNode::T_FETCHED_LEAF) {
+			uint64_t srcInternalIdxId = n.fetchedNode.internalIdxId;
+			n.fetchedNode.internalIdxId = dest.m_fetchedIdx.size();
+			dest.m_fetchedIdx.push_back(src.m_fetchedIdx.at(srcInternalIdxId));
+		}
+	}
+	dest.m_hasFetchedNodes = true;
+}
 
 TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 	const TreedCQRImp & o = *other;
@@ -324,7 +368,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 						
-						r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+						r.m_desc.emplace_back(0, 0, myCellId, 0, treeBegin, r.m_trees.size());
 					}
 					break;
 				case 0x2: //my full
@@ -341,17 +385,18 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 				};
 			}
 			else { //at least one has a tree
+				uint64_t hasFetchedNode = myCD.hasFetchedNode | oCD.hasFetchedNode;
 				//if any of the two is a full match then we only need to copy the other tree TODO:take care of indexes
 				if (myCD.fullMatch) { //copy tree from other
-					r.m_desc.emplace_back(0, myCellId, 0);
+					r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0);
 					r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
+					copyTree(o, oCD, r);
 					r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 				}
 				else if (oCD.fullMatch) { //copy tree from this
-					r.m_desc.emplace_back(0, oCellId, 0);
+					r.m_desc.emplace_back(0, hasFetchedNode, oCellId, 0);
 					r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
+					copyTree(*this, myCD, r);
 					r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 				}
 				else { //this means at least one has a tree and the other is partial or has a tree as well
@@ -360,7 +405,7 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 					r.m_trees.emplace_back(FlatNode::T_INTERSECT);
 					
 					if (myCD.hasTree()) {
-						r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+						copyTree(*this, myCD, r);
 						r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 					}
 					else {
@@ -371,21 +416,20 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 					}
 				
 					if (oCD.hasTree()) {
-						r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
+						copyTree(o, oCD, r);
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
 						r.m_trees.back().pmNode.cellId = oCellId;
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 					}
-					r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+					r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0, treeBegin, r.m_trees.size());
 				}
 			}
 			++myI;
 			++oI;
 		}
 	}
-	//unite the rest
 
 	SSERIALIZE_CHEAP_ASSERT(r.m_desc.size() <= std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
@@ -405,7 +449,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			r.m_desc.push_back(myCD);
 			if (myCD.hasTree()) {//adjust tree info
 				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
+				copyTree(*this, myCD, r);
 				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++myI;
@@ -415,7 +459,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 			r.m_desc.push_back(oCD);
 			if (oCD.hasTree()) {//adjust tree info
 				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
+				copyTree(o, oCD, r);
 				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++oI;
@@ -426,11 +470,12 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				r.m_desc.emplace_back(1, myCellId, 0);
 			}
 			else { //none is full match
+				uint64_t hasFetchedNode = myCD.hasFetchedNode | oCD.hasFetchedNode;
 				std::size_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_UNITE);
 				
 				if (myCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+					copyTree(*this, myCD, r);
 					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 				}
 				else {
@@ -441,14 +486,14 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				}
 			
 				if (oCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
+					copyTree(o, oCD, r);
 				}
 				else {
 					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
 					r.m_trees.back().pmNode.cellId = oCellId;
 					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 				}
-				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+				r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0, treeBegin, r.m_trees.size());
 			}
 			++myI;
 			++oI;
@@ -475,6 +520,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				if (cd.hasTree()) {
 					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
 					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					copyFetchedIndices(*this, r, cd);
 				}
 			}
 		}
@@ -498,6 +544,7 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				if (cd.hasTree()) {
 					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
 					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					copyFetchedIndices(o, r, cd);
 				}
 			}
 		}
@@ -520,7 +567,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 			r.m_desc.push_back(myCD);
 			if (myCD.hasTree()) {//adjust tree info
 				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
+				copyTree(*this, myCD, r);
 				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++myI;
@@ -534,9 +581,10 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 			if (!oCD.fullMatch) {//we definetly have to create a tree, no matter what
 				std::size_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_DIFF);
+				uint64_t hasFetchedNode = myCD.hasFetchedNode | oCD.hasFetchedNode;
 				
 				if (myCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+					copyTree(*this, myCD, r);
 					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 				}
 				else {
@@ -553,7 +601,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 				}
 			
 				if (oCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
+					copyTree(o, oCD, r);
 				}
 				else {
 					if (oCD.fullMatch) {
@@ -566,7 +614,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 					}
 				}
-				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+				r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0, treeBegin, r.m_trees.size());
 			}
 			++myI;
 			++oI;
@@ -592,6 +640,7 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 				if (cd.hasTree()) {
 					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
 					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					copyFetchedIndices(*this, r, cd);
 				}
 			}
 		}
@@ -615,7 +664,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 			r.m_desc.push_back(myCD);
 			if (myCD.hasTree()) {//adjust tree info
 				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), m_trees.cbegin()+myCD.treeBegin, m_trees.cbegin()+myCD.treeEnd);
+				copyTree(*this, myCD, r);
 				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++myI;
@@ -625,7 +674,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 			r.m_desc.push_back(oCD);
 			if (oCD.hasTree()) {//adjust tree info
 				r.m_desc.back().treeBegin = (uint32_t)r.m_trees.size();
-				r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin()+oCD.treeBegin, o.m_trees.cbegin()+oCD.treeEnd);
+				copyTree(o, oCD, r);
 				r.m_desc.back().treeEnd = (uint32_t)r.m_trees.size();
 			}
 			++oI;
@@ -635,9 +684,10 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 			if (!myCD.fullMatch || !oCD.fullMatch) {//we definetly have to create a tree, no matter what
 				std::size_t treeBegin = r.m_trees.size();
 				r.m_trees.emplace_back(FlatNode::T_SYM_DIFF);
+				uint64_t hasFetchedNode = myCD.hasFetchedNode | oCD.hasFetchedNode;
 				
 				if (myCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
+					copyTree(*this, myCD, r);
 					r.m_trees[treeBegin].opNode.childB = 1+myCD.treeSize();
 				}
 				else {
@@ -654,7 +704,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 				}
 			
 				if (oCD.hasTree()) {
-					r.m_trees.insert(r.m_trees.end(), o.m_trees.cbegin() + oCD.treeBegin, o.m_trees.cbegin() + oCD.treeEnd);
+					copyTree(o, oCD, r);
 				}
 				else {
 					if (oCD.fullMatch) {
@@ -667,14 +717,13 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 					}
 				}
-				r.m_desc.emplace_back(0, myCellId, 0, treeBegin, r.m_trees.size());
+				r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0, treeBegin, r.m_trees.size());
 			}
 			++myI;
 			++oI;
 		}
 	}
 	//unite the rest
-	
 	if (myI < myEnd) {
 		std::size_t rDescBegin = r.m_desc.size();
 		
@@ -694,6 +743,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 				if (cd.hasTree()) {
 					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
 					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					copyFetchedIndices(*this, r, cd);
 				}
 			}
 		}
@@ -717,6 +767,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 				if (cd.hasTree()) {
 					cd.treeBegin = (uint32_t)((int64_t)(cd.treeBegin) - treeOffsetCorrection);
 					cd.treeEnd = (uint32_t)((int64_t)(cd.treeEnd) - treeOffsetCorrection);
+					copyFetchedIndices(o, r, cd);
 				}
 			}
 		}
@@ -734,10 +785,10 @@ TreedCQRImp* TreedCQRImp::allToFull() const {
 	
 	for(std::size_t myI(0), myEnd(m_desc.size()); myI < myEnd; ++myI) {
 		const CellDesc & myCD = m_desc[myI];
-		std::size_t treeBegin = r.m_trees.size();
 		if (myCD.hasTree()) {
-			r.m_trees.insert(r.m_trees.end(), m_trees.cbegin() + myCD.treeBegin, m_trees.cbegin() + myCD.treeEnd);
-			r.m_desc.emplace_back(0, myCD.cellId, 0, treeBegin, r.m_trees.size());
+			std::size_t treeBegin = r.m_trees.size();
+			copyTree(*this, myCD, r);
+			r.m_desc.emplace_back(0, myCD.hasFetchedNode, myCD.cellId, 0, treeBegin, r.m_trees.size());
 		}
 		else {
 			r.m_desc.emplace_back(1, myCD.cellId, 0);

@@ -11,9 +11,6 @@ namespace detail {
 namespace TreedCellQueryResult  {
 
 	//TODO: Add ability to stop flattening (i.e. by call back function, could also provide a progress bar)
-	//If we do this, then we need to make sure that we copy the indexes as well when we copy a tree
-	//realy? only if we allow set operations between partialy flattened CQR
-	//Need?: if there are too many cells that might get pruned away beforehand by the tree operations then we could periodically flatten it
 
 	union FlatNode {
 		typedef enum {T_INVALID=0, T_PM_LEAF=1, T_FM_LEAF=2, T_FETCHED_LEAF=3, T_TO_FM=4, T_INTERSECT=5, T_UNITE=6, T_DIFF=7, T_SYM_DIFF=8} Type;
@@ -53,7 +50,8 @@ public:
 private:
 	struct CellDesc final {
 		static constexpr uint32_t notree = 0xFFFFFFFF;
-		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId, uint32_t treeBegin, uint32_t treeEnd);
+		CellDesc(uint32_t fullMatch, uint32_t hasFetchedNode, uint32_t cellId, uint32_t pmIdxId, uint32_t treeBegin, uint32_t treeEnd);
+		CellDesc(uint32_t fullMatch, uint32_t hasFetchedNode, uint32_t cellId, uint32_t pmIdxId);
 		CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId);
 		CellDesc(const CellDesc & other);
 		~CellDesc();
@@ -81,6 +79,12 @@ private:
 	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	///flattens a cell tree, @pmIdxId set iff frt == FT_PM, @idx set iff frt == FT_FETCHED
 	void flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const;
+	///copy the tree of the cell at cellPos while taking care of indexes
+	///also sets the appropriate m_hasFetchedNodes for dest
+	static void copyTree(const TreedCQRImp & src, const CellDesc & cd, TreedCQRImp & dest);
+	///copies fetched index and adjusts the tree index pointers accordingly
+	///the internal index pointers point to indexes in src before and to indexes in dest afterwards
+	static void copyFetchedIndices(const TreedCQRImp& src, TreedCQRImp & dest, CellDesc& destCD);
 public:
 	TreedCQRImp();
 	TreedCQRImp(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
