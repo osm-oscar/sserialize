@@ -9,6 +9,43 @@ CellQueryResult::CellQueryResult() :
 m_idx(0)
 {}
 
+CellQueryResult::CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
+	std::vector<sserialize::ItemIndex>::const_iterator pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_gh(gh),
+m_idxStore(idxStore)
+{
+	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
+
+	uint32_t totalSize = fmIdx.size() + pmIdx.size();
+	m_desc.reserve(totalSize);
+	m_idx = (IndexDesc*) malloc(totalSize * sizeof(IndexDesc));
+	uint32_t pos = 0;
+	for(; fmIt != fmEnd && pmIt != pmEnd; ++pos) {
+		uint32_t fCellId = *fmIt;
+		uint32_t pCellId = *pmIt;
+		if(fCellId <= pCellId) {
+			m_desc.emplace_back(1, 0, fCellId);
+			++fmIt;
+		}
+		else {
+			m_desc.emplace_back(0, 1, pCellId);
+			this->uncheckedSet(pos,*pmItemsIt);
+			++pmIt;
+			++pmItemsIt;
+		}
+	}
+	for(; fmIt != fmEnd; ++fmIt) {
+		m_desc.emplace_back(1, 0, *fmIt);
+	}
+	
+	for(; pmIt != pmEnd; ++pos, ++pmIt, ++pmItemsIt) {
+		m_desc.emplace_back(0, 1, *pmIt);
+		this->uncheckedSet(pos, *pmItemsIt);
+	}
+	
+	assert(selfCheck());
+}
+
 CellQueryResult::CellQueryResult(const ItemIndex & fmIdx, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
 m_gh(gh),
 m_idxStore(idxStore)

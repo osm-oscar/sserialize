@@ -81,6 +81,10 @@ public:
 					const ItemIndex & partialMatches,
 					const std::vector<uint32_t>::const_iterator & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	CellQueryResult(const ItemIndex & fullMatches,
+					const ItemIndex & partialMatches,
+					const std::vector<sserialize::ItemIndex>::const_iterator & partialMatchesIdx,
+					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);

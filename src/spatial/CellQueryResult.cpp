@@ -98,6 +98,10 @@ CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const
 m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
 {}
 
+CellQueryResult::CellQueryResult(const ItemIndex & fullMatches, const ItemIndex & partialMatches, const std::vector<sserialize::ItemIndex>::const_iterator & partialMatchesIdx, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesIdx, gh, idxStore))
+{}
+
 CellQueryResult::~CellQueryResult() {}
 
 CellQueryResult::CellQueryResult(const CellQueryResult & other) : m_priv(other.m_priv) {}

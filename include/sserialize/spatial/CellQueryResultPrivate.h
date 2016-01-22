@@ -55,6 +55,8 @@ public:
 	template<typename T_PMITEMSPTR_IT>
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
+					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~CellQueryResult();
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
 	uint32_t idxSize(uint32_t pos) const;
