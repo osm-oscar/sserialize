@@ -89,8 +89,6 @@ public:
 	TreedCQRImp();
 	TreedCQRImp(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId);
-	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
-	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
 	
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>
@@ -98,7 +96,12 @@ public:
 					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCQRImp(const sserialize::CellQueryResult & cqr);
+	
 	virtual ~TreedCQRImp();
+	
+	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
+	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline bool hasTree(uint32_t pos) const { return m_desc[pos].hasTree();}

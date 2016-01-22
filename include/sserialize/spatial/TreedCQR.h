@@ -41,6 +41,11 @@ public:
 					const ItemIndex & partialMatches,
 					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCellQueryResult(const ItemIndex & fullMatches,
+					const ItemIndex & partialMatches,
+					const std::vector<sserialize::ItemIndex>::const_iterator partialMatchesItemsPtrBegin,
+					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	explicit TreedCellQueryResult(const sserialize::CellQueryResult & cqr);
 	virtual ~TreedCellQueryResult();
 	TreedCellQueryResult(const TreedCellQueryResult & other);
 	TreedCellQueryResult & operator=(const TreedCellQueryResult & other);
@@ -57,6 +62,8 @@ public:
 	TreedCellQueryResult operator-(const TreedCellQueryResult & other) const;
 	TreedCellQueryResult operator^(const TreedCellQueryResult & other) const;
 	TreedCellQueryResult allToFull() const;
+	
+	explicit inline operator sserialize::CellQueryResult() const { return toCQR(); }
 	
 	sserialize::CellQueryResult toCQR() const;
 	sserialize::CellQueryResult toCQR(std::function<bool(std::size_t)> progressFunction) const;

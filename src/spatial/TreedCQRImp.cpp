@@ -244,7 +244,34 @@ m_hasFetchedNodes(pmIdx.size())
 	}
 }
 
-
+TreedCQRImp::TreedCQRImp(const sserialize::CellQueryResult & cqr) :
+m_gh(cqr.geoHierarchy()),
+m_idxStore(cqr.idxStore()),
+m_hasFetchedNodes(false)
+{
+	for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
+		if (it.fetched()) {
+			m_desc.emplace_back(0, it.cellId(), 0);
+			CellDesc & cd = m_desc.back();
+			cd.hasFetchedNode = 1;
+			
+			//create the node
+			cd.treeBegin = m_trees.size();
+			m_trees.push_back(FlatNode::T_FETCHED_LEAF);
+			cd.treeEnd = m_trees.size();
+			
+			//add the index
+			m_trees.back().fetchedNode.internalIdxId = m_fetchedIdx.size();
+			m_fetchedIdx.push_back(it.idx());
+		}
+		else if (it.fullMatch()) {
+			m_desc.emplace_back(1, it.cellId(), 0);
+		}
+		else {
+			m_desc.emplace_back(0, it.cellId(), it.idxId());
+		}
+	}
+}
 TreedCQRImp::~TreedCQRImp() {}
 
 TreedCQRImp::CellDesc::CellDesc(uint32_t fullMatch, uint32_t cellId, uint32_t pmIdxId) :

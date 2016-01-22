@@ -28,6 +28,14 @@ TreedCellQueryResult::TreedCellQueryResult(const sserialize::ItemIndex& fullMatc
 m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
 {}
 
+TreedCellQueryResult::TreedCellQueryResult(const ItemIndex & fullMatches, const ItemIndex & partialMatches, const std::vector<sserialize::ItemIndex>::const_iterator partialMatchesItemsPtrBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
+{}
+
+TreedCellQueryResult::TreedCellQueryResult(const CellQueryResult& cqr) :
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(cqr))
+{}
+
 TreedCellQueryResult::~TreedCellQueryResult() {}
 
 TreedCellQueryResult::TreedCellQueryResult(const TreedCellQueryResult & other) : m_priv(other.m_priv) {}
