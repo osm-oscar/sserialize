@@ -111,6 +111,9 @@ m_idxStore(idxStore)
 		m_desc.emplace_back(0, 0, *pmIt);
 		idxPtr->idxPtr = (sserialize::Static::ItemIndexStore::IdType)*pmItemsIt;
 	}
+	
+	m_desc.shrink_to_fit();
+	::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
 	assert(selfCheck());
 }
