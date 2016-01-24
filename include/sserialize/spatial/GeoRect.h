@@ -43,7 +43,7 @@ public:
 	double & minLon();
 	double & maxLon();
 	
-	double diagonalLength() const;
+	double diagInM() const;
 	
 	double length() const;
 	

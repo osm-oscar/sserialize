@@ -1,9 +1,10 @@
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/spatial/GeoPoint.h>
+#include <sserialize/algorithm/utilmath.h>
+#include <sserialize/spatial/LatLonCalculations.h>
 #include <sstream>
 #include <algorithm>
-#include <sserialize/algorithm/utilmath.h>
 
 namespace sserialize {
 namespace spatial {
@@ -86,9 +87,15 @@ double GeoRect::midLon() const {
 	return minLon()+(maxLon()-minLon())/2.0;
 }
 
-///TODO:check how fast it would be to calculate the real length
 double GeoRect::length() const {
 	return 2*(m_lat[0]-m_lat[1])+2*(m_lon[0]-m_lon[1]);
+}
+
+double GeoRect::diagInM() const {
+	if (minLat() == maxLat() && minLon() == maxLon()) {
+		return 0.0;
+	}
+	return distanceTo(minLat(), minLon(), maxLat(), maxLon());
 }
 
 bool GeoRect::overlap(const GeoRect & other) const {
