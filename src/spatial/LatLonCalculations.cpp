@@ -16,7 +16,64 @@ double bearingTo(double lat0, double lon0, double lat1, double lon1) {
 	double x = ::cos(ph1)* ::sin(ph2) - ::sin(ph1) * ::cos(ph2)* ::cos(deltaLambda);
 	double theta = ::atan2(y, x);
 
-	return ::fmod(toDegree(theta)+360.0, 360.0);
+	return ::fmod(toDegree(theta)+360, 360.0);
+}
+
+void destinationPoint(double latStart, double lonStart, double bearing, double distance, double& latRes, double& lonRes, double earthRadius) {
+	double delta = distance / earthRadius; // angular distance in radians
+	double theta = toRadian(bearing);
+
+	double phi1 = toRadian(latStart);
+	double lambda1 = toRadian(lonStart);
+
+	double phi2 = std::asin( std::sin(phi1)*std::cos(delta) +
+						std::cos(phi1)*std::sin(delta)*std::cos(theta) );
+	double lambda2 = lambda1 + std::atan2(std::sin(theta)*std::sin(delta)*std::cos(phi1),
+								std::cos(delta)-std::sin(phi1)*std::sin(phi2));
+
+	latRes = toDegree( phi2 );
+	lonRes = ::fmod(toDegree(lambda2)+540.0, 360)-180; // normalise to −180…+180°
+}
+
+void midPoint(double lat0, double lon0, double lat1, double lon1, double & latRes, double & lonRes) {
+	double phi1 = toRadian(lat0);
+	double lambda1 = toRadian(lon0);
+	double phi2 = toRadian(lat1);
+	double deltaLambda = toRadian(lon1-lon0);
+
+	double Bx = std::cos(phi2) * std::cos(deltaLambda);
+	double By = std::cos(phi2) * std::sin(deltaLambda);
+
+	double phi3 = std::atan2(std::sin(phi1)+std::sin(phi2),
+				std::sqrt( (std::cos(phi1)+Bx)*(std::cos(phi1)+Bx) + By*By) );
+	double lambda3 = lambda1 + std::atan2(By, std::cos(phi1) + Bx);
+
+	latRes = toDegree(phi3);
+	lonRes = ::fmod(toDegree(lambda3)+540.0, 360.0)-180.0; // normalise to −180…+180°
+}
+
+void rhumbMidPoint(double lat0, double lon0, double lat1, double lon1, double& latRes, double& lonRes) {
+	double phi1 = toRadian(lat0);
+	double lambda1 = toRadian(lon0);
+	double phi2 = toRadian(lat1);
+	double lambda2 = toRadian(lon1);
+
+	if (std::abs(lambda2-lambda1) > M_PI) {
+		lambda1 += 2*M_PI; // crossing anti-meridian
+	}
+
+	double phi3 = (phi1+phi2)/2;
+	double f1 = std::tan(M_PI/4 + phi1/2);
+	double f2 = std::tan(M_PI/4 + phi2/2);
+	double f3 = std::tan(M_PI/4 + phi3/2);
+	double lambda3 = ( (lambda2-lambda1)*std::log(f3) + lambda1*std::log(f2) - lambda2*std::log(f1) ) / std::log(f2/f1);
+
+	if (!std::isfinite(lambda3)) {
+		lambda3 = (lambda1+lambda2)/2; // parallel of latitude
+	}
+
+	latRes = toDegree(phi3);
+	lonRes = ::fmod(toDegree(lambda3)+540.0, 360)-180; // normalise to −180…+180°
 }
 
 double distanceTo(double lat0, double lon0, double lat1, double lon1, double earthRadius) {
