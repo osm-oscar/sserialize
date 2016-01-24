@@ -4,6 +4,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/Static/DenseGeoPointVector.h>
+#include <sserialize/spatial/LatLonCalculations.h>
 
 namespace sserialize {
 namespace spatial {
@@ -62,6 +63,9 @@ public:
 		destination << myBoundary();
 		return sserialize::Static::spatial::DenseGeoPointVector::append(cbegin(), cend(), destination);
 	}
+	
+	///returns the length of this way in meters
+	double length() const;
 	
 	virtual sserialize::spatial::GeoShape * copy() const { return new GeoWay(*this); }
 	virtual std::ostream & asString(std::ostream & out) const;
@@ -268,6 +272,24 @@ std::ostream & GeoWay<TPointsContainer>::asString(std::ostream & out) const {
 	}
 	out << "}]";
 	return out;
+}
+
+template<typename TPointsContainer>
+double
+GeoWay<TPointsContainer>::length() const {
+	if (size() < 2) {
+		return 0.0;
+	}
+	double len = 0.0;
+	typename TPointsContainer::const_iterator prev(cbegin());
+	typename TPointsContainer::const_iterator it(prev);
+	typename TPointsContainer::const_iterator end(cend());
+	for(++it; it != end; ++it, ++prev) {
+		typename TPointsContainer::const_reference gp1 = *prev;
+		typename TPointsContainer::const_reference gp2 = *it;
+		len += std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) );
+	}
+	return len;
 }
 
 template<typename TPointsContainer>
