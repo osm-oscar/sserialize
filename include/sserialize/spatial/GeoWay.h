@@ -45,6 +45,8 @@ public:
 	inline TPointsContainer & points() { return m_points; }
 	inline const TPointsContainer & points() const { return m_points; }
 	inline const_iterator cbegin() const { return points().cbegin(); }
+	inline const_iterator begin() const { return points().begin(); }
+	inline const_iterator end() const { return points().end(); }
 	inline const_iterator cend() const { return points().cend(); }
 	inline iterator begin() { return points().begin(); }
 	inline iterator end() { return points().end(); }
