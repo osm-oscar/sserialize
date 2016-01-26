@@ -18,11 +18,8 @@ namespace spatial {
 
 namespace detail {
 
-class CellQueryResultIterator {
+class CellQueryResultIterator: public std::iterator<std::input_iterator_tag, sserialize::ItemIndex, int64_t> {
 public:
-	typedef int64_t differnce_type;
-	typedef sserialize::ItemIndex value_type;
-	typedef const sserialize::ItemIndex & reference;
 	typedef enum {RD_FULL_MATCH=0x1, RD_FETCHED=0x2} RawDescAccessors;
 private:
 	RCPtrWrapper<detail::CellQueryResult> m_d;
@@ -44,10 +41,11 @@ public:
 	inline uint32_t pos() const { return m_pos; }
 	const sserialize::ItemIndex & operator*() const;
 	inline bool operator!=(const CellQueryResultIterator & other) const { return m_pos != other.m_pos; }
-	inline differnce_type operator-(const CellQueryResultIterator & other) const { return m_pos - other.m_pos; }
+	inline bool operator==(const CellQueryResultIterator & other) const { return m_pos == other.m_pos; }
+	inline difference_type operator-(const CellQueryResultIterator & other) const { return m_pos - other.m_pos; }
 	CellQueryResultIterator operator++(int);
 	CellQueryResultIterator & operator++();
-	CellQueryResultIterator operator+(differnce_type v) const;
+	CellQueryResultIterator operator+(difference_type v) const;
 };
 
 }

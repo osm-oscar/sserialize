@@ -61,7 +61,7 @@ CellQueryResultIterator & CellQueryResultIterator::operator++() {
 	return *this;
 }
 
-CellQueryResultIterator CellQueryResultIterator::operator+(differnce_type v) const {
+CellQueryResultIterator CellQueryResultIterator::operator+(difference_type v) const {
 	SSERIALIZE_CHEAP_ASSERT(v >= 0);
 	return CellQueryResultIterator(m_d, m_pos+(uint32_t)v);
 }
