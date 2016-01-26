@@ -1,5 +1,6 @@
 #include <sserialize/spatial/LatLonCalculations.h>
 #include <cmath>
+#include <algorithm>
 
 namespace sserialize {
 namespace spatial {
@@ -90,7 +91,7 @@ double distanceTo(double lat0, double lon0, double lat1, double lon1, double ear
 
 //pathStart=(lat0, lon0), pathEnd=(lat1, lon1), this=(latq, lonq)
 double crossTrackDistance(double lat0, double lon0, double lat1, double lon1, double latq, double lonq) {
-	double radius(6371e3);
+	double radius(SSERIALIZE_DEFAULT_EARTH_RADIUS);
 
 	double delta13 = distanceTo(lat0, lon0, latq, lonq, radius)/radius;
 	double theta13 = toRadian( bearingTo(lat0, lon0, latq, lonq) );
@@ -98,6 +99,46 @@ double crossTrackDistance(double lat0, double lon0, double lat1, double lon1, do
 
 	double dxt = ::asin( ::sin(delta13) * ::sin(theta13-theta12) ) * radius;
 	return dxt;
+}
+
+double alongTrackDistance(double lat0, double lon0, double lat1, double lon1, double latq, double lonq) {
+	double radius(SSERIALIZE_DEFAULT_EARTH_RADIUS);
+
+	double delta13 = distanceTo(lat0, lon0, latq, lonq, radius)/radius;
+	double theta13 = toRadian( bearingTo(lat0, lon0, latq, lonq) );
+	double theta12 = toRadian( bearingTo(lat0, lon0, lat1, lon1) );
+
+	double dxt = ::asin( ::sin(delta13) * ::sin(theta13-theta12) );
+	
+	double dAt = ::acos(::cos(delta13)/::cos(dxt)) * radius;
+	
+	return dAt;
+}
+
+double distance(double lat0, double lon0, double lat1, double lon1, double latq, double lonq) {
+	double earthRadius = SSERIALIZE_DEFAULT_EARTH_RADIUS;
+	double dist01 = distanceTo(lat0, lon0, lat1, lon1, earthRadius);
+	double atd = alongTrackDistance(lat0, lon0, lat1, lon1, lat1, lonq);
+
+	double dist0q = distanceTo(lat0, lon0, latq, lonq, earthRadius);
+
+	double delta13 = dist0q/earthRadius;
+	double theta13 = toRadian( bearingTo(lat0, lon0, latq, lonq) );
+	double theta12 = toRadian( bearingTo(lat0, lon0, lat1, lon1) );
+
+	double dxt = ::asin( ::sin(delta13) * ::sin(theta13-theta12) );
+	
+	double dAt = ::acos(::cos(delta13)/::cos(dxt)) * earthRadius;
+
+	if (atd < 0.0) {
+		return ::fabs(dist0q);
+	}
+	else if (atd > dist01) {
+		return ::fabs(distanceTo(lat1, lon1, latq, lonq));
+	}
+	else {
+		return ::fabs( dxt*earthRadius );
+	}
 }
 
 CrossTrackDistanceCalculator::CrossTrackDistanceCalculator(double lat0, double lon0, double lat1, double lon1) :
