@@ -140,20 +140,20 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 		bool ok = false;
 		typedef const sserialize::spatial::GeoPoint* MyIt;
 		for(MyIt it(wct.beginPts), end(wct.endPts-1); !ok && it != end; ++it) {
-			double tmp = sserialize::spatial::crossTrackDistance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), ct.lat(), ct.lon());
-			tmp = std::fabs<double>(tmp);
-			ok = tmp < radius;
+			double myDist = sserialize::spatial::distance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), ct.lat(), ct.lon());
+			myDist = std::fabs<double>(myDist);
+			ok = myDist < radius;
 			for(int j(0); !ok && j < 3; ++j) {
 				Triangulation::Point gp(f.point(j));
-				tmp = sserialize::spatial::crossTrackDistance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), gp.lat(), gp.lon());
-				tmp = std::fabs<double>(tmp);
-				ok = tmp < radius;
+				myDist = sserialize::spatial::distance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), gp.lat(), gp.lon());
+				myDist = std::fabs<double>(myDist);
+				ok = myDist < radius;
 			}
 		}
 		if (ok) {
-			uint32_t tmp = wct.parent->cellIdFromFaceId(f.id());
-			if (tmp != NullCellId) {
-				wct.result.insert(tmp);
+			uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
+			if (cellId != NullCellId) {
+				wct.result.insert(cellId);
 			}
 		}
 		return ok;
