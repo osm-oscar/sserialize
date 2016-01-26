@@ -13,7 +13,7 @@ private:
 	T_UNARY_FUNC m_func;
 	T_IT m_it;
 public:
-	//mapper function gets default constructed
+	///mapper function gets default constructed
 	TransformIterator(T_IT it) : m_it(it) {}
 	///@param func: functoid
 	TransformIterator(T_UNARY_FUNC func, T_IT it) : m_func(func), m_it(it) {}
@@ -21,6 +21,7 @@ public:
 	inline TransformIterator & operator++() { ++m_it; return *this;}
 	inline T_RETURN_TYPE operator*() { return m_func(*m_it);}
 	inline bool operator!=(const TransformIterator & other) const { return m_it != other.m_it;}
+	inline bool operator==(const TransformIterator & other) const { return !(m_it != other.m_it); }
 	const T_IT & base() const { return m_it; }
 };
 
