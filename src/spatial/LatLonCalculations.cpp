@@ -118,8 +118,6 @@ double alongTrackDistance(double lat0, double lon0, double lat1, double lon1, do
 double distance(double lat0, double lon0, double lat1, double lon1, double latq, double lonq) {
 	double earthRadius = SSERIALIZE_DEFAULT_EARTH_RADIUS;
 	double dist01 = distanceTo(lat0, lon0, lat1, lon1, earthRadius);
-	double atd = alongTrackDistance(lat0, lon0, lat1, lon1, lat1, lonq);
-
 	double dist0q = distanceTo(lat0, lon0, latq, lonq, earthRadius);
 
 	double delta13 = dist0q/earthRadius;
@@ -128,7 +126,7 @@ double distance(double lat0, double lon0, double lat1, double lon1, double latq,
 
 	double dxt = ::asin( ::sin(delta13) * ::sin(theta13-theta12) );
 	
-	double dAt = ::acos(::cos(delta13)/::cos(dxt)) * earthRadius;
+	double atd = ::acos(::cos(delta13)/::cos(dxt)) * earthRadius;
 
 	if (atd < 0.0) {
 		return ::fabs(dist0q);
