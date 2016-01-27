@@ -16,6 +16,7 @@ public:
 	virtual TReturnType get() const = 0;
 	virtual void next() = 0;
 	virtual bool notEq(const AbstractArrayIterator * other) const = 0;
+	virtual bool eq(const AbstractArrayIterator * other) const = 0;
 	virtual AbstractArrayIterator * copy() const = 0;
 };
 
@@ -40,13 +41,18 @@ public:
 	AbstractArrayIteratorDefaultImp(const TMyIteratorType & it) : m_it(it) {}
 	AbstractArrayIteratorDefaultImp(const AbstractArrayIteratorDefaultImp & other) : m_it(other.m_it) {}
 	virtual ~AbstractArrayIteratorDefaultImp() {}
-	virtual TReturnType get() const { return *m_it;}
-	virtual void next() { ++m_it;}
-	virtual bool notEq(const AbstractArrayIterator<TReturnType> * other) const {
+	virtual TReturnType get() const override { return *m_it;}
+	virtual void next() override { ++m_it;}
+	virtual bool notEq(const AbstractArrayIterator<TReturnType> * other) const override {
 		const AbstractArrayIteratorDefaultImp * oIt = dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other);
 		return !oIt || oIt->m_it != m_it;
 	}
-	virtual AbstractArrayIterator<TReturnType> * copy() const {
+	virtual bool eq(const AbstractArrayIterator<TReturnType> * other) const override {
+		const AbstractArrayIteratorDefaultImp * oIt = dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other);
+		return !oIt && !(oIt->m_it != m_it);
+	}
+	
+	virtual AbstractArrayIterator<TReturnType> * copy() const override {
 		return new AbstractArrayIteratorDefaultImp(*this);
 	}
 };
@@ -110,8 +116,12 @@ public:
 		return t;
 	}
 	
-	bool operator!=(const AbstractArrayIterator & other) {
+	bool operator!=(const AbstractArrayIterator & other) const {
 		return m_priv->notEq(other.m_priv.get());
+	}
+	
+	bool operator==(const AbstractArrayIterator & other) const {
+		return m_priv->eq(other.m_priv.get());
 	}
 };
 

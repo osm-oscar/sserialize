@@ -66,6 +66,11 @@ bool ItemIndexPrivateRleDE::MyIterator::notEq(const ItemIndexPrivate::const_iter
 	return (oIt->m_dataOffset != m_dataOffset) || (oIt->m_parent != m_parent);
 }
 
+bool ItemIndexPrivateRleDE::MyIterator::eq(const ItemIndexPrivate::const_iterator_base_type * other) const {
+	const ItemIndexPrivateRleDE::MyIterator * oIt = static_cast<const ItemIndexPrivateRleDE::MyIterator*>(other);
+	return (oIt->m_dataOffset == m_dataOffset) && (oIt->m_parent == m_parent);
+}
+
 ItemIndexPrivate::const_iterator_base_type * ItemIndexPrivateRleDE::MyIterator::copy() const {
 	return new MyIterator(*this);
 }

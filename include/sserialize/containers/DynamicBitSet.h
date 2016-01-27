@@ -27,6 +27,7 @@ public:
 	virtual SizeType get() const override;
 	virtual void next() override;
 	virtual bool notEq(const AbstractArrayIterator<SizeType> * other) const override;
+	virtual bool eq(const AbstractArrayIterator<SizeType> * other) const override;
 	virtual AbstractArrayIterator<SizeType> * copy() const override;
 };
 

@@ -130,6 +130,7 @@ private:
 		virtual uint32_t get() const override;
 		virtual void next() override;
 		virtual bool notEq(const ItemIndexPrivate::const_iterator_base_type * other) const override;
+		virtual bool eq(const ItemIndexPrivate::const_iterator_base_type * other) const override;
 		virtual ItemIndexPrivate::const_iterator_base_type * copy() const override;
 	};
 private:

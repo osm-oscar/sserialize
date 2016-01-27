@@ -55,6 +55,11 @@ bool DynamicBitSetIdIterator::notEq(const AbstractArrayIterator<SizeType> * othe
 	return o->m_off != m_off || o->m_curShift != m_curShift || o->m_curId != m_curId || o->m_d != m_d;
 }
 
+bool DynamicBitSetIdIterator::eq(const AbstractArrayIterator<SizeType> * other) const {
+	const DynamicBitSetIdIterator * o = static_cast<const DynamicBitSetIdIterator*>(other);
+	return o->m_off == m_off && o->m_curShift == m_curShift && o->m_curId == m_curId && o->m_d == m_d;
+}
+
 AbstractArrayIterator<SizeType> * DynamicBitSetIdIterator::copy() const {
 	return new DynamicBitSetIdIterator(*this);
 }
