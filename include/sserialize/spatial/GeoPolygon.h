@@ -395,6 +395,10 @@ template<>
 GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(const std::vector<sserialize::spatial::GeoPoint> & points);
 
 template<>
+GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(std::vector<sserialize::spatial::GeoPoint> && points);
+
+
+template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect);
 
 //specializations for AbstractArray

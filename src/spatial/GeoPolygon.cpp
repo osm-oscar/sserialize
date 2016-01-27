@@ -16,6 +16,17 @@ MyBaseClass()
 }
 
 template<>
+GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(std::vector<sserialize::spatial::GeoPoint> && points) :
+MyBaseClass()
+{
+	if (points.front() != points.back()) {
+		points.push_back(points.front());
+	}
+	this->points() = std::move(points);
+	recalculateBoundary();
+}
+
+template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
 	points.reserve(5);
