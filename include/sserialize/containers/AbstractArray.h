@@ -49,7 +49,7 @@ public:
 	}
 	virtual bool eq(const AbstractArrayIterator<TReturnType> * other) const override {
 		const AbstractArrayIteratorDefaultImp * oIt = dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other);
-		return !oIt && !(oIt->m_it != m_it);
+		return oIt && !(oIt->m_it != m_it);
 	}
 	
 	virtual AbstractArrayIterator<TReturnType> * copy() const override {
