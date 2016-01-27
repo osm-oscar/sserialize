@@ -43,7 +43,7 @@ public:
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
-					const std::vector<sserialize::ItemIndex>::const_iterator partialMatchesItemsPtrBegin,
+					std::vector<sserialize::ItemIndex>::const_iterator partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	explicit TreedCellQueryResult(const sserialize::CellQueryResult & cqr);
 	virtual ~TreedCellQueryResult();
