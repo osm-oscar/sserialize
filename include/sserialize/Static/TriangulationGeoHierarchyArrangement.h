@@ -56,7 +56,7 @@ public:
 	CFGraph cfGraph(uint32_t cellId) const;
 	///start needs to be within the triangulation
 	sserialize::ItemIndex cellsBetween(const Point & start, const Point & end, double radius) const;
-	///at least one point needs to be within the triangulation
+	///at least one point needs to be within the triangulation, if radius==0.0 then a faster triangulation walk will be used
 	sserialize::ItemIndex cellsAlongPath(double radius, const Point * begin, const Point * end) const;
 	inline sserialize::ItemIndex cellsAlongPath(double radius, const std::vector<Point>::const_iterator & begin, const std::vector<Point>::const_iterator & end) const {
 		const Point * myBegin = &(*begin);

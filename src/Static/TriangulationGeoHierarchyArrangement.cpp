@@ -2,6 +2,8 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/spatial/LatLonCalculations.h>
 
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+
 namespace sserialize {
 namespace Static {
 namespace spatial {
@@ -115,14 +117,6 @@ cellsBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spati
 
 sserialize::ItemIndex
 TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatial::GeoPoint* begin, const spatial::GeoPoint* end) const {
-	uint32_t startFace = Triangulation::NullFace;
-	for(const spatial::GeoPoint * it(begin); startFace == Triangulation::NullFace && it != end; ++it) {
-		startFace = m_grid.faceId(*it);
-	}
-
-	if (startFace == Triangulation::NullFace) {
-		return sserialize::ItemIndex();
-	}
 
 	struct WorkContext {
 		const TriangulationGeoHierarchyArrangement * parent;
@@ -134,30 +128,56 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 	};
 	WorkContext wct(begin, end);
 	wct.parent = this;
+
 	
-	tds().explore(startFace, [&wct, radius](const Triangulation::Face & f) {
-		sserialize::spatial::GeoPoint ct(f.centroid());
-		bool ok = false;
-		typedef const sserialize::spatial::GeoPoint* MyIt;
-		for(MyIt it(wct.beginPts), end(wct.endPts-1); !ok && it != end; ++it) {
-			double myDist = sserialize::spatial::distance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), ct.lat(), ct.lon());
-			myDist = std::fabs<double>(myDist);
-			ok = myDist < radius;
-			for(int j(0); !ok && j < 3; ++j) {
-				Triangulation::Point gp(f.point(j));
-				myDist = sserialize::spatial::distance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), gp.lat(), gp.lon());
-				myDist = std::fabs<double>(myDist);
-				ok = myDist < radius;
+	if (radius <= 0.0) {
+		typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
+		uint32_t startFace = Triangulation::NullFace;
+		for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
+			if (startFace == Triangulation::NullFace) {
+				startFace = m_grid.faceId(*prev);
+			}
+			if (startFace != Triangulation::NullFace) {
+				startFace = tds().traverse(it->lat(), it-> lon(), startFace, [&wct](const Triangulation::Face & face) {
+					wct.result.insert( wct.parent->cellIdFromFaceId(face.id()) );
+				}, MyGeomTraits());
 			}
 		}
-		if (ok) {
-			uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
-			if (cellId != NullCellId) {
-				wct.result.insert(cellId);
-			}
+	}
+	else {
+		uint32_t startFace = Triangulation::NullFace;
+		for(const spatial::GeoPoint * it(begin); startFace == Triangulation::NullFace && it != end; ++it) {
+			startFace = m_grid.faceId(*it);
 		}
-		return ok;
-	});
+
+		if (startFace == Triangulation::NullFace) {
+			return sserialize::ItemIndex();
+		}
+
+		tds().explore(startFace, [&wct, radius](const Triangulation::Face & f) {
+				sserialize::spatial::GeoPoint ct(f.centroid());
+				bool ok = false;
+				typedef const sserialize::spatial::GeoPoint* MyIt;
+				for(MyIt it(wct.beginPts), end(wct.endPts-1); !ok && it != end; ++it) {
+					double myDist = sserialize::spatial::distance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), ct.lat(), ct.lon());
+					myDist = std::fabs<double>(myDist);
+					ok = myDist < radius;
+					for(int j(0); !ok && j < 3; ++j) {
+						Triangulation::Point gp(f.point(j));
+						myDist = sserialize::spatial::distance(it->lat(), it->lon(), (it+1)->lat(), (it+1)->lon(), gp.lat(), gp.lon());
+						myDist = std::fabs<double>(myDist);
+						ok = myDist < radius;
+					}
+				}
+				if (ok) {
+					uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
+					if (cellId != NullCellId) {
+						wct.result.insert(cellId);
+					}
+				}
+				return ok;
+		});
+	}
 	std::vector<uint32_t> tmp(wct.result.begin(), wct.result.end());
 	std::sort(tmp.begin(), tmp.end());
 	return sserialize::ItemIndex(std::move(tmp));
