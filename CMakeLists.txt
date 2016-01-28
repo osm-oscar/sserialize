@@ -79,6 +79,7 @@ src/Static/GeoWay.cpp
 src/Static/DenseGeoPointVector.cpp
 src/Static/GeoPolygon.cpp
 src/Static/GeoMultiPolygon.cpp
+src/Static/CQRDilator.cpp
 src/Static/UnicodeTrie/detail/SimpleNode.cpp
 src/Static/UnicodeTrie/detail/Node.cpp
 src/Static/UnicodeTrie/detail/EmptyNode.cpp
