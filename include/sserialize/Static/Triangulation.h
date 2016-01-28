@@ -164,7 +164,13 @@ public:
 	uint32_t faceCount() const { return m_fi.size(); }
 	Face face(uint32_t pos) const;
 	Vertex vertex(uint32_t pos) const;
-	///Locate the face the point=(lat, lon) lies in, need exact predicates
+	
+	///traverse the triangulation in a more or less straight line starting from startFace to endpoint
+	///@return faceid where the destination point is inside or NullFace
+	///@param visitor operator()(const Face & face)
+	template<typename TVisitor, typename T_GEOMETRY_TRAITS>
+	uint32_t traverse(double lat, double lon, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	///Locate the face the point=(lat, lon) lies in, need exact predicates, hint: id of start face
 	template<typename T_GEOMETRY_TRAITS>
 	uint32_t locate(double lat, double lon, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
 	///Explores the triangulation starting at startFace
@@ -186,8 +192,8 @@ public:
 	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
 };
 
-template<typename T_GEOMETRY_TRAITS>
-uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY_TRAITS traits) const {
+template<typename TVisitor, typename T_GEOMETRY_TRAITS>
+uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
 	typedef T_GEOMETRY_TRAITS K;
 	typedef typename K::Point_2 Point_2;
 	typedef typename K::Orientation_2 Orientation_2;
@@ -258,6 +264,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 						circleVertex = Vertex();
 						//the next face is the face that shares the edge myLv<->myRv with cf
 						curFace = cf.neighbor((uint32_t)cvIdx);
+						visitor(curFace);
 						break;
 					}
 				}
@@ -318,6 +325,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 				lv = sv;
 				lp = sp;
 				curFace = curFace.neighbor((uint32_t)lvIndex);
+				visitor(curFace);
 			}
 			else if (CGAL::Orientation::RIGHT_TURN == sot) {
 				//check if q is within our face
@@ -332,6 +340,7 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 				rv = sv;
 				rp = sp;
 				curFace = curFace.neighbor((uint32_t)rvIndex);
+				visitor(curFace);
 			}
 			else {
 				throw std::runtime_error("sserialize::Static::Triangulation::locate: unexpected error");
@@ -340,6 +349,11 @@ uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY
 	}
 	
 	return NullFace;
+}
+
+template<typename T_GEOMETRY_TRAITS>
+uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY_TRAITS traits) const {
+	return traverse(lat, lon, hint, [](Face const &) {}, traits);
 }
 
 template<typename T_EXPLORER>
