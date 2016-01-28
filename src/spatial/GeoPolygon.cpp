@@ -8,6 +8,9 @@ template<>
 GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(const std::vector<sserialize::spatial::GeoPoint> & points) :
 MyBaseClass()
 {
+	if (points.size() < 3) {
+		throw sserialize::CorruptDataException("GeoPolygon");
+	}
 	this->points() = points;
 	if (points.front() != points.back()) {
 		this->points().push_back(points.front());
@@ -19,6 +22,9 @@ template<>
 GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(std::vector<sserialize::spatial::GeoPoint> && points) :
 MyBaseClass()
 {
+	if (points.size() < 3) {
+		throw sserialize::CorruptDataException("GeoPolygon");
+	}
 	if (points.front() != points.back()) {
 		points.push_back(points.front());
 	}
