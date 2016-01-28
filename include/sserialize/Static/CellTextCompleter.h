@@ -107,6 +107,7 @@ public:
 	inline Trie & trie() { return m_trie;}
 	inline const Static::spatial::GeoHierarchy & geoHierarchy() const { return m_gh;}
 	inline const sserialize::Static::ItemIndexStore & idxStore() const { return m_idxStore; }
+	inline const sserialize::Static::spatial::TriangulationGeoHierarchyArrangement & regionArrangement() const { return m_ra; }
 	
 	bool count(const std::string::const_iterator& begin, const std::string::const_iterator& end) const;
 	Payload::Type typeFromCompletion(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const;
@@ -255,6 +256,10 @@ public:
 	
 	inline const sserialize::Static::ItemIndexStore & idxStore() const {
 		return priv()->idxStore();
+	}
+	
+	inline const sserialize::Static::spatial::TriangulationGeoHierarchyArrangement & regionArrangement() const {
+		return priv()->regionArrangement();
 	}
 	
 	inline Payload::Type typeFromCompletion(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const {
