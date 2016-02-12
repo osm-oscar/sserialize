@@ -297,7 +297,7 @@ void CompactUintArray::setPrivate(const sserialize::UByteArrayAdapter& array, ui
 	else if (bitsPerNumber > 64)
 		bitsPerNumber = 64;
 
-	m_maxCount = (uint32_t)(static_cast<uint64_t>(array.size())*8)/bitsPerNumber;
+	m_maxCount = (SizeType) std::max<uint64_t>((static_cast<uint64_t>(array.size())*8)/bitsPerNumber, std::numeric_limits<SizeType>::max());
 
 
 	switch(bitsPerNumber) {
