@@ -338,20 +338,29 @@ namespace detail {
 
 template<typename TReturnType>
 class VectorAbstractArrayIterator: public sserialize::detail::AbstractArrayIterator<TReturnType> {
+public:
+	typedef sserialize::detail::AbstractArrayIterator<TReturnType> MyBaseClass;
+private:
+	typedef typename Array<TReturnType>::SizeType SizeType;
+private:
 	const Array<TReturnType> * m_data;
-	uint32_t m_pos;
+	SizeType m_pos;
 public:
 	VectorAbstractArrayIterator() : m_data(0), m_pos(0) {}
 	VectorAbstractArrayIterator(const Array<TReturnType> * data, uint32_t pos) : m_data(data), m_pos(pos) {}
 	VectorAbstractArrayIterator(const VectorAbstractArrayIterator & other) : m_data(other.m_data), m_pos(other.m_pos) {}
-	virtual ~VectorAbstractArrayIterator() {}
-	virtual TReturnType get() const { return m_data->at(m_pos);}
-	virtual void next() { m_pos += (m_data->size() > m_pos ? 1 : 0);}
-	virtual bool notEq(const sserialize::detail::AbstractArrayIterator<TReturnType> * other) const {
+	virtual ~VectorAbstractArrayIterator() override {}
+	virtual TReturnType get() const override { return m_data->at(m_pos);}
+	virtual void next() override { m_pos += (m_data->size() > m_pos ? 1 : 0);}
+	virtual bool notEq(const MyBaseClass * other) const override {
 		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
 		return !oIt || oIt->m_data != m_data || oIt->m_pos != m_pos;
 	}
-	virtual sserialize::detail::AbstractArrayIterator<TReturnType> * copy() const {
+	virtual bool eq(const MyBaseClass * other) const override {
+		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
+		return oIt && oIt->m_data == m_data && oIt->m_pos != m_pos;
+	};
+	virtual sserialize::detail::AbstractArrayIterator<TReturnType> * copy() const override {
 		return new VectorAbstractArrayIterator(*this);
 	}
 };
@@ -366,11 +375,11 @@ private:
 public:
 	VectorAbstractArray() {}
 	VectorAbstractArray(const Array<TValue> & d) : m_data(d) {}
-	virtual ~VectorAbstractArray() {}
-	virtual uint32_t size() const { return m_data.size(); }
-	virtual TValue at(uint32_t pos) const { return m_data.at(pos); }
-	virtual const_iterator cbegin() const { return new VectorAbstractArrayIterator<TValue>(&m_data, 0);}
-	virtual const_iterator cend() const { return new VectorAbstractArrayIterator<TValue>(&m_data, m_data.size());}
+	virtual ~VectorAbstractArray() override {}
+	virtual uint32_t size() const override { return m_data.size(); }
+	virtual TValue at(uint32_t pos) const override { return m_data.at(pos); }
+	virtual const_iterator cbegin() const override { return new VectorAbstractArrayIterator<TValue>(&m_data, 0);}
+	virtual const_iterator cend() const override { return new VectorAbstractArrayIterator<TValue>(&m_data, m_data.size());}
 };
 
 }//end namespace detail
