@@ -17,7 +17,7 @@ void intersectWithBinarySearch(const ItemIndexPrivate * aindex, const ItemIndexP
 	uint32_t curId;
 	for(uint32_t i (0), s(smallerIndex->size()); i < s; ++i) {
 		curId = smallerIndex->at(i);
-		if (largerIndex->find(curId) >= 0 ) {
+		if (largerIndex->find(curId) != ItemIndexPrivate::npos) {
 			creator.push_back(curId);
 		}
 	}
@@ -129,7 +129,7 @@ void differenceWithBinarySearch(const ItemIndexPrivate * aindex, const ItemIndex
 	uint32_t itemId;
 	for(uint32_t i = 0; i < size; i++) {
 		itemId = aindex->at(i);
-		if (bindex->find(itemId) < 0) {
+		if (bindex->find(itemId) == ItemIndexPrivate::npos) {
 			creator.push_back(itemId);
 		}
 	}
