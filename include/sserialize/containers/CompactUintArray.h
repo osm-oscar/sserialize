@@ -275,7 +275,7 @@ uint32_t BoundedCompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteAr
 	if (src.size()) {
 		typename T_SOURCE_CONTAINER::value_type maxElem = *std::max_element(src.begin(), src.end());
 		uint32_t bits = minStorageBits64(maxElem);
-		dest.putVlPackedUint64(src.size() << 6 | (bits-1));
+		dest.putVlPackedUint64( static_cast<uint64_t>(src.size()) << 6 | (bits-1));
 		return CompactUintArray::create(src, dest, bits);
 	}
 	else {

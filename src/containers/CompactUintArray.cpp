@@ -491,14 +491,16 @@ BoundedCompactUintArray::BoundedCompactUintArray(const sserialize::UByteArrayAda
 CompactUintArray(0)
 {
 	int len;
-	m_size = (uint32_t) d.getVlPackedUint64(0, &len);
+	uint64_t sizeBits = d.getVlPackedUint64(0, &len);
 	
 	if (UNLIKELY_BRANCH(len < 0)) {
 		throw sserialize::IOException("BoundedCompactUintArray::BoundedCompactUintArray");
 	}
 	
-	uint8_t bits = (uint8_t)((m_size & 0x3F) + 1);
-	m_size >>= 6;
+	m_size = sserialize::narrow_check<SizeType>(sizeBits >> 6);
+	
+	uint8_t bits = (uint8_t)((sizeBits & 0x3F) + 1);
+
 	UByteArrayAdapter::OffsetType dSize = minStorageBytes(bits, m_size);
 	if (m_size) {
 		CompactUintArray::setPrivate(UByteArrayAdapter(d, (uint32_t)len, dSize), bits);
@@ -524,8 +526,8 @@ BoundedCompactUintArray & BoundedCompactUintArray::operator=(const BoundedCompac
 
 UByteArrayAdapter::OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
 	uint8_t bits = bpn();
-	UByteArrayAdapter::OffsetType sb = (m_size << 6) | (bits-1);
-	return (uint32_t) psize_vu64(sb) + minStorageBytes(bits, m_size);
+	uint64_t sb = (static_cast<uint64_t>(m_size) << 6) | (bits-1);
+	return psize_vu64(sb) + minStorageBytes(bits, m_size);
 }
 
 std::ostream & operator<<(std::ostream & out, const BoundedCompactUintArray & src) {
