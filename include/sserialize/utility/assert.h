@@ -75,11 +75,15 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 }//end namspace
 
 #if defined(WITH_SSERIALIZE_EXPENSIVE_ASSERT)
-	#define WITH_SSERIALIZE_NORMAL_ASSERT
+	#ifndef WITH_SSERIALIZE_NORMAL_ASSERT
+		#define WITH_SSERIALIZE_NORMAL_ASSERT
+	#endif
 #endif
 
 #if defined(WITH_SSERIALIZE_NORMAL_ASSERT)
-	#define WITH_SSERIALIZE_CHEAP_ASSERT
+	#ifndef WITH_SSERIALIZE_CHEAP_ASSERT
+		#define WITH_SSERIALIZE_CHEAP_ASSERT
+	#endif
 #endif
 
 #ifdef WITH_SSERIALIZE_CHEAP_ASSERT
