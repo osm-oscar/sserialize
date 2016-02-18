@@ -16,6 +16,7 @@ public:
 	virtual ~UByteArrayAdapterPrivateVector() {
 		if (m_deleteOnClose) {
 			delete m_data;
+			m_data = 0;
 			m_deleteOnClose = false;
 			this->data() = 0;
 		}
