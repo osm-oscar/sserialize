@@ -225,7 +225,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	struct Worker {
 		State * state;
 		std::vector<ValueEntry> outBuffer;
-		uint32_t outBufferSize;
+		std::size_t outBufferSize;
 		
 		//item dependend
 		FullMatchPredicate fmPred;
@@ -235,7 +235,6 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		
 		std::vector<uint32_t> itemCells;
 		std::vector<NodeIdentifier> itemNodes;
-		std::vector<ValueEntry> itemEntries;
 		
 		std::back_insert_iterator< std::vector<uint32_t> > itemCellsBI;
 		std::back_insert_iterator< std::vector<NodeIdentifier> > itemNodesBI;
@@ -243,7 +242,14 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		void flush() {
 			std::unique_lock<std::mutex> lck(state->flushLock);
 			state->entries->push_back(outBuffer.begin(), outBuffer.end());
-			outBuffer.clear();
+			if (outBuffer.size() > 2*outBufferSize) { //outbuffer was way too large
+				std::cout << "OOMCTCValueStorage: flushing very large=" << outBuffer.size() << " buffer" << std::endl;
+				outBuffer.clear();
+				outBuffer.shrink_to_fit();
+			}
+			else {
+				outBuffer.clear();
+			}
 		}
 		
 		void operator()() {
@@ -263,7 +269,6 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 				
 				itemCells.clear();
 				itemNodes.clear();
-				itemEntries.clear();
 				
 				ValueEntry e;
 				if (fmPred(item)) {
@@ -278,10 +283,9 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 					e.nodeId(node);
 					for(uint32_t cellId : itemCells) {
 						e.cellId(cellId);
-						itemEntries.push_back(e);
+						outBuffer.push_back(e);
 					}
 				}
-				outBuffer.insert(outBuffer.end(), itemEntries.cbegin(), itemEntries.cend());
 				state->incCounter();
 				if (outBuffer.size() > outBufferSize) {
 					flush();
@@ -291,7 +295,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		}
 		Worker(State * state, TInputTraits & itraits) :
 		state(state),
-		outBufferSize(100000),
+		outBufferSize((10*1024*1024)/sizeof(ValueEntry)),
 		fmPred(itraits.fullMatchPredicate()),
 		itemIdE(itraits.itemId()),
 		itemCellsE(itraits.itemCells()),
@@ -309,7 +313,6 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		nodesE(std::move(other.nodesE)),
 		itemCells(std::move(other.itemCells)),
 		itemNodes(std::move(other.itemNodes)),
-		itemEntries(std::move(other.itemEntries)),
 		itemCellsBI(itemCells),
 		itemNodesBI(itemNodes)
 		{}
