@@ -590,13 +590,13 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	{
 		std::cout << "Calculating region payload" << std::endl;
 		RegionInputTraits regionInputTraits(regionTraits, &ti, true, sq);
-		vc.insert<TRegionIterator, RegionInputTraits, TWithProgressInfo>(regionsBegin, regionsEnd, regionInputTraits);
+		vc.insert<TRegionIterator, RegionInputTraits, TWithProgressInfo>(regionsBegin, regionsEnd, regionInputTraits, threadCount);
 	}
 	//insert the items
 	{
 		std::cout << "Calculating item payload" << std::endl;
 		ItemInputTraits itemInputTraits(itemTraits, &ti, false, sq);
-		vc.insert<TItemIterator, ItemInputTraits, TWithProgressInfo>(itemsBegin, itemsEnd, itemInputTraits);
+		vc.insert<TItemIterator, ItemInputTraits, TWithProgressInfo>(itemsBegin, itemsEnd, itemInputTraits, threadCount);
 	}
 	
 	//now serialize it
