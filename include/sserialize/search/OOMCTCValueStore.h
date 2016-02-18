@@ -252,6 +252,12 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 			}
 		}
 		
+		inline void flushOnFull() {
+			if (UNLIKELY_BRANCH(outBuffer.size() > outBufferSize)) {
+				flush();
+			}
+		}
+		
 		void operator()() {
 			std::unique_lock<std::mutex> itLock(state->itLock);
 			itLock.unlock();
@@ -285,11 +291,9 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 						e.cellId(cellId);
 						outBuffer.push_back(e);
 					}
+					flushOnFull();
 				}
 				state->incCounter();
-				if (outBuffer.size() > outBufferSize) {
-					flush();
-				}
 			}
 			flush();
 		}
