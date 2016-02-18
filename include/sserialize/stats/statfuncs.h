@@ -41,8 +41,9 @@ TValue stddev(TIterator begin, const TIterator & end, TValue initial) {
 template<typename TIterator, typename TValue>
 TValue median(const TIterator & begin, const TIterator & end, TValue def) {
 	std::vector<TValue> v(begin, end);
-	if (!v.size())
+	if (!v.size()) {
 		return def;
+	}
 	std::sort(v.begin(), v.end());
 	return v.at( v.size() / 2);
 }

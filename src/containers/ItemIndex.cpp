@@ -94,7 +94,6 @@ ItemIndex::ItemIndex(std::vector<uint32_t> && index) {
 	MyBaseClass::setPrivate(myPriv);
 }
 
-
 ItemIndex::ItemIndex(const UByteArrayAdapter& index, const ItemIndex& realIdIndex, Types type) : RCWrapper< sserialize::ItemIndexPrivate >(0) {
 	createPrivate(index, realIdIndex, type);
 }
