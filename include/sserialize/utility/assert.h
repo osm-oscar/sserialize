@@ -31,7 +31,7 @@ template<typename T1, typename T2>
 void assert_equal(const T1 & v1, const T2 & v2) {
 	if (UNLIKELY_BRANCH(v1 != v2)) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED! SHOULD=" << v1 << ", IS=" << v2;
+		ss << "ASSERTION FAILED(==) LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
@@ -40,7 +40,7 @@ template<typename T1, typename T2>
 void assert_larger(const T1 & v1, const T2 & v2) {
 	if (UNLIKELY_BRANCH(!(v1 > v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED! SHOULD=" << v1 << ", IS=" << v2;
+		ss << "ASSERTION FAILED(>) LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
@@ -49,7 +49,7 @@ template<typename T1, typename T2>
 void assert_larger_or_equal(const T1 & v1, const T2 & v2) {
 	if (UNLIKELY_BRANCH(!(v1 >= v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED! SHOULD=" << v1 << ", IS=" << v2;
+		ss << "ASSERTION FAILED(>=) LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
@@ -58,7 +58,7 @@ template<typename T1, typename T2>
 void assert_smaller(const T1 & v1, const T2 & v2) {
 	if (UNLIKELY_BRANCH(!(v1 < v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED! SHOULD=" << v1 << ", IS=" << v2;
+		ss << "ASSERTION FAILED(<) LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
@@ -67,7 +67,7 @@ template<typename T1, typename T2>
 void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 	if (UNLIKELY_BRANCH(!(v1 <= v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED! SHOULD=" << v1 << ", IS=" << v2;
+		ss << "ASSERTION FAILED(<=) LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
@@ -94,7 +94,7 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 	#define SSERIALIZE_CHEAP_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2);
 	#define SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2);
 	#define SSERIALIZE_CHEAP_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2);
-	#define SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_larger(__V1, __V2);
+	#define SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2);
 #else
 	#define SSERIALIZE_CHEAP_ASSERT(__BOOL)
 	#define SSERIALIZE_CHEAP_ASSERT_MESSAGE(__BOOL, __MSG)
@@ -114,7 +114,7 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 	#define SSERIALIZE_NORMAL_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2);
 	#define SSERIALIZE_NORMAL_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2);
 	#define SSERIALIZE_NORMAL_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2);
-	#define SSERIALIZE_NORMAL_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_larger(__V1, __V2);
+	#define SSERIALIZE_NORMAL_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2);
 #else
 	#define SSERIALIZE_NORMAL_ASSERT(__BOOL)
 	#define SSERIALIZE_NORMAL_ASSERT_MESSAGE(__BOOL, __MSG)
@@ -134,7 +134,7 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 	#define SSERIALIZE_EXPENSIVE_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2);
 	#define SSERIALIZE_EXPENSIVE_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2);
 	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2);
-	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_larger(__V1, __V2);
+	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2);
 #else
 	#define SSERIALIZE_EXPENSIVE_ASSERT(__BOOL)
 	#define SSERIALIZE_EXPENSIVE_ASSERT_MESSAGE(__BOOL, __MSG)
