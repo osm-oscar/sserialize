@@ -47,6 +47,9 @@ public:
 	inline uint32_t size() const { return nodeInfo().size(); }
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	inline Node node(uint32_t cellId) const { return Node(this, cellId); }
+	///proc(const Node & n)
+	template<typename TProcessor>
+	void explore(uint32_t cellId, TProcessor proc) const;
 private:
 	friend class Node;
 	typedef sserialize::MultiVarBitArray NodeInfo;
@@ -59,6 +62,30 @@ private:
 	EdgeInfo m_edgeInfo;
 };
 
+template<typename TProcessor>
+void TracGraph::explore(uint32_t cellId, TProcessor proc) const {
+	std::vector<uint32_t> queue;
+	std::unordered_set<uint32_t> visited;
+	
+	queue.push_back(cellId);
+	visited.insert(cellId);
+	
+	while(queue.size()) {
+		uint32_t nId = queue.back();
+		queue.pop_back();
+		
+		Node n(node(nId));
+		proc(n);
+		
+		for(uint32_t i(0), s(n.size()); i < s; ++i) {
+			uint32_t nnId = n.neighborId(i);
+			if (!visited.count(nnId)) {
+				queue.push_back(nnId);
+				visited.insert(nnId);
+			}
+		}
+	}
+}
 
 }}}//end namespace
 
