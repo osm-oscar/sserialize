@@ -174,7 +174,7 @@ public:
 	template<typename T_GEOMETRY_TRAITS>
 	uint32_t locate(double lat, double lon, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
 	///Explores the triangulation starting at startFace
-	///@param explorer operator()(uint32_t face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
+	///@param explorer operator()(const Face & face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
 	template<typename T_EXPLORER>
 	void explore(uint32_t startFace, T_EXPLORER explorer) const;
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
