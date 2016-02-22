@@ -91,7 +91,14 @@ void Triangulation::Face::dump(std::ostream& out) const {
 	out << "\tid=" << id() << "\n";
 	out << "\tneighbor_valid=" << m_p->faceInfo().at(m_pos, FI_NEIGHBOR_VALID) << "\n";
 	for(uint32_t j(0); j < 3; ++j) {
-		out << "\tneighbor[" << j << "]=" << neighborId(j)  << "\n";
+		out << "\tneighbor[" << j << "]=";
+		if (isNeighbor(j)) {
+			out << neighborId(j);
+		}
+		else {
+			out << "invalid";
+		}
+		out << "\n";
 	}
 	for(uint32_t j(0); j < 3; ++j) {
 		out << "\tvertex[" << j << "]=" << vertexId(j)  << "\n";
