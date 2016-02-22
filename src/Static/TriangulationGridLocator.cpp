@@ -38,9 +38,17 @@ bool TriangulationGridLocator::contains(double lat, double lon) const {
 	return faceId(lat, lon) != NullFace;
 }
 
+uint32_t TriangulationGridLocator::faceHint(double lat, double lon) const {
+	return m_grid.at(lat, lon);
+}
+
+uint32_t TriangulationGridLocator::faceHint(const TriangulationGridLocator::Point& p) const {
+	return faceHint(p.lat(), p.lon());
+}
+
 uint32_t TriangulationGridLocator::faceId(double lat, double lon) const {
-	if (gridContains(lat, lon)) {
-		uint32_t hint = m_grid.at(lat, lon);
+	if (gridContains(lat, lon)) {//BUG: hint is sometimes wrong
+		uint32_t hint = faceHint(lat, lon);
 		return m_trs.locate<CGAL::Exact_predicates_inexact_constructions_kernel>(lat, lon, hint);
 	}
 	return NullFace;

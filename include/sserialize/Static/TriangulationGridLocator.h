@@ -37,6 +37,8 @@ public:
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	inline const Grid & grid() const { return m_grid; }
 	inline const Triangulation & tds() const { return m_trs; }
+	uint32_t faceHint(double lat, double lon) const;
+	uint32_t faceHint(const Point & p) const;
 	bool gridContains(double lat, double lon) const;
 	bool gridContains(const Point & p) const;
 	bool contains(double lat, double lon) const;
