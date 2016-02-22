@@ -14,60 +14,55 @@ inline void __assert_function(const std::string & message) {
 	}
 }
 
-template<typename T_STRING_CONVERTIBLE>
-void assert_true_message(bool value, T_STRING_CONVERTIBLE msg) {
+inline void assert_true(bool value, const char * msg) {
 	if (UNLIKELY_BRANCH(!value)) {
-		__assert_function("ASSERTION FAILED WITH MESSAGE="+std::string(msg));
-	}
-}
-
-inline void assert_true(bool value) {
-	if (UNLIKELY_BRANCH(!value)) {
-		__assert_function("ASSERTION FAILED");
+		std::stringstream ss;
+		ss << "ASSERTION FAILED(" << msg << ")";
+		__assert_function(ss.str());
 	}
 }
 
 template<typename T1, typename T2>
-void assert_equal(const T1 & v1, const T2 & v2) {
+void assert_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(v1 != v2)) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED(==) LEFT=" << v1 << ", RIGHT=" << v2;
+		ss << "ASSERTION FAILED(" << msg << ") LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
 
 template<typename T1, typename T2>
-void assert_larger(const T1 & v1, const T2 & v2) {
+void assert_larger(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 > v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED(>) LEFT=" << v1 << ", RIGHT=" << v2;
+		ss << "ASSERTION FAILED(" << msg << ") LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
 
 template<typename T1, typename T2>
-void assert_larger_or_equal(const T1 & v1, const T2 & v2) {
+void assert_larger_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 >= v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED(>=) LEFT=" << v1 << ", RIGHT=" << v2;
+		ss << "ASSERTION FAILED(" << msg << ") LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
 
 template<typename T1, typename T2>
-void assert_smaller(const T1 & v1, const T2 & v2) {
+void assert_smaller(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 < v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED(<) LEFT=" << v1 << ", RIGHT=" << v2;
+		ss << "ASSERTION FAILED(" << msg << ") LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
 
 template<typename T1, typename T2>
-void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
+void assert_smaller_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 <= v2))) {
 		std::stringstream ss;
-		ss << "ASSERTION FAILED(<=) LEFT=" << v1 << ", RIGHT=" << v2;
+		ss << "ASSERTION FAILED(" << msg << ") LEFT=" << v1 << ", RIGHT=" << v2;
 		__assert_function(ss.str());
 	}
 }
@@ -88,13 +83,13 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 
 #ifdef WITH_SSERIALIZE_CHEAP_ASSERT
 	#define SSERIALIZE_CHEAP_ASSERT_ENABLED
-	#define SSERIALIZE_CHEAP_ASSERT(__BOOL) sserialize::assert_true(__BOOL);
+	#define SSERIALIZE_CHEAP_ASSERT(__BOOL) sserialize::assert_true(__BOOL, #__BOOL);
 	#define SSERIALIZE_CHEAP_ASSERT_MESSAGE(__BOOL, __MSG) sserialize::assert_true_message(__BOOL, __MSG);
-	#define SSERIALIZE_CHEAP_ASSERT_EQUAL(__V1, __V2) sserialize::assert_equal(__V1, __V2);
-	#define SSERIALIZE_CHEAP_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2);
-	#define SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2);
-	#define SSERIALIZE_CHEAP_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2);
-	#define SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2);
+	#define SSERIALIZE_CHEAP_ASSERT_EQUAL(__V1, __V2) sserialize::assert_equal(__V1, __V2, #__V1 " == " #__V2);
+	#define SSERIALIZE_CHEAP_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2, #__V1 " > " #__V2);
+	#define SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2, #__V1 " >= " #__V2);
+	#define SSERIALIZE_CHEAP_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2, #__V1 " < " #__V2);
+	#define SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2, #__V1 " <= " #__V2);
 #else
 	#define SSERIALIZE_CHEAP_ASSERT(__BOOL)
 	#define SSERIALIZE_CHEAP_ASSERT_MESSAGE(__BOOL, __MSG)
@@ -108,13 +103,13 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 //normal asserts
 #ifdef WITH_SSERIALIZE_NORMAL_ASSERT
 	#define SSERIALIZE_NORMAL_ASSERT_ENABLED
-	#define SSERIALIZE_NORMAL_ASSERT(__BOOL) sserialize::assert_true(__BOOL);
+	#define SSERIALIZE_NORMAL_ASSERT(__BOOL) sserialize::assert_true(__BOOL, #__BOOL);
 	#define SSERIALIZE_NORMAL_ASSERT_MESSAGE(__BOOL, __MSG) sserialize::assert_true_message(__BOOL, __MSG);
-	#define SSERIALIZE_NORMAL_ASSERT_EQUAL(__V1, __V2) sserialize::assert_equal(__V1, __V2);
-	#define SSERIALIZE_NORMAL_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2);
-	#define SSERIALIZE_NORMAL_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2);
-	#define SSERIALIZE_NORMAL_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2);
-	#define SSERIALIZE_NORMAL_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2);
+	#define SSERIALIZE_NORMAL_ASSERT_EQUAL(__V1, __V2) sserialize::assert_equal(__V1, __V2, #__V1 " == " #__V2);
+	#define SSERIALIZE_NORMAL_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2, #__V1 " > " #__V2);
+	#define SSERIALIZE_NORMAL_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2, #__V1 " >= " #__V2);
+	#define SSERIALIZE_NORMAL_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2, #__V1 " < " #__V2);
+	#define SSERIALIZE_NORMAL_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2, #__V1 " <= " #__V2);
 #else
 	#define SSERIALIZE_NORMAL_ASSERT(__BOOL)
 	#define SSERIALIZE_NORMAL_ASSERT_MESSAGE(__BOOL, __MSG)
@@ -128,13 +123,13 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2) {
 //expensive asserts
 #ifdef WITH_SSERIALIZE_EXPENSIVE_ASSERT
 	#define SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	#define SSERIALIZE_EXPENSIVE_ASSERT(__BOOL) sserialize::assert_true(__BOOL);
+	#define SSERIALIZE_EXPENSIVE_ASSERT(__BOOL) sserialize::assert_true(__BOOL, #__BOOL);
 	#define SSERIALIZE_EXPENSIVE_ASSERT_MESSAGE(__BOOL, __MSG) sserialize::assert_true_message(__BOOL, __MSG);
-	#define SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(__V1, __V2) sserialize::assert_equal(__V1, __V2);
-	#define SSERIALIZE_EXPENSIVE_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2);
-	#define SSERIALIZE_EXPENSIVE_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2);
-	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2);
-	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2);
+	#define SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(__V1, __V2) sserialize::assert_equal(__V1, __V2, #__V1 " == " #__V2);
+	#define SSERIALIZE_EXPENSIVE_ASSERT_LARGER(__V1, __V2) sserialize::assert_larger(__V1, __V2, #__V1 " > " #__V2);
+	#define SSERIALIZE_EXPENSIVE_ASSERT_LARGER_OR_EQUAL(__V1, __V2) sserialize::assert_larger_or_equal(__V1, __V2, #__V1 " >= " #__V2);
+	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER(__V1, __V2) sserialize::assert_smaller(__V1, __V2, #__V1 " < " #__V2);
+	#define SSERIALIZE_EXPENSIVE_ASSERT_SMALLER_OR_EQUAL(__V1, __V2) sserialize::assert_smaller_or_equal(__V1, __V2, #__V1 " <= " #__V2);
 #else
 	#define SSERIALIZE_EXPENSIVE_ASSERT(__BOOL)
 	#define SSERIALIZE_EXPENSIVE_ASSERT_MESSAGE(__BOOL, __MSG)
