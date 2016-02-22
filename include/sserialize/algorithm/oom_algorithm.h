@@ -379,7 +379,7 @@ TInputOutputIterator oom_unique(TInputOutputIterator begin, TInputOutputIterator
 	
 	tmp.flush();
 	
-	SSERIALIZE_CHEAP_ASSERT_MESSAGE(srcSize >= tmp.size(), "tmp.size() > srcSize");
+	SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(srcSize, tmp.size());
 	
 	//set larger read buffers
 	tmp.backBufferSize(sizeof(value_type));
