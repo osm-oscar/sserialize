@@ -239,6 +239,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 			FaceCirculator fcBegin(circleVertex.facesBegin()), fcEnd(circleVertex.facesEnd());
 			while (true) {
 				const Face & cf = fcBegin.face();
+				SSERIALIZE_CHEAP_ASSERT(cf.valid());
 				int cvIdx = cf.index(circleVertex);
 				assert(cvIdx != -1);
 				
@@ -264,6 +265,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 						circleVertex = Vertex();
 						//the next face is the face that shares the edge myLv<->myRv with cf
 						curFace = cf.neighbor((uint32_t)cvIdx);
+						SSERIALIZE_CHEAP_ASSERT(curFace.valid());
 						visitor(curFace);
 						break;
 					}
@@ -289,6 +291,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 			continue;
 		}
 		else {
+			SSERIALIZE_CHEAP_ASSERT(curFace.valid());
 			//we have a face, r, l, rv and lv are set, find s
 			//p->q does not pass through r or l but may pass through s
 			//p->q intersects l->r with l beeing on the left and r beeing on the right
