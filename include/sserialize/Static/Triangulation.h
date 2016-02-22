@@ -206,6 +206,10 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 		Point gp(v.point());
 		return Point_2(gp.lat(), gp.lon());
 	};
+	
+	if (hint >= faceCount()) {
+		hint = 0;
+	}
 
 	Orientation_2 ot(traits.orientation_2_object());
 	//(p,q,r) = 1 iff q is between p and r
