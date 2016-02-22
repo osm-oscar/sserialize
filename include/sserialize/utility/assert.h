@@ -22,6 +22,10 @@ inline void assert_true(bool value, const char * msg) {
 	}
 }
 
+inline void assert_true_message(bool value, const std::string & msg) {
+	return assert_true(value, msg.c_str());
+}
+
 template<typename T1, typename T2>
 void assert_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(v1 != v2)) {
