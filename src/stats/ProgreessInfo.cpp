@@ -1,4 +1,5 @@
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/utility/printers.h>
 
 namespace sserialize {
 
@@ -25,9 +26,10 @@ void ProgressInfo::end(const std::string & message) {
 	time_t timer = time(NULL);
 	time_t elapsedSecond = (timer-startTimer);
 	std::cout << std::endl;
-	std::cout << message << ": " << elapsedSecond << " seconds for " << targetCount;
-	if (elapsedSecond)
+	std::cout << message << ": " << elapsedSecond << " seconds for " << prettyFormatSI(targetCount);
+	if (elapsedSecond) {
 		std::cout << "=" << targetCount/elapsedSecond << " 1/s";
+	}
 	std::cout << std::endl;
 }
 
