@@ -44,7 +44,8 @@ namespace Triangulation {
 class Triangulation final {
 public:
 	typedef sserialize::spatial::GeoPoint Point;
-
+	typedef uint32_t FaceId;
+	typedef uint32_t VertexId;
 	class Face;
 	class Vertex;
 	class FaceCirculator;

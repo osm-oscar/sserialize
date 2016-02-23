@@ -16,7 +16,7 @@ namespace spatial {
   *
   * }
   *
-  * Grid: grid-cell -> faceId
+  * Grid: grid-cell -> FaceId
   *
   */
 
