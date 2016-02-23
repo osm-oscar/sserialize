@@ -268,8 +268,11 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 						lp = myLP;
 						circleVertex = Vertex();
 						//the next face is the face that shares the edge myLv<->myRv with cf
+						//check if it's inside our triangulation 
+						if (!cf.isNeighbor((uint32_t)cvIdx)) { //next face is outside (this is only valid for convex triangulations)
+							return NullFace;
+						}
 						curFace = cf.neighbor((uint32_t)cvIdx);
-						SSERIALIZE_CHEAP_ASSERT(curFace.valid());
 						visitor(curFace);
 						break;
 					}
