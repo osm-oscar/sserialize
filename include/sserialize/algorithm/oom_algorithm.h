@@ -340,7 +340,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		state.pinfo.end();
 		using std::swap;
 		swap(state.pendingChunks, nextRoundPendingChunks);
-		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.srcSize, tmp.size());
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
 	}
 }
 
