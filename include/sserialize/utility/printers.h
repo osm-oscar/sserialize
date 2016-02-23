@@ -187,6 +187,35 @@ inline std::string prettyFormatSize(uint64_t bytes) {
 	}
 }
 
+template<typename T_INTEGRAL_TYPE>
+inline std::string prettyFormatSI(T_INTEGRAL_TYPE value) {
+	std::stringstream ss;
+	if (std::is_signed<T_INTEGRAL_TYPE>::value && value < 0) {
+		ss << '-';
+	}
+	if (value) {
+		bool hasPrev = false;
+		char prefixes[] = {' ', 'K', 'M', 'G'};
+		std::stringstream ss;
+		uint div = 1000*1000*1000*1000;
+		for(int i = 3; i >= 0; --i) {
+			T_INTEGRAL_TYPE tmp = value/div;
+			if (tmp) {
+				if (hasPrev) {
+					ss << ' ';
+				}
+				hasPrev = true;
+				ss << tmp << prefixes[i];
+				value -= tmp*div;
+			}
+			div /= 1000;
+		}
+		return ss.str();
+	}
+	else {
+		return "0";
+	}
+}
 
 }
 
