@@ -168,6 +168,9 @@ public:
 			}
 		}
 		else {
+			if (!FileHandler::fileSize(fileName)) {
+				throw sserialize::CreationException("MmappedMemory does not support opening zero-length files: " + fileName);
+			}
 			throw sserialize::CreationException("MmappedMemory: could not open file " + fileName);
 		}
 	}
