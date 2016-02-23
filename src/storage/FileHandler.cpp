@@ -151,7 +151,7 @@ void * FileHandler::resize(int fd, void * mem, OffsetType oldSize, OffsetType ne
 }
 
 bool FileHandler::closeAndUnlink(const std::string & fileName, int fd, void * mem, OffsetType size) {
-	bool ok = (close(fd, mem, size) >= 0);
+	bool ok = close(fd, mem, size);
 	ok = (::unlink(fileName.c_str()) >= 0) && ok;
 	return ok;
 }
@@ -224,4 +224,13 @@ void FileHandler::pread(int fd, void * dest, OffsetType size, OffsetType offset)
 	}
 }
 
+
+OffsetType FileHandler::fileSize(const std::string & str) {
+	return MmappedFile::fileSize(str);
 }
+
+OffsetType FileHandler::fileSize(int fd) {
+	return MmappedFile::fileSize(fd);
+}
+
+}//end namespace sserialize

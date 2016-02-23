@@ -28,6 +28,9 @@ struct FileHandler {
 	///Throws IOException on error
 	static void pread(int fd, void * dest, OffsetType size, OffsetType offset);
 	
+	static OffsetType fileSize(const std::string & str);
+	static OffsetType fileSize(int fd);
+	
 };
 
 }//end namespace
