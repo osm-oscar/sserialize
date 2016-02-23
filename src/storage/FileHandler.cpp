@@ -151,8 +151,8 @@ void * FileHandler::resize(int fd, void * mem, OffsetType oldSize, OffsetType ne
 }
 
 bool FileHandler::closeAndUnlink(const std::string & fileName, int fd, void * mem, OffsetType size) {
-	bool ok = close(fd, mem, size);
-	ok = (::unlink(fileName.c_str()) < 0) && ok;
+	bool ok = (close(fd, mem, size) >= 0);
+	ok = (::unlink(fileName.c_str()) >= 0) && ok;
 	return ok;
 }
 
@@ -160,8 +160,8 @@ bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 	if (sync) {
 		::msync(mem, size, MS_ASYNC);
 	}
-	bool ok = (::munmap(mem, size) < 0);
-	ok = (::close(fd) < 0) && ok;
+	bool ok = (::munmap(mem, size) >= 0);
+	ok = (::close(fd) >= 0) && ok;
 	return ok;
 }
 
