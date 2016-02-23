@@ -146,7 +146,7 @@ public:
 			m_size = size;
 		}
 		else {
-			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
+			throw sserialize::CreationException("MmappedMemory: could not create tempfile with size " + std::to_string(size));
 		}
 	}
 	///map as much of fileName into memory as possible, if file does not exists, create it
@@ -167,7 +167,7 @@ public:
 			}
 		}
 		else {
-			throw sserialize::CreationException("MmappedMemory::MmappedMemory");
+			throw sserialize::CreationException("MmappedMemory: could not open file " + fileName);
 		}
 	}
 	virtual ~MmappedMemoryFileBased() override {
@@ -186,7 +186,7 @@ public:
 		newSize = std::max<OffsetType>(1, newSize);
 		m_data = (TValue *) FileHandler::resize(m_fd, m_data, m_size*sizeof(TValue), newSize*sizeof(TValue), m_populate, m_randomAccess);
 		if (!m_data) {
-			throw sserialize::CreationException("MmappedMemory::resize");
+			throw sserialize::CreationException("MmappedMemory: could not resize to " + std::to_string(newSize) + " entries");
 		}
 		m_size = newSize;
 		return m_data;
