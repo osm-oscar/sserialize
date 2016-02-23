@@ -32,8 +32,9 @@ void * FileHandler::mmapFile(int fd, OffsetType fileSize, bool prePopulate, bool
 void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType & fileSize, bool prePopulate, bool randomAccess) {
 	bool fExisted = MmappedFile::fileExists(fileName);
 	fd = ::open(fileName.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-	if (fd < 0)
+	if (fd < 0) {
 		return 0;
+	}
 	if (!fExisted) {
 		if (::ftruncate(fd, 512) < 0) {//reserve at least a block on old rotating media
 			::close(fd);
@@ -43,7 +44,7 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 		fileSize = 512;
 	}
 	else {
-		fileSize = MmappedFile::fileSize(fileName);
+		fileSize = MmappedFile::fileSize(fd);
 	}
 		
 	void * d = mmapFile(fd, fileSize, prePopulate, randomAccess);
