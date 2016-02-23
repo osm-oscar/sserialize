@@ -197,7 +197,7 @@ inline std::string prettyFormatSI(T_INTEGRAL_TYPE value) {
 		bool hasPrev = false;
 		char prefixes[] = {' ', 'K', 'M', 'G'};
 		std::stringstream ss;
-		uint div = 1000*1000*1000*1000;
+		uint div = 1000*1000*1000;
 		for(int i = 3; i >= 0; --i) {
 			T_INTEGRAL_TYPE tmp = value/div;
 			if (tmp) {
