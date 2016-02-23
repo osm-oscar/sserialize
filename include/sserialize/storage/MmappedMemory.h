@@ -153,6 +153,7 @@ public:
 	MmappedMemoryFileBased(const std::string & fileName, bool populate = false, bool randomAccess = false) :
 	m_data(0),
 	m_size(0),
+	m_fileName(fileName),
 	m_fd(-1),
 	m_populate(populate),
 	m_randomAccess(randomAccess),
