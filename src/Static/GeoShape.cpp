@@ -41,7 +41,6 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 	}
 }
 
-
 template<typename T_POINTS_CONTAINER>
 struct PointsArraySizeGetter {
 	static sserialize::UByteArrayAdapter::OffsetType getSizeInBytes(const T_POINTS_CONTAINER & c);
