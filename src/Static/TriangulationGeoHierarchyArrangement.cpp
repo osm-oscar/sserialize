@@ -168,6 +168,9 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 						myDist = std::fabs<double>(myDist);
 						ok = myDist < radius;
 					}
+					if (!ok) {
+						ok = f.contains(*it); //TODO: intersection needs to be tested aswell
+					}
 				}
 				if (ok) {
 					uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
