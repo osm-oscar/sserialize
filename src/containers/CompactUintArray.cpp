@@ -321,6 +321,10 @@ void CompactUintArray::setPrivate(const sserialize::UByteArrayAdapter& array, ui
 	}
 }
 
+void CompactUintArray::setMaxCount(CompactUintArray::SizeType maxCount) {
+	m_maxCount = maxCount;
+}
+
 CompactUintArray::CompactUintArray() :
 RCWrapper< sserialize::CompactUintArrayPrivate > (new CompactUintArrayPrivateEmpty()),
 m_maxCount(0)
@@ -388,37 +392,38 @@ uint32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
 
 
 uint32_t CompactUintArray::at(sserialize::CompactUintArray::SizeType pos) const {
-	if (m_maxCount == 0)
-		return 0;
-	if (pos >= m_maxCount)
-		pos = m_maxCount-1;
+	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
+		throw sserialize::OutOfBoundsException("CompactUintArray::at: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
+	}
 	return priv()->at(pos);
 }
 
 uint64_t CompactUintArray::at64(sserialize::CompactUintArray::SizeType pos) const {
-	if (m_maxCount == 0)
-		return 0;
-	if (pos >= m_maxCount)
-		pos = m_maxCount-1;
+	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
+		throw sserialize::OutOfBoundsException("CompactUintArray::at64: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
+	}
 	return priv()->at64(pos);
 }
 
 uint32_t CompactUintArray::set(const uint32_t pos, const uint32_t value) {
-	if (pos >= m_maxCount)
-		return ~pos;
+	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
+		throw sserialize::OutOfBoundsException("CompactUintArray::set: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
+	}
 	return priv()->set(pos, value);
 }
 
 uint64_t CompactUintArray::set64(const uint32_t pos, const uint64_t value) {
-	if (pos >= m_maxCount)
-		return ~pos;
+	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
+		throw sserialize::OutOfBoundsException("CompactUintArray::set64: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
+	}
 	return priv()->set64(pos, value);
 }
 
 bool CompactUintArray::reserve(uint32_t newMaxCount) {
-	if (maxCount() >= newMaxCount)
+	if (maxCount() >= newMaxCount) {
 		return true;
-
+	}
+	
 	uint32_t mybpn = bpn();
 	UByteArrayAdapter::OffsetType neededByteCount = minStorageBytes(mybpn, newMaxCount);
 	UByteArrayAdapter::OffsetType haveByteCount = priv()->data().size();
@@ -498,6 +503,7 @@ CompactUintArray(0)
 	}
 	
 	m_size = sserialize::narrow_check<SizeType>(sizeBits >> 6);
+	setMaxCount(m_size);
 	
 	uint8_t bits = (uint8_t)((sizeBits & 0x3F) + 1);
 

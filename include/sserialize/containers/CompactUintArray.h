@@ -135,6 +135,7 @@ private:
 	SizeType m_maxCount;
 protected:
 	void setPrivate(const UByteArrayAdapter & array, uint32_t bitsPerNumber);
+	void setMaxCount(SizeType maxCount);
 	CompactUintArray(CompactUintArrayPrivate * priv);
 public:
 	CompactUintArray();
