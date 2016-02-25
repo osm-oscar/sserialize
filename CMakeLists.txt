@@ -120,6 +120,7 @@ src/containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
+src/spatial/GeoShape.cpp
 src/spatial/GeoPoint.cpp
 src/spatial/GeoWay.cpp
 src/spatial/GeoRect.cpp

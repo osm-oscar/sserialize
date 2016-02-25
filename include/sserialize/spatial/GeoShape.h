@@ -31,6 +31,7 @@ public:
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const = 0;
 	virtual GeoShape * copy() const = 0;
 	virtual std::ostream & asString(std::ostream & out) const { return out; }
+	void dump() const;
 
 // 	virtual double realDistance(const sserialize::spatial::GeoShape & other) const;
 	
