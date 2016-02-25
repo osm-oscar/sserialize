@@ -169,7 +169,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 						ok = myDist < radius;
 					}
 					if (!ok) {
-						ok = f.contains(*it); //TODO: intersection needs to be tested aswell
+						ok = f.intersects(*it, *(it+1));
 					}
 				}
 				if (ok) {
