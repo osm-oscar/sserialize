@@ -2,6 +2,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/utility/printers.h>
 #include <sserialize/utility/assert.h>
+#include <sserialize/spatial/GeoPolygon.h>
 
 
 namespace sserialize {
@@ -59,6 +60,13 @@ Triangulation::Vertex Triangulation::Face::vertex(uint32_t pos) const {
 
 Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
+}
+
+bool Triangulation::Face::contains(const Triangulation::Point& p) const {
+	//TODO:speed this up by using a point-in-triangle test
+	std::vector<Point> tmp{ point(0), point(1), point(2) };
+	sserialize::spatial::GeoPolygon gp(std::move(tmp));
+	return gp.contains(p);
 }
 
 Triangulation::Point Triangulation::Face::centroid() const {
