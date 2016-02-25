@@ -114,6 +114,7 @@ public:
 		Vertex vertex(uint32_t pos) const;
 		Point point(uint32_t pos) const;
 		bool contains(const Point & p) const;
+		bool intersects(const Point & p, const Point & q) const;
 		///inexact computed centroid
 		Point centroid() const;
 		///index of the vertex, -1 if vertex is not part of this face

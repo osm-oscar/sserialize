@@ -69,6 +69,13 @@ bool Triangulation::Face::contains(const Triangulation::Point& p) const {
 	return gp.contains(p);
 }
 
+bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {
+	using namespace sserialize::spatial;
+	return GeoPoint::intersect(p, q, point(0), point(1)) ||
+			GeoPoint::intersect(p, q, point(1), point(2)) ||
+			GeoPoint::intersect(p, q, point(2), point(0));
+}
+
 Triangulation::Point Triangulation::Face::centroid() const {
 	Triangulation::Point p[] = { point(0), point(1), point(2) };
 	double lat = (p[0].lat() + p[1].lat() + p[2].lat()) / 3;
