@@ -47,7 +47,7 @@ m_idxStore(idxStore)
 	//return should stay the same since gthis is just a shrink
 	m_idx = (IndexDesc*) ::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
-	assert(selfCheck());
+	SSERIALIZE_NORMAL_ASSERT(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(const ItemIndex & fmIdx, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
@@ -62,7 +62,7 @@ m_idxStore(idxStore)
 	for(; fmIt != fmEnd; ++fmIt) {
 		m_desc.push_back( CellDesc(1, 0, *fmIt) );
 	}
-	assert(selfCheck());
+	SSERIALIZE_NORMAL_ASSERT(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
@@ -78,7 +78,7 @@ m_idxStore(idxStore)
 	if (!fullMatch) {
 		idxPtr[0].idxPtr = cellIdxId;
 	}
-	assert(selfCheck());
+	SSERIALIZE_NORMAL_ASSERT(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
@@ -331,7 +331,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		++oI;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
-	assert(r.m_desc.size() >= std::max<std::size_t>(m_desc.size(), o.m_desc.size()));
+	SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(r.m_desc.size(), std::max<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
 
@@ -388,7 +388,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 		continue;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
-	assert(r.m_desc.size() <= m_desc.size());
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(r.m_desc.size(), m_desc.size());
 	return rPtr;
 }
 
@@ -468,7 +468,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 		continue;
 	}
 	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
-	assert(r.m_desc.size() <= (m_desc.size() + o.m_desc.size()));
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(r.m_desc.size(), (m_desc.size() + o.m_desc.size()));
 	return rPtr;
 }
 
