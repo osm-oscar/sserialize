@@ -139,7 +139,12 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 			}
 			if (startFace != Triangulation::NullFace) {
 				startFace = tds().traverse(it->lat(), it-> lon(), startFace, [&wct](const Triangulation::Face & face) {
-					wct.result.insert( wct.parent->cellIdFromFaceId(face.id()) );
+					SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
+					SSERIALIZE_CHEAP_ASSERT(face.valid())
+					uint32_t cId = wct.parent->cellIdFromFaceId(face.id());
+					if (cId != NullCellId) {
+						wct.result.insert(cId);
+					}
 				}, MyGeomTraits());
 			}
 		}
@@ -155,6 +160,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 		}
 
 		tds().explore(startFace, [&wct, radius](const Triangulation::Face & f) {
+				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(f.id(), Triangulation::NullFace)
 				sserialize::spatial::GeoPoint ct(f.centroid());
 				bool ok = false;
 				typedef const sserialize::spatial::GeoPoint* MyIt;
