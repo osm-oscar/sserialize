@@ -108,6 +108,15 @@ public:
 	}
 };
 
+class UnsupportedFeatureException: public Exception {
+public:
+	UnsupportedFeatureException(const std::string & what) :
+	Exception()
+	{
+		setMsg("UnsupportedFeatureException: " + what);
+	}
+};
+
 class ConfigurationException: public Exception {
 public:
 	ConfigurationException(const std::string & where, const std::string & what) :
