@@ -172,6 +172,10 @@ void Triangulation::Vertex::dump(std::ostream& out) const {
 	out << "\tpoint=" << point() << "\n";
 	out << "\tbeginFaceId=" << beginFaceId() << "\n";
 	out << "\tendFaceId=" << endFaceId() << "\n";
+	FaceCirculator fB(facesBegin()), fE(facesEnd());
+	for(uint32_t i(0);fB != fE; ++fB, ++i) {
+		out << "\tface[" << i << "]=" << fB.face().id() << std::endl;
+	}
 	out << "}";
 }
 
