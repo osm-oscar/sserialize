@@ -4,6 +4,9 @@
 namespace sserialize {
 namespace Static {
 namespace UnicodeTrie {
+
+constexpr uint32_t FlatTrieBase::npos;
+
 namespace detail {
 namespace FlatTrie {
 
