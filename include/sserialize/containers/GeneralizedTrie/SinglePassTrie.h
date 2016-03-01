@@ -125,8 +125,8 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, c
 			suffixIndicesPtr = suffixIndicesPtr+cap;
 		};
 		m_root->mapDepthFirst(indexStorageDistributor);
-		assert(exactIndicesPtr == exactIndicesMem.begin()+exactStorageNeed);
-		assert(suffixIndicesPtr == suffixIndicesMem.begin()+suffixStorageNeed);
+		SSERIALIZE_CHEAP_ASSERT(exactIndicesPtr == exactIndicesMem.begin()+exactStorageNeed);
+		SSERIALIZE_CHEAP_ASSERT(suffixIndicesPtr == suffixIndicesMem.begin()+suffixStorageNeed);
 	}
 	std::cout << "Distributed memory to nodes" << std::endl;
 	

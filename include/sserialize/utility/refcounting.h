@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_REF_COUNTING_H
 #define SSERIALIZE_REF_COUNTING_H
+#include <sserialize/utility/assert.h>
 #include <cstdint>
-#include <assert.h>
 #include <atomic>
 #include <utility>
 
@@ -20,7 +20,7 @@ public:
 	inline void rcReset() { m_rc = 0; }
 	inline void rcInc() { ++m_rc; }
 	inline void rcDec() {
-		assert(m_rc);
+		SSERIALIZE_CHEAP_ASSERT(m_rc);
 		if (m_rc.fetch_sub(1) == 1) { //check if we are the last
 			delete this;
 		}
@@ -178,7 +178,7 @@ public:
 
 	inline void rcInc() { m_rc++; }
 	inline void rcDec() {
-		assert(m_rc);
+		SSERIALIZE_CHEAP_ASSERT(m_rc);
 		m_rc--;
 		if (m_rc < 1) { //destructor will decrease privRc
 			delete this;

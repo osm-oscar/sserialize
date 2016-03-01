@@ -2,6 +2,7 @@
 #define SSERIALIZE_WINDOWED_ARRAY
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/algorithm/utilfuncs.h>
+#include <sserialize/utility/assert.h>
 #include <algorithm>
 #include <iterator>
 
@@ -104,7 +105,7 @@ public:
 	template<typename T_INPUT_ITERATOR>
 	void push_back(T_INPUT_ITERATOR a, T_INPUT_ITERATOR b) {
 		m_push = std::copy(a, b, m_push);
-		assert( m_push <= m_end );
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL( m_push, m_end );
 	}
 	
 	WindowedArray<T_VALUE> slice(SizeType begin, SizeType end) {

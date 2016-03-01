@@ -248,7 +248,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 				const Face & cf = fcBegin.face();
 				SSERIALIZE_CHEAP_ASSERT(cf.valid());
 				int cvIdx = cf.index(circleVertex);
-				assert(cvIdx != -1);
+				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(cvIdx, -1);
 				
 				Vertex myLv(cf.vertex((uint32_t)Triangulation::cw(cvIdx))), myRv(cf.vertex((uint32_t)Triangulation::ccw(cvIdx)));
 				Point_2 myLP(getPoint2(myLv)), myRP(getPoint2(myRv));
@@ -316,8 +316,8 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 				sv = curFace.vertex((uint32_t)ccw(lvIndex));
 				rvIndex = cw(lvIndex);
 			}
-			assert(curFace.vertexId((uint32_t)rvIndex) == rv.id());
-			assert(curFace.vertexId((uint32_t)lvIndex) == lv.id());
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(curFace.vertexId((uint32_t)rvIndex), rv.id());
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(curFace.vertexId((uint32_t)lvIndex), lv.id());
 			
 			Point_2 sp(getPoint2(sv));
 			CGAL::Orientation sot = ot(p, q, sp);
@@ -445,7 +445,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 		bitConfig[Triangulation::Vertex::VI_FACES_END] = bitConfig[Triangulation::Vertex::VI_FACES_BEGIN];
 		sserialize::MultiVarBitArrayCreator va(bitConfig, dest);
 		for(Finite_vertices_iterator vt(src.finite_vertices_begin()), vtEnd(src.finite_vertices_end()); vt != vtEnd; ++vt) {
-			assert(vertexToVertexId.is_defined(vt));
+			SSERIALIZE_NORMAL_ASSERT(vertexToVertexId.is_defined(vt));
 			uint32_t vertexId = vertexToVertexId[vt];
 			uint32_t beginFace, endFace;
 			Face_circulator fc(src.incident_faces(vt));
@@ -469,7 +469,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 				}
 			}
 			for(;src.is_infinite(fc); ++fc) {}
-			assert(!src.is_infinite(fc));
+			SSERIALIZE_NORMAL_ASSERT(!src.is_infinite(fc));
 			//now move forward/backward until we either reach the fc or reach an infite face
 			Face_circulator fcBegin(fc), fcEnd(fc);
 			while(true) {
@@ -495,10 +495,10 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 				}
 			}
 			
-			assert(!src.is_infinite(fcBegin));
-			assert(!src.is_infinite(fcEnd));
-			assert(faceToFaceId.is_defined(fcBegin));
-			assert(faceToFaceId.is_defined(fcEnd));
+			SSERIALIZE_NORMAL_ASSERT(!src.is_infinite(fcBegin));
+			SSERIALIZE_NORMAL_ASSERT(!src.is_infinite(fcEnd));
+			SSERIALIZE_NORMAL_ASSERT(faceToFaceId.is_defined(fcBegin));
+			SSERIALIZE_NORMAL_ASSERT(faceToFaceId.is_defined(fcEnd));
 			
 			beginFace = faceToFaceId[fcBegin];
 			endFace = faceToFaceId[fcEnd];
@@ -521,7 +521,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	
 		faceId = 0;
 		for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
-			assert(faceToFaceId.is_defined(fh) && faceToFaceId[fh] == faceId);
+			SSERIALIZE_NORMAL_ASSERT(faceToFaceId.is_defined(fh) && faceToFaceId[fh] == faceId);
 			
 			uint8_t validNeighbors = 0;
 			for(int j(0); j < 3; ++j) {
@@ -537,14 +537,14 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 			
 			for(int j(0); j < 3; ++j) {
 				Vertex_handle vh = fh->vertex(j);
-				assert(vertexToVertexId.is_defined(vh));
+				SSERIALIZE_NORMAL_ASSERT(vertexToVertexId.is_defined(vh));
 				uint32_t vertexId = vertexToVertexId[vh];
 				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+(uint32_t)j, vertexId);
 			}
 			++faceId;
 		}
 		fa.flush();
-		assert(faceId == faceCount);
+		SSERIALIZE_NORMAL_ASSERT(faceId == faceCount);
 	}
 	return dest;
 }

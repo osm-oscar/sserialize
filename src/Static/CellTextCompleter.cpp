@@ -45,7 +45,7 @@ sserialize::UByteArrayAdapter CellTextCompleter::Payload::typeData(sserialize::S
 	for(uint32_t i(1); i <= pos; ++i) {
 		totalOffset += m_offsets[i-1];
 	}
-	assert(pos < 4);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(pos, 4);
 	if (pos == 3 || m_offsets[pos] == 0) {
 		dataLength = (UByteArrayAdapter::OffsetType)(m_data.size() - totalOffset);
 	}

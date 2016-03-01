@@ -304,7 +304,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 					uint32_t rp = *rPIt;
 					if (SPARSE) {
 						if (!nodes[rp]) { //sparse SubSet doesnt push parent ptrs upwards
-							assert(rp > regionId); //otherwise we would not take care of the newly created region
+							SSERIALIZE_CHEAP_ASSERT_LARGER(rp, regionId); //otherwise we would not take care of the newly created region
 							nodes[rp] = new SubSet::Node(rp, 0);
 						}
 						nodes[rp]->push_back(*it);

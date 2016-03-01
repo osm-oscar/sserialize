@@ -274,7 +274,7 @@ void ChunkedMmappedFilePrivate::write(const uint8_t* src, const SizeType destOff
 uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFilePrivate::SizeType chunk) {
 	uint8_t * data = m_cache[chunk]; //returns null if not set, usage will be increased by one, but also reset to zero below due to insertion
 	if (data) {
-		assert(data);
+		SSERIALIZE_CHEAP_ASSERT(data);
 		return data;
 	}
 	else {
@@ -287,7 +287,7 @@ uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFi
 		uint8_t * data = do_map(chunk);
 		
 		m_cache.insert(chunk, data);
-		assert(data);
+		SSERIALIZE_CHEAP_ASSERT(data);
 		return data;
 	}
 }

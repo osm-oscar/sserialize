@@ -40,7 +40,7 @@ public:
 	~CTCValueStoreNode() {}
 	inline bool operator==(const CTCValueStoreNode & other) const { return m_nodeId == other.m_nodeId && m_qt == other.m_qt; }
 	inline bool operator<(const CTCValueStoreNode & other) const {
-		assert(qt() && other.qt());
+		SSERIALIZE_CHEAP_ASSERT(qt() && other.qt());
 		return (m_nodeId == other.m_nodeId ? m_qt < other.m_qt : m_nodeId < other.m_nodeId);
 	}
 	inline uint32_t nodeId() const { return m_nodeId; }
@@ -119,7 +119,7 @@ public:
 	}
 	ExactStringDerefIterator & operator=(const std::string & str) {
 		uint32_t p = m_t->trie()->find(str, false);
-		assert(p != MyStaticTrie::npos);
+		SSERIALIZE_CHEAP_ASSERT(p != MyStaticTrie::npos);
 		*m_out = p;
 		return *this;
 	}
@@ -140,7 +140,7 @@ public:
 	}
 	SuffixStringDerefIterator & operator=(const std::string & str) {
 		uint32_t p = m_t->trie()->find(str, false);
-		assert(p != MyStaticTrie::npos);
+		SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(p, MyStaticTrie::npos);
 		*m_out = p;
 		if (!str.size()) {
 			return *this;
@@ -150,7 +150,7 @@ public:
 		for(utf8::next(it, end); it != end; utf8::next(it, end)) {
 			mstr.assign(it, end);
 			uint32_t p = m_t->trie()->find(mstr, false);
-			assert(p != MyStaticTrie::npos);
+			SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(p, MyStaticTrie::npos);
 			++m_out;
 			*m_out = p;
 		}
@@ -275,7 +275,7 @@ public:
 			}
 			//and out it goes
 			for(const auto & x : m_allNodes) {
-				assert(x.qt() != sserialize::StringCompleter::QT_NONE);
+				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(x.qt(), sserialize::StringCompleter::QT_NONE);
 				*out = x;
 				++out;
 			}
@@ -349,13 +349,13 @@ public:
 		m_curData(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY))
 		{}
 		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
-			assert(ni.qt());
-			assert(m_curNodeId <= ni.nodeId());
+			SSERIALIZE_CHEAP_ASSERT(ni.qt());
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(m_curNodeId, ni.nodeId());
 			if (m_curNodeId != ni.nodeId()) {//flush
 				flush();
 				m_curNodeId = ni.nodeId();
 			}
-			assert(m_curTypes < ni.qt());
+			SSERIALIZE_CHEAP_ASSERT_SMALLER(m_curTypes, ni.qt());
 			m_curTypes |= ni.qt();
 			m_curOffsets.emplace_back( m_curData.tellPutPtr() );
 			m_curData.put(data);
@@ -607,7 +607,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED);
 		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
 		pc.flush();
-		assert(pc.size() == mst.size());
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(pc.size(), mst.size());
 	}
 }
 

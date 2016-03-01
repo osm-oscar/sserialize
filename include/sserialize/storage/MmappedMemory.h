@@ -6,6 +6,7 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/storage/FileHandler.h>
+#include <sserialize/utility/assert.h>
 #include <string.h>
 
 #ifdef __ANDROID__
@@ -39,7 +40,7 @@ struct MmappedMemoryHelper<TValue, typename std::enable_if< std::is_integral<TVa
 		}
 	}
 	static void initMemory(const TValue * srcBegin, const TValue * srcEnd, TValue * dest) {
-		assert(srcEnd >= srcBegin);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(srcEnd, srcBegin);
 		memmove(dest, srcBegin, (::size_t)(srcEnd-srcBegin)*sizeof(TValue));
 	}
 	static void deinitMemory(TValue * /*begin*/, TValue * /*end*/) {}

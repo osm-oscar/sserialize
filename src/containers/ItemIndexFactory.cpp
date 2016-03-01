@@ -196,7 +196,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		sserialize::UByteArrayAdapter::OffsetType dataOffset = m_indexStore.tellPutPtr();
 		m_indexStore.putData(idx);
 		id = m_idToOffsets.size();
-		assert((std::size_t)id == m_idToOffsets.size()); //check for wrap around of ids
+		SSERIALIZE_CHEAP_ASSERT_EQUAL((std::size_t)id, m_idToOffsets.size()); //check for wrap around of ids
 		m_idToOffsets.push_back(dataOffset);
 		m_idxSizes.push_back(idxSize);
 		m_dataLock.releaseWriteLock();
@@ -225,7 +225,7 @@ UByteArrayAdapter ItemIndexFactory::getFlushedData() {
 }
 
 OffsetType ItemIndexFactory::flush() {
-	assert(m_idxSizes.size() == m_idToOffsets.size());
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(m_idxSizes.size(), m_idToOffsets.size());
 	std::cout << "Serializing index with type=" << m_type << std::endl;
 	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
 	std::cout << "Size=" << m_idToOffsets.size() << std::endl;
@@ -252,10 +252,10 @@ OffsetType ItemIndexFactory::flush() {
 	uint64_t idxSizesBegin = m_indexStore.tellPutPtr();
 	std::cout << "Serializing idx sizes starting at " << idxSizesBegin << "..." << std::flush;
 #ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	assert(m_idxSizes[0] == 0);
+	SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_idxSizes[0], 0);
 	if (m_useDeduplication) {
 		for(uint32_t i(1), s(m_idxSizes.size()); i < s; ++i) {
-			SSERIALIZE_EXPENSIVE_ASSERT(m_idxSizes[i] > 0);
+			SSERIALIZE_EXPENSIVE_ASSERT_LARGER(m_idxSizes[i], 0);
 		}
 	}
 #endif

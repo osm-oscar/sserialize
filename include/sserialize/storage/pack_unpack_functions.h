@@ -9,6 +9,7 @@
 #include <functional>
 #include <limits>
 #include <sserialize/algorithm/utilmath.h>
+#include <sserialize/utility/assert.h>
 
 /* make sure be32toh and be64toh are present */
 #if defined(__linux__)
@@ -294,7 +295,7 @@ template<typename SignedType>
 uint32_t p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s, uint8_t * d) {
 	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
 	UnsignedType tmp;
-	assert(s != std::numeric_limits<SignedType>::min());
+	SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(s, std::numeric_limits<SignedType>::min());
 	if (s < 0) {
 		tmp = (UnsignedType) -s;
 		tmp <<= 1;

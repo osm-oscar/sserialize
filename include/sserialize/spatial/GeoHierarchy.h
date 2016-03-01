@@ -361,7 +361,7 @@ inline void GeoHierarchy::createNeighborPointers(const T_CELL_GRAPH & cellGraph)
 	//reassemble the region info, we can do this in-place for the region description
 	//and a single copy of the region data (don't do a swap there since the regions have a pointer on the container)
 	sserialize::MMVector<uint32_t> regionDataList;
-	assert(regions().size() == rnList.size());
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(regions().size(), rnList.size());
 	for(uint32_t i(0), s(regions().size()); i < s; ++i) {
 		Region & r = region(i);
 		RegionNeighbors & rn = rnList.at(i);

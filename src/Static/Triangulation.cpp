@@ -227,7 +227,7 @@ bool Triangulation::FaceCirculator::operator!=(const Triangulation::FaceCirculat
 Triangulation::FaceCirculator& Triangulation::FaceCirculator::operator++() {
 	if (m_f.id() != m_v.endFaceId()) {
 		int i = m_f.index(m_v);
-		assert(i >= 0);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(i, 0);
 		m_f = m_f.neighbor((uint32_t) Triangulation::ccw(i));
 	}
 	else {
@@ -245,7 +245,7 @@ Triangulation::FaceCirculator Triangulation::FaceCirculator::operator++(int) {
 Triangulation::FaceCirculator& Triangulation::FaceCirculator::operator--() {
 	if (m_f.id() != m_v.beginFaceId()) {
 		int i = m_f.index(m_v);
-		assert(i >= 0);
+		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(i, 0);
 		m_f = m_f.neighbor((uint32_t)Triangulation::cw(i));
 	}
 	else {

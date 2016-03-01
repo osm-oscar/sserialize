@@ -182,7 +182,7 @@ public:
 	}
 	///rebind container
 	void rebind(container_type * container) {
-		assert(!m_delete);
+		SSERIALIZE_CHEAP_ASSERT(!m_delete);
 		m_d.backend = container;
 	}
 	void swap(CFLArray & o) {

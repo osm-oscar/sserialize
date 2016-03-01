@@ -58,7 +58,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 	flattenCell(n+1, cellId, aIdx, pmIdxIdA, frtA);
 	flattenCell(n+n->opNode.childB, cellId, bIdx, pmIdxIdB, frtB);
 	
-	assert(frtA != FT_NONE && frtB != FT_NONE);
+	SSERIALIZE_CHEAP_ASSERT(frtA != FT_NONE && frtB != FT_NONE);
 	
 	switch (n->common.type) {
 	case FlatNode::T_INTERSECT:

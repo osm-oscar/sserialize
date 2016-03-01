@@ -115,7 +115,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 	std::vector<uint8_t> s;
 	UByteArrayAdapter ds(&s, false);
 	bool mok = create(idx, ds, m_type);
-	assert(mok);
+	SSERIALIZE_CHEAP_ASSERT(mok);
 	if (mok) {
 		return addIndex(s, narrow_check<uint32_t>(idx.size()));
 	}

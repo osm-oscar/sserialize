@@ -523,7 +523,7 @@ HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 	else {//special string (comes from outside)
 		typename StaticString::OffsetType strOff = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
-		assert(utf8::is_valid(m_strHandler.strBegin(a), m_strHandler.strEnd(a)));
+		SSERIALIZE_NORMAL_ASSERT(utf8::is_valid(m_strHandler.strBegin(a), m_strHandler.strEnd(a)));
 		StaticString ns(strOff, a.size());
 		m_ht.insert(ns);
 		return ns;
@@ -623,7 +623,6 @@ bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::Fla
 	UByteArrayAdapter sftStrData = sft.strData();
 	for(UByteArrayAdapter::OffsetType i(0), s(m_stringData.size()); i < s; ++i) {
 		if (sftStrData.at(i) != (uint8_t) m_stringData.at(i)) {
-			assert(false);
 			return false;
 		}
 	}
@@ -632,7 +631,6 @@ bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::Fla
 	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
 		auto sftX = sft.sstr(sI);
 		if (rIt->first.size() != sftX.size() || rIt->first.offset() != sftX.off()) {
-			assert(false);
 			return false;
 		}
 	}
@@ -641,7 +639,6 @@ bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::Fla
 	sI = 0;
 	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
 		if (toStr(rIt->first) != sft.strAt(sI)) {
-			assert(false);
 			return false;
 		}
 	}
@@ -687,12 +684,12 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	for(const auto & x : m_ht) {
 		bool ok = tsCreator.set(count, 0, m_strHandler.strBegin(x.first)-strDataBegin);
 		ok = tsCreator.set(count, 1, x.first.size()) && ok;
-		assert(ok);
+		SSERIALIZE_CHEAP_ASSERT(ok);
 		++count;
 		pinfo(count);
 #if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
-		assert(tsCreator.at(0,0) == debugCheckOffsetEntry);
-		assert(tsCreator.at(0,1) == debugCheckSizeEntry);
+		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(tsCreator.at(0,0), debugCheckOffsetEntry);
+		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(tsCreator.at(0,1), debugCheckSizeEntry);
 #endif
 	}
 	tsCreator.flush();
@@ -703,7 +700,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 		tmp.setPutPtr(flatTrieBaseBeginOffset);
 		tmp.shrinkToPutPtr();
 		sserialize::Static::UnicodeTrie::FlatTrieBase ftb(tmp);
-		assert(checkTrieEquality(ftb));
+		SSERIALIZE_EXPENSIVE_ASSERT(checkTrieEquality(ftb));
 		std::cout << "Tries are equal" << std::endl;
 	}
 #endif
@@ -765,15 +762,15 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			for(const NodePtr & n : levelNodes) {
 				for(typename Node::const_iterator it(n->cbegin()), end(n->cend()); it != end; ++it) {
 					destLevelNodes.push_back(*it);
-					#ifndef NDEBUG
+					#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
 					int64_t id = destLevelNodes.back()->rawBegin() - htBegin;
 					#endif
-					assert(id >= 0 && id < htSize);
-					assert(id < size());
+					SSERIALIZE_CHEAP_ASSERT(id >= 0 && id < htSize);
+					SSERIALIZE_CHEAP_ASSERT(id < size());
 				}
 			}
 		}
-		assert(nodesInLevelOrder.back().size());
+		SSERIALIZE_CHEAP_ASSERT(nodesInLevelOrder.back().size());
 		sserialize::ThreadPool threadPool(threadCount);
 		std::vector<T_PH> payloadHandlers(threadPool.numThreads(), payloadHandler);
 		GuardedVariable<int32_t> runningBlockTasks(0);
@@ -781,7 +778,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		std::mutex nodeFetchMtx;
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
 		while(nodesInLevelOrder.size()) {
-			assert(runningBlockTasks.unsyncedValue() == 0);
+			SSERIALIZE_CHEAP_ASSERT(runningBlockTasks.unsyncedValue() == 0);
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
 			NodePtr * levelNodesIt = &levelNodes[0];
 			NodePtr * levelNodesEnd = levelNodesIt+levelNodes.size();
@@ -802,12 +799,12 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 								++levelNodesIt;
 								nodeFetchMtx.unlock();
 								uint32_t id = n->rawBegin() - htBegin;
-								assert(id < htSize);
+								SSERIALIZE_CHEAP_ASSERT_SMALLER(id, htSize);
 								
 								myTmpPayload.beginRawPush() << (*pH)(n);
 								myTmpPayload.endRawPush();
 								nodeIds.push_back(id);
-								assert(nodeIds.size() == myTmpPayload.size());
+								SSERIALIZE_CHEAP_ASSERT_EQUAL(nodeIds.size(), myTmpPayload.size());
 							}
 							else {
 								nodeFetchMtx.unlock();
@@ -826,13 +823,13 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 					}
 				);
 			}
-			assert(runningBlockTasks.unsyncedValue() <= (int32_t)threadCount+1);
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(runningBlockTasks.unsyncedValue(), (int32_t)(threadCount+1));
 			{
 				GuardedVariable<int32_t>::UniqueLock lck(runningBlockTasks.uniqueLock());
 				while (runningBlockTasks.unsyncedValue() > 0) {
 					runningBlockTasks.wait_for(lck, 1000000);//wait for 1 second
 				}
-				assert(runningBlockTasks.unsyncedValue() == 0);
+				SSERIALIZE_CHEAP_ASSERT_EQUAL(runningBlockTasks.unsyncedValue(), 0);
 			}
 			//wait for jobs to deallocate memory
 			nodesInLevelOrder.pop_back();

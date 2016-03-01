@@ -116,7 +116,7 @@ m_idxStore(idxStore)
 	//return should stay the same since gthis is just a shrink
 	m_idx = (IndexDesc*)::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
-	assert(selfCheck());
+	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
 
 

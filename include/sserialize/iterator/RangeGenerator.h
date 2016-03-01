@@ -1,6 +1,6 @@
 #ifndef SSERIALIZE_UTIL_RANGE_GENERATOR_H
 #define SSERIALIZE_UTIL_RANGE_GENERATOR_H
-#include <assert.h>
+#include <sserialize/utility/assert.h>
 #include <iterator>
 #include <type_traits>
 
@@ -73,7 +73,11 @@ private:
 	SizeType m_stride;
 public:
 	///@param end one past the end (like in python)
-	RangeGenerator(SizeType begin, SizeType end, SizeType stride=1) : m_begin(begin), m_end(end), m_stride(stride) { assert((m_end-m_begin) % m_stride == 0);}
+	RangeGenerator(SizeType begin, SizeType end, SizeType stride=1) :
+	m_begin(begin), m_end(end), m_stride(stride)
+	{
+		SSERIALIZE_CHEAP_ASSERT((m_end-m_begin) % m_stride == 0);
+	}
 	RangeGenerator(SizeType size) : m_begin(0), m_end(size), m_stride(1) {}
 	inline SizeType size() const { return (m_end-m_begin)/m_stride; }
 	inline Iterator begin() const { return Iterator(m_begin, m_stride); }

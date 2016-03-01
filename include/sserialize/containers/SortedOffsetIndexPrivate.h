@@ -3,6 +3,7 @@
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/algorithm/utilfuncs.h>
+#include <sserialize/utility/assert.h>
 #include <cmath>
 #include <iostream>
 
@@ -102,7 +103,7 @@ public:
 	///Append a SortedOffsetIndexPrivate at dest
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, sserialize::UByteArrayAdapter & destination) {
-		assert(std::is_sorted(src.cbegin(), src.cend()));
+		SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(src.cbegin(), src.cend()));
 	
 		if (src.size() > 1) {
 			uint64_t slopenom = 0;

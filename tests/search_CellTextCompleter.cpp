@@ -63,7 +63,7 @@ struct Item {
 
 
 std::set<uint32_t> createCellIds(uint32_t count, uint32_t maxCellId) {
-	assert(count < maxCellId);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(count, maxCellId);
 	std::set<uint32_t> res;
 	while (res.size() < count) {
 		res.insert(rand() % (maxCellId+1));
@@ -236,7 +236,7 @@ public:
 				cellItemListSize += x.second.size();
 			}
 			
-			assert(cellParents.size() == cellId);
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(cellParents.size(), cellId);
 			
 			cellList.cellRegionLists().resize(cellParentListSize);
 			cellList.cellItemList().resize(cellItemListSize);
@@ -251,14 +251,14 @@ public:
 				if (cellItems.count(cellId)) {
 					cellItemListIt = std::copy(cellItems[cellId].cbegin(), cellItems[cellId].cend(), cellItemListIt);
 				}
-				assert(cellParents.count(cellId));
+				SSERIALIZE_CHEAP_ASSERT(cellParents.count(cellId));
 				cellRegionListIt = std::copy(cellParents[cellId].cbegin(), cellParents[cellId].cend(), cellRegionListIt);
 				cellList.cells().emplace_back(myCellRegionListBegin, cellRegionListIt, myCellItemListBegin, cellItemListIt, sserialize::spatial::GeoRect());
 			}
 			
 			//now take care of the region list
 			for(const sserialize::RCPtrWrapper<Region> & rp : rgi) {
-				assert(rp->ghId == regionList.regionDescriptions().size());
+				SSERIALIZE_CHEAP_ASSERT_EQUAL(rp->ghId, regionList.regionDescriptions().size());
 				uint64_t off = regionList.regionData().size();
 				
 				for(auto x : rp->children) {
@@ -283,7 +283,7 @@ public:
 			
 			this->gh = sserialize::Static::spatial::GeoHierarchy(sghD);
 			
-			assert(this->gh.cellSize() == cellId);
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(this->gh.cellSize(), cellId);
 		}
 		
 		//now kill the regionGraph, remove the cycles created by the parent-pointers
