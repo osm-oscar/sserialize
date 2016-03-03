@@ -138,7 +138,7 @@ sserialize::spatial::GeoShape * GeoPoint::copy() const {
 
 std::ostream & GeoPoint::asString(std::ostream & out) const {
 	auto p = out.precision();
-	out.precision(std::numeric_limits<float>::digits10);
+	out.precision(std::numeric_limits<double>::digits10+1);
 	out << "GeoPoint(" << lat() << ", " << lon() << ")";
 	out.precision(p);
 	return out;
