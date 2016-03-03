@@ -210,6 +210,11 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 		return Point_2(gp.lat(), gp.lon());
 	};
 	
+	//TODO: there's currently no way to tell that the point is identical with a vertex
+	auto returnFaceFromVertex = [](const Vertex & v) -> uint32_t {
+		return v.facesBegin().face().id();
+	};
+	
 	if (hint >= faceCount()) {
 		hint = 0;
 	}
@@ -238,8 +243,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 			p = cv;
 			
 			if (cv == q) {
-				//TODO: there's currently no way to tell that the point is identical with a vertex
-				return circleVertex.facesBegin().face().id();
+				return returnFaceFromVertex(circleVertex);
 			}
 			//p->q goes through circleVertex, we have to find the right triangle
 			//That triangle has circleVertex as a vertex
@@ -280,13 +284,23 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 						break;
 					}
 				}
-				else if (lvOt == CGAL::Orientation::COLLINEAR && oal(p, myLP, q)) {
-					circleVertex = myLv;
-					break;
+				else if (lvOt == CGAL::Orientation::COLLINEAR) {
+					if (oal(p, q, myLP)) { //q lies on the edge, this has to come first in case both p and q lie on vertices
+						return cf.id();
+					}
+					else if (oal(p, myLP, q)) {
+						circleVertex = myLv;
+						break;
+					}
 				}
-				else if (rvOt == CGAL::Orientation::COLLINEAR && oal(p, myRP, q)) {
-					circleVertex = myRv;
-					break;
+				else if (rvOt == CGAL::Orientation::COLLINEAR) {
+					if (oal(p, q, myRP)) { //q lies on the edge, this has to come first in case both p and q lie on vertices
+						return cf.id();
+					}
+					else if (oal(p, myRP, q)) {
+						circleVertex = myRv;
+						break;
+					}
 				}
 				//we've tested all faces and none matched, thus p must be outside of our triangulation
 				//This is only correct, if the triangulation is convex
