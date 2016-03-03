@@ -123,6 +123,10 @@ uint32_t CellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }
 
+uint32_t CellQueryResult::maxItems() const {
+	return m_priv->maxItems();
+}
+
 sserialize::ItemIndex::Types CellQueryResult::defaultIndexType() const {
 	return m_priv->defaultIndexType();
 }

@@ -66,6 +66,7 @@ public:
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
 	inline uint32_t cellCount() const { return (uint32_t)m_desc.size();}
+	uint32_t maxItems() const;
 	inline bool fetched(uint32_t pos) const { return m_desc[pos].fetched; }
 	inline uint32_t rawDesc(uint32_t pos) const { return m_desc[pos].raw(); }
 	CellQueryResult * intersect(const CellQueryResult * other) const;

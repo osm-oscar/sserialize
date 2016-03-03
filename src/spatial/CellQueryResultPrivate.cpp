@@ -144,6 +144,14 @@ uint32_t CellQueryResult::idxId(uint32_t pos) const {
 	}
 }
 
+uint32_t CellQueryResult::maxItems() const {
+	uint32_t tmp = 0;
+	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+		tmp += idxSize(i);
+	}
+	return tmp;
+}
+
 CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const {
 	const CellQueryResult & o = *oPtr;
 	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
