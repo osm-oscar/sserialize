@@ -137,7 +137,11 @@ sserialize::spatial::GeoShape * GeoPoint::copy() const {
 }
 
 std::ostream & GeoPoint::asString(std::ostream & out) const {
-	return out << "GeoPoint(" << lat() << ", " << lon() << ")";
+	auto p = out.precision();
+	out.precision(std::numeric_limits<float>::digits10);
+	out << "GeoPoint(" << lat() << ", " << lon() << ")";
+	out.precision(p);
+	return out;
 }
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
