@@ -351,6 +351,15 @@ bool Triangulation::selfCheck() const {
 			}
 		}
 	}
+	for(uint32_t faceId(0), s(faceCount()); faceId < s; ++faceId) {
+		Face f(face(faceId));
+		Vertex v0(f.vertex(0)), v1(f.vertex(1)), v2(f.vertex(2));
+		if (v0.id() == v1.id() || v0.id() == v2.id() || v1.id() == v2.id() ||
+			v0.point() == v1.point() || v0.point() == v2.point() || v1.point() == v2.point())
+		{
+			return false;
+		}
+	}
 	for(uint32_t vertexId(0), s(vertexCount()); vertexId < s; ++vertexId) {
 		Vertex v(vertex(vertexId));
 		FaceCirculator fc(v.faces());
