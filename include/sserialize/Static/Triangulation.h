@@ -218,7 +218,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 	if (hint >= faceCount()) {
 		hint = 0;
 	}
-
+	//(p,q,r) ->  CGAL::Orientation
 	Orientation_2 ot(traits.orientation_2_object());
 	//(p,q,r) = 1 iff q is between p and r
 	Collinear_are_ordered_along_line_2 oal(traits.collinear_are_ordered_along_line_2_object());
@@ -431,6 +431,12 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	
 	uint32_t faceCount = 0;
 	uint32_t vertexCount = 0;
+	
+
+	//BUG: the reduced precision of the serialization may produce degenerate triangultions
+	//or even triangulations that are incorrect (like self intersections due to rounding errors etc.)
+	//Make sure that this does not happen:
+	//The shortest edge according to L1 should be at least std::numeric_limits<float>::epsilon*2
 	
 	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 		faceToFaceId[fh] = faceId;
