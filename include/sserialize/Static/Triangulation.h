@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_H
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_H
 #include <sserialize/containers/MultiVarBitArray.h>
+#include <sserialize/containers/UnionFind.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoPoint.h>
 #include <assert.h>
@@ -8,6 +9,7 @@
 
 #include <CGAL/number_utils.h>
 #include <CGAL/enum.h>
+#include <CGAL/Unique_hash_map.h>
 
 namespace sserialize {
 namespace Static {
@@ -180,8 +182,6 @@ public:
 	///@param explorer operator()(const Face & face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
 	template<typename T_EXPLORER>
 	void explore(uint32_t startFace, T_EXPLORER explorer) const;
-	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
-	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
 	bool selfCheck() const;
 	void printStats(std::ostream & out) const;
 	//counter-clock-wise next vertex/neighbor as defined in cgal
@@ -193,6 +193,18 @@ public:
 	inline static uint32_t ccw(const uint32_t i) { return (i+1)%3; }
 	//clock-wise next vertex/neighbor as defined in cgal
 	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
+
+	///contract node v2 and v1 by removing v2 and adding the respective constraints if needed
+	template<typename T_CTD>
+	static void contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, typename T_CTD::Vertex_handle v2);
+	
+	///prepare triangulation for serialization (currently contracts faces that are representable)
+	template<typename T_CTD>
+	static void prepare(T_CTD & ctd);
+	
+	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
+	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
+
 };
 
 template<typename TVisitor, typename T_GEOMETRY_TRAITS>
@@ -412,6 +424,93 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 	}
 }
 
+template<typename T_CTD>
+void Triangulation::contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, typename T_CTD::Vertex_handle v2) {
+	typedef T_CTD TDS;
+	typedef typename TDS::Vertex_handle Vertex_handle;
+	typedef typename TDS::Vertex_circulator Vertex_circulator;
+	
+	SSERIALIZE_CHEAP_ASSERT(v1 != v2);
+	//targets of constraint vertices
+	std::vector<Vertex_handle> cVerts;
+	
+	Vertex_circulator vC(ctd.incident_vertices(v2));
+	Vertex_circulator vEnd(vC);
+	if (vC != 0) {
+		do {
+			if (vC != v1) {
+				cVerts.push_back(vC);
+			}
+			++vC;
+		} while (vC != vEnd);
+	}
+	ctd.remove(v2);
+	
+	//now readd the constraints TODO: does this create new intersection points?
+	for(Vertex_handle & vh : cVerts) {
+		ctd.insert_constraint(v1, vh);
+	}
+}
+
+template<typename T_CTD>
+void Triangulation::prepare(T_CTD & ctd) {
+	typedef T_CTD TDS;
+	typedef typename TDS::Vertex_handle Vertex_handle;
+	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
+	typedef typename TDS::Vertex_circulator Vertex_circulator;
+	typedef typename TDS::Point Point;
+	
+	typedef sserialize::UnionFind<Vertex_handle> UnionFind;
+	typedef typename UnionFind::handle_type UFHandle;
+	typedef CGAL::Unique_hash_map<Vertex_handle, UFHandle> VertexHashMap;
+	
+	//by definition p2 is different from intLat/intLon before mapping
+	auto mapToSame = [](uint32_t intLat, uint32_t intLon, const Point & p2) -> bool {
+		return (intLat == sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p2.x())) ||
+				intLon == sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p2.y())));
+	};
+	
+	UnionFind contractVerts;
+	VertexHashMap vert2UFHandle;
+	
+	contractVerts.reserve(ctd.number_of_vertices());
+	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+		auto h = contractVerts.make_set(vt);
+		vert2UFHandle[vt] = h;
+	}
+	
+	//find nodes that need to be contracted (is this even necessary?
+	for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
+		Vertex_handle vh = it.value();
+		SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vh));
+		UFHandle vufh = vert2UFHandle[vh];
+		Point vhp = vh->point();
+		uint32_t intLat = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(vhp.x()));
+		uint32_t intLon = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(vhp.y()));
+		Vertex_circulator vC(ctd.incident_vertices(vh));
+		Vertex_circulator vEnd(vC);
+		if (vC == 0) {
+			continue;
+		}
+		do {
+			if (mapToSame(intLat, intLon, vC->point())) {
+				SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vC));
+				UFHandle ufh = vert2UFHandle[vC];
+				contractVerts.unite(vufh, ufh);
+			}
+			++vC;
+		} while (vC != vEnd);
+	}
+	
+	//now let's contract the nodes
+	for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
+		UFHandle rep = contractVerts.find( it.handle() );
+		if (rep != it.handle()) {
+			contract(ctd, contractVerts.get(rep), it.value());
+		}
+	}
+}
+
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 sserialize::UByteArrayAdapter &
@@ -433,10 +532,29 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	uint32_t vertexCount = 0;
 	
 
-	//BUG: the reduced precision of the serialization may produce degenerate triangultions
+	//the reduced precision of the serialization may produce degenerate triangultions
 	//or even triangulations that are incorrect (like self intersections due to rounding errors etc.)
-	//Make sure that this does not happen:
-	//The shortest edge according to L1 should be at least std::numeric_limits<float>::epsilon*2
+	//This should not happen => unite nodes that get the same coordinates
+	//Here we only check if the triangulation satisfies the condition
+
+	auto toIntLat = [](double v) { return sserialize::spatial::GeoPoint::toIntLat(v); };
+	auto toIntLon = [](double v) { return sserialize::spatial::GeoPoint::toIntLon(v); };
+	
+	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
+		auto p0 = fh->vertex(0)->point();
+		auto p1 = fh->vertex(1)->point();
+		auto p2 = fh->vertex(2)->point();
+		if (p0 == p1 || p0 == p2 || p1 == p2) {
+			throw sserialize::CreationException("Triangulation has degenerate face");
+		}
+		using CGAL::to_double;
+		if (toIntLat(to_double(p0.x())) == toIntLat(to_double(p1.x())) || toIntLon(to_double(p0.y())) == toIntLon(to_double(p1.y())) ||
+			toIntLat(to_double(p0.x())) == toIntLat(to_double(p2.x())) || toIntLon(to_double(p0.y())) == toIntLon(to_double(p2.y())) ||
+			toIntLat(to_double(p1.x())) == toIntLat(to_double(p2.x())) || toIntLon(to_double(p1.y())) == toIntLon(to_double(p2.y())))
+		{
+			throw sserialize::CreationException("Triangulation has degenerate face after serialization");
+		}
+	}
 	
 	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 		faceToFaceId[fh] = faceId;
