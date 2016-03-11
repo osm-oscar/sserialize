@@ -164,22 +164,22 @@ UnionFind<TValueType>::find(handle_type a) {
 template<typename TValueType>
 void
 UnionFind<TValueType>::unite(handle_type a, handle_type b) {
-	   handle_type pa = find(a);
-	   handle_type pb = find(b);
+	handle_type pa = find(a);
+	handle_type pb = find(b);
 	if (pa == pb) {
 		return;
 	}
-	Entry & ea = m_d[pa];
-	Entry & eb = m_d[pb];
-	if (ea.rank < eb.rank) {
-		ea.parent = pb;
+	Entry & epa = m_d[pa];
+	Entry & epb = m_d[pb];
+	if (epa.rank < epb.rank) {
+		epa.parent = pb;
 	}
-	else if (ea.rank > eb.rank) {
-		eb.parent = pa;
+	else if (epa.rank > epb.rank) {
+		epb.parent = pa;
 	}
 	else {
-		ea.parent = pb;
-		eb.rank += 1;
+		epa.parent = pb;
+		epb.rank += 1;
 	}
 }
 
