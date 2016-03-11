@@ -430,6 +430,11 @@ void Triangulation::contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, type
 	typedef typename TDS::Vertex_handle Vertex_handle;
 	typedef typename TDS::Vertex_circulator Vertex_circulator;
 	
+	if (ctd.tds().is_vertex(v1)) {
+		std::cout << "Base Vertex not existent. Skipping";
+		return;
+	}
+	
 	SSERIALIZE_CHEAP_ASSERT(v1 != v2);
 	//targets of constraint vertices
 	std::vector<Vertex_handle> cVerts;
@@ -449,9 +454,22 @@ void Triangulation::contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, type
 	ctd.remove_incident_constraints(v2);
 	ctd.remove(v2);
 	
+	if (ctd.tds().is_vertex(v1)) {
+		throw std::runtime_error("Base Vertex vanished by magic before loop");
+	}
+	
 	//now readd the constraints TODO: does this create new intersection points?
+	//yes it does. And that is BAD! This may very well create the same point that we removed
 	for(Vertex_handle & vh : cVerts) {
-		ctd.insert_constraint(v1, vh);
+		if (ctd.tds().is_vertex(v1)) {
+			throw std::runtime_error("Base Vertex vanished by magic in loop");
+		}
+		if (ctd.tds().is_vertex(vh)) {
+			ctd.insert_constraint(v1, vh);
+		}
+		else {
+			std::cout << "Vertex vanished by magic" << std::endl;
+		}
 	}
 }
 
@@ -478,6 +496,7 @@ void Triangulation::prepare(T_CTD & ctd) {
 	std::size_t nr1PhaseCVerts = 0;
 	std::size_t nr2PhaseCVerts = 0;
 	std::size_t contractRounds = 0;
+	std::size_t nrUnsnappedPoints = 0;
 	do {
 		++contractRounds;
 		nr1PhaseCVerts = 0;
@@ -492,14 +511,20 @@ void Triangulation::prepare(T_CTD & ctd) {
 				vert2UFHandle[vt] = h;
 			}
 			
-			//find nodes that need to be contracted (is this even necessary?
+			//find nodes that need to be contracted (is this even necessary?)
+			//this is broken!
 			for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
 				Vertex_handle vh = it.value();
 				SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vh));
 				UFHandle vufh = vert2UFHandle[vh];
 				Point vhp = vh->point();
-				uint32_t intLat = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(vhp.x()));
-				uint32_t intLon = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(vhp.y()));
+				double dLat = CGAL::to_double(vhp.x());
+				double dLon = CGAL::to_double(vhp.y());
+				uint32_t intLat = sserialize::spatial::GeoPoint::toIntLat(dLat);
+				uint32_t intLon = sserialize::spatial::GeoPoint::toIntLon(dLon);
+				if (dLat != sserialize::spatial::GeoPoint::toDoubleLat(intLat) || dLon != sserialize::spatial::GeoPoint::toDoubleLon(intLon)) {
+					++nrUnsnappedPoints;
+				}
 				Vertex_circulator vC(ctd.incident_vertices(vh));
 				Vertex_circulator vEnd(vC);
 				if (vC == 0) {
@@ -524,7 +549,7 @@ void Triangulation::prepare(T_CTD & ctd) {
 				}
 			}
 		}
-		{
+		if (false) {
 			std::unordered_map< std::pair<uint32_t, uint32_t>, Vertex_handle> baseVerts;
 			std::vector<Vertex_handle> contractVerts;
 			std::pair<uint32_t, uint32_t> ip;
@@ -551,10 +576,11 @@ void Triangulation::prepare(T_CTD & ctd) {
 		nr1PhaseTotalContractions += nr1PhaseCVerts;
 		nr2PhaseTotalContractions += nr2PhaseCVerts;
 	} while (nr1PhaseCVerts || nr2PhaseCVerts);
-	std::cout << "sserialize::Static::Triangulation:prepare:\n\tPhase 1 contractions: ";
-	std::cout << nr1PhaseTotalContractions << "\n\tPhase 2 contractions: ";
-	std::cout  << nr2PhaseTotalContractions << "\n\tRounds: ";
-	std::cout  << contractRounds << std::endl;
+	std::cout << "sserialize::Static::Triangulation:prepare:\n";
+	std::cout << "\tPhase 1 contractions: " << nr1PhaseTotalContractions << '\n';
+	std::cout << "\tPhase 2 contractions: " << nr2PhaseTotalContractions << '\n';
+	std::cout << "\tRounds: " << contractRounds << '\n';
+	std::cout << "\tUnsapped points: " << nrUnsnappedPoints << std::endl;
 }
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
