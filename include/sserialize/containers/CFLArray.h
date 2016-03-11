@@ -82,37 +82,52 @@ public:
 		m_delete = 1;
 	}
 	CFLArray(size_type size) {
+		m_d.backend = 0;
+		m_d.copy = 0;
 		m_size = size;
+		m_offset = 0;
 		m_delete = 1;
-
+		
 		if (m_size) {
 			m_d.copy = new value_type[m_size];
 		}
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(size, m_size);
 	}
 	///Create CFLArray by copying elements from begin to end
 	template<typename T_INPUT_ITERATOR>
 	CFLArray(const T_INPUT_ITERATOR & begin, const T_INPUT_ITERATOR & end) {
-		int size = std::distance(begin, end);
+		typedef typename std::iterator_traits<T_INPUT_ITERATOR>::difference_type iterator_difference_type;
+		using std::distance;
+		iterator_difference_type size = distance(begin, end);
+		m_d.backend = 0;
+		m_d.copy = 0;
 		m_size = size;
+		m_offset = 0;
 		m_delete = 1;
 		if (m_size) {
 			m_d.copy = new value_type[m_size];
 			std::copy(begin, end, m_d.copy);
 		}
+		SSERIALIZE_CHEAP_ASSERT(size >= 0 && m_size == (uint64_t)size);
 	}
 	CFLArray(container_type * container, uint64_t offset, uint32_t size) {
 		m_d.backend = container;
 		m_offset = offset;
 		m_size = size;
 		m_delete = 0;
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_offset, offset);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_size, size);
 	}
 	CFLArray(container_type * container, uint32_t size) {
 		m_d.backend = container;
 		m_offset = 0;
 		m_size = size;
 		m_delete = 0;
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_size, size);
 	}
 	CFLArray(const CFLArray & other) {
+		m_d.backend = 0;
+		m_d.copy = 0;
 		m_size = other.m_size;
 		m_delete = other.m_delete;
 		m_offset = other.m_offset;
