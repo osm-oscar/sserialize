@@ -31,6 +31,9 @@ public:
 	
 	bool valid() const;
 	void normalize(NormalizationType nt = NT_WRAP);
+	///snap point to the precision provided by the serialization
+	void snap();
+	bool isSnapped() const;
 	inline const double & lat() const { return m_lat; }
 	inline const double & lon() const {return m_lon;}
 	///lat is betweern -90 and 90 degrees

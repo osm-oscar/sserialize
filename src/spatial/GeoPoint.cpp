@@ -84,7 +84,14 @@ void GeoPoint::normalize(sserialize::spatial::GeoPoint::NormalizationType nt) {
 	}
 }
 
+void GeoPoint::snap() {
+	m_lat = toDoubleLat(toIntLat(m_lat));
+	m_lon = toDoubleLon(toIntLon(m_lon));
+}
 
+bool GeoPoint::isSnapped() const {
+	return m_lat == toDoubleLat(toIntLat(m_lat)) && m_lon == toDoubleLon(toIntLon(m_lon));
+}
 
 GeoRect GeoPoint::boundary() const {
 	return GeoRect(lat(), lat(), lon(), lon());
