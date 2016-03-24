@@ -1,15 +1,14 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_H
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_H
+#define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION 1
 #include <sserialize/containers/MultiVarBitArray.h>
-#include <sserialize/containers/UnionFind.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoPoint.h>
-#include <assert.h>
-#define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION 1
+#include <sserialize/containers/OOMArray.h>
+#include <sserialize/algorithm/oom_algorithm.h>
 
 #include <CGAL/number_utils.h>
 #include <CGAL/enum.h>
-#include <CGAL/Unique_hash_map.h>
 
 namespace sserialize {
 namespace Static {
@@ -194,10 +193,6 @@ public:
 	//clock-wise next vertex/neighbor as defined in cgal
 	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
 
-	///contract node v2 and v1 by removing v2 and adding the respective constraints if needed
-	template<typename T_CTD>
-	static void contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, typename T_CTD::Vertex_handle v2);
-	
 	///prepare triangulation for serialization (currently contracts faces that are representable)
 	template<typename T_CTD>
 	static void prepare(T_CTD & ctd);
@@ -423,7 +418,7 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 		}
 	}
 }
-
+/*
 template<typename T_CTD>
 void Triangulation::contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, typename T_CTD::Vertex_handle v2) {
 	typedef T_CTD TDS;
@@ -471,116 +466,94 @@ void Triangulation::contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, type
 			std::cout << "Vertex vanished by magic" << std::endl;
 		}
 	}
-}
+}*/
 
+///This will handle points created by intersections of constrained edges
+///The initial data points already need to be representable!
 template<typename T_CTD>
-void Triangulation::prepare(T_CTD & ctd) {
+void Triangulation::prepare(T_CTD & /*ctd*/) {
 	typedef T_CTD TDS;
 	typedef typename TDS::Vertex_handle Vertex_handle;
 	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
 	typedef typename TDS::Vertex_circulator Vertex_circulator;
 	typedef typename TDS::Point Point;
-	
-	typedef sserialize::UnionFind<Vertex_handle> UnionFind;
-	typedef typename UnionFind::handle_type UFHandle;
-	typedef CGAL::Unique_hash_map<Vertex_handle, UFHandle> VertexHashMap;
-	
-	//by definition p2 is different from intLat/intLon before mapping
-	auto mapToSame = [](uint32_t intLat, uint32_t intLon, const Point & p2) -> bool {
-		return (intLat == sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p2.x())) ||
-				intLon == sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p2.y())));
-	};
-	
-	std::size_t nr1PhaseTotalContractions = 0;
-	std::size_t nr2PhaseTotalContractions = 0;
-	std::size_t nr1PhaseCVerts = 0;
-	std::size_t nr2PhaseCVerts = 0;
-	std::size_t contractRounds = 0;
-	std::size_t nrUnsnappedPoints = 0;
-	do {
-		++contractRounds;
-		nr1PhaseCVerts = 0;
-		nr2PhaseCVerts = 0;
-		{
-			UnionFind contractVerts;
-			VertexHashMap vert2UFHandle;
-			
-			contractVerts.reserve(ctd.number_of_vertices());
-			for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-				auto h = contractVerts.make_set(vt);
-				vert2UFHandle[vt] = h;
-			}
-			
-			//find nodes that need to be contracted (is this even necessary?)
-			//this is broken!
-			for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
-				Vertex_handle vh = it.value();
-				SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vh));
-				UFHandle vufh = vert2UFHandle[vh];
-				Point vhp = vh->point();
-				double dLat = CGAL::to_double(vhp.x());
-				double dLon = CGAL::to_double(vhp.y());
-				uint32_t intLat = sserialize::spatial::GeoPoint::toIntLat(dLat);
-				uint32_t intLon = sserialize::spatial::GeoPoint::toIntLon(dLon);
-				if (dLat != sserialize::spatial::GeoPoint::toDoubleLat(intLat) || dLon != sserialize::spatial::GeoPoint::toDoubleLon(intLon)) {
-					++nrUnsnappedPoints;
-				}
-				Vertex_circulator vC(ctd.incident_vertices(vh));
-				Vertex_circulator vEnd(vC);
-				if (vC == 0) {
-					continue;
-				}
-				do {
-					if (mapToSame(intLat, intLon, vC->point())) {
-						SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vC));
-						UFHandle ufh = vert2UFHandle[vC];
-						contractVerts.unite(vufh, ufh);
-					}
-					++vC;
-				} while (vC != vEnd);
-			}
-			
-			//now let's contract the nodes
-			for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
-				UFHandle rep = contractVerts.find( it.handle() );
-				if (rep != it.handle()) {
-					contract(ctd, contractVerts.get(rep), it.value());
-					++nr1PhaseCVerts ;
-				}
-			}
-		}
-		if (false) {
-			std::unordered_map< std::pair<uint32_t, uint32_t>, Vertex_handle> baseVerts;
-			std::vector<Vertex_handle> contractVerts;
-			std::pair<uint32_t, uint32_t> ip;
-			for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-				Point vhp = vt->point();
-				ip.first = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(vhp.x()));
-				ip.second = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(vhp.y()));
-				if (baseVerts.count(ip)) {
-					contractVerts.emplace_back(vt);
-				}
-				else {
-					baseVerts[ip] = vt;
-				}
-			}
-			for(Vertex_handle & vh : contractVerts) {
-				Point vhp = vh->point();
-				ip.first = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(vhp.x()));
-				ip.second = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(vhp.y()));
-				contract(ctd, baseVerts.at(ip), vh);
-			}
-			nr2PhaseCVerts = contractVerts.size();
-		}
-		
-		nr1PhaseTotalContractions += nr1PhaseCVerts;
-		nr2PhaseTotalContractions += nr2PhaseCVerts;
-	} while (nr1PhaseCVerts || nr2PhaseCVerts);
-	std::cout << "sserialize::Static::Triangulation:prepare:\n";
-	std::cout << "\tPhase 1 contractions: " << nr1PhaseTotalContractions << '\n';
-	std::cout << "\tPhase 2 contractions: " << nr2PhaseTotalContractions << '\n';
-	std::cout << "\tRounds: " << contractRounds << '\n';
-	std::cout << "\tUnsapped points: " << nrUnsnappedPoints << std::endl;
+// 	struct Entry {
+// 		uint64_t intLatLon;
+// 		Vertex_handle vh;
+// 		Entry(uint64_t intLatLon, const Vertex_handle & vh) : intLatLon(intLatLon), vh(vh) {}
+// 	};
+// 	
+// 	std::vector<Entry> verts;
+// 	verts.reserve(ctd.number_of_vertices());
+// 	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+// 		const Point & p = vt->point();
+// 		uint64_t intLatLon = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p.x()));
+// 		intLatLon <<= 32;
+// 		intLatLon = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p.y()));
+// 		verts.emplace_back(intLatLon, vt);
+// 	}
+// 	
+// 	using std::sort;
+// 	sort(verts.begin(), verts.end(), [](const Entry & a, const Entry & b) { return a.intLatLon < b.intLatLon; });
+// 	
+// 	//now walk over and remove all the vertices that map to the same point and store the endpoints of the constrained edges
+// 	//Remember that all points of the base data are valid, so we will only remove the new intersection points
+// 	for(std::vector<Entry>::iterator it(verts.begin()), end(verts.end()); it != end; ++it) {
+// 		
+// 		
+// 	}
+// 	
+// 	
+// 	
+// 	typedef sserialize::UnionFind<Vertex_handle> UnionFind;
+// 	typedef typename UnionFind::handle_type UFHandle;
+// 	typedef CGAL::Unique_hash_map<Vertex_handle, UFHandle> VertexHashMap;
+// 	
+// 	//by definition p2 is different from intLat/intLon before mapping
+// 	auto mapToSame = [](uint32_t intLat, uint32_t intLon, const Point & p2) -> bool {
+// 		return (intLat == sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p2.x())) ||
+// 				intLon == sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p2.y())));
+// 	};
+// 	
+// 	UnionFind contractVerts;
+// 	VertexHashMap vert2UFHandle;
+// 	
+// 	contractVerts.reserve(ctd.number_of_vertices());
+// 	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+// 		auto h = contractVerts.make_set(vt);
+// 		vert2UFHandle[vt] = h;
+// 	}
+// 	
+// 	//find nodes that need to be contracted (is this even necessary?
+// 	for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
+// 		Vertex_handle vh = it.value();
+// 		SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vh));
+// 		UFHandle vufh = vert2UFHandle[vh];
+// 		Point vhp = vh->point();
+// 		uint32_t intLat = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(vhp.x()));
+// 		uint32_t intLon = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(vhp.y()));
+// 		Vertex_circulator vC(ctd.incident_vertices(vh));
+// 		Vertex_circulator vEnd(vC);
+// 		if (vC == 0) {
+// 			continue;
+// 		}
+// 		do {
+// 			if (mapToSame(intLat, intLon, vC->point())) {
+// 				SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vC));
+// 				UFHandle ufh = vert2UFHandle[vC];
+// 				contractVerts.unite(vufh, ufh);
+// 			}
+// 			++vC;
+// 		} while (vC != vEnd);
+// 	}
+// 	
+// 	//now let's contract the nodes
+// 	for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
+// 		UFHandle rep = contractVerts.find( it.handle() );
+// 		if (rep != it.handle()) {
+// 			contract(ctd, contractVerts.get(rep), it.value());
+// 		}
+// 	}
 }
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
