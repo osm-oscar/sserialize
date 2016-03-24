@@ -5,6 +5,8 @@
 #include <sserialize/spatial/CellQueryResultPrivate.h>
 #include <memory>
 #include <string.h>
+#include <mutex>
+#include <thread>
 
 namespace sserialize {
 namespace detail {
@@ -113,8 +115,9 @@ public:
 	TreedCQRImp * symDiff(const TreedCQRImp * other) const;
 	TreedCQRImp * allToFull() const;
 	///@pf progress function pf(uint32_t numFinishedCells, uint32_t currentResultCellCount)
+	///iff threadCount > 1 => pf must be thread-safe
 	template<typename T_PROGRESS_FUNCION>
-	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf) const;
+	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf, uint32_t threadCount) const;
 };
 
 template<typename T_PMITEMSPTR_IT>
@@ -152,45 +155,162 @@ m_hasFetchedNodes(false)
 }
 
 template<typename T_PROGRESS_FUNCION>
-sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf) const {
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore);
-	CellQueryResult & r = *rPtr;
-	r.m_desc.reserve(cellCount());
-	r.m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
-	
-
-	sserialize::ItemIndex idx;
-	uint32_t pmIdxId;
-	FlattenResultType frt = FT_NONE;
-	
-	for(std::size_t i(0), s(m_desc.size()); i < s && pf(i, m_desc.size()); ++i) {
-		const CellDesc & cd = m_desc[i];
-		if (m_desc[i].hasTree()) {
-			flattenCell((&m_trees[0])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
-			assert(frt != FT_NONE);
-			if (frt == FT_FM) {
-				r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
-			}
-			else if (frt == FT_PM) {
-				r.m_idx[r.m_desc.size()].idxPtr = pmIdxId;
-				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
-			}
-			else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
-				r.uncheckedSet((uint32_t)r.m_desc.size(), idx);
-				r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
-			}
-			//frt == FT_EMPTY
-		}
-		else {
-			if (!cd.fullMatch) {
-				r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;
-			}
-			r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
-		}
+sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, uint32_t threadCount) const {
+	if (!threadCount) {
+		threadCount = std::thread::hardware_concurrency();
 	}
-	r.m_desc.shrink_to_fit();
-	r.m_idx = (detail::CellQueryResult::IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(detail::CellQueryResult::IndexDesc));
-	return rPtr;
+
+	if (threadCount > 1 && cellCount() > 1000) {//is 1000 good? probably not
+		struct State {
+			uint32_t srcPos;
+			std::mutex srcPosLck;
+			const TreedCQRImp * src;
+			CellQueryResult * dest;
+			std::atomic<uint32_t> emptyCellCount;
+		};
+		
+		//we use the cqr data as follows: if a cell is empty, then it should be a partial-matched cell that is not fetched an whose indexId is 0
+		//since by definition the index with the id=0 is empty anyway
+		struct Proc {
+			State * state;
+			sserialize::ItemIndex idx;
+			uint32_t pmIdxId;
+			FlattenResultType frt;
+			Proc(State * s) : state(s) {}
+			void operator()() {
+				std::unique_lock<std::mutex> srcPosLck(state->srcPosLck);
+				while (true) {
+					if (state->srcPos >= state->src->cellCount()) {
+						return;
+					}
+					uint32_t myPos = state->srcPos;
+					state->srcPos += 1;
+					srcPosLck.unlock();
+					idx = sserialize::ItemIndex();
+					pmIdxId = 0;
+					frt = FT_NONE;
+					const CellDesc & cd = state->src->m_desc[myPos];
+					if (cd.hasTree()) {
+						state->src->flattenCell((&(state->src->m_trees[0]))+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+						SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(frt, FT_NONE);
+						if (frt == FT_FM) {
+							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(1, 0, cd.cellId);
+						}
+						else if (frt == FT_PM) {
+							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
+							state->dest->m_idx[myPos].idxPtr = pmIdxId;
+						}
+						else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
+							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 1, cd.cellId);
+							state->dest->uncheckedSet(myPos, idx);
+						}
+						else if (frt == FT_EMPTY) {
+							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
+							state->dest->m_idx[myPos].idxPtr = 0;
+							state->emptyCellCount += 1;
+						}
+					}
+					else {
+						if (!cd.fullMatch) {
+							state->dest->m_idx[myPos].idxPtr = cd.pmIdxId;
+						}
+						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId);
+					}
+				}
+			}
+		};
+		
+		State state;
+		state.srcPos = 0;
+		state.src = this;
+		state.dest = new detail::CellQueryResult(m_gh, m_idxStore);
+		state.dest->m_desc.reserve(cellCount());
+		state.dest->m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
+
+		std::vector<std::thread> threads;
+		
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads.emplace_back(Proc(&state));
+		}
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads[i].join();
+		}
+		//check if we have to copy the stuff
+		if (state.emptyCellCount.load() == 0) {
+			return state.dest;
+		}
+		//now copy the real stuff
+		{
+			detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore);
+			detail::CellQueryResult & r = *rPtr;
+			
+			uint32_t realCellCount = state.dest->cellCount()-state.emptyCellCount;
+			
+			r.m_desc.reserve(realCellCount);
+			r.m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * realCellCount);
+			
+			for(uint32_t i(0), s(state.dest->cellCount()); i < s; ++i) {
+				const detail::CellQueryResult::CellDesc & cd = state.dest->m_desc[i];
+				if (cd.fullMatch) {
+					r.m_desc.emplace_back(cd);
+				}
+				else if (!cd.fetched && state.dest->m_idx[i].idxPtr != 0) { //remove empty indices
+					r.m_desc.emplace_back(cd);
+					r.m_idx[r.m_desc.size()].idxPtr = state.dest->m_idx[i].idxPtr;
+				}
+				else if (cd.fetched) {
+					r.m_desc.emplace_back(cd);
+					r.uncheckedSet((uint32_t)r.m_desc.size(), state.dest->m_idx[i].idx);
+				}
+			}
+			//delete old cqr
+			delete state.dest;
+			
+			return rPtr;
+		}
+		
+	}
+	else {
+	
+		detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore);
+		detail::CellQueryResult & r = *rPtr;
+		
+		r.m_desc.reserve(cellCount());
+		r.m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
+
+		sserialize::ItemIndex idx;
+		uint32_t pmIdxId;
+		FlattenResultType frt = FT_NONE;
+
+		for(std::size_t i(0), s(m_desc.size()); i < s && pf(i, m_desc.size()); ++i) {
+			const CellDesc & cd = m_desc[i];
+			if (cd.hasTree()) {
+				flattenCell((&m_trees[0])+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(frt, FT_NONE);
+				if (frt == FT_FM) {
+					r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
+				}
+				else if (frt == FT_PM) {
+					r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
+					r.m_idx[r.m_desc.size()].idxPtr = pmIdxId;
+				}
+				else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
+					r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
+					r.uncheckedSet((uint32_t)r.m_desc.size(), idx);
+				}
+				//frt == FT_EMPTY
+			}
+			else {
+				if (!cd.fullMatch) {
+					r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;
+				}
+				r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
+			}
+		}
+		r.m_desc.shrink_to_fit();
+		r.m_idx = (detail::CellQueryResult::IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(detail::CellQueryResult::IndexDesc));
+		return rPtr;
+	}
 }
 
 }}}//end namespace
