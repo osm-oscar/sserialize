@@ -167,6 +167,7 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 			const TreedCQRImp * src;
 			CellQueryResult * dest;
 			std::atomic<uint32_t> emptyCellCount;
+			State() : srcPos(0), src(0), dest(0), emptyCellCount(0) {}
 		};
 		
 		//we use the cqr data as follows: if a cell is empty, then it should be a partial-matched cell that is not fetched an whose indexId is 0
@@ -179,7 +180,9 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 			Proc(State * s) : state(s) {}
 			void operator()() {
 				std::unique_lock<std::mutex> srcPosLck(state->srcPosLck);
+				srcPosLck.unlock();
 				while (true) {
+					srcPosLck.lock();
 					if (state->srcPos >= state->src->cellCount()) {
 						return;
 					}
@@ -221,10 +224,9 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 		};
 		
 		State state;
-		state.srcPos = 0;
 		state.src = this;
 		state.dest = new detail::CellQueryResult(m_gh, m_idxStore);
-		state.dest->m_desc.reserve(cellCount());
+		state.dest->m_desc.resize(cellCount(), detail::CellQueryResult::CellDesc(0, 0, 0));
 		state.dest->m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
 
 		std::vector<std::thread> threads;
@@ -244,6 +246,8 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 			detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore);
 			detail::CellQueryResult & r = *rPtr;
 			
+			SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(state.dest->cellCount(), state.emptyCellCount);
+			
 			uint32_t realCellCount = state.dest->cellCount()-state.emptyCellCount;
 			
 			r.m_desc.reserve(realCellCount);
@@ -255,12 +259,12 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 					r.m_desc.emplace_back(cd);
 				}
 				else if (!cd.fetched && state.dest->m_idx[i].idxPtr != 0) { //remove empty indices
+					r.m_idx[r.m_desc.size()].idxPtr = state.dest->m_idx[i].idxPtr;//this has to come first due to the usage of m_desc.size()
 					r.m_desc.emplace_back(cd);
-					r.m_idx[r.m_desc.size()].idxPtr = state.dest->m_idx[i].idxPtr;
 				}
 				else if (cd.fetched) {
-					r.m_desc.emplace_back(cd);
 					r.uncheckedSet((uint32_t)r.m_desc.size(), state.dest->m_idx[i].idx);
+					r.m_desc.emplace_back(cd);//this has to come first due to the usage of m_desc.size()
 				}
 			}
 			//delete old cqr
@@ -291,18 +295,18 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 					r.m_desc.push_back(detail::CellQueryResult::CellDesc(1, 0, cd.cellId));
 				}
 				else if (frt == FT_PM) {
+					r.m_idx[r.m_desc.size()].idxPtr = pmIdxId;//this has to come first due to the usage of m_desc.size()
 					r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 0, cd.cellId));
-					r.m_idx[r.m_desc.size()].idxPtr = pmIdxId;
 				}
 				else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
+					r.uncheckedSet((uint32_t)r.m_desc.size(), idx);//this has to come first due to the usage of m_desc.size()
 					r.m_desc.push_back(detail::CellQueryResult::CellDesc(0, 1, cd.cellId));
-					r.uncheckedSet((uint32_t)r.m_desc.size(), idx);
 				}
 				//frt == FT_EMPTY
 			}
 			else {
 				if (!cd.fullMatch) {
-					r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;
+					r.m_idx[r.m_desc.size()].idxPtr = cd.pmIdxId;//this has to come first due to the usage of m_desc.size()
 				}
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
 			}
