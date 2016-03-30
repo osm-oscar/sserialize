@@ -8,6 +8,7 @@
 #include <sserialize/Static/GeoMultiPolygon.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
+#include "helpers.h"
 
 sserialize::spatial::GeoPoint createPoint() {
 	sserialize::spatial::GeoPoint prev;

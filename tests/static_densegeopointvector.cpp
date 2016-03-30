@@ -4,6 +4,7 @@
 #include <sserialize/Static/DenseGeoPointVector.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
+#include "helpers.h"
 
 using namespace sserialize;
 

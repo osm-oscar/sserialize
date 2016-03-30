@@ -62,18 +62,24 @@ public:
 	static inline uint32_t toIntLon(double lon) { return (uint32_t)((lon+180.0)/360.0*0xFFFFFFFF);}
 	static inline double toDoubleLon(uint32_t lon) { return ((double)lon*360.0/0xFFFFFFFF-180.0);}
 	static inline GeoPoint fromIntLatLon(uint32_t lat, uint32_t lon) { return GeoPoint(lat, lon); }
+	
+	///set acc to 0 to get usualy equality
+	static inline bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON) {
+		return (std::abs<double>(a.lat() - b.lat()) <= acc && std::abs<double>(a.lon() - b.lon()) <= acc);
+	}
+	
+	inline bool equal(const sserialize::spatial::GeoPoint & b, double acc = EPSILON) const {
+		return equal(*this, b, acc);
+	}
+	
+	bool operator==(const GeoPoint & other) const = delete;
 };
 
-sserialize::UByteArrayAdapter & operator<<(::sserialize::UByteArrayAdapter & destination, const GeoPoint & point);
-sserialize::UByteArrayAdapter & operator>>(::sserialize::UByteArrayAdapter & destination, GeoPoint & p);
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPoint & point);
+sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & destination, GeoPoint & p);
 
-///equality test with EPS 
-inline bool operator==(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b) {
-	return (std::abs<double>(a.lat() - b.lat()) < EPSILON && std::abs<double>(a.lon() - b.lon()) < EPSILON);
-}
-
-inline bool operator!=(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b) {
-	return ! (a == b);
+inline bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON) {
+	return sserialize::spatial::GeoPoint::equal (a, b, acc);
 }
 
 inline std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp) {

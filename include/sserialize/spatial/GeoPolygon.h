@@ -134,7 +134,7 @@ template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(const TPointsContainer & points) :
 MyBaseClass(points)
 {
-	if (this->points().size() < 4 || this->points().front() != this->points().back()) {
+	if (this->points().size() < 4 || ! spatial::equal(this->points().front(), this->points().back(), 0.0)) {
 		throw sserialize::CorruptDataException("GeoPolygon");
 	}
 }
@@ -143,7 +143,7 @@ template<typename TPointsContainer>
 GeoPolygon<TPointsContainer>::GeoPolygon(TPointsContainer && points) :
 MyBaseClass(std::move(points))
 {
-	if (this->points().size() < 4 || this->points().front() != this->points().back()) {
+	if (this->points().size() < 4 || ! spatial::equal(this->points().front(), this->points().back(), 0.0)) {
 		throw sserialize::CorruptDataException("GeoPolygon");
 	}
 }

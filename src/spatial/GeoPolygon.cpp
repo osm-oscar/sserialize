@@ -12,7 +12,7 @@ MyBaseClass()
 		throw sserialize::CorruptDataException("GeoPolygon");
 	}
 	this->points() = points;
-	if (points.front() != points.back()) {
+	if (!spatial::equal(points.front(), points.back(), 0.0)) {
 		this->points().push_back(points.front());
 	}
 	recalculateBoundary();
@@ -25,7 +25,7 @@ MyBaseClass()
 	if (points.size() < 3) {
 		throw sserialize::CorruptDataException("GeoPolygon");
 	}
-	if (points.front() != points.back()) {
+	if (!spatial::equal(points.front(), points.back(), 0.0)) {
 		points.push_back(points.front());
 	}
 	this->points() = std::move(points);

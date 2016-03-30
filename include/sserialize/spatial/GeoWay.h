@@ -155,8 +155,9 @@ template<typename TPointsContainer>
 bool GeoWay<TPointsContainer>::contains(const GeoPoint & p) const {
 	if (m_boundary.contains(p.lat(), p.lon())) {
 		for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
-			if (p == *it)
+			if (p.equal(p, *it)) {
 				return true;
+			}
 		}
 	}
 	return false;
