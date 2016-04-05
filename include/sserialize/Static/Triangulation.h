@@ -1,11 +1,15 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_H
 #define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_H
-#define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION 1
+#define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION 2
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/oom_algorithm.h>
+
+#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	#include <sserialize/algorithm/hashspecializations.h>
+#endif
 
 #include <CGAL/number_utils.h>
 #include <CGAL/enum.h>
@@ -18,6 +22,118 @@ class Triangulation;
 
 namespace detail {
 namespace Triangulation {
+
+///@return true if the line v1->v2 intersects another constraint edge
+template<typename T_TDS>
+bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv) {
+	typedef T_TDS TDS;
+	typedef typename TDS::Geom_traits Geom_traits;
+	typedef typename TDS::Face_circulator Face_circulator;
+	typedef typename TDS::Edge Edge;
+	typedef typename Geom_traits::Orientation_2 Orientation_2;
+	typedef typename Geom_traits::Collinear_are_ordered_along_line_2 Collinear_are_ordered_along_line_2;
+
+	
+	Orientation_2 ot( tds.geom_traits().orientation_2_object() );
+	Collinear_are_ordered_along_line_2 oal( tds.geom_traits().collinear_are_ordered_along_line_2_object() );
+	
+	auto tp = tv->point();
+	
+	while (true) {
+		//we first have to do a circle step to determine the face our line intersects
+		//after that only face tests follow
+		if (sv == tv) {
+			return false;
+		}
+		SSERIALIZE_CHEAP_ASSERT(sv->point() != tv->point());
+
+		auto sp = sv->point();
+		
+		bool faceStep = true;
+		Edge enteringEdge;
+		
+		//first the circle step
+		{
+			Face_circulator fc(tds.incident_faces(sv));
+			Face_circulator fcEnd(fc);
+			do {
+				SSERIALIZE_CHEAP_ASSERT(!tds.is_infinite(fc));
+				
+				int svIdx = fc->index(sv);
+				auto lv = fc->vertex(TDS::cw(svIdx));
+				auto rv = fc->vertex(TDS::ccw(svIdx));
+				auto lp = lv->point();
+				auto rp = rv->point();
+				
+				auto lvOT = ot(sp, tp, lp);
+				auto rvOT = ot(sp, tp, rp);
+				
+				//intersects edge lv->rv, remember that tv cannot be within the face
+				if (lvOT == CGAL::Orientation::LEFT_TURN && rvOT == CGAL::Orientation::RIGHT_TURN) {
+					if (fc->is_constrained(svIdx)) {
+						return true;
+					}
+					faceStep = true;
+					enteringEdge = tds.mirror_edge(Edge(fc, svIdx));
+					break;
+				}
+				else if (lvOT == CGAL::Orientation::COLLINEAR) {
+					if (oal(sp, lp, tp)) { //make sure that we don't jump back
+						faceStep = false;
+						sv = lv;
+						break;
+					}
+				}
+				else if (rvOT == CGAL::Orientation::COLLINEAR) {
+					if (oal(sp, rp, tp)) { //make sure that we don't jump back
+						faceStep = false;
+						sv = rv;
+						break;
+					}
+				}
+				++fc;
+			} while (fc != fcEnd);
+		}
+		
+		//and now the face steps
+		//here we have to check which edge of the current face our line sv->tv intersects
+		while (faceStep) {
+			auto ov = enteringEdge.first->vertex(enteringEdge.second);
+			auto op = ov->point();
+
+			//check through which edge we leave, since we already know that we came through edge enteringEdge
+			//it's enough to check if ov is left, right, on -sv-tv-
+			//remember that orientations are with respect to -sv-tv-
+			
+			auto oOT = ot(sp, tp, op);
+			if (oOT == CGAL::Orientation::LEFT_TURN) {
+				//leave through the edge left of op
+				//this is the edge whose opposive vertex is ccw of ov
+				enteringEdge.second = TDS::ccw(enteringEdge.second);
+			}
+			else if (oOT == CGAL::Orientation::RIGHT_TURN) {
+				//leave through the edge right of op
+				//this is the edge whose opposive vertex is cw of ov
+				enteringEdge.second = TDS::cw(enteringEdge.second);
+			}
+			else if (oOT == CGAL::Orientation::COLLINEAR) {
+				//opposite vertex is on the line -sv-tv-
+				sv = ov;
+				break;
+			}
+			else {
+				SSERIALIZE_CHEAP_ASSERT(false);
+			}
+			
+			//enteringEdge should now be the one through which we leave this face
+			if (tds.is_constrained(enteringEdge)) {
+				return true;
+			}
+			enteringEdge = tds.mirror_edge(enteringEdge);
+		}
+	}
+}
+
 
 }}//end namespace detail::Triangulation
 
@@ -96,7 +212,8 @@ public:
 			FI_NEIGHBOR_VALID=0,
 			FI_NEIGHBOR0=1, FI_NEIGHBOR1=2, FI_NEIGHBOR2=3, FI_NEIGHBOR_BEGIN=FI_NEIGHBOR0, FI_NEIGHBOR_END=FI_NEIGHBOR2+1,
 			FI_VERTEX0=4, FI_VERTEX1=5, FI_VERTEX2=6, FI_VERTEX_BEGIN=FI_VERTEX0, FI_VERTEX_END=FI_VERTEX2+1,
-			FI__NUMBER_OF_ENTRIES=FI_VERTEX_END
+			FI_IS_DEGENERATE=7, FI_ADDITIONAL_INFO_BEGIN=FI_IS_DEGENERATE, FI_ADDITIONAL_INFO_END=FI_IS_DEGENERATE+1,
+			FI__NUMBER_OF_ENTRIES=FI_ADDITIONAL_INFO_END
 		} FaceInfo;
 	private:
 		const Triangulation * m_p;
@@ -108,6 +225,10 @@ public:
 		~Face();
 		inline uint32_t id() const { return m_pos; }
 		bool valid() const;
+		///a face is degenerate if any two vertices have the same coordinates
+		///This may happen since the static version uses fixed precision numbers
+		///The topology is still correct
+		bool isDegenerate() const;
 		bool isNeighbor(uint32_t pos) const;
 		uint32_t neighborId(uint32_t pos) const;
 		Face neighbor(uint32_t pos) const;
@@ -195,13 +316,15 @@ public:
 
 	///prepare triangulation for serialization (currently contracts faces that are representable)
 	template<typename T_CTD>
-	static void prepare(T_CTD & ctd);
+	static bool prepare(T_CTD& ctd);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
 
 };
 
+
+//TODO:add support for degenerate faces
 template<typename TVisitor, typename T_GEOMETRY_TRAITS>
 uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
 	typedef T_GEOMETRY_TRAITS K;
@@ -418,142 +541,153 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 		}
 	}
 }
-/*
-template<typename T_CTD>
-void Triangulation::contract(T_CTD & ctd, typename T_CTD::Vertex_handle v1, typename T_CTD::Vertex_handle v2) {
-	typedef T_CTD TDS;
-	typedef typename TDS::Vertex_handle Vertex_handle;
-	typedef typename TDS::Vertex_circulator Vertex_circulator;
-	
-	if (ctd.tds().is_vertex(v1)) {
-		std::cout << "Base Vertex not existent. Skipping";
-		return;
-	}
-	
-	SSERIALIZE_CHEAP_ASSERT(v1 != v2);
-	//targets of constraint vertices
-	std::vector<Vertex_handle> cVerts;
-	
-	Vertex_circulator vC(ctd.incident_vertices(v2));
-	Vertex_circulator vEnd(vC);
-	if (vC != 0) {
-		do {
-			if (vC != v1) {
-				cVerts.push_back(vC);
-			}
-			++vC;
-		} while (vC != vEnd);
-	}
-	//first remove constraints
-	
-	ctd.remove_incident_constraints(v2);
-	ctd.remove(v2);
-	
-	if (ctd.tds().is_vertex(v1)) {
-		throw std::runtime_error("Base Vertex vanished by magic before loop");
-	}
-	
-	//now readd the constraints TODO: does this create new intersection points?
-	//yes it does. And that is BAD! This may very well create the same point that we removed
-	for(Vertex_handle & vh : cVerts) {
-		if (ctd.tds().is_vertex(v1)) {
-			throw std::runtime_error("Base Vertex vanished by magic in loop");
-		}
-		if (ctd.tds().is_vertex(vh)) {
-			ctd.insert_constraint(v1, vh);
-		}
-		else {
-			std::cout << "Vertex vanished by magic" << std::endl;
-		}
-	}
-}*/
 
 ///This will handle points created by intersections of constrained edges
-///The initial data points already need to be representable!
+///This makes all points representable! Beware that this very likely changes the triangulation (removing faces and adding new ones)
+///You should therefore snap points before creating the triangulation
+///@return true iff changes were made
 template<typename T_CTD>
-void Triangulation::prepare(T_CTD & /*ctd*/) {
+bool Triangulation::prepare(T_CTD & ctd) {
 	typedef T_CTD TDS;
+	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
 	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
-	typedef typename TDS::Vertex_circulator Vertex_circulator;
 	typedef typename TDS::Point Point;
-// 	struct Entry {
-// 		uint64_t intLatLon;
-// 		Vertex_handle vh;
-// 		Entry(uint64_t intLatLon, const Vertex_handle & vh) : intLatLon(intLatLon), vh(vh) {}
-// 	};
-// 	
-// 	std::vector<Entry> verts;
-// 	verts.reserve(ctd.number_of_vertices());
-// 	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-// 		const Point & p = vt->point();
-// 		uint64_t intLatLon = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p.x()));
-// 		intLatLon <<= 32;
-// 		intLatLon = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p.y()));
-// 		verts.emplace_back(intLatLon, vt);
-// 	}
-// 	
-// 	using std::sort;
-// 	sort(verts.begin(), verts.end(), [](const Entry & a, const Entry & b) { return a.intLatLon < b.intLatLon; });
-// 	
-// 	//now walk over and remove all the vertices that map to the same point and store the endpoints of the constrained edges
-// 	//Remember that all points of the base data are valid, so we will only remove the new intersection points
-// 	for(std::vector<Entry>::iterator it(verts.begin()), end(verts.end()); it != end; ++it) {
-// 		
-// 		
-// 	}
-// 	
-// 	
-// 	
-// 	typedef sserialize::UnionFind<Vertex_handle> UnionFind;
-// 	typedef typename UnionFind::handle_type UFHandle;
-// 	typedef CGAL::Unique_hash_map<Vertex_handle, UFHandle> VertexHashMap;
-// 	
-// 	//by definition p2 is different from intLat/intLon before mapping
-// 	auto mapToSame = [](uint32_t intLat, uint32_t intLon, const Point & p2) -> bool {
-// 		return (intLat == sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p2.x())) ||
-// 				intLon == sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p2.y())));
-// 	};
-// 	
-// 	UnionFind contractVerts;
-// 	VertexHashMap vert2UFHandle;
-// 	
-// 	contractVerts.reserve(ctd.number_of_vertices());
-// 	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-// 		auto h = contractVerts.make_set(vt);
-// 		vert2UFHandle[vt] = h;
-// 	}
-// 	
-// 	//find nodes that need to be contracted (is this even necessary?
-// 	for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
-// 		Vertex_handle vh = it.value();
-// 		SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vh));
-// 		UFHandle vufh = vert2UFHandle[vh];
-// 		Point vhp = vh->point();
-// 		uint32_t intLat = sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(vhp.x()));
-// 		uint32_t intLon = sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(vhp.y()));
-// 		Vertex_circulator vC(ctd.incident_vertices(vh));
-// 		Vertex_circulator vEnd(vC);
-// 		if (vC == 0) {
-// 			continue;
-// 		}
-// 		do {
-// 			if (mapToSame(intLat, intLon, vC->point())) {
-// 				SSERIALIZE_CHEAP_ASSERT(vert2UFHandle.is_defined(vC));
-// 				UFHandle ufh = vert2UFHandle[vC];
-// 				contractVerts.unite(vufh, ufh);
-// 			}
-// 			++vC;
-// 		} while (vC != vEnd);
-// 	}
-// 	
-// 	//now let's contract the nodes
-// 	for(typename UnionFind::iterator it(contractVerts.begin()), end(contractVerts.end()); it != end; ++it) {
-// 		UFHandle rep = contractVerts.find( it.handle() );
-// 		if (rep != it.handle()) {
-// 			contract(ctd, contractVerts.get(rep), it.value());
-// 		}
-// 	}
+	typedef typename TDS::Edge Edge;
+	typedef typename TDS::Locate_type Locate_type;
+	
+	//simple version: first get all points that change their coordinates and save these and their incident constraint edges
+	//then remove these vertices and readd the constraints that don't intersect other constraints
+	//avoiding the creation of new 
+	
+	
+	struct IntPoint {
+		uint32_t lat;
+		uint32_t lon;
+		IntPoint(const Point & p) :
+		lat(sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p.x()))),
+		lon(sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p.y())))
+		{}
+		
+		IntPoint(const GeoPoint & p)  :
+		lat(sserialize::spatial::GeoPoint::toIntLat(p.lat())),
+		lon(sserialize::spatial::GeoPoint::toIntLon(p.lon()))
+		{}
+		
+		GeoPoint toGeoPoint() const {
+			double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
+			double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
+			return sserialize::spatial::GeoPoint(dlat, dlon);
+		}
+		
+		Point toPoint() const {
+			double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
+			double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
+			return Point(dlat, dlon);
+		}
+		
+		static bool changes(const Point & p) {
+			Point tmp(IntPoint(p).toPoint());
+			return tmp.x() != p.x() || tmp.y() != p.y();
+		}
+		
+		bool operator==(const IntPoint & other) const {
+			return lat == other.lat && lon == other.lon;
+		}
+		
+		bool operator!=(const IntPoint & other) const {
+			return lat != other.lat || lon != other.lon;
+		}
+	};
+	
+	struct ConstrainedEdge {
+		IntPoint p1;
+		IntPoint p2;
+		ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {}
+		ConstrainedEdge(const Point & p1, const Point & p2) : p1(p1), p2(p2) {}
+		bool valid() const {
+			return p1 != p2;
+		}
+	};
+	
+	
+	std::vector<Point> rmPoints;
+	std::vector<ConstrainedEdge> cEdges;
+	
+	struct CEInsertIterator {
+		TDS & ctd;
+		std::vector<ConstrainedEdge> & cEdges;
+		CEInsertIterator(TDS & ctd, std::vector<ConstrainedEdge> & cEdges) : ctd(ctd), cEdges(cEdges) {}
+		CEInsertIterator & operator++() { return *this; }
+		CEInsertIterator & operator++(int) { return *this; }
+		CEInsertIterator & operator*() { return *this; }
+		CEInsertIterator & operator=(const Edge & e) {
+			Vertex_handle v1 = e.first->vertex(TDS::cw(e.second));
+			Vertex_handle v2 = e.first->vertex(TDS::ccw(e.second));
+			IntPoint p1(v1->point()), p2(v2->point());
+			if (p1 != p2) {
+				cEdges.emplace_back(p1, p2);
+			}
+			return *this;
+		}
+	};
+	
+	CEInsertIterator ceIt(ctd, cEdges);
+	
+	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+		const Point & p = vt->point();
+		if (!IntPoint::changes(p)) {
+			continue;
+		}
+		//point changes, save it and add its constrained edges
+		rmPoints.emplace_back(p);
+		ctd.incident_constraints(vt, ceIt);
+	}
+	std::cout << "sserialize::Static::Triangulation::prepare: found " << rmPoints.size() << " out of " << ctd.number_of_vertices() << " points that change their position" << std::endl;
+	
+	//now remove all those bad points
+	for(const Point & p : rmPoints) {
+		Face_handle fh;
+		Locate_type lt = (Locate_type) -1;
+		int li;
+		fh = ctd.locate(p, lt, li);
+		if (lt != TDS::VERTEX) {
+			std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
+			continue;
+		}
+		if (li < 4) { //if dimension is 0, then locate returns a NullFace with lt set to VERTEX and li set to 4
+			Vertex_handle v = fh->vertex(li);
+			ctd.remove_incident_constraints(v);
+			ctd.remove(v);
+		}
+	}
+	
+	uint32_t reAddCount = 0;
+	//readd the removed constraints if possible
+	//we don't want to create new intersection points, so just skip edges that create them
+	std::cout << "sserialize::Static::Triangulation::prepare: trying to re-add " << cEdges.size() << " constraints" << std::endl;
+	for(const ConstrainedEdge & e : cEdges) {
+		SSERIALIZE_CHEAP_ASSERT(e.valid());
+		Vertex_handle v1(ctd.insert(e.p1.toPoint()));
+		Vertex_handle v2(ctd.insert(e.p2.toPoint()));
+		bool intersects = detail::Triangulation::intersects<TDS>(ctd, v1, v2);
+		if (!intersects) {
+			ctd.insert_constraint(v1, v2);
+			++reAddCount;
+		}
+	}
+	std::cout << "sserialize::Static::Triangulation::prepare: re-added " << reAddCount << " out of " << cEdges.size() << " constraints" << std::endl;
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	{
+		std::unordered_set< std::pair<uint32_t, uint32_t> > pts;
+		for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+			IntPoint p(vt->point());
+			pts.emplace(p.lat, p.lon);
+		}
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(pts.size(), ctd.number_of_vertices());
+	}
+	#endif
+	return rmPoints.size();
 }
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
@@ -575,30 +709,16 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	uint32_t faceCount = 0;
 	uint32_t vertexCount = 0;
 	
-
+	uint32_t degenerateFaceCount = 0;
 	//the reduced precision of the serialization may produce degenerate triangultions
 	//or even triangulations that are incorrect (like self intersections due to rounding errors etc.)
-	//This should not happen => unite nodes that get the same coordinates
-	//Here we only check if the triangulation satisfies the condition
-
+	//we would need to snap the vertices accordingly, unfortunately this not easy
+	//as a remedy, mark faces that are degenerate
+	//Alternative?: remove vertices that change their precision in such a way that they snap on to another vertex
+	
+	
 	auto toIntLat = [](double v) { return sserialize::spatial::GeoPoint::toIntLat(v); };
 	auto toIntLon = [](double v) { return sserialize::spatial::GeoPoint::toIntLon(v); };
-	
-	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
-		auto p0 = fh->vertex(0)->point();
-		auto p1 = fh->vertex(1)->point();
-		auto p2 = fh->vertex(2)->point();
-		if (p0 == p1 || p0 == p2 || p1 == p2) {
-			throw sserialize::CreationException("Triangulation has degenerate face");
-		}
-		using CGAL::to_double;
-		if (toIntLat(to_double(p0.x())) == toIntLat(to_double(p1.x())) || toIntLon(to_double(p0.y())) == toIntLon(to_double(p1.y())) ||
-			toIntLat(to_double(p0.x())) == toIntLat(to_double(p2.x())) || toIntLon(to_double(p0.y())) == toIntLon(to_double(p2.y())) ||
-			toIntLat(to_double(p1.x())) == toIntLat(to_double(p2.x())) || toIntLon(to_double(p1.y())) == toIntLon(to_double(p2.y())))
-		{
-			throw sserialize::CreationException("Triangulation has degenerate face after serialization");
-		}
-	}
 	
 	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 		faceToFaceId[fh] = faceId;
@@ -606,7 +726,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	}
 	faceCount = faceId;
 	
-	dest.putUint8(1);//VERSION
+	dest.putUint8(2);//VERSION
 	{ //put the points
 		sserialize::spatial::GeoPoint gp;
 		sserialize::Static::ArrayCreator<sserialize::spatial::GeoPoint> va(dest);
@@ -699,11 +819,29 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 		bitConfig[Triangulation::Face::FI_VERTEX0] = (uint8_t)sserialize::CompactUintArray::minStorageBits(vertexCount);
 		bitConfig[Triangulation::Face::FI_VERTEX1] = bitConfig[Triangulation::Face::FI_VERTEX0];
 		bitConfig[Triangulation::Face::FI_VERTEX2] = bitConfig[Triangulation::Face::FI_VERTEX0];
+		bitConfig[Triangulation::Face::FI_IS_DEGENERATE] = 1;
 		sserialize::MultiVarBitArrayCreator fa(bitConfig, dest);
 	
 		faceId = 0;
 		for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 			SSERIALIZE_NORMAL_ASSERT(faceToFaceId.is_defined(fh) && faceToFaceId[fh] == faceId);
+			{//check degeneracy
+				auto p0 = fh->vertex(0)->point();
+				auto p1 = fh->vertex(1)->point();
+				auto p2 = fh->vertex(2)->point();
+				if (p0 == p1 || p0 == p2 || p1 == p2) { //this should not happen
+					throw sserialize::CreationException("Triangulation has degenerate face in source triangulation");
+				}
+				using CGAL::to_double;
+				if ((toIntLat(to_double(p0.x())) == toIntLat(to_double(p1.x())) && toIntLon(to_double(p0.y())) == toIntLon(to_double(p1.y()))) ||
+					(toIntLat(to_double(p0.x())) == toIntLat(to_double(p2.x())) && toIntLon(to_double(p0.y())) == toIntLon(to_double(p2.y()))) ||
+					(toIntLat(to_double(p1.x())) == toIntLat(to_double(p2.x())) && toIntLon(to_double(p1.y())) == toIntLon(to_double(p2.y()))))
+				{
+					throw sserialize::CreationException("Triangulation has degenerate face after serialization");
+					fa.set(faceId, Triangulation::Face::FI_IS_DEGENERATE, 1);
+					++degenerateFaceCount;
+				}
+			}
 			
 			uint8_t validNeighbors = 0;
 			for(int j(0); j < 3; ++j) {
@@ -727,6 +865,9 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 		}
 		fa.flush();
 		SSERIALIZE_NORMAL_ASSERT(faceId == faceCount);
+	}
+	if (degenerateFaceCount) {
+		std::cout << "Triangulation has " << degenerateFaceCount << " degenerate faces!" << std::endl;
 	}
 	return dest;
 }

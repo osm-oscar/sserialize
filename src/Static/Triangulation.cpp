@@ -25,7 +25,11 @@ m_pos(pos)
 Triangulation::Face::~Face() {}
 
 bool Triangulation::Face::valid() const {
-	return m_p;
+	return m_p && id() != Triangulation::NullFace;
+}
+
+bool Triangulation::Face::isDegenerate() const {
+	return m_p->faceInfo().at(m_pos, FI_IS_DEGENERATE);
 }
 
 bool Triangulation::Face::isNeighbor(uint32_t pos) const {
@@ -143,7 +147,7 @@ m_pos(pos)
 Triangulation::Vertex::~Vertex() {}
 
 bool Triangulation::Vertex::valid() const {
-	return id() != Triangulation::NullVertex;
+	return m_p && id() != Triangulation::NullVertex;
 }
 
 Triangulation::Point Triangulation::Vertex::point() const {
