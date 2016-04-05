@@ -57,20 +57,16 @@ public:
 	
 	///Check if two lines given by p->q and r->s intersect each other
 	static bool intersect(const GeoPoint & p , const GeoPoint & q, const GeoPoint & r, const GeoPoint & s);
-	static inline uint32_t toIntLat(double lat) { return (uint32_t)((lat+90.0)*0xFFFFFFFF/180.0);}
-	static inline double toDoubleLat(uint32_t lat) { return ((double)lat*180.0/0xFFFFFFFF-90.0);}
-	static inline uint32_t toIntLon(double lon) { return (uint32_t)((lon+180.0)/360.0*0xFFFFFFFF);}
-	static inline double toDoubleLon(uint32_t lon) { return ((double)lon*360.0/0xFFFFFFFF-180.0);}
-	static inline GeoPoint fromIntLatLon(uint32_t lat, uint32_t lon) { return GeoPoint(lat, lon); }
+	static uint32_t toIntLat(double lat);
+	static double toDoubleLat(uint32_t lat);
+	static uint32_t toIntLon(double lon);
+	static double toDoubleLon(uint32_t lon);
+	static GeoPoint fromIntLatLon(uint32_t lat, uint32_t lon);
 	
 	///set acc to 0 to get usualy equality
-	static inline bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON) {
-		return (std::abs<double>(a.lat() - b.lat()) <= acc && std::abs<double>(a.lon() - b.lon()) <= acc);
-	}
+	static bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON);
 	
-	inline bool equal(const sserialize::spatial::GeoPoint & b, double acc = EPSILON) const {
-		return equal(*this, b, acc);
-	}
+	bool equal(const sserialize::spatial::GeoPoint & b, double acc = EPSILON) const;
 	
 	bool operator==(const GeoPoint & other) const = delete;
 };
@@ -78,13 +74,9 @@ public:
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPoint & point);
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & destination, GeoPoint & p);
 
-inline bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON) {
-	return sserialize::spatial::GeoPoint::equal (a, b, acc);
-}
+bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON);
 
-inline std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp) {
-	return gp.asString(out);
-}
+std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp);
 
 }//end namespace spatial
 

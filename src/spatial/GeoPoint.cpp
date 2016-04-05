@@ -87,6 +87,7 @@ void GeoPoint::normalize(sserialize::spatial::GeoPoint::NormalizationType nt) {
 void GeoPoint::snap() {
 	m_lat = toDoubleLat(toIntLat(m_lat));
 	m_lon = toDoubleLon(toIntLon(m_lon));
+	SSERIALIZE_CHEAP_ASSERT(isSnapped());
 }
 
 bool GeoPoint::isSnapped() const {
@@ -151,6 +152,34 @@ std::ostream & GeoPoint::asString(std::ostream & out) const {
 	return out;
 }
 
+uint32_t GeoPoint::toIntLat(double lat) {
+	SSERIALIZE_CHEAP_ASSERT(lat >= -90.0 && lat <= 90.0);
+	return ::floor((lat+90.0) * (1 << 24) );
+}
+
+double GeoPoint::toDoubleLat(uint32_t lat) {
+	return (static_cast<double>(lat) / (1 << 24)) - 90.0;
+}
+
+uint32_t GeoPoint::toIntLon(double lon) {
+	SSERIALIZE_CHEAP_ASSERT(lon >= -180.0 && lon <= 180.0);
+	return ::floor((lon+180.0) * (1 << 24));
+}
+
+double GeoPoint::toDoubleLon(uint32_t lon) {
+	return (static_cast<double>(lon) / (1 << 24)) - 180.0;
+}
+
+GeoPoint GeoPoint::fromIntLatLon(uint32_t lat, uint32_t lon) { return GeoPoint(lat, lon); }
+
+bool GeoPoint::equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc) {
+	return (std::abs<double>(a.lat() - b.lat()) <= acc && std::abs<double>(a.lon() - b.lon()) <= acc);
+}
+
+bool GeoPoint::equal(const sserialize::spatial::GeoPoint & b, double acc) const {
+	return equal(*this, b, acc);
+}
+
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const sserialize::spatial::GeoPoint & point) {
 	return point.append(destination);
 }
@@ -159,6 +188,15 @@ sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & desti
 	p.lat() = sserialize::spatial::GeoPoint::toDoubleLat(destination.getUint32());
 	p.lon() = sserialize::spatial::GeoPoint::toDoubleLon(destination.getUint32());
 	return destination;
+}
+
+
+bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc) {
+	return sserialize::spatial::GeoPoint::equal (a, b, acc);
+}
+
+std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp) {
+	return gp.asString(out);
 }
 
 }}//end namespace
