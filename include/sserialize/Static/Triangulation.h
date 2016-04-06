@@ -560,7 +560,6 @@ bool Triangulation::prepare(T_CTD & ctd) {
 	//then remove these vertices and readd the constraints that don't intersect other constraints
 	//avoiding the creation of new 
 	
-	
 	struct IntPoint {
 		uint32_t lat;
 		uint32_t lon;
@@ -574,6 +573,8 @@ bool Triangulation::prepare(T_CTD & ctd) {
 		lon(sserialize::spatial::GeoPoint::toIntLon(p.lon()))
 		{}
 		
+		IntPoint(uint64_t v) : lat(v >> 32), lon(v & 0xFFFFFFFF) {}
+		
 		GeoPoint toGeoPoint() const {
 			double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
 			double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
@@ -585,6 +586,8 @@ bool Triangulation::prepare(T_CTD & ctd) {
 			double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
 			return Point(dlat, dlon);
 		}
+		
+		uint64_t toU64() const { return (static_cast<uint64_t>(lat) << 32) | lon; }
 		
 		static bool changes(const Point & p) {
 			Point tmp(IntPoint(p).toPoint());
@@ -598,6 +601,16 @@ bool Triangulation::prepare(T_CTD & ctd) {
 		bool operator!=(const IntPoint & other) const {
 			return lat != other.lat || lon != other.lon;
 		}
+	};
+	
+	auto locateVertex = [&ctd](const IntPoint & p) -> Vertex_handle {
+		Locate_type lt = (Locate_type) -1;
+		int li = 4;
+		auto f = ctd.locate(p.toPoint(), lt, li);
+		if (lt != TDS::VERTEX) {
+			throw std::runtime_error("Could not locate vertex");
+		}
+		return f->vertex(li);
 	};
 	
 	struct ConstrainedEdge {
@@ -662,14 +675,28 @@ bool Triangulation::prepare(T_CTD & ctd) {
 		}
 	}
 	
+	//add points from edges, we first remove all multiple occurences
+	{
+		std::unordered_set<uint64_t> pts;
+		for(const ConstrainedEdge & e : cEdges) {
+			pts.emplace(e.p1.toU64());
+			pts.emplace(e.p2.toU64());
+		}
+		std::vector<Point> ipts;
+		ipts.reserve(pts.size());
+		for(uint64_t x : pts) {
+			ipts.emplace_back(IntPoint(x).toPoint());
+		}
+		ctd.insert(ipts.begin(), ipts.end());
+	}
 	uint32_t reAddCount = 0;
 	//readd the removed constraints if possible
 	//we don't want to create new intersection points, so just skip edges that create them
 	std::cout << "sserialize::Static::Triangulation::prepare: trying to re-add " << cEdges.size() << " constraints" << std::endl;
 	for(const ConstrainedEdge & e : cEdges) {
 		SSERIALIZE_CHEAP_ASSERT(e.valid());
-		Vertex_handle v1(ctd.insert(e.p1.toPoint()));
-		Vertex_handle v2(ctd.insert(e.p2.toPoint()));
+		Vertex_handle v1(locateVertex(e.p1));
+		Vertex_handle v2(locateVertex(e.p2));
 		bool intersects = detail::Triangulation::intersects<TDS>(ctd, v1, v2);
 		if (!intersects) {
 			ctd.insert_constraint(v1, v2);
