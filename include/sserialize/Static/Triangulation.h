@@ -6,6 +6,7 @@
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/oom_algorithm.h>
+#include <sserialize/spatial/LatLonCalculations.h>
 
 #ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	#include <sserialize/algorithm/hashspecializations.h>
@@ -701,6 +702,12 @@ bool Triangulation::prepare(T_CTD & ctd) {
 		if (!intersects) {
 			ctd.insert_constraint(v1, v2);
 			++reAddCount;
+		}
+		else {
+			auto gp1(e.p1.toGeoPoint());
+			auto gp2(e.p2.toGeoPoint());
+			std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
+			std::cout << std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) ) << '\n';
 		}
 	}
 	std::cout << "sserialize::Static::Triangulation::prepare: re-added " << reAddCount << " out of " << cEdges.size() << " constraints" << std::endl;
