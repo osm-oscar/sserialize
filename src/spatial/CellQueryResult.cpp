@@ -175,6 +175,35 @@ CellQueryResult CellQueryResult::allToFull() const {
 	return CellQueryResult(m_priv->allToFull());
 }
 
+bool CellQueryResult::operator!=(const CellQueryResult& other) const {
+	return CellQueryResult::operator==(other);
+}
+
+bool CellQueryResult::operator==(const CellQueryResult& other) const {
+	if (cellCount() != other.cellCount()) {
+		return false;
+	}
+	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+		if (cellId(i) != other.cellId(i)) {
+			return false;
+		}
+		if (fullMatch(i) != other.fullMatch(i)) {
+			return false;
+		}
+		if (!fullMatch(i)) {
+			if (!fetched(i) && !other.fetched(i)) {
+				if (idxId(i) != other.idxId(i)) {
+					return false;
+				}
+			}
+			else if (idx(i) != other.idx(i)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 CellQueryResult::const_iterator CellQueryResult::begin() const {
 	return const_iterator(m_priv, 0);
 }

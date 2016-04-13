@@ -109,6 +109,9 @@ public:
 	CellQueryResult operator^(const CellQueryResult & other) const;
 	CellQueryResult allToFull() const;
 	
+	bool operator!=(const CellQueryResult & other) const;
+	bool operator==(const CellQueryResult & other) const;
+	
 	const_iterator begin() const;
 	const_iterator cbegin() const;
 	const_iterator end() const;
