@@ -23,6 +23,13 @@ public:
 	}
 };
 
+class BugException: public Exception {
+public:
+	BugException(const std::string & what) :
+	Exception("BugException: " + what)
+	{}
+};
+
 class VersionMissMatchException: public Exception {
 	uint32_t m_wantVersion;
 	uint32_t m_haveVersion;
