@@ -176,7 +176,7 @@ CellQueryResult CellQueryResult::allToFull() const {
 }
 
 bool CellQueryResult::operator!=(const CellQueryResult& other) const {
-	return CellQueryResult::operator==(other);
+	return !CellQueryResult::operator==(other);
 }
 
 bool CellQueryResult::operator==(const CellQueryResult& other) const {
