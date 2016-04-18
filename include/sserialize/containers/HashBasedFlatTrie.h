@@ -123,6 +123,7 @@ public:
 		bool operator==(const NodePtr & other) const;
 		bool operator!=(const NodePtr & other) const;
 		bool operator!() const { return !m_priv.get(); }
+		explicit operator bool() const { return m_priv.get(); }
 	};
 	
 	class Node final {
