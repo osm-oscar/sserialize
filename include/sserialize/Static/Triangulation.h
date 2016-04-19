@@ -135,6 +135,12 @@ bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::V
 	}
 }
 
+struct PrintRemovedEdges {
+	void operator()(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const {
+		std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
+		std::cout << std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) ) << '\n';
+	}
+};
 
 }}//end namespace detail::Triangulation
 
@@ -316,8 +322,8 @@ public:
 	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
 
 	///prepare triangulation for serialization (currently contracts faces that are representable)
-	template<typename T_CTD>
-	static bool prepare(T_CTD& ctd);
+	template<typename T_CTD, typename T_REMOVED_EDGES>
+	static bool prepare(T_CTD& ctd, T_REMOVED_EDGES re);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
@@ -547,8 +553,8 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 ///This makes all points representable! Beware that this very likely changes the triangulation (removing faces and adding new ones)
 ///You should therefore snap points before creating the triangulation
 ///@return true iff changes were made
-template<typename T_CTD>
-bool Triangulation::prepare(T_CTD & ctd) {
+template<typename T_CTD, typename T_REMOVED_EDGES>
+bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulation::PrintRemovedEdges()) {
 	typedef T_CTD TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
@@ -704,10 +710,7 @@ bool Triangulation::prepare(T_CTD & ctd) {
 			++reAddCount;
 		}
 		else {
-			auto gp1(e.p1.toGeoPoint());
-			auto gp2(e.p2.toGeoPoint());
-			std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
-			std::cout << std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) ) << '\n';
+			re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
 		}
 	}
 	std::cout << "sserialize::Static::Triangulation::prepare: re-added " << reAddCount << " out of " << cEdges.size() << " constraints" << std::endl;
