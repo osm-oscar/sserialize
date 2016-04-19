@@ -147,6 +147,15 @@ public:
 	}
 };
 
+class ConversionException: public Exception {
+public:
+	ConversionException(const std::string & what) :
+	Exception()
+	{
+		setMsg("ConversionException: " + what);
+	}
+};
+
 }//end namespace
 
 #define SSERIALIZE_VERSION_MISSMATCH_CHECK(__WANTVERSION, __HAVEVERSION, __MSG) do { if (__WANTVERSION != __HAVEVERSION) throw sserialize::VersionMissMatchException(__MSG, __WANTVERSION, __HAVEVERSION); } while(0);
