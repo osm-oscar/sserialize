@@ -68,6 +68,10 @@ public:
 	
 	bool equal(const sserialize::spatial::GeoPoint & b, double acc = EPSILON) const;
 	
+	///use equal function
+	bool operator!=(const GeoPoint & other) const = delete;
+	
+	///use equal function
 	bool operator==(const GeoPoint & other) const = delete;
 };
 
