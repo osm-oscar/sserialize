@@ -570,6 +570,14 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 	struct IntPoint {
 		uint32_t lat;
 		uint32_t lon;
+		
+		IntPoint() : lat(0xFFFFFFFF), lon(0xFFFFFFFF) {}
+		
+		IntPoint(const IntPoint & other) :
+		lat(other.lat),
+		lon(other.lon)
+		{}
+		
 		IntPoint(const Point & p) :
 		lat(sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p.x()))),
 		lon(sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p.y())))
@@ -608,6 +616,9 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 		bool operator!=(const IntPoint & other) const {
 			return lat != other.lat || lon != other.lon;
 		}
+		bool operator<(const IntPoint & other) const {
+			return (lat == other.lat ? lon < other.lon : lat < other.lat);
+		}
 	};
 	
 	auto locateVertex = [&ctd](const IntPoint & p) -> Vertex_handle {
@@ -623,16 +634,20 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 	struct ConstrainedEdge {
 		IntPoint p1;
 		IntPoint p2;
+		ConstrainedEdge() {}
+		ConstrainedEdge(const ConstrainedEdge & other) : p1(other.p1), p2(other.p2) {}
 		ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {}
 		ConstrainedEdge(const Point & p1, const Point & p2) : p1(p1), p2(p2) {}
 		bool valid() const {
 			return p1 != p2;
 		}
+		bool operator==(const ConstrainedEdge & other) const {
+			return p1 == other.p1 && p2 == other.p2;
+		}
+		bool operator<(const ConstrainedEdge & other) const {
+			return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
+		}
 	};
-	
-	
-	std::vector<Point> rmPoints;
-	std::vector<ConstrainedEdge> cEdges;
 	
 	struct CEInsertIterator {
 		TDS & ctd;
@@ -652,68 +667,107 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 		}
 	};
 	
-	CEInsertIterator ceIt(ctd, cEdges);
-	
-	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-		const Point & p = vt->point();
-		if (!IntPoint::changes(p)) {
-			continue;
+	uint32_t totalChangedPoints = 0;
+	bool hadIntersected = true;
+	for(uint32_t round(0), maxRounds(20); hadIntersected && round < maxRounds; ++round) {
+		bool isLastRound = !(round+1 < maxRounds);
+		hadIntersected = false;
+		
+		std::vector<Point> rmPoints;
+		std::vector<ConstrainedEdge> cEdges;
+		
+		CEInsertIterator ceIt(ctd, cEdges);
+		
+		for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+			const Point & p = vt->point();
+			if (!IntPoint::changes(p)) {
+				continue;
+			}
+			//point changes, save it and add its constrained edges
+			rmPoints.emplace_back(p);
+			ctd.incident_constraints(vt, ceIt);
 		}
-		//point changes, save it and add its constrained edges
-		rmPoints.emplace_back(p);
-		ctd.incident_constraints(vt, ceIt);
-	}
-	std::cout << "sserialize::Static::Triangulation::prepare: found " << rmPoints.size() << " out of " << ctd.number_of_vertices() << " points that change their position" << std::endl;
-	
-	//now remove all those bad points
-	for(const Point & p : rmPoints) {
-		Face_handle fh;
-		Locate_type lt = (Locate_type) -1;
-		int li;
-		fh = ctd.locate(p, lt, li);
-		if (lt != TDS::VERTEX) {
-			std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
-			continue;
+		totalChangedPoints += rmPoints.size();
+		if (isLastRound) {
+			std::cout << "sserialize::Static::Triangulation::prepare: found " << rmPoints.size() << " out of " << ctd.number_of_vertices() << " points that change their position" << std::endl;
 		}
-		if (li < 4) { //if dimension is 0, then locate returns a NullFace with lt set to VERTEX and li set to 4
-			Vertex_handle v = fh->vertex(li);
-			ctd.remove_incident_constraints(v);
-			ctd.remove(v);
+		//now remove all those bad points
+		for(const Point & p : rmPoints) {
+			Face_handle fh;
+			Locate_type lt = (Locate_type) -1;
+			int li;
+			fh = ctd.locate(p, lt, li);
+			if (lt != TDS::VERTEX) {
+				std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
+				continue;
+			}
+			if (li < 4) { //if dimension is 0, then locate returns a NullFace with lt set to VERTEX and li set to 4
+				Vertex_handle v = fh->vertex(li);
+				ctd.remove_incident_constraints(v);
+				ctd.remove(v);
+			}
 		}
-	}
-	
-	//add points from edges, we first remove all multiple occurences
-	{
-		std::unordered_set<uint64_t> pts;
+		
+		//filter double edges
+		{
+			using std::sort;
+			using std::unique;
+			sort(cEdges.begin(), cEdges.end());
+			auto it = unique(cEdges.begin(), cEdges.end());
+			cEdges.resize(it-cEdges.begin());
+		}
+		//add points from edges, we first remove all multiple occurences
+		{
+			std::unordered_set<uint64_t> pts;
+			for(const ConstrainedEdge & e : cEdges) {
+				pts.emplace(e.p1.toU64());
+				pts.emplace(e.p2.toU64());
+			}
+			std::vector<Point> ipts;
+			ipts.reserve(pts.size());
+			for(uint64_t x : pts) {
+				ipts.emplace_back(IntPoint(x).toPoint());
+			}
+			ctd.insert(ipts.begin(), ipts.end());
+		}
+		uint32_t reAddCount = 0;
+		//readd the removed constraints if possible
+		//we don't want to create new intersection points, so just skip edges that create them
+		if (isLastRound) {
+			std::cout << "sserialize::Static::Triangulation::prepare: trying to re-add " << cEdges.size() << " constraints" << std::endl;
+		}
+		
 		for(const ConstrainedEdge & e : cEdges) {
-			pts.emplace(e.p1.toU64());
-			pts.emplace(e.p2.toU64());
+			SSERIALIZE_CHEAP_ASSERT(e.valid());
+			Vertex_handle v1(locateVertex(e.p1));
+			Vertex_handle v2(locateVertex(e.p2));
+			if (ctd.is_edge(v1, v2)) {
+				ctd.insert_constraint(v1, v2);
+				if (isLastRound) {
+					++reAddCount;
+				}
+			}
+			else {
+				bool intersects = detail::Triangulation::intersects<TDS>(ctd, v1, v2);
+				if (isLastRound) {
+					if (!intersects) {
+						ctd.insert_constraint(v1, v2);
+						++reAddCount;
+					}
+					else {
+						re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+					}
+				}
+				else {
+					ctd.insert_constraint(v1, v2);
+					hadIntersected = hadIntersected || intersects;
+				}
+			}
 		}
-		std::vector<Point> ipts;
-		ipts.reserve(pts.size());
-		for(uint64_t x : pts) {
-			ipts.emplace_back(IntPoint(x).toPoint());
+		if (isLastRound) {
+			std::cout << "sserialize::Static::Triangulation::prepare: re-added " << reAddCount << " out of " << cEdges.size() << " constraints" << std::endl;
 		}
-		ctd.insert(ipts.begin(), ipts.end());
 	}
-	uint32_t reAddCount = 0;
-	//readd the removed constraints if possible
-	//we don't want to create new intersection points, so just skip edges that create them
-	std::cout << "sserialize::Static::Triangulation::prepare: trying to re-add " << cEdges.size() << " constraints" << std::endl;
-	for(const ConstrainedEdge & e : cEdges) {
-		SSERIALIZE_CHEAP_ASSERT(e.valid());
-		Vertex_handle v1(locateVertex(e.p1));
-		Vertex_handle v2(locateVertex(e.p2));
-		bool intersects = detail::Triangulation::intersects<TDS>(ctd, v1, v2);
-		if (!intersects) {
-			ctd.insert_constraint(v1, v2);
-			++reAddCount;
-		}
-		else {
-			re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
-		}
-	}
-	std::cout << "sserialize::Static::Triangulation::prepare: re-added " << reAddCount << " out of " << cEdges.size() << " constraints" << std::endl;
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
 		std::unordered_set< std::pair<uint32_t, uint32_t> > pts;
@@ -724,7 +778,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pts.size(), ctd.number_of_vertices());
 	}
 	#endif
-	return rmPoints.size();
+	return totalChangedPoints;
 }
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
