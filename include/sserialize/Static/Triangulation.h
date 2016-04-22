@@ -24,9 +24,10 @@ class Triangulation;
 namespace detail {
 namespace Triangulation {
 
-///@return true if the line v1->v2 intersects another constraint edge
-template<typename T_TDS>
-bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv) {
+///ic: operator()(T_TDS::Edge) -> bool calls for every intersected constraint
+///iff returnv value is false, exit function, otherwise continue intersecting
+template<typename T_TDS, typename T_INTERSECTED_CONSTRAINTS>
+void intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv, T_INTERSECTED_CONSTRAINTS ic) {
 	typedef T_TDS TDS;
 	typedef typename TDS::Geom_traits Geom_traits;
 	typedef typename TDS::Face_circulator Face_circulator;
@@ -44,7 +45,7 @@ bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::V
 		//we first have to do a circle step to determine the face our line intersects
 		//after that only face tests follow
 		if (sv == tv) {
-			return false;
+			return;
 		}
 		SSERIALIZE_CHEAP_ASSERT(sv->point() != tv->point());
 
@@ -72,7 +73,9 @@ bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::V
 				//intersects edge lv->rv, remember that tv cannot be within the face
 				if (lvOT == CGAL::Orientation::LEFT_TURN && rvOT == CGAL::Orientation::RIGHT_TURN) {
 					if (fc->is_constrained(svIdx)) {
-						return true;
+						if (!ic(Edge(fc, svIdx))) {
+							return;
+						}
 					}
 					faceStep = true;
 					enteringEdge = tds.mirror_edge(Edge(fc, svIdx));
@@ -128,11 +131,24 @@ bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::V
 			
 			//enteringEdge should now be the one through which we leave this face
 			if (tds.is_constrained(enteringEdge)) {
-				return true;
+				if (!ic(enteringEdge)) {
+					return;
+				}
 			}
 			enteringEdge = tds.mirror_edge(enteringEdge);
 		}
 	}
+}
+
+///@return true if the line v1->v2 intersects another constraint edge
+template<typename T_TDS>
+bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv) {
+	bool doesIntersect = false;
+	intersects(tds, sv, tv, [&doesIntersect](const typename T_TDS::Edge &) -> bool {
+		doesIntersect = true;
+		return false;
+	});
+	return doesIntersect;
 }
 
 struct PrintRemovedEdges {
