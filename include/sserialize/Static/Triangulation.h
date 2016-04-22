@@ -7,6 +7,7 @@
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/oom_algorithm.h>
 #include <sserialize/spatial/LatLonCalculations.h>
+#include <sserialize/spatial/DistanceCalculator.h>
 
 #ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	#include <sserialize/algorithm/hashspecializations.h>
@@ -14,6 +15,7 @@
 
 #include <CGAL/number_utils.h>
 #include <CGAL/enum.h>
+#include <CGAL/Constrained_triangulation_2.h>
 
 namespace sserialize {
 namespace Static {
@@ -578,6 +580,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 	typedef typename TDS::Point Point;
 	typedef typename TDS::Edge Edge;
 	typedef typename TDS::Locate_type Locate_type;
+	typedef typename TDS::Intersection_tag Intersection_tag;
 	
 	//simple version: first get all points that change their coordinates and save these and their incident constraint edges
 	//then remove these vertices and readd the constraints that don't intersect other constraints
@@ -645,6 +648,15 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 			throw std::runtime_error("Could not locate vertex");
 		}
 		return f->vertex(li);
+	};
+	
+	sserialize::spatial::DistanceCalculator dc(sserialize::spatial::DistanceCalculator::DCT_GEODESIC_ACCURATE);
+	auto distanceTo = [&dc](const Point & p1, const Point & p2) {
+		double lat1 = CGAL::to_double(p1.x());
+		double lon1 = CGAL::to_double(p1.y());
+		double lat2 = CGAL::to_double(p2.x());
+		double lon2 = CGAL::to_double(p2.y());
+		return std::abs<double>( dc.calc(lat1, lon1, lat2, lon2) );
 	};
 	
 	struct ConstrainedEdge {
@@ -782,8 +794,55 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 						ctd.insert_constraint(v1, v2);
 						++reAddCount;
 					}
-					else {
-						re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+					else { //lets try to add that edge anyway in case the next snap point is very close
+						int xCount = 0;
+						Edge xEdge;
+						detail::Triangulation::intersects<TDS>(ctd, v1, v2, [&xCount, &xEdge](const Edge & ine) -> bool {
+							if (!xCount) {
+								++xCount;
+								xEdge = ine;
+								return true;
+							}
+							else {
+								xCount = 2;
+								return false;
+							}
+						});
+						if (xCount > 1) {
+							re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+						}
+						else { //lets try to add this edge
+							Point xP;
+							const Point & pc = xEdge.first->vertex(TDS::ccw(xEdge.second))->point();
+							const Point & pd = xEdge.first->vertex(TDS::cw(xEdge.second))->point();
+							const Point & p1 = v1->point();
+							const Point & p2 = v2->point();
+							Intersection_tag itag = Intersection_tag();
+							CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, itag);
+							//now check how far away that point is form one of our endpoints
+							double dcxP = distanceTo(pc, xP);
+							double ddxP = distanceTo(pd, xP);
+							double dv1xP = distanceTo(p1, xP);
+							double dv2xP = distanceTo(p2, xP);
+							if ((dcxP < 0.05 || ddxP < 0.05) && (dv1xP < 0.05 || dv2xP < 0.05)) { //close enough
+								//now check what point should be snapped to where
+								Point pn1 = (dcxP < ddxP ? pc : pd);
+								Point pn2 = (dv1xP < dv2xP ? p2 : p1);
+								
+								Vertex_handle vn1(locateVertex(pn1));
+								Vertex_handle vn2(locateVertex(pn2));
+								if (detail::Triangulation::intersects<TDS>(ctd, vn1, vn2)) {
+									re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+								}
+								else {
+									ctd.insert_constraint(vn1, vn2);
+									++reAddCount;
+								}
+							}
+							else { //too far away
+								re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+							}
+						}
 					}
 				}
 				else {
