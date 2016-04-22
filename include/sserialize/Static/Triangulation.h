@@ -340,8 +340,8 @@ public:
 	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
 
 	///prepare triangulation for serialization (currently contracts faces that are representable)
-	template<typename T_CTD, typename T_REMOVED_EDGES>
-	static bool prepare(T_CTD& ctd, T_REMOVED_EDGES re, uint32_t maxRounds = 1);
+	template<typename T_CTD, typename T_REMOVED_EDGES = detail::Triangulation::PrintRemovedEdges>
+	static bool prepare(T_CTD& ctd, T_REMOVED_EDGES re = T_REMOVED_EDGES(), uint32_t maxRounds = 1);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
@@ -572,7 +572,7 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 ///You should therefore snap points before creating the triangulation
 ///@return true iff changes were made
 template<typename T_CTD, typename T_REMOVED_EDGES>
-bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulation::PrintRemovedEdges(), uint32_t maxRounds) {
+bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds) {
 	typedef T_CTD TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
