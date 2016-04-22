@@ -650,18 +650,29 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 	struct ConstrainedEdge {
 		IntPoint p1;
 		IntPoint p2;
-		ConstrainedEdge() {}
-		ConstrainedEdge(const ConstrainedEdge & other) : p1(other.p1), p2(other.p2) {}
-		ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {}
-		ConstrainedEdge(const Point & p1, const Point & p2) : p1(p1), p2(p2) {}
+		double length;
+		ConstrainedEdge() : length(-1) {}
+		ConstrainedEdge(const ConstrainedEdge & other) : p1(other.p1), p2(other.p2), length(other.length) {}
+		ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {
+			double l1 = (double)p1.lat - (double) p2.lat;
+			double l2 = (double)p1.lon - (double) p2.lon;
+			length = l1*l1 + l2*l2;
+		}
+		ConstrainedEdge(const Point & p1, const Point & p2) : ConstrainedEdge(IntPoint(p1), IntPoint(p2)) {}
 		bool valid() const {
 			return p1 != p2;
 		}
 		bool operator==(const ConstrainedEdge & other) const {
 			return p1 == other.p1 && p2 == other.p2;
 		}
+		//this will prefer long edges over short edges during radding (note the std:reverse later)
 		bool operator<(const ConstrainedEdge & other) const {
-			return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
+			if (length == other.length) {
+				return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
+			}
+			else {
+				return length < other.length;
+			}
 		}
 	};
 	
@@ -731,6 +742,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re = detail::Triangulat
 			sort(cEdges.begin(), cEdges.end());
 			auto it = unique(cEdges.begin(), cEdges.end());
 			cEdges.resize(it-cEdges.begin());
+			std::reverse(cEdges.begin(), cEdges.end());
 		}
 		//add points from edges, we first remove all multiple occurences
 		{
