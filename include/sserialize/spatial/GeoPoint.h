@@ -24,6 +24,8 @@ public:
 	GeoPoint(std::pair<float, float> p);
 	GeoPoint(const UByteArrayAdapter & data);
 	GeoPoint(const GeoPoint & other);
+	///format: [(]double[,;]double[(]
+	GeoPoint(const std::string & str);
 	virtual ~GeoPoint();
 	GeoPoint& operator=(const GeoPoint & other);
 	

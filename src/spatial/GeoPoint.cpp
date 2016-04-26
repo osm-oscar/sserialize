@@ -37,6 +37,10 @@ m_lat(toDoubleLat(lat)),
 m_lon(toDoubleLon(lon))
 {}
 
+GeoPoint::GeoPoint(const std::string & str) {
+	std::sscanf("%*[(] %lf %*[;,] %lf %*[)]", str.c_str(), m_lat, m_lon);
+}
+
 GeoPoint::GeoPoint(const GeoPoint & other) :
 m_lat(other.m_lat),
 m_lon(other.m_lon)
