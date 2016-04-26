@@ -153,6 +153,28 @@ bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::V
 	return doesIntersect;
 }
 
+
+///@return true if the line v1->v2 intersects another constraint edge
+template<typename T_CTD, typename T_OUTPUT_ITERATOR>
+void intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename T_CTD::Vertex_handle tv, T_OUTPUT_ITERATOR out) {
+	typedef T_CTD CTD;
+	typedef typename CTD::Edge Edge;
+	typedef typename CTD::Point Point;
+	typedef typename CTD::Intersection_tag Intersection_tag;
+	intersects(ctd, sv, tv, [&ctd, &sv, &tv, &out](const Edge & e) -> bool {
+		Point xP;
+		const Point & pc = e.first->vertex(CTD::ccw(e.second))->point();
+		const Point & pd = e.first->vertex(CTD::cw(e.second))->point();
+		const Point & p1 = sv->point();
+		const Point & p2 = tv->point();
+		Intersection_tag itag = Intersection_tag();
+		CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, itag);
+		*out  = xP;
+		++out;
+		return true;
+	});
+}
+
 struct PrintRemovedEdges {
 	void operator()(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const {
 		std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
