@@ -43,6 +43,130 @@ public:
 	using MyBaseClass::pop;
 };
 
+template<typename T_POINT>
+struct IntPoint {
+	typedef T_POINT Point;
+
+	uint32_t lat;
+	uint32_t lon;
+	
+	IntPoint() : lat(0xFFFFFFFF), lon(0xFFFFFFFF) {}
+	
+	IntPoint(uint32_t lat, uint32_t lon) : lat(lat), lon(lon) {}
+	
+	IntPoint(const IntPoint & other) :
+	lat(other.lat),
+	lon(other.lon)
+	{}
+	
+	IntPoint(const Point & p) :
+	lat(sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p.x()))),
+	lon(sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p.y())))
+	{}
+	
+	IntPoint(const GeoPoint & p)  :
+	lat(sserialize::spatial::GeoPoint::toIntLat(p.lat())),
+	lon(sserialize::spatial::GeoPoint::toIntLon(p.lon()))
+	{}
+	
+	IntPoint(uint64_t v) : lat(v >> 32), lon(v & 0xFFFFFFFF) {}
+	
+	GeoPoint toGeoPoint() const {
+		double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
+		double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
+		return sserialize::spatial::GeoPoint(dlat, dlon);
+	}
+	
+	Point toPoint() const {
+		double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
+		double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
+		return Point(dlat, dlon);
+	}
+	
+	uint64_t toU64() const { return (static_cast<uint64_t>(lat) << 32) | lon; }
+	
+	static bool changes(const Point & p) {
+		Point tmp(IntPoint(p).toPoint());
+		return tmp.x() != p.x() || tmp.y() != p.y();
+	}
+	
+	bool operator==(const IntPoint & other) const {
+		return lat == other.lat && lon == other.lon;
+	}
+	
+	bool operator!=(const IntPoint & other) const {
+		return lat != other.lat || lon != other.lon;
+	}
+	bool operator<(const IntPoint & other) const {
+		return (lat == other.lat ? lon < other.lon : lat < other.lat);
+	}
+};
+
+template<typename T_POINT>
+struct ConstrainedEdge {
+	typedef T_POINT Point;
+	typedef sserialize::Static::spatial::detail::Triangulation::IntPoint<Point> IntPoint;
+	IntPoint p1;
+	IntPoint p2;
+	double length;
+	ConstrainedEdge() : length(-1) {}
+	ConstrainedEdge(const ConstrainedEdge & other) : p1(other.p1), p2(other.p2), length(other.length) {}
+	ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {
+		double l1 = (double)p1.lat - (double) p2.lat;
+		double l2 = (double)p1.lon - (double) p2.lon;
+		length = l1*l1 + l2*l2;
+	}
+	ConstrainedEdge(const Point & p1, const Point & p2) : ConstrainedEdge(IntPoint(p1), IntPoint(p2)) {}
+	bool valid() const {
+		return p1 != p2;
+	}
+	bool operator==(const ConstrainedEdge & other) const {
+		return p1 == other.p1 && p2 == other.p2;
+	}
+	//this will prefer long edges over short edges during re-adding (note the std:reverse later)
+	bool operator<(const ConstrainedEdge & other) const {
+		if (length == other.length) {
+			return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
+		}
+		else {
+			return length < other.length;
+		}
+	}
+};
+
+template<typename T_CTD, typename T_CECONTAINER>
+struct CEBackInsertIterator {
+	typedef T_CTD CTD;
+	typedef typename CTD::Point Point;
+	typedef typename CTD::Edge Edge;
+	typedef typename CTD::Vertex_handle Vertex_handle;
+	typedef T_CECONTAINER CEContainer;
+	typedef sserialize::Static::spatial::detail::Triangulation::IntPoint<Point> IntPoint;
+	CTD & ctd;
+	CEContainer & dest;
+	CEBackInsertIterator(CTD & ctd, CEContainer & dest) : ctd(ctd), dest(dest) {}
+	CEBackInsertIterator & operator++() { return *this; }
+	CEBackInsertIterator & operator++(int) { return *this; }
+	CEBackInsertIterator & operator*() { return *this; }
+	CEBackInsertIterator & operator=(const Edge & e) {
+		Vertex_handle v1 = e.first->vertex(CTD::cw(e.second));
+		Vertex_handle v2 = e.first->vertex(CTD::ccw(e.second));
+		IntPoint p1(v1->point()), p2(v2->point());
+		if (p1 != p2) {
+			dest.emplace(p1, p2);
+		}
+		return *this;
+	}
+	
+};
+
+struct PrintRemovedEdges {
+	void operator()(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const {
+		std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
+		std::cout << std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) ) << '\n';
+	}
+};
+
 ///ic: operator()(T_TDS::Edge) -> bool calls for every intersected constraint
 ///iff returnv value is false, exit function, otherwise continue intersecting
 template<typename T_TDS, typename T_INTERSECTED_CONSTRAINTS>
@@ -191,13 +315,6 @@ void intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename
 		return true;
 	});
 }
-
-struct PrintRemovedEdges {
-	void operator()(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const {
-		std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
-		std::cout << std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) ) << '\n';
-	}
-};
 
 }}//end namespace detail::Triangulation
 
@@ -621,65 +738,15 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 	typedef typename TDS::Locate_type Locate_type;
 	typedef typename TDS::Intersection_tag Intersection_tag;
 	
+	//internal typedefs
+	typedef detail::Triangulation::IntPoint<Point> IntPoint;
+	typedef detail::Triangulation::ConstrainedEdge<Point> ConstrainedEdge;
+	typedef detail::Triangulation::MyPrioQueue<ConstrainedEdge> CEContainer;
+	typedef detail::Triangulation::CEBackInsertIterator<TDS, CEContainer> CEBackInsertIterator;
+
 	//simple version: first get all points that change their coordinates and save these and their incident constraint edges
 	//then remove these vertices and readd the constraints that don't intersect other constraints
 	//avoiding the creation of new , do this until no new intersection points are created
-	
-	struct IntPoint {
-		uint32_t lat;
-		uint32_t lon;
-		
-		IntPoint() : lat(0xFFFFFFFF), lon(0xFFFFFFFF) {}
-		
-		IntPoint(uint32_t lat, uint32_t lon) : lat(lat), lon(lon) {}
-		
-		IntPoint(const IntPoint & other) :
-		lat(other.lat),
-		lon(other.lon)
-		{}
-		
-		IntPoint(const Point & p) :
-		lat(sserialize::spatial::GeoPoint::toIntLat(CGAL::to_double(p.x()))),
-		lon(sserialize::spatial::GeoPoint::toIntLon(CGAL::to_double(p.y())))
-		{}
-		
-		IntPoint(const GeoPoint & p)  :
-		lat(sserialize::spatial::GeoPoint::toIntLat(p.lat())),
-		lon(sserialize::spatial::GeoPoint::toIntLon(p.lon()))
-		{}
-		
-		IntPoint(uint64_t v) : lat(v >> 32), lon(v & 0xFFFFFFFF) {}
-		
-		GeoPoint toGeoPoint() const {
-			double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
-			double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
-			return sserialize::spatial::GeoPoint(dlat, dlon);
-		}
-		
-		Point toPoint() const {
-			double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
-			double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);
-			return Point(dlat, dlon);
-		}
-		
-		uint64_t toU64() const { return (static_cast<uint64_t>(lat) << 32) | lon; }
-		
-		static bool changes(const Point & p) {
-			Point tmp(IntPoint(p).toPoint());
-			return tmp.x() != p.x() || tmp.y() != p.y();
-		}
-		
-		bool operator==(const IntPoint & other) const {
-			return lat == other.lat && lon == other.lon;
-		}
-		
-		bool operator!=(const IntPoint & other) const {
-			return lat != other.lat || lon != other.lon;
-		}
-		bool operator<(const IntPoint & other) const {
-			return (lat == other.lat ? lon < other.lon : lat < other.lat);
-		}
-	};
 	
 	auto locateVertex = [&ctd](const IntPoint & p) -> Vertex_handle {
 		Locate_type lt = (Locate_type) -1;
@@ -698,55 +765,6 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		double lat2 = CGAL::to_double(p2.x());
 		double lon2 = CGAL::to_double(p2.y());
 		return std::abs<double>( dc.calc(lat1, lon1, lat2, lon2) );
-	};
-	
-	struct ConstrainedEdge {
-		IntPoint p1;
-		IntPoint p2;
-		double length;
-		ConstrainedEdge() : length(-1) {}
-		ConstrainedEdge(const ConstrainedEdge & other) : p1(other.p1), p2(other.p2), length(other.length) {}
-		ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {
-			double l1 = (double)p1.lat - (double) p2.lat;
-			double l2 = (double)p1.lon - (double) p2.lon;
-			length = l1*l1 + l2*l2;
-		}
-		ConstrainedEdge(const Point & p1, const Point & p2) : ConstrainedEdge(IntPoint(p1), IntPoint(p2)) {}
-		bool valid() const {
-			return p1 != p2;
-		}
-		bool operator==(const ConstrainedEdge & other) const {
-			return p1 == other.p1 && p2 == other.p2;
-		}
-		//this will prefer long edges over short edges during re-adding (note the std:reverse later)
-		bool operator<(const ConstrainedEdge & other) const {
-			if (length == other.length) {
-				return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
-			}
-			else {
-				return length < other.length;
-			}
-		}
-	};
-	
-	typedef detail::Triangulation::MyPrioQueue<ConstrainedEdge> CEContainer;
-	struct CEBackInsertIterator {
-		TDS & ctd;
-		CEContainer & dest;
-		CEBackInsertIterator(TDS & ctd, CEContainer & dest) : ctd(ctd), dest(dest) {}
-		CEBackInsertIterator & operator++() { return *this; }
-		CEBackInsertIterator & operator++(int) { return *this; }
-		CEBackInsertIterator & operator*() { return *this; }
-		CEBackInsertIterator & operator=(const Edge & e) {
-			Vertex_handle v1 = e.first->vertex(TDS::cw(e.second));
-			Vertex_handle v2 = e.first->vertex(TDS::ccw(e.second));
-			IntPoint p1(v1->point()), p2(v2->point());
-			if (p1 != p2) {
-				dest.emplace(p1, p2);
-			}
-			return *this;
-		}
-		
 	};
 
 	CEContainer ceQueue;
@@ -805,13 +823,14 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 	}
 	
 	uint32_t initialQueueSize = ceQueue.size();
+	uint32_t targetQueueRounds = initialQueueSize;
 	uint32_t queueRound = 0;
 	
 	//ceQueue makes sure that long edges come first
 	sserialize::ProgressInfo pinfo;
-	pinfo.begin(ceQueue.size(), "Triangulation::prepare: Processing edges");
+	pinfo.begin(targetQueueRounds, "Triangulation::prepare: Processing edges");
 	for(; ceQueue.size(); ++queueRound) {
-		pinfo(queueRound, ceQueue.size());
+		pinfo(queueRound, targetQueueRounds);
 		ConstrainedEdge e = ceQueue.top();
 		ceQueue.pop();
 		SSERIALIZE_CHEAP_ASSERT(e.valid());
@@ -823,7 +842,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		}
 		//we have intersections, calculate the intersection points and decide how to snap them
 		bool intersected = false;
-		detail::Triangulation::intersects(ctd, v1, v2, [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue](const Edge & xEdge) -> bool {
+		detail::Triangulation::intersects(ctd, v1, v2, [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue, &targetQueueRounds](const Edge & xEdge) -> bool {
 			intersected = true;
 			Point xP;
 			const Point & p1 = v1->point();
@@ -867,15 +886,19 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 			//xP and xIntPoint maybe different at this point
 			if (e.p1 != xIntPoint) {
 				ceQueue.emplace(e.p1, xIntPoint);
+				++targetQueueRounds;
 			}
 			if (e.p2 != xIntPoint) {
 				ceQueue.emplace(e.p2, xIntPoint);
+				++targetQueueRounds;
 			}
 			if (pcInt!= xIntPoint) {
 				ceQueue.emplace(pcInt, xIntPoint);
+				++targetQueueRounds;
 			}
 			if (pdInt != xIntPoint) {
 				ceQueue.emplace(pdInt, xIntPoint);
+				++targetQueueRounds;
 			}
 			//and remove the constrained on our current edge
 			ctd.remove_constrained_edge(xEdge.first, xEdge.second);
