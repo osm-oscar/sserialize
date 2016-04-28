@@ -167,155 +167,6 @@ struct PrintRemovedEdges {
 	}
 };
 
-///ic: operator()(T_TDS::Edge) -> bool calls for every intersected constraint
-///iff returnv value is false, exit function, otherwise continue intersecting
-template<typename T_TDS, typename T_INTERSECTED_CONSTRAINTS>
-void intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv, T_INTERSECTED_CONSTRAINTS ic) {
-	typedef T_TDS TDS;
-	typedef typename TDS::Geom_traits Geom_traits;
-	typedef typename TDS::Face_circulator Face_circulator;
-	typedef typename TDS::Edge Edge;
-	typedef typename Geom_traits::Orientation_2 Orientation_2;
-	typedef typename Geom_traits::Collinear_are_ordered_along_line_2 Collinear_are_ordered_along_line_2;
-
-	
-	Orientation_2 ot( tds.geom_traits().orientation_2_object() );
-	Collinear_are_ordered_along_line_2 oal( tds.geom_traits().collinear_are_ordered_along_line_2_object() );
-	
-	auto tp = tv->point();
-	
-	while (true) {
-		//we first have to do a circle step to determine the face our line intersects
-		//after that only face tests follow
-		if (sv == tv) {
-			return;
-		}
-		SSERIALIZE_CHEAP_ASSERT(sv->point() != tv->point());
-
-		auto sp = sv->point();
-		
-		bool faceStep = true;
-		Edge enteringEdge;
-		
-		//first the circle step
-		{
-			Face_circulator fc(tds.incident_faces(sv));
-			Face_circulator fcEnd(fc);
-			do {
-				SSERIALIZE_CHEAP_ASSERT(!tds.is_infinite(fc));
-				
-				int svIdx = fc->index(sv);
-				auto lv = fc->vertex(TDS::cw(svIdx));
-				auto rv = fc->vertex(TDS::ccw(svIdx));
-				auto lp = lv->point();
-				auto rp = rv->point();
-				
-				auto lvOT = ot(sp, tp, lp);
-				auto rvOT = ot(sp, tp, rp);
-				
-				//intersects edge lv->rv, remember that tv cannot be within the face
-				if (lvOT == CGAL::Orientation::LEFT_TURN && rvOT == CGAL::Orientation::RIGHT_TURN) {
-					if (fc->is_constrained(svIdx)) {
-						if (!ic(Edge(fc, svIdx))) {
-							return;
-						}
-					}
-					faceStep = true;
-					enteringEdge = tds.mirror_edge(Edge(fc, svIdx));
-					break;
-				}
-				else if (lvOT == CGAL::Orientation::COLLINEAR) {
-					if (oal(sp, lp, tp)) { //make sure that we don't jump back
-						faceStep = false;
-						sv = lv;
-						break;
-					}
-				}
-				else if (rvOT == CGAL::Orientation::COLLINEAR) {
-					if (oal(sp, rp, tp)) { //make sure that we don't jump back
-						faceStep = false;
-						sv = rv;
-						break;
-					}
-				}
-				++fc;
-			} while (fc != fcEnd);
-		}
-		
-		//and now the face steps
-		//here we have to check which edge of the current face our line sv->tv intersects
-		while (faceStep) {
-			auto ov = enteringEdge.first->vertex(enteringEdge.second);
-			auto op = ov->point();
-
-			//check through which edge we leave, since we already know that we came through edge enteringEdge
-			//it's enough to check if ov is left, right, on -sv-tv-
-			//remember that orientations are with respect to -sv-tv-
-			
-			auto oOT = ot(sp, tp, op);
-			if (oOT == CGAL::Orientation::LEFT_TURN) {
-				//leave through the edge left of op
-				//this is the edge whose opposive vertex is ccw of ov
-				enteringEdge.second = TDS::ccw(enteringEdge.second);
-			}
-			else if (oOT == CGAL::Orientation::RIGHT_TURN) {
-				//leave through the edge right of op
-				//this is the edge whose opposive vertex is cw of ov
-				enteringEdge.second = TDS::cw(enteringEdge.second);
-			}
-			else if (oOT == CGAL::Orientation::COLLINEAR) {
-				//opposite vertex is on the line -sv-tv-
-				sv = ov;
-				break;
-			}
-			else {
-				SSERIALIZE_CHEAP_ASSERT(false);
-			}
-			
-			//enteringEdge should now be the one through which we leave this face
-			if (tds.is_constrained(enteringEdge)) {
-				if (!ic(enteringEdge)) {
-					return;
-				}
-			}
-			enteringEdge = tds.mirror_edge(enteringEdge);
-		}
-	}
-}
-
-///@return true if the line v1->v2 intersects another constraint edge
-template<typename T_TDS>
-bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv) {
-	bool doesIntersect = false;
-	intersects(tds, sv, tv, [&doesIntersect](const typename T_TDS::Edge &) -> bool {
-		doesIntersect = true;
-		return false;
-	});
-	return doesIntersect;
-}
-
-
-///@return true if the line v1->v2 intersects another constraint edge
-template<typename T_CTD, typename T_OUTPUT_ITERATOR>
-void intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename T_CTD::Vertex_handle tv, T_OUTPUT_ITERATOR out) {
-	typedef T_CTD CTD;
-	typedef typename CTD::Edge Edge;
-	typedef typename CTD::Point Point;
-	typedef typename CTD::Intersection_tag Intersection_tag;
-	intersects(ctd, sv, tv, [&ctd, &sv, &tv, &out](const Edge & e) -> bool {
-		Point xP;
-		const Point & pc = e.first->vertex(CTD::ccw(e.second))->point();
-		const Point & pd = e.first->vertex(CTD::cw(e.second))->point();
-		const Point & p1 = sv->point();
-		const Point & p2 = tv->point();
-		Intersection_tag itag = Intersection_tag();
-		CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, itag);
-		*out  = xP;
-		++out;
-		return true;
-	});
-}
-
 }}//end namespace detail::Triangulation
 
 /**
@@ -501,9 +352,19 @@ public:
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
+	
+	///call ic(T_TDS::Edge e) -> bool for every intersected constrained edge
+	///iff return value is false, exit function, otherwise continue intersecting
+	template<typename T_TDS, typename T_INTERSECTED_CONSTRAINTS>
+	static void intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv, T_INTERSECTED_CONSTRAINTS ic);
 
+	///@return true if the line v1->v2 intersects another constraint edge
+	template<typename T_TDS>
+	static bool intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv);
+
+	template<typename T_CTD, typename T_OUTPUT_ITERATOR>
+	static void intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename T_CTD::Vertex_handle tv, T_OUTPUT_ITERATOR out);
 };
-
 
 //TODO:add support for degenerate faces
 template<typename TVisitor, typename T_GEOMETRY_TRAITS>
@@ -723,6 +584,155 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 	}
 }
 
+///ic: operator()(T_TDS::Edge) -> bool calls for every intersected constraint
+///iff returnv value is false, exit function, otherwise continue intersecting
+template<typename T_TDS, typename T_INTERSECTED_CONSTRAINTS>
+void Triangulation::intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv, T_INTERSECTED_CONSTRAINTS ic) {
+	typedef T_TDS TDS;
+	typedef typename TDS::Geom_traits Geom_traits;
+	typedef typename TDS::Face_circulator Face_circulator;
+	typedef typename TDS::Edge Edge;
+	typedef typename Geom_traits::Orientation_2 Orientation_2;
+	typedef typename Geom_traits::Collinear_are_ordered_along_line_2 Collinear_are_ordered_along_line_2;
+
+	
+	Orientation_2 ot( tds.geom_traits().orientation_2_object() );
+	Collinear_are_ordered_along_line_2 oal( tds.geom_traits().collinear_are_ordered_along_line_2_object() );
+	
+	auto tp = tv->point();
+	
+	while (true) {
+		//we first have to do a circle step to determine the face our line intersects
+		//after that only face tests follow
+		if (sv == tv) {
+			return;
+		}
+		SSERIALIZE_CHEAP_ASSERT(sv->point() != tv->point());
+
+		auto sp = sv->point();
+		
+		bool faceStep = true;
+		Edge enteringEdge;
+		
+		//first the circle step
+		{
+			Face_circulator fc(tds.incident_faces(sv));
+			Face_circulator fcEnd(fc);
+			do {
+				SSERIALIZE_CHEAP_ASSERT(!tds.is_infinite(fc));
+				
+				int svIdx = fc->index(sv);
+				auto lv = fc->vertex(TDS::cw(svIdx));
+				auto rv = fc->vertex(TDS::ccw(svIdx));
+				auto lp = lv->point();
+				auto rp = rv->point();
+				
+				auto lvOT = ot(sp, tp, lp);
+				auto rvOT = ot(sp, tp, rp);
+				
+				//intersects edge lv->rv, remember that tv cannot be within the face
+				if (lvOT == CGAL::Orientation::LEFT_TURN && rvOT == CGAL::Orientation::RIGHT_TURN) {
+					if (fc->is_constrained(svIdx)) {
+						if (!ic(Edge(fc, svIdx))) {
+							return;
+						}
+					}
+					faceStep = true;
+					enteringEdge = tds.mirror_edge(Edge(fc, svIdx));
+					break;
+				}
+				else if (lvOT == CGAL::Orientation::COLLINEAR) {
+					if (oal(sp, lp, tp)) { //make sure that we don't jump back
+						faceStep = false;
+						sv = lv;
+						break;
+					}
+				}
+				else if (rvOT == CGAL::Orientation::COLLINEAR) {
+					if (oal(sp, rp, tp)) { //make sure that we don't jump back
+						faceStep = false;
+						sv = rv;
+						break;
+					}
+				}
+				++fc;
+			} while (fc != fcEnd);
+		}
+		
+		//and now the face steps
+		//here we have to check which edge of the current face our line sv->tv intersects
+		while (faceStep) {
+			auto ov = enteringEdge.first->vertex(enteringEdge.second);
+			auto op = ov->point();
+
+			//check through which edge we leave, since we already know that we came through edge enteringEdge
+			//it's enough to check if ov is left, right, on -sv-tv-
+			//remember that orientations are with respect to -sv-tv-
+			
+			auto oOT = ot(sp, tp, op);
+			if (oOT == CGAL::Orientation::LEFT_TURN) {
+				//leave through the edge left of op
+				//this is the edge whose opposive vertex is ccw of ov
+				enteringEdge.second = TDS::ccw(enteringEdge.second);
+			}
+			else if (oOT == CGAL::Orientation::RIGHT_TURN) {
+				//leave through the edge right of op
+				//this is the edge whose opposive vertex is cw of ov
+				enteringEdge.second = TDS::cw(enteringEdge.second);
+			}
+			else if (oOT == CGAL::Orientation::COLLINEAR) {
+				//opposite vertex is on the line -sv-tv-
+				sv = ov;
+				break;
+			}
+			else {
+				SSERIALIZE_CHEAP_ASSERT(false);
+			}
+			
+			//enteringEdge should now be the one through which we leave this face
+			if (tds.is_constrained(enteringEdge)) {
+				if (!ic(enteringEdge)) {
+					return;
+				}
+			}
+			enteringEdge = tds.mirror_edge(enteringEdge);
+		}
+	}
+}
+
+///@return true if the line v1->v2 intersects another constraint edge
+template<typename T_TDS>
+bool Triangulation::intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv) {
+	bool doesIntersect = false;
+	Triangulation::intersects(tds, sv, tv, [&doesIntersect](const typename T_TDS::Edge &) -> bool {
+		doesIntersect = true;
+		return false;
+	});
+	return doesIntersect;
+}
+
+
+///@return true if the line v1->v2 intersects another constraint edge
+template<typename T_CTD, typename T_OUTPUT_ITERATOR>
+void Triangulation::intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename T_CTD::Vertex_handle tv, T_OUTPUT_ITERATOR out) {
+	typedef T_CTD CTD;
+	typedef typename CTD::Edge Edge;
+	typedef typename CTD::Point Point;
+	typedef typename CTD::Intersection_tag Intersection_tag;
+	Triangulation::intersects(ctd, sv, tv, [&ctd, &sv, &tv, &out](const Edge & e) -> bool {
+		Point xP;
+		const Point & pc = e.first->vertex(CTD::ccw(e.second))->point();
+		const Point & pd = e.first->vertex(CTD::cw(e.second))->point();
+		const Point & p1 = sv->point();
+		const Point & p2 = tv->point();
+		Intersection_tag itag = Intersection_tag();
+		CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, itag);
+		*out  = xP;
+		++out;
+		return true;
+	});
+}
+
 ///This will handle points created by intersections of constrained edges
 ///This makes all points representable! Beware that this very likely changes the triangulation (removing faces and adding new ones)
 ///You should therefore snap points before creating the triangulation
@@ -842,7 +852,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		}
 		//we have intersections, calculate the intersection points and decide how to snap them
 		bool intersected = false;
-		detail::Triangulation::intersects(ctd, v1, v2, [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue, &targetQueueRounds](const Edge & xEdge) -> bool {
+		Triangulation::intersects(ctd, v1, v2, [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue, &targetQueueRounds, &numChangedPoints](const Edge & xEdge) -> bool {
 			intersected = true;
 			Point xP;
 			const Point & p1 = v1->point();
@@ -1111,7 +1121,6 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	}
 	return dest;
 }
-
 
 }}} //end namespace
 
