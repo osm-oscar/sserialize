@@ -252,10 +252,10 @@ OffsetType ItemIndexFactory::flush() {
 	uint64_t idxSizesBegin = m_indexStore.tellPutPtr();
 	std::cout << "Serializing idx sizes starting at " << idxSizesBegin << "..." << std::flush;
 #ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_idxSizes[0], 0);
+	SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_idxSizes[0], (ItemIndexSizesContainer::value_type)0);
 	if (m_useDeduplication) {
 		for(uint32_t i(1), s(m_idxSizes.size()); i < s; ++i) {
-			SSERIALIZE_EXPENSIVE_ASSERT_LARGER(m_idxSizes[i], 0);
+			SSERIALIZE_EXPENSIVE_ASSERT_LARGER(m_idxSizes[i],(ItemIndexSizesContainer::value_type)0);
 		}
 	}
 #endif
