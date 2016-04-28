@@ -37,6 +37,11 @@ void ProgressInfo::operator()(uint64_t currentCount) {
 	(*this)(currentCount, message);
 }
 
+void ProgressInfo::operator()(uint64_t currentCount, uint64_t newTargetCount) {
+	targetCount = newTargetCount;
+	(*this)(currentCount);
+}
+
 void ProgressInfo::operator()(uint64_t currentCount, const std::string & message) {
 	time_t timer = time(NULL);
 	if (timer != prevTimer) {

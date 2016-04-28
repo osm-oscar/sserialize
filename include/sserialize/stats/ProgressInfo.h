@@ -22,6 +22,8 @@ struct ProgressInfo {
 	
 	void operator()(uint64_t currentCount);
 	void operator()(uint64_t currentCount, const std::string & message);
+	
+	void operator()(uint64_t currentCount, uint64_t newTargetCount);
 };
 
 template<bool enable>
