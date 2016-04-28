@@ -17,6 +17,8 @@
 #include <CGAL/enum.h>
 #include <CGAL/Constrained_triangulation_2.h>
 
+#include <queue>
+
 namespace sserialize {
 namespace Static {
 namespace spatial {
@@ -25,6 +27,21 @@ class Triangulation;
 
 namespace detail {
 namespace Triangulation {
+
+template<typename _Tp, typename _Sequence = std::vector<_Tp>,
+	typename _Compare  = std::less<typename _Sequence::value_type> >
+class MyPrioQueue: public std::priority_queue<_Tp, _Sequence, _Compare> {
+public:
+	typedef std::priority_queue<_Tp, _Sequence, _Compare> MyBaseClass;
+public:
+	MyPrioQueue() {}
+	MyPrioQueue(MyBaseClass && base) : MyBaseClass(std::move(base)) {}
+	MyPrioQueue(const MyBaseClass & base) : MyBaseClass(base) {}
+	const _Sequence & container() const { return MyBaseClass::c; }
+	using MyBaseClass::emplace;
+	using MyBaseClass::top;
+	using MyBaseClass::pop;
+};
 
 ///ic: operator()(T_TDS::Edge) -> bool calls for every intersected constraint
 ///iff returnv value is false, exit function, otherwise continue intersecting
@@ -606,13 +623,15 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 	
 	//simple version: first get all points that change their coordinates and save these and their incident constraint edges
 	//then remove these vertices and readd the constraints that don't intersect other constraints
-	//avoiding the creation of new 
+	//avoiding the creation of new , do this until no new intersection points are created
 	
 	struct IntPoint {
 		uint32_t lat;
 		uint32_t lon;
 		
 		IntPoint() : lat(0xFFFFFFFF), lon(0xFFFFFFFF) {}
+		
+		IntPoint(uint32_t lat, uint32_t lon) : lat(lat), lon(lon) {}
 		
 		IntPoint(const IntPoint & other) :
 		lat(other.lat),
@@ -699,7 +718,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		bool operator==(const ConstrainedEdge & other) const {
 			return p1 == other.p1 && p2 == other.p2;
 		}
-		//this will prefer long edges over short edges during radding (note the std:reverse later)
+		//this will prefer long edges over short edges during re-adding (note the std:reverse later)
 		bool operator<(const ConstrainedEdge & other) const {
 			if (length == other.length) {
 				return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
@@ -710,34 +729,33 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		}
 	};
 	
-	struct CEInsertIterator {
+	typedef detail::Triangulation::MyPrioQueue<ConstrainedEdge> CEContainer;
+	struct CEBackInsertIterator {
 		TDS & ctd;
-		std::vector<ConstrainedEdge> & cEdges;
-		CEInsertIterator(TDS & ctd, std::vector<ConstrainedEdge> & cEdges) : ctd(ctd), cEdges(cEdges) {}
-		CEInsertIterator & operator++() { return *this; }
-		CEInsertIterator & operator++(int) { return *this; }
-		CEInsertIterator & operator*() { return *this; }
-		CEInsertIterator & operator=(const Edge & e) {
+		CEContainer & dest;
+		CEBackInsertIterator(TDS & ctd, CEContainer & dest) : ctd(ctd), dest(dest) {}
+		CEBackInsertIterator & operator++() { return *this; }
+		CEBackInsertIterator & operator++(int) { return *this; }
+		CEBackInsertIterator & operator*() { return *this; }
+		CEBackInsertIterator & operator=(const Edge & e) {
 			Vertex_handle v1 = e.first->vertex(TDS::cw(e.second));
 			Vertex_handle v2 = e.first->vertex(TDS::ccw(e.second));
 			IntPoint p1(v1->point()), p2(v2->point());
 			if (p1 != p2) {
-				cEdges.emplace_back(p1, p2);
+				dest.emplace(p1, p2);
 			}
 			return *this;
 		}
+		
 	};
-	
-	uint32_t totalChangedPoints = 0;
-	bool hadIntersected = true;
-	for(uint32_t round(0); hadIntersected && round < maxRounds; ++round) {
-		bool isLastRound = !(round+1 < maxRounds);
-		hadIntersected = false;
-		
+
+	CEContainer ceQueue;
+	//do the first global step which snaps all points
+	{
 		std::vector<Point> rmPoints;
-		std::vector<ConstrainedEdge> cEdges;
+		std::unordered_set<uint64_t> noConstraintsPoints;
 		
-		CEInsertIterator ceIt(ctd, cEdges);
+		CEBackInsertIterator ceIt(ctd, ceQueue);
 		
 		for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
 			const Point & p = vt->point();
@@ -745,12 +763,13 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 				continue;
 			}
 			//point changes, save it and add its constrained edges
+			if( ctd.are_there_incident_constraints(vt) ) {
+				ctd.incident_constraints(vt, ceIt);
+			}
+			else {
+				noConstraintsPoints.emplace(IntPoint(p).toU64());
+			}
 			rmPoints.emplace_back(p);
-			ctd.incident_constraints(vt, ceIt);
-		}
-		totalChangedPoints += rmPoints.size();
-		if (isLastRound) {
-			std::cout << "sserialize::Static::Triangulation::prepare: found " << rmPoints.size() << " out of " << ctd.number_of_vertices() << " points that change their position" << std::endl;
 		}
 		//now remove all those bad points
 		for(const Point & p : rmPoints) {
@@ -768,20 +787,10 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 				ctd.remove(v);
 			}
 		}
-		
-		//filter double edges
+		//add points from edges and points without constraints, we first remove all multiple occurences
 		{
-			using std::sort;
-			using std::unique;
-			sort(cEdges.begin(), cEdges.end());
-			auto it = unique(cEdges.begin(), cEdges.end());
-			cEdges.resize(it-cEdges.begin());
-			std::reverse(cEdges.begin(), cEdges.end());
-		}
-		//add points from edges, we first remove all multiple occurences
-		{
-			std::unordered_set<uint64_t> pts;
-			for(const ConstrainedEdge & e : cEdges) {
+			std::unordered_set<uint64_t> pts = std::move(noConstraintsPoints);
+			for(const ConstrainedEdge & e : ceQueue.container()) {
 				pts.emplace(e.p1.toU64());
 				pts.emplace(e.p2.toU64());
 			}
@@ -791,92 +800,100 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 				ipts.emplace_back(IntPoint(x).toPoint());
 			}
 			ctd.insert(ipts.begin(), ipts.end());
-		}
-		uint32_t reAddCount = 0;
-		//readd the removed constraints if possible
-		//we don't want to create new intersection points, so just skip edges that create them
-		if (isLastRound) {
-			std::cout << "sserialize::Static::Triangulation::prepare: trying to re-add " << cEdges.size() << " constraints" << std::endl;
-		}
-		
-		for(const ConstrainedEdge & e : cEdges) {
-			SSERIALIZE_CHEAP_ASSERT(e.valid());
-			Vertex_handle v1(locateVertex(e.p1));
-			Vertex_handle v2(locateVertex(e.p2));
-			if (ctd.is_edge(v1, v2)) {
-				ctd.insert_constraint(v1, v2);
-				if (isLastRound) {
-					++reAddCount;
-				}
-			}
-			else {
-				bool intersects = detail::Triangulation::intersects<TDS>(ctd, v1, v2);
-				if (isLastRound) {
-					if (!intersects) {
-						ctd.insert_constraint(v1, v2);
-						++reAddCount;
-					}
-					else { //lets try to add that edge anyway in case the next snap point is very close
-						int xCount = 0;
-						Edge xEdge;
-						detail::Triangulation::intersects<TDS>(ctd, v1, v2, [&xCount, &xEdge](const Edge & ine) -> bool {
-							if (!xCount) {
-								++xCount;
-								xEdge = ine;
-								return true;
-							}
-							else {
-								xCount = 2;
-								return false;
-							}
-						});
-						if (xCount > 1) {
-							re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
-						}
-						else { //lets try to add this edge
-							Point xP;
-							const Point & pc = xEdge.first->vertex(TDS::ccw(xEdge.second))->point();
-							const Point & pd = xEdge.first->vertex(TDS::cw(xEdge.second))->point();
-							const Point & p1 = v1->point();
-							const Point & p2 = v2->point();
-							Intersection_tag itag = Intersection_tag();
-							CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, itag);
-							//now check how far away that point is form one of our endpoints
-							double dcxP = distanceTo(pc, xP);
-							double ddxP = distanceTo(pd, xP);
-							double dv1xP = distanceTo(p1, xP);
-							double dv2xP = distanceTo(p2, xP);
-							if ((dcxP < 0.05 || ddxP < 0.05) && (dv1xP < 0.05 || dv2xP < 0.05)) { //close enough
-								//now check what point should be snapped to where
-								Point pn1 = (dcxP < ddxP ? pc : pd);
-								Point pn2 = (dv1xP < dv2xP ? p2 : p1);
-								
-								Vertex_handle vn1(locateVertex(pn1));
-								Vertex_handle vn2(locateVertex(pn2));
-								if (detail::Triangulation::intersects<TDS>(ctd, vn1, vn2)) {
-									re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
-								}
-								else {
-									ctd.insert_constraint(vn1, vn2);
-									++reAddCount;
-								}
-							}
-							else { //too far away
-								re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
-							}
-						}
-					}
-				}
-				else {
-					ctd.insert_constraint(v1, v2);
-					hadIntersected = hadIntersected || intersects;
-				}
-			}
-		}
-		if (isLastRound) {
-			std::cout << "sserialize::Static::Triangulation::prepare: re-added " << reAddCount << " out of " << cEdges.size() << " constraints" << std::endl;
+// 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
 		}
 	}
+	
+	uint32_t initialQueueSize = ceQueue.size();
+	uint32_t queueRound = 0;
+	
+	//ceQueue makes sure that long edges come first
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(ceQueue.size(), "Triangulation::prepare: Processing edges");
+	for(; ceQueue.size(); ++queueRound) {
+		pinfo(queueRound, ceQueue.size());
+		ConstrainedEdge e = ceQueue.top();
+		ceQueue.pop();
+		SSERIALIZE_CHEAP_ASSERT(e.valid());
+		Vertex_handle v1(locateVertex(e.p1));
+		Vertex_handle v2(locateVertex(e.p2));
+		if (ctd.is_edge(v1, v2)) {
+			ctd.insert_constraint(v1, v2);
+			continue;
+		}
+		//we have intersections, calculate the intersection points and decide how to snap them
+		bool intersected = false;
+		detail::Triangulation::intersects(ctd, v1, v2, [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue](const Edge & xEdge) -> bool {
+			intersected = true;
+			Point xP;
+			const Point & p1 = v1->point();
+			const Point & p2 = v2->point();
+			const Point & pc = xEdge.first->vertex(TDS::ccw(xEdge.second))->point();
+			const Point & pd = xEdge.first->vertex(TDS::cw(xEdge.second))->point();
+			CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, Intersection_tag());
+
+			SSERIALIZE_CHEAP_ASSERT(!IntPoint::changes(pc));
+			SSERIALIZE_CHEAP_ASSERT(!IntPoint::changes(pd));
+			//maps from distance -> point
+			std::array< std::pair<double, IntPoint>, 4> tmp;
+			tmp[0].second = e.p1;
+			tmp[1].second = e.p2;
+			tmp[2].second = IntPoint(pc);
+			tmp[3].second = IntPoint(pd);
+			tmp[0].first = distanceTo(p1, xP);
+			tmp[1].first = distanceTo(p2, xP);
+			tmp[2].first = distanceTo(pc, xP);
+			tmp[3].first = distanceTo(pd, xP);
+			auto tmpMinIt = std::min_element(tmp.begin(), tmp.end(),
+				[](const std::pair<double, IntPoint> & a, const std::pair<double, IntPoint> & b) {
+					return a.first < b.first;
+				}
+			);
+			
+			IntPoint xIntPoint;
+			bool insertXIntP = false;
+			//now check how far away that point is from one of our endpoints
+			if (tmpMinIt->first < 0.05) { //close enough
+				xIntPoint = tmpMinIt->second;
+			}
+			else {
+				xIntPoint = IntPoint(xP);
+				insertXIntP = true;
+			}
+			const IntPoint & pcInt = tmp[2].second;
+			const IntPoint & pdInt = tmp[3].second;
+
+			//requeue edge and xEdge with their new intersection point
+			//xP and xIntPoint maybe different at this point
+			if (e.p1 != xIntPoint) {
+				ceQueue.emplace(e.p1, xIntPoint);
+			}
+			if (e.p2 != xIntPoint) {
+				ceQueue.emplace(e.p2, xIntPoint);
+			}
+			if (pcInt!= xIntPoint) {
+				ceQueue.emplace(pcInt, xIntPoint);
+			}
+			if (pdInt != xIntPoint) {
+				ceQueue.emplace(pdInt, xIntPoint);
+			}
+			//and remove the constrained on our current edge
+			ctd.remove_constrained_edge(xEdge.first, xEdge.second);
+			if (insertXIntP) {
+				ctd.insert(xIntPoint.toPoint());
+			}
+			//its important to return false here since ctd.remove_constrained_edge
+			//changes the triangulation
+			return false; 
+		});
+		//readd constraint, since function above was not called due to no intersection
+		if (!intersected) {
+			ctd.insert_constraint(v1, v2);
+			continue;
+		}
+	}
+	pinfo.end();
+	std::cout << "Processed " << initialQueueSize << " changed constrained edges in " << queueRound << " rounds" << std::endl;
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
 		std::unordered_set< std::pair<uint32_t, uint32_t> > pts;
@@ -887,7 +904,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pts.size(), ctd.number_of_vertices());
 	}
 	#endif
-	return totalChangedPoints;
+	return 0;
 }
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
