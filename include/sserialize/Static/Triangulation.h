@@ -348,7 +348,7 @@ public:
 
 	///prepare triangulation for serialization (currently contracts faces that are representable)
 	template<typename T_CTD, typename T_REMOVED_EDGES = detail::Triangulation::PrintRemovedEdges>
-	static bool prepare(T_CTD& ctd, T_REMOVED_EDGES re = T_REMOVED_EDGES(), uint32_t maxRounds = 1);
+	static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re = T_REMOVED_EDGES(), uint32_t maxRounds = 1);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
@@ -736,9 +736,9 @@ void Triangulation::intersection_points(T_CTD & ctd, typename T_CTD::Vertex_hand
 ///This will handle points created by intersections of constrained edges
 ///This makes all points representable! Beware that this very likely changes the triangulation (removing faces and adding new ones)
 ///You should therefore snap points before creating the triangulation
-///@return true iff changes were made
+///@return number of changed points
 template<typename T_CTD, typename T_REMOVED_EDGES>
-bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds) {
+uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES /*re*/, uint32_t /*maxRounds*/) {
 	typedef T_CTD TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
@@ -776,7 +776,8 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		double lon2 = CGAL::to_double(p2.y());
 		return std::abs<double>( dc.calc(lat1, lon1, lat2, lon2) );
 	};
-
+	
+	uint32_t numChangedPoints;
 	CEContainer ceQueue;
 	//do the first global step which snaps all points
 	{
@@ -828,6 +829,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 				ipts.emplace_back(IntPoint(x).toPoint());
 			}
 			ctd.insert(ipts.begin(), ipts.end());
+			numChangedPoints = ipts.size();
 // 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
 		}
 	}
@@ -913,6 +915,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 			//and remove the constrained on our current edge
 			ctd.remove_constrained_edge(xEdge.first, xEdge.second);
 			if (insertXIntP) {
+				++numChangedPoints; //TODO: if xIntPOint is already in the tds, then this is wrong
 				ctd.insert(xIntPoint.toPoint());
 			}
 			//its important to return false here since ctd.remove_constrained_edge
@@ -937,7 +940,7 @@ bool Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, uint32_t maxRounds)
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pts.size(), ctd.number_of_vertices());
 	}
 	#endif
-	return 0;
+	return numChangedPoints;
 }
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
