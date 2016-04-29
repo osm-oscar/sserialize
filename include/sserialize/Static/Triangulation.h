@@ -123,7 +123,7 @@ struct ConstrainedEdge {
 	bool operator==(const ConstrainedEdge & other) const {
 		return p1 == other.p1 && p2 == other.p2;
 	}
-	//this will prefer long edges over short edges during re-adding (note the std:reverse later)
+	//this way we get a max heap for the prio queue in prepare
 	bool operator<(const ConstrainedEdge & other) const {
 		if (length == other.length) {
 			return (p1 == other.p1 ? p2 < other.p2 : p1 < other.p1);
@@ -347,8 +347,9 @@ public:
 	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
 
 	///prepare triangulation for serialization (currently contracts faces that are representable)
+	///@param minEdgeLength the minimal length an edge has to have in order to be processed
 	template<typename T_CTD, typename T_REMOVED_EDGES = detail::Triangulation::PrintRemovedEdges>
-	static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re = T_REMOVED_EDGES(), uint32_t maxRounds = 1);
+	static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re = T_REMOVED_EDGES(), double minEdgeLength = 0.0);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
@@ -738,7 +739,7 @@ void Triangulation::intersection_points(T_CTD & ctd, typename T_CTD::Vertex_hand
 ///You should therefore snap points before creating the triangulation
 ///@return number of changed points
 template<typename T_CTD, typename T_REMOVED_EDGES>
-uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES /*re*/, uint32_t /*maxRounds*/) {
+uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
 	typedef T_CTD TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
@@ -841,7 +842,7 @@ uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES /*re*/, uint32_t /*
 	//ceQueue makes sure that long edges come first
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(targetQueueRounds, "Triangulation::prepare: Processing edges");
-	for(; ceQueue.size(); ++queueRound) {
+	for(; ceQueue.size() && ceQueue.top().length > minEdgeLength; ++queueRound) {
 		pinfo(queueRound, targetQueueRounds);
 		ConstrainedEdge e = ceQueue.top();
 		ceQueue.pop();
@@ -915,7 +916,7 @@ uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES /*re*/, uint32_t /*
 			//and remove the constrained on our current edge
 			ctd.remove_constrained_edge(xEdge.first, xEdge.second);
 			if (insertXIntP) {
-				++numChangedPoints; //TODO: if xIntPOint is already in the tds, then this is wrong
+				++numChangedPoints; //TODO: if xIntPoint is already in the tds, then this is wrong
 				ctd.insert(xIntPoint.toPoint());
 			}
 			//its important to return false here since ctd.remove_constrained_edge
@@ -930,6 +931,9 @@ uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES /*re*/, uint32_t /*
 	}
 	pinfo.end();
 	std::cout << "Processed " << initialQueueSize << " changed constrained edges in " << queueRound << " rounds" << std::endl;
+	for(const ConstrainedEdge & e : ceQueue.container()) {
+		re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+	}
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
 		std::unordered_set< std::pair<uint32_t, uint32_t> > pts;
