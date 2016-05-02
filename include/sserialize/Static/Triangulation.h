@@ -951,6 +951,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	typedef typename TDS::Finite_faces_iterator Finite_faces_iterator;
 	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
 	typedef typename TDS::Face_circulator Face_circulator;
+	typedef typename TDS::Point Point;
 	
 	faceToFaceId.clear();
 	vertexToVertexId.clear();
@@ -967,10 +968,6 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	//we would need to snap the vertices accordingly, unfortunately this not easy
 	//as a remedy, mark faces that are degenerate
 	//Alternative?: remove vertices that change their precision in such a way that they snap on to another vertex
-	
-	
-	auto toIntLat = [](double v) { return sserialize::spatial::GeoPoint::toIntLat(v); };
-	auto toIntLon = [](double v) { return sserialize::spatial::GeoPoint::toIntLon(v); };
 	
 	for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 		faceToFaceId[fh] = faceId;
@@ -1084,11 +1081,8 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 				if (p0 == p1 || p0 == p2 || p1 == p2) { //this should not happen
 					throw sserialize::CreationException("Triangulation has degenerate face in source triangulation");
 				}
-				using CGAL::to_double;
-				if ((toIntLat(to_double(p0.x())) == toIntLat(to_double(p1.x())) && toIntLon(to_double(p0.y())) == toIntLon(to_double(p1.y()))) ||
-					(toIntLat(to_double(p0.x())) == toIntLat(to_double(p2.x())) && toIntLon(to_double(p0.y())) == toIntLon(to_double(p2.y()))) ||
-					(toIntLat(to_double(p1.x())) == toIntLat(to_double(p2.x())) && toIntLon(to_double(p1.y())) == toIntLon(to_double(p2.y()))))
-				{
+				detail::Triangulation::IntPoint<Point> ip0(p0), ip1(p1), ip2(p2);
+				if (ip0 == ip1 || ip0 == ip2 || ip1 == ip2) {
 					throw sserialize::CreationException("Triangulation has degenerate face after serialization");
 					fa.set(faceId, Triangulation::Face::FI_IS_DEGENERATE, 1);
 					++degenerateFaceCount;
