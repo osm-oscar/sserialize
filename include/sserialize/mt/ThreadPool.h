@@ -38,6 +38,7 @@ public:
 		return sheduleTask(tmp);
 	}
 	
+	///execute task t with threadCount thread by spawning new threads
 	static void execute(QueuedTaskFunction t, uint32_t threadCount = 0);
 };
 
