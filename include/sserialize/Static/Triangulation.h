@@ -935,13 +935,8 @@ uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeL
 		re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
 	}
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	{
-		std::unordered_set< std::pair<uint32_t, uint32_t> > pts;
-		for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-			IntPoint p(vt->point());
-			pts.emplace(p.lat, p.lon);
-		}
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(pts.size(), ctd.number_of_vertices());
+	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+		SSERIALIZE_EXPENSIVE_ASSERT(!IntPoint::changes(vt->point()));
 	}
 	#endif
 	return numChangedPoints;
