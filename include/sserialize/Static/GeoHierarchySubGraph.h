@@ -1,5 +1,5 @@
-#ifndef SSERIALIZE_GEO_HIERARCHY_SUB_SET_CREATOR_H
-#define SSERIALIZE_GEO_HIERARCHY_SUB_SET_CREATOR_H
+#ifndef SSERIALIZE_GEO_HIERARCHY_SUB_GRAPH_H
+#define SSERIALIZE_GEO_HIERARCHY_SUB_GRAPH_H
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/utility/assert.h>
 
@@ -11,29 +11,49 @@ namespace sserialize {
 namespace spatial {
 namespace interface {
 
-class GeoHierarchySubSetCreator: public RefCountObject {
+class GeoHierarchySubGraph: public RefCountObject {
 public:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
 public:
-	GeoHierarchySubSetCreator() {}
-	virtual ~GeoHierarchySubSetCreator() {}
+	GeoHierarchySubGraph() {}
+	virtual ~GeoHierarchySubGraph() {}
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const = 0;
+	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const = 0;
 };
 
 }//end namespace interface
 
 namespace detail {
 
-class PassThroughGeoHierarchySubSetCreator: public interface::GeoHierarchySubSetCreator {
+class PassThroughGeoHierarchySubGraph: public interface::GeoHierarchySubGraph {
 public:
-	PassThroughGeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh);
-	virtual ~PassThroughGeoHierarchySubSetCreator();
+	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
+	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
+public:
+	PassThroughGeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	virtual ~PassThroughGeoHierarchySubGraph();
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
+	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
+	sserialize::Static::ItemIndexStore m_idxStore;
 };
 
-class GeoHierarchySubSetCreator: public interface::GeoHierarchySubSetCreator {
+class GeoHierarchySubGraph: public interface::GeoHierarchySubGraph {
+public:
+	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
+	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
+public:
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
+public:
+	GeoHierarchySubGraph();
+	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
+	template<typename TFilter>
+	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter);
+	virtual ~GeoHierarchySubGraph();
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
+	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
 private:
 	typedef std::vector<uint32_t> PointerContainer;
 	
@@ -60,16 +80,9 @@ private:
 		std::vector<uint32_t> regionParentsPtrs;
 		std::vector<RegionDesc> regionDesc;
 		void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
-		GeoHierarchySubSetCreator::PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
-		GeoHierarchySubSetCreator::PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
+		GeoHierarchySubGraph::PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
+		GeoHierarchySubGraph::PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
 	};
-public:
-	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
-private:
-	std::vector<uint32_t> m_cellParentsPtrs;
-	std::vector<uint32_t> m_regionParentsPtrs;
-	std::vector<RegionDesc> m_regionDesc;
-	std::vector<CellDesc> m_cellDesc;
 private:
 	template<bool SPARSE>
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
@@ -78,18 +91,45 @@ private://used during construction
 	void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
 	PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
 	PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
-public:
-	GeoHierarchySubSetCreator();
-	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh);
-	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
-	template<typename TFilter>
-	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter);
-	virtual ~GeoHierarchySubSetCreator();
-	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
+private:
+	std::vector<uint32_t> m_cellParentsPtrs;
+	std::vector<uint32_t> m_regionParentsPtrs;
+	std::vector<RegionDesc> m_regionDesc;
+	std::vector<CellDesc> m_cellDesc;
+	std::vector<sserialize::ItemIndex> m_rec;
 };
 
+}//end namespace detail
+
+class GeoHierarchySubGraph final {
+public:
+	enum Type {T_PASS_THROUGH, T_IN_MEMORY};
+	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
+	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
+private:
+	RCPtrWrapper<interface::GeoHierarchySubGraph> m_ghs;
+public:
+	GeoHierarchySubGraph();
+	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
+	template<typename TFilter>
+	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter);
+	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, Type t = T_IN_MEMORY);
+	~GeoHierarchySubGraph();
+	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
+	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
+};
+
+}}//end namespace
+
+//template definitions
+
+namespace sserialize {
+namespace spatial {
+namespace detail {
+
 template<typename TFilter>
-GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter)
+GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter)
 {
 	if (!gh.regionSize()) {
 		return;
@@ -249,11 +289,27 @@ GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::s
 	m_regionParentsPtrs.shrink_to_fit();
 	m_regionDesc.shrink_to_fit();
 	m_cellDesc.shrink_to_fit();
+	
+	//now calculate the region exclusive cells
+	m_rec.resize(m_regionDesc.size()-1);
+	for(uint32_t regionId(0), s(m_rec.size()); regionId < s; ++regionId) {
+		if (filter(regionId)) {
+			m_rec[regionId] = idxStore.at(gh.regionCellIdxPtr(regionId));
+		}
+	}
+	for(uint32_t regionId(0), s(m_rec.size()); regionId < s; ++regionId) {
+		if (!filter(regionId)) {
+			continue;
+		}
+		for(auto pit(parentsBegin(regionId)), pend(parentsEnd(regionId)); pit < pend; ++pit) {
+			m_rec[*pit] -= m_rec[regionId];
+		}
+	}
 }
 
 template<bool SPARSE>
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
-GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
+GeoHierarchySubGraph::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
 	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos, 0);
 
 	const uint32_t * cPPtrsBegin = &(m_cellParentsPtrs[0]);
@@ -328,24 +384,11 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, SubSet::Nod
 
 }//end namespace detail
 
-class GeoHierarchySubSetCreator final {
-public:
-	enum Type {T_PASS_THROUGH, T_IN_MEMORY};
-private:
-	RCPtrWrapper<interface::GeoHierarchySubSetCreator> m_ghs;
-public:
-	GeoHierarchySubSetCreator();
-	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
-	template<typename TFilter>
-	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, TFilter filter) :
-	m_ghs(new detail::GeoHierarchySubSetCreator(gh, filter))
-	{}
-	GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, Type t = T_IN_MEMORY);
-	~GeoHierarchySubSetCreator();
-	sserialize::Static::spatial::GeoHierarchy::SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
-};
+template<typename TFilter>
+GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter) :
+m_ghs(new detail::GeoHierarchySubGraph(gh, idxStore, filter))
+{}
 
-
-}}//end namespace
+}} //end namespace sserialize::spatial
 
 #endif

@@ -1,24 +1,31 @@
-#include <sserialize/Static/GeoHierarchySubSetCreator.h>
+#include <sserialize/Static/GeoHierarchySubGraph.h>
 
 namespace sserialize {
 namespace spatial {
 namespace detail {
 
-PassThroughGeoHierarchySubSetCreator::PassThroughGeoHierarchySubSetCreator(const Static::spatial::GeoHierarchy& gh) :
-m_gh(gh)
+PassThroughGeoHierarchySubGraph::PassThroughGeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+m_gh(gh),
+m_idxStore(idxStore)
 {}
 
-PassThroughGeoHierarchySubSetCreator::~PassThroughGeoHierarchySubSetCreator() {}
+PassThroughGeoHierarchySubGraph::~PassThroughGeoHierarchySubGraph() {}
 
-interface::GeoHierarchySubSetCreator::SubSet PassThroughGeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
+interface::GeoHierarchySubGraph::SubSet
+PassThroughGeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
 	return m_gh.subSet(cqr, sparse);
 }
 
-GeoHierarchySubSetCreator::TempRegionInfos::TempRegionInfos(const sserialize::Static::spatial::GeoHierarchy & gh) :
+sserialize::ItemIndex
+PassThroughGeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
+	return m_idxStore.at(m_gh.regionExclusiveCellIdxPtr(regionId));
+}
+
+GeoHierarchySubGraph::TempRegionInfos::TempRegionInfos(const sserialize::Static::spatial::GeoHierarchy & gh) :
 regionDesc(gh.regionSize())
 {}
 
-void GeoHierarchySubSetCreator::TempRegionInfos::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
+void GeoHierarchySubGraph::TempRegionInfos::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
 	SSERIALIZE_CHEAP_ASSERT(regionDesc.at(rid).valid());
 	
 	SSERIALIZE_CHEAP_ASSERT(rid < regionDesc.size());
@@ -28,30 +35,30 @@ void GeoHierarchySubSetCreator::TempRegionInfos::getAncestors(uint32_t rid, std:
 	}
 }
 
-GeoHierarchySubSetCreator::PointerContainer::const_iterator 
-GeoHierarchySubSetCreator::TempRegionInfos::parentsBegin(uint32_t rid) const {	
+GeoHierarchySubGraph::PointerContainer::const_iterator 
+GeoHierarchySubGraph::TempRegionInfos::parentsBegin(uint32_t rid) const {	
 	uint32_t parentsBegin = regionDesc.at(rid).parentsBegin;
 	SSERIALIZE_CHEAP_ASSERT(parentsBegin <= regionParentsPtrs.size());
 	return regionParentsPtrs.begin()+parentsBegin;
 }
 
-GeoHierarchySubSetCreator::PointerContainer::const_iterator
-GeoHierarchySubSetCreator::TempRegionInfos::parentsEnd(uint32_t rid) const {
+GeoHierarchySubGraph::PointerContainer::const_iterator
+GeoHierarchySubGraph::TempRegionInfos::parentsEnd(uint32_t rid) const {
 	uint32_t parentsEnd = (rid == 0 ? regionParentsPtrs.size() : regionDesc.at(rid-1).parentsBegin);
 	SSERIALIZE_CHEAP_ASSERT(parentsEnd <= regionParentsPtrs.size());
 	return regionParentsPtrs.begin()+parentsEnd;
 }
 
-GeoHierarchySubSetCreator::GeoHierarchySubSetCreator() {}
+GeoHierarchySubGraph::GeoHierarchySubGraph() {}
 
-GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh) :
-GeoHierarchySubSetCreator(gh, [](uint32_t) { return true; })
+GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+GeoHierarchySubGraph(gh, idxStore, [](uint32_t) { return true; })
 {}
 
-GeoHierarchySubSetCreator::~GeoHierarchySubSetCreator() {}
+GeoHierarchySubGraph::~GeoHierarchySubGraph() {}
 
 sserialize::Static::spatial::GeoHierarchy::SubSet
-GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
+GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > m_cellDesc.size()*0.5 || sparse) {
 		std::vector<SubSet::Node*> nodes(m_regionDesc.size()+1, 0);
@@ -69,8 +76,16 @@ GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult& cqr, bool s
 	return SubSet(rootNode, cqr, sparse);
 }
 
+sserialize::ItemIndex
+GeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
+	if (regionId < m_rec.size()) {
+		return m_rec.at(regionId);
+	}
+	return sserialize::ItemIndex();
+}
+
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
-GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const {
+GeoHierarchySubGraph::createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const {
 	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos, 0);
 
 	const uint32_t * cPPtrsBegin = &(m_cellParentsPtrs[0]);
@@ -119,7 +134,7 @@ GeoHierarchySubSetCreator::createSubSet(const CellQueryResult & cqr, std::unorde
 	return rootNode;
 }
 
-void GeoHierarchySubSetCreator::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
+void GeoHierarchySubGraph::getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest) {
 	SSERIALIZE_CHEAP_ASSERT(rid < m_regionDesc.size());
 	for(PointerContainer::const_iterator it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
 		getAncestors(*it, dest);
@@ -127,15 +142,15 @@ void GeoHierarchySubSetCreator::getAncestors(uint32_t rid, std::unordered_set<ui
 	}
 }
 
-GeoHierarchySubSetCreator::PointerContainer::const_iterator 
-GeoHierarchySubSetCreator::parentsBegin(uint32_t rid) const {	
+GeoHierarchySubGraph::PointerContainer::const_iterator 
+GeoHierarchySubGraph::parentsBegin(uint32_t rid) const {	
 	uint32_t parentsBegin = m_regionDesc.at(rid).parentsBegin;
 	SSERIALIZE_CHEAP_ASSERT(parentsBegin <= m_regionParentsPtrs.size());
 	return m_regionParentsPtrs.begin()+parentsBegin;
 }
 
-GeoHierarchySubSetCreator::PointerContainer::const_iterator
-GeoHierarchySubSetCreator::parentsEnd(uint32_t rid) const {
+GeoHierarchySubGraph::PointerContainer::const_iterator
+GeoHierarchySubGraph::parentsEnd(uint32_t rid) const {
 	uint32_t parentsEnd = (rid+1 == m_regionDesc.size() ? m_regionParentsPtrs.size() : m_regionDesc.at(rid+1).parentsBegin);
 	SSERIALIZE_CHEAP_ASSERT(parentsEnd <= m_regionParentsPtrs.size());
 	return m_regionParentsPtrs.begin()+parentsEnd;
@@ -145,25 +160,31 @@ GeoHierarchySubSetCreator::parentsEnd(uint32_t rid) const {
 
 }//end namespace detail
 
-GeoHierarchySubSetCreator::GeoHierarchySubSetCreator() {}
+GeoHierarchySubGraph::GeoHierarchySubGraph() {}
 
-GeoHierarchySubSetCreator::GeoHierarchySubSetCreator(const sserialize::Static::spatial::GeoHierarchy & gh, Type t) {
+GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, Type t) {
 	switch(t) {
 	case T_IN_MEMORY:
-		m_ghs.reset(new detail::GeoHierarchySubSetCreator(gh) );
+		m_ghs.reset(new detail::GeoHierarchySubGraph(gh, idxStore) );
 		break;
 	case T_PASS_THROUGH:
-		m_ghs.reset(new detail::PassThroughGeoHierarchySubSetCreator(gh) );
+		m_ghs.reset(new detail::PassThroughGeoHierarchySubGraph(gh, idxStore) );
 		break;
 	default:
-		throw sserialize::TypeMissMatchException("GeoHierarchySubSetCreator");
+		throw sserialize::TypeMissMatchException("GeoHierarchySubGraph");
 		break;
 	};
 }
-GeoHierarchySubSetCreator::~GeoHierarchySubSetCreator() {}
 
-sserialize::Static::spatial::GeoHierarchy::SubSet GeoHierarchySubSetCreator::subSet(const sserialize::CellQueryResult & cqr, bool sparse) const {
+GeoHierarchySubGraph::~GeoHierarchySubGraph() {}
+
+sserialize::Static::spatial::GeoHierarchy::SubSet
+GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult & cqr, bool sparse) const {
 	return m_ghs->subSet(cqr, sparse);
+}
+
+sserialize::ItemIndex GeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
+	return m_ghs->regionExclusiveCells(regionId);
 }
 
 }}//end namespace sserialize::spatial

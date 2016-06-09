@@ -84,7 +84,7 @@ src/Static/UnicodeTrie/detail/SimpleNode.cpp
 src/Static/UnicodeTrie/detail/Node.cpp
 src/Static/UnicodeTrie/detail/EmptyNode.cpp
 src/Static/UnicodeTrie/FlatTrie.cpp
-src/Static/GeoHierarchySubSetCreator.cpp
+src/Static/GeoHierarchySubGraph.cpp
 src/Static/Triangulation.cpp
 src/Static/TriangulationGridLocator.cpp
 src/Static/TriangulationRegionArrangement.cpp
