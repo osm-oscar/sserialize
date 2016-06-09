@@ -195,6 +195,26 @@ ItemIndex ItemIndex::operator^(const ItemIndex& idx) const {
 	return ItemIndex::symmetricDifference(*this, idx);
 }
 
+ItemIndex & ItemIndex::operator+=(const ItemIndex& idx) {
+	*this = ItemIndex::unite(*this, idx);
+	return *this;
+}
+
+ItemIndex & ItemIndex::operator/=(const ItemIndex& idx) {
+	*this = ItemIndex::intersect(*this, idx);
+	return *this;
+}
+
+ItemIndex & ItemIndex::operator-=(const ItemIndex& idx) {
+	*this = ItemIndex::difference(*this, idx);
+	return *this;
+}
+
+ItemIndex & ItemIndex::operator^=(const ItemIndex& idx) {
+	*this = ItemIndex::symmetricDifference(*this, idx);
+	return *this;
+}
+
 std::set<uint32_t> ItemIndex::toSet() const {
 	std::set<uint32_t> s;
 	uint32_t msize = size();

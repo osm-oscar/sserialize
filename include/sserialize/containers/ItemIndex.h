@@ -95,6 +95,11 @@ public:
 	ItemIndex operator-(const ItemIndex & idx) const;
 	ItemIndex operator^(const ItemIndex & idx) const;
 	
+	ItemIndex & operator+=(const ItemIndex & idx);
+	ItemIndex & operator/=(const ItemIndex & idx);
+	ItemIndex & operator-=(const ItemIndex & idx);
+	ItemIndex & operator^=(const ItemIndex & idx);
+	
 	std::set<uint32_t> toSet() const;
 	template<typename T_BACK_INSERTER>
 	void insertInto(T_BACK_INSERTER inserter) {
