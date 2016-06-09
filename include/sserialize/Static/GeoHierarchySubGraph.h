@@ -114,7 +114,7 @@ public:
 	///@param filter a functor: operator()(uint32_t regionId) -> bool defining regions relevant for subsets
 	template<typename TFilter>
 	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter);
-	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, Type t = T_IN_MEMORY);
+	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, Type t);
 	~GeoHierarchySubGraph();
 	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
 	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
