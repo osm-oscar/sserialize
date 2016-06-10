@@ -293,18 +293,22 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 	m_cellDesc.shrink_to_fit();
 	
 	//now calculate the region exclusive cells
-	m_rec.resize(m_regionDesc.size()-1);
-	for(uint32_t regionId(0), s(m_rec.size()); regionId < s; ++regionId) {
+	m_rec.resize(m_regionDesc.size());
+	for(uint32_t regionId(0), s(gh.regionSize()); regionId < s; ++regionId) {
 		if (filter(regionId)) {
 			m_rec[regionId] = idxStore.at(gh.regionCellIdxPtr(regionId));
 		}
 	}
-	for(uint32_t regionId(0), s(m_rec.size()); regionId < s; ++regionId) {
+	
+	for(uint32_t regionId(0), s(gh.regionSize()); regionId < s; ++regionId) {
 		if (!filter(regionId)) {
 			continue;
 		}
+		auto myIdx = idxStore.at(gh.regionCellIdxPtr(regionId));
 		for(auto pit(parentsBegin(regionId)), pend(parentsEnd(regionId)); pit < pend; ++pit) {
-			m_rec[*pit] -= m_rec[regionId];
+			if (filter(*pit)) {
+				m_rec[*pit] -= myIdx;
+			}
 		}
 	}
 }
