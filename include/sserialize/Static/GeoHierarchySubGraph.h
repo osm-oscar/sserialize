@@ -91,6 +91,8 @@ private://used during construction
 	void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
 	PointerContainer::const_iterator parentsBegin(uint32_t rid) const;
 	PointerContainer::const_iterator parentsEnd(uint32_t rid) const;
+private: //debug
+	void dumpParents(uint32_t rid) const;
 private:
 	std::vector<uint32_t> m_cellParentsPtrs;
 	std::vector<uint32_t> m_regionParentsPtrs;

@@ -143,7 +143,7 @@ void GeoHierarchySubGraph::getAncestors(uint32_t rid, std::unordered_set<uint32_
 }
 
 GeoHierarchySubGraph::PointerContainer::const_iterator 
-GeoHierarchySubGraph::parentsBegin(uint32_t rid) const {	
+GeoHierarchySubGraph::parentsBegin(uint32_t rid) const {
 	uint32_t parentsBegin = m_regionDesc.at(rid).parentsBegin;
 	SSERIALIZE_CHEAP_ASSERT(parentsBegin <= m_regionParentsPtrs.size());
 	return m_regionParentsPtrs.begin()+parentsBegin;
@@ -156,7 +156,13 @@ GeoHierarchySubGraph::parentsEnd(uint32_t rid) const {
 	return m_regionParentsPtrs.begin()+parentsEnd;
 }
 
-
+void GeoHierarchySubGraph::dumpParents(uint32_t rid) const {
+	std::cout << "Parents of region with ghId=" << rid << ":";
+	for(auto it(parentsBegin(rid)), end(parentsEnd(rid)); it != end; ++it) {
+		std::cout << *it << ", ";
+	}
+	std::cout << std::endl;
+}
 
 }//end namespace detail
 
