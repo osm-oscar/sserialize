@@ -229,7 +229,7 @@ public:
 	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType dataSize, const sserialize::UByteArrayAdapter & d) :
 	m_size((uint32_t)(dataSize/sserialize::SerializationInfo<TValue>::length))
 	{
-		SSERIALIZE_CHEAP_ASSERT((sserialize::UByteArrayAdapter::OffsetType)m_size*sserialize::SerializationInfo<TValue>::length == dataSize);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)m_size*sserialize::SerializationInfo<TValue>::length, dataSize);
 		if (!std::is_integral<TValue>::value) {
 			if (d.getVlPackedUint32(0) != sserialize::SerializationInfo<TValue>::length) {
 				throw sserialize::CorruptDataException("sserialize::Static::Array: sizeof(value_type) - WANT=" +
