@@ -643,7 +643,7 @@ bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, cons
 	}
 	
 	if (r.boundary != sr.boundary()) {
-		std::cout << "Boundary of region " << i << " differs" << std::endl;
+		std::cout << "Boundary of region " << i << " differs: SHOULD" << r.boundary << "; IS=" << sr.boundary() << std::endl;
 		ok = false;
 	}
 	
