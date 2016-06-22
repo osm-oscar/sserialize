@@ -10,6 +10,7 @@
 #include <sserialize/containers/AbstractArray.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/assert.h>
+#include <sserialize/utility/VersionChecker.h>
 #include <fstream>
 #include <functional>
 #define SSERIALIZE_STATIC_ARRAY_VERSION 4
@@ -391,7 +392,14 @@ Array<TValue>::Array() : RefCountObject() {}
 template<typename TValue>
 Array<TValue>::Array(const UByteArrayAdapter & data) :
 RefCountObject(),
-m_data(UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1))),
+m_data(
+	sserialize::VersionChecker::check(
+		UByteArrayAdapter(data, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), data.getOffset(1)),
+		SSERIALIZE_STATIC_ARRAY_VERSION, 
+		data.at(0),
+		"Static::Array"
+	)
+),
 m_index(m_data.size(), data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength() + m_data.size()))
 {
 SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ARRAY_VERSION, data.at(0), "Static::Array");
