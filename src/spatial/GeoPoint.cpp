@@ -167,11 +167,11 @@ double GeoPoint::toDoubleLat(uint32_t lat) {
 
 uint32_t GeoPoint::toIntLon(double lon) {
 	SSERIALIZE_CHEAP_ASSERT(lon >= -180.0 && lon <= 180.0);
-	return ::floor((lon+180.0) * (1 << 24));
+	return ::floor((lon+180.0) * (1 << 23));
 }
 
 double GeoPoint::toDoubleLon(uint32_t lon) {
-	return (static_cast<double>(lon) / (1 << 24)) - 180.0;
+	return (static_cast<double>(lon) / (1 << 23)) - 180.0;
 }
 
 GeoPoint GeoPoint::fromIntLatLon(uint32_t lat, uint32_t lon) { return GeoPoint(lat, lon); }
