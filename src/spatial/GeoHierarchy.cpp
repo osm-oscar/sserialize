@@ -565,7 +565,8 @@ UByteArrayAdapter GeoHierarchy::append(sserialize::UByteArrayAdapter& dest, sser
 	{
 		sserialize::Static::ArrayCreator<sserialize::spatial::GeoRect> bCreator(dest);
 		for(uint32_t i = 0, s = m_cells.size(); i < s; ++i) {
-			bCreator.put(m_cells.at(i).boundary());
+			const auto & cb = m_cells.at(i).boundary();
+			bCreator.put(cb);
 		}
 		bCreator.flush();
 	}
@@ -643,7 +644,7 @@ bool GeoHierarchy::regionEqTest(uint32_t i, const GeoHierarchy::Region & r, cons
 	}
 	
 	if (r.boundary != sr.boundary()) {
-		std::cout << "Boundary of region " << i << " differs: SHOULD" << r.boundary << "; IS=" << sr.boundary() << std::endl;
+		std::cout << "Boundary of region " << i << " differs: SHOULD=" << r.boundary << "; IS=" << sr.boundary() << std::endl;
 		ok = false;
 	}
 	
@@ -700,7 +701,7 @@ bool GeoHierarchy::testEquality(const sserialize::Static::spatial::GeoHierarchy&
 			ok = false;
 		}
 		if (c.boundary() != sc.boundary()) {
-			std::cout << "Boundary of cell " << i << " differs" << std::endl;
+			std::cout << "Boundary of cell " << i << " differs. SHOULD=" << c.boundary() << ";IS=" << sc.boundary() << std::endl;
 			ok = false;
 		}
 
