@@ -37,32 +37,6 @@ void ItemIndex::createPrivate(const UByteArrayAdapter & index, const ItemIndex::
 	}
 }
 
-void ItemIndex::createPrivate(const UByteArrayAdapter& index, const ItemIndex& realIdIndex, const ItemIndex::Types type) {
-	switch (type) {
-		case(ItemIndex::T_SIMPLE):
-			setPrivate( new ItemIndexPrivateSimpleIndirect(index, realIdIndex) );
-			break;
-		case(ItemIndex::T_REGLINE):
-			setPrivate( new ItemIndexPrivateRegLineIndirect(index, realIdIndex) );
-			break;
-		case(ItemIndex::T_WAH):
-			setPrivate( new ItemIndexPrivateWAHIndirect(index, realIdIndex) );
-			break;
-		case(ItemIndex::T_DE):
-			setPrivate( new ItemIndexPrivateDEIndirect(index, realIdIndex) );
-			break;
-		case(ItemIndex::T_RLE_DE):
-			setPrivate( new ItemIndexPrivateRleDEIndirect(index, realIdIndex) );
-			break;
-		case (ItemIndex::T_NATIVE):
-			setPrivate( new detail::ItemIndexPrivate::ItemIndexPrivateNativeIndirect(index, realIdIndex) );
-			break;
-		default:
-			setPrivate( new ItemIndexPrivateEmpty() );
-			break;
-	}
-}
-
 ItemIndex ItemIndex::intersectWithTree(uint32_t start, uint32_t end, const std::vector<ItemIndex> & set) {
 	if (start == end)
 		return set.at(start);
@@ -93,19 +67,6 @@ ItemIndex::ItemIndex(std::vector<uint32_t> && index) {
 	sserialize::ItemIndexPrivateStlVector * myPriv = new sserialize::ItemIndexPrivateStlVector(std::move(index));
 	MyBaseClass::setPrivate(myPriv);
 }
-
-ItemIndex::ItemIndex(const UByteArrayAdapter& index, const ItemIndex& realIdIndex, Types type) : RCWrapper< sserialize::ItemIndexPrivate >(0) {
-	createPrivate(index, realIdIndex, type);
-}
-
-ItemIndex::ItemIndex(const std::deque< uint32_t >& index, const ItemIndex& realIdIndex) :
-	RCWrapper< sserialize::ItemIndexPrivate >(new ItemIndexPrivateStlDequeIndirect(index, realIdIndex) )
-{}
-
-ItemIndex::ItemIndex(const std::vector< uint32_t >& index, const ItemIndex& realIdIndex) :
-	RCWrapper< sserialize::ItemIndexPrivate >(new ItemIndexPrivateStlVectorIndirect(index, realIdIndex) )
-{}
-
 
 ItemIndex::~ItemIndex() {}
 
@@ -357,23 +318,11 @@ ItemIndex ItemIndex::symmetricDifference(const ItemIndex & a, const ItemIndex & 
 		return ItemIndex( a.priv()->symmetricDifference( b.priv() ) );
 }
 
-
-ItemIndex ItemIndex::fromIndexHierachy(const std::deque< uint32_t >& offsets, const UByteArrayAdapter & indexFile, Types type) {
-	if (offsets.size() == 0) return ItemIndex();
-	ItemIndex idx(indexFile+offsets.at(0), type);
-	for(size_t i = 1; i < offsets.size(); i++) {
-		idx = ItemIndex(indexFile+offsets.at(i), idx, type);
-	}
-	return idx;
-}
-
-
 ItemIndex ItemIndex::fromFile(const std::string & fileName, bool deleteOnClose){
 	MmappedFile tempIndexFile = MmappedFile(fileName); //re-open read-only
 	tempIndexFile.setDeleteOnClose(deleteOnClose);
 	return ItemIndex(UByteArrayAdapter(tempIndexFile));
 }
-
 
 ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 	if (!bitSet.data().size())

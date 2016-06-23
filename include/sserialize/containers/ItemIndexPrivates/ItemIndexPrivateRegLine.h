@@ -218,7 +218,6 @@ public:
 	static void addFixedSizeHeaderRegLine(uint32_t idsInSet, uint8_t storageBits, uint32_t lowestId, const CompactUintArray & carray, UByteArrayAdapter & adap);
 };
 
-typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateRegLine> ItemIndexPrivateRegLineIndirect;
 
 }//end namespace
 

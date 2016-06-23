@@ -36,8 +36,6 @@ public:
 	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const = 0;
 	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const = 0;
 	virtual ItemIndex at(uint32_t pos) const = 0;
-	virtual ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const = 0;
-	virtual ItemIndex hierachy(const std::deque< uint32_t >& offsets) const = 0;
 	virtual uint32_t idxSize(uint32_t pos) const = 0;
 	virtual std::ostream& printStats(std::ostream& out) const = 0;
 	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const = 0;
@@ -108,8 +106,6 @@ public:
 	inline UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const { return priv()->dataSize(pos); }
 	inline UByteArrayAdapter rawDataAt(uint32_t pos) const { return priv()->rawDataAt(pos); }
 	inline ItemIndex at(uint32_t pos) const { return priv()->at(pos);}
-	inline ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const { return priv()->at(pos, realIdIndex);}
-	inline ItemIndex hierachy(const std::deque< uint32_t >& offsets) const { return priv()->hierachy(offsets); }
 	inline uint32_t idxSize(uint32_t pos) const { return priv()->idxSize(pos); }
 	inline std::ostream& printStats(std::ostream& out) const { return priv()->printStats(out); }
 	inline std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const { return priv()->printStats(out, indexIds);}
@@ -155,8 +151,6 @@ public:
 	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const override;
 	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const override;
 	virtual ItemIndex at(uint32_t pos) const override;
-	virtual ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const override;
-	virtual ItemIndex hierachy(const std::deque< uint32_t >& offsets) const override;
 	virtual inline uint32_t idxSize(uint32_t pos) const override { return m_idxSizes.at(pos); }
 	virtual std::ostream& printStats(std::ostream& out) const override;
 	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const override;

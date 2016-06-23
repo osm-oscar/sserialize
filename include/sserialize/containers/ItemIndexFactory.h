@@ -194,8 +194,6 @@ public:
 	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const override;
 	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const override;
 	virtual ItemIndex at(uint32_t pos) const override;
-	virtual ItemIndex at(uint32_t pos, const ItemIndex & realIdIndex) const override;
-	virtual ItemIndex hierachy(const std::deque< uint32_t >& offsets) const override;
 	virtual uint32_t idxSize(uint32_t pos) const override;
 	virtual std::ostream& printStats(std::ostream& out) const override;
 	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const override;

@@ -361,7 +361,5 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	return new ItemIndexPrivateRleDE(dest);
 }
 
-typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateRleDE> ItemIndexPrivateRleDEIndirect;
-
 }//end namespace
 #endif

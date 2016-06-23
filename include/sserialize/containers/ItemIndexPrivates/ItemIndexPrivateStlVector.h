@@ -37,8 +37,6 @@ public:
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 };
 
-typedef ItemIndexPrivateIndirectWrapper<std::vector<uint32_t>, ItemIndexPrivateStlVector> ItemIndexPrivateStlVectorIndirect;
-
 }//end namespace
 
 #endif

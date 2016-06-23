@@ -189,7 +189,5 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateDE::genericOp(const sserialize::It
 }
 
 
-typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateDE> ItemIndexPrivateDEIndirect;
-
 }//end namespace
 #endif

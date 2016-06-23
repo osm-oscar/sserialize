@@ -309,50 +309,6 @@ ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNo
 	return ItemIndex();
 }
 
-ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType qtype, const ItemIndex& indirectIndexParent) const {
-	if (qtype & sserialize::StringCompleter::QT_SUBSTRING) {
-		if (node.hasSuffixPrefixIndex()) {
-			return m_indexStore.at(node.getSuffixPrefixIndexPtr(), indirectIndexParent);
-		}
-		else {
-			std::vector<uint32_t> childIndexPtrs;
-			addSuffixPrefixIndexPtrsRecursive(node, childIndexPtrs);
-			std::vector<ItemIndex> idxSet;
-			idxSet.reserve(childIndexPtrs.size());
-			for(size_t i = 0; i < childIndexPtrs.size(); i++) {
-				idxSet.push_back(m_indexStore.at(childIndexPtrs[i], indirectIndexParent));
-			}
-			return ItemIndex::unite(idxSet);
-		}
-	}
-	else if (qtype & sserialize::StringCompleter::QT_SUFFIX) {
-		if (node.hasSuffixIndex()) {
-			return m_indexStore.at(node.getSuffixIndexPtr(), indirectIndexParent);
-		}
-	}
-	else if (qtype & sserialize::StringCompleter::QT_PREFIX) {
-		if (node.hasPrefixIndex()) {
-			return m_indexStore.at(node.getPrefixIndexPtr(), indirectIndexParent);
-		}
-		else {
-			std::vector<uint32_t> childIndexPtrs;
-			addPrefixIndexPtrsRecursive(node, childIndexPtrs);
-			std::vector<ItemIndex> idxSet;
-			idxSet.reserve(childIndexPtrs.size());
-			for(size_t i = 0; i < childIndexPtrs.size(); i++) {
-				idxSet.push_back(m_indexStore.at(childIndexPtrs[i], indirectIndexParent));
-			}
-			return ItemIndex::unite(idxSet);
-		}
-	}
-	else if (qtype & sserialize::StringCompleter::QT_EXACT) {
-		if (node.hasExactIndex()) {
-			return m_indexStore.at(node.getExactIndexPtr(), indirectIndexParent);
-		}
-	}
-	return ItemIndex();
-}
-
 //if indexPtrs is present, then also set the index ptrs
 std::map< uint16_t, ItemIndex > GeneralizedTrie::getNextCharacters(const std::string& str, sserialize::StringCompleter::QuerryType qtype, bool withIndex) const {
 

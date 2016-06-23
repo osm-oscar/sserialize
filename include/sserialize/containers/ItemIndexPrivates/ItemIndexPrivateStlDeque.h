@@ -35,7 +35,6 @@ public:
 	
 };
 
-typedef ItemIndexPrivateIndirectWrapper<std::deque<uint32_t>, ItemIndexPrivateStlDeque> ItemIndexPrivateStlDequeIndirect;
 }//end namespace
 
 #endif

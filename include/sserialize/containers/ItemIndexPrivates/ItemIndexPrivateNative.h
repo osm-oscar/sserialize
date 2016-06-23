@@ -146,8 +146,6 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIn
 	return new ItemIndexPrivateNative(tmpD);
 }
 
-typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateNative> ItemIndexPrivateNativeIndirect;
-
 }}}//end namespace
 
 #endif

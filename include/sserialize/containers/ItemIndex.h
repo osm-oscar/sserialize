@@ -38,7 +38,6 @@ public:
 	
 private:
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex::Types type);
-	void createPrivate(const UByteArrayAdapter & index, const ItemIndex & realIdIndex, const ItemIndex::Types type);
 private:
 	static ItemIndex intersectWithTree(uint32_t start, uint32_t end, const std::vector< sserialize::ItemIndex >& set);
 	static ItemIndex uniteWithTree(uint32_t start, uint32_t end, const std::vector< sserialize::ItemIndex >& set);
@@ -51,9 +50,6 @@ public:
 	explicit ItemIndex(const std::deque<uint32_t> & index);
 	explicit ItemIndex(const std::vector<uint32_t> & index);
 	explicit ItemIndex(std::vector<uint32_t> && index);
-	ItemIndex(const UByteArrayAdapter & index, const ItemIndex & realIdIndex, Types type = T_REGLINE);
-	explicit ItemIndex(const std::deque<uint32_t> & index, const ItemIndex & realIdIndex);
-	explicit ItemIndex(const std::vector<uint32_t> & index, const ItemIndex & realIdIndex);
 	~ItemIndex();
 	void loadIntoMemory() const;
 	
@@ -124,7 +120,6 @@ public:
 	static ItemIndex unite(const ItemIndex & aindex, const ItemIndex & bindex);
 	static ItemIndex intersect(const ItemIndex & aindex, const ItemIndex & bindex);
 
-	static ItemIndex fromIndexHierachy(const std::deque<uint32_t> & offsets, const UByteArrayAdapter & indexFile, Types type = T_REGLINE);
 	static ItemIndex fromFile(const std::string & fileName, bool deleteOnClose);
 	
 	template<typename T_INDEX_TYPE, typename ... T_INDEX_ARGS>

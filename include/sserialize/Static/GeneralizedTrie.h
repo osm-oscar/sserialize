@@ -96,8 +96,6 @@ public:
 	
 	Static::TrieNode getRootNode() const;
 	ItemIndex getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType type) const;
-	ItemIndex getItemIndexFromNode(const sserialize::Static::TrieNode& node, sserialize::StringCompleter::QuerryType qtype, const ItemIndex & indirectIndexParent) const;
-
 
 	virtual ItemIndex complete(const std::string& str, sserialize::StringCompleter::QuerryType qtype) const;
 	

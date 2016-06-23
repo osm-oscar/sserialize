@@ -192,7 +192,6 @@ public:
 	}
 };
 
-typedef ItemIndexPrivateIndirectWrapper<UByteArrayAdapter, ItemIndexPrivateWAH> ItemIndexPrivateWAHIndirect;
 
 }//end namespace
 #endif

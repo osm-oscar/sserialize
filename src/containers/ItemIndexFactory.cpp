@@ -640,16 +640,6 @@ ItemIndex ItemIndexStoreFromFactory::at(uint32_t pos) const {
 	return m_idxFactory->indexById(pos);
 }
 
-ItemIndex ItemIndexStoreFromFactory::at(uint32_t /*pos*/, const ItemIndex & /*realIdIndex*/) const {
-	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::at");
-	return ItemIndex();
-}
-
-ItemIndex ItemIndexStoreFromFactory::hierachy(const std::deque< uint32_t >& /*offsets*/) const {
-	throw sserialize::UnimplementedFunctionException("ItemIndexStoreFromFactory::hierachy");
-	return ItemIndex();
-}
-
 uint32_t ItemIndexStoreFromFactory::idxSize(uint32_t pos) const {
 	return m_idxFactory->idxSize(pos);
 }
