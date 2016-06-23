@@ -89,8 +89,8 @@ void GeoPoint::normalize(sserialize::spatial::GeoPoint::NormalizationType nt) {
 }
 
 void GeoPoint::snap() {
-	m_lat = toDoubleLat(toIntLat(m_lat));
-	m_lon = toDoubleLon(toIntLon(m_lon));
+	m_lat = snapLat(m_lat);
+	m_lon = snapLon(m_lon);
 	SSERIALIZE_CHEAP_ASSERT(isSnapped());
 }
 
@@ -172,6 +172,14 @@ uint32_t GeoPoint::toIntLon(double lon) {
 
 double GeoPoint::toDoubleLon(uint32_t lon) {
 	return (static_cast<double>(lon) / (1 << 23)) - 180.0;
+}
+
+double GeoPoint::snapLat(double v) {
+	return toDoubleLat(toIntLat(v));
+}
+
+double GeoPoint::snapLon(double v) {
+	return toDoubleLon(toIntLon(v));
 }
 
 GeoPoint GeoPoint::fromIntLatLon(uint32_t lat, uint32_t lon) { return GeoPoint(lat, lon); }

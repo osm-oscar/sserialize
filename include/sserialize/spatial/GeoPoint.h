@@ -64,7 +64,8 @@ public:
 	static uint32_t toIntLon(double lon);
 	static double toDoubleLon(uint32_t lon);
 	static GeoPoint fromIntLatLon(uint32_t lat, uint32_t lon);
-	
+	static double snapLat(double v);
+	static double snapLon(double v);
 	///set acc to 0 to get usualy equality
 	static bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON);
 	
