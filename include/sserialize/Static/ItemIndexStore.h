@@ -49,6 +49,43 @@ public:
 
 }//end namespace interfaces
 
+class ItemIndexStoreId final {
+public:
+	typedef enum {
+		ST_FIXED_LENGTH=0, ST_VARIABLE_LENGTH=1,
+		ST_FL=ST_FIXED_LENGTH, ST_VL=ST_VARIABLE_LENGTH
+	} SerializationType;
+	
+	struct FixedLengthTag {};
+	struct VariableLengthTag {};
+	
+public:
+	ItemIndexStoreId() : m_d(0xFFFFFFFFFF) {}
+	ItemIndexStoreId(uint64_t id) : m_d(id) {}
+	template<typename T_ST>
+	ItemIndexStoreId(const sserialize::UByteArrayAdapter & d, T_ST dummy = T_ST());
+	ItemIndexStoreId(const sserialize::UByteArrayAdapter & d, SerializationType t);
+	~ItemIndexStoreId() {}
+	template<typename T_ST>
+	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes(T_ST dummy = T_ST()) const;
+	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes(SerializationType t) const;
+	operator uint32_t() const { return m_d; }
+private:
+	uint64_t m_d;
+};
+
+template<>
+ItemIndexStoreId::ItemIndexStoreId(const UByteArrayAdapter& d, ItemIndexStoreId::FixedLengthTag);
+
+template<>
+ItemIndexStoreId::ItemIndexStoreId(const UByteArrayAdapter& d, ItemIndexStoreId::VariableLengthTag);
+
+template<>
+sserialize::UByteArrayAdapter::OffsetType ItemIndexStoreId::getSizeInBytes(ItemIndexStoreId::FixedLengthTag) const;
+
+template<>
+sserialize::UByteArrayAdapter::OffsetType ItemIndexStoreId::getSizeInBytes(ItemIndexStoreId::VariableLengthTag) const;
+
 class ItemIndexStore {
 public:
 	typedef enum {IC_NONE=0, IC_VARUINT32=1, IC_HUFFMAN=2, IC_LZO=4} IndexCompressionType;

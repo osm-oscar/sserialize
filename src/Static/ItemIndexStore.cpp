@@ -10,6 +10,52 @@
 namespace sserialize {
 namespace Static {
 
+template<>
+ItemIndexStoreId::ItemIndexStoreId(const UByteArrayAdapter& d, ItemIndexStoreId::FixedLengthTag) :
+m_d(d.getOffset(0))
+{}
+
+template<>
+ItemIndexStoreId::ItemIndexStoreId(const UByteArrayAdapter& d, ItemIndexStoreId::VariableLengthTag) :
+m_d(d.getVlPackedUint64(0))
+{}
+
+ItemIndexStoreId::ItemIndexStoreId(const UByteArrayAdapter& d, ItemIndexStoreId::SerializationType t) :
+ItemIndexStoreId()
+{
+	switch(t) {
+	case ST_FL:
+		m_d = d.getOffset(0);
+		break;
+	case ST_VL:
+		m_d = d.getVlPackedUint64(0);
+		break;
+	default:
+		break;
+	}
+}
+
+template<>
+sserialize::UByteArrayAdapter::OffsetType ItemIndexStoreId::getSizeInBytes(ItemIndexStoreId::FixedLengthTag) const {
+	return sserialize::UByteArrayAdapter::OffsetTypeSerializedLength();
+}
+
+template<>
+sserialize::UByteArrayAdapter::OffsetType ItemIndexStoreId::getSizeInBytes(ItemIndexStoreId::VariableLengthTag) const {
+	return sserialize::psize_vu64(m_d);
+}
+
+UByteArrayAdapter::OffsetType ItemIndexStoreId::getSizeInBytes(ItemIndexStoreId::SerializationType t) const {
+	switch(t) {
+	case ST_FL:
+		return getSizeInBytes<ItemIndexStoreId::FixedLengthTag>();
+	case ST_VL:
+		return getSizeInBytes<ItemIndexStoreId::VariableLengthTag>();
+	default:
+		return 0;
+	}
+}
+
 ItemIndexStore::ItemIndexStore() : m_priv(new detail::ItemIndexStore()) {}
 ItemIndexStore::ItemIndexStore(const sserialize::UByteArrayAdapter & data) : m_priv(new detail::ItemIndexStore(data)) {}
 ItemIndexStore::ItemIndexStore(interfaces::ItemIndexStore * base) : m_priv(base) {}
