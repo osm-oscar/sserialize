@@ -130,6 +130,26 @@ bool GeoRect::clip(const GeoRect & other) {
 	return true;
 }
 
+void GeoRect::snap() {
+	minLat() = sserialize::spatial::GeoPoint::snapLat(minLat());
+	maxLat() = sserialize::spatial::GeoPoint::snapLat(maxLat());
+	minLon() = sserialize::spatial::GeoPoint::snapLon(minLon());
+	maxLon() = sserialize::spatial::GeoPoint::snapLon(maxLon());
+}
+
+GeoRect GeoRect::snapped() const {
+	GeoRect tmp(*this);
+	tmp.snap();
+	return tmp;
+}
+
+bool GeoRect::isSnapped() const {
+	return minLat() == sserialize::spatial::GeoPoint::snapLat(minLat()) &&
+			maxLat() == sserialize::spatial::GeoPoint::snapLat(maxLat()) &&
+			minLon() == sserialize::spatial::GeoPoint::snapLon(minLon()) &&
+			maxLon() == sserialize::spatial::GeoPoint::snapLon(maxLon());
+}
+
 /** Enlarge this rect so that other will fit into it */
 void GeoRect::enlarge(const GeoRect & other) {
 	if (!other.valid()) {

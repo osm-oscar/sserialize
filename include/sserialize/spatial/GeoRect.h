@@ -56,6 +56,11 @@ public:
 	  * @return: returns true if clipping worked => rects overlapped, false if they did not overlap */
 	bool clip(const GeoRect & other);
 	
+	///Snap coordinates to accuracy of sserialize::Static::GeoPoint
+	void snap();
+	GeoRect snapped() const;
+	bool isSnapped() const;
+	
 	/** Enlarge this rect so that other will fit into it.
 	    If other is !valid, then the rect stays the same.
 	    If !this.valid() then *this = other
