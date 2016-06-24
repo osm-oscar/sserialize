@@ -2,10 +2,98 @@
 #define SSERIALIZE_STAT_FUNCS_H
 #include <numeric>
 #include <algorithm>
+#include <ostream>
 #include <sserialize/algorithm/utilfuncs.h>
 
 namespace sserialize {
 namespace statistics {
+
+struct StatPrinting {
+	typedef enum {S_MEAN=0x1, S_MIN=0x2, S_MAX=0x4, S_MEDIAN=0x8, S_VARIANCE=0x10, S_STDDEV=0x20, S_ALL=0xFFFFFFFF} Stats;
+	template<typename TIterator, typename TValue = typename std::iterator_traits<TIterator>::value_type>
+	static void print(std::ostream & out, TIterator begin, const TIterator & end, Stats which = S_ALL, TValue initial = TValue());
+};
+
+template<typename TIterator, typename TValue>
+TValue min(TIterator begin, const TIterator & end, TValue initial);
+
+template<typename TIterator, typename TValue>
+TValue max(TIterator begin, const TIterator & end, TValue initial);
+
+template<typename TIterator, typename TValue>
+TValue mean(TIterator begin, const TIterator & end, TValue initial);
+
+template<typename TIterator, typename TValue>
+TValue variance(TIterator begin, const TIterator & end, TValue initial);
+
+template<typename TIterator, typename TValue>
+TValue stddev(TIterator begin, const TIterator & end, TValue initial);
+
+template<typename TIterator, typename TValue>
+TValue median(const TIterator & begin, const TIterator & end, TValue def);
+
+
+/** Iterators to a item->frequency table */
+template<typename TIterator, typename TValue>
+TValue entropy(TIterator begin, const TIterator & end, TValue initial, TValue totalCount);
+
+template<typename TIterator>
+void linearRegression(TIterator begin, const TIterator & end, double & slope, double & yintercept);
+
+
+}}//end namespace
+
+//now the definition
+
+namespace sserialize {
+namespace statistics {
+
+template<typename TIterator, typename TValue>
+void
+StatPrinting::print(std::ostream & out, TIterator begin, const TIterator & end, StatPrinting::Stats which, TValue initial) {
+	if (which & S_MIN) {
+		TValue v = sserialize::statistics::min(begin, end, initial);;
+		out << "min: " << v << '\n';
+	}
+	if (which & S_MAX) {
+		TValue v = sserialize::statistics::max(begin, end, initial);;
+		out << "max: " << v << '\n';
+	}
+	if (which & S_MEAN) {
+		TValue v = sserialize::statistics::mean(begin ,end, initial);
+		out << "Mean: " << v << '\n';
+	}
+	if (which & S_MEDIAN) {
+		TValue v = sserialize::statistics::median(begin, end, initial);
+		out << "Median: " << v << '\n';
+	}
+	if (which & S_VARIANCE) {
+		TValue v = sserialize::statistics::variance(begin, end, initial);
+		out << "Variance: " << v << '\n';
+	}
+	if (which & S_STDDEV) {
+		TValue v = sserialize::statistics::stddev(begin, end, initial);
+		out << "Stddev: " << v << '\n';
+	}
+}
+
+template<typename TIterator, typename TValue>
+TValue min(TIterator begin, const TIterator & end, TValue initial) {
+	TIterator it = std::min_element(begin, end);
+	if (it != end) {
+		return *it;
+	}
+	return initial;
+}
+
+template<typename TIterator, typename TValue>
+TValue max(TIterator begin, const TIterator & end, TValue initial) {
+	TIterator it = std::max_element(begin, end);
+	if (it != end) {
+		return *it;
+	}
+	return initial;
+}
 
 template<typename TIterator, typename TValue>
 TValue mean(TIterator begin, const TIterator & end, TValue initial) {
@@ -87,7 +175,8 @@ void linearRegression(TIterator begin, const TIterator & end, double & slope, do
 	yintercept = meanY - slope*meanX;
 }
 
+}}//end namespace sserialize::statistics
 
-}}//end namespace
+
 
 #endif
