@@ -15,6 +15,12 @@ public:
 	virtual ~AbstractArrayIterator() {}
 	virtual TReturnType get() const = 0;
 	virtual void next() = 0;
+	virtual void ffwd(std::size_t amount) {
+		while (amount > 0) {
+			next();
+			--amount;
+		}
+	}
 	virtual bool notEq(const AbstractArrayIterator * other) const = 0;
 	virtual bool eq(const AbstractArrayIterator * other) const = 0;
 	virtual AbstractArrayIterator * copy() const = 0;
@@ -107,12 +113,14 @@ public:
 		return t;
 	}
 	
-	AbstractArrayIterator operator+(uint32_t amount) {
+	AbstractArrayIterator operator+=(std::size_t amount) {
+		m_priv->ffwd(amount);
+		return *this;
+	}
+	
+	AbstractArrayIterator operator+(std::size_t amount) {
 		AbstractArrayIterator t(*this);
-		while (amount) {
-			m_priv->next();
-			--amount;
-		}
+		t.m_priv->ffwd(amount);
 		return t;
 	}
 	
