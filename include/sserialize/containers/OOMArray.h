@@ -538,6 +538,9 @@ template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::clear() {
 	m_backBufferBegin = 0;
 	m_backBuffer.clear();
+	if (::ftruncate(m_fd, 0) < 0) {
+		throw sserialize::IOException("OOMArray::clear: " + std::string(::strerror(errno)));
+	}
 }
 
 template<typename TValue, typename TEnable>
@@ -553,6 +556,7 @@ template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
 	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
 	if (writeSize) {
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 		FileHandler::pwrite(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
 		::fdatasync(m_fd);
 		m_backBufferBegin += m_backBuffer.size();
