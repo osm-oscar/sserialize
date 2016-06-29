@@ -554,6 +554,8 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unor
 
 }//end namespace detail
 
+const uint32_t GeoHierarchy::npos;
+
 std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const {
 	std::vector<uint32_t> cellItemSizes(cellSize(), 0);
 	std::vector<uint32_t> cellAncestorCount(cellSize(), 0);
