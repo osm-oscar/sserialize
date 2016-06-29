@@ -57,6 +57,10 @@ uint32_t TreedCellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }
 
+uint32_t TreedCellQueryResult::cellId(uint32_t position) const {
+	return m_priv->cellId(position);
+}
+
 sserialize::ItemIndex::Types TreedCellQueryResult::defaultIndexType() const {
 	return m_priv->defaultIndexType();
 }
