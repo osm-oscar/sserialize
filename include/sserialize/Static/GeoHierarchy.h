@@ -116,7 +116,9 @@ public:
 		inline void push_back(Node * child) { m_children.push_back( RCPtrWrapper<Node>(child) );}
 		inline uint32_t maxItemsSize() const { return m_itemSize; }
 		inline uint32_t & maxItemsSize() { return m_itemSize; }
+		///A sparse SubSet has cellpositions/apxitemcount only for direct parents
 		inline const CellPositionsContainer & cellPositions() const { return m_cellPositions;}
+		///A sparse SubSet has cellpositions/apxitemcount only for direct parents
 		inline CellPositionsContainer & cellPositions() { return m_cellPositions;}
 		inline iterator begin() { return m_children.begin();}
 		inline const_iterator begin() const { return m_children.begin();}
