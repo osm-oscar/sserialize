@@ -5,7 +5,7 @@
 #include <sserialize/containers/MMVector.h>
 
 void help() {
-	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -st <memory|mmap|oomarray> -sp <source tmp path> -tp <tmp path>" << std::endl;
+	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -w <max wait in s> -st <memory|mmap|oomarray> -sp <source tmp path> -tp <tmp path>" << std::endl;
 }
 
 enum SrcFileType {
@@ -18,6 +18,7 @@ struct State {
 	uint64_t memorySize = 1 << 28;
 	uint32_t threadCount = 2;
 	uint32_t queueDepth = 32;
+	uint32_t maxWait = 10;
 };
 
 template<typename T_SRC_CONTAINER_TYPE>
@@ -36,7 +37,13 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 	}
 	pinfo.end();
 	tm.begin();
-	sserialize::oom_sort(data.begin(), data.end(), std::less<uint64_t>(), state.memorySize, state.threadCount, sserialize::MM_SLOW_FILEBASED, state.queueDepth);
+	sserialize::oom_sort(
+		data.begin(), data.end(),
+		std::less<uint64_t>(),
+		state.memorySize, state.threadCount,
+		sserialize::MM_SLOW_FILEBASED, 
+		state.queueDepth, state.maxWait
+	);
 	tm.end();
 	std::cout << "Sorting took " << tm << std::endl;
 	pinfo.begin(state.entryCount, "Verifying");
@@ -74,6 +81,10 @@ int main(int argc, char ** argv) {
 			state.threadCount = atoi(argv[i+1]);
 			++i;
 		}
+		else if (token == "-w" && i+1 < argc) {
+			state.maxWait = atoi(argv[i+1]);
+			++i;
+		}
 		else if (token == "-sp" && i+1 < argc) {
 			sserialize::UByteArrayAdapter::setFastTempFilePrefix(std::string(argv[i+1]));
 		}
@@ -102,10 +113,12 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
-	std::cout << "Creating source file at " << sserialize::UByteArrayAdapter::getFastTempFilePrefix() << "\n";
-	std::cout << "Creating tmp file at " << sserialize::UByteArrayAdapter::getTempFilePrefix() << "\n";
-	std::cout << "File size: " << sserialize::prettyFormatSize(state.size) << "\n";
-	std::cout << "Memory usage: " << sserialize::prettyFormatSize(state.memorySize) << std::endl;
+	std::cout << "Creating source file at " << sserialize::UByteArrayAdapter::getFastTempFilePrefix() << '\n';
+	std::cout << "Creating tmp file at " << sserialize::UByteArrayAdapter::getTempFilePrefix() << '\n';
+	std::cout << "File size: " << sserialize::prettyFormatSize(state.size) << '\n';
+	std::cout << "Memory usage: " << sserialize::prettyFormatSize(state.memorySize) << '\n';
+	std::cout << "Thread count: " << state.threadCount << '\n';
+	std::cout << "Max wait: " << state.maxWait << '\n';
 	std::cout << "Src file type: ";
 	switch (sft) {
 	case SFT_MEM:

@@ -6,9 +6,11 @@
 #include <vector>
 #include <queue>
 #include <mutex>
+#include <condition_variable>
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/utility/assert.h>
 
 namespace sserialize {
@@ -126,9 +128,10 @@ struct IteratorSyncer< detail::OOMArray::Iterator<TValue> > {
 template<typename TInputOutputIterator, typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>, bool TWithProgressInfo = true>
 void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
 				uint64_t maxMemoryUsage = 0x100000000,
-				uint32_t threadCount = 2,
+				uint32_t maxThreadCount = 2,
 				sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED,
-				uint32_t queueDepth = 64)
+				uint32_t queueDepth = 64,
+				uint32_t maxWait = 10)
 {
 	typedef TInputOutputIterator SrcIterator;
 	typedef typename std::iterator_traits<SrcIterator>::value_type value_type;
@@ -136,11 +139,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	
 	SSERIALIZE_CHEAP_ASSERT(begin < end);
 	
-	if (!threadCount) {
-		threadCount = std::thread::hardware_concurrency();
+	if (!maxThreadCount) {
+		maxThreadCount = std::thread::hardware_concurrency();
 	}
 	
 	struct Config {
+		uint32_t maxThreadCount;
+		//maximum time a thread wait before it remove itself from processing
+		uint32_t maxWait;
 		//chunk size in number of entries
 		uint64_t initialChunkSize;
 		//max memory size in bytes
@@ -148,6 +154,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		//tmp buffer size in bytes
 		uint64_t tmpBuffferSize;
 		CompFunc * comp;
+	};
+	
+	struct WorkerBalanceInfo {
+		WorkerBalanceInfo() : pausedWorkers(0), wantExtraWorker(false) {}
+		uint32_t pausedWorkers;
+		bool wantExtraWorker;
+		std::mutex mtx;
+		std::condition_variable  cv;
 	};
 	
 	struct State {
@@ -164,9 +178,12 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	
 	Config cfg;
 	State state;
+	WorkerBalanceInfo wbi;
 	
+	cfg.maxThreadCount = maxThreadCount;
+	cfg.maxWait = maxWait;
 	cfg.maxMemoryUsage = maxMemoryUsage;
-	cfg.initialChunkSize = maxMemoryUsage/(threadCount*sizeof(value_type));
+	cfg.initialChunkSize = maxMemoryUsage/(maxThreadCount*sizeof(value_type));
 	cfg.comp = &comp;
 	
 	state.srcIt = begin;
@@ -189,13 +206,26 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	struct Worker {
 		State * state;
 		Config * cfg;
+		WorkerBalanceInfo * wbi;
 		std::vector<value_type> buffer;
-		Worker(State * state, Config * cfg) : state(state), cfg(cfg) {}
-		Worker(Worker && other) : state(other.state), cfg(other.cfg), buffer(std::move(other.buffer)) {}
+		Worker(State * state, Config * cfg, WorkerBalanceInfo * wbi) : state(state), cfg(cfg), wbi(wbi) {}
+		Worker(Worker && other) : state(other.state), cfg(other.cfg), wbi(other.wbi), buffer(std::move(other.buffer)) {}
 		void operator()() {
+			sserialize::TimeMeasurer tm;
 			while (true) {
+				uint64_t lockTime = 0;
+				tm.begin();
 				std::unique_lock<std::mutex> ioLock(state->ioLock);
+				tm.end();
+				lockTime = tm.elapsedSeconds();
+				
 				if (state->srcOffset >= state->srcSize) {
+					ioLock.unlock();
+					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
+					if (wbi->pausedWorkers) {
+						wbiLck.unlock();
+						wbi->cv.notify_one();
+					}
 					return; //we're done
 				}
 				uint64_t myChunkSize = std::min<uint64_t>(cfg->initialChunkSize, state->srcSize-state->srcOffset);
@@ -211,10 +241,25 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				
 				ioLock.unlock();
 				
+				//check if we want to activate another thread
+				if (lockTime < 1) {
+					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
+					if (wbi->pausedWorkers) {
+						wbi->wantExtraWorker = true;
+						wbiLck.unlock();
+						wbi->cv.notify_one();
+					}
+				}
+				
 				using std::sort;
 				sort(buffer.begin(), buffer.end(), *(cfg->comp));
 				
+				tm.begin();
 				ioLock.lock();
+				tm.end();
+				
+				lockTime += tm.elapsedSeconds();
+				
 				//flush back
 				using std::move;
 				//capture return value if need be
@@ -235,6 +280,25 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				
 				state->sortCompleted += myChunkSize;
 				state->pinfo(state->sortCompleted);
+				
+				ioLock.unlock();
+				
+				//check if we need to pause processing
+				if (lockTime > cfg->maxWait) {
+					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
+					if (cfg->maxThreadCount-wbi->pausedWorkers > 2) {
+						std::cout << "Pausing worker" << std::endl;
+						wbi->pausedWorkers += 1;
+						while (true) {
+							wbi->cv.wait(wbiLck);
+							if (wbi->wantExtraWorker || state->srcOffset >= state->srcSize) {
+								std::cout << "Resuming worker" << std::endl;
+								wbi->pausedWorkers -= 1;
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	};
@@ -242,17 +306,17 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	{
 		state.sortCompleted = 0;
 		state.pinfo.begin(state.srcSize, "Sorting chunks");
-		if (threadCount > 1) {
+		if (maxThreadCount > 1) {
 			std::vector<std::thread> ts;
-			for(uint32_t i(0); i < threadCount; ++i) {
-				ts.emplace_back(std::thread(Worker(&state, &cfg)));
+			for(uint32_t i(0); i < maxThreadCount; ++i) {
+				ts.emplace_back(std::thread(Worker(&state, &cfg, &wbi)));
 			}
 			for(std::thread & t : ts) {
 				t.join();
 			}
 		}
 		else {
-			Worker w(&state, &cfg);
+			Worker w(&state, &cfg, &wbi);
 			w.operator()();
 		}
 		state.pinfo.end();
