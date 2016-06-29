@@ -21,6 +21,10 @@ PassThroughGeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
 	return m_idxStore.at(m_gh.regionExclusiveCellIdxPtr(regionId));
 }
 
+uint32_t PassThroughGeoHierarchySubGraph::directParentsSize(uint32_t cellId) const {
+	return m_gh.cellDirectParentsEnd(cellId) - m_gh.cellParentsBegin(cellId);
+}
+
 GeoHierarchySubGraph::TempRegionInfos::TempRegionInfos(const sserialize::Static::spatial::GeoHierarchy & gh) :
 regionDesc(gh.regionSize())
 {}
@@ -82,6 +86,11 @@ GeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
 		return m_rec.at(regionId);
 	}
 	return sserialize::ItemIndex();
+}
+
+uint32_t GeoHierarchySubGraph::directParentsSize(uint32_t cellId) const {
+	const CellDesc & cd = m_cellDesc.at(cellId);
+	return cd.directParentsEnd - cd.parentsBegin;
 }
 
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
@@ -191,6 +200,10 @@ GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult & cqr, bool spars
 
 sserialize::ItemIndex GeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
 	return m_ghs->regionExclusiveCells(regionId);
+}
+
+uint32_t GeoHierarchySubGraph::directParentsSize(uint32_t cellId) const {
+	return m_ghs->directParentsSize(cellId);
 }
 
 }}//end namespace sserialize::spatial

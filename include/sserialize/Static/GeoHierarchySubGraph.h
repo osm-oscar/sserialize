@@ -19,6 +19,7 @@ public:
 	virtual ~GeoHierarchySubGraph() {}
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const = 0;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const = 0;
+	virtual uint32_t directParentsSize(uint32_t cellId) const = 0;
 };
 
 }//end namespace interface
@@ -34,6 +35,7 @@ public:
 	virtual ~PassThroughGeoHierarchySubGraph();
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
+	virtual uint32_t directParentsSize(uint32_t cellId) const override;
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 	sserialize::Static::ItemIndexStore m_idxStore;
@@ -54,6 +56,7 @@ public:
 	virtual ~GeoHierarchySubGraph();
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
+	virtual uint32_t directParentsSize(uint32_t cellId) const override;
 private:
 	typedef std::vector<uint32_t> PointerContainer;
 	
@@ -120,6 +123,7 @@ public:
 	~GeoHierarchySubGraph();
 	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
 	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
+	uint32_t directParentsSize(uint32_t cellId) const;
 };
 
 }}//end namespace
