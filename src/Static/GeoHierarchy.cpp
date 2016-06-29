@@ -666,6 +666,13 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 			}
 		}
 	}
+	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
+		if (cellDirectParentsEnd(i) - cellParentsBegin(i) < 1) {
+			std::cerr << "Cell " << i << " has no direct parents" << std::endl;
+			allOk = false;
+			break;
+		}
+	}
 	for(uint32_t i = 0, s = regionSize(); i < s; ++i) {
 		Region r = region(i);
 		std::vector<ItemIndex> idcs;
