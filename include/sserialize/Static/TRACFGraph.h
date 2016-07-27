@@ -23,9 +23,8 @@ public:
 	~TRACFGraph() {}
 	uint32_t size() const;
 	uint32_t cellId() const;
-	///visit every face exactly once
-	template<typename T_OUT_ITERATOR>
-	void visit(T_OUT_ITERATOR out) const {
+	template<typename T_CALLBACK>
+	void visitCB(T_CALLBACK cb) const {
 		uint32_t myCellId = cellId();
 		std::unordered_set<uint32_t> visitedFaces;
 		std::vector<uint32_t> queuedFaces;
@@ -34,8 +33,7 @@ public:
 		while(queuedFaces.size()) {
 			Face f( m_tra->tds().face(queuedFaces.back()) );
 			queuedFaces.pop_back();
-			(*out) = f;
-			++out;
+			cb(f);
 			for(int j(0); j < 3; ++j) {
 				uint32_t nId = f.neighborId(j);
 				if (!visitedFaces.count(nId) && m_tra->cellIdFromFaceId(nId) == myCellId) {
@@ -44,6 +42,14 @@ public:
 				}
 			}
 		}
+	}
+	///visit every face exactly once
+	template<typename T_OUT_ITERATOR>
+	void visit(T_OUT_ITERATOR out) const {
+		visitCB([&out](const Face & f) {
+			*out = f;
+			++out;
+		});
 	}
 private:
 	const TRA * m_tra;
