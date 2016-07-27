@@ -32,6 +32,9 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(const TriangulationGeoHier
 }
 
 uint32_t TriangulationGeoHierarchyArrangement::cellIdFromFaceId(uint32_t faceId) const {
+	if (faceId == Triangulation::NullFace) {
+		return NullCellId;
+	}
 	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId);
 	if (tmp != cellCount()) {
 		return tmp;
