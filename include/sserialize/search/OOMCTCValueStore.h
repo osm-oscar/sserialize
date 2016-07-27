@@ -465,7 +465,11 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	LessThan ltp(m_traits.nodeIdentifierLessThanComparator());
 	Equal ep(m_traits.nodeIdentifierEqualPredicate());
 	
-	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo>(m_entries.begin(), m_entries.end(), ltp, otraits.maxMemoryUsage(), 2, otraits.mmt());
+	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo>(
+		m_entries.begin(), m_entries.end(), ltp,
+		otraits.maxMemoryUsage(), std::thread::hardware_concurrency(),
+		otraits.mmt(), 64, 30
+	);
 	
 	
 	auto entriesBegin = m_entries.begin();
