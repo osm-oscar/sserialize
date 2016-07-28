@@ -122,6 +122,7 @@ public:
 	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, Type t);
 	~GeoHierarchySubGraph();
 	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
+	///@param regionId in ghId
 	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
 	uint32_t directParentsSize(uint32_t cellId) const;
 };
