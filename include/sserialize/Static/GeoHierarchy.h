@@ -271,6 +271,7 @@ public:
 	const RegionDescriptionType & regions() const { return m_regions; }
 	const CellDescriptionType & cells() const { return m_cells; }
 	const RegionPtrListType & regionPtrs() const { return m_regionPtrs; }
+	///Points of cells, these are the cell parents
 	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
 
 	uint32_t cellSize() const;
