@@ -90,6 +90,7 @@ public:
 };
 
 class InvalidReferenceException: public Exception {
+public:
 	InvalidReferenceException(const std::string & what) :
 	Exception()
 	{
