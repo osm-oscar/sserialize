@@ -104,10 +104,6 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   * This class creates the values stored in a text search data structure
   * The text search has to provide a deterministic mapping of strings to unsigned integers,
   * from now on called nodeId.
-  * The fill function takes as argument an ItemDerefer, which has an operator()()
-  * taking an OsmKeyValueObjectStore::Item and an output iterator (which should be templateized)
-  * The fill() function maybe called multiple times
-  * 
   * 
   * struct BaseTraits {
   *   typdef <some type> NodeIdentifier
