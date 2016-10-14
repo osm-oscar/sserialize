@@ -117,6 +117,15 @@ public:
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
 	
+	typedef enum {
+		//will read the next bytes
+		AT_READ,
+		//will write the next bytes
+		AT_WRITE,
+		//will not use the next bytes
+		AT_DROP
+	} AdviseType;
+	
 	typedef detail::__UByteArrayAdapter::MemoryView MemoryView;
 	
 	template<typename TValue>
@@ -187,6 +196,9 @@ public://constructors
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
 	void swap(UByteArrayAdapter & other);
+public:
+	///Tell UByteArrayAdapter about the intended usage of the next count bytes
+	void advice(AdviseType type, SizeType count);
 public://templated get/put functions to specify the types via template parameters
 	template<typename TValue>
 	TValue get(UByteArrayAdapter::OffsetType pos) const;

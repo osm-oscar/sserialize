@@ -21,6 +21,8 @@ public:
 	/** grow data to at least! size bytes */
 	virtual bool growStorage(UByteArrayAdapter::OffsetType size) = 0;
 
+//advise api
+	virtual void advice(UByteArrayAdapter::AdviseType, UByteArrayAdapter::SizeType) {}
 
 //manipulators
 	virtual void setDeleteOnClose(bool del) { m_deleteOnClose = del;}
