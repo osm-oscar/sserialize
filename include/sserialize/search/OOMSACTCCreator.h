@@ -259,6 +259,19 @@ public:
 				}
 			}
 			if (m_sq & StringCompleter::SQ_SUBSTRING) {
+				//also add stuff from the exact nodes, to their prefixed to the substring search
+				//we need to do this in case there are nodes that are not in the suffixNodes but only in the exactNodes
+				//This usually is not the case, so we should safe some operations by first checking if the node realy is not in the suffixNodes set
+				for(uint32_t x : m_exactNodes) {
+					if (!m_suffixNodes.count(x)) {
+						uint32_t nextNode = x;
+						while (nextNode != 0xFFFFFFFF) {
+							m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
+							nextNode = m_ti->parents().at(nextNode);
+						}
+					}
+				}
+				
 				for(uint32_t x : m_suffixNodes) {
 					m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
 					uint32_t nextNode = x;
