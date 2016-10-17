@@ -232,5 +232,34 @@ public:
 	std::string escape(const std::string & str) const;
 };
 
+//A very simple, invalid XmlEscaper which only escapes ><'"&. It does not check for explicit unicode point definitions
+class XmlEscaper final {
+private:
+private:
+	AsciiCharEscaper m_escaper;
+	const char * m_escapeMap[128];
+public:
+	XmlEscaper();
+	~XmlEscaper() {}
+	template<typename T_SRC_IT, typename T_OUTPUT_IT>
+	void escape(T_SRC_IT begin, T_SRC_IT end, T_OUTPUT_IT out) const {
+		for(; begin != end; ++begin, ++out) {
+			char c = *begin;
+			if (m_escaper.escapeChar(c)) {
+				*out = '\\';
+				++out;
+				for(const char * it(m_escapeMap[(unsigned char)c]); *it != 0; ++it) {
+					*out = *it;
+					++out;
+				}
+			}
+			else {
+				*out = c;
+			}
+		}
+	}
+	std::string escape(const std::string & str) const;
+};
+
 }//end namespace
 #endif

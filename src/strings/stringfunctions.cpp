@@ -163,4 +163,22 @@ std::string JsonEscaper::escape(const std::string & str) const {
 	return tmp;
 }
 
+
+
+XmlEscaper::XmlEscaper() :
+m_escaper({'"', '\'', '&', '<', '>'})
+{
+	m_escapeMap['"'] = "&quot;";
+	m_escapeMap['\''] = "&apos;";
+	m_escapeMap['&'] = "&amp;";
+	m_escapeMap['<'] = "&lt;";
+	m_escapeMap['>'] = "&gt;";
+}
+
+std::string XmlEscaper::escape(const std::string & str) const {
+	std::string tmp;
+	escape(str.cbegin(), str.cend(), std::back_insert_iterator<std::string>(tmp));
+	return tmp;
+}
+
 }//end namespace
