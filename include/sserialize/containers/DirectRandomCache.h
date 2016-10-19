@@ -1,5 +1,6 @@
 #ifndef SSERIALIZE_DIRECT_RANDOM_CACHE_H
 #define SSERIALIZE_DIRECT_RANDOM_CACHE_H
+#include <sserialize/utility/assert.h>
 #include <limits>
 #include <vector>
 #include <set>
@@ -21,7 +22,7 @@ public:
 	/// It's your task to take of correct deletion of the values! */
 	virtual ~DirectRandomCache() {}
 	
-	uint32_t occupyCount() const { return m_occupied.size(); }
+	uint32_t occupyCount() const { return (uint32_t) m_occupied.size(); }
 	
 	/** Tries to find a victim cache line
 	  * @return the victim cache line, std::numeric_limits<uint32_t>::max() on failure
@@ -62,6 +63,7 @@ public:
 	void insert(const uint32_t cacheLine, const TValue & value) {
 		m_cache[cacheLine] = value;
 		m_occupied.insert(cacheLine);
+		SSERIALIZE_CHEAP_ASSERT_SMALLER(m_occupied.size(), (std::size_t) std::numeric_limits<uint32_t>::max());
 	}
 	///Clears the cache
 	void clear() {
