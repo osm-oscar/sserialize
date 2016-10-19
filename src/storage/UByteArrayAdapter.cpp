@@ -618,7 +618,7 @@ float UByteArrayAdapter::getFloat(const OffsetType pos) const {
 uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
-	int len = std::min<OffsetType>(9, m_len - pos);
+	int len = (int) std::min<SizeType>(9, m_len - pos);
 	uint64_t res = m_priv->getVlPackedUint64(m_offSet+pos, &len);
 	if (length)
 		*length = len;
@@ -630,7 +630,7 @@ uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length
 int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
-	int len = std::min<OffsetType>(9, m_len - pos);
+	int len = (int) std::min<SizeType>(9, m_len - pos);
 	int64_t res = m_priv->getVlPackedInt64(m_offSet+pos, &len);
 	if (length)
 		*length = len;
@@ -642,7 +642,7 @@ int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) 
 uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
-	int len = std::min<OffsetType>(5, m_len - pos);
+	int len = (int) std::min<SizeType>(5, m_len - pos);
 	uint32_t res = m_priv->getVlPackedUint32(m_offSet+pos, &len);
 	if (length)
 		*length = len;
@@ -654,7 +654,7 @@ uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length
 int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
-	int len = std::min<OffsetType>(5, m_len - pos);
+	int len = (int) std::min<SizeType>(5, m_len - pos);
 	uint32_t res = m_priv->getVlPackedInt32(m_offSet+pos, &len);
 	if (length)
 		*length = len;
@@ -813,14 +813,16 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t 
 }
 
 int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) {
-	UByteArrayAdapter::OffsetType needSize = psize_vu32(str.size()) + str.size();
-	if (m_len < pos+needSize)
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(str.size(), (std::size_t) std::numeric_limits<int>::max());
+	UByteArrayAdapter::OffsetType needSize = psize_vu32((uint32_t) str.size()) + str.size();
+	if (m_len < pos+needSize) {
 		return -1;
-	int len = putVlPackedUint32(pos, str.size());
+	}
+	int len = putVlPackedUint32(pos, (uint32_t) str.size());
 	for(size_t i = 0; i < str.size(); i++) {
 		putUint8(pos+len+i, str[i]);
 	}
-	return needSize;
+	return (int) needSize;
 }
 
 bool UByteArrayAdapter::putData(OffsetType pos, const uint8_t * data, OffsetType len) {
@@ -853,9 +855,9 @@ bool UByteArrayAdapter::putData(const OffsetType pos, const UByteArrayAdapter & 
 		return putData(pos, &data[0], data.size());
 	}
 
-	uint32_t bufLen = std::min<OffsetType>(data.size(), 1024*1024);
+	SizeType bufLen = std::min<OffsetType>(data.size(), 1024*1024);
 	uint8_t * buf = new uint8_t[bufLen];
-	for(OffsetType i = 0, s = data.size(); i < s;) {
+	for(SizeType i = 0, s = data.size(); i < s;) {
 		OffsetType len = std::min<OffsetType>(s-i, bufLen);
 		data.getData(i, buf, len);
 		putData(pos+i, buf, len);
@@ -1076,9 +1078,10 @@ int64_t UByteArrayAdapter::getVlPackedInt64() {
 }
 
 uint32_t UByteArrayAdapter::getVlPackedUint32() {
-	if (m_len < m_getPtr+1)
+	if (m_len < m_getPtr+1) {
 		return 0; //we need to read at least one byte
-	int len = std::min<OffsetType>(5, m_len - m_getPtr);
+	}
+	int len = (int) std::min<OffsetType>(5, m_len - m_getPtr);
 	uint32_t res = m_priv->getVlPackedUint32(m_offSet+m_getPtr, &len);
 	if (len < 0)
 		return 0;
@@ -1195,7 +1198,8 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 }
 
 bool UByteArrayAdapter::putString(const std::string& str) {
-	UByteArrayAdapter::OffsetType needSize = psize_vu32(str.size()) + str.size();
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(str.size(), (std::size_t) std::numeric_limits<uint32_t>::max());
+	UByteArrayAdapter::OffsetType needSize = psize_vu32((uint32_t) str.size()) + str.size();
 	if (!resizeForPush(m_putPtr, needSize))
 		return false;
 	int pushedBytes = putString(m_putPtr, str);
