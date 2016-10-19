@@ -23,7 +23,6 @@ public:
 	uint8_t & operator[](OffsetType globalposition) {
 		return *(m_data + (globalposition-m_beginOffset));
 	}
-	
 };
 
 }}//end namespace detail::ChunkedMmappedFile
@@ -69,15 +68,14 @@ public:
 
 	/** resizes the file to size bytes. All former data references are invalid after this */
 	bool resize(sserialize::ChunkedMmappedFile::SizeType size);
-
 };
-
-
 
 class ChunkedMmappedFilePrivate: public RefCountObject  {
 public:
 	typedef ChunkedMmappedFile::SizeType SizeType;
 	typedef ChunkedMmappedFile::NegativeSizeType NegativeSizeType;
+	typedef uint32_t ChunkIndexType;
+	typedef SizeType ChunkSizeType;
 private:
 	std::string m_fileName;
 	SizeType m_size; //total size of the array
@@ -90,17 +88,17 @@ private:
 	uint8_t m_chunkShift;
 	uint32_t m_chunkMask;
 	
-	uint32_t m_maxOccupyCount;
+	ChunkIndexType m_maxOccupyCount;
 	DirectRandomCache<uint8_t*> m_cache;
 private:
-	uint8_t * do_map(const SizeType chunk);
+	uint8_t * do_map(const sserialize::ChunkedMmappedFilePrivate::ChunkIndexType chunk);
 	
 	/** unmaps a chunk but does not remove it from the cache */
-	bool do_unmap(const SizeType chunk);
+	bool do_unmap(const ChunkIndexType chunk);
 	/** Does an unchecked sync on @param chunk */
-	bool do_sync(const SizeType chunk);
-	inline uint32_t chunkSize() { return 1 << m_chunkShift; }
-	uint32_t sizeOfChunk(uint32_t chunk);
+	bool do_sync(const ChunkIndexType chunk);
+	inline ChunkSizeType chunkSize() { return static_cast<ChunkSizeType>(1) << m_chunkShift; }
+	ChunkSizeType sizeOfChunk(ChunkIndexType chunk);
 public:
 	ChunkedMmappedFilePrivate(uint8_t chunkSizeExponent);
 	virtual ~ChunkedMmappedFilePrivate();
@@ -136,9 +134,9 @@ public:
 	void write(const uint8_t * src, const SizeType destOffset, SizeType & len);
 	
 	///This does not do any kind of correctnes checks! 
-	uint8_t * chunkData(const SizeType chunk);
-	inline SizeType chunk(const SizeType offset) const;
-	inline SizeType inChunkOffSet(const SizeType offset) const;
+	uint8_t * chunkData(const sserialize::ChunkedMmappedFilePrivate::ChunkIndexType chunk);
+	   ChunkIndexType chunk(const sserialize::ChunkedMmappedFilePrivate::SizeType offset) const;
+	   ChunkSizeType inChunkOffSet(const sserialize::ChunkedMmappedFilePrivate::SizeType offset) const;
 };
 
 }//end namespace

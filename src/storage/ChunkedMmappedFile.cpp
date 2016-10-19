@@ -1,6 +1,7 @@
 #include <sserialize/storage/ChunkedMmappedFile.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
+#include <sserialize/utility/checks.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -115,7 +116,7 @@ ChunkedMmappedFilePrivate::~ChunkedMmappedFilePrivate() {
 
 void ChunkedMmappedFilePrivate::setCacheCount(uint32_t count) {
 	while (m_cache.occupyCount() > count) {
-		uint32_t victim = m_cache.findVictim();
+		ChunkIndexType victim = m_cache.findVictim();
 		do_unmap(victim);
 		m_cache.evict(victim);
 	}
@@ -125,34 +126,39 @@ void ChunkedMmappedFilePrivate::setCacheCount(uint32_t count) {
 
 bool ChunkedMmappedFilePrivate::do_open() {
 	int proto = O_RDONLY;
-	if (m_writable)
+	if (m_writable) {
 		proto = O_RDWR;
-	if (m_fileName.size() == 0)
+	}
+	if (m_fileName.size() == 0) {
 		return false;
+	}
 	m_fd = ::open64(m_fileName.c_str(), proto);
-	if (m_fd < 0)
+	if (m_fd < 0) {
 		return false;
+	}
 	struct ::stat64 stFileInfo;
-	if (::fstat64(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && static_cast<SizeType>( stFileInfo.st_size ) < std::numeric_limits<SizeType>::max()) {
+	if (::fstat64(m_fd,&stFileInfo) == 0 && stFileInfo.st_size >= 0 && (size_t) stFileInfo.st_size < (size_t) std::numeric_limits<SizeType>::max()) {
 		m_size = stFileInfo.st_size;
 	}
 	else {
 		return false;
 	}
-	if (!S_ISREG (stFileInfo.st_mode))
+	if (!S_ISREG (stFileInfo.st_mode)) {
 		return false;
+	}
 	
 	//init the cache
-	m_cache = DirectRandomCache<uint8_t*>(size()/chunkSize() + 1, 0);
+	m_cache = DirectRandomCache<uint8_t*>(narrow_check<uint32_t>( size()/chunkSize() + 1), 0);
 	
 	return true;
 }
 
 
 bool ChunkedMmappedFilePrivate::do_close() {
-	if (m_fd < 0)
+	if (m_fd < 0) {
 		return false;
-
+	}
+	
 	bool allOk = do_unmap();
 	
 	if (::close(m_fd) == -1) {
@@ -169,7 +175,7 @@ bool ChunkedMmappedFilePrivate::do_close() {
 }
 
 bool ChunkedMmappedFilePrivate::do_unmap() {
-	uint32_t victim;
+	ChunkIndexType victim;
 	bool allOk = true;
 	while(m_cache.occupyCount()) {
 		victim = m_cache.findVictim();
@@ -180,11 +186,12 @@ bool ChunkedMmappedFilePrivate::do_unmap() {
 }
 
 
-inline uint8_t * ChunkedMmappedFilePrivate::do_map(const ChunkedMmappedFilePrivate::SizeType chunk) {
+inline uint8_t * ChunkedMmappedFilePrivate::do_map(const ChunkIndexType chunk) {
 	int mmap_proto = PROT_READ;
-	if (m_writable)
+	if (m_writable) {
 		mmap_proto |= PROT_WRITE;
-	ChunkedMmappedFilePrivate::SizeType chunkOffSet = chunk*chunkSize(); //This will always be page aligned as a chunk has a minimum size of PAGE_SIZE
+	}
+	SizeType chunkOffSet = chunk * (SizeType) chunkSize(); //This will always be page aligned as a chunk has a minimum size of PAGE_SIZE
 	uint8_t * data = (uint8_t*) ::mmap64(0, sizeOfChunk(chunk), mmap_proto, MAP_SHARED, m_fd, chunkOffSet);
 	
 	if (data == MAP_FAILED) {
@@ -194,7 +201,7 @@ inline uint8_t * ChunkedMmappedFilePrivate::do_map(const ChunkedMmappedFilePriva
 	return data;
 }
 
-bool ChunkedMmappedFilePrivate::do_unmap(const ChunkedMmappedFilePrivate::SizeType chunk) {
+bool ChunkedMmappedFilePrivate::do_unmap(const sserialize::ChunkedMmappedFilePrivate::ChunkIndexType chunk) {
 	if (m_syncOnClose) {
 		do_sync(chunk);
 	}
@@ -207,7 +214,7 @@ bool ChunkedMmappedFilePrivate::do_unmap(const ChunkedMmappedFilePrivate::SizeTy
 	return true;
 }
 
-bool ChunkedMmappedFilePrivate::do_sync(const ChunkedMmappedFilePrivate::SizeType chunk) {
+bool ChunkedMmappedFilePrivate::do_sync(const sserialize::ChunkedMmappedFilePrivate::ChunkIndexType chunk) {
 	uint8_t * data = m_cache.directAccess(chunk);
 	int result = ::msync(data, sizeOfChunk(chunk), MS_SYNC);
 	return result == 0;
@@ -215,7 +222,7 @@ bool ChunkedMmappedFilePrivate::do_sync(const ChunkedMmappedFilePrivate::SizeTyp
 
 
 uint8_t * ChunkedMmappedFilePrivate::data(const ChunkedMmappedFilePrivate::SizeType offset) {
-	SizeType chunk = this->chunk(offset);
+	auto chunk = this->chunk(offset);
 	SizeType inChunkOffSet = this->inChunkOffSet(offset);
 	uint8_t * data = chunkData(chunk);
 	return data + inChunkOffSet;
@@ -231,12 +238,12 @@ void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType o
 		
 	SizeType chunkSize = this->chunkSize();
 	
-	SizeType beginChunk = chunk(offset);
-	SizeType endChunk = chunk(offset+len-1);
+	ChunkIndexType beginChunk = chunk(offset);
+	ChunkIndexType endChunk = chunk(offset+len-1);
 
 	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(offset)));
 	dest += sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(offset));
-	for(SizeType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
+	for(ChunkIndexType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
 		dest += chunkSize;
 	}
@@ -253,15 +260,15 @@ void ChunkedMmappedFilePrivate::write(const uint8_t* src, const SizeType destOff
 	if (destOffset +len > m_size) {
 		len =  m_size - destOffset;
 	}
-		
+
 	SizeType chunkSize = this->chunkSize();
 	
-	SizeType beginChunk = chunk(destOffset);
-	SizeType endChunk = chunk(destOffset +len-1);
+	ChunkIndexType beginChunk = chunk(destOffset);
+	ChunkIndexType endChunk = chunk(destOffset +len-1);
 
 	::memmove(chunkData(beginChunk)+inChunkOffSet(destOffset), src, sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(destOffset)));
-	src += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(destOffset));
-	for(SizeType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
+	src += sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(destOffset));
+	for(ChunkIndexType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(chunkData(i), src, sizeof(uint8_t)*chunkSize);
 		src += chunkSize;
 	}
@@ -271,7 +278,7 @@ void ChunkedMmappedFilePrivate::write(const uint8_t* src, const SizeType destOff
 }
 
 
-uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFilePrivate::SizeType chunk) {
+uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFilePrivate::ChunkIndexType chunk) {
 	uint8_t * data = m_cache[chunk]; //returns null if not set, usage will be increased by one, but also reset to zero below due to insertion
 	if (data) {
 		SSERIALIZE_CHEAP_ASSERT(data);
@@ -279,7 +286,7 @@ uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFi
 	}
 	else {
 		if (m_cache.occupyCount() >= m_maxOccupyCount) {
-			uint32_t victim = m_cache.findVictim(); //this should be valid!
+			ChunkIndexType victim = m_cache.findVictim(); //this should be valid!
 			do_unmap(victim);
 			m_cache.evict(victim);
 		}
@@ -292,22 +299,23 @@ uint8_t* ChunkedMmappedFilePrivate::chunkData(const sserialize::ChunkedMmappedFi
 	}
 }
 
-uint32_t ChunkedMmappedFilePrivate::sizeOfChunk(uint32_t chunk) {
-	uint32_t chunkSize = this->chunkSize();
+ChunkedMmappedFilePrivate::ChunkSizeType ChunkedMmappedFilePrivate::sizeOfChunk(ChunkIndexType chunk) {
+	SizeType chunkSize = this->chunkSize();
 	if (chunk*chunkSize+chunkSize > m_size) {
-		return m_size - chunk*chunkSize;
+		return  (ChunkSizeType) (m_size - chunk*chunkSize);
 	}
-	else
+	else {
 		return chunkSize;
+	}
 }
 
 
-ChunkedMmappedFilePrivate::SizeType ChunkedMmappedFilePrivate::chunk(const sserialize::ChunkedMmappedFilePrivate::SizeType offset) const {
-	return offset >> m_chunkShift;
+ChunkedMmappedFilePrivate::ChunkIndexType ChunkedMmappedFilePrivate::chunk(const sserialize::ChunkedMmappedFilePrivate::SizeType offset) const {
+	return (ChunkIndexType) (offset >> m_chunkShift);
 }
 
-ChunkedMmappedFilePrivate::SizeType ChunkedMmappedFilePrivate::inChunkOffSet(const ChunkedMmappedFilePrivate::SizeType offset) const {
-	return offset & m_chunkMask;
+ChunkedMmappedFilePrivate::ChunkSizeType ChunkedMmappedFilePrivate::inChunkOffSet(const ChunkedMmappedFilePrivate::SizeType offset) const {
+	return (ChunkSizeType) (offset & m_chunkMask);
 }
 
 
