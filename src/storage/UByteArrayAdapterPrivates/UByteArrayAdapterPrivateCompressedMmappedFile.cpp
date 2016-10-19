@@ -151,7 +151,7 @@ UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateCompressedMmappedF
 
 int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
 	SizeType bufLen = (*length > 9 ? 9 : *length);
-	*length = bufLen;
+	*length = (int) bufLen;
 	uint8_t buf[bufLen];
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.lock();
@@ -165,7 +165,7 @@ int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArr
 
 uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
 	SizeType bufLen = (*length > 9 ? 9 : *length);
-	*length = bufLen;
+	*length = (int) bufLen;
 	uint8_t buf[bufLen];
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.lock();
@@ -179,7 +179,7 @@ uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteA
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
 	SizeType bufLen = (*length > 5 ? 5 : *length);
-	*length = bufLen;
+	*length = (int) bufLen;
 	uint8_t buf[bufLen];
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.lock();
