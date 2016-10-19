@@ -69,24 +69,26 @@ GeoGrid::GridBin GeoGrid::select(double lat, double lon) const {
 }
 
 std::vector<GeoGrid::GridBin> GeoGrid::select(GeoRect rect) {
-	if (!rect.clip(m_rect))
+	if (!rect.clip(m_rect)) {
 		return std::vector<GridBin>();
+	}
 	GeoGrid::GridBin blBin = GeoGrid::select(rect.lat()[0], rect.lon()[0]);
 	GeoGrid::GridBin trBin = GeoGrid::select(rect.lat()[1], rect.lon()[1]);
-	if (!blBin.valid() || !trBin.valid())
+	if (!blBin.valid() || !trBin.valid()) {
 		return std::vector<GridBin>();
-	unsigned int xbinStart = blBin.x;
-	unsigned int ybinStart = blBin.y;
-	unsigned int xbinEnd = trBin.x;
-	unsigned int ybinEnd = trBin.y;
+	}
+	uint32_t xbinStart = blBin.x;
+	uint32_t ybinStart = blBin.y;
+	uint32_t xbinEnd = trBin.x;
+	uint32_t ybinEnd = trBin.y;
 	if (xbinStart == xbinEnd && ybinStart == ybinEnd) { //one cell
 		return std::vector<GridBin>(1, trBin);
 	}
 	else { //polygon spans multiple cells
 		std::vector< GridBin > cells;
 		cells.reserve((xbinEnd-xbinStart+1)*(ybinEnd-ybinStart+1));
-		for(unsigned int i = xbinStart; i <= xbinEnd; i++) {
-			for(unsigned int j = ybinStart; j <= ybinEnd; j++) {
+		for(uint32_t i = xbinStart; i <= xbinEnd; i++) {
+			for(uint32_t j = ybinStart; j <= ybinEnd; j++) {
 				cells.push_back( GridBin(i,j, selectBin(i,j)) );
 			}
 		}
@@ -119,18 +121,18 @@ void GeoGrid::select(const GeoRect & rect, std::vector<GridBin> & enclosed, std:
 	}
 	else { //polygon spans multiple cells
 		//enclosed cells
-		for(unsigned int i = xbinStart-1; i <= xbinEnd-1; i++) {
-			for(unsigned int j = ybinStart-1; j <= ybinEnd-1; j++) {
+		for(uint32_t i = xbinStart-1; i <= xbinEnd-1; i++) {
+			for(uint32_t j = ybinStart-1; j <= ybinEnd-1; j++) {
 				enclosed.push_back( GridBin(i,j, selectBin(i,j)) );
 			}
 		}
 		
 		//intersected cells, first top and bottom rows
-		for(size_t i = xbinStart; i <= xbinEnd; i++) {
+		for(uint32_t i = xbinStart; i <= xbinEnd; i++) {
 			intersected.push_back( GridBin(i,ybinStart, selectBin(i,ybinStart)) );
 		}
 		if (ybinStart != ybinEnd) {
-			for(size_t i = xbinStart; i <= xbinEnd; i++) {
+			for(uint32_t i = xbinStart; i <= xbinEnd; i++) {
 				intersected.push_back( GridBin(i,ybinEnd, selectBin(i,ybinEnd)) );
 			}
 		}
@@ -138,11 +140,11 @@ void GeoGrid::select(const GeoRect & rect, std::vector<GridBin> & enclosed, std:
 		//now the vertical rows
 		if (ybinStart+1 < ybinEnd) {
 			//left vertical line
-			for(size_t j = ybinStart+1; j <= ybinEnd-1; ++j) {
+			for(uint32_t j = ybinStart+1; j <= ybinEnd-1; ++j) {
 				intersected.push_back( GridBin(xbinStart,j, selectBin(xbinStart,j)) );
 			}
 			if (xbinStart != xbinEnd) { //right vertical line
-				for(size_t j = ybinStart+1; j <= ybinEnd-1; ++j) {
+				for(uint32_t j = ybinStart+1; j <= ybinEnd-1; ++j) {
 					intersected.push_back( GridBin(xbinEnd,j, selectBin(xbinEnd,j)) );
 				}
 			}
@@ -170,11 +172,11 @@ void GeoGrid::select(const GeoRect & rect, std::vector<uint32_t> & enclosed, std
 		}
 		
 		//intersected cells, first top and bottom rows
-		for(size_t i = xbinStart; i <= xbinEnd; i++) {
+		for(uint32_t i = xbinStart; i <= xbinEnd; i++) {
 			intersected.push_back( selectBin(i,ybinStart) );
 		}
 		if (ybinStart != ybinEnd) {
-			for(size_t i = xbinStart; i <= xbinEnd; i++) {
+			for(uint32_t i = xbinStart; i <= xbinEnd; i++) {
 				intersected.push_back(selectBin(i,ybinEnd));
 			}
 		}
@@ -182,11 +184,11 @@ void GeoGrid::select(const GeoRect & rect, std::vector<uint32_t> & enclosed, std
 		//now the vertical rows
 		if (ybinStart+1 < ybinEnd) {
 			//left vertical line
-			for(size_t j = ybinStart+1; j < ybinEnd; ++j) {
+			for(uint32_t j = ybinStart+1; j < ybinEnd; ++j) {
 				intersected.push_back(selectBin(xbinStart,j));
 			}
 			if (xbinStart != xbinEnd) { //right vertical line
-				for(size_t j = ybinStart+1; j < ybinEnd; ++j) {
+				for(uint32_t j = ybinStart+1; j < ybinEnd; ++j) {
 					intersected.push_back(selectBin(xbinEnd,j));
 				}
 			}
