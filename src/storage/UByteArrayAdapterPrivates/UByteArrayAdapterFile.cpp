@@ -108,77 +108,77 @@ void UByteArrayAdapterPrivateFile::setDeleteOnClose(bool del) {
 
 //Access functions
 uint8_t & UByteArrayAdapterPrivateFile::operator[](UByteArrayAdapter::OffsetType pos) {
-	uint32_t offsetInCache = populateCache(pos, 1);
+	auto offsetInCache = populateCache(pos, 1);
 	return m_buffer[offsetInCache];
 }
 
 const uint8_t & UByteArrayAdapterPrivateFile::operator[](UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 1);
+	auto offsetInCache = populateCache(pos, 1);
 	return m_buffer[offsetInCache];
 }
 
 int64_t UByteArrayAdapterPrivateFile::getInt64(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 8);
+	auto offsetInCache = populateCache(pos, 8);
 	return up_s64(m_buffer+offsetInCache);
 }
 
 uint64_t UByteArrayAdapterPrivateFile::getUint64(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 8);
+	auto offsetInCache = populateCache(pos, 8);
 	return up_u64(m_buffer+offsetInCache);
 }
 
 int32_t UByteArrayAdapterPrivateFile::getInt32(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 4);
+	auto offsetInCache = populateCache(pos, 4);
 	return up_s32(m_buffer+offsetInCache);
 }
 
 uint32_t UByteArrayAdapterPrivateFile::getUint32(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 4);
+	auto offsetInCache = populateCache(pos, 4);
 	return up_u32(m_buffer+offsetInCache);
 }
 
 uint32_t UByteArrayAdapterPrivateFile::getUint24(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 3);
+	auto offsetInCache = populateCache(pos, 3);
 	return up_u24(m_buffer+offsetInCache);
 }
 
 uint16_t UByteArrayAdapterPrivateFile::getUint16(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 2);
+	auto offsetInCache = populateCache(pos, 2);
 	return up_u16(m_buffer+offsetInCache);
 }
 
 uint8_t UByteArrayAdapterPrivateFile::getUint8(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 1);
+	auto offsetInCache = populateCache(pos, 1);
 	return m_buffer[offsetInCache];
 }
 
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateFile::getNegativeOffset(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 5);
+	auto offsetInCache = populateCache(pos, 5);
 	return up_s40(m_buffer+offsetInCache);
 }
 
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateFile::getOffset(UByteArrayAdapter::OffsetType pos) const {
-	uint32_t offsetInCache = populateCache(pos, 5);
+	auto offsetInCache = populateCache(pos, 5);
 	return up_u40(m_buffer+offsetInCache);
 }
 
 uint64_t UByteArrayAdapterPrivateFile::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	uint32_t offsetInCache = populateCache(pos, 9);
+	auto offsetInCache = populateCache(pos, 9);
 	return up_vu64(m_buffer+offsetInCache, length);
 }
 
 int64_t UByteArrayAdapterPrivateFile::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	uint32_t offsetInCache = populateCache(pos, 9);
+	auto offsetInCache = populateCache(pos, 9);
 	return up_vs64(m_buffer+offsetInCache, length);
 }
 
 uint32_t UByteArrayAdapterPrivateFile::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
-	uint32_t offsetInCache = populateCache(pos, 5);
+	auto offsetInCache = populateCache(pos, 5);
 	return up_vu32(m_buffer+offsetInCache, length);
 }
 
 int32_t UByteArrayAdapterPrivateFile::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
-	uint32_t offsetInCache = populateCache(pos, 5);
+	auto offsetInCache = populateCache(pos, 5);
 	return up_vs32(m_buffer+offsetInCache, length);
 }
 
@@ -188,7 +188,7 @@ void UByteArrayAdapterPrivateFile::get(UByteArrayAdapter::OffsetType pos, uint8_
 
 std::string UByteArrayAdapterPrivateFile::getString(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const {
 	int myLen;
-	uint32_t strLen = getVlPackedUint32(pos, &myLen);
+	auto strLen = getVlPackedUint32(pos, &myLen);
 	if (myLen < 1)
 		return std::string();
 	char buf[strLen];
