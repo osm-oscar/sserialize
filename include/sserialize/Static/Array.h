@@ -221,13 +221,14 @@ template<typename TValue>
 class ArrayOffsetIndex<TValue, typename std::enable_if<sserialize::SerializationInfo<TValue>::is_fixed_length>::type > {
 public:
 	typedef ArrayOffsetIndex<TValue, typename std::enable_if<sserialize::SerializationInfo<TValue>::is_fixed_length>::type > MyType;
+	typedef sserialize::SizeType SizeType;
 private:
-	uint32_t m_size;
+	SizeType m_size;
 public:
 	ArrayOffsetIndex() {}
 	ArrayOffsetIndex(const MyType & other) : m_size(other.m_size) {}
 	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType dataSize, const sserialize::UByteArrayAdapter & d) :
-	m_size((uint32_t)(dataSize/sserialize::SerializationInfo<TValue>::length))
+	m_size((SizeType)(dataSize/sserialize::SerializationInfo<TValue>::length))
 	{
 		SSERIALIZE_CHEAP_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)m_size*sserialize::SerializationInfo<TValue>::length, dataSize);
 		if (!std::is_integral<TValue>::value) {
@@ -239,8 +240,8 @@ public:
 		}
 	}
 	~ArrayOffsetIndex() {}
-	sserialize::UByteArrayAdapter::OffsetType at(uint32_t pos) const { return sserialize::SerializationInfo<TValue>::length*pos; }
-	uint32_t size() const { return m_size; }
+	sserialize::UByteArrayAdapter::OffsetType at(SizeType pos) const { return sserialize::SerializationInfo<TValue>::length*pos; }
+	SizeType size() const { return m_size; }
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {
 		if (std::is_integral<TValue>::value) {
 			return 0;
@@ -255,6 +256,7 @@ template<typename TValue>
 class ArrayOffsetIndex<TValue, typename std::enable_if<!sserialize::SerializationInfo<TValue>::is_fixed_length>::type > {
 public:
 	typedef ArrayOffsetIndex<TValue, typename std::enable_if<!sserialize::SerializationInfo<TValue>::is_fixed_length>::type > MyType;
+	typedef sserialize::SizeType SizeType;
 private:
 	sserialize::Static::SortedOffsetIndex m_index;
 public:
@@ -262,8 +264,8 @@ public:
 	ArrayOffsetIndex(const MyType & other) : m_index(other.m_index) {}
 	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType /*dataSize*/, const sserialize::UByteArrayAdapter & d) : m_index(d) {}
 	~ArrayOffsetIndex() {}
-	inline sserialize::UByteArrayAdapter::OffsetType at(uint32_t pos) const { return m_index.at(pos); }
-	uint32_t size() const { return m_index.size(); }
+	inline sserialize::UByteArrayAdapter::OffsetType at(SizeType pos) const { return m_index.at( narrow_check<uint32_t>(pos) ); }
+	SizeType size() const { return m_index.size(); }
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const { return m_index.getSizeInBytes();}
 };
 
@@ -278,8 +280,8 @@ public:
 	typedef value_type const_reference;
 	typedef value_type reference;
 	typedef enum {TI_FIXED_LENGTH=1} TypeInfo;
-	typedef uint32_t SizeType;
-	static constexpr SizeType npos = 0xFFFFFFFF;
+	typedef sserialize::SizeType SizeType;
+	static constexpr SizeType npos = std::numeric_limits<SizeType>::max();
 private:
 	UByteArrayAdapter m_data;
 	detail::ArrayOffsetIndex<TValue> m_index;
@@ -408,7 +410,7 @@ SSERIALIZE_LENGTH_CHECK(m_index.size()*sserialize::SerializationInfo<TValue>::mi
 
 template<typename TValue>
 TValue
-Array<TValue>::at(uint32_t pos) const {
+Array<TValue>::at(SizeType pos) const {
 	if (pos >= size() || size() == 0) {
 		return TValue();
 	}
@@ -417,7 +419,7 @@ Array<TValue>::at(uint32_t pos) const {
 
 template<typename TValue>
 TValue
-Array<TValue>::operator[](uint32_t pos) const {
+Array<TValue>::operator[](SizeType pos) const {
 	return m_ds(dataAt(pos));
 }
 
@@ -435,7 +437,7 @@ Array<TValue>::back() const {
 
 template<typename TValue>
 UByteArrayAdapter::OffsetType
-Array<TValue>::dataSize(uint32_t pos) const {
+Array<TValue>::dataSize(SizeType pos) const {
 	if (pos >= size() || size() == 0) {
 		return 0;
 	}
@@ -452,7 +454,7 @@ Array<TValue>::dataSize(uint32_t pos) const {
 
 template<typename TValue>
 UByteArrayAdapter
-Array<TValue>::dataAt(uint32_t pos) const {
+Array<TValue>::dataAt(SizeType pos) const {
 	if (pos >= size() || size() == 0) {
 		return UByteArrayAdapter();
 	}
@@ -468,10 +470,11 @@ Array<TValue>::dataAt(uint32_t pos) const {
 }
 
 template<typename TValue>
-uint32_t Array<TValue>::find(const TValue& value) const {
+SizeType Array<TValue>::find(const TValue& value) const {
 	for(uint32_t i = 0; i < size(); i++) {
-		if (at(i) == value)
+		if (at(i) == value) {
 			return i;
+		}
 	}
 	return npos;
 }
