@@ -69,7 +69,7 @@ void ThreadPool::numThreads(uint32_t num) {
 }
 
 uint32_t ThreadPool::numThreads() const {
-	return m_threads.size();
+	return (uint32_t) m_threads.size();
 }
 
 bool ThreadPool::sheduleTask(QueuedTaskFunction t) {//std::function als parameter
