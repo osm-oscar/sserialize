@@ -15,7 +15,8 @@ class StringTable: public RCWrapper< sserialize::Static::Array<std::string> > {
 public:
 	typedef sserialize::Static::Array<std::string>::const_iterator const_iterator;
 	typedef sserialize::Static::Array<std::string>::const_reference const_reference;
-	static constexpr uint32_t npos = 0xFFFFFFFF;
+	typedef sserialize::Static::Array<std::string>::SizeType SizeType;
+	static constexpr SizeType npos = sserialize::Static::Array<std::string>::npos;
 protected:
 	inline UByteArrayAdapter & data() { return priv()->data();}
 	inline const UByteArrayAdapter & data() const { return priv()->data(); }
@@ -32,11 +33,11 @@ public:
 	bool match(uint32_t stringId, const std::string & searchStr, sserialize::StringCompleter::QuerryType qtype) const;
 	std::ostream& printStats(std::ostream & out) const;
 	
-	inline uint32_t size() const { return priv()->size();}
+	inline SizeType size() const { return priv()->size();}
 	inline UByteArrayAdapter::OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
-	inline std::string at(uint32_t pos) const { return priv()->at(pos); }
-	inline UByteArrayAdapter strDataAt(uint32_t pos) const { return priv()->dataAt(pos).getStringData(0);}
-	inline uint32_t strSize(uint32_t pos) const { return priv()->dataAt(pos).getStringLength(0); }
+	inline std::string at(SizeType pos) const { return priv()->at(pos); }
+	inline UByteArrayAdapter strDataAt(SizeType pos) const { return priv()->dataAt(pos).getStringData(0);}
+	inline uint32_t strSize(SizeType pos) const { return priv()->dataAt(pos).getStringLength(0); }
 	inline std::string front() const { return priv()->front();}
 	inline std::string back() const { return priv()->back();}
 	inline const_iterator cbegin() const { return priv()->cbegin();}
@@ -71,7 +72,7 @@ public:
 	FrequencyStringTable(const FrequencyStringTable & other);
 	FrequencyStringTable & operator=(const FrequencyStringTable & other);
 	virtual ~FrequencyStringTable();
-	inline uint32_t find(const std::string & value) const { return priv()->find(value);}
+	inline SizeType find(const std::string & value) const { return priv()->find(value);}
 	inline bool count(const std::string & value) const { return find(value) != npos; }
 };
 
@@ -81,7 +82,7 @@ public:
 	SortedStringTable(const UByteArrayAdapter & data);
 	SortedStringTable(const SortedStringTable & other);
 	virtual ~SortedStringTable();
-	uint32_t find(const std::string & value) const;
+	SizeType find(const std::string & value) const;
 	inline bool count(const std::string & value) const { return find(value) != npos; }
 };
 
