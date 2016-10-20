@@ -32,25 +32,25 @@ Set<uint8_t>::Set(const UByteArrayAdapter & data)
 template<>
 uint32_t
 Set<int32_t>::size() const {
-	return m_data.size()/4;
+	return (uint32_t) m_data.size()/4;
 }
 
 template<>
 uint32_t
 Set<uint32_t>::size() const {
-	return m_data.size()/4;
+	return (uint32_t) m_data.size()/4;
 }
 
 template<>
 uint32_t
 Set<uint16_t>::size() const {
-	return m_data.size()/2;
+	return (uint32_t) m_data.size()/2;
 }
 
 template<>
 uint32_t
 Set<uint8_t>::size() const {
-	return m_data.size();
+	return (uint32_t) m_data.size();
 }
 
 template<>

@@ -21,6 +21,7 @@
  * size is length in bytes of data
  * 
  * TODO:base this on Static::Array since this is essentialy a sorted array
+ * This will also add support for more than 2**32 items
  * 
  */
 
@@ -180,7 +181,7 @@ template<typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::set<TValue> & source) {
 	std::vector<uint8_t> tmpStore;
 	sserialize::UByteArrayAdapter tmpValueStore(&tmpStore);
-	std::set<uint32_t> offSets;
+	std::set<sserialize::UByteArrayAdapter::SizeType> offSets;
 	for(typename std::set<TValue>::const_iterator it = source.begin(); it != source.end(); it++) {
 		offSets.insert(tmpValueStore.tellPutPtr());
 		tmpValueStore << *it;
@@ -191,7 +192,7 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destin
 	
 	//Add everything to our adapter
 	destination.putUint8(SSERIALIZE_STATIC_SET_VERSION); //version
-	destination.putUint32(tmpStore.size());
+	destination.putUint32( sserialize::narrow_check<uint32_t>( tmpStore.size() ) );
 	destination.putData(indexData);
 	destination.putData(tmpStore);
 	return destination;
@@ -200,13 +201,13 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destin
 template<typename TNumberValue>
 sserialize::UByteArrayAdapter& streamNumberSetInUByteArrayAdapter(sserialize::UByteArrayAdapter & destination, const std::set<TNumberValue> & source) {
 	destination.putUint8(0); //version
-	uint32_t sizePutPtr = destination.tellPutPtr(); //save put ptr
+	sserialize::UByteArrayAdapter::SizeType sizePutPtr = destination.tellPutPtr(); //save put ptr
 	destination.putUint32(0); //put dummy size
 	for(typename std::set<TNumberValue>::const_iterator it = source.begin(); it != source.end(); it++) {
 		destination << *it;
 	}
 	//Put correct size, the 4 is the size of the SIZE-Field
-	destination.putUint32(sizePutPtr, destination.tellPutPtr()-(4+sizePutPtr));
+	destination.putUint32(sizePutPtr, sserialize::narrow_check<uint32_t>( destination.tellPutPtr()-(4+sizePutPtr) ) );
 	return destination;
 }
 
