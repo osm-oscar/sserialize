@@ -35,8 +35,8 @@ m_root(m_nodes.at(0))
 }
 
 void HuffmanDecoder::readInCache() {
-	uint32_t s = m_nodes.size();
-	for(uint32_t i = 0; i < s; ++i) {
+	auto s = m_nodes.size();
+	for(decltype(s) i = 0; i < s; ++i) {
 		m_nodes.at(i).readInCache();
 	}
 }
