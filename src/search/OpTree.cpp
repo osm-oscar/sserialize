@@ -234,7 +234,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 		token.tokenString += '?';
 		++m_strIt;
 		lastValidStrIt = m_strIt;
-		lastValidStrSize = token.tokenString.size();
+		lastValidStrSize = (int) token.tokenString.size();
 	}
 	if (*m_strIt == '"') {
 		token.tokenString += *m_strIt;
@@ -261,12 +261,12 @@ void SetOpsOpTreeParser::readString(Token & token) {
 			}
 		}
 		lastValidStrIt = m_strIt;
-		lastValidStrSize = token.tokenString.size();
+		lastValidStrSize = (int) token.tokenString.size();
 		if (m_strIt != m_strEnd && *m_strIt == '?') {
 			token.tokenString += *m_strIt;
 			++m_strIt;
 			lastValidStrIt = m_strIt;
-			lastValidStrSize = token.tokenString.size();
+			lastValidStrSize = (int) token.tokenString.size();
 		}
 	}
 	else {
@@ -288,7 +288,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 				token.tokenString += *m_strIt;
 				if (m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend())) {
 					if (token.tokenString.size() > 1 && token.tokenString.at(token.tokenString.size()-2) != ' ') {
-						lastValidStrSize = token.tokenString.size()-1;
+						lastValidStrSize = (int) token.tokenString.size()-1;
 						lastValidStrIt = m_strIt;
 					}
 					++m_strIt;
@@ -301,7 +301,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 			else if (*m_strIt == '(' || *m_strIt == ')') {
 				//we've read a string with spaces, check if all up to here is also part of it
 				if (lastValidStrSize >= 0 && token.tokenString.size() && token.tokenString.back() != ' ' && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend())) {
-					lastValidStrSize = token.tokenString.size();
+					lastValidStrSize = (int) token.tokenString.size();
 					lastValidStrIt = m_strIt;
 				}
 				break;
@@ -321,7 +321,7 @@ void SetOpsOpTreeParser::readString(Token & token) {
 			}
 		}
 		if (lastValidStrSize < 0 || (m_strIt == m_strEnd && m_strHinter->operator()(token.tokenString.cbegin(), token.tokenString.cend()))) {
-			lastValidStrSize = token.tokenString.size();
+			lastValidStrSize = (int) token.tokenString.size();
 			lastValidStrIt = m_strIt;
 		}
 		else if (lastValidStrSize > 0) {
