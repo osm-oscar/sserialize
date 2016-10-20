@@ -32,9 +32,10 @@ StringTable& StringTable::operator=(const StringTable& other) {
 typedef bool (*StrMatchFunction)(const std::string& searchStr, const UByteArrayAdapter & str);
 
 bool matchPrefix(const std::string& searchStr, const UByteArrayAdapter & str) {
-	if (searchStr.size() > str.size())
+	if (searchStr.size() > str.size()) {
 		return false;
-	uint32_t strSize = searchStr.size();
+	}
+	uint32_t strSize = narrow_check<uint32_t>( searchStr.size() );
 	for(uint16_t i = 0; i < strSize; i++) {
 		if (str.at(i) != static_cast<uint8_t>( searchStr[i] ))
 			return false;
@@ -93,7 +94,7 @@ bool matchSuffix(const std::string& searchStr, const UByteArrayAdapter & str) {
 	std::string::const_reverse_iterator searchStrIt = searchStr.rbegin();
 	std::string::const_reverse_iterator searchStrEnd = searchStr.rend();
 	
-	int32_t strPos = str.size()-1;
+	int32_t strPos = narrow_check<int32_t>(str.size())-1;
 	//no need to check strPos since str.size() >= searchStr.size()
 	while (searchStrIt != searchStrEnd) {
 		if (static_cast<uint8_t>(*searchStrIt) != str.at(strPos))
@@ -293,7 +294,7 @@ SortedStringTable::SortedStringTable(const sserialize::Static::SortedStringTable
 SortedStringTable::~SortedStringTable() {}
 uint32_t SortedStringTable::find(const std::string & value) const {
 	SizeType tmp = binarySearchKeyInArray(*priv(), value);
-	return (tmp < npos ? tmp : npos);
+	return narrow_check<uint32_t>(tmp < npos ? tmp : npos);
 }
 
 }}//end namespace
