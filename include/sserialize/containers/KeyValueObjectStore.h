@@ -60,7 +60,7 @@ public:
 	void reserve(SizeType size);
 	SizeType size() const { return m_items.size(); }
 	inline const ItemData & itemDataAt(SizeType pos) const { return m_items[pos]; }
-	inline Item at(SizeType pos) const { return Item(this, pos); }
+	inline Item at(SizeType pos) const { return Item(this, narrow_check<uint32_t>(pos) ); }
 	void push_back(const std::vector< std::pair< std::string, std::string > > & extItem);
 	
 	///This remaps the strings ids ot the items and orders the keys of the item in ascending order

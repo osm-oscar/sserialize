@@ -98,7 +98,7 @@ void KeyValueObjectStore::serialize(const sserialize::KeyValueObjectStore::ItemD
 	carr.reserve((uint32_t)item.size()); //overflow checked above
 	for(SizeType i(0), s(item.size()); i < s; ++i) {
 		uint64_t pv = ( static_cast<uint64_t>(item.at(i).key-minKey) << valueBits) | (item.at(i).value-minValue);
-		carr.set64(i, pv);
+		carr.set64((uint32_t) i, pv);
 	}
 	dest.putData(carr.data());
 #if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
@@ -146,7 +146,7 @@ UByteArrayAdapter::OffsetType KeyValueObjectStore::serialize(sserialize::UByteAr
 	
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(m_items.size(), "KeyValueObjectStore::serialize: items");
-	for(uint32_t i = 0, s = m_items.size(); i < s; ++i) {
+	for(uint32_t i = 0, s = (uint32_t) m_items.size(); i < s; ++i) {
 		const ItemData & item = m_items[i];
 		creator.beginRawPut();
 		serialize(item, creator.rawPut());
