@@ -253,7 +253,7 @@ CompactStaticTrieCreationNode::createNewNode(
 	//change this later if ptr len is not constant
 	uint8_t childPtrLen = 2;
 
-	uint32_t childrenCount = nodeInfo.childChars.size();
+	uint32_t childrenCount = (uint32_t) nodeInfo.childChars.size();
 
 	if (childrenCount > 0xFFF) {
 		std::cout << "Error: too many children" << std::endl;
@@ -347,13 +347,13 @@ CompactStaticTrieCreationNode::createNewNode(
 }
 
 unsigned int CompactStaticTrieCreationNode::appendNewNode(const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter & destination) {
-	uint32_t putPtr = destination.tellPutPtr();
+	UByteArrayAdapter::SizeType putPtr = destination.tellPutPtr();
 	unsigned int errors = CompactStaticTrieCreationNode::createNewNode(nodeInfo, destination);
 	UByteArrayAdapter nodeStart = destination;
 	nodeStart.setPutPtr(putPtr);
 	if (nodeInfo.childChars.size() > 0) {
 		CompactStaticTrieCreationNode creationNode(nodeStart);
-		for(size_t i = 0; i < nodeInfo.childPtrs.size(); i++) {
+		for(uint32_t i = 0; i < nodeInfo.childPtrs.size(); i++) {
 			if (!creationNode.setChildPointer(i, nodeInfo.childPtrs[i])) {
 				errors |= CHILD_PTR_FAILED;
 				break;
