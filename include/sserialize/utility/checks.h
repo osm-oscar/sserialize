@@ -68,6 +68,37 @@ narrow_check(J value) {
 	return static_cast<I>(value);
 }
 
+
+///assign lhs to rhs. Use it like narrow_check_assign(lhs, rhs);
+template<typename I, typename J>
+void narrow_check_assign(I & lhs, const J & rhs) {
+	lhs = narrow_check<I, J>(rhs);
+}
+
+namespace detail {
+
+	template<typename I>
+	class NarrowCheckAssigner {
+	private:
+		I & m_lhs;
+	public:
+		NarrowCheckAssigner(I & lhs) : m_lhs(lhs) {}
+		
+		template<typename J>
+		inline I & operator=(const J & rhs) {
+			m_lhs = narrow_check<I>(rhs);
+			return m_lhs;
+		}
+	};
+} //end namespace detail
+
+
+///Returns a simple wrapper, you can use like this: narrow_check_assign(lhs) = rhs;
+template<typename I> 
+detail::NarrowCheckAssigner<I> narrow_check_assign(I & lhs) {
+	return detail::NarrowCheckAssigner<I>(lhs);
+}
+
 }//end namespace sserialize
 
 #endif
