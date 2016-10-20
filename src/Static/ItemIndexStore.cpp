@@ -270,7 +270,7 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 	std::unordered_set<uint32_t> wabSet;
 	std::unordered_map<uint32_t, uint32_t> idFreqs;
 	for(std::unordered_set<uint32_t>::const_iterator idIt = indexIds.begin(); idIt != indexIds.end(); ++idIt) {
-		size_t i = *idIt;
+		uint32_t i = *idIt;
 		ItemIndex idx(at(i));
 		for(uint32_t j(0), s(idx.size()); j < s; j++)  {
 			uint32_t id = idx.at(j);
