@@ -217,9 +217,10 @@ void GeneralizedTrie::addPrefixIndexPtrsRecursive(const sserialize::Static::Trie
 		indexPtrs.push_back(node.getPrefixIndexPtr());
 	}
 	else {
-		if (node.hasExactIndex())
+		if (node.hasExactIndex()) {
 			indexPtrs.push_back(node.getExactIndexPtr());
-		for(size_t i = 0; i < node.childCount(); i++) {
+		}
+		for(uint32_t i = 0; i < node.childCount(); i++) {
 			addPrefixIndexPtrsRecursive(node.childAt(i), indexPtrs);
 		}
 	}
@@ -235,7 +236,7 @@ void GeneralizedTrie::addSuffixPrefixIndexPtrsRecursive(const Static::TrieNode &
 		if (node.hasSuffixIndex())
 			indexPtrs.push_back(node.getSuffixIndexPtr());
 
-		for(size_t i = 0; i < node.childCount(); i++) {
+		for(uint32_t i = 0; i < node.childCount(); i++) {
 			addSuffixPrefixIndexPtrsRecursive(node.childAt(i), indexPtrs);
 		}
 	}
