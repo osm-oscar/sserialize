@@ -149,12 +149,14 @@ public:
 
 	inline void sort() {
 		std::sort(m_strings.begin(), m_strings.end(), MySmaller(&m_strData));
-		for(SizeType i(0), s(m_strings.size()); i < s; ++i) {
+		for(SizeType i(0), s(narrow_check<SizeType>( m_strings.size() )); i < s; ++i) {
 			m_map[ m_strings[i] ] = i;
 		}
 	}
 	
-	inline bool count(const std::string & str) const { return m_map.count(StaticString(const_cast<char*>(str.c_str()), str.size(), true)) > 0; }
+	inline bool count(const std::string & str) const {
+		return m_map.count(StaticString(const_cast<char*>(str.c_str()), narrow_check<uint32_t>( str.size() ), true)) > 0;
+	}
 	
 	inline std::string at(uint32_t id) const {
 		if (id < m_strings.size()) {
@@ -165,7 +167,7 @@ public:
 	}
 	
 	uint32_t at(const std::string & str) const {
-		MyMap::const_iterator it = m_map.find(StaticString(const_cast<char*>(str.c_str()), str.size(), true));
+		MyMap::const_iterator it = m_map.find(StaticString(const_cast<char*>(str.c_str()), narrow_check<uint32_t>(str.size()), true));
 		if (it != m_map.end()) {
 			return it->second;
 		}
