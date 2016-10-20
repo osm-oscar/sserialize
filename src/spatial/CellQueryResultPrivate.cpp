@@ -159,7 +159,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	
 
-	for(std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size()); myI < myEnd && oI < oEnd;) {
+	for(uint32_t myI(0), myEnd((uint32_t)m_desc.size()), oI(0), oEnd((uint32_t)o.m_desc.size()); myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
 		uint32_t myCellId = myCD.cellId;
@@ -231,7 +231,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
-	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	uint32_t myI(0), myEnd((uint32_t)m_desc.size()), oI(0), oEnd((uint32_t)o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
@@ -349,8 +349,8 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * m_desc.size());
 	
-	std::size_t myI(0), myEnd(m_desc.size());
-	for(std::size_t oI(0), oEnd(o.m_desc.size()); myI < myEnd && oI < oEnd;) {
+	uint32_t myI(0), myEnd((uint32_t) m_desc.size());
+	for(uint32_t oI(0), oEnd((uint32_t)o.m_desc.size()); myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
 		uint32_t myCellId = myCD.cellId;
@@ -406,7 +406,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
-	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
+	uint32_t myI(0), myEnd((uint32_t)m_desc.size()), oI(0), oEnd((uint32_t)o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
 		const CellDesc & myCD = m_desc[myI];
 		const CellDesc & oCD = o.m_desc[oI];
