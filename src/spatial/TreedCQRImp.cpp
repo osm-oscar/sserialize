@@ -212,9 +212,9 @@ m_hasFetchedNodes(pmIdx.size())
 			cd.hasFetchedNode = 1;
 			
 			//create the node
-			cd.treeBegin = m_trees.size();
+			cd.treeBegin = (uint32_t) m_trees.size();
 			m_trees.push_back(FlatNode::T_FETCHED_LEAF);
-			cd.treeEnd = m_trees.size();
+			cd.treeEnd = (uint32_t) m_trees.size();
 			
 			//add the index
 			m_trees.back().fetchedNode.internalIdxId = m_fetchedIdx.size();
@@ -234,9 +234,9 @@ m_hasFetchedNodes(pmIdx.size())
 		cd.hasFetchedNode = 1;
 		
 		//create the node
-		cd.treeBegin = m_trees.size();
+		cd.treeBegin = (uint32_t) m_trees.size();
 		m_trees.push_back(FlatNode::T_FETCHED_LEAF);
-		cd.treeEnd = m_trees.size();
+		cd.treeEnd = (uint32_t) m_trees.size();
 		
 		//add the index
 		m_trees.back().fetchedNode.internalIdxId = m_fetchedIdx.size();
@@ -256,9 +256,9 @@ m_hasFetchedNodes(false)
 			cd.hasFetchedNode = 1;
 			
 			//create the node
-			cd.treeBegin = m_trees.size();
+			cd.treeBegin = (uint32_t) m_trees.size();
 			m_trees.push_back(FlatNode::T_FETCHED_LEAF);
-			cd.treeEnd = m_trees.size();
+			cd.treeEnd = (uint32_t) m_trees.size();
 			
 			//add the index
 			m_trees.back().fetchedNode.internalIdxId = m_fetchedIdx.size();
@@ -326,9 +326,8 @@ TreedCQRImp::CellDesc& TreedCQRImp::CellDesc::operator=(const TreedCQRImp::CellD
 	return *this;
 }
 
-
 void TreedCQRImp::copyTree(const TreedCQRImp& src, const CellDesc & cd, TreedCQRImp& dest) {
-	uint32_t dTreeBegin = dest.m_trees.size();
+	uint32_t dTreeBegin = (uint32_t) dest.m_trees.size();
 	dest.m_trees.insert(dest.m_trees.end(), src.m_trees.begin()+cd.treeBegin, src.m_trees.begin()+cd.treeEnd);
 	if (cd.hasFetchedNode) { //adjust internalIdxId and copy index
 		for(auto it(dest.m_trees.begin()+dTreeBegin), end(dest.m_trees.end()); it != end; ++it) {

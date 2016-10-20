@@ -63,7 +63,8 @@ private:
 		uint64_t fullMatch:1;
 		uint64_t hasFetchedNode:1;
 		uint64_t cellId:28;
-		uint64_t pmIdxId:34;
+		uint64_t pmIdxId:32;
+		uint64_t dummy:2;
 		//by definition: if this is 0xFFFFFFFF then the start is invalid
 		uint32_t treeBegin;
 		uint32_t treeEnd; //this is needed for fast copying of trees (and alignment gives it for free)
@@ -215,7 +216,7 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 					}
 					else {
 						if (!cd.fullMatch) {
-							state->dest->m_idx[myPos].idxPtr = cd.pmIdxId;
+							state->dest->m_idx[myPos].idxPtr = (uint32_t) cd.pmIdxId;
 						}
 						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId);
 					}
