@@ -51,7 +51,7 @@ void ProgressInfo::operator()(uint64_t currentCount, const std::string & message
 		std::cout << '\xd';
 		std::cout << message << ": ";
 		std::cout << currentCount  << '|' << targetCount << "=" <<  std::setprecision(4) << (double)currentCount/targetCount*100 << "%";
-		std::cout << std::setprecision(prec);
+		std::cout << std::setprecision((int) prec);
 		std::cout << " (" << (timer-startTimer) << "|";
 		std::cout << static_cast<uint64_t>( (double)(timer-startTimer) / currentCount * (targetCount-currentCount) ) << "|";
 		std::cout << static_cast<uint64_t>( (double)(timer-startTimer) / currentCount * (targetCount) ) << ")";
