@@ -185,31 +185,30 @@ void CompactTrieNodePrivate::dump() const {
 }
 
 
-uint32_t CompactTrieNodePrivate::getStorageSize() const {
+UByteArrayAdapter::SizeType CompactTrieNodePrivate::getStorageSize() const {
 	return m_myEndPtr;
 }
 
-uint32_t CompactTrieNodePrivate::getHeaderStorageSize() const {
+UByteArrayAdapter::SizeType CompactTrieNodePrivate::getHeaderStorageSize() const {
 	if (m_nodeHeader & 0x2000)
 		return 3;
 	else
 		return 2;
 }
 
-
-uint32_t CompactTrieNodePrivate::getNodeStringStorageSize() const {
+UByteArrayAdapter::SizeType CompactTrieNodePrivate::getNodeStringStorageSize() const {
 	return 1 + strLen();
 }
 
-uint32_t CompactTrieNodePrivate::getChildPtrStorageSize() const {
+UByteArrayAdapter::SizeType CompactTrieNodePrivate::getChildPtrStorageSize() const {
 	return (m_childCount > 0 ? (m_childCount+1)*2 : 0);
 }
 
-uint32_t CompactTrieNodePrivate::getChildCharStorageSize() const {
+UByteArrayAdapter::SizeType CompactTrieNodePrivate::getChildCharStorageSize() const {
 	return charWidth()*m_childCount;
 }
 
-uint32_t CompactTrieNodePrivate::getIndexPtrStorageSize() const {
+UByteArrayAdapter::SizeType CompactTrieNodePrivate::getIndexPtrStorageSize() const {
 	return CompactUintArray::minStorageBytes(indexArrBpn(), popCount( (unsigned int)indexTypes() ) );
 }
 
@@ -249,7 +248,7 @@ unsigned int
 CompactStaticTrieCreationNode::createNewNode(
     const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter & destination) {
 
-	uint32_t putPtr = destination.tellPutPtr();
+	UByteArrayAdapter::SizeType putPtr = destination.tellPutPtr();
 
 	//change this later if ptr len is not constant
 	uint8_t childPtrLen = 2;

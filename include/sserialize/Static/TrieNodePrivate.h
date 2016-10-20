@@ -39,12 +39,12 @@ public:
 	virtual std::string str() const = 0;
 	virtual int32_t posOfChar(uint32_t ucode) const = 0;
 	virtual void dump() const = 0;
-	virtual uint32_t getStorageSize() const = 0;
-	virtual uint32_t getHeaderStorageSize() const = 0;
-	virtual uint32_t getNodeStringStorageSize() const = 0;
-	virtual uint32_t getChildPtrStorageSize() const = 0;
-	virtual uint32_t getChildCharStorageSize() const = 0;
-	virtual uint32_t getIndexPtrStorageSize() const = 0;
+	virtual UByteArrayAdapter::SizeType getStorageSize() const = 0;
+	virtual UByteArrayAdapter::SizeType getHeaderStorageSize() const = 0;
+	virtual UByteArrayAdapter::SizeType getNodeStringStorageSize() const = 0;
+	virtual UByteArrayAdapter::SizeType getChildPtrStorageSize() const = 0;
+	virtual UByteArrayAdapter::SizeType getChildCharStorageSize() const = 0;
+	virtual UByteArrayAdapter::SizeType getIndexPtrStorageSize() const = 0;
 	virtual uint32_t getExactIndexPtr() const = 0;
 	virtual uint32_t getPrefixIndexPtr() const = 0;
 	virtual uint32_t getSuffixIndexPtr() const = 0;
@@ -78,12 +78,12 @@ public:
 	virtual std::string str() const { return std::string();}
 	virtual int32_t posOfChar(uint32_t /*ucode*/) const { return -1;}
 	virtual void dump() const {}
-	virtual uint32_t getStorageSize() const { return 0;}
-	virtual uint32_t getHeaderStorageSize() const { return 0;}
-	virtual uint32_t getNodeStringStorageSize() const { return 0;}
-	virtual uint32_t getChildPtrStorageSize() const { return 0;}
-	virtual uint32_t getChildCharStorageSize() const { return 0;}
-	virtual uint32_t getIndexPtrStorageSize() const { return 0;}
+	virtual UByteArrayAdapter::SizeType getStorageSize() const { return 0;}
+	virtual UByteArrayAdapter::SizeType getHeaderStorageSize() const { return 0;}
+	virtual UByteArrayAdapter::SizeType getNodeStringStorageSize() const { return 0;}
+	virtual UByteArrayAdapter::SizeType getChildPtrStorageSize() const { return 0;}
+	virtual UByteArrayAdapter::SizeType getChildCharStorageSize() const { return 0;}
+	virtual UByteArrayAdapter::SizeType getIndexPtrStorageSize() const { return 0;}
 	virtual uint32_t getExactIndexPtr() const { return 0;}
 	virtual uint32_t getPrefixIndexPtr() const { return 0;}
 	virtual uint32_t getSuffixIndexPtr() const { return 0;}

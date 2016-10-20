@@ -70,12 +70,12 @@ public:
 	virtual int32_t posOfChar(uint32_t ucode) const;
 	virtual void dump() const;
 
-	virtual uint32_t getStorageSize() const;
-	virtual uint32_t getHeaderStorageSize() const;
-	virtual uint32_t getNodeStringStorageSize() const;
-	virtual uint32_t getChildPtrStorageSize() const;
-	virtual uint32_t getChildCharStorageSize() const;
-	virtual uint32_t getIndexPtrStorageSize() const;
+	virtual UByteArrayAdapter::SizeType getStorageSize() const;
+	virtual UByteArrayAdapter::SizeType getHeaderStorageSize() const;
+	virtual UByteArrayAdapter::SizeType getNodeStringStorageSize() const;
+	virtual UByteArrayAdapter::SizeType getChildPtrStorageSize() const;
+	virtual UByteArrayAdapter::SizeType getChildCharStorageSize() const;
+	virtual UByteArrayAdapter::SizeType getIndexPtrStorageSize() const;
 
 	virtual uint32_t getExactIndexPtr() const;
 	virtual uint32_t getPrefixIndexPtr() const;

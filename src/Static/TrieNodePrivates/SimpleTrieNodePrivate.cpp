@@ -128,28 +128,28 @@ void SimpleTrieNodePrivate::dump() const {
 	std::cout << childCharStr << ")]" << std::endl << std::flush;
 }
 
-uint32_t SimpleTrieNodePrivate::getStorageSize() const {
+UByteArrayAdapter::SizeType SimpleTrieNodePrivate::getStorageSize() const {
 	return 5+strLen()+8*m_childCount+16;
 }
 
-uint32_t SimpleTrieNodePrivate::getHeaderStorageSize() const {
+UByteArrayAdapter::SizeType SimpleTrieNodePrivate::getHeaderStorageSize() const {
 	return 4;
 }
 
 
-uint32_t SimpleTrieNodePrivate::getNodeStringStorageSize() const {
+UByteArrayAdapter::SizeType SimpleTrieNodePrivate::getNodeStringStorageSize() const {
 	return 1 + strLen();
 }
 
-uint32_t SimpleTrieNodePrivate::getChildPtrStorageSize() const {
+UByteArrayAdapter::SizeType SimpleTrieNodePrivate::getChildPtrStorageSize() const {
 	return m_childCount*4;
 }
 
-uint32_t SimpleTrieNodePrivate::getChildCharStorageSize() const {
+UByteArrayAdapter::SizeType SimpleTrieNodePrivate::getChildCharStorageSize() const {
 	return 4*m_childCount;
 }
 
-uint32_t SimpleTrieNodePrivate::getIndexPtrStorageSize() const {
+UByteArrayAdapter::SizeType SimpleTrieNodePrivate::getIndexPtrStorageSize() const {
 	return 16;
 }
 
@@ -168,7 +168,7 @@ unsigned int
 SimpleStaticTrieCreationNode::createNewNode(
     const sserialize::Static::TrieNodeCreationInfo& nodeInfo, UByteArrayAdapter& destination) {
 
-	uint32_t childrenCount = nodeInfo.childChars.size();
+	uint32_t childrenCount = (uint32_t) nodeInfo.childChars.size();
 
 	if (childrenCount > 0xFFFF) {
 		std::cout << "Error: too many children" << std::endl;

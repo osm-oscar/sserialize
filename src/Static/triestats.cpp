@@ -235,7 +235,7 @@ void TrieStats::recurse(const sserialize::Static::TrieNode& node, uint32_t level
 				info.bitsMinMaxPerLevel[level].second = idx.bpn();
 
 			//raw id frequencies
-			for(size_t i = 0; i < idx.size(); i++) {
+			for(uint32_t i = 0; i < idx.size(); i++) {
 				uint32_t id = idx.at(i);
 	
 				if (info.IdFreq.count(id) == 0) {
@@ -390,7 +390,7 @@ bool writeIndexToFile(ItemIndex& idx, const std::string & fileName) {
 	file << "plot \"-\" using 1:2 with linespoints title \"IDs with " << static_cast<uint32_t>(idx.bpn()) << " bits\", ";
 	file << 0 << "\t" << idx.at(0) << "\t" << 0 << "\t" << 0 << std::endl;
 	uint32_t count = 0;
-	for(size_t i = 1; i < idx.size(); i++) {
+	for(uint32_t i = 1; i < idx.size(); i++) {
 		curOffsetDiff = idx.at(i) - curOffSetCorrection;
 		if (curOffsetDiff > maxOffsetPositive) maxOffsetPositive = curOffsetDiff;
 		if (curOffsetDiff < minOffsetNegative) minOffsetNegative = curOffsetDiff;

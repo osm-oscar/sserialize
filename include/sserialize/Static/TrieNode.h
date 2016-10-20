@@ -46,12 +46,12 @@ public:
 
 	inline void dump() const { priv()->dump();}
 
-	inline uint32_t getStorageSize() const { return priv()->getStorageSize(); }
-	inline uint32_t getHeaderStorageSize() const { return priv()->getHeaderStorageSize(); }
-	inline uint32_t getNodeStringStorageSize() const { return priv()->getNodeStringStorageSize();}
-	inline uint32_t getChildPtrStorageSize() const { return priv()->getChildPtrStorageSize();}
-	inline uint32_t getChildCharStorageSize() const { return priv()->getChildCharStorageSize();}
-	inline uint32_t getIndexPtrStorageSize() const { return priv()->getIndexPtrStorageSize();}
+	inline UByteArrayAdapter::SizeType getStorageSize() const { return priv()->getStorageSize(); }
+	inline UByteArrayAdapter::SizeType getHeaderStorageSize() const { return priv()->getHeaderStorageSize(); }
+	inline UByteArrayAdapter::SizeType getNodeStringStorageSize() const { return priv()->getNodeStringStorageSize();}
+	inline UByteArrayAdapter::SizeType getChildPtrStorageSize() const { return priv()->getChildPtrStorageSize();}
+	inline UByteArrayAdapter::SizeType getChildCharStorageSize() const { return priv()->getChildCharStorageSize();}
+	inline UByteArrayAdapter::SizeType getIndexPtrStorageSize() const { return priv()->getIndexPtrStorageSize();}
 
 	inline uint32_t getIndexPtr() const { return 0xFFFFFFFF;}
 	inline uint32_t getExactIndexPtr() const { return priv()->getExactIndexPtr();}

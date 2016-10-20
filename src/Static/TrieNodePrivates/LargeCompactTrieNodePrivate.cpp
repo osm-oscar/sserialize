@@ -33,17 +33,17 @@ m_substrIndexPtr(0)
 	
 	//get the string length
 	m_strLen = m_data.getUint8();
-	m_strBegin = m_data.tellGetPtr();
+	narrow_check_assign(m_strBegin, m_data.tellGetPtr() );
 	m_data.incGetPtr(m_strLen);
 
 	//skip the pointers
-	m_childArrayStart = m_data.tellGetPtr();
+	narrow_check_assign(m_childArrayStart) = m_data.tellGetPtr();
 	m_data.incGetPtr(charWidth()*childCount());
 	
 	//child ptr stuff
 	if (childCount()) {
 		m_childPtrBaseOffset = m_data.getVlPackedUint32();
-		m_childPointerArrayStart = m_data.tellGetPtr();
+		narrow_check_assign(m_childPointerArrayStart, m_data.tellGetPtr());
 		if (childCount()) {
 			m_data.incGetPtr( CompactUintArray::minStorageBytes(childPtrBits(), childCount()-1) );
 		}
@@ -61,7 +61,7 @@ m_substrIndexPtr(0)
 		if (hasSuffixPrefixIndex())
 			m_substrIndexPtr = indexPtrBaseOffset + m_data.getVlPackedUint32();
 	}
-	m_myEndPtr = m_data.tellGetPtr();
+	narrow_check_assign(m_myEndPtr) = m_data.tellGetPtr();
 }
 
 uint32_t LargeCompactTrieNodePrivate::getChildPtrBeginOffset() const {
@@ -188,19 +188,19 @@ void LargeCompactTrieNodePrivate::dump() const {
 }
 
 
-uint32_t LargeCompactTrieNodePrivate::getStorageSize() const {
+UByteArrayAdapter::SizeType LargeCompactTrieNodePrivate::getStorageSize() const {
 	return m_myEndPtr;
 }
 
-uint32_t LargeCompactTrieNodePrivate::getHeaderStorageSize() const {
+UByteArrayAdapter::SizeType LargeCompactTrieNodePrivate::getHeaderStorageSize() const {
 	return 2 + psize_vu32(m_childCount >> 3);
 }
 
-uint32_t LargeCompactTrieNodePrivate::getNodeStringStorageSize() const {
+UByteArrayAdapter::SizeType LargeCompactTrieNodePrivate::getNodeStringStorageSize() const {
 	return 1 + strLen();
 }
 
-uint32_t LargeCompactTrieNodePrivate::getChildPtrStorageSize() const {
+UByteArrayAdapter::SizeType LargeCompactTrieNodePrivate::getChildPtrStorageSize() const {
 	if (childCount()) {
 		uint32_t s = psize_vu32(m_childPtrBaseOffset);
 		if (childCount() > 1)
@@ -210,11 +210,11 @@ uint32_t LargeCompactTrieNodePrivate::getChildPtrStorageSize() const {
 	return 0;
 }
 
-uint32_t LargeCompactTrieNodePrivate::getChildCharStorageSize() const {
+UByteArrayAdapter::SizeType LargeCompactTrieNodePrivate::getChildCharStorageSize() const {
 	return charWidth()*m_childCount;
 }
 
-uint32_t LargeCompactTrieNodePrivate::getIndexPtrStorageSize() const {
+UByteArrayAdapter::SizeType LargeCompactTrieNodePrivate::getIndexPtrStorageSize() const {
 	return getStorageSize()-(getHeaderStorageSize()+getNodeStringStorageSize()+getChildPtrStorageSize()+getChildCharStorageSize());
 }
 
@@ -241,7 +241,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 	
 	destination.putUint16(header);
 	if (nodeInfo.childChars.size() > 0x7) {
-		destination.putVlPackedUint32(nodeInfo.childChars.size() >> 3);
+		destination.putVlPackedUint32((uint32_t) (nodeInfo.childChars.size() >> 3));
 	}
 	
 	//node string
@@ -283,7 +283,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 			std::vector<uint32_t> childPtrs = nodeInfo.childPtrs;
 			uint32_t curChildPtrOffset = childPtrs[0];
 			childPtrs[0] = 0;
-			for(uint32_t i = 1, s = childPtrs.size(); i < s; ++i) {
+			for(uint32_t i = 1, s = (uint32_t) childPtrs.size(); i < s; ++i) {
 				childPtrs[i] -= curChildPtrOffset;
 				if (i % CHILDPTR_STRIPE_SIZE == 0) {
 					curChildPtrOffset += childPtrs[i];
@@ -297,7 +297,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 			childPtrBits = CompactUintArray::minStorageBits(maxOffset);
 			UByteArrayAdapter tempD(new std::vector<uint8_t>(CompactUintArray::minStorageBytes(childPtrBits, nodeInfo.childChars.size()-1)), true);
 			CompactUintArray carr(tempD, childPtrBits);
-			for(uint32_t i = 1, s = childPtrs.size(); i < s; ++i) {
+			for(uint32_t i = 1, s = (uint32_t) childPtrs.size(); i < s; ++i) {
 				carr.set(i-1, childPtrs[i]);
 			}
 			destination.putData(carr.data());
