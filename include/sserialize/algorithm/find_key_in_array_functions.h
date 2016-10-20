@@ -67,7 +67,7 @@ inline SizeType binarySearchKeyInArray(const TRANDOM_ACCESS_CONTAINER & containe
 	SignedSizeType right = len-1;
 	SignedSizeType mid = (right-left)/2+left;
 	while( left < right ) {
-		int cmp = compareWrapper(container.at(mid), key);
+		int cmp = compareWrapper(container.at((SizeType) mid), key);
 		if (cmp == 0)
 			return mid;
 		if (cmp < 1) { // key should be to the right
@@ -78,7 +78,7 @@ inline SizeType binarySearchKeyInArray(const TRANDOM_ACCESS_CONTAINER & containe
 		}
 		mid = (right-left)/2+left;
 	}
-	return ((container.at(mid) == key) ? mid : std::numeric_limits<SizeType>::max());
+	return ((container.at((SizeType) mid) == key) ? mid : std::numeric_limits<SizeType>::max());
 }
 
 
