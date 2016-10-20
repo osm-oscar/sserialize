@@ -168,7 +168,7 @@ CompressedMmappedFilePrivate::~CompressedMmappedFilePrivate() {
 	do_close();
 }
 
-void CompressedMmappedFilePrivate::setCacheCount(uint32_t count) {
+void CompressedMmappedFilePrivate::setCacheCount(sserialize::CompressedMmappedFilePrivate::ChunkIndexType count) {
 	if (valid() && chunkSize()*count > m_decTileFile.size()) {
 		m_decTileFile.resize(chunkSize()*count);
 		//repopulate free list
@@ -203,9 +203,9 @@ bool CompressedMmappedFilePrivate::do_open() {
 	if (!S_ISREG (stFileInfo.st_mode))
 		return false;
 
-	if (fileSize <= COMPRESSED_MMAPPED_FILE_HEADER_SIZE)
+	if (fileSize <= COMPRESSED_MMAPPED_FILE_HEADER_SIZE) {
 		return false;
-
+	}
 	
 	uint8_t headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE];
 	::lseek64(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
@@ -223,6 +223,10 @@ bool CompressedMmappedFilePrivate::do_open() {
 	m_chunkMask = createMask(m_chunkShift);
 	m_size = up_u40(&headerData[1]);
 	m_compressedSize = up_u40(&headerData[6]);
+	
+	if ( (std::size_t) (m_compressedSize / chunkSize()) + 1 > (std::size_t) std::numeric_limits<ChunkIndexType>::max() ) {
+		throw sserialize::OutOfBoundsException("CompressedMmappedFile: too many chunks");
+	}
 	
 	//prepare the data for the index
 	size_t mapOverHead = (m_compressedSize % m_pageSize);
@@ -305,21 +309,22 @@ bool CompressedMmappedFilePrivate::do_close() {
 	return true;
 }
 
-void CompressedMmappedFilePrivate::mmapChunkParameters(CompressedMmappedFilePrivate::SizeType chunk, size_t& mapOverHead, off_t& beginOffset, size_t& mapLen) {
+void CompressedMmappedFilePrivate::mmapChunkParameters(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, size_t& mapOverHead, off_t& beginOffset, size_t& mapLen) {
 	SizeType offset = m_chunkIndex.at(chunk);
-	uint32_t chunkLen;
-	if (chunk+1 < m_chunkIndex.size())
+	ChunkSizeType chunkLen;
+	if (chunk+1 < m_chunkIndex.size()) {
 		chunkLen = m_chunkIndex.at(chunk+1) - offset;
-	else
+	}
+	else {
 		chunkLen = m_compressedSize - offset;
-
+	}
 	mapOverHead = offset % m_pageSize;
 	beginOffset = offset - mapOverHead; //offset in pageSizes
 	mapLen = mapOverHead + chunkLen;
 }
 
 
-uint8_t* CompressedMmappedFilePrivate::mmapChunk(CompressedMmappedFilePrivate::SizeType chunk) {
+uint8_t* CompressedMmappedFilePrivate::mmapChunk(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk) {
 	size_t mapOverHead;
 	off_t beginOffset;
 	size_t mapLen;
@@ -334,7 +339,7 @@ uint8_t* CompressedMmappedFilePrivate::mmapChunk(CompressedMmappedFilePrivate::S
 	return data+mapOverHead;
 }
 
-void CompressedMmappedFilePrivate::ummapChunk(CompressedMmappedFilePrivate::SizeType chunk, uint8_t * data) {
+void CompressedMmappedFilePrivate::ummapChunk(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, uint8_t* data) {
 	size_t mapOverHead;
 	off_t beginOffset;
 	size_t mapLen;
@@ -346,7 +351,7 @@ void CompressedMmappedFilePrivate::ummapChunk(CompressedMmappedFilePrivate::Size
 
 
 
-bool CompressedMmappedFilePrivate::do_unpack(const CompressedMmappedFilePrivate::SizeType chunk, uint8_t * dest) {
+bool CompressedMmappedFilePrivate::do_unpack(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, uint8_t* dest) {
 	size_t mapOverHead;
 	off_t beginOffset;
 	size_t mapLen;
@@ -368,10 +373,10 @@ bool CompressedMmappedFilePrivate::do_unpack(const CompressedMmappedFilePrivate:
 	return (ok == LZO_E_OK);
 }
 
-bool CompressedMmappedFilePrivate::populate(sserialize::CompressedMmappedFilePrivate::SizeType chunk, uint8_t*& dest) {
+bool CompressedMmappedFilePrivate::populate(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, uint8_t*& dest) {
 	if (m_chunkTypeBitSet.isSet(chunk)) {
-		//get a free chunk from the free list (there always has to be one,  otherwise theis function was called without evition)
-		uint32_t decChunkOffset = m_freeList.back() * chunkSize();
+		//get a free chunk from the free list (there always has to be one, otherwise this function was called without evition)
+		SizeType decChunkOffset = m_freeList.back() * (SizeType) chunkSize();
 		m_freeList.pop_back();
 		dest = m_decTileFile.data()+decChunkOffset;
 		return do_unpack(chunk, dest);
@@ -382,7 +387,7 @@ bool CompressedMmappedFilePrivate::populate(sserialize::CompressedMmappedFilePri
 	}
 }
 
-bool CompressedMmappedFilePrivate::evict(uint32_t & evictedChunk, uint32_t & associatedChunkStoragePostion) {
+bool CompressedMmappedFilePrivate::evict(sserialize::CompressedMmappedFilePrivate::ChunkIndexType& evictedChunk, sserialize::CompressedMmappedFilePrivate::ChunkIndexType& associatedChunkStoragePostion) {
 	if (m_cache.occupyCount() == 0)
 		return false;
 	evictedChunk = m_cache.findVictim();
@@ -405,12 +410,12 @@ bool CompressedMmappedFilePrivate::evict(uint32_t & evictedChunk, uint32_t & ass
 }
 
 
-uint32_t CompressedMmappedFilePrivate::chunkCount() const {
-	uint32_t tmp = m_compressedSize / chunkSize();
+CompressedMmappedFilePrivate::ChunkIndexType CompressedMmappedFilePrivate::chunkCount() const {
+	ChunkIndexType tmp = (ChunkIndexType) (m_compressedSize / chunkSize());
 	return ((m_compressedSize % chunkSize()) ? tmp+1 : tmp); 
 }
 
-uint8_t * CompressedMmappedFilePrivate::chunkData(const CompressedMmappedFilePrivate::SizeType chunk) {
+uint8_t * CompressedMmappedFilePrivate::chunkData(const sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk) {
 	uint32_t chunkStoragePostion = m_cache[chunk]; //returns -1 if not set, usage will be increased by one, but also reset to zero below due to insertion
 	if (chunkStoragePostion < std::numeric_limits<uint32_t>::max()) {
 		return m_chunkStorage[chunkStoragePostion];
@@ -435,7 +440,7 @@ uint8_t * CompressedMmappedFilePrivate::chunkData(const CompressedMmappedFilePri
 }
 
 uint8_t * CompressedMmappedFilePrivate::data(const CompressedMmappedFilePrivate::SizeType offset) {
-	SizeType chunk = this->chunk(offset);
+	ChunkIndexType chunk = this->chunk(offset);
 	SizeType inChunkOffSet = this->inChunkOffSet(offset);
 	uint8_t * data = chunkData(chunk);
 	return data + inChunkOffSet;
@@ -446,17 +451,18 @@ void CompressedMmappedFilePrivate::read(const CompressedMmappedFilePrivate::Size
 		len = 0;
 		return;
 	}
-	if (offset+len > m_size)
+	if (offset+len > m_size) {
 		len =  m_size - offset;
-		
+	}
+	
 	SizeType chunkSize = this->chunkSize();
 	
-	SizeType beginChunk = chunk(offset);
-	SizeType endChunk = chunk(offset+len-1);
+	ChunkIndexType beginChunk = chunk(offset);
+	ChunkIndexType endChunk = chunk(offset+len-1);
 
 	::memmove(dest, chunkData(beginChunk)+inChunkOffSet(offset), sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(offset)));
-	dest += sizeof(uint8_t)*std::min<uint32_t>(len, chunkSize-inChunkOffSet(offset));
-	for(SizeType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
+	dest += sizeof(uint8_t)*std::min<ChunkSizeType>(len, chunkSize-inChunkOffSet(offset));
+	for(ChunkIndexType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(dest, chunkData(i), sizeof(uint8_t)*chunkSize);
 		dest += chunkSize;
 	}
@@ -466,15 +472,15 @@ void CompressedMmappedFilePrivate::read(const CompressedMmappedFilePrivate::Size
 }
 
 
-inline uint32_t CompressedMmappedFilePrivate::chunk(const CompressedMmappedFilePrivate::SizeType offset) const {
-	return offset >> m_chunkShift;
+CompressedMmappedFilePrivate::ChunkIndexType CompressedMmappedFilePrivate::chunk(const CompressedMmappedFilePrivate::SizeType offset) const {
+	return (ChunkIndexType) (offset >> m_chunkShift);
 }
 
-inline uint32_t CompressedMmappedFilePrivate::inChunkOffSet(const CompressedMmappedFilePrivate::SizeType offset) const {
-	return offset & m_chunkMask;
+CompressedMmappedFilePrivate::ChunkSizeType CompressedMmappedFilePrivate::inChunkOffSet(const CompressedMmappedFilePrivate::SizeType offset) const {
+	return (ChunkSizeType) (offset & m_chunkMask);
 }
 
-inline bool CompressedMmappedFilePrivate::valid() const {
+bool CompressedMmappedFilePrivate::valid() const {
 	return m_fd >= 0;
 }
 

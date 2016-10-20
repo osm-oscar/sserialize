@@ -79,11 +79,13 @@ class CompressedMmappedFilePrivate: public RefCountObject  {
 public:
 	typedef CompressedMmappedFile::SizeType SizeType;
 	typedef DirectRandomCache<uint32_t> MyCacheType;
+	typedef uint32_t ChunkIndexType;
+	typedef SizeType ChunkSizeType;
 private:
 	std::string m_fileName;
 	SizeType m_size; //Total size of the decompressed file
 	int m_fd;
-	size_t m_pageSize;
+	std::size_t m_pageSize;
 	std::size_t m_compressedSize;
 	
 	uint8_t * m_chunkIndexData;
@@ -101,35 +103,35 @@ private:
 	std::vector<uint8_t*> m_chunkStorage;
 private:
 	
-	void mmapChunkParameters(SizeType chunk, size_t & mapOverHead, off_t & beginOffset, size_t & mapLen);
+	void mmapChunkParameters(ChunkIndexType chunk, size_t & mapOverHead, off_t & beginOffset, size_t & mapLen);
 	
 	///@return ptr to the beginning of the chunk
-	uint8_t * mmapChunk(sserialize::CompressedMmappedFilePrivate::SizeType chunk);
+	uint8_t * mmapChunk(ChunkIndexType chunk);
 	///@param data: ptr to the beginning of the chunk
-	void ummapChunk(sserialize::CompressedMmappedFilePrivate::SizeType chunk, uint8_t * data);
+	void ummapChunk(ChunkIndexType chunk, uint8_t * data);
 
 	///This function uncompresses chunk number @chunk into @dest
-	bool do_unpack(const sserialize::CompressedMmappedFilePrivate::SizeType chunk, uint8_t * dest);
+	bool do_unpack(ChunkIndexType chunk, uint8_t * dest);
 	
 	/** This functions populates the chunkStorage with chunk @chunk */
-	bool populate(SizeType chunk, uint8_t* & dest);
+	bool populate(ChunkIndexType chunk, uint8_t* & dest);
 	
 	/** This function evicts a chunk from the cache
 	  * it returns the chosen chunk, 0xFFFFFFFF on failure
 	  * It checks the type of the chosen chunk an removed mmapped locations or puts the freed decTileChunk back into the freeList
 	  *
 	  */
-	bool evict(uint32_t & evictedChunk, uint32_t & associatedChunkStoragePostion);
+	bool evict(ChunkIndexType & evictedChunk, ChunkIndexType & associatedChunkStoragePostion);
 	
-	inline uint32_t chunkSize() const { return 1 << m_chunkShift; }
-	uint32_t chunkCount() const;
+	inline ChunkSizeType chunkSize() const { return 1 << m_chunkShift; }
+	ChunkIndexType chunkCount() const;
 public:
 	CompressedMmappedFilePrivate();
 	virtual ~CompressedMmappedFilePrivate();
 	inline void setFileName(std::string fileName) { m_fileName = fileName; }
 	
 	///sets the cache count, costly operation
-	void setCacheCount(uint32_t count);
+	void setCacheCount(ChunkIndexType count);
 
 	///@return Total size of the decompressed data
 	inline SizeType size() const { return m_size; }
@@ -150,9 +152,9 @@ public:
 	void read(const SizeType offset, uint8_t * dest, SizeType & len);
 	
 	///This does not do any kind of correctnes checks! 
-	uint8_t * chunkData(const SizeType chunk);
-	uint32_t chunk(const sserialize::CompressedMmappedFilePrivate::SizeType offset) const;
-	uint32_t inChunkOffSet(const sserialize::CompressedMmappedFilePrivate::SizeType offset) const;
+	uint8_t * chunkData(const ChunkIndexType chunk);
+	ChunkIndexType chunk(const SizeType offset) const;
+	ChunkSizeType inChunkOffSet(const SizeType offset) const;
 };
 
 }//end namespace
