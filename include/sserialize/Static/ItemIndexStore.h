@@ -67,7 +67,7 @@ public:
 	template<typename T_ST>
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes(T_ST dummy = T_ST()) const;
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes(SerializationType t) const;
-	operator uint32_t() const { return m_d; }
+	operator uint32_t() const { return sserialize::narrow_check<uint32_t>( m_d ); }
 private:
 	uint64_t m_d;
 };
