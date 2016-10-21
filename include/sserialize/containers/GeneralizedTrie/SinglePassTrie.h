@@ -116,7 +116,7 @@ bool SinglePassTrie::fromStringsFactory(const T_ITEM_FACTORY & stringsFactory, c
 		uint32_t * suffixIndicesPtr = suffixIndicesMem.begin();
 	
 		auto indexStorageDistributor = [&exactIndicesPtr, &suffixIndicesPtr] (Node * node) {
-			uint32_t cap = node->exactValues.capacity();
+			std::size_t cap = node->exactValues.capacity();
 			node->exactValues = WindowedArray<uint32_t>(exactIndicesPtr, exactIndicesPtr+cap);
 			exactIndicesPtr = exactIndicesPtr+cap;
 			
