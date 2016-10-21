@@ -110,7 +110,7 @@ public:
 		}
 		SSERIALIZE_CHEAP_ASSERT(size >= 0 && m_size == (uint64_t)size);
 	}
-	CFLArray(container_type * container, uint64_t offset, uint32_t size) {
+	CFLArray(container_type * container, uint64_t offset, uint64_t size) {
 		m_d.backend = container;
 		m_offset = offset;
 		m_size = size;
@@ -118,7 +118,7 @@ public:
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_offset, offset);
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_size, size);
 	}
-	CFLArray(container_type * container, uint32_t size) {
+	CFLArray(container_type * container, uint64_t size) {
 		m_d.backend = container;
 		m_offset = 0;
 		m_size = size;
