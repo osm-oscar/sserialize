@@ -134,7 +134,7 @@ void MultiVarBitArrayPrivate::setSize(uint32_t newSize) {
 }
 
 uint32_t MultiVarBitArrayPrivate::bitConfigCount() const {
-	return m_bitSums.size();
+	return (uint32_t) m_bitSums.size();
 }
 
 
@@ -212,18 +212,21 @@ UByteArrayAdapter::OffsetType MultiVarBitArray::minStorageBytes(const uint32_t b
 
 MultiVarBitArrayCreator::MultiVarBitArrayCreator(const std::vector<uint8_t> & bitConfig, UByteArrayAdapter& data) : m_data(data), m_header(m_data) {
 	m_header.shrinkToPutPtr();
-	m_headerSize = MultiVarBitArray::HEADER_SIZE + CompactUintArray::minStorageBytes(5, bitConfig.size());
-	if (m_header.size() < m_headerSize)
+	m_headerSize = MultiVarBitArray::HEADER_SIZE + (uint32_t) CompactUintArray::minStorageBytes(5, bitConfig.size());
+	if (m_header.size() < m_headerSize) {
 		m_header.growStorage( m_headerSize - m_header.size() );
+	}
 	m_header.putUint8(0, 0);
 	m_header.putUint32(1, 0);
 	m_header.putUint8(5, bitConfig.size());
 	CompactUintArray carr(m_header+MultiVarBitArray::HEADER_SIZE, 5);
-	for(size_t i = 0; i < bitConfig.size(); i++) {
-		if (bitConfig[i]  == 0 || bitConfig[i] > 32)
+	for(uint32_t i = 0; i < bitConfig.size(); i++) {
+		if (bitConfig[i]  == 0 || bitConfig[i] > 32) {
 			carr.set(i, 31);
-		else
+		}
+		else {
 			carr.set(i, bitConfig[i]-1);
+		}
 	}
 	m_arr = MultiVarBitArray(m_header);
 }
