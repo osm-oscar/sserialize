@@ -1,6 +1,7 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/stats/statfuncs.h>
+#include <sserialize/utility/checks.h>
 #include <iostream>
 #include <set>
 #include <limits>
@@ -62,7 +63,7 @@ std::vector<long int> test32UBA(const std::vector<uint32_t> & nums, int testCoun
 }
 
 std::vector<long int> test32VLUBA(const std::vector<uint32_t> & nums, int testCount) {
-	int testLength = nums.size();
+	int testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 	for(int testNum = 0; testNum < testCount; ++testNum) {
@@ -83,7 +84,7 @@ std::vector<long int> test32VLUBA(const std::vector<uint32_t> & nums, int testCo
 }
 
 std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCount) {
-	int testLength = nums.size();
+	int testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 
@@ -105,7 +106,7 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 }
 
 std::vector<long int> test64UBA(const std::vector<uint64_t> & nums, int testCount) {
-	int testLength = nums.size();
+	int testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 	for(int testNum = 0; testNum < testCount; ++testNum) {
@@ -126,7 +127,7 @@ std::vector<long int> test64UBA(const std::vector<uint64_t> & nums, int testCoun
 }
 
 std::vector<long int> test64VLUBA(const std::vector<uint64_t> & nums, int testCount) {
-	int testLength = nums.size();
+	int testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 	for(int testNum = 0; testNum < testCount; ++testNum) {

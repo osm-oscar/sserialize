@@ -37,7 +37,7 @@ int main(int argc, char ** argv) {
 
 	{
 		sserialize::CompactUintArray carr(sserialize::UByteArrayAdapter(new std::vector<uint8_t>(), true), sserialize::CompactUintArray::minStorageBits(max) );
-		carr.reserve(values.size());
+		carr.reserve(sserialize::narrow_check<uint32_t>(values.size()));
 		uint32_t pos = 0;
 		for(std::vector<uint32_t>::const_iterator it(values.begin()); it != end; ++it) {
 			carr.set(pos, *it);
