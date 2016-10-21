@@ -215,7 +215,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 	else {//index is in store, so we have deduplication enabled
 		++m_hitCount;
 	}
-	return id;
+	return narrow_check<uint32_t>(id);
 }
 
 UByteArrayAdapter ItemIndexFactory::getFlushedData() {
@@ -548,10 +548,10 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	for(uint32_t i = 0; i < store.size(); ++i ) {
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
 		UByteArrayAdapter::MemoryView idxData( store.rawDataAt(i).asMemView() );
-		uncompressedSizes.push_back(idxData.size());
+		uncompressedSizes.push_back(narrow_check<uint32_t>(idxData.size()));
 		if (idxData.size() > bufferSize) {
 			delete[] outBuf;
-			bufferSize = idxData.size();
+			bufferSize = (uint32_t) idxData.size();
 			outBuf = new uint8_t[2*bufferSize];
 			
 		}
