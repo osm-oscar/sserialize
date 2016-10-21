@@ -55,10 +55,10 @@ template<typename TValue, typename T_STREAMING_SERIALIZER = detail::ArrayCreator
 class ArrayCreator {
 public:
 	typedef T_OFFSET_STORAGE OffsetContainer;
-	typedef uint32_t SizeType;
+	typedef sserialize::SizeType SizeType;
 private:
 	UByteArrayAdapter * m_dest;
-	uint32_t m_size;
+	SizeType m_size;
 	OffsetContainer m_offsets;
 	OffsetType m_dataLenPtr;
 	OffsetType m_dataBegin;
@@ -118,10 +118,10 @@ public:
 		m_offsets.clear();
 		m_dest->setPutPtr(m_dataBegin);
 	}
-	uint32_t size() const { return m_size; }
+	SizeType size() const { return m_size; }
 	const OffsetContainer & offsets() const { return m_offsets; }
-	void reserveOffsets(uint32_t size) { m_offsets.reserve(size); }
-	void reserve(uint32_t size) { reserveOffsets(size); }
+	void reserveOffsets(SizeType size) { m_offsets.reserve(size); }
+	void reserve(SizeType size) { reserveOffsets(size); }
 	void put(const TValue & value) {
 		beginRawPut();
 		m_ss(rawPut(), value);
@@ -135,7 +135,7 @@ public:
 	}
 	UByteArrayAdapter & rawPut() { return *m_dest;}
 	void endRawPut() {}
-	UByteArrayAdapter dataAt(uint32_t id) const {
+	UByteArrayAdapter dataAt(SizeType id) const {
 		sserialize::UByteArrayAdapter::OffsetType begin = 0;
 		sserialize::UByteArrayAdapter::OffsetType len = 0;
 		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
@@ -350,7 +350,7 @@ private:
 	SizeType m_pos;
 public:
 	VectorAbstractArrayIterator() : m_data(0), m_pos(0) {}
-	VectorAbstractArrayIterator(const Array<TReturnType> * data, uint32_t pos) : m_data(data), m_pos(pos) {}
+	VectorAbstractArrayIterator(const Array<TReturnType> * data, SizeType pos) : m_data(data), m_pos(pos) {}
 	VectorAbstractArrayIterator(const VectorAbstractArrayIterator & other) : m_data(other.m_data), m_pos(other.m_pos) {}
 	virtual ~VectorAbstractArrayIterator() override {}
 	virtual TReturnType get() const override { return m_data->at(m_pos);}
@@ -379,8 +379,8 @@ public:
 	VectorAbstractArray() {}
 	VectorAbstractArray(const Array<TValue> & d) : m_data(d) {}
 	virtual ~VectorAbstractArray() override {}
-	virtual uint32_t size() const override { return m_data.size(); }
-	virtual TValue at(uint32_t pos) const override { return m_data.at(pos); }
+	virtual SizeType size() const override { return m_data.size(); }
+	virtual TValue at(SizeType pos) const override { return m_data.at(pos); }
 	virtual const_iterator cbegin() const override { return new VectorAbstractArrayIterator<TValue>(&m_data, 0);}
 	virtual const_iterator cend() const override { return new VectorAbstractArrayIterator<TValue>(&m_data, m_data.size());}
 };
@@ -504,7 +504,7 @@ template<typename TValue>
 bool operator==(const sserialize::Static::Array<TValue> & dequeA, const std::deque<TValue> & dequeB) {
 	if (dequeA.size() != dequeB.size())
 		return false;
-	uint32_t size = dequeA.size();
+	std::size_t size = dequeA.size();
 	for(uint32_t i = 0; i < size; i++) {
 		if (dequeA.at(i) != dequeB.at(i))
 			return false;
