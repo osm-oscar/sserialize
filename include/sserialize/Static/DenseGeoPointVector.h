@@ -85,9 +85,9 @@ public:
 	inline ForwardIterator cbegin() const { return const_iterator(m_data, size(), false); }
 	inline ForwardIterator cend() const { return const_iterator(m_data, size(), true); }
 
-	inline GeoPoint at(uint32_t pos) const {
+	inline GeoPoint at(sserialize::SizeType pos) const {
 		if (pos < m_size) {
-			return *(cbegin()+pos);
+			return *(cbegin()+(uint32_t) pos);
 		}
 		return GeoPoint();
 	}
