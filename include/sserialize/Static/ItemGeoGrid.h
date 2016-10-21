@@ -75,16 +75,16 @@ public:
 		if (!definiteBins.size() && !possibleBins.size())
 			return ItemIndex();
 		
-		uint32_t binsToMerge = definiteBins.size() + possibleBins.size();
+		uint32_t binsToMerge = narrow_check<uint32_t>(definiteBins.size() + possibleBins.size());
 		if (approximate) {
 			if (binsToMerge < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
 				if (definiteBins.size())
 					if (possibleBins.size())
-						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1) + mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
+						return mergeBinIndices(definiteBins, 0, (uint32_t) (definiteBins.size()-1)) + mergeBinIndices(possibleBins, 0, (uint32_t) (possibleBins.size()-1));
 					else
-						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1);
+						return mergeBinIndices(definiteBins, 0, (uint32_t) (definiteBins.size()-1));
 				else if (possibleBins.size())
-					return mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
+					return mergeBinIndices(possibleBins, 0, (uint32_t) (possibleBins.size()-1));
 			}
 			else {
 				DynamicBitSet bitSet;
@@ -98,7 +98,7 @@ public:
 		else {
 			DynamicBitSet bitSet;
 			if (binsToMerge < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
-				ItemIndex idx = mergeBinIndices(possibleBins, 0, possibleBins.size()-1);
+				ItemIndex idx = mergeBinIndices(possibleBins, 0, (uint32_t) (possibleBins.size()-1));
 				uint32_t idxSize = idx.size();
 				for(uint32_t idxIt = 0; idxIt < idxSize; ++idxIt) {
 					uint32_t itemId = idx.at(idxIt);
@@ -141,7 +141,7 @@ public:
 				}
 				else
 					if (definiteBins.size() < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
-						return mergeBinIndices(definiteBins, 0, definiteBins.size()-1);
+						return mergeBinIndices(definiteBins, 0, (uint32_t) (definiteBins.size()-1));
 					}
 					else {
 						putBinIndicesInto(definiteBins, bitSet);
@@ -177,7 +177,7 @@ public:
 		uint32_t largestIdx = 0;
 		uint32_t smallestsIdx = 0xFFFFFFFF;
 		std::unordered_set<uint32_t> indexIds;
-		for(size_t i = 0; i < storage().size(); i++) {
+		for(uint32_t i = 0; i < storage().size(); i++) {
 			ItemIndex idx( indexFromBin(i) );
 			if (!idx.size())
 				++emptyIdx;
