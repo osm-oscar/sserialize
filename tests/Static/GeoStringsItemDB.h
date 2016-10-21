@@ -30,7 +30,7 @@ public:
 		return *this;
 	}
 	
-	uint32_t getSizeInBytes() const {
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const {
 		return priv()->getSizeInBytes();
 	}
 	
@@ -67,7 +67,7 @@ public:
 			return partner;
 		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY) );
 		ItemIndexPrivateSimpleCreator creator(partner.front(), partner.back(), partner.size(), cache);
-		for(size_t i = 0; i < partner.size(); i++) {
+		for(uint32_t i = 0; i < partner.size(); i++) {
 			uint32_t itemId = partner.at(i);
 			if (match(itemId, rect))
 				creator.push_back(itemId);

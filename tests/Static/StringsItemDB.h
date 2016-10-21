@@ -27,7 +27,7 @@ public:
 	}
 	
 	uint32_t size() const { return priv()->size(); }
-	uint32_t getSizeInBytes() const { return priv()->getSizeInBytes(); }
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const { return priv()->getSizeInBytes(); }
 	UByteArrayAdapter itemDataAt(uint32_t itemId) const { return priv()->itemDataAt(itemId); }
 	MetaDataDeSerializable itemPayloadAt(uint32_t itemId) const { return priv()->itemPayloadAt(itemId);}
 	const StringTable & stringTable() const { return priv()->stringTable(); }

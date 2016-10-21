@@ -43,8 +43,8 @@ public:
 	StringsItemDBPrivate();
 	StringsItemDBPrivate(const UByteArrayAdapter & db, const StringTable & stable);
 	virtual ~StringsItemDBPrivate();
-	inline uint32_t size() const { return m_itemStrings.size();}
-	inline uint32_t getSizeInBytes() const { return 1+m_itemStrings.getSizeInBytes()+m_payloads.getSizeInBytes();}
+	inline uint32_t size() const { return (uint32_t) m_itemStrings.size();}
+	inline sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const { return 1+m_itemStrings.getSizeInBytes()+m_payloads.getSizeInBytes();}
 	UByteArrayAdapter itemDataAt(uint32_t itemId) const;
 	MetaDataDeSerializable itemPayloadAt(uint32_t itemId) const;
 	const StringTable & stringTable() const { return m_stringTable; }

@@ -193,7 +193,7 @@ protected:
 		std::shared_ptr<sserialize::Static::UnicodeTrie::NodeCreator> nodeCreator( new Static::UnicodeTrie::detail::SimpleNodeCreator() );
 		std::unordered_set<uint32_t> separators;
 		
-		for(uint32_t i(0), s(items().size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) items().size()); i < s; ++i) {
 			const TestItemData & item = items()[i];
 			for(const std::string & itemStr : item.strs) {
 				std::string putStr = itemStr;

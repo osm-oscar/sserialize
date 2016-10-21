@@ -38,7 +38,7 @@ public:
 	}
 	virtual ~GeoStringsItemDBPrivate() {}
 	
-	uint32_t getSizeInBytes() const {
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const {
 		return 1 + MyParentClass::getSizeInBytes() + m_shapes.getSizeInBytes();
 	}
 
@@ -52,10 +52,11 @@ public:
 	ItemIndex complete(const sserialize::spatial::GeoRect & rect) const {
 		size_t size = MyParentClass::size();
 		UByteArrayAdapter cache( UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY) );
-		ItemIndexPrivateSimpleCreator creator(0, size, size, cache);
-		for(size_t i = 0; i < size; ++i) {
-			if (match(i, rect))
+		ItemIndexPrivateSimpleCreator creator(0, (uint32_t) size, (uint32_t) size, cache);
+		for(uint32_t i = 0; i < size; ++i) {
+			if (match(i, rect)) {
 				creator.push_back(i);
+			}
 		}
 		creator.flush();
 		return creator.getIndex();
