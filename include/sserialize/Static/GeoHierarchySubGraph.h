@@ -156,18 +156,18 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 			removed.clear();
 			
 			RegionDesc & rd = regionInfo.regionDesc.at((std::size_t)i);
-			rd.parentsBegin = regionInfo.regionParentsPtrs.size();
+			rd.parentsBegin = (uint32_t) regionInfo.regionParentsPtrs.size();
 
-			if (!filter(i)) { //region is not part of the hierarchy
+			if (!filter((uint32_t) i)) { //region is not part of the hierarchy
 				//use storeId to indicate that a region is not part of the hierarchy
 				continue;
 			}
 			else {
-				rd.storeId = gh.region(i).storeId();
+				rd.storeId = gh.region((uint32_t) i).storeId();
 			}
 			
 			//first find all the parents that are part of this hierarchy and that are removed
-			for(uint32_t rPIt(gh.regionParentsBegin(i)), rPEnd(gh.regionParentsEnd(i)); rPIt != rPEnd; ++rPIt) {
+			for(uint32_t rPIt(gh.regionParentsBegin((uint32_t) i)), rPEnd(gh.regionParentsEnd((uint32_t) i)); rPIt != rPEnd; ++rPIt) {
 				uint32_t rId = ghRegionPtrs.at(rPIt);
 				if (filter(rId)) {
 					added.push_back(rId);
@@ -214,7 +214,7 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 		}
 		//now move them to the real hierarchy
 		SSERIALIZE_CHEAP_ASSERT(regionInfo.regionDesc.size() == gh.regionSize());
-		for(uint32_t rId(0), s(regionInfo.regionDesc.size()); rId < s; ++rId) {
+		for(uint32_t rId(0), s((uint32_t) regionInfo.regionDesc.size()); rId < s; ++rId) {
 			m_regionDesc.emplace_back(m_regionParentsPtrs.size(), regionInfo.regionDesc.at(rId).storeId);
 			m_regionParentsPtrs.insert(m_regionParentsPtrs.end(), regionInfo.parentsBegin(rId), regionInfo.parentsEnd(rId));
 		}
@@ -238,7 +238,7 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 		uint32_t cPEnd(gh.cellParentsEnd(i));
 		
 		CellDesc cd;
-		cd.parentsBegin = m_cellParentsPtrs.size();
+		cd.parentsBegin = (uint32_t) m_cellParentsPtrs.size();
 		cd.itemsCount = gh.cellItemsCount(i);
 		
 		
@@ -273,12 +273,12 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 			std::sort(added.begin(), added.end());
 			
 			m_cellParentsPtrs.insert(m_cellParentsPtrs.end(), added.begin(), added.end());
-			cd.directParentsEnd = m_cellParentsPtrs.size();
+			cd.directParentsEnd = (uint32_t) m_cellParentsPtrs.size();
 			m_cellParentsPtrs.insert(m_cellParentsPtrs.end(), nonDirectParents.begin(), nonDirectParents.end());
 		}
 		else {
 			m_cellParentsPtrs.insert(m_cellParentsPtrs.end(), added.begin(), added.end());
-			cd.directParentsEnd = m_cellParentsPtrs.size();
+			cd.directParentsEnd = (uint32_t) m_cellParentsPtrs.size();
 			for(cPIt = cdPEnd; cPIt != cPEnd; ++cPIt) {
 				uint32_t rId = ghCellPtrs.at(cPIt);
 				if (filter(rId)) {
@@ -363,7 +363,7 @@ GeoHierarchySubGraph::createSubSet(const CellQueryResult & cqr, SubSet::Node* *n
 	SubSet::Node* * end = nodes+size;
 	for(SubSet::Node* * it(nodes); it != end; ++it) {
 		if (*it) {
-			uint32_t regionId = it-nodes;
+			uint32_t regionId = (uint32_t) (it-nodes);
 			const uint32_t * rPIt = rPPtrsBegin + m_regionDesc[regionId].parentsBegin;
 			const uint32_t * rPEnd = rPPtrsBegin + m_regionDesc[regionId+1].parentsBegin;
 			if (rPIt != rPEnd) {

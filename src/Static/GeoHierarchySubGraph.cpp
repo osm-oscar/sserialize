@@ -48,7 +48,7 @@ GeoHierarchySubGraph::TempRegionInfos::parentsBegin(uint32_t rid) const {
 
 GeoHierarchySubGraph::PointerContainer::const_iterator
 GeoHierarchySubGraph::TempRegionInfos::parentsEnd(uint32_t rid) const {
-	uint32_t parentsEnd = (rid == 0 ? regionParentsPtrs.size() : regionDesc.at(rid-1).parentsBegin);
+	uint32_t parentsEnd = (uint32_t) (rid == 0 ? regionParentsPtrs.size() : regionDesc.at(rid-1).parentsBegin);
 	SSERIALIZE_CHEAP_ASSERT(parentsEnd <= regionParentsPtrs.size());
 	return regionParentsPtrs.begin()+parentsEnd;
 }
@@ -67,10 +67,10 @@ GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse
 	if (cqr.cellCount() > m_cellDesc.size()*0.5 || sparse) {
 		std::vector<SubSet::Node*> nodes(m_regionDesc.size()+1, 0);
 		if (sparse) {
-			rootNode = createSubSet<true>(cqr, &(nodes[0]), nodes.size());
+			rootNode = createSubSet<true>(cqr, &(nodes[0]), (uint32_t) nodes.size());
 		}
 		else {
-			rootNode = createSubSet<false>(cqr, &(nodes[0]), nodes.size());
+			rootNode = createSubSet<false>(cqr, &(nodes[0]), (uint32_t) nodes.size());
 		}
 	}
 	else {
@@ -160,7 +160,7 @@ GeoHierarchySubGraph::parentsBegin(uint32_t rid) const {
 
 GeoHierarchySubGraph::PointerContainer::const_iterator
 GeoHierarchySubGraph::parentsEnd(uint32_t rid) const {
-	uint32_t parentsEnd = (rid+1 == m_regionDesc.size() ? m_regionParentsPtrs.size() : m_regionDesc.at(rid+1).parentsBegin);
+	uint32_t parentsEnd = (uint32_t) (rid+1 == m_regionDesc.size() ? m_regionParentsPtrs.size() : m_regionDesc.at(rid+1).parentsBegin);
 	SSERIALIZE_CHEAP_ASSERT(parentsEnd <= m_regionParentsPtrs.size());
 	return m_regionParentsPtrs.begin()+parentsEnd;
 }
