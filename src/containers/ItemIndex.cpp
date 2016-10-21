@@ -132,7 +132,7 @@ uint8_t ItemIndex::bpn() const {
 	return priv()->bpn();
 }
 
-uint32_t ItemIndex::getSizeInBytes() const {
+sserialize::UByteArrayAdapter::SizeType ItemIndex::getSizeInBytes() const {
 	return priv()->getSizeInBytes();
 }
 
@@ -190,8 +190,9 @@ void ItemIndex::toDisk() {
 	std::size_t s = size();
 	UByteArrayAdapter dest( ItemIndexPrivateSimpleCreator::createCache(front(), back(), s, true) );
 	ItemIndexPrivateSimpleCreator creator(front(), back(), s, dest);
-	for(uint32_t i = 0; i < s; ++i)
+	for(uint32_t i = 0; i < s; ++i) {
 		creator.push_back(at(i));
+	}
 	creator.flush();
 	this->operator=(creator.getIndex());
 }
@@ -271,7 +272,7 @@ ItemIndex ItemIndex::intersect(const std::vector<ItemIndex> & set) {
 	else if (set.size() == 2)
 		return ItemIndex::intersect(set.front(), set.back());
 	else {
-		return intersectWithTree(0, set.size()-1, set);
+		return intersectWithTree(0, (uint32_t) (set.size()-1), set);
 	}
 }
 
@@ -283,7 +284,7 @@ ItemIndex ItemIndex::unite(const std::vector<ItemIndex> & set) {
 	else if (set.size() == 2)
 		return *(set.begin()) + *(set.rbegin());
 	else {
-		return uniteWithTree(0, set.size()-1, set);
+		return uniteWithTree(0, (uint32_t) (set.size()-1), set);
 	}
 }
 

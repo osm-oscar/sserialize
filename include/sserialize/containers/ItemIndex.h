@@ -3,6 +3,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/containers/AbstractArray.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 #include <vector>
 #include <set>
 #include <deque>
@@ -12,7 +13,6 @@
 namespace sserialize {
 
 class DynamicBitSet;
-class UByteArrayAdapter;
 class ItemIndexPrivate;
 
 /** This class is an interface for an ItemIndex which is esential a set container of uint32_t,
@@ -58,7 +58,7 @@ public:
 	ItemIndex & operator=(const ItemIndex & idx);
 
 	uint32_t size() const;
-	uint32_t getSizeInBytes() const;
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
 	Types type() const;
 
 	int count(uint32_t id) const;
