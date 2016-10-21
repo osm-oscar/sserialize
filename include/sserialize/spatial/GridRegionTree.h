@@ -199,7 +199,7 @@ template<typename T_TYPES_CONTAINER>
 void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER::GridRefiner refiner) {
 	std::unordered_map<GeoRegion*, uint32_t> rPtr2IdH;
 	rPtr2IdH.reserve(m_regions.size());
-	for(uint32_t i = 0, s = m_regions.size(); i < s; ++i) {
+	for(uint32_t i = 0, s = (uint32_t) m_regions.size(); i < s; ++i) {
 		rPtr2IdH[ m_regions[i] ] = i;
 	}
 	
@@ -223,7 +223,7 @@ void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER:
 		GeoGrid::GridBin gridBin(initial.select(tile));
 		std::vector<uint32_t> tmp;
 		GeoRect tmpRect(initial.cellBoundary(gridBin));
-		for(uint32_t rIt(0), rEnd(m_regions.size()); rIt != rEnd; ++rIt) {
+		for(uint32_t rIt(0), rEnd((uint32_t) m_regions.size()); rIt != rEnd; ++rIt) {
 			if (m_regions[rIt]->intersects(tmpRect)) {
 				tmp.push_back(rIt);
 			}
@@ -247,7 +247,7 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 	uint32_t nodePtr = NullNodePtr;
 	#pragma omp critical
 	{
-		nodePtr = m_nodes.size();
+		nodePtr = (uint32_t) m_nodes.size();
 		m_nodes.push_back(Node(Node::NT_INVALID));
 	}
 	//remove regions that fully enclose this tile;
@@ -263,7 +263,7 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 		uint32_t childPtr = NullNodePtr;
 		#pragma omp critical
 		{
-			childPtr = m_nodePtr.size();
+			childPtr = (uint32_t) m_nodePtr.size();
 			Node & n = m_nodes[nodePtr];
 			n.internal().type = Node::NT_INTERNAL;
 			n.internalLeaf().valueBegin = m_leafInfo.size();
