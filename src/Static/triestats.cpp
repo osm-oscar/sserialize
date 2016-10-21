@@ -220,8 +220,8 @@ void TrieStats::recurse(const sserialize::Static::TrieNode& node, uint32_t level
 
 			info.storageDist["total"] += idx.getSizeInBytes();
 			
-			info.smallestIndex = std::min<uint32_t>(info.smallestIndex, idx.getSizeInBytes());
-			info.largestIndex = std::max<uint32_t>(info.largestIndex, idx.getSizeInBytes());
+			info.smallestIndex = std::min(info.smallestIndex, idx.getSizeInBytes());
+			info.largestIndex = std::max(info.largestIndex, idx.getSizeInBytes());
 
 			if (info.storageOverDepth.count(level) == 0)
 				info.storageOverDepth[level] = 0;
@@ -410,7 +410,7 @@ bool writeIndexToFile(ItemIndex& idx, const std::string & fileName) {
 void getLargestIndexRecurse( Static::TrieNode node, Static::ItemIndexStore indexFile, uint32_t count, std::map<uint32_t, uint32_t> * indexPositions) {
 	{
 		ItemIndex idx(indexFile.at(node.getIndexPtr()));
-		uint32_t idxsize =  idx.getSizeInBytes();
+		sserialize::UByteArrayAdapter::SizeType idxsize =  idx.getSizeInBytes();
 		if (indexPositions->size() > count) {
 			if (indexPositions->begin()->first < idxsize) {
 				indexPositions->erase(indexPositions->begin());

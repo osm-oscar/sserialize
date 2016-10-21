@@ -42,8 +42,8 @@ public:
 		double meanBitsPerRawId;
 		std::unordered_map<uint16_t, double> meanBitsPerLevel;
 		std::unordered_map<uint16_t, double> bitsVariancePerLevel;
-		uint32_t smallestIndex;
-		uint32_t largestIndex;
+		sserialize::UByteArrayAdapter::SizeType smallestIndex;
+		sserialize::UByteArrayAdapter::SizeType largestIndex;
 	};
 	
 	IndexInfo indexInfo[4];
