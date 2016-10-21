@@ -41,8 +41,8 @@ public:
 		d.resetPutPtr();
 		sserialize::Static::Array<uint32_t> sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
-		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t)sd.size());
+		for(uint32_t i = 0, s = (uint32_t) realValues.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
 		}
 	}
@@ -53,8 +53,8 @@ public:
 		d << realValues;
 		sserialize::Static::Array<std::string> sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
-		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t)sd.size());
+		for(uint32_t i = 0, s = (uint32_t) realValues.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("data size a", i), sd.dataAt(i).size(), sd.dataSize(i));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
 		}
@@ -64,15 +64,15 @@ public:
 		std::deque<std::string> realValues = createStrings(33, TestMask & rand());
 		UByteArrayAdapter d(new std::vector<uint8_t>(), true);
 		Static::ArrayCreator<std::string> creator(d);
-		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) realValues.size(); i < s; ++i) {
 			creator.beginRawPut();
 			creator.rawPut() << realValues[i];
 			creator.endRawPut();
 		}
 		sserialize::Static::Array<std::string> sd(creator.flush());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
-		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t)sd.size());
+		for(uint32_t i = 0, s = (uint32_t) realValues.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], sd.at(i));
 		}
 	}
@@ -83,11 +83,11 @@ public:
 		d << realValues;
 		sserialize::Static::Array< Static::Array<uint32_t>  > sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
-		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t)sd.size());
+		for(uint32_t i = 0, s = (uint32_t) realValues.size(); i < s; ++i) {
 			Static::Array<uint32_t> t = sd.at(i);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(toString("size at ", i), (uint32_t)realValues[i].size(), t.size());
-			for(uint32_t j = 0, sj = realValues[i].size(); j < sj; ++j) {
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(toString("size at ", i), (uint32_t)realValues[i].size(), (uint32_t)t.size());
+			for(uint32_t j = 0, sj = (uint32_t) realValues[i].size(); j < sj; ++j) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at [", i,":",j,"]"), realValues[i][j], t.at(j));
 			}
 		}
@@ -100,7 +100,7 @@ public:
 		d.resetPutPtr();
 		sserialize::Static::Array<uint32_t> sd(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t)sd.size());
 		{
 			sserialize::Static::Array<uint32_t>::const_iterator it(sd.cbegin());
 			sserialize::Static::Array<uint32_t>::const_iterator end(sd.cend());
@@ -121,8 +121,8 @@ public:
 		
 		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
 		
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), asd.size());
-		for(uint32_t i = 0, s = realValues.size(); i < s; ++i) {
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t)asd.size());
+		for(uint32_t i = 0, s = (uint32_t) realValues.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), realValues[i], asd.at(i));
 		}
 	}
@@ -138,7 +138,7 @@ public:
 
 		sserialize::AbstractArray<uint32_t> asd( new sserialize::Static::detail::VectorAbstractArray<uint32_t>(sd) );
 
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), sd.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), (uint32_t) sd.size());
 		{
 			sserialize::AbstractArray<uint32_t>::const_iterator it(asd.cbegin());
 			sserialize::AbstractArray<uint32_t>::const_iterator end(asd.cend());
@@ -157,7 +157,7 @@ public:
 		}
 		sserialize::Static::Array<uint32_t> sd(ac.flush());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", d.size(), sd.getSizeInBytes());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testSize, sd.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testSize, (uint32_t) sd.size());
 		for(uint32_t i = 0; i < testSize; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), i, sd.at(i));
 		}

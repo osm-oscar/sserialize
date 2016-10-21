@@ -34,7 +34,7 @@ public:
 	virtual void setUp() {
 		GeoStringsItemDB<TestItemData> srcDB = createDB();
 		m_srcGrid = spatial::ItemGeoGrid(spatial::GeoRect(0, 20, 0, 20), latcount, loncount);
-		for(size_t i = 0; i < srcDB.size(); i++) {
+		for(uint32_t i = 0; i < srcDB.size(); i++) {
 			if (srcDB.geoShape(i)) {
 				m_srcGrid.addItem(i, srcDB.geoShape(i));
 			}
@@ -79,8 +79,8 @@ public:
 		CPPUNIT_ASSERT(m_srcGrid.latCount() == m_grid.latCount());
 		CPPUNIT_ASSERT(m_srcGrid.lonCount() == m_grid.lonCount());
 		
-		for(size_t x = 0; x < m_srcGrid.latCount(); ++x) {
-			for(size_t y = 0; y < m_srcGrid.lonCount(); ++y) {
+		for(uint32_t x = 0; x < m_srcGrid.latCount(); ++x) {
+			for(uint32_t y = 0; y < m_srcGrid.lonCount(); ++y) {
 				std::set<uint32_t> * realSet = m_srcGrid.binAt(x,y);
 				std::set<uint32_t> testSet = m_grid.indexAt(x, y).toSet();
 				std::stringstream ss;

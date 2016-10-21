@@ -201,7 +201,7 @@ public:
 		CGAL::Random_points_in_disc_2<Point, Creator> g(m_discDiameter);
 		CGAL::cpp11::copy_n(g, NUM_TEST_POINTS, std::back_inserter(testPoints));
 		
-		for(uint32_t i(0), s(testPoints.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) testPoints.size()); i < s; ++i) {
 			double x = CGAL::to_double(testPoints[i].x());
 			double y = CGAL::to_double(testPoints[i].x());
 			CGALTriangulation::Face_handle fh = m_ctr.locate(Point(x, y));

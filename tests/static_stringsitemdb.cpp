@@ -43,19 +43,19 @@ public:
 	
 	void testSize() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("DB sizes don't match", static_cast<uint32_t>( m_db.size() ), m_sdb.size());
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("Reported sizeInBytes don't match", static_cast<uint32_t>( m_sdbData.size() ), m_sdb.getSizeInBytes());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("Reported sizeInBytes don't match", static_cast<sserialize::UByteArrayAdapter::SizeType>( m_sdbData.size() ), m_sdb.getSizeInBytes());
 	}
 	
 	void testStrings() {
 		std::stringstream ss;
 		CPPUNIT_ASSERT_EQUAL(static_cast<uint32_t>( m_db.size() ), m_sdb.size());
-		for(size_t i = 0; i < m_db.size(); i++) {
+		for(uint32_t i = 0; i < m_db.size(); i++) {
 			MyDBItemType item = m_db.at(i);
 			MyStaticDBItemType sitem = m_sdb.at(i);
 			ss << "Testing Item" << i;
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": string-count failed", item.strCount(), sitem.strCount());
 			uint32_t stringCount = item.strCount();
-			for(size_t j = 0; j < stringCount; j++) {
+			for(uint32_t j = 0; j < stringCount; j++) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": string-equality failed", item.strAt(j), sitem.strAt(j));
 			}
 		}
@@ -64,7 +64,7 @@ public:
 	void testPayload() {
 		std::stringstream ss;
 		CPPUNIT_ASSERT_EQUAL(static_cast<uint32_t>( m_db.size() ), m_sdb.size());
-		for(size_t i = 0; i < m_db.size(); i++) {
+		for(uint32_t i = 0; i < m_db.size(); i++) {
 			MyDBItemType item = m_db.at(i);
 			MyStaticDBItemType sitem = m_sdb.at(i);
 			ss << "Testing Item" << i;

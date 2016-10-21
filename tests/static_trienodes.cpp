@@ -110,7 +110,7 @@ void createNodeBottomUp(NodeConfig & config) {
 	}
 
 
-	config.nodeSize = nodeData.size()-config.nodeOffSet;
+	narrow_check_assign(config.nodeSize) = nodeData.size()-config.nodeOffSet;
 	prependToDeque(std::deque<uint8_t>(config.nodeOffSet, 0xFE), nodeData);
 
 	config.rawNodeData.swap(nodeData);
@@ -167,7 +167,7 @@ bool testNode(NodeConfig & config, StaticTrieNodeT & node) {
 		allOk = false;
 	}
 
-	uint32_t cummulatedStorageSize = node.getHeaderStorageSize() + node.getNodeStringStorageSize();
+	auto cummulatedStorageSize = node.getHeaderStorageSize() + node.getNodeStringStorageSize();
 	cummulatedStorageSize += node.getChildPtrStorageSize() + node.getChildCharStorageSize();
 	cummulatedStorageSize += node.getIndexPtrStorageSize();
 

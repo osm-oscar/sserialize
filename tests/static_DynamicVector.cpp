@@ -52,13 +52,13 @@ public:
 	void testDefaultSerializer() {
 		std::deque<uint32_t> rawData = sserialize::createNumbers(NumberOfItems);
 		sserialize::Static::DynamicVector<uint32_t, uint32_t> dynVec(NumberOfItems, NumberOfItems*sserialize::SerializationInfo<uint32_t>::length);
-		for(uint32_t i = 0, s = rawData.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) rawData.size(); i < s; ++i) {
 			dynVec.push_back(rawData[i]);
 		}
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", (uint32_t)rawData.size(), dynVec.size());
 		
-		for(uint32_t i = 0, s = rawData.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) rawData.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item at ", i), rawData[i], dynVec.at(i));
 		}
 	}
@@ -66,13 +66,13 @@ public:
 	void testComplexSerialize() {
 		std::vector<ComplexData> rawData(NumberOfItems);
 		sserialize::Static::DynamicVector<ComplexData> dynVec(NumberOfItems, NumberOfItems*12);
-		for(uint32_t i = 0, s = rawData.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) rawData.size(); i < s; ++i) {
 			dynVec.push_back(rawData[i], ComplexDataSerializer());
 		}
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", (uint32_t)rawData.size(), dynVec.size());
 		
-		for(uint32_t i = 0, s = rawData.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) rawData.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("item at ", i), rawData[i], dynVec.at(i, ComplexDataDeserializer()));
 		}
 	}

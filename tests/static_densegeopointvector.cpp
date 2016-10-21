@@ -58,7 +58,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), dgpv.size());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (sserialize::UByteArrayAdapter::OffsetType)d.size(), dgpv.getSizeInBytes());
 		
-		for(uint32_t i = 0, s = testPoints.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) testPoints.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("point at ", i), tr(testPoints.at(i)), dgpv.at(i));
 		}
 		
@@ -94,9 +94,9 @@ public:
 		
 		sserialize::AbstractArray<sserialize::spatial::GeoPoint> adgpv( new sserialize::Static::spatial::detail::DenseGeoPointVectorAbstractArray(dgpv) );
 		
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), adgpv.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), (uint32_t)adgpv.size());
 		
-		for(uint32_t i = 0, s = testPoints.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) testPoints.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("point at ", i), tr(testPoints.at(i)), adgpv.at(i));
 		}
 		
@@ -112,7 +112,7 @@ public:
 		
 		sserialize::Static::spatial::DenseGeoPointAbstractArray  adgpv( new sserialize::Static::spatial::detail::DenseGeoPointVectorAbstractArray(dgpv) );
 		
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), adgpv.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)testPoints.size(), (uint32_t) adgpv.size());
 		
 		uint32_t pos = 0;
 		for(sserialize::Static::spatial::DenseGeoPointAbstractArray::const_iterator it(adgpv.cbegin()), end(adgpv.cend()); it != end; ++it) {

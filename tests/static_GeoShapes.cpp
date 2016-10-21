@@ -123,7 +123,7 @@ public:
 		const sserialize::Static::spatial::GeoWay * sgw = gs.get<sserialize::Static::spatial::GeoWay>();
 		CPPUNIT_ASSERT_MESSAGE("static geoway cast", sgw);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("boundary", gw->boundary(), gs.boundary());
-		for(uint32_t i = 0, s = pts.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) pts.size(); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("GeoPoint at ", i), pts.at(i), sgw->points().at(i));
 		}
 	}
@@ -131,7 +131,7 @@ public:
 	void testPolygon() {
 		sserialize::SamplePolygonTestData testData;
 		sserialize::createHandSamplePolygons(testData);
-		for(uint32_t i = 0, s = testData.polys.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) testData.polys.size(); i < s; ++i) {
 			sserialize::spatial::GeoPolygon * gpoly = &(testData.polys[i].first);
 			sserialize::spatial::GeoShape * gs = gpoly;
 			std::vector<uint8_t> ds;
@@ -146,7 +146,7 @@ public:
 			const sserialize::Static::spatial::GeoPolygon * sgpoly = sgs.get<sserialize::Static::spatial::GeoPolygon>();
 			CPPUNIT_ASSERT_MESSAGE("static geopolygon cast", sgpoly);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("boundary", gs->boundary(), sgs.boundary());
-			for(uint32_t j = 0, s = gpoly->points().size(); j < s; ++j) {
+			for(uint32_t j = 0, s = (uint32_t) gpoly->points().size(); j < s; ++j) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("GeoPoint of Polygon ",i," at ", j), gpoly->points().at(j), sgpoly->points().at(j));
 			}
 		}
@@ -155,7 +155,7 @@ public:
 	void testMultiPolygon() {
 		sserialize::SamplePolygonTestData testData;
 		sserialize::createHandSamplePolygons(testData);
-		for(uint32_t i = 0, s = testData.polys.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) testData.polys.size(); i < s; ++i) {
 			sserialize::spatial::GeoMultiPolygon * gmpo = new sserialize::spatial::GeoMultiPolygon();
 			for(uint32_t j = 0; j < i; ++j) {
 				gmpo->outerPolygons().push_back(testData.polys[i].first);
@@ -178,12 +178,12 @@ public:
 			const sserialize::Static::spatial::GeoMultiPolygon * sgmpo = sgs.get<sserialize::Static::spatial::GeoMultiPolygon>();
 			CPPUNIT_ASSERT_MESSAGE("static GeoMultiPolygon cast", sgmpo);
 			
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("outerPolygons.size()", (uint32_t)gmpo->outerPolygons().size(), sgmpo->outerPolygons().size());
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("innerPolygons.size()", (uint32_t)gmpo->innerPolygons().size(), sgmpo->innerPolygons().size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("outerPolygons.size()", (uint32_t)gmpo->outerPolygons().size(), (uint32_t) sgmpo->outerPolygons().size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("innerPolygons.size()", (uint32_t)gmpo->innerPolygons().size(), (uint32_t) sgmpo->innerPolygons().size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("outerBoundary", gmpo->outerPolygonsBoundary(), sgmpo->outerPolygonsBoundary());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("innerBoundary", gmpo->innerPolygonsBoundary(), sgmpo->innerPolygonsBoundary());
 			
-			for(uint32_t j = 0, s = gmpo->outerPolygons().size(); j < s; ++j) {
+			for(uint32_t j = 0, s = (uint32_t) gmpo->outerPolygons().size(); j < s; ++j) {
 				const sserialize::spatial::GeoPolygon & gpoly = gmpo->outerPolygons().at(j);
 				sserialize::Static::spatial::GeoPolygon sgpoly = sgmpo->outerPolygons().at(j);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of outerPolygon ", j, " in run=", i), gpoly.size(), sgpoly.size());
@@ -191,7 +191,7 @@ public:
 					CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("GeoPoint at ", k," of run=", i, ", outerPolygons=", j), gpoly.points().at(k), sgpoly.points().at(k));
 				}
 			}
-			for(uint32_t j = 0, s = gmpo->innerPolygons().size(); j < s; ++j) {
+			for(uint32_t j = 0, s = (uint32_t) gmpo->innerPolygons().size(); j < s; ++j) {
 				const sserialize::spatial::GeoPolygon & gpoly = gmpo->innerPolygons().at(j);
 				sserialize::Static::spatial::GeoPolygon sgpoly = sgmpo->innerPolygons().at(j);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("size of innerPolygon ", j, " in run=", i), gpoly.size(), sgpoly.size());

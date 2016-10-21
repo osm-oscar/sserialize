@@ -55,7 +55,7 @@ DataItem createItem(const std::deque<std::string> & possibleStrings, uint8_t str
 
 bool createDataBase(uint32_t itemCount, uint8_t maxStrCount, const std::deque<std::string> possibleStrings,StringsItemDB<DataItem> & database) {
 	uint32_t rndnum;
-	for(size_t i = 0; i < itemCount; i++) {
+	for(uint32_t i = 0; i < itemCount; i++) {
 		rndnum = (double)rand()/RAND_MAX * maxStrCount;
 		DataItem item = createItem(possibleStrings, rndnum, i);
 		database.insert(item.strs, item);
@@ -72,7 +72,7 @@ bool testDataBase(const StringsItemDB<DataItem> & database, UByteArrayAdapter db
 	if (!checkAndDebugPrint("ERROR: Database has wrong getSizeInBytes", dbAdap.size(), stDB.getSizeInBytes()))
 		return false;
 	
-	for(size_t i = 0; i < database.size(); i++) {
+	for(uint32_t i = 0; i < database.size(); i++) {
 		typename sserialize::Static::StringsItemDB<DataItem>::Item sitem = stDB.at(i);
 		DataItem sitemPayload = sitem.data();
 		if (sitemPayload.id != database.items()[i].id) {
@@ -83,7 +83,7 @@ bool testDataBase(const StringsItemDB<DataItem> & database, UByteArrayAdapter db
 			std::cout << "ERROR: String count is different" << std::endl;
 			return false;
 		} 
-		for(size_t j = 0; j < database.itemStrings()[i].size(); j++) {
+		for(uint32_t j = 0; j < database.itemStrings()[i].size(); j++) {
 			if (sitem.strAt(j) != database.strIdToStr().at(database.itemStrings()[i][j]) ) {
 				std::cout << "ERROR: String is different" << std::endl;
 				return false;
