@@ -23,7 +23,7 @@ void SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 	}
 	data += curLen;
 	uint8_t bpn = (size & 0x3F)+1;
-	m_size = size >> 6;
+	m_size = narrow_check<uint32_t>(size >> 6);
 	
 	if (m_size > 1) {
 		m_yintercept = data.getVlPackedInt64(0, &curLen);

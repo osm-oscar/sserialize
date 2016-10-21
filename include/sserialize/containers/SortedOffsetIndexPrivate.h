@@ -104,6 +104,10 @@ public:
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, sserialize::UByteArrayAdapter & destination) {
 		SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(src.cbegin(), src.cend()));
+		
+		if (src.size() > std::numeric_limits<uint32_t>::max()) {
+			throw sserialize::OutOfBoundsException("sserialize::SortedOffsetIndex::create: too many entries in src");
+		}
 	
 		if (src.size() > 1) {
 			uint64_t slopenom = 0;
