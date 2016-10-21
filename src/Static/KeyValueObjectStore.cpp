@@ -23,11 +23,11 @@ m_kv(data.shrinkToGetPtr(), keyBits() + valueBits())
 KeyValueObjectStoreItemBase::~KeyValueObjectStoreItemBase() {}
 
 uint32_t KeyValueObjectStoreItemBase::keyId(uint32_t pos) const {
-	return m_keyBegin + (m_kv.at64(pos) >> valueBits());
+	return m_keyBegin + (uint32_t)(m_kv.at64(pos) >> valueBits());
 }
 
 uint32_t KeyValueObjectStoreItemBase::valueId(uint32_t pos) const {
-	return m_valueBegin + (m_kv.at64(pos) & valueMask());
+	return m_valueBegin + (uint32_t)(m_kv.at64(pos) & valueMask());
 }
 
 uint32_t KeyValueObjectStoreItemBase::findKey(uint32_t id, uint32_t start) const {
@@ -221,12 +221,15 @@ m_valueStringTable(data+(m_keyStringTable.getSizeInBytes()+1)),
 m_items(data+(m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInBytes()+1))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_KEY_VALUE_OBJECTSTORE_VERSION, data.at(0), "sserialize::Static::KeyValueObjectStore");
+	if (m_items.size() > std::numeric_limits<uint32_t>::max()) {
+		throw sserialize::OutOfBoundsException("sserialize::KeyValueObjectStore: too many items");
+	}
 }
 
 KeyValueObjectStorePrivate::~KeyValueObjectStorePrivate() {}
 
 uint32_t KeyValueObjectStorePrivate::size() const {
-	return m_items.size();
+	return (uint32_t) m_items.size();
 }
 
 UByteArrayAdapter::OffsetType KeyValueObjectStorePrivate::getSizeInBytes() const {
@@ -234,19 +237,19 @@ UByteArrayAdapter::OffsetType KeyValueObjectStorePrivate::getSizeInBytes() const
 }
 
 uint32_t KeyValueObjectStorePrivate::findKeyId(const std::string & str) const {
-	uint32_t pos = m_keyStringTable.find(str);
+	KeyStringTable::SizeType pos = m_keyStringTable.find(str);
 	if (pos == sserialize::Static::StringTable::npos) {
 		return KeyValueObjectStore::npos;
 	}
-	return pos;
+	return narrow_check<uint32_t>(pos);
 }
 
 uint32_t KeyValueObjectStorePrivate::findValueId(const std::string & str) const {
-	uint32_t pos = m_valueStringTable.find(str);
+	KeyStringTable::SizeType pos = m_valueStringTable.find(str);
 	if (pos == sserialize::Static::StringTable::npos) {
 		return KeyValueObjectStore::npos;
 	}
-	return pos;
+	return narrow_check<uint32_t>(pos);
 }
 
 std::string KeyValueObjectStorePrivate::key(uint32_t id) const {
