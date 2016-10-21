@@ -126,11 +126,13 @@ UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemI
 		std::cout << "Created alphabetChar->freq mapping of size: " << alphabet.size() << std::endl;
 		std::vector< std::pair<uint32_t, uint32_t> > tmp;
 		tmp.reserve(alphabet.size());
-		for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it)
+		for(std::unordered_map<uint32_t, uint32_t>::const_iterator it(alphabet.begin()); it != alphabet.end(); ++it) {
 			tmp.push_back(std::pair<uint32_t, uint32_t>(it->second, it->first));
+		}
 		std::sort(tmp.begin(), tmp.end());
-		for(int i = tmp.size()-1; i >= 0; --i)
-			alphabet[tmp[i].second] = i; 
+		for(int64_t i = (int64_t) (tmp.size()-1); i >= 0; --i) {
+			alphabet[tmp[i].second] = (uint32_t) i;
+		}
 	}
 	
 	std::cout << "Alphabet size: " << alphabet.size() << std::endl;
@@ -343,14 +345,16 @@ int main(int argc, char ** argv) {
 			*out << std::endl;
 			dumpIndex(*out, idx);
 		}
-		for(uint32_t i = 0, s = dumpIndexId.size(); i < s; ++i) {
-			if (dumpIndexId[i] >= store.size())
+		for(uint32_t i = 0, s = (uint32_t) dumpIndexId.size(); i < s; ++i) {
+			if (dumpIndexId[i] >= store.size()) {
 				continue;
+			}
 			std::cout << "ItemIndex with id " << dumpIndexId[i] << ": " << std::endl;
-			store.at(dumpIndexId[i]).dump(*out);
+			store.at((uint32_t) dumpIndexId[i]).dump(*out);
 		}
-		if (fout.is_open())
+		if (fout.is_open()) {
 			fout.close();
+		}
 	}
 	if (dumpDataHisto) {
 		dumpDataHistoFunc(store, alphabetBitLength);

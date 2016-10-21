@@ -30,7 +30,7 @@ int main(int argc, char ** argv) {
 		}
 		else if (str == "-cc" && i+2 < argc) {
 			minCompressionRatio = atof(argv[i+1]);
-			chunkSizeExponent = atol(argv[i+2]);
+			chunkSizeExponent = atoi(argv[i+2]);
 			i+=2;
 		}
 		else if (str == "-verify") {
