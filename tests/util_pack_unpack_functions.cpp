@@ -14,10 +14,10 @@ bool test_packFunctions2() {
 
 #define VL_PACK_32_TEST(__VALUE, __LEN) \
 	should = __VALUE; \
-	p_vu32(should, array); \
+	p_vu32((uint32_t) should, array); \
 	is = up_vu32(array, &len); \
 	if (is != should) std::cout << __LEN << " byte: vl_pack/unpack wrong" << std::endl;\
-	if (psize_vu32(should) != __LEN) std::cout << __LEN << " byte: psize_vu32 wrong" << std::endl; \
+	if (psize_vu32((uint32_t) should) != __LEN) std::cout << __LEN << " byte: psize_vu32 wrong" << std::endl; \
 	
 VL_PACK_32_TEST(0xFEFEFEFE, 5);
 VL_PACK_32_TEST(0x0FFFFFFF, 4);

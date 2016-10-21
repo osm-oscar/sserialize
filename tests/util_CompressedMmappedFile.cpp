@@ -72,9 +72,9 @@ public:
 	void testRandomRead() {
 		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), m_file.size());
 		
-		uint32_t runs = std::min<uint32_t>(m_realValues.size(), 10000);
+		std::size_t runs = std::min<std::size_t>(m_realValues.size(), 10000);
 		for(uint32_t i = 0; i < runs; ++i) {
-			uint32_t pos = std::min<uint32_t>( (double) std::rand()/RAND_MAX * m_realValues.size(), m_realValues.size()-1);
+			std::size_t pos = std::min<std::size_t>( (double) std::rand()/RAND_MAX * m_realValues.size(), m_realValues.size()-1);
 			std::stringstream ss;
 			ss << "value at " << pos << " in run " << i;
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), static_cast<uint32_t>(m_realValues[pos]), static_cast<uint32_t>(m_file[pos]));

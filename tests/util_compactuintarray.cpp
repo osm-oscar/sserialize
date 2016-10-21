@@ -53,7 +53,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("create bits", bits+1,static_cast<uint32_t>(createBits));
 			d.resetPtrs();
 			CompactUintArray carr(d, createBits);
-			for(uint32_t i = 0, s = compSrcArrays[bits].size(); i < s; ++i) {
+			for(uint32_t i = 0, s = (uint32_t) compSrcArrays[bits].size(); i < s; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("bits=",bits," at ", i), compSrcArrays[bits][i], carr.at64(i));
 			}
 		}
@@ -65,7 +65,7 @@ public:
 			CompactUintArray::create(compSrcArrays[bits], d, bits+1);
 			d.resetPtrs();
 			CompactUintArray carr(d, bits+1);
-			for(uint32_t i = 0, s = compSrcArrays[bits].size(); i < s; ++i) {
+			for(uint32_t i = 0, s = (uint32_t) compSrcArrays[bits].size(); i < s; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), compSrcArrays[bits][i], carr.at64(i));
 			}
 		}
@@ -78,7 +78,7 @@ public:
 			d.resetPtrs();
 			BoundedCompactUintArray bcarr(d);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("for bits=", bits+1), compSrcArrays[bits].size(), (std::size_t)bcarr.size());
-			for(uint32_t i = 0, s = compSrcArrays[bits].size(); i < s; ++i) {
+			for(uint32_t i = 0, s = (uint32_t) compSrcArrays[bits].size(); i < s; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("at ", i), compSrcArrays[bits][i], bcarr.at64(i));
 			}
 		}
@@ -87,17 +87,17 @@ public:
 	void veryLargeTest() {
 		for(uint32_t bits = 16; bits < 64; ++bits) {
 			UByteArrayAdapter d(new std::vector<uint8_t>(), true);
-			uint32_t count = 0x1FFFFFFFF/bits;
+			uint32_t count = (uint32_t) (0x1FFFFFFFF/bits);
 			uint64_t mask = createMask64(bits);
 			CompactUintArray carr(d, bits);
 			carr.reserve(count);
 			sserialize::RangeGenerator<uint64_t> rg(0, count);
 			for(uint64_t x : rg) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64((uint32_t) x, x & mask));
 			}
 			for(uint64_t x : rg) {
-				if ((x & mask) != carr.at64(x)) {
-					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64(x));
+				if ((x & mask) != carr.at64((uint32_t) x)) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64((uint32_t) x));
 				}
 			}
 		}
@@ -112,11 +112,11 @@ public:
 			carr.reserve(count);
 			sserialize::RangeGenerator<uint32_t> rg(0, count);
 			for(uint64_t x : rg) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64((uint32_t) x, x & mask));
 			}
 			for(uint64_t x : rg) {
-				if ((x & mask) != carr.at64(x)) {
-					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64(x));
+				if ((x & mask) != carr.at64((uint32_t) x)) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64((uint32_t) x));
 				}
 			}
 	

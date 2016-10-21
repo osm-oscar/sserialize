@@ -58,7 +58,7 @@ public:
 	void testSequentialRead() {
 		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), m_file.size());
 		
-		for(uint32_t i = 0; i < m_realValues.size(); ++i) {
+		for(std::size_t i = 0; i < m_realValues.size(); ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("value", m_realValues[i], m_file[i]);
 		}
 	}
@@ -66,8 +66,8 @@ public:
 	void testRandomRead() {
 		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), m_file.size());
 		
-		for(uint32_t i = 0; i < m_realValues.size(); ++i) {
-			uint32_t pos = std::min<uint32_t>( (double) std::rand()/RAND_MAX * m_realValues.size(), m_realValues.size()-1);
+		for(std::size_t i = 0; i < m_realValues.size(); ++i) {
+			std::size_t pos = std::min<std::size_t>( (double) std::rand()/RAND_MAX * m_realValues.size(), m_realValues.size()-1);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("value", m_realValues[pos], m_file[pos]);
 		}
 	}

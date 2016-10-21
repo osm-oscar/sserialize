@@ -63,7 +63,7 @@ public:
 		cto.flush();
 		tmpData.resetPtrs();
 		sserialize::RLEStream rls(tmpData);
-		for(uint32_t i(0), s(real.size()); i < s; ++i) {
+		for(std::size_t i(0), s(real.size()); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("At ", i), *rls, real[i]);
 			++rls;
 		}
@@ -71,7 +71,7 @@ public:
 	void testRandom() {
 		sserialize::UByteArrayAdapter tmpData(new std::vector<uint8_t>(), true);
 		std::vector<uint32_t> real(100000);
-		sserialize::TestDataGenerator<std::vector<uint32_t>::iterator>::generate(real.size(), real.begin());
+		sserialize::TestDataGenerator<std::vector<uint32_t>::iterator>::generate((uint32_t) real.size(), real.begin());
 		sserialize::RLEStream::Creator cto(tmpData);
 		for(std::size_t i(0), s(real.size()); i < s; ++i) {
 			cto.put(real[i]);

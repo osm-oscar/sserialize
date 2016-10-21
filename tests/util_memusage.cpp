@@ -9,9 +9,9 @@
 int main() {
 	sserialize::MemUsage().print();
 	std::deque< std::deque<uint32_t>* > ab;
-	for(size_t i = 0; i < 1024; i++) {
+	for(uint32_t i = 0; i < 1024; i++) {
 		std::deque<uint32_t> * p = new std::deque<uint32_t>();
-		for(size_t j = 0; j < 16*1024; j++) {
+		for(uint32_t j = 0; j < 16*1024; j++) {
 			p->push_back(1024*i+j);
 		}
 		ab.push_back(p);
