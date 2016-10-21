@@ -177,7 +177,7 @@ private:
 			InnerNode * in = dynamic_cast<InnerNode*>(node);
 			if (info.length == bpl[info.level]) {
 				//push the code and pointer to the child node to the current parent node
-				uint32_t childId = szn.size();
+				uint32_t childId = (uint32_t) szn.size();
 				szn[info.destinationNode].addChild(info.prefixCode, childId);
 				szn.push_back( SerializationNode(bpl[info.level+1]) );
 				for(uint32_t i = 0; i < in->children.size(); ++i) {
