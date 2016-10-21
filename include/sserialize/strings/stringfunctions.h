@@ -72,7 +72,10 @@ std::string::size_type calcLcp(const UByteArrayAdapter & strA, const std::string
   * @param lcp: searches with offset of lcp and updates lcp for equal chars
   */
 int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t& lcp);
+#ifdef __LP64__
 int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint32_t & lcp);
+#endif
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, std::string::size_type & lcp);
 
 /** Returns the number of utf8 characters (NOT encoding chars) */ 
 template<typename octetIterator>

@@ -1,6 +1,7 @@
 #include <sserialize/strings/stringfunctions.h>
 #include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/vendor/utf8.h>
+#include <sserialize/utility/checks.h>
 #include <set>
 
 
@@ -88,14 +89,7 @@ std::string::size_type calcLcp(const UByteArrayAdapter & strA, const std::string
 	return len;
 }
 
-int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t & lcp) {
-	uint32_t tmpLcp;
-	int8_t ret = compare(strA, strB, tmpLcp);
-	lcp = tmpLcp;
-	return ret;
-}
-
-int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint32_t & lcp) {
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, std::string::size_type & lcp) {
 	UByteArrayAdapter::OffsetType len = strA.size();
 	if (strB.size() < len) {
 		len = strB.size();
@@ -118,6 +112,23 @@ int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint32_t 
 		return 1;
 	}
 }
+
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint16_t & lcp) {
+	std::string::size_type tmpLcp;
+	int8_t ret = compare(strA, strB, tmpLcp);
+	lcp = narrow_check<uint16_t>(tmpLcp);
+	return ret;
+}
+
+#ifdef __LP64__
+int8_t compare(const UByteArrayAdapter& strA, const std::string& strB, uint32_t & lcp) {
+	std::string::size_type tmpLcp;
+	int8_t ret = compare(strA, strB, tmpLcp);
+	lcp = narrow_check<uint32_t>(tmpLcp);
+	return ret;
+}
+#endif
+
 
 void AsciiCharEscaper::setEscapeChar(char c) {
 	if (c >= 0) {
