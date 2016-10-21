@@ -436,7 +436,7 @@ SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse)
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > cellSize()*0.5) {
 		std::vector<SubSet::Node*> nodes(regionSize()+1, 0);
-		rootNode = createSubSet(cqr, &(nodes[0]), nodes.size());
+		rootNode = createSubSet(cqr, &(nodes[0]), (uint32_t) nodes.size());
 	}
 	else {
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
@@ -490,7 +490,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::N
 	SubSet::Node* * end = nodes+size;
 	for(SubSet::Node* * it(nodes); it != end; ++it) {
 		if (*it) {
-			uint32_t regionId = it-nodes;
+			uint32_t regionId = (uint32_t) (it-nodes);
 			uint32_t rPIt(regionParentsBegin(regionId)), rPEnd(regionParentsEnd(regionId));
 			if (rPIt != rPEnd) {
 				for(; rPIt != rPEnd; ++rPIt) {

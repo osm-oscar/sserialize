@@ -206,7 +206,7 @@ public:
 template<typename T_HASH_CONTAINER>
 void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const {
 	idcsPos.insert(node->cellPositions().cbegin(), node->cellPositions().cend());
-	for(std::size_t i(0), s(node->size()); i < s; ++i) {
+	for(uint32_t i(0), s((uint32_t) node->size()); i < s; ++i) {
 		insertCellPositions(node->at(i), idcsPos);
 	}
 }
