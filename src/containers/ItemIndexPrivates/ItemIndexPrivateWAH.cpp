@@ -102,7 +102,7 @@ void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 	if (!size())
 		return;
 	UByteArrayAdapter & destData = bitSet.data();
-	uint32_t destDataSize = destData.size();
+	uint32_t destDataSize = (uint32_t) destData.size();
 	uint32_t bitCount = 0;
 	
 	UDWConstrainedIterator dataIt = dataIterator();
@@ -163,7 +163,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::fromBitSet(const DynamicBitSet & bitSet)
 	
 	uint32_t curEncWord = 0;
 	uint32_t bitSetDataOffset = 0;
-	uint32_t bitSetDataSize = bitSetData.size();
+	uint32_t bitSetDataSize = (uint32_t) bitSetData.size();
 	for(;bitSetDataOffset < bitSetDataSize;) {
 		uint32_t val = 0;
 		{
@@ -222,7 +222,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::fromBitSet(const DynamicBitSet & bitSet)
 	if (curEncWord) {
 		tmpData.putUint32(curEncWord);
 	}
-	tmpData.putUint32(0, tmpData.tellPutPtr()-8);
+	tmpData.putUint32(0, (uint32_t) (tmpData.tellPutPtr()-8) );
 	tmpData.putUint32(4, count);
 	
 	return new ItemIndexPrivateWAH(tmpData);
@@ -372,7 +372,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 	}
 	
 	uint32_t idCount = oHandler.flush();
-	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(0, (uint32_t) (oData.tellPutPtr()-8));
 	oData.putUint32(4, idCount);
 	oData.resetPtrs();
 	return new ItemIndexPrivateWAH(oData);
@@ -485,7 +485,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 	}
 	
 	uint32_t idCount = oHandler.flush();
-	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(0, (uint32_t) (oData.tellPutPtr()-8));
 	oData.putUint32(4, idCount);
 	oData.resetPtrs();
 	return new ItemIndexPrivateWAH(oData);
@@ -593,7 +593,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 	}
 	
 	uint32_t idCount = oHandler.flush();
-	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(0, (uint32_t) (oData.tellPutPtr()-8));
 	oData.putUint32(4, idCount);
 	oData.resetPtrs();
 	return new ItemIndexPrivateWAH(oData);
@@ -710,7 +710,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 	}
 	
 	uint32_t idCount = oHandler.flush();
-	oData.putUint32(0, oData.tellPutPtr()-8);
+	oData.putUint32(0, (uint32_t) (oData.tellPutPtr()-8));
 	oData.putUint32(4, idCount);
 	oData.resetPtrs();
 	return new ItemIndexPrivateWAH(oData);
@@ -723,8 +723,8 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 	std::vector<uint32_t> resultIds;
 	resultIds.reserve(count);
 	
-	uint32_t intersectSize = intersect.size();
-	uint32_t subtractSize = subtract.size();
+	uint32_t intersectSize = (uint32_t) intersect.size();
+	uint32_t subtractSize = (uint32_t) subtract.size();
 	
 	std::vector<UDWConstrainedIterator> intersectIts;
 	intersectIts.reserve(intersectSize);
@@ -801,7 +801,7 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 			}
 		}
 		
-		for(uint32_t i = bitOffset; currentWorkingWord && i < bitOffset+31; ++i) {
+		for(uint32_t i = (uint32_t) bitOffset; currentWorkingWord && i < bitOffset+31; ++i) {
 			if ((currentWorkingWord & 0x1) && (!filter || filter->operator()(i))) {
 				resultIds.push_back(i);
 			}
@@ -817,7 +817,7 @@ ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserializ
 	std::vector<uint32_t> resultIds;
 	resultIds.reserve(count);
 	
-	const uint32_t intersectSize = intersect.size();
+	const uint32_t intersectSize = (uint32_t) intersect.size();
 	
 	std::vector<uint32_t> intersectEncWords(intersectSize, 0);
 	std::vector<UDWConstrainedIterator> intersectIts;
@@ -865,7 +865,7 @@ ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserializ
 			}
 		}
 		
-		for(uint32_t i = bitOffset; currentWorkingWord && i < bitOffset+31; ++i) {
+		for(uint32_t i = (uint32_t) bitOffset; currentWorkingWord && i < bitOffset+31; ++i) {
 			if ((currentWorkingWord & 0x1) && (!filter || filter->operator()(i))) {
 				resultIds.push_back(i);
 			}

@@ -27,7 +27,7 @@ uint32_t ItemIndexPrivateStlDeque::last() const {
 }
 
 uint32_t ItemIndexPrivateStlDeque::size() const {
-	return m_data.size();
+	return (uint32_t) m_data.size();
 }
 
 }//end namespace

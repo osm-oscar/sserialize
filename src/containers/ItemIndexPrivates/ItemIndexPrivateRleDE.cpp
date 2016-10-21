@@ -3,6 +3,7 @@
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/storage/SerializationInfo.h>
+#include <sserialize/utility/checks.h>
 
 namespace sserialize {
 
@@ -237,12 +238,12 @@ void ItemIndexPrivateRleDE::putInto(uint32_t * dest) const {
 	}
 }
 
-ItemIndexPrivate *  ItemIndexPrivateRleDE::fromBitSet(const DynamicBitSet & bitSet) {
+ItemIndexPrivate * ItemIndexPrivateRleDE::fromBitSet(const DynamicBitSet & bitSet) {
 	const UByteArrayAdapter & bitSetData(bitSet.data());
 	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(cacheData);
 	uint32_t curId = 0;
-	uint32_t myDataSize = bitSetData.size();
+	uint32_t myDataSize = narrow_check<uint32_t>( bitSetData.size() );
 	for(uint32_t dataOffset = 0; dataOffset < myDataSize; ++dataOffset, curId += 8) {
 		uint8_t data = bitSetData.at(dataOffset);
 		for(uint32_t i = 0; data; ++i) {
@@ -578,15 +579,14 @@ struct IndexStates {
 };
 
 ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< ItemIndexPrivateRleDE* > & intersect, const std::vector< ItemIndexPrivateRleDE* >& subtract, uint32_t count) {
-	IndexStates intersectStates(intersect.size());
-	for(std::size_t i = 0; i < intersect.size(); ++i) {
+	IndexStates intersectStates((uint32_t) intersect.size());
+	for(uint32_t i = 0; i < intersect.size(); ++i) {
 		intersectStates.push_back(intersect[i]->m_data);
 	}
-	IndexStates subtractStates(subtract.size());
-	for(std::size_t i = 0; i < intersect.size(); ++i) {
+	IndexStates subtractStates((uint32_t) subtract.size());
+	for(uint32_t i = 0; i < intersect.size(); ++i) {
 		subtractStates.push_back(subtract[i]->m_data);
 	}
-
 
 	std::vector<uint32_t> resultSet;
 	resultSet.reserve(count);
@@ -607,8 +607,8 @@ ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< Ite
 
 
 ItemIndex ItemIndexPrivateRleDE::constrainedIntersect(const std::vector< ItemIndexPrivateRleDE* > & intersect, uint32_t count) {
-	IndexStates states(intersect.size());
-	for(std::size_t i = 0; i < intersect.size(); ++i) {
+	IndexStates states((uint32_t) intersect.size());
+	for(uint32_t i = 0; i < intersect.size(); ++i) {
 		states.push_back(intersect[i]->m_data);
 	}
 	std::vector<uint32_t> resultSet;

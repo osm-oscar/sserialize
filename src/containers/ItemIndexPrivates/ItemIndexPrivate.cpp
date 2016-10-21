@@ -145,7 +145,7 @@ uint32_t ItemIndexPrivate::find(uint32_t id) const {
 	int64_t mid = (right-left)/2+left;
 	uint32_t curId;
 	while( left < right ) {
-		curId = at(mid);
+		curId = at((uint32_t) mid);
 		if (curId == id) {
 			return (uint32_t)mid;
 		}
@@ -158,7 +158,7 @@ uint32_t ItemIndexPrivate::find(uint32_t id) const {
 		mid = (right-left)/2+left;
 	}
 	curId = at((uint32_t)mid);
-	return ((curId == id) ? mid : npos);
+	return ((curId == id) ? (uint32_t) mid : npos);
 }
 
 void ItemIndexPrivate::doPutInto(DynamicBitSet & bitSet) const {

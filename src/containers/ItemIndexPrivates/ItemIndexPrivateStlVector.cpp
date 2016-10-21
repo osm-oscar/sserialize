@@ -46,7 +46,7 @@ uint32_t ItemIndexPrivateStlVector::last() const {
 }
 
 uint32_t ItemIndexPrivateStlVector::size() const {
-	return m_data.size();
+	return (uint32_t) m_data.size();
 }
 
 ItemIndexPrivate * ItemIndexPrivateStlVector::fromBitSet(const DynamicBitSet & bitSet) {

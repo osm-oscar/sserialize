@@ -92,7 +92,7 @@ ItemIndexPrivate * ItemIndexPrivateDE::fromBitSet(const DynamicBitSet & bitSet) 
 	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateDECreator creator(cacheData);
 	uint32_t curId = 0;
-	uint32_t myDataSize = bitSetData.size();
+	uint32_t myDataSize = narrow_check<uint32_t>( bitSetData.size() );
 	for(uint32_t dataOffset = 0; dataOffset < myDataSize; ++dataOffset, curId += 8) {
 		uint8_t data = bitSetData.at(dataOffset);
 		for(uint32_t i = 0; i < 8 && data; ++i) {

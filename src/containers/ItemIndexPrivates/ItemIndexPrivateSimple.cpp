@@ -7,10 +7,11 @@ ItemIndexPrivateSimpleCreator::ItemIndexPrivateSimpleCreator(uint32_t lowestId, 
 m_destination(destination), m_beginning(m_destination.tellPutPtr()), m_lowestId(lowestId), m_pos(0) {
 	UByteArrayAdapter data(m_destination + m_destination.tellPutPtr());
 	uint8_t bpn = CompactUintArray::minStorageBitsFullBytes(highestId-lowestId+1);
-	uint32_t storageSize = CompactUintArray::minStorageBytes(bpn, reserveCount) + ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE;
-	uint32_t haveStorage = data.size();
-	if (storageSize > haveStorage)
+	sserialize::UByteArrayAdapter::SizeType storageSize = CompactUintArray::minStorageBytes(bpn, reserveCount) + ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE;
+	sserialize::UByteArrayAdapter::SizeType haveStorage = data.size();
+	if (storageSize > haveStorage) {
 		data.growStorage(storageSize - haveStorage);
+	}
 	m_carr = CompactUintArray(data+ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE, bpn);
 }
 
@@ -27,9 +28,10 @@ void ItemIndexPrivateSimpleCreator::flush() {
 		data.growStorage(ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE-data.size());
 	ItemIndexPrivateSimple::addHeader(m_pos, m_carr.bpn()/8, m_lowestId, data);
 	//adjust putptr
-	uint32_t neededData = ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE + CompactUintArray::minStorageBytes(m_carr.bpn(), m_pos);
-	if (m_destination.size()-m_destination.tellPutPtr() < neededData)
+	sserialize::UByteArrayAdapter::SizeType neededData = ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE + CompactUintArray::minStorageBytes(m_carr.bpn(), m_pos);
+	if (m_destination.size()-m_destination.tellPutPtr() < neededData) {
 		m_destination.growStorage(m_destination.tellPutPtr() + neededData - m_destination.size()); //this should not inc the underlying storage
+	}
 	m_destination.incPutPtr(neededData);
 }
 
@@ -46,8 +48,8 @@ ItemIndexPrivateSimple * ItemIndexPrivateSimpleCreator::privateIndex() {
 }
 
 UByteArrayAdapter ItemIndexPrivateSimpleCreator::createCache(uint32_t lowestId, uint32_t highestId, uint32_t maxCount, bool forceFileBase) {
-	uint8_t bpn = CompactUintArray::minStorageBitsFullBytes(highestId-lowestId+1);
-	uint32_t storageSize = CompactUintArray::minStorageBytes(bpn, maxCount);
+	uint32_t bpn = CompactUintArray::minStorageBitsFullBytes(highestId-lowestId+1);
+	sserialize::UByteArrayAdapter::SizeType storageSize = CompactUintArray::minStorageBytes(bpn, maxCount);
 	return UByteArrayAdapter::createCache(ITEM_INDEX_PRIVATE_SIMPLE_HEADER_SIZE+storageSize, (forceFileBase ? sserialize::MM_FILEBASED : sserialize::MM_PROGRAM_MEMORY));
 }
 
@@ -146,12 +148,13 @@ void ItemIndexPrivateSimple::putInto(std::vector<uint32_t> & dest) const {
 bool ItemIndexPrivateSimple::addItemIndexFromIds(const std::set<uint32_t> & ids, UByteArrayAdapter & adap) {
 	uint32_t lowestId = *(ids.begin());
 	uint32_t highestId = *(ids.rbegin());
-	uint8_t neededBits = CompactUintArray::minStorageBitsFullBytes(highestId-lowestId);
-	uint32_t neededBytes = 8 + CompactUintArray::minStorageBytes(neededBits, ids.size());
-	if (adap.size() < neededBytes && !adap.growStorage(neededBytes))
+	uint32_t neededBits = CompactUintArray::minStorageBitsFullBytes(highestId-lowestId);
+	sserialize::UByteArrayAdapter::SizeType neededBytes = 8 + CompactUintArray::minStorageBytes(neededBits, ids.size());
+	if (adap.size() < neededBytes && !adap.growStorage(neededBytes)) {
 		return false;
+	}
 
-	addHeader(ids.size(), neededBits/8, lowestId, adap);
+	addHeader((uint32_t) ids.size(), neededBits/8, lowestId, adap);
 	CompactUintArray store(adap+8, neededBits);
 	uint32_t count = 0;
 	for(std::set<uint32_t>::const_iterator it = ids.begin(); it != ids.end(); it++) {
@@ -189,7 +192,7 @@ ItemIndexPrivate * ItemIndexPrivateSimple::fromBitSet(const DynamicBitSet & bitS
 
 	const UByteArrayAdapter & bitSetData(bitSet.data());
 	uint32_t dataOffset = 0;
-	uint32_t myDataSize = bitSetData.size()-1;
+	sserialize::UByteArrayAdapter::SizeType myDataSize = bitSetData.size()-1;
 	
 	//first find the first an last occurence of a bit
 	while (! bitSetData.at(dataOffset) && dataOffset <= myDataSize)
@@ -202,7 +205,7 @@ ItemIndexPrivate * ItemIndexPrivateSimple::fromBitSet(const DynamicBitSet & bitS
 	++myDataSize; //readjust to set end one behind the last
 	
 	uint32_t minId = dataOffset*8;
-	uint32_t maxId = myDataSize*8;
+	uint32_t maxId = (uint32_t) (myDataSize*8);
 	
 	UByteArrayAdapter cacheData( UByteArrayAdapter::createCache(bitSetData.size(), sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateSimpleCreator creator(minId, maxId, 2, cacheData);
