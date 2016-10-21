@@ -26,7 +26,7 @@ public:
 	typedef sserialize::Static::Pair<TKey, TValue> value_type;
 	typedef typename sserialize::Static::Array<value_type>::iterator iterator;
 	typedef typename sserialize::Static::Array<value_type>::const_iterator const_iterator; 
-	typedef uint32_t size_type;
+	typedef sserialize::SizeType size_type;
 	static constexpr size_type npos = std::numeric_limits<size_type>::max();
 private:
 	sserialize::Static::Array<value_type> m_data;
@@ -106,7 +106,7 @@ Map<TKey, TValue>::at(const TKey & key) const {
 
 template<typename TKey, typename TValue>
 typename Map<TKey, TValue>::value_type
-Map<TKey, TValue>::atPosition(const uint32_t pos) const {
+Map<TKey, TValue>::atPosition(const size_type pos) const {
 	return m_data.at(pos);
 }
 
