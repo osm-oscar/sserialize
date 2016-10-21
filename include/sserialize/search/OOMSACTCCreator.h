@@ -343,7 +343,7 @@ public:
 				m_payloadCreator->beginRawPut();
 				
 				m_payloadCreator->rawPut().putUint8(m_curTypes);
-				for(uint32_t i(1), s(m_curOffsets.size()); i < s; ++i) {
+				for(uint32_t i(1), s((uint32_t) m_curOffsets.size()); i < s; ++i) {
 					m_payloadCreator->rawPut().putVlPackedUint32(m_curOffsets[i]-m_curOffsets[i-1]);
 				}
 				m_payloadCreator->rawPut().put(m_curData);
@@ -549,7 +549,8 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 				std::string::const_iterator strBegin(str.cbegin());
 				std::string::const_iterator strIt(strBegin), strEnd(str.cend());
 				for(utf8::next(strIt, strEnd); strIt != strEnd; utf8::next(strIt, strEnd)) {
-					m_t->insert(sstr.addOffset(std::distance(strBegin, strIt)));
+					using std::distance;
+					m_t->insert(sstr.addOffset((uint32_t) distance(strBegin, strIt)));
 				}
 				return *this;
 			}
