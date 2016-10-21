@@ -24,7 +24,7 @@ public:
 	template<typename TInputIterator>
 	void set(TInputIterator begin, const TInputIterator & end);
 	///get all set positions in ascending order 
-	template<typename TOutputIterator>
+	template<typename TOutputIterator, typename T_CAST_TYPE = typename std::iterator_traits<TOutputIterator>::value_type >
 	void getSet(TOutputIterator out) const;
 private:
 	std::vector<BaseStorageType> m_d;
@@ -37,13 +37,13 @@ void SimpleBitVector::set(TInputIterator begin, const TInputIterator & end) {
 	}
 }
 
-template<typename TOutputIterator>
+template<typename TOutputIterator, typename T_CAST_TYPE>
 void SimpleBitVector::getSet(TOutputIterator out) const {
 	std::size_t v = 0;
 	for(BaseStorageType x : m_d) {
 		for(std::size_t myV(v); x; ++myV, x >>= 1) {
 			if (x & 0x1) {
-				*out = myV;
+				*out = (T_CAST_TYPE) myV;
 				++out;
 			}
 		}
