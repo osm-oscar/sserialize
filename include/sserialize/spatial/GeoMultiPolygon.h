@@ -351,7 +351,7 @@ void GeoMultiPolygon<TPolygonContainer, TPolygon>::recalculateBoundary() {
 template<typename TPolygonContainer, typename TPolygon>
 sserialize::spatial::GeoPoint GeoMultiPolygon<TPolygonContainer, TPolygon>::at(uint32_t pos) const {
 	if (pos <= m_size) {
-		for(uint32_t i = 0, s = m_outerPolygons.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) m_outerPolygons.size(); i < s; ++i) {
 			typename TPolygonContainer::const_reference poly = m_outerPolygons.at(i);
 			if (poly.size() > pos) {
 				return poly.points().at(pos);
@@ -360,7 +360,7 @@ sserialize::spatial::GeoPoint GeoMultiPolygon<TPolygonContainer, TPolygon>::at(u
 				pos -= poly.size();
 			}
 		}
-		for(uint32_t i = 0, s = m_innerPolygons.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) m_innerPolygons.size(); i < s; ++i) {
 			typename TPolygonContainer::const_reference poly = m_innerPolygons.at(i);
 			if (poly.size() > pos) {
 				return poly.points().at(pos);
