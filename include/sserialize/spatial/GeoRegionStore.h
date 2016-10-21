@@ -234,7 +234,7 @@ public:
 		m_polyRaster = new PolyRaster(bbox, gridLatCount, gridLonCount);
 		sserialize::ProgressInfo info;
 		info.begin(m_regionStore.size(), "Polyraster::addPolygon");
-		for(size_t i=0; i < m_regionStore.size(); i++) {
+		for(uint32_t i=0; i < m_regionStore.size(); i++) {
 			m_polyRaster->addRegion(*m_regionStore[i], i);
 			info(i);
 		}
@@ -250,7 +250,7 @@ public:
 	T_SET_TYPE test(const Point & p) const {
 		T_SET_TYPE polys;
 		if (!m_polyRaster) {
-			for(std::size_t it(0), s(m_regionStore.size()); it < s; ++it) {
+			for(uint32_t it(0), s((uint32_t) m_regionStore.size()); it < s; ++it) {
 				if ( pointInRegion(p, *m_regionStore[it]) ) {
 					polys.insert(it);
 				}
@@ -279,7 +279,7 @@ public:
 	T_SET_TYPE test(TPOINT_ITERATOR begin, TPOINT_ITERATOR end) const {
 		T_SET_TYPE polyIds;
 		if (!m_polyRaster) {
-			for(std::size_t it = 0, itEnd(m_regionStore.size()); it < itEnd; ++it) {
+			for(uint32_t it = 0, itEnd((uint32_t) m_regionStore.size()); it < itEnd; ++it) {
 				for(TPOINT_ITERATOR pit(begin); pit != end; ++pit) {
 					if ( pointInRegion(*pit, *m_regionStore[it]) ) {
 						polyIds.insert(it);
