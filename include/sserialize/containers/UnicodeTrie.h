@@ -349,7 +349,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 			nodeInfo.childKeyPtrOffsets.push_back(std::pair<uint32_t, uint32_t>(cIt->first, trieData.size()-nodeOffsets.at(cIt->second)));
 		}
 		
-		nodeInfo.payloadPtr =  payloadContainerCreator.size();
+		narrow_check_assign(nodeInfo.payloadPtr) = payloadContainerCreator.size();
 		payloadContainerCreator.put( payloadHandler(n) );
 		
 		tmpData.clear();
@@ -357,7 +357,7 @@ UByteArrayAdapter & Trie<TValue>::append(sserialize::UByteArrayAdapter& d, T_PH 
 		nodeCreator->append(nodeInfo, d);
 		
 		prependToDeque(tmpData, trieData);
-		nodeOffsets[n] = trieData.size();
+		nodeOffsets[n] = (uint32_t) trieData.size();
 		++count;
 		pinfo(count);
 // 		std::cout << count << std::endl;
