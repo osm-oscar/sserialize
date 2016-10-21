@@ -96,7 +96,7 @@ uint32_t ItemIndexPrivateWAH::size() const {
 uint8_t ItemIndexPrivateWAH::bpn() const { return 0; }
 
 
-uint32_t ItemIndexPrivateWAH::getSizeInBytes() const { return 0; }
+UByteArrayAdapter::SizeType ItemIndexPrivateWAH::getSizeInBytes() const { return 0; }
 
 void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 	if (!size())

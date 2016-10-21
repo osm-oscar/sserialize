@@ -177,8 +177,8 @@ uint8_t ItemIndexPrivateRleDE::bpn() const {
 }
 
 
-uint32_t ItemIndexPrivateRleDE::getSizeInBytes() const {
-	return m_data.size() + sserialize::psize_v<uint32_t>(m_size) + sserialize::psize_v<uint32_t>(m_data.size());
+sserialize::UByteArrayAdapter::SizeType ItemIndexPrivateRleDE::getSizeInBytes() const {
+	return m_data.size() + sserialize::psize_v<uint32_t>((uint32_t) m_size) + sserialize::psize_v<uint32_t>((uint32_t) m_data.size());
 }
 
 void ItemIndexPrivateRleDE::putInto(DynamicBitSet & bitSet) const {

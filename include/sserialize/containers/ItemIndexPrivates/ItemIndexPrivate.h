@@ -53,7 +53,7 @@ public:
 	///return the mean bit per number including header
 	virtual uint8_t bpn() const = 0;
 	
-	virtual uint32_t getSizeInBytes() const = 0;
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const = 0;
 
 	virtual bool is_random_access() const;
 
@@ -90,7 +90,7 @@ public:
 
 	virtual uint8_t bpn() const override;
 
-	virtual uint32_t getSizeInBytes() const override;
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const override;
 
 };
 

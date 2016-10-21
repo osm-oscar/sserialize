@@ -168,7 +168,7 @@ public:
 	virtual uint8_t bpn() const override;
 
 
-	virtual uint32_t getSizeInBytes() const override;
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const override;
 	
 	virtual void putInto(DynamicBitSet & bitSet) const override;
 	virtual void putInto(uint32_t * dest) const override;

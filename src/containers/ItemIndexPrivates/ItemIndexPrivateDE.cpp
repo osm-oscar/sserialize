@@ -62,7 +62,9 @@ uint32_t ItemIndexPrivateDE::size() const {
 
 uint8_t ItemIndexPrivateDE::bpn() const { return m_data.size()*8/m_size; } //This shouldn't cause an overflow here
 
-uint32_t ItemIndexPrivateDE::getSizeInBytes() const { return m_data.size() + 8; }
+sserialize::UByteArrayAdapter::SizeType ItemIndexPrivateDE::getSizeInBytes() const {
+	return m_data.size() + 8;
+}
 
 void ItemIndexPrivateDE::putInto(DynamicBitSet & bitSet) const {
 	UByteArrayAdapter tmpData(m_data);

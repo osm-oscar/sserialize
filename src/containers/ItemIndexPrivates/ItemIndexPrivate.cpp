@@ -241,7 +241,7 @@ uint8_t ItemIndexPrivateEmpty::bpn() const {
 	return 0;
 }
 
-uint32_t ItemIndexPrivateEmpty::getSizeInBytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateEmpty::getSizeInBytes() const {
 	return 0;
 }
 

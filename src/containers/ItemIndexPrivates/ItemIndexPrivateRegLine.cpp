@@ -169,17 +169,17 @@ uint32_t ItemIndexPrivateRegLine::rawIdAt(const uint32_t pos) const {
 
 //Statistics
 
-uint32_t ItemIndexPrivateRegLine::getSizeInBytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateRegLine::getSizeInBytes() const {
 	return getHeaderbytes() + getRegressionLineBytes() + getIdBytes();
 }
 
-uint32_t ItemIndexPrivateRegLine::getHeaderbytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateRegLine::getHeaderbytes() const {
 	if (m_size == 0)
 		return 1;
 	return psize_vu32(m_size << 5);
 }
 
-uint32_t ItemIndexPrivateRegLine::getRegressionLineBytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateRegLine::getRegressionLineBytes() const {
 	if (m_size == 0) return 0;
 	uint32_t size = 0;
 	if (m_size > 1) {
@@ -190,7 +190,7 @@ uint32_t ItemIndexPrivateRegLine::getRegressionLineBytes() const {
 	return size;
 }
 
-uint32_t ItemIndexPrivateRegLine::getIdBytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateRegLine::getIdBytes() const {
 	if (m_size == 0)
 		return 0;
 	uint32_t size = 0;

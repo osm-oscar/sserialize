@@ -24,7 +24,7 @@ class ItemIndexPrivateSimple;
 class ItemIndexPrivateSimpleCreator {
 private:
 	UByteArrayAdapter & m_destination;
-	uint32_t m_beginning;
+	sserialize::UByteArrayAdapter::SizeType m_beginning;
 	uint32_t m_lowestId;
 	CompactUintArray m_carr;
 	uint32_t m_pos;
@@ -74,7 +74,7 @@ public:
 
 
 	virtual uint32_t rawIdAt(const uint32_t pos) const;
-	virtual uint32_t getSizeInBytes() const;
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
 	virtual uint32_t getHeaderbytes() const;
 	virtual uint32_t getRegressionLineBytes() const;
 	virtual uint32_t getIdBytes() const;

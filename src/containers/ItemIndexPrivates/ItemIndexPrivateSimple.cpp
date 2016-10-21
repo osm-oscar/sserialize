@@ -119,7 +119,7 @@ uint32_t ItemIndexPrivateSimple::rawIdAt(const uint32_t pos) const {
 	return m_idStore.at(pos);
 }
 
-uint32_t ItemIndexPrivateSimple::getSizeInBytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateSimple::getSizeInBytes() const {
 	return getHeaderbytes() + getRegressionLineBytes() + getIdBytes();
 }
 

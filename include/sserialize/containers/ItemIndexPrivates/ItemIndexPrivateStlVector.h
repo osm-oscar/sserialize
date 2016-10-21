@@ -29,10 +29,10 @@ public:
 
 
 	virtual uint32_t rawIdAt(const uint32_t pos) const { return at(pos); }
-	virtual uint32_t getSizeInBytes() const { return size()*4;}
-	virtual uint32_t getHeaderbytes() const { return 0; }
-	virtual uint32_t getRegressionLineBytes() const { return 0; }
-	virtual uint32_t getIdBytes() const { return size()*4;}
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const { return size()*4;}
+	virtual sserialize::UByteArrayAdapter::SizeType getHeaderbytes() const { return 0; }
+	virtual sserialize::UByteArrayAdapter::SizeType getRegressionLineBytes() const { return 0; }
+	virtual sserialize::UByteArrayAdapter::SizeType getIdBytes() const { return size()*4;}
 
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 };

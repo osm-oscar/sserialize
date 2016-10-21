@@ -43,7 +43,7 @@ uint8_t ItemIndexPrivateNative::bpn() const {
 	return getSizeInBytes()*8/(size()+1);
 }
 
-uint32_t ItemIndexPrivateNative::getSizeInBytes() const {
+UByteArrayAdapter::SizeType ItemIndexPrivateNative::getSizeInBytes() const {
 	return m_dataMem.size()+SerializationInfo<uint32_t>::length;
 }
 

@@ -108,10 +108,10 @@ public:
 	virtual int32_t idOffSet() const { return m_idOffset;}
 
 	virtual uint32_t rawIdAt(const uint32_t pos) const;
-	virtual uint32_t getSizeInBytes() const;
-	virtual uint32_t getHeaderbytes() const;
-	virtual uint32_t getRegressionLineBytes() const;
-	virtual uint32_t getIdBytes() const;
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
+	virtual sserialize::UByteArrayAdapter::SizeType getHeaderbytes() const;
+	virtual sserialize::UByteArrayAdapter::SizeType getRegressionLineBytes() const;
+	virtual sserialize::UByteArrayAdapter::SizeType getIdBytes() const;
 public:
 
 	template<class TSortedContainer>
