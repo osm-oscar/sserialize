@@ -39,8 +39,8 @@ public:
 	virtual void tearDown() {}
 	
 	void testIntersect() {
-		for(size_t i = 0; i < m_data.polys.size(); ++i) {
-			for(size_t j = 0; j < m_data.polys.size(); ++j) {
+		for(uint32_t i = 0; i < m_data.polys.size(); ++i) {
+			for(uint32_t j = 0; j < m_data.polys.size(); ++j) {
 				std::string msg = brokenPolyIntersect(i, j);
 				bool shouldIntersect = (m_data.polyIntersects.count(std::pair<uint32_t, uint32_t>(i,j)) > 0 || i == j);
 				bool intersectResult = m_data.polys.at(i).first.intersects(m_data.polys.at(j).first);
@@ -53,8 +53,8 @@ public:
 	}
 	
 	void testPointIntersect() {
-		for(size_t polyIt = 0; polyIt < m_data.polys.size(); ++polyIt) {
-			for(size_t pointsIt = 0; pointsIt < m_data.points.size(); ++pointsIt) {
+		for(uint32_t polyIt = 0; polyIt < m_data.polys.size(); ++polyIt) {
+			for(uint32_t pointsIt = 0; pointsIt < m_data.points.size(); ++pointsIt) {
 				std::string msg = brokenPolyPointIntersect(polyIt, pointsIt);
 				bool shouldIntersect = m_data.pointPolyIntersects.count(std::pair<uint32_t, uint32_t>(pointsIt,polyIt)) > 0;
 				bool intersectResult = m_data.polys.at(polyIt).first.contains( m_data.points.at(pointsIt) );
@@ -68,7 +68,7 @@ public:
 	
 	void testEnclosing() {
 	double scaleFactors[6] = {0.1, 0.2, 0.4, 0.8, 1.6, 3.2};
-		for(size_t i = 0; i < m_data.polys.size(); ++i) {
+		for(uint32_t i = 0; i < m_data.polys.size(); ++i) {
 			sserialize::spatial::GeoPolygon rectPoly( sserialize::spatial::GeoPolygon::fromRect(m_data.poly(i).boundary()) );
 			for(uint32_t j = 0; j < 6; ++j) {
 				sserialize::spatial::GeoRect testRect = rectPoly.boundary();

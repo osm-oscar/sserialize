@@ -109,7 +109,7 @@ public:
 	virtual void tearDown() {}
 	
 	void testPointIntersect() {
-		for(size_t pointsIt = 0; pointsIt < m_data.points.size(); ++pointsIt) {
+		for(uint32_t pointsIt = 0; pointsIt < m_data.points.size(); ++pointsIt) {
 			std::string msg = brokenPolyPointIntersect(pointsIt);
 			std::set<uint32_t> intersectingPolys = polysIntersectingPoint(pointsIt);
 			std::set<uint32_t> realIntersectingPolys = realPolysIntersectingPoint(pointsIt);
