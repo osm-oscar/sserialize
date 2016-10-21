@@ -464,8 +464,11 @@ HashBasedFlatTrie<TValue>::count(const StaticString & a) const {
 template<typename TValue>
 typename HashBasedFlatTrie<TValue>::StaticString
 HashBasedFlatTrie<TValue>::insert(const std::string & a) {
+	if (a.size() > std::numeric_limits<uint32_t>::max()) {
+		throw sserialize::OutOfBoundsException("HashBasedFlatTrie::insert: string is too long");
+	}
 	m_strHandler.specialString = a.c_str();
-	StaticString ret = insert(StaticString(a.size()));
+	StaticString ret = insert(StaticString((uint32_t) a.size()));
 	m_strHandler.specialString = 0;
 	return ret;
 }
@@ -478,7 +481,8 @@ HashBasedFlatTrie<TValue>::operator[](const StaticString & a) {
 		return m_ht[a];
 	}
 	else {
-		typename StaticString::OffsetType strOff = m_stringData.size();
+		typename StaticString::OffsetType strOff;
+		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
 		return m_ht[StaticString(strOff, a.size())];
 	}
@@ -493,7 +497,7 @@ HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERAT
 	}
 	std::string tmp(strIt, strEnd);
 	m_strHandler.specialString = tmp.c_str();
-	StaticString sstr(tmp.size());
+	StaticString sstr((uint32_t) tmp.size());
 	typename HashTable::iterator nodeBegin = m_ht.find(sstr);
 	if (nodeBegin != m_ht.end()) {
 		struct MyComp {
@@ -522,7 +526,8 @@ HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 		return a;
 	}
 	else {//special string (comes from outside)
-		typename StaticString::OffsetType strOff = m_stringData.size();
+		typename StaticString::OffsetType strOff;
+		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
 		SSERIALIZE_NORMAL_ASSERT(utf8::is_valid(m_strHandler.strBegin(a), m_strHandler.strEnd(a)));
 		StaticString ns(strOff, a.size());
@@ -575,7 +580,7 @@ void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEnd
 			uint32_t cp = utf8::next(childNextCP, m_strHandler.strEnd(nodeBegin->first));
 			const_iterator endChildNode = std::upper_bound(nodeBegin, nodeEnd, cp, compFunc);
 			uint64_t childEndOff = endChildNode-begin();
-			finalize(nodeBeginOff, childEndOff, childNextCP - m_strHandler.strBegin(nodeBegin->first));
+			finalize(nodeBeginOff, childEndOff, (uint32_t) (childNextCP - m_strHandler.strBegin(nodeBegin->first)));
 			nodeBeginOff = childEndOff;
 		}
 	}
@@ -683,7 +688,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	uint64_t debugCheckSizeEntry = m_ht.begin()->first.size();
 #endif
 	for(const auto & x : m_ht) {
-		bool ok = tsCreator.set(count, 0, m_strHandler.strBegin(x.first)-strDataBegin);
+		bool ok = tsCreator.set(count, 0, (uint32_t) (m_strHandler.strBegin(x.first)-strDataBegin));
 		ok = tsCreator.set(count, 1, x.first.size()) && ok;
 		SSERIALIZE_CHEAP_ASSERT(ok);
 		++count;
@@ -711,6 +716,10 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
 bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
+	if (size() > std::numeric_limits<uint32_t>::max()) {
+		throw sserialize::CreationException("HashBasedFlatTrie: unable to serialize. Too many nodes.");
+	}
+
 	if (!append(dest)) {
 		return false;
 	}
@@ -742,7 +751,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
 		while (nodesInLevelOrder.size()) {
 			NodePtr & n = nodesInLevelOrder.back();
-			uint32_t id = n->m_begin - m_ht.begin();
+			uint32_t id = (uint32_t) (n->m_begin - m_ht.begin());
 			nodeIdToData[id] = tmpPayload.size();
 			tmpPayload.beginRawPush() << payloadHandler(n);
 			tmpPayload.endRawPush();
@@ -757,7 +766,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		uint32_t htSize = size();
 		std::vector< std::vector<NodePtr> > nodesInLevelOrder(depth(root()));
 		nodesInLevelOrder[0].push_back(root());
-		for(uint32_t i(0), s(nodesInLevelOrder.size()-1); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) (nodesInLevelOrder.size()-1)); i < s; ++i) {
 			const std::vector<NodePtr> & levelNodes = nodesInLevelOrder[i];
 			std::vector<NodePtr> & destLevelNodes = nodesInLevelOrder[i+1];
 			for(const NodePtr & n : levelNodes) {
@@ -783,7 +792,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
 			NodePtr * levelNodesIt = &levelNodes[0];
 			NodePtr * levelNodesEnd = levelNodesIt+levelNodes.size();
-			uint32_t blockSize = levelNodes.size()/threadCount;
+			uint32_t blockSize = (uint32_t) (levelNodes.size()/threadCount);
 			
 			for(uint32_t i(0); i < threadCount; ++i) {
 				T_PH * pH = &payloadHandlers[i];
@@ -799,7 +808,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 								NodePtr & n = *levelNodesIt;
 								++levelNodesIt;
 								nodeFetchMtx.unlock();
-								uint32_t id = n->rawBegin() - htBegin;
+								uint32_t id = (uint32_t) (n->rawBegin() - htBegin);
 								SSERIALIZE_CHEAP_ASSERT_SMALLER(id, htSize);
 								
 								myTmpPayload.beginRawPush() << (*pH)(n);
@@ -814,7 +823,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 						}
 						{//do the real push
 							std::unique_lock<std::mutex> dALck(dataAccessMtx);
-							for(uint32_t i(0), s(nodeIds.size()); i < s; ++i) {
+							for(uint32_t i(0), s((uint32_t) nodeIds.size()); i < s; ++i) {
 								nodeIdToData.at(nodeIds.at(i)) = tmpPayload.size();
 								tmpPayload.beginRawPush().putData(myTmpPayload.dataAt(i));
 								tmpPayload.endRawPush();
