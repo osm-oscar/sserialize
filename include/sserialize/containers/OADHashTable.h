@@ -5,6 +5,7 @@
 #include <limits>
 #include <algorithm>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
+#include <sserialize/utility/checks.h>
 #include <sserialize/utility/log.h>
 
 namespace sserialize {
@@ -190,7 +191,7 @@ public:
 		m_d.clear();
 		m_d.resize(16, 0);
 	}
-	inline SizeType size() const { return m_valueStorage.size(); }
+	inline SizeType size() const { return (SizeType) m_valueStorage.size(); }
 	///Capacity of the storage table
 	inline SizeType storageCapacity()  const { return m_valueStorage.capacity();}
 	inline double rehashMultiplier() const { return m_rehashMult;}
@@ -321,7 +322,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 	else {
 		m_valueStorage.push_back(value_type(key, mapped_type()));
 		auto mySize = m_valueStorage.size();
-		cp = mySize;
+		sserialize::narrow_check_assign(cp) = mySize;
 		if ( mySize != cp ) {//get optimized our if return_type(m_valueStorage.size()) == SizeType
 			throw std::out_of_range("OADHashTable: overflow in TableStorage pointer type. Too many elements in hash.");
 		}
