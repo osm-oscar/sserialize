@@ -1,4 +1,5 @@
 #include <sserialize/containers/RLEStream.h>
+#include <sserialize/utility/checks.h>
 
 namespace sserialize {
 
@@ -14,7 +15,7 @@ RLEStream::Creator::~Creator() {
 }
 
 void RLEStream::Creator::put(uint32_t value) {
-	int32_t myDiff = (int64_t)value - (int64_t)m_prevId;
+	int32_t myDiff = narrow_check<int32_t>((int64_t)value - (int64_t)m_prevId);
 	if (myDiff == m_rleDiff) {
 		++m_rleCount;
 	}
@@ -112,10 +113,10 @@ RLEStream & RLEStream::operator++() {
 			m_curId -= curWord; 
 			return *this;
 		case 0x2://no rle, no delta
-			m_curId = curWord;
+			m_curId = (uint32_t) curWord;
 			return *this;
 		case 0x3://rle
-			m_curRleCount = curWord;
+			m_curRleCount = (uint32_t) curWord;
 			m_curRleDiff = m_d.getVlPackedInt32();
 			break;
 		}
