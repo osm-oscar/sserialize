@@ -53,7 +53,7 @@ public:
 			for(uint32_t i = 0; i < testData.size(); ++i) {
 				was.push_back( sserialize::WindowedArray<uint32_t>(ptr, ptr+testData[i].size()) );
 				WindowedArray<uint32_t> & wa = was.back();
-				for(uint32_t j = 0, js = testData[i].size(); j < js; ++j) {
+				for(std::size_t j = 0, js = testData[i].size(); j < js; ++j) {
 					wa.push_back(testData[i][j]);
 				}
 				ptr = ptr+testData[i].size();
@@ -63,7 +63,7 @@ public:
 			
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("Merged data don't have the same size", mergedTestData.size(), mergedWa.size());
 			
-			for(uint32_t i = 0, s = mergedWa.size(); i < s; ++i) {
+			for(std::size_t i = 0, s = mergedWa.size(); i < s; ++i) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("Merged data at ", i), mergedTestData[i], mergedWa[i]);
 			}
 			

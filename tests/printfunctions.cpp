@@ -20,7 +20,7 @@ void printCompletionQuery(const std::deque<std::string> & q) {
 }
 
 void printCompletionSet(const sserialize::StringsItemDBWrapper< sserialize::TestItemData >& db, sserialize::ItemIndex trieSet) {
-	for(size_t i = 0; i < trieSet.size(); i++) {
+	for(uint32_t i = 0; i < trieSet.size(); i++) {
 		const TestItemData & item = db.at( trieSet.at(i) );
 		std::cout << "[(";
 		for(std::deque<std::string>::const_iterator sit = item.strs.begin(); sit != item.strs.end(); sit++) {
@@ -32,7 +32,7 @@ void printCompletionSet(const sserialize::StringsItemDBWrapper< sserialize::Test
 
 
 void printCompletionSet(const  std::deque<TestItemData> & db, ItemIndex trieSet) {
-	for(size_t i = 0; i < trieSet.size(); i++) {
+	for(uint32_t i = 0; i < trieSet.size(); i++) {
 		const TestItemData & item = db.at( trieSet.at(i) );
 		std::cout << "[(";
 		for(std::deque<std::string>::const_iterator sit = item.strs.begin(); sit != item.strs.end(); sit++) {
@@ -43,7 +43,7 @@ void printCompletionSet(const  std::deque<TestItemData> & db, ItemIndex trieSet)
 }
 
 void printCompletionSet(const std::set<unsigned int> & set, const std::deque<TestItemData> & items) {
-	for(size_t i = 0; i < items.size(); i++) {
+	for(uint32_t i = 0; i < items.size(); i++) {
 		if (set.count(items.at(i).id) > 0) {
 			std::cout << "[(";
 			for(std::deque<std::string>::const_iterator sit = items.at(i).strs.begin(); sit != items.at(i).strs.end(); sit++) {
@@ -70,10 +70,10 @@ void printCompletionSet(std::deque< ItemIndex > & set, std::deque<TestItemData> 
 }
 
 void printCompletionSet(TestItemDataItemSet & set) {
-	for(size_t i = 0; i < set.size(); i++) {
+	for(uint32_t i = 0; i < set.size(); i++) {
 		TestItemDataDBItem item = set.at(i);
 		std::cout << "[(";
-		for(size_t j = 0; j < item.strCount(); j++) {
+		for(uint32_t j = 0; j < item.strCount(); j++) {
 			std::cout << item.strAt(j) << ",";
 		}
 		std::cout << "):";

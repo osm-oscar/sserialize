@@ -52,7 +52,7 @@ private:
 			prefixStrings.insert(item.strs.cbegin(), item.strs.cend());
 		};
 	
-		tempTrie.fromStringsFactory(derefer, 0, myDB.size(), sserialize::MM_PROGRAM_MEMORY);
+		tempTrie.fromStringsFactory(derefer, 0, narrow_check<uint32_t>( myDB.size() ), sserialize::MM_PROGRAM_MEMORY);
 		tempTrie.trieSerializationProblemFixer();
 	}
 

@@ -17,7 +17,7 @@ public:
 		sserialize::AsciiCharEscaper escaper(escapeStr.cbegin(), escapeStr.cend());
 		std::string escapedStr = escaper.escape(escapeStr);
 		CPPUNIT_ASSERT_EQUAL(escapeStr.size()*2, escapedStr.size());
-		for(uint32_t i(0), s(escapeStr.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) escapeStr.size()); i < s; ++i) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("original char pos=", i), (int)escapeStr[i], (int)escapedStr[2*i+1]);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("escape char pos=", i),(int)'\\', (int)escapedStr[2*i]);
 		}

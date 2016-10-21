@@ -68,7 +68,7 @@ public:
 			}
 		}
 		
-		for(uint32_t i = 0, s = m_items.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) m_items.size(); i < s; ++i) {
 			for(const KeyValuePair & kv : m_items[i]) {
 				m_kv.addKey(kv.first);
 				m_kv.addValue(kv.second);

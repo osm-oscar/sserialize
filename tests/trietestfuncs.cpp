@@ -6,7 +6,7 @@ namespace sserialize {
 
 std::set<unsigned int> itemIdsFromTrieSet(const sserialize::StringsItemDBWrapper< sserialize::TestItemData >& db, sserialize::ItemIndex trieSet) {
 	std::set<unsigned int> res;
-	for(size_t i = 0; i < trieSet.size(); i++) {
+	for(uint32_t i = 0; i < trieSet.size(); i++) {
 		res.insert(db.at(trieSet.at(i)).id);
 	}
 	return res;
@@ -15,7 +15,7 @@ std::set<unsigned int> itemIdsFromTrieSet(const sserialize::StringsItemDBWrapper
 
 std::set<unsigned int> itemIdsFromTrieSet(std::deque<TestItemData> & db, ItemIndex trieSet) {
 	std::set<unsigned int> res;
-	for(size_t i = 0; i < trieSet.size(); i++) {
+	for(uint32_t i = 0; i < trieSet.size(); i++) {
 		res.insert(db.at(trieSet.at(i)).id);
 	}
 	return res;

@@ -128,7 +128,7 @@ std::deque<TestItemData> createSampleData() {
 	
 	//assign item ids
 	for(size_t i = 0; i < data.size(); i++) {
-		data[i].id = i;
+		data[i].id = (uint32_t) i;
 	}
 	return data;
 }
@@ -223,7 +223,7 @@ getItemIdsWithString(const std::deque< std::string >& strs, sserialize::StringCo
 
 std::set< unsigned int > getItemIds(const std::deque< TestItemData >& items, ItemIndex idx) {
 	std::set<unsigned int> ret;
-	for(size_t i = 0; i < idx.size(); i++) {
+	for(uint32_t i = 0; i < idx.size(); i++) {
 		if (idx.at(i) < items.size()) {
 			ret.insert( items[idx.at(i)].id );
 		}

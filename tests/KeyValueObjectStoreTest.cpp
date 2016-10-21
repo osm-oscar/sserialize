@@ -102,7 +102,7 @@ public:
 	void testReorder() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size does not match", static_cast<uint32_t>( m_items.size() ), (uint32_t)m_kv.size());
 		
-		std::vector<uint32_t> perm(sserialize::RangeGenerator<uint32_t>::begin(0, m_items.size()), sserialize::RangeGenerator<uint32_t>::end(0, m_items.size()));
+		std::vector<uint32_t> perm(sserialize::RangeGenerator<uint32_t>::begin(0, (uint32_t) m_items.size()), sserialize::RangeGenerator<uint32_t>::end(0, (uint32_t) m_items.size()));
 		std::random_shuffle(perm.begin(), perm.end());
 		
 		m_kv.reorder(perm);
@@ -196,7 +196,7 @@ public:
 				KeyValueObjectStore::serialize(itemData, d);
 				Static::KeyValueObjectStoreItemBase sitem(d);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("item.size()",(uint32_t)itemData.size(), sitem.size());
-				for(uint32_t i = 0, s = itemData.size(); i < s; ++i) {
+				for(uint32_t i = 0, s = (uint32_t) itemData.size(); i < s; ++i) {
 					CPPUNIT_ASSERT_EQUAL_MESSAGE("item keyid", itemData[i].key, sitem.keyId(i));
 					CPPUNIT_ASSERT_EQUAL_MESSAGE("item valueid", itemData[i].value, sitem.valueId(i));
 				}

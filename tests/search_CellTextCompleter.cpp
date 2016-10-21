@@ -180,7 +180,7 @@ public:
 			item.strs.assign(strs.begin(), strs.end());
 			item.cells = r->cells;
 			
-			r->storeId = this->regions.size();
+			r->storeId = (uint32_t) this->regions.size();
 			
 			this->regions.emplace_back(std::move(item));
 		});
@@ -244,7 +244,7 @@ public:
 			uint32_t * cellRegionListIt = cellList.cellRegionLists().begin();
 			uint32_t * cellItemListIt = cellList.cellItemList().begin();
 			
-			for(uint32_t cellId(0), s(cellParents.size()); cellId < s; ++cellId) {
+			for(uint32_t cellId(0), s((uint32_t) cellParents.size()); cellId < s; ++cellId) {
 				uint32_t * myCellRegionListBegin = cellRegionListIt;
 				uint32_t * myCellItemListBegin = cellItemListIt;
 				
@@ -269,7 +269,7 @@ public:
 				}
 				regionList.regionData().push_back(rp->cells.begin(), rp->cells.end());
 				
-				regionList.regionDescriptions().emplace_back(&(regionList.regionData()), off, rp->children.size(), rp->parents.size(), rp->cells.size(), 0);
+				regionList.regionDescriptions().emplace_back(&(regionList.regionData()), off, (uint32_t) rp->children.size(), (uint32_t) rp->parents.size(), (uint32_t) rp->cells.size(), 0);
 			}
 			
 			gh.createRootRegion();
@@ -323,7 +323,7 @@ public:
 		{
 			std::map<uint32_t, uint32_t> pmc2pml;
 			for(auto & x : pm) {
-				pmc2pml[x.first] = pml.size();
+				pmc2pml[x.first] = (uint32_t) pml.size();
 				pml.emplace_back(std::move(x.second));
 			}
 			
@@ -400,7 +400,7 @@ public:
 		std::sort(myTestStrings.begin(), myTestStrings.end());
 		
 		//now do the test
-		for(uint32_t i(0), s(myTestStrings.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) myTestStrings.size()); i < s; ++i) {
 			const std::string & qstr  = myTestStrings[i];
 			sserialize::CellQueryResult testCqr, realCqr;
 			std::vector<sserialize::ItemIndex> realPm;

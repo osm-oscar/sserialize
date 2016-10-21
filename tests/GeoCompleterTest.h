@@ -25,11 +25,13 @@ private:
 		std::set<uint32_t> & polyIds = m_geoData.rectPolyIds[rectId];
 		std::set<uint32_t> & pointIds = m_geoData.rectPointIds[rectId];
 		std::set<uint32_t> ret;
-		for(size_t i = 0; i < m_items.size(); ++i) {
-			if (m_items[i].points.size() == 1 && pointIds.count( m_items[i].geoId ) > 0)
+		for(uint32_t i = 0; i < m_items.size(); ++i) {
+			if (m_items[i].points.size() == 1 && pointIds.count( m_items[i].geoId ) > 0) {
 				ret.insert(i);
-			else if (m_items[i].points.size() > 1 && polyIds.count( m_items[i].geoId ) > 0)
+			}
+			else if (m_items[i].points.size() > 1 && polyIds.count( m_items[i].geoId ) > 0) {
 				ret.insert(i);
+			}
 		}
 		return ret;
 	}
@@ -81,7 +83,7 @@ public:
 	virtual void tearDown() {}
 
 	void testGeoCompletion() {
-		for(size_t i = 0; i < m_geoData.rects.size(); i++) {
+		for(uint32_t i = 0; i < m_geoData.rects.size(); i++) {
 			ItemIndex idx = geoCompleter().complete(m_geoData.rects.at(i), false);
 			std::set<uint32_t> retIds = idx.toSet();
 			std::set<uint32_t> realIds = itemsWithinRect(i);
@@ -92,7 +94,7 @@ public:
 	}
 	
 	void testPartialGeoCompletion() {
-		for(size_t i = 0; i < m_geoData.rects.size(); i++) {
+		for(uint32_t i = 0; i < m_geoData.rects.size(); i++) {
 			ItemIndex idx = geoCompleter().partialComplete(m_geoData.rects.at(i), false).toItemIndex();
 			std::set<uint32_t> retIds = idx.toSet();
 			std::set<uint32_t> realIds = itemsWithinRect(i);
