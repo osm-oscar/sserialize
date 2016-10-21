@@ -1,4 +1,5 @@
 #include <sserialize/Static/UnicodeTrie/detail/SimpleNode.h>
+#include <sserialize/utility/checks.h>
 #include <algorithm>
 
 
@@ -41,7 +42,7 @@ std::string SimpleNode::str() const {
 }
 
 uint32_t SimpleNode::childSize() const {
-	return m_children.size();
+	return (uint32_t) m_children.size();
 }
 
 uint32_t SimpleNode::childKey(uint32_t pos) const {
@@ -57,7 +58,7 @@ uint32_t SimpleNode::find(uint32_t unicode_point) const {
 		)
 	);
 	if (it->first == unicode_point) {
-		return it-m_children.cbegin();
+		return (uint32_t) (it-m_children.cbegin());
 	}
 	else {
 		return sserialize::Static::UnicodeTrie::Node::npos;
@@ -82,7 +83,7 @@ uint32_t SimpleNodeCreator::type() const {
 }
 
 bool SimpleNodeCreator::append(const NodeSerializationInfo & src, sserialize::UByteArrayAdapter & dest) {
-	dest.putVlPackedUint32(src.childKeyPtrOffsets.size());
+	dest.putVlPackedUint32(sserialize::narrow_check<uint32_t>( src.childKeyPtrOffsets.size() ));
 	for(const auto & x : src.childKeyPtrOffsets) {
 		dest.putVlPackedUint32(x.first);
 		dest.putVlPackedUint32(x.second);
