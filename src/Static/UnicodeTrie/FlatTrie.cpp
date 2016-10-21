@@ -121,12 +121,12 @@ uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 	uint32_t right = size()-1;
 	uint32_t mid  = (right-left)/2 + left;
 
-	uint32_t lLcp = calcLcp(strData(left), str);
+	std::string::size_type lLcp = calcLcp(strData(left), str);
 	if (lLcp == str.size()) {//first is match
 		return 0;
 	}
-	uint32_t rLcp = calcLcp(strData(right), str);
-	uint32_t mLcp = 0;
+	std::string::size_type rLcp = calcLcp(strData(right), str);
+	std::string::size_type mLcp = 0;
 	int8_t cmp = compare(strData(mid), str, mLcp);
 	
 	while(right-left > 1) {
