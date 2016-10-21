@@ -240,11 +240,11 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 	out << "size: " << indexIds.size() << std::endl;
 
 	uint32_t largestIndex = 0;
-	uint32_t largestSpaceUsageIndex = 0;
+	sserialize::UByteArrayAdapter::SizeType largestSpaceUsageIndex = 0;
 	for(uint32_t i(0), s(size()); i < s; ++i) {
 		sserialize::ItemIndex idx(at(i));
 		largestIndex = std::max<uint32_t>(largestIndex, idx.size());
-		largestSpaceUsageIndex = std::max<uint32_t>(largestSpaceUsageIndex, idx.getSizeInBytes());
+		largestSpaceUsageIndex = std::max(largestSpaceUsageIndex, idx.getSizeInBytes());
 	}
 	out << "Largest index size: " << largestIndex << std::endl;
 	out << "Largest space usage: " << largestSpaceUsageIndex << std::endl;
