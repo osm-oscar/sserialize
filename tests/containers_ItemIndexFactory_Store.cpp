@@ -160,7 +160,7 @@ public:
 		for(size_t i = 0; i < m_sets.size(); ++i) {
 			uint32_t idxId = m_setIds[i];
 			ItemIndex idx = csdb.at(idxId);
-			uint32_t realIndexSize =  m_sets[i].size();
+			uint32_t realIndexSize =  (uint32_t) m_sets[i].size();
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Index at", i), m_sets[i] == idx);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("IndexIndexStore.idxSize at", i), realIndexSize, sdb.idxSize(idxId));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("IndexIndexStore.idxSize at", i), realIndexSize, csdb.idxSize(idxId));
@@ -182,7 +182,7 @@ public:
 		idxFactory.setType(T_IDX_TYPE);
 		idxFactory.setIndexFile( UByteArrayAdapter::createCache(T_SET_COUNT*T_MAX_SET_FILL, sserialize::MM_PROGRAM_MEMORY) );
 		std::vector<uint32_t> remap = idxFactory.insert(sdb);
-		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);
 			sserialize::ItemIndex testIdx = idxFactory.indexById(remap.at(i));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("remap id at ", i), i, remap.at(i));
@@ -191,7 +191,7 @@ public:
 		}
 		
 		remap = idxFactory.insert(sdb);
-		for(uint32_t i = 0, s = remap.size(); i < s; ++i) {
+		for(uint32_t i = 0, s = (uint32_t) remap.size(); i < s; ++i) {
 			sserialize::ItemIndex real = sdb.at(i);
 			sserialize::ItemIndex testIdx = idxFactory.indexById(remap.at(i));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", real.size(), testIdx.size());

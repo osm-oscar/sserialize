@@ -45,13 +45,13 @@ public:
 		std::stringstream ss;
 		CPPUNIT_ASSERT_EQUAL(m_data.size(), m_db.size());
 		for(size_t i = 0; i < m_db.size(); i++) {
-			MyDBItemType item = m_db.at(i);
+			MyDBItemType item = m_db.at((uint32_t) i);
 			TestItemData & realItem = m_data.at(i);
 			ss << "Testing Item" << i;
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": string-count failed", static_cast<uint32_t>(realItem.strs.size()), item.strCount());
 			uint32_t stringCount = item.strCount();
 			for(size_t j = 0; j < stringCount; j++) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": string-equality failed", realItem.strs.at(j), item.strAt(j));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": string-equality failed", realItem.strs.at(j), item.strAt((uint32_t) j));
 			}
 		}
 	}
@@ -59,10 +59,10 @@ public:
 		std::stringstream ss;
 		CPPUNIT_ASSERT_EQUAL(m_data.size(), m_db.size());
 		for(size_t i = 0; i < m_db.size(); i++) {
-			MyDBItemType item = m_db.at(i);
+			MyDBItemType item = m_db.at((uint32_t) i);
 			TestItemData & realItem = m_data.at(i);
 			ss << "Testing Item" << i;
-			uint32_t realPointCount = realItem.points.size();
+			uint32_t realPointCount = (uint32_t) realItem.points.size();
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str() + ": geopoint-count failed", realPointCount, (item.geoShape() ? item.geoShape()->size() : 0) );
 			
 			if (realPointCount == 1) {

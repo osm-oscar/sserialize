@@ -133,7 +133,8 @@ public:
 			for(std::set<uint64_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count;
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
+				CPPUNIT_ASSERT(count <= std::numeric_limits<uint32_t>::max());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at((uint32_t) count));
 			}
 		}
 	}

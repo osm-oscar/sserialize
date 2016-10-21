@@ -41,8 +41,8 @@ public:
 		for(uint32_t i = 0; i< m_sets.size(); ++i) {
 			sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
 			sserialize::ItemIndexFactory::create(m_sets[i], tmp, T_IDX_TYPE);
-			uint32_t id = m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_ON);
-			m_setIds.push_back(id);
+			VariantStore::SizeType id = m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_ON);
+			m_setIds.push_back((uint32_t) id);
 		}
 	}
 	virtual void tearDown() {}
@@ -51,11 +51,11 @@ public:
 		for(uint32_t i = 0; i < m_sets.size(); ++i) {
 			sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
 			sserialize::ItemIndexFactory::create(m_sets[i], tmp, T_IDX_TYPE);
-			uint32_t id = m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_ON);
+			VariantStore::SizeType id = m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_ON);
 			if (id != m_setIds[i]) {
 				m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_ON);
 			}
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(std::string("at ") + std::to_string(i), m_setIds[i], id);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(std::string("at ") + std::to_string(i), m_setIds[i], (uint32_t) id);
 		}
 	}
 	
@@ -63,8 +63,8 @@ public:
 		for(uint32_t i = 0; i < m_sets.size(); ++i) {
 			sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
 			sserialize::ItemIndexFactory::create(m_sets[i], tmp, T_IDX_TYPE);
-			uint32_t expectId = m_dsFactory.size();
-			uint32_t id = m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_OFF);
+			VariantStore::SizeType expectId = m_dsFactory.size();
+			VariantStore::SizeType id = m_dsFactory.insert(tmp, VariantStore::DDM_FORCE_OFF);
 			CPPUNIT_ASSERT_EQUAL(expectId, id);
 		}
 	}

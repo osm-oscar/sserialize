@@ -81,7 +81,7 @@ public:
 	}
 	
 	//Access functions for StringsItemDBItem
-	uint32_t strCount(uint32_t itemPos) const { return itemStrings().at(itemPos).size();}
+	uint32_t strCount(uint32_t itemPos) const { return (uint32_t) itemStrings().at(itemPos).size();}
 	uint32_t strIdAt(uint32_t itemPos, uint32_t strPos) const { return itemStrings().at(itemPos).at(strPos);}
 	bool match(uint32_t /*itemPos*/, const std::string & /*str*/, const sserialize::StringCompleter::QuerryType /*qt*/) const {
 		return false;
@@ -160,7 +160,7 @@ template<typename ItemType>
 ItemIndex
 StringsItemDBPrivate<ItemType>::select(const std::unordered_set<uint32_t> & strIds) const {
 	std::deque<unsigned int> itemIds;
-	for(size_t i = 0; i < m_itemStrings.size(); i++) {
+	for(unsigned int i = 0; i < m_itemStrings.size(); i++) {
 		if (haveCommonValue(m_itemStrings[i], strIds) ) {
 			itemIds.push_back(i);
 		}
@@ -209,12 +209,12 @@ StringsItemDBPrivate<ItemType>::push_back(const std::deque<std::string> & strs, 
 template<typename ItemType>
 unsigned int
 StringsItemDBPrivate<ItemType>::push_back(const std::vector<std::string> & strs, const ItemType & item) {
-	unsigned int itemId = m_items.size();
+	unsigned int itemId = (uint32_t) m_items.size();
 	std::vector<uint32_t> addedStrings;
 	for(std::vector<std::string>::const_iterator it = strs.begin(); it != strs.end(); it++) {
 		unsigned int strId;
 		if (m_strToStrIdCount.count(*it) == 0) {
-			strId = m_strIdToStr.size();
+			narrow_check_assign(strId) = m_strIdToStr.size();
 			m_strIdToStr.push_back(*it);
 			m_strToStrIdCount[*it] = std::pair<unsigned int, unsigned int>(strId, 0);
 		}
@@ -246,7 +246,7 @@ bool StringsItemDBPrivate<ItemType>::addStringsToItem(uint32_t itemPos, std::deq
 	for(std::deque<std::string>::iterator it = strs.begin(); it != strs.end(); it++) {
 		unsigned int strId;
 		if (m_strToStrIdCount.count(*it) == 0) {
-			strId = m_strIdToStr.size();
+			narrow_check_assign(strId) = m_strIdToStr.size();
 			m_strIdToStr.push_back(*it);
 			m_strToStrIdCount[*it] = std::pair<unsigned int, unsigned int>(strId, 0);
 		}

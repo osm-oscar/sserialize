@@ -47,7 +47,7 @@ public:
 	//setup hft with strings in m_testStrings
 	virtual void setUp() {
 		for(std::size_t i(0), s(m_testStrings.size()); i < s; ++i) {
-			m_ht[m_ht.insert(m_testStrings[i])] = i; 
+			m_ht[m_ht.insert(m_testStrings[i])] = (uint32_t) i; 
 		}
 		m_ht.finalize();
 	}
@@ -64,7 +64,7 @@ public:
 		};
 
 		TrieTrie trie;
-		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) m_testStrings.size()); i < s; ++i) {
 			trie.at(m_testStrings[i].begin(), m_testStrings[i].end()) = i;
 		}
 		if (!m_testStrings.size())
@@ -226,7 +226,7 @@ public:
 		MyST sft(hftOut);
 		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
 		
-		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) m_testStrings.size()); i < s; ++i) {
 			const std::string & str = m_testStrings[i];
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("search broken for" + str, ValueType(i), sft.at(str, false));
 		}
@@ -322,7 +322,7 @@ public:
 		MyST sft(hftOut);
 		std::vector< std::pair<MyST::Node::const_iterator, MyST::Node::const_iterator> > nodeIts;
 		
-		for(uint32_t i(0), s(m_testStrings.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) m_testStrings.size()); i < s; ++i) {
 			const std::string & str = m_testStrings[i];
 			uint32_t pos = sft.find(str, false);
 			uint32_t v = sft.at(pos);

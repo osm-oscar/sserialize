@@ -191,7 +191,7 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	sserialize::Static::ArrayCreator<sserialize::spatial::GeoShape> creator(destination);
 	sserialize::ProgressInfo info;
 	info.begin(db.items().size());
-	for(size_t i = 0; i < db.size(); ++i) {
+	for(uint32_t i = 0; i < db.size(); ++i) {
 		creator.beginRawPut();
 		const sserialize::spatial::GeoShape * shape = db.geoShape(i);
 		if (shape) {

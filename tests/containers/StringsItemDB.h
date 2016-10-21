@@ -100,7 +100,7 @@ public:
 		return priv()->strIdToStr();
 	}
 
-	Item at(size_t pos) {
+	Item at(uint32_t pos) {
 		return StringsItem<StringsItemDB>(pos, *this);
 	}
 	

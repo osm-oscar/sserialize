@@ -44,8 +44,8 @@ public:
 		MultiVarBitArrayCreator creator(m_bitConfig, m_data);
 		creator.reserve(TValueCount);
 		
-		for(size_t i = 0; i < TValueCount; i++) {
-			for(size_t j = 0; j < TSubValueCount; j++) {
+		for(uint32_t i = 0; i < TValueCount; i++) {
+			for(uint32_t j = 0; j < TSubValueCount; j++) {
 				creator.set(i,j, m_values[i][j] );
 			}
 		}
@@ -57,8 +57,8 @@ public:
 	virtual void tearDown() {}
 	
 	void testEquality() {
-		for(size_t i = 0; i < TValueCount; i++) {
-			for(size_t j = 0; j < TSubValueCount; j++) {
+		for(uint32_t i = 0; i < TValueCount; i++) {
+			for(uint32_t j = 0; j < TSubValueCount; j++) {
 				std::stringstream ss;
 				ss << "pos=" << i << ", subpos=" << j;
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), m_values[i][j], m_arr.at(i,j)  );
@@ -73,7 +73,7 @@ public:
 	
 	void testBitCount() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("bitconfig.size() is wrong", (uint32_t) m_bitConfig.size(), m_arr.bitConfigCount());
-		for(size_t i = 0; i< m_bitConfig.size(); i++) {
+		for(uint32_t i = 0; i < m_bitConfig.size(); i++) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("bitconfig is broken", m_bitConfig.at(i), m_arr.bitCount(i));
 		}
 	}

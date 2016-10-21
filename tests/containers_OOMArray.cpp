@@ -165,8 +165,8 @@ public:
 			}
 			
 			m_d.flush();
-			uint32_t replacePos = rand() % m_rd.size();
-			uint32_t replaceCount = m_d.size() + m_d.backBufferSize()/2;
+			std::size_t replacePos = rand() % m_rd.size();
+			sserialize::SizeType replaceCount = m_d.size() + m_d.backBufferSize()/2;
 			if (replacePos + replaceCount > m_rd.size()) {
 				m_rd.resize(replacePos+replaceCount);
 			}
@@ -183,8 +183,8 @@ public:
 				CPPUNIT_ASSERT_MESSAGE("entries[" +  std::to_string(rdit-m_rd.begin()) + "] are unequal after long replace", *rdit == *it);
 			}
 			
-			uint32_t backInsertPos = m_rd.size();
-			for(uint32_t j(0), s(2*m_d.backBufferSize()); j < s; ++j) {
+			sserialize::SizeType backInsertPos = m_rd.size();
+			for(sserialize::SizeType j(0), s(2*m_d.backBufferSize()); j < s; ++j) {
 				m_rd.push_back(TestData());
 			}
 			

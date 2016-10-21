@@ -42,7 +42,7 @@ public:
 		typename MyIFLArray::iterator dIt(d.begin()), dEnd(d.end());
 		typename MyIFLArray::iterator cIt(c.begin()), cEnd(c.end());
 		typename std::vector<value_type>::iterator mIt(m_d.begin());
-		for(uint32_t i(0), s(m_d.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) m_d.size()); i < s; ++i) {
 			CPPUNIT_ASSERT(dIt != dEnd);
 			CPPUNIT_ASSERT(cIt != cEnd);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("direct iterator at ", i), *mIt, *dIt);
@@ -63,7 +63,7 @@ public:
 		typename MyIFLArray::reverse_iterator dIt(d.rbegin()), dEnd(d.rend());
 		typename MyIFLArray::reverse_iterator cIt(c.rbegin()), cEnd(c.rend());
 		typename std::vector<value_type>::reverse_iterator mIt(m_d.rbegin());
-		for(uint32_t i(0), s(m_d.size()); i < s; ++i) {
+		for(uint32_t i(0), s((uint32_t) m_d.size()); i < s; ++i) {
 			CPPUNIT_ASSERT(dIt != dEnd);
 			CPPUNIT_ASSERT(cIt != cEnd);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("direct iterator at ", i), *mIt, *dIt);

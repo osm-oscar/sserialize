@@ -94,7 +94,7 @@ public:
 			for(uint32_t i=0; i < 3; ++i) {
 				create(src[i], idcs[i]);
 			}
-			for(uint32_t i(0), s(idcs.size()); i < s; ++i) {
+			for(uint32_t i(0), s((uint32_t) idcs.size()); i < s; ++i) {
 				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("united special created index=",i," is broken"), src[i] == idcs[i]);
 			}
 			ItemIndex unitedIdx = ItemIndex::unite(idcs);
@@ -112,7 +112,7 @@ public:
 			for(uint32_t i=0; i < 2; ++i) {
 				create(src[i], idcs[i]);
 			}
-			for(uint32_t i(0), s(idcs.size()); i < s; ++i) {
+			for(uint32_t i(0), s((uint32_t) idcs.size()); i < s; ++i) {
 				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("united special2 created index=",i," is broken"), src[i] == idcs[i]);
 				idcs[0].back();
 				idcs[1].back();
@@ -373,7 +373,7 @@ public:
 		
 			std::set<uint32_t>::iterator it = realValues.begin();
 			ItemIndex::const_iterator sit = idx.cbegin();
-			for(uint32_t j = 0, s = realValues.size(); j < s; ++j, ++it, ++sit) {
+			for(uint32_t j = 0, s = (uint32_t) realValues.size(); j < s; ++j, ++it, ++sit) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("direct access at ", j), *it, idx.at(j));
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("iterator access at ", j), *it, *sit);
 			}
