@@ -187,7 +187,7 @@ std::set<uint32_t> ItemIndex::toSet() const {
 }
 
 void ItemIndex::toDisk() {
-	std::size_t s = size();
+	uint32_t s = size();
 	UByteArrayAdapter dest( ItemIndexPrivateSimpleCreator::createCache(front(), back(), s, true) );
 	ItemIndexPrivateSimpleCreator creator(front(), back(), s, dest);
 	for(uint32_t i = 0; i < s; ++i) {

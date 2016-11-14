@@ -60,6 +60,6 @@ int main() {
 	runner.addTest( UtilFuncsTest<10, 10000>::suite() );
 	runner.addTest( UtilFuncsTest<100, 10000>::suite() );
 	runner.addTest( UtilFuncsTest<10, 100000>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

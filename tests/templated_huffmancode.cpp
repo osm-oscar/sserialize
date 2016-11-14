@@ -124,6 +124,6 @@ int main() {
 	runner.addTest( HuffmanCodeTest<10, 1011>::suite() );
 	runner.addTest( HuffmanCodeTest<10, 10111>::suite() );
 	runner.addTest( HuffmanCodeTest<10, 101111>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

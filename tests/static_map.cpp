@@ -96,10 +96,12 @@ int main() {
 
 
 
-	if (allOk)
+	if (allOk) {
 		std::cout << "PASSED all test." << std::endl;
-	else
+		return 0;
+	}
+	else {
 		std::cout << "FAILED at least one test!" << std::endl;
-
-	return 0;
+		return 1;
+	}
 }

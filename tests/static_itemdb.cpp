@@ -123,6 +123,8 @@ int main(int argc, char **argv) {
 	}
 	std::deque<std::string> strings(stringSet.begin(), stringSet.end());
 	stringSet.clear();
+	
+	bool allOk = true;
 
 	for(unsigned int itemCount = 100; itemCount < 10000000; itemCount*=10) {
 		std::cout << "Creating database with " << itemCount << " items." << std::endl;
@@ -133,6 +135,7 @@ int main(int argc, char **argv) {
 		}
 		else {
 			std::cout << "Creation Failed!" << std::endl;
+			allOk = false;
 			continue;
 		}
 
@@ -146,6 +149,7 @@ int main(int argc, char **argv) {
 		}
 		else {
 			std::cout << "Serialization failed!" << std::endl;
+			allOk = false;
 		}
 
 		if (testDataBase(dataBase, dbAdap, stableAdap)) {

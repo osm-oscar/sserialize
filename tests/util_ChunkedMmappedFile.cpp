@@ -94,7 +94,6 @@ int main() {
 	runner.addTest( ChunkedMmappedFileTest<2048576, 20, 3>::suite() ); //~2 MebiByte, 1 mb chunk size
 	runner.addTest( ChunkedMmappedFileTest<548576, 14, 3>::suite() ); //~0.5 MebiByte, 16 kb chunk size
 
-	runner.run();
-	return 0;
-	
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

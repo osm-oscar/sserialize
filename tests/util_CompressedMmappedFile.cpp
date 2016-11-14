@@ -104,7 +104,6 @@ int main() {
 	runner.addTest( CompressedMmappedFileTest<2048576, 20, 3>::suite() ); //~2 MebiByte, 1 mb chunk size
 	runner.addTest( CompressedMmappedFileTest<548576, 16, 4>::suite() ); //~0.5 MebiByte, 64 kb chunk size
 
-	runner.run();
-	return 0;
-	
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

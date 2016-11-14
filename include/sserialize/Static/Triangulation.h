@@ -830,12 +830,12 @@ uint32_t Triangulation::prepare(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeL
 				ipts.emplace_back(IntPoint(x).toPoint());
 			}
 			ctd.insert(ipts.begin(), ipts.end());
-			numChangedPoints = ipts.size();
+			numChangedPoints = (uint32_t) ipts.size();
 // 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
 		}
 	}
 	
-	uint32_t initialQueueSize = ceQueue.size();
+	uint32_t initialQueueSize = (uint32_t) ceQueue.size();
 	uint32_t targetQueueRounds = initialQueueSize;
 	uint32_t queueRound = 0;
 	

@@ -193,7 +193,7 @@ public:
 	}
 	inline SizeType size() const { return (SizeType) m_valueStorage.size(); }
 	///Capacity of the storage table
-	inline SizeType storageCapacity()  const { return m_valueStorage.capacity();}
+	inline SizeType storageCapacity()  const { return (SizeType) m_valueStorage.capacity();}
 	inline double rehashMultiplier() const { return m_rehashMult;}
 	inline void rehashMultiplier(double v) { m_rehashMult = v; }
 	///Capacity of the hash table (not the storage table)

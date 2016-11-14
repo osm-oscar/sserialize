@@ -222,10 +222,10 @@ public:
 int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-// 	runner.addTest(  TriangulationTest<0, 10>::suite() );
+	runner.addTest(  TriangulationTest<0, 10>::suite() );
 	runner.addTest(  TriangulationTest<1000, 1000>::suite() );
-// 	runner.addTest(  TriangulationTest<10000, 1000>::suite() );
+	runner.addTest(  TriangulationTest<10000, 1000>::suite() );
 // 	runner.eventManager().popProtector();
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

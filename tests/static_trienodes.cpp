@@ -286,7 +286,7 @@ int main() {
 	
 	if (!ok) {
 		std::cout << "Some tests Failed" << std::endl;
+		return 1;
 	}
-	
 	return 0;
 }

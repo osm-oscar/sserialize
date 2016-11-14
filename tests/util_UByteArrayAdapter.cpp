@@ -2,6 +2,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
+#include <cppunit/TestResult.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include "datacreationfuncs.h"
 
@@ -280,6 +281,8 @@ int main() {
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  UBAVec::suite() );
 
-	runner.run();
-	return 0;
+	runner.eventManager().popProtector();
+	
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

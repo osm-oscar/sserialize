@@ -190,13 +190,20 @@ inline bool test_packFunctions() {
 
 int main() {
 	
+	bool allOk = true;
 	if (test_packFunctions2()) {
 		std::cout << "Selective test passed" << std::endl;
+	}
+	else {
+		allOk = false;
 	}
 	
 	if (test_packFunctions()) {
 		std::cout << "Rand test passed" << std::endl;
 	}
+	else {
+		allOk = false;
+	}
 	
-	return 0;
+	return (allOk ? 0 : 1);
 }

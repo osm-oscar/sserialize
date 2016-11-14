@@ -30,13 +30,13 @@ int main() {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestThreadPool<1, 10>::suite() );
-// 	runner.addTest(  TestThreadPool<2, 2>::suite() );
-// 	runner.addTest(  TestThreadPool<2, 20>::suite() );
-// 	runner.addTest(  TestThreadPool<4, 100>::suite() );
-// 	runner.addTest(  TestThreadPool<8, 8>::suite() );
-// 	runner.addTest(  TestThreadPool<8, 1>::suite() );
-// 	runner.addTest(  TestThreadPool<100, 1000>::suite() );
-// 	runner.addTest(  TestThreadPool<100, 1>::suite() );
-	runner.run();
-	return 0;
+	runner.addTest(  TestThreadPool<2, 2>::suite() );
+	runner.addTest(  TestThreadPool<2, 20>::suite() );
+	runner.addTest(  TestThreadPool<4, 100>::suite() );
+	runner.addTest(  TestThreadPool<8, 8>::suite() );
+	runner.addTest(  TestThreadPool<8, 1>::suite() );
+	runner.addTest(  TestThreadPool<100, 1000>::suite() );
+	runner.addTest(  TestThreadPool<100, 1>::suite() );
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

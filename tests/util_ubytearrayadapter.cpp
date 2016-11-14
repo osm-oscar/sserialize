@@ -864,7 +864,12 @@ int main(int argc, char** argv) {
 		allOk = false;
 #endif
 	std::cout <<  "SUMMARY: ";
-	if (allOk) std::cout << "OK! All tests passed" << std::endl;
-	else std::cout << "FAILED! Some tests failed" << std::endl;
-	return 0;
+	if (allOk) {
+		std::cout << "OK! All tests passed" << std::endl;
+		return 0;
+	}
+	else {
+		std::cout << "FAILED! Some tests failed" << std::endl;
+		return 1;
+	}
 }
