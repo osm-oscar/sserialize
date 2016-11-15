@@ -118,6 +118,8 @@ public:
 	static bool createDirectory(const std::string & fileName, __mode_t mode = S_IRWXU);
 	static bool createSymlink(const std::string & src, const std::string & destination);
 	static std::string realPath(const std::string & path);
+	static std::string dirName(const std::string & path);
+	static bool isAbsolute(const std::string& path);
 };
 
 }//end namespace

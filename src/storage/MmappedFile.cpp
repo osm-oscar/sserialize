@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <string.h>
 #include <limits>
+#include <libgen.h>
 #include <iostream>
 
 namespace sserialize {
@@ -393,5 +394,16 @@ std::string MmappedFile::realPath(const std::string & path) {
 	}
 	return std::string(buf);
 }
+
+std::string MmappedFile::dirName(const std::string& path) {
+	char buf[path.size()];
+	std::copy(path.begin(), path.end(), buf);
+	return std::string( ::dirname(buf) );
+}
+
+bool MmappedFile::isAbsolute(const std::string& path) {
+	return path.size() && path.front() == '/';
+}
+
 
 }//end namespace
