@@ -5,6 +5,28 @@
 
 namespace sserialize {
 
+//from https://stackoverflow.com/questions/18085331/recursive-lambda-functions-in-c14
+
+template<typename Functor>
+struct fix_type {
+	Functor functor;
+
+	template<typename... Args>
+	decltype(auto) operator()(Args&&... args) const & {
+		return functor(*this, std::forward<Args>(args)...);
+	}
+	
+	template<typename... Args>
+	decltype(auto) operator()(Args&&... args) & {
+		return functor(*this, std::forward<Args>(args)...);
+	}
+};
+
+template<typename Functor>
+fix_type<typename std::decay<Functor>::type> fix(Functor&& functor) {
+	return { std::forward<Functor>(functor) };
+}
+
 template<typename T_IT1, typename T_IT2>
 bool is_smaller(T_IT1 begin1, T_IT1 end1, T_IT2 begin2, T_IT2 end2) {
 	for(; begin1 != end1 && begin2 != end2; ++begin1, ++begin2) {
