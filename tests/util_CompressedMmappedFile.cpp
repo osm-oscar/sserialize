@@ -93,8 +93,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( CompressedMmappedFileTest<182137657, 20, 0>::suite() ); //about 173 MebiBytes, 1 megbyte chunk size

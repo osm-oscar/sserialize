@@ -82,8 +82,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticGridRTreeTest<1, 1>::suite() );
 	runner.addTest( StaticGridRTreeTest<2, 2>::suite() );

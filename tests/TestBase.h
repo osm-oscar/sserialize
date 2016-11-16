@@ -17,8 +17,11 @@ public:
 	TestBase();
 	virtual ~TestBase();
 public:
+	static void init(int argc, char ** argv);
+private:
 	static int argc;
 	static char ** argv;
+	
 };
 
 }} //end namespace sserialize::tests

@@ -54,8 +54,8 @@ std::ostream& operator<<(std::ostream & out, const std::vector<uint32_t> & vec) 
 
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( UtilFuncsTest<10, 10000>::suite() );

@@ -196,8 +196,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 
 	bool testLarge = false;
 	if (argc > 1 && std::string(argv[1]) == "-l") {

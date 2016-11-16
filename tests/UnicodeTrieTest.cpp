@@ -178,8 +178,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( UnicodeTrieTest<false>::suite() );

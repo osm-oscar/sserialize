@@ -30,8 +30,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 	srand( 0 );
 	std::cout << std::setprecision(9);
 	std::cerr << std::setprecision(9);

@@ -84,8 +84,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	sserialize::tests::TestBase::argc = argc;
-	sserialize::tests::TestBase::argv = argv;
+	sserialize::tests::TestBase::init(argc, argv);
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( ChunkedMmappedFileTest<18213765, 22, 0>::suite() ); //aboutt 17.3 MebiBytes, 4 megbyte chunk size
