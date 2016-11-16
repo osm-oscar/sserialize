@@ -1,13 +1,11 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/algorithm/utilmath.h>
 #include <sserialize/utility/log.h>
+#include "TestBase.h"
 
 int TestCount = 10000;
 
-class PackFunctions: public CppUnit::TestFixture {
+class PackFunctions: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( PackFunctions );
 CPPUNIT_TEST( test16 );
 CPPUNIT_TEST( test24 );
@@ -202,7 +200,10 @@ public:
 	
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  PackFunctions::suite() );

@@ -1,19 +1,16 @@
 #ifndef SSERIALIZE_TESTS_STRING_COMPLETER_TEST_H
 #define SSERIALIZE_TESTS_STRING_COMPLETER_TEST_H
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include "containers/StringsItemDBWrapper.h"
 #include "containers/StringsItemDBWrapperPrivateSIDB.h"
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
-
+#include "TestBase.h"
 
 
 namespace sserialize {
 
 
-class StringCompleterTest: public CppUnit::TestFixture {
+class StringCompleterTest: public sserialize::tests::TestBase {
 private:
 	std::deque<std::string> m_sampleCmpStrs;
 	std::deque<TestItemData> m_items;
@@ -59,7 +56,7 @@ protected:
 	virtual bool createStringCompleter()  = 0;
 	
 public:
-	StringCompleterTest() : CppUnit::TestFixture() {
+	StringCompleterTest() : sserialize::tests::TestBase() {
 		m_sampleCmpStrs = createSampleSingleCompletionStrings();
 		m_items = createSampleData();
 		m_db = createDB();

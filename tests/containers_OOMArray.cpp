@@ -1,9 +1,5 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestResult.h>
 #include <sserialize/containers/OOMArray.h>
+#include "TestBase.h"
 
 struct TestData {
 	uint8_t a;
@@ -17,7 +13,7 @@ struct TestData {
 };
 
 template<uint32_t TTestCount, uint32_t TEntrySize, sserialize::MmappedMemoryType mmt>
-class TestOOMArray: public CppUnit::TestFixture {
+class TestOOMArray: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestOOMArray );
 CPPUNIT_TEST( testGetSet );
 CPPUNIT_TEST( testPushBackGet );
@@ -200,6 +196,8 @@ public:
 };
 
 int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 
 	bool testLarge = false;
 	if (argc > 1 && std::string(argv[1]) == "-l") {

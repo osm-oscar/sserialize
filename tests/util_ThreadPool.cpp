@@ -1,12 +1,9 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
 #include <sserialize/mt/ThreadPool.h>
 #include <sserialize/mt/GuardedVariable.h>
+#include "TestBase.h"
 
 template<uint32_t T_NUM_THREADS, uint32_t T_NUM_TASKS>
-class TestThreadPool: public CppUnit::TestFixture {
+class TestThreadPool: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestThreadPool );
 CPPUNIT_TEST( test );
 CPPUNIT_TEST_SUITE_END();
@@ -26,7 +23,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestThreadPool<1, 10>::suite() );

@@ -1,11 +1,9 @@
 #include <iostream>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/Static/DynamicKeyValueObjectStore.h>
 #include <sserialize/Static/KeyValueObjectStore.h>
 #include <sserialize/utility/log.h>
 #include <algorithm>
+#include "TestBase.h"
 #define EPS 0.000025
 
 
@@ -19,7 +17,7 @@ std::string getRandomString() {
 }
 
 template<int T_ITEM_COUNT, int T_ITEM_STR_COUNT>
-class DynamicKeyValueObjectStoreTest: public CppUnit::TestFixture {
+class DynamicKeyValueObjectStoreTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( DynamicKeyValueObjectStoreTest );
 CPPUNIT_TEST( testSize );
 CPPUNIT_TEST( testEquality );
@@ -155,14 +153,16 @@ public:
 
 
 int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	if (argc < 2) {
-		std::cout << "Need string source file" << std::endl;
+		std::cout << "Need string source file as first parameter" << std::endl;
 		return -1;
 	}
 	std::ifstream inFile;
 	inFile.open(argv[1]);
 	if (!inFile.is_open()) {
-		std::cout << "Could not open source string file" << std::endl;
+		std::cout << "Could not open source string file. Should be first parameter" << std::endl;
 	}
 	
 	std::string line;

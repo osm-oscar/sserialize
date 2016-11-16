@@ -1,13 +1,11 @@
 #ifndef SSERIALIZE_TESTS_GEO_COMPLETER_TEST_H
 #define SSERIALIZE_TESTS_GEO_COMPLETER_TEST_H
 #include <sserialize/utility/printers.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/search/GeoCompleter.h>
 #include "containers/GeoStringsItemDB.h"
 #include "TestItemData.h"
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 namespace sserialize {
 
@@ -16,7 +14,7 @@ typedef spatial::GeoWay MyGeoWay;
 
 
 /** Items with a single Point should be a point, others a way */
-class GeoCompleterTest: public CppUnit::TestFixture {
+class GeoCompleterTest: public sserialize::tests::TestBase {
 private:
 	std::deque<TestItemData> m_items;
 	SamplePolygonTestData m_geoData;
@@ -69,7 +67,7 @@ protected:
 	}
 
 public:
-	GeoCompleterTest() : CppUnit::TestFixture() {
+	GeoCompleterTest() : sserialize::tests::TestBase() {
 		m_items = createSampleData();
 		createHandSamplePolygons(m_geoData);
 		

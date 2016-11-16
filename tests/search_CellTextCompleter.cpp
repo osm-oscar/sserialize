@@ -1,9 +1,5 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestResult.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 #include <sserialize/spatial/GeoHierarchy.h>
 #include <sserialize/Static/CellTextCompleter.h>
@@ -339,7 +335,7 @@ public:
 	}
 };
 
-class CTCBaseTest: public CppUnit::TestFixture {
+class CTCBaseTest: public sserialize::tests::TestBase {
 // CPPUNIT_TEST_SUITE( CTCBaseTest );
 // CPPUNIT_TEST_SUITE_END();
 private:
@@ -572,7 +568,9 @@ public:
 	virtual void tearDown() {}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.eventManager().popProtector();

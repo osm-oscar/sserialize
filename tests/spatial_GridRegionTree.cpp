@@ -1,12 +1,10 @@
 #include <algorithm>
 #include <sserialize/utility/printers.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/spatial/GridRegionTree.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -26,7 +24,7 @@ public:
 };
 
 template<uint32_t T_RINIT_X, uint32_t T_RINIT_Y, uint32_t T_RF_X, uint32_t T_RF_Y>
-class GridRegionTreeTest:public CppUnit::TestFixture {
+class GridRegionTreeTest:public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( GridRegionTreeTest );
 CPPUNIT_TEST( testPointIntersect );
 CPPUNIT_TEST( testOutOfBounds );
@@ -126,7 +124,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 // 	foo();
 	CppUnit::TextUi::TestRunner runner;

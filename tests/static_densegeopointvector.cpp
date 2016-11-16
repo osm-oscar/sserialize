@@ -1,10 +1,8 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/Static/DenseGeoPointVector.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
 #include "helpers.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -31,7 +29,7 @@ std::vector<sserialize::spatial::GeoPoint> createPoints(uint32_t count, double m
 uint32_t testPointCount = 1024;
 double maxGpDiff = 1.;
 
-class TestDenseGeoPointVector: public CppUnit::TestFixture {
+class TestDenseGeoPointVector: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestDenseGeoPointVector );
 CPPUNIT_TEST( testPoints );
 CPPUNIT_TEST( testIterator );
@@ -126,7 +124,9 @@ public:
 
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	for(uint32_t i = 0; i < 10; i++) {

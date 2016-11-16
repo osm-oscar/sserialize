@@ -1,10 +1,6 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestResult.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 constexpr uint32_t TStringsCount = 1024;
 constexpr uint32_t TIntegerCount = 10240;
@@ -176,7 +172,7 @@ void get(sserialize::UByteArrayAdapter & d, const IntegerType & t, IntegerType &
 	}
 }
 
-class UBABaseTest: public CppUnit::TestFixture {
+class UBABaseTest: public sserialize::tests::TestBase {
 protected:
 	virtual sserialize::UByteArrayAdapter createUBA() { return sserialize::UByteArrayAdapter(); }
 	virtual sserialize::UByteArrayAdapter createUBA(const sserialize::UByteArrayAdapter & /*src*/) { return sserialize::UByteArrayAdapter(); }
@@ -276,7 +272,9 @@ public:
 
 
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  UBAVec::suite() );

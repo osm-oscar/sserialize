@@ -1,10 +1,8 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/iterator/MultiBitIterator.h>
 #include <sserialize/algorithm/utilfuncs.h>
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -25,7 +23,7 @@ std::string printToString(Args ... args) {
 }
 
 template<int NumberOfRuns, int TestDataLength>
-class MultiBitIteratorTest: public CppUnit::TestFixture {
+class MultiBitIteratorTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( MultiBitIteratorTest );
 CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testEquality );
@@ -98,7 +96,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand(0);
 	srandom( 0 );
 	CppUnit::TextUi::TestRunner runner;

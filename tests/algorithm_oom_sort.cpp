@@ -1,14 +1,10 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestResult.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 #include <sserialize/utility/printers.h>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/algorithm/oom_algorithm.h>
 
-class OomAlgorithm: public CppUnit::TestFixture {
+class OomAlgorithm: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( OomAlgorithm );
 CPPUNIT_TEST( testSort );
 CPPUNIT_TEST( testLargeSort);
@@ -121,7 +117,9 @@ public:
 	
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  OomAlgorithm::suite() );

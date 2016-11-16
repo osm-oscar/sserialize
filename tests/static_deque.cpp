@@ -1,9 +1,7 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 #include <deque>
 
 using namespace sserialize;
@@ -20,7 +18,7 @@ std::deque< std::deque<uint32_t> > createDequeOfDequeNumbers(uint32_t maxCountPe
 int TestCount = 10;
 uint32_t TestMask = 0xFFF;
 
-class TestArray: public CppUnit::TestFixture {
+class TestArray: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestArray );
 CPPUNIT_TEST( testNumbers );
 CPPUNIT_TEST( testStrings );
@@ -165,7 +163,9 @@ public:
 	
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestArray::suite() );

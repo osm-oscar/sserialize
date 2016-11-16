@@ -1,7 +1,3 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestResult.h>
 #include <stdlib.h>
 #include <vector>
 #include <sserialize/algorithm/utilfuncs.h>
@@ -11,11 +7,12 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
 template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_TYPE>
-class ItemIndexFactoryTest: public CppUnit::TestFixture {
+class ItemIndexFactoryTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
 CPPUNIT_TEST( testSerializedEquality );
 CPPUNIT_TEST( testSameId );
@@ -201,7 +198,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  ItemIndexFactoryTest<64, 512, ItemIndex::T_SIMPLE>::suite() );

@@ -1,6 +1,3 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/algorithm/utilmath.h>
 #include <sserialize/utility/log.h>
@@ -9,13 +6,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
+#include "TestBase.h"
 
 using namespace sserialize;
 
 
 uint32_t testLen = 0xFFFFF;
 
-class TestCompactUintArray: public CppUnit::TestFixture {
+class TestCompactUintArray: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestCompactUintArray );
 CPPUNIT_TEST( createAutoBitsTest );
 CPPUNIT_TEST( createManuBitsTest );
@@ -124,7 +122,9 @@ public:
 	
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestCompactUintArray::suite() );

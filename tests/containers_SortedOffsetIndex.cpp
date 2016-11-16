@@ -1,13 +1,12 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <vector>
 #include <fstream>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/iterator/RangeGenerator.h>
+#include <sserialize/storage/MmappedFile.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -53,7 +52,7 @@ std::set<uint64_t> largeOffsets(uint32_t count, uint32_t minDistance) {
 
 std::string inFile;
 
-class SortedOffsetIndexTest: public CppUnit::TestFixture {
+class SortedOffsetIndexTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( SortedOffsetIndexTest );
 CPPUNIT_TEST( testRandomEquality );
 CPPUNIT_TEST( testLargeOffsets );
@@ -209,7 +208,10 @@ public:
 };
 
 int main(int argc, char ** argv) {
-	if (argc > 1) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
+	
+	if (argc > 1 && sserialize::MmappedFile::fileExists(argv[1])) {
 		inFile = std::string(argv[1]);
 	}
 

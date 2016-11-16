@@ -1,12 +1,9 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 #include <sserialize/containers/RLEStream.h>
 #include <sserialize/utility/printers.h>
 
-class TestRLEStream: public CppUnit::TestFixture {
+class TestRLEStream: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestRLEStream );
 CPPUNIT_TEST( testPositiveRle );
 CPPUNIT_TEST( testNegativeRle );
@@ -86,7 +83,10 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestRLEStream::suite() );

@@ -1,16 +1,14 @@
 #include <algorithm>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
+#include "TestBase.h"
 #include <sserialize/spatial/GeoGrid.h>
 
 using namespace sserialize;
 
-class GeoPolygonTest:public CppUnit::TestFixture {
+class GeoPolygonTest:public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( GeoPolygonTest );
 CPPUNIT_TEST( testIntersect );
 CPPUNIT_TEST( testPointIntersect );
@@ -81,7 +79,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( GeoPolygonTest::suite() );

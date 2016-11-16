@@ -1,12 +1,10 @@
 #include <iostream>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/iterator/RangeGenerator.h>
 #include <algorithm>
 #include "printfunctions.h"
+#include "TestBase.h"
 #define EPS 0.000025
 
 
@@ -20,13 +18,14 @@ std::string getRandomString() {
 }
 
 template<int T_TEST_COUNT, int T_ITEM_COUNT>
-class UtilFuncsTest: public CppUnit::TestFixture {
+class UtilFuncsTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( UtilFuncsTest );
 CPPUNIT_TEST( test_reorder );
 CPPUNIT_TEST_SUITE_END();
 private:
 private:
 public:
+	UtilFuncsTest() : sserialize::tests::TestBase() {}
 	virtual void setUp() {}
 	virtual void tearDown() {}
 
@@ -54,7 +53,9 @@ std::ostream& operator<<(std::ostream & out, const std::vector<uint32_t> & vec) 
 }
 
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( UtilFuncsTest<10, 10000>::suite() );

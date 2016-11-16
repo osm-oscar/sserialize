@@ -1,16 +1,14 @@
 #include <algorithm>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/containers/ItemIndexIterator.h>
 #include <sserialize/containers/ItemIndexIteratorSetOp.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include "datacreationfuncs.h"
 #include "utilalgos.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
-class ItemIndexIteratorTest: public CppUnit::TestFixture {
+class ItemIndexIteratorTest: public sserialize::tests::TestBase {
 private:
 	std::set<uint32_t> m_srcRes;
 	ItemIndexIterator m_indexRes;
@@ -102,7 +100,9 @@ public:
 };
 
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( ItemIndexIteratorItemIndexTest<0>::suite() );

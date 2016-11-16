@@ -1,15 +1,13 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
 #include <sserialize/containers/CFLArray.h>
 #include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 #include <functional>
 
 
+
 template<typename T_TEST_DATA_TYPE, uint32_t T_TEST_COUNT>
-class CFLArrayTest: public CppUnit::TestFixture {
+class CFLArrayTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( CFLArrayTest );
 CPPUNIT_TEST( testIterator );
 CPPUNIT_TEST( testReverseIterator );
@@ -75,7 +73,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  CFLArrayTest<uint32_t, 1042>::suite() );

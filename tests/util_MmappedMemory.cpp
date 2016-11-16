@@ -1,9 +1,7 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/storage/MmappedMemory.h>
+#include "TestBase.h"
 
-class MmappedMemoryTest: public CppUnit::TestFixture {
+class MmappedMemoryTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( MmappedMemoryTest );
 CPPUNIT_TEST( testDeletion );
 CPPUNIT_TEST_SUITE_END();
@@ -23,7 +21,9 @@ public:
 };
 
 
-int main(int /*argc*/, char ** /*argv*/) {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( MmappedMemoryTest::suite() );

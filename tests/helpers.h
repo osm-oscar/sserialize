@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_TESTS_HELPERS_H
 #define SSERIALIZE_TESTS_HELPERS_H
 #include <sserialize/spatial/GeoPoint.h>
+#include <cppunit/TestAssert.h>
 
 namespace CppUnit {
 

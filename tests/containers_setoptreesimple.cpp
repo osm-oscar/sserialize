@@ -1,10 +1,8 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/search/SetOpTree.h>
 #include <sserialize/search/SetOpTreePrivateSimple.h>
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -18,7 +16,7 @@ class TestOpFilter2: public SetOpTree::ExternalFunctoid {
 	virtual const std::string cmdString() const { return "TestOpFilter2"; }
 };
 
-class SetOpTreeSimpleTest: public CppUnit::TestFixture {
+class SetOpTreeSimpleTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( SetOpTreeSimpleTest );
 // CPPUNIT_TEST( testWithoutEf );
 CPPUNIT_TEST( testWithEF );
@@ -56,7 +54,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  SetOpTreeSimpleTest::suite() );

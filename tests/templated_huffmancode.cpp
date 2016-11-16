@@ -1,7 +1,3 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/TestResult.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/containers/HuffmanTree.h>
 #include <sserialize/Static/HuffmanDecoder.h>
@@ -10,6 +6,7 @@
 #include <sserialize/iterator/UDWIterator.h>
 #include <sserialize/iterator/UDWIteratorPrivateHD.h>
 #include <sserialize/algorithm/utilfuncs.h>
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -34,7 +31,7 @@ void putWrapper(UByteArrayAdapter & dest, const uint32_t & src) {
 }
 
 template<int NumberOfRuns, int TestDataLength>
-class HuffmanCodeTest: public CppUnit::TestFixture {
+class HuffmanCodeTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( HuffmanCodeTest );
 CPPUNIT_TEST( testEquality );
 CPPUNIT_TEST_SUITE_END();
@@ -116,7 +113,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand(0);
 	srandom( 0 );
 	CppUnit::TextUi::TestRunner runner;

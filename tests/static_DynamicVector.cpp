@@ -1,9 +1,7 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/Static/DynamicVector.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -41,7 +39,7 @@ struct ComplexDataDeserializer {
 
 
 template<int NumberOfItems>
-class DynamicVectorTest: public CppUnit::TestFixture {
+class DynamicVectorTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( DynamicVectorTest );
 CPPUNIT_TEST( testDefaultSerializer );
 CPPUNIT_TEST( testComplexSerialize );
@@ -79,7 +77,9 @@ public:
 	
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  DynamicVectorTest<10>::suite() );

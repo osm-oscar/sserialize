@@ -1,11 +1,8 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestResult.h>
 #include <sserialize/containers/HashBasedFlatTrie.h>
 #include <sserialize/containers/UnicodeTrie.h>
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
 #include <sserialize/utility/printers.h>
+#include "TestBase.h"
 
 const char * inFileName = 0;
 
@@ -36,7 +33,7 @@ struct ValueType {
 	}
 };
 
-class TestHashBasedFlatTrieBase: public CppUnit::TestFixture {
+class TestHashBasedFlatTrieBase: public sserialize::tests::TestBase {
 protected:
 	typedef sserialize::HashBasedFlatTrie<ValueType> MyT;
 	typedef sserialize::Static::UnicodeTrie::FlatTrie<ValueType> MyST;
@@ -338,11 +335,14 @@ public:
 	}
 };
 
-int main(int argc, const char ** argv) {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
-	if (argc > 1) {
+	if (argc > 1 && sserialize::MmappedFile::fileExists(argv[1])) {
 		inFileName = argv[1];
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
 	}

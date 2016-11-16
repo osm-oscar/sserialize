@@ -1,6 +1,3 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/spatial/GeoRect.h>
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/Static/GeoWay.h>
@@ -9,6 +6,7 @@
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
 #include "helpers.h"
+#include "TestBase.h"
 
 sserialize::spatial::GeoPoint createPoint() {
 	sserialize::spatial::GeoPoint prev;
@@ -42,7 +40,7 @@ std::vector<sserialize::spatial::GeoPoint> createPoints(uint32_t count, double m
 uint32_t gwLen = 100;
 double maxDiff = 0.5;
 
-class StaticGeoWayTest: public CppUnit::TestFixture {
+class StaticGeoWayTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( StaticGeoWayTest );
 CPPUNIT_TEST( testRect );
 CPPUNIT_TEST( testPoint );
@@ -204,7 +202,9 @@ public:
 };
 
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	for(uint32_t i = 0; i < 10; ++i) {

@@ -78,7 +78,9 @@ public:
 	ItemIndexPrivateSerializedTest() : ItemIndexPrivateBaseTest(T_TYPE) {}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	

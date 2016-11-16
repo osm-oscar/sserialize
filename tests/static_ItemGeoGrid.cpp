@@ -97,7 +97,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticItemGeoGridTest<1, 1>::suite() );
 	runner.addTest( StaticItemGeoGridTest<3, 2>::suite() );

@@ -1,16 +1,13 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/TestResult.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/containers/WindowedArray.h>
 #include <sserialize/utility/log.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
 template<int NumberOfBuckets, int ItemsPerBucket>
-class WindowedArrayTest: public CppUnit::TestFixture {
+class WindowedArrayTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( WindowedArrayTest );
 CPPUNIT_TEST( testEquality );
 CPPUNIT_TEST_SUITE_END();
@@ -72,7 +69,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand(0);
 	srandom( 0 );
 	CppUnit::TextUi::TestRunner runner;

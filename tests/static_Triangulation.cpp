@@ -1,9 +1,3 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestResult.h>
-
 #include <sserialize/Static/Triangulation.h>
 #include <sserialize/utility/printers.h>
 
@@ -14,6 +8,8 @@
 #include <CGAL/Delaunay_triangulation_2.h>
 #include <CGAL/point_generators_2.h>
 #include <CGAL/Unique_hash_map.h>
+
+#include "TestBase.h"
 
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef CGAL::Triangulation_vertex_base_2<K> Vb;
@@ -28,7 +24,7 @@ CGALTriangulation::Point centroid(const CGALTriangulation::Face_handle & fh) {
 
 
 template<uint32_t NUM_TRIANG_POINTS, uint32_t NUM_TEST_POINTS>
-class TriangulationTest: public CppUnit::TestFixture {
+class TriangulationTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TriangulationTest );
 CPPUNIT_TEST( staticSelfCheck );
 CPPUNIT_TEST( testSerialization );
@@ -219,7 +215,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TriangulationTest<0, 10>::suite() );

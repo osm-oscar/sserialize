@@ -1,15 +1,13 @@
 #include <iostream>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include "containers/StringsItemDB.h"
 #include "Static/StringsItemDB.h"
 #include "TestItemData.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
 
-class StaticStringsItemDBTest: public CppUnit::TestFixture {
+class StaticStringsItemDBTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( StaticStringsItemDBTest );
 CPPUNIT_TEST( testSize );
 CPPUNIT_TEST( testStrings );
@@ -74,7 +72,9 @@ public:
 };
 
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticStringsItemDBTest::suite() );

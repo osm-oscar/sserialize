@@ -1,12 +1,10 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <vector>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/DynamicBitSet.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
@@ -37,7 +35,7 @@ std::set<uint32_t> myCreateNumbers(uint32_t count, uint32_t maxNum) {
 	return ret;
 }
 
-class ItemIndexPrivateBaseTest: public CppUnit::TestFixture {
+class ItemIndexPrivateBaseTest: public sserialize::tests::TestBase {
 protected:
 	virtual bool create(const std::set<uint32_t> & srcSet, sserialize::ItemIndex & idx) = 0;
 	virtual bool create(const std::vector<uint32_t> & srcSet, sserialize::ItemIndex & idx) = 0;

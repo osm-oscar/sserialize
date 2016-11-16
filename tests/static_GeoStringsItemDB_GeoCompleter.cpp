@@ -39,7 +39,9 @@ public:
 	virtual void tearDown() {}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticGeoStringsItemDBGeoCompleterTest::suite() );
 	runner.run();

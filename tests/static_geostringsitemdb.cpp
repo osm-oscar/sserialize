@@ -1,12 +1,10 @@
 #include <iostream>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include "containers/GeoStringsItemDB.h"
 #include "Static/GeoStringsItemDB.h"
 #include <sserialize/spatial/GeoWay.h>
 #include "TestItemData.h"
 #include "utilalgos.h"
+#include "TestBase.h"
 #define EPS 0.000025
 
 
@@ -14,7 +12,7 @@ using namespace sserialize;
 
 typedef spatial::GeoWay MyGeoWay;
 
-class StaticGeoStringsItemDBTest: public CppUnit::TestFixture {
+class StaticGeoStringsItemDBTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( StaticGeoStringsItemDBTest );
 CPPUNIT_TEST( testSize );
 CPPUNIT_TEST( testStrings );
@@ -116,7 +114,9 @@ public:
 };
 
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticGeoStringsItemDBTest::suite() );

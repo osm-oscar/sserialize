@@ -1,15 +1,13 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
 #include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/utility/printers.h>
 #include <sserialize/algorithm/utilmath.h>
 #include <sserialize/stats/statfuncs.h>
 #include <iomanip>
+#include "TestBase.h"
 
 bool deq(double a, double b) { return std::abs<double>(a-b) < 0.0001; }
 
-class LinearRegressionTest: public CppUnit::TestFixture {
+class LinearRegressionTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( LinearRegressionTest );
 CPPUNIT_TEST( testSimple );
 CPPUNIT_TEST_SUITE_END();
@@ -31,7 +29,9 @@ public:
 	
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	std::cout << std::setprecision(9);
 	std::cerr << std::setprecision(9);

@@ -3,15 +3,13 @@
 #include <cmath>
 #include <limits>
 #include <stdlib.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
+#include "TestBase.h"
 
 
 using namespace sserialize;
 
 template<uint32_t FileSize, uint8_t chunkExponent, uint32_t TestNumber>
-class ChunkedMmappedFileTest: public CppUnit::TestFixture {
+class ChunkedMmappedFileTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( ChunkedMmappedFileTest );
 CPPUNIT_TEST( testStats );
 CPPUNIT_TEST( testSequentialRead );
@@ -85,7 +83,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( ChunkedMmappedFileTest<18213765, 22, 0>::suite() ); //aboutt 17.3 MebiBytes, 4 megbyte chunk size

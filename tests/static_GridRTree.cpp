@@ -81,22 +81,24 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticGridRTreeTest<1, 1>::suite() );
 	runner.addTest( StaticGridRTreeTest<2, 2>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<3, 3>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<4, 4>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<5, 5>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<6, 6>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<7, 7>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<8, 8>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<9, 9>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<3, 2>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<7, 11>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<20, 20>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<13, 31>::suite() );
-// 	runner.addTest( StaticGridRTreeTest<200, 200>::suite() );
+	runner.addTest( StaticGridRTreeTest<3, 3>::suite() );
+	runner.addTest( StaticGridRTreeTest<4, 4>::suite() );
+	runner.addTest( StaticGridRTreeTest<5, 5>::suite() );
+	runner.addTest( StaticGridRTreeTest<6, 6>::suite() );
+	runner.addTest( StaticGridRTreeTest<7, 7>::suite() );
+	runner.addTest( StaticGridRTreeTest<8, 8>::suite() );
+	runner.addTest( StaticGridRTreeTest<9, 9>::suite() );
+	runner.addTest( StaticGridRTreeTest<3, 2>::suite() );
+	runner.addTest( StaticGridRTreeTest<7, 11>::suite() );
+	runner.addTest( StaticGridRTreeTest<20, 20>::suite() );
+	runner.addTest( StaticGridRTreeTest<13, 31>::suite() );
+	runner.addTest( StaticGridRTreeTest<200, 200>::suite() );
 	runner.run();
 	return 0;
 };

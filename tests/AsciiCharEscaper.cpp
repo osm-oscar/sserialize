@@ -1,11 +1,8 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
 #include <sserialize/strings/stringfunctions.h>
 #include <sserialize/utility/printers.h>
+#include "TestBase.h"
 
-class TestAsciiCharEscaper: public CppUnit::TestFixture {
+class TestAsciiCharEscaper: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestAsciiCharEscaper );
 CPPUNIT_TEST( test );
 CPPUNIT_TEST_SUITE_END();
@@ -24,7 +21,9 @@ public:
 	}
 };
 
-int main() {
+int main(int argc, char ** argv) {
+	sserialize::tests::TestBase::argc = argc;
+	sserialize::tests::TestBase::argv = argv;
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestAsciiCharEscaper::suite() );
