@@ -13,13 +13,17 @@ namespace sserialize {
 class ThreadPool final {
 private:
 	typedef std::function< void(void) > QueuedTaskFunction;
-	typedef std::queue< std::function<void(void)> > TaskQueue;
+	typedef std::queue<QueuedTaskFunction> TaskQueue;
+	struct QueueInfo {
+		TaskQueue q;
+		uint32_t runningTasks;
+		QueueInfo() : runningTasks(0) {}
+	};
 private:
 	std::vector<std::thread> m_threads;
-	GuardedVariable<TaskQueue> m_queue;
+	GuardedVariable<QueueInfo> m_qi;
 	std::atomic<bool> m_online; //is ThreadPool online
 	GuardedVariable<uint32_t> m_runningThreads;//threads MUST notify this variable if they decrement/increment it
-	GuardedVariable<uint32_t> m_runningTasks;
 public:
 	void taskWorkerFunc(uint32_t /*myThreadNumber*/);
 public:
@@ -29,6 +33,7 @@ public:
 	~ThreadPool();
 	///Wait for empty queue
 	void flushQueue();
+	std::size_t queueSize() const;
 	void numThreads(uint32_t num);
 	uint32_t numThreads() const;
 	bool sheduleTask(QueuedTaskFunction t);
