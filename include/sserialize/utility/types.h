@@ -10,6 +10,10 @@ namespace sserialize {
 #define TEMP_FILE_PREFIX "/tmp/sserializetmp"
 #endif
 
+#ifndef SHM_FILE_PREFIX
+#define SHM_FILE_PREFIX "sserialize"
+#endif
+
 #ifndef PERSISTENT_CACHE_PATH
 #define PERSISTENT_CACHE_PATH "/tmp/sserializecache"
 #endif

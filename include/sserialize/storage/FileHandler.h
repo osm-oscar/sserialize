@@ -31,6 +31,12 @@ struct FileHandler {
 	static OffsetType fileSize(const std::string & str);
 	static OffsetType fileSize(int fd);
 	
+	static void setShmPrefix(const std::string & name);
+	static const std::string & getShmPrefix();
+	
+private:
+	static std::string m_shmPrefix;
+	
 };
 
 }//end namespace

@@ -167,7 +167,7 @@ bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 
 int FileHandler::shmCreate(std::string& fileName) {
 	std::stringstream ss;
-	ss << "/sserialize" << rand() << rand();
+	ss << "/" << m_shmPrefix << rand() << rand();
 	fileName = ss.str();
 	if (fileName.size() > 255) {
 		fileName.resize(255);
@@ -232,5 +232,15 @@ OffsetType FileHandler::fileSize(const std::string & str) {
 OffsetType FileHandler::fileSize(int fd) {
 	return MmappedFile::fileSize(fd);
 }
+
+void FileHandler::setShmPrefix(const std::string& name) {
+	m_shmPrefix = name;
+}
+
+const std::string& FileHandler::getShmPrefix() {
+	return m_shmPrefix;
+}
+
+std::string FileHandler::m_shmPrefix = SHM_FILE_PREFIX;
 
 }//end namespace sserialize
