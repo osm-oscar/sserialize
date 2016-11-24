@@ -8,9 +8,13 @@
 #include <sserialize/storage/MmappedFile.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include "datacreationfuncs.h"
+#include "TestBase.h"
 
 using namespace sserialize;
 
+void print_error() {
+	std::cout << "ERROR" << std::endl;
+}
 
 enum CODEDNUMTYPES { CT_UINT8, CT_UINT16, CT_UINT24, CT_UINT32, CT_VLUINT32, CT_VLINT32 };
 
@@ -153,7 +157,7 @@ bool fillFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 	uint32_t curPos = 0;
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)/8) {
 		case(1):
 			adapter.putUint8(curPos, (uint8_t)num);
 			curPos += 1;
@@ -171,7 +175,7 @@ bool fillFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 			curPos += 4;
 			break;
 		default:
-			std::cout << "ERROR" << std::endl;
+			print_error();
 			break;
 		}
 	}
@@ -182,7 +186,7 @@ bool fillFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 	adapter.resetPtrs();
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)/8) {
 		case(1):
 			adapter.putUint8((uint8_t)num);
 			break;
@@ -196,7 +200,7 @@ bool fillFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 			adapter.putUint32((uint32_t)num);
 			break;
 		default:
-			std::cout << "ERROR" << std::endl;
+			print_error();
 			break;
 		}
 	}
@@ -209,7 +213,7 @@ bool testFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum = 0;
-		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)/8) {
 		case(1):
 			codedNum = adapter.getUint8(curPos);
 			curPos += 1;
@@ -227,7 +231,7 @@ bool testFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter adapter
 			curPos += 4;
 			break;
 		default:
-			std::cout << "ERROR" << std::endl;
+			print_error();
 			break;
 		}
 		if (codedNum != num) {
@@ -244,7 +248,7 @@ bool testFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum = 0xFEFE;
-		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)/8) {
 		case(1):
 			codedNum = adapter.getUint8();
 			break;
@@ -258,7 +262,7 @@ bool testFixedSizeStreaming(std::deque<uint32_t> & realNumbers, UByteArrayAdapte
 			codedNum = adapter.getUint32();
 			break;
 		default:
-			std::cout << "ERROR" << std::endl;
+			print_error();
 			break;
 		}
 		if (codedNum != num) {
@@ -455,7 +459,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 	uint32_t curPos = 0;
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
-		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)/8) {
 		case(1):
 			adapter.putUint8(curPos, (uint8_t)num);
 			curPos += 1;
@@ -473,7 +477,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 			curPos += 4;
 			break;
 		default:
-			std::cout << "ERROR" << std::endl;
+			print_error();
 			break;
 		}
 	}
@@ -487,7 +491,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 	for(size_t i = 0; i < realNumbers.size(); i++) {
 		uint32_t num = realNumbers.at(i);
 		uint32_t codedNum = 0;
-		switch (CompactUintArray::minStorageBitsFullBytes(num)) {
+		switch (CompactUintArray::minStorageBitsFullBytes(num)/8) {
 		case(1):
 			codedNum = testAdapter.getUint8(0);
 			testAdapter++;
@@ -525,7 +529,7 @@ bool fillAndTestFixedSizeUtilityFuncs(std::deque<uint32_t> & realNumbers, UByteA
 			}
 			break;
 		default:
-			std::cout << "ERROR" << std::endl;
+			print_error();
 			break;
 		}
 		if (codedNum != num) {
@@ -839,6 +843,7 @@ bool testVeryLargeFileCreation() {
 }
 
 int main(int argc, char** argv) {
+	sserialize::tests::TestBase::init(argc, argv);
 
 	srand( 0 );
 

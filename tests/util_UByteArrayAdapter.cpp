@@ -233,7 +233,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellGetPtr());
 		
 		d.putUint32(123);
-		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)4, d.size());
+		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)8, d.size());
 		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)4, d.tellPutPtr());
 		CPPUNIT_ASSERT_EQUAL((sserialize::UByteArrayAdapter::OffsetType)0, d.tellGetPtr());
 		
