@@ -24,6 +24,9 @@ private:
 	GuardedVariable<QueueInfo> m_qi;
 	std::atomic<bool> m_online; //is ThreadPool online
 	GuardedVariable<uint32_t> m_runningThreads;//threads MUST notify this variable if they decrement/increment it
+private:
+	void stop();
+	void start(uint32_t count);
 public:
 	void taskWorkerFunc(uint32_t /*myThreadNumber*/);
 public:
