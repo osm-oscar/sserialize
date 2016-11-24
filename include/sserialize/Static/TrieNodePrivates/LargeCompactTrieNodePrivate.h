@@ -80,7 +80,10 @@ private:
 	
 public:
 	LargeCompactTrieNodePrivate(const UByteArrayAdapter & nodeData);
+	LargeCompactTrieNodePrivate(const LargeCompactTrieNodePrivate & other);
 	virtual ~LargeCompactTrieNodePrivate() {}
+	
+	LargeCompactTrieNodePrivate & operator=(const LargeCompactTrieNodePrivate & other);
 
 	virtual uint32_t childCount() const { return m_childCount;}
 	virtual uint8_t charWidth() const { return ((m_header >> 10) & 0x3) + 1; }

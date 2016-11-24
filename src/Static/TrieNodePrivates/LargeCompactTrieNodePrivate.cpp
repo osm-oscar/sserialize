@@ -64,6 +64,47 @@ m_substrIndexPtr(0)
 	narrow_check_assign(m_myEndPtr) = m_data.tellGetPtr();
 }
 
+#define CTOR_CP_OTHER(__NAME) __NAME(other.__NAME)
+
+LargeCompactTrieNodePrivate::LargeCompactTrieNodePrivate(const LargeCompactTrieNodePrivate & other) :
+CTOR_CP_OTHER(m_data),
+CTOR_CP_OTHER(m_header),
+CTOR_CP_OTHER(m_childCount),
+CTOR_CP_OTHER(m_strLen),
+CTOR_CP_OTHER(m_childPtrBaseOffset),
+CTOR_CP_OTHER(m_strBegin),
+CTOR_CP_OTHER(m_childArrayStart),
+CTOR_CP_OTHER(m_childPointerArrayStart),
+CTOR_CP_OTHER(m_myEndPtr),
+CTOR_CP_OTHER(m_exactIndexPtr),
+CTOR_CP_OTHER(m_prefixIndexPtr),
+CTOR_CP_OTHER(m_suffixIndexPtr),
+CTOR_CP_OTHER(m_substrIndexPtr)
+{}
+
+#undef CTOR_CP_OTHER
+
+#define CP_OTHER(__NAME) __NAME = other.__NAME;
+
+LargeCompactTrieNodePrivate& LargeCompactTrieNodePrivate::operator=(const LargeCompactTrieNodePrivate& other) {
+	CP_OTHER(m_data)
+	CP_OTHER(m_header)
+	CP_OTHER(m_childCount)
+	CP_OTHER(m_strLen)
+	CP_OTHER(m_childPtrBaseOffset)
+	CP_OTHER(m_strBegin)
+	CP_OTHER(m_childArrayStart)
+	CP_OTHER(m_childPointerArrayStart)
+	CP_OTHER(m_myEndPtr)
+	CP_OTHER(m_exactIndexPtr)
+	CP_OTHER(m_prefixIndexPtr)
+	CP_OTHER(m_suffixIndexPtr)
+	CP_OTHER(m_substrIndexPtr)
+	return *this;
+}
+#undef CP_OTHER
+
+
 uint32_t LargeCompactTrieNodePrivate::getChildPtrBeginOffset() const {
 	return m_childPointerArrayStart;
 }
@@ -224,7 +265,7 @@ LargeCompactTrieNodeCreator::createNewNode(const sserialize::Static::TrieNodeCre
 
 	uint8_t charWidth = 1;
 	if (nodeInfo.childChars.size() > 0) {
-		charWidth = CompactUintArray::minStorageBitsFullBytes(nodeInfo.childChars.back());
+		charWidth = CompactUintArray::minStorageBitsFullBytes(nodeInfo.childChars.back()) / 8;
 	}
 	uint16_t header = charWidth-1;
 	header <<= 1; //charWidth
@@ -342,6 +383,9 @@ bool LargeCompactTrieNodeCreator::isError(unsigned int error) {
 
 std::string LargeCompactTrieNodeCreator::errorString(unsigned int error) {
 	std::string estr = "";
+	if (error & LargeCompactTrieNodeCreator::CHILD_CHAR_FAILED) {
+		estr += "Unsupported child char option ";
+	}
 	if (error & LargeCompactTrieNodeCreator::TOO_MANY_CHILDREN) {
 		estr += "Too many children! ";
 	}

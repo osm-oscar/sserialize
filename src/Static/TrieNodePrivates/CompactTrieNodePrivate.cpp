@@ -262,7 +262,7 @@ CompactStaticTrieCreationNode::createNewNode(
 	
 	uint8_t charWidth = 1;
 	if (nodeInfo.childChars.size() > 0) {
-		charWidth = CompactUintArray::minStorageBitsFullBytes(nodeInfo.childChars.back());
+		charWidth = CompactUintArray::minStorageBitsFullBytes(nodeInfo.childChars.back()) / 8;
 	}
 
 	//Size of a character in the array length of the children array
