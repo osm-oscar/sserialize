@@ -1,9 +1,6 @@
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/Asserter.h>
-#include <cppunit/TestAssert.h>
+#include "TestBase.h"
 
-class TestTemplate: public CppUnit::TestFixture {
+class TestTemplate: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TestTemplate );
 CPPUNIT_TEST( test );
 CPPUNIT_TEST_SUITE_END();
@@ -13,8 +10,11 @@ public:
 	void test() {}
 };
 
-int main() {
+int main(int argc, char ** argv) {
 	srand( 0 );
+	
+	sserialize::tests::TestBase::init(argc, argv);
+	
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  TestTemplate::suite() );
 	bool ok = runner.run();
