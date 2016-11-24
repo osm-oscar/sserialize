@@ -3,12 +3,15 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <cppunit/TestAssert.h>
 
-namespace CppUnit {
+CPPUNIT_NS_BEGIN
 
 template<>
 struct assertion_traits<sserialize::spatial::GeoPoint> {
+
+	static double eps;
+
 	static bool equal( const sserialize::spatial::GeoPoint & x, const sserialize::spatial::GeoPoint & y ) {
-		return sserialize::spatial::equal(x, y, 0.0);
+		return sserialize::spatial::equal(x, y, eps);
 	}
 
 	static std::string toString( const sserialize::spatial::GeoPoint & x ) {
@@ -18,7 +21,7 @@ struct assertion_traits<sserialize::spatial::GeoPoint> {
     }
 };
 
-}//end namespace sserialize
+CPPUNIT_NS_END
 
 
 #endif

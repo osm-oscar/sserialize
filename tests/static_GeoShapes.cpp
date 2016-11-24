@@ -13,6 +13,7 @@ sserialize::spatial::GeoPoint createPoint() {
 	prev.lat() = ((double)rand()/RAND_MAX)*180.0-90.0;
 	prev.lon() = ((double)rand()/RAND_MAX)*360.0-180.0;
 	prev.normalize();
+	prev.snap();
 	return prev;
 }
 
@@ -24,6 +25,8 @@ std::vector<sserialize::spatial::GeoPoint> createPoints(uint32_t count, double m
 	prev.lat() = ((double)rand()/RAND_MAX)*180.0-90.0;
 	prev.lon() = ((double)rand()/RAND_MAX)*360.0-180.0;
 	
+	prev.normalize();
+	prev.snap();
 	res.push_back(prev);
 	
 	for(; count > 0; --count) {
@@ -32,6 +35,7 @@ std::vector<sserialize::spatial::GeoPoint> createPoints(uint32_t count, double m
 		prev.lat() += difflat;
 		prev.lon() += difflon;
 		prev.normalize();
+		prev.snap();
 		res.push_back(prev);
 	}
 	return res;
@@ -53,7 +57,7 @@ public:
 	virtual void tearDown() {}
 
 	void testRect() {
-		sserialize::OffsetType geoRectLen =sserialize::SerializationInfo<sserialize::spatial::GeoRect>::length;
+		sserialize::OffsetType geoRectLen = sserialize::SerializationInfo<sserialize::spatial::GeoRect>::length;
 		for(uint32_t i = 0; i < gwLen; ++i) {
 			std::vector<sserialize::spatial::GeoPoint> srcPts = createPoints(2, 10.0);
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("GeoPoint0 invalid at ", i), srcPts[0].valid());
@@ -205,9 +209,11 @@ public:
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
 	
+	CPPUNIT_NS::assertion_traits<sserialize::spatial::GeoPoint>::eps = 0.000001;
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	for(uint32_t i = 0; i < 10; ++i) {
+	for(uint32_t i = 0; i < 1; ++i) {
 		runner.addTest( StaticGeoWayTest::suite() );
 	}
 	bool ok = runner.run();

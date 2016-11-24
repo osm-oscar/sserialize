@@ -14,6 +14,7 @@ TestItemData.cpp
 datacreationfuncs.cpp
 test_stringcompleter.cpp
 TestBase.cpp
+helpers.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${TEST_LIB_SOURCES_CPP})
