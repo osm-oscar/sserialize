@@ -23,5 +23,7 @@ struct assertion_traits<sserialize::spatial::GeoPoint> {
 
 CPPUNIT_NS_END
 
+#define SSERIALIZE_TESTS_EPS CPPUNIT_NS::assertion_traits<sserialize::spatial::GeoPoint>::eps
+
 
 #endif

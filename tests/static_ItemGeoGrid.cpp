@@ -4,7 +4,8 @@
 #include <sserialize/Static/ItemGeoGrid.h>
 #include <sserialize/spatial/ItemGeoGrid.h>
 #include "utilalgos.h"
-#define EPS 0.000025
+#include "helpers.h"
+#define EPS 0.000001
 
 using namespace sserialize;
 
@@ -99,6 +100,8 @@ public:
 
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
+	
+	SSERIALIZE_TESTS_EPS = 0.000001;
 	
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StaticItemGeoGridTest<1, 1>::suite() );

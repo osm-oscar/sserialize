@@ -69,7 +69,7 @@ public:
 		return m_shapes.at(itemPos).size();
 	}
 	sserialize::Static::spatial::GeoPoint geoPointAt(uint32_t itemPos, uint32_t pos) const {
-	return dynamic_cast<sserialize::Static::spatial::GeoWay*>( m_shapes.at(itemPos).priv().get())->points().at(pos);
+	return m_shapes.at(itemPos).at(pos);
 	}
 	
 	sserialize::Static::spatial::GeoShape geoShapeAt(uint32_t itemPos) const {

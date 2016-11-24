@@ -194,9 +194,7 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & desti
 	for(uint32_t i = 0; i < db.size(); ++i) {
 		creator.beginRawPut();
 		const sserialize::spatial::GeoShape * shape = db.geoShape(i);
-		if (shape) {
-			sserialize::spatial::GeoShape::appendWithTypeInfo(shape, creator.rawPut() );
-		}
+		sserialize::spatial::GeoShape::appendWithTypeInfo(shape, creator.rawPut() );
 		creator.endRawPut();
 		info(i, "GeoStringsItemDB<ItemType>::serialize::Shapes");
 	}

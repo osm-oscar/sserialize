@@ -1,5 +1,6 @@
 #include <sserialize/Static/GeoShape.h>
 #include <sserialize/spatial/GeoRect.h>
+#include <sserialize/spatial/GeoNone.h>
 #include <sserialize/Static/GeoWay.h>
 #include <sserialize/Static/GeoPolygon.h>
 #include <sserialize/Static/GeoMultiPolygon.h>
@@ -17,6 +18,7 @@ GeoShape::GeoShape(UByteArrayAdapter data) {
 	data.shrinkToGetPtr();
 	switch (type) {
 	case sserialize::spatial::GS_NONE:
+		m_priv.reset( new sserialize::spatial::GeoNone() );
 		break;
 	case sserialize::spatial::GS_POINT:
 		m_priv.reset( new sserialize::spatial::GeoPoint(data) );
