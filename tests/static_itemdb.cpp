@@ -161,5 +161,5 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	return 0;
+	return allOk ? 0 : 1;
 }
