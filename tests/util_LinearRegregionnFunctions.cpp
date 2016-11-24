@@ -5,7 +5,9 @@
 #include <iomanip>
 #include "TestBase.h"
 
-bool deq(double a, double b) { return std::abs<double>(a-b) < 0.0001; }
+bool deq(double a, double b) {
+	return std::abs<double>(a-b) < 0.0001;
+}
 
 class LinearRegressionTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( LinearRegressionTest );

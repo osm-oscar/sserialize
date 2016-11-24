@@ -158,8 +158,8 @@ void linearRegression(TIterator begin, const TIterator & end, double & slope, do
 
 	uint64_t size = 0;
 	uint64_t cysum = 0.0;
-	for(; begin != end; ++begin, ++size) {
-		cysum += *begin;
+	for(TIterator it(begin); it != end; ++it, ++size) {
+		cysum += *it;
 	}
 	double meanY = (double)(cysum/size) + static_cast<double>(cysum%size)/static_cast<double>(size);
 	double meanX = (double)(size-1)/2.0;
