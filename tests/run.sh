@@ -59,7 +59,6 @@ FAST_TESTS=(
 	"sserializetests_util_pack_unpack_functions"
 	"sserializetests_util_RLEStream"
 	"sserializetests_util_ThreadPool"
-	"sserializetests_util_ubytearrayadapter"
 	"sserializetests_util_UByteArrayAdapter"
 	"sserializetests_util_utilfuncs"
 )
@@ -70,7 +69,10 @@ PARAM_TESTS=(
 	"sserializetests_KeyValueObjectStoreTest"
 	"sserializetests_sort_oom_sactc_data"
 	"sserializetests_static_itemdb"
+	"sserializetests_util_ubytearrayadapter"
 )
+
+SHM_FILE_PREFIX="sserializeteststmp"
 
 BUILD_PATH="${1}"
 
@@ -80,6 +82,23 @@ if [ ! -d "${BUILD_PATH}" ] || [ ! -f "${BUILD_PATH}/sserializetests_util_UByteA
 fi
 
 cd "${BUILD_PATH}" && echo "Entering build path: ${BUILD_PATH}"
+
+if [ ! -d "${BUILD_PATH}/testtmp/slow" ]; then
+	mkdir -p "${BUILD_PATH}/testtmp/slow" || exit 1
+else
+	rm "${BUILD_PATH}/testtmp/slow/*"
+fi
+
+if [ ! -d "${BUILD_PATH}/testtmp/fast" ]; then
+	mkdir -p "${BUILD_PATH}/testtmp/fast" || exit 1
+else
+	rm "${BUILD_PATH}/testtmp/fast/*"
+fi
+
+rm /dev/shm/sserializeteststmp*
+
+TMP_FILE_OPTS="--tc-fast-temp-file ${BUILD_PATH$}/testtmp/fast/f --tc-slow-temp-file ${BUILD_PATH$}/testtmp/slow/f --tc-shm-file sserializeteststmp"
+
 num_slow=${#SLOW_TESTS[@]}
 num_normal=${#NORMAL_TESTS[@]}
 num_fast=${#FAST_TESTS[@]}
@@ -91,8 +110,13 @@ echo "#Fast tests: $num_fast"
 
 for ((i = 0; i < ${#FAST_TESTS[@]}; ++i)); do
 	echo "Executing $i: ${FAST_TESTS[i]}"
-	eval "./${FAST_TESTS[i]}"
+	eval "./${FAST_TESTS[i]} ${TMP_FILE_OPTS}"
 	FAST_TESTS_RESULT[i]=$?
+	ls -1 /tmp/sserialize*
+	if [ $? -eq 0 ]; then
+		echo "tmp broken for $i"
+		exit 1
+	fi
 done
 
 for ((i = 0; i < ${#FAST_TESTS_RESULT[@]}; ++i)); do
