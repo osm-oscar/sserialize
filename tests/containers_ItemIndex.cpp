@@ -94,6 +94,6 @@ int main(int argc, char ** argv) {
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_DE>::suite() );
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_RLE_DE>::suite() );
 // 	runner.eventManager().popProtector();
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

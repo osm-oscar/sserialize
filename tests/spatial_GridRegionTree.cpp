@@ -134,6 +134,6 @@ int main(int argc, char ** argv) {
 	runner.addTest( GridRegionTreeTest<2,2,4,4>::suite() );
 	runner.addTest( GridRegionTreeTest<2,3,5,7>::suite() );
 	runner.addTest( GridRegionTreeTest<1,1,3,3>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

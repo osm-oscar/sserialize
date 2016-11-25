@@ -55,11 +55,9 @@ int main(int argc, char ** argv) {
 	runner.addTest(  TestThreadPool<8, 1>::suite() );
 	runner.addTest(  TestThreadPool<100, 1000>::suite() );
 	runner.addTest(  TestThreadPool<100, 1>::suite() );
-	for(uint32_t i(0), s(25); i < s; ++i) {
-		bool ok = runner.run();
-		if (!ok) {
-			return 1;
-		}
+	bool ok = true;
+	for(uint32_t i(0), s(25); ok && i < s; ++i) {
+		ok = runner.run() && ok;
 	}
-	return 0;
+	return ok ? 0 : 1;
 }

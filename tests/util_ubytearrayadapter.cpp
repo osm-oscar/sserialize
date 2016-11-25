@@ -871,10 +871,9 @@ int main(int argc, char** argv) {
 	std::cout <<  "SUMMARY: ";
 	if (allOk) {
 		std::cout << "OK! All tests passed" << std::endl;
-		return 0;
 	}
 	else {
 		std::cout << "FAILED! Some tests failed" << std::endl;
-		return 1;
 	}
+	return allOk ? 0 : 1;
 }

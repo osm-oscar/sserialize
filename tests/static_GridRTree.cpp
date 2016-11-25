@@ -99,6 +99,6 @@ int main(int argc, char ** argv) {
 	runner.addTest( StaticGridRTreeTest<20, 20>::suite() );
 	runner.addTest( StaticGridRTreeTest<13, 31>::suite() );
 	runner.addTest( StaticGridRTreeTest<200, 200>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 };

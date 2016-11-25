@@ -249,6 +249,6 @@ int main(int argc, char ** argv) {
 		runner.addTest(  TestOOMArray<1, 100000000, sserialize::MM_SLOW_FILEBASED>::suite() );
 	}
 // 	runner.eventManager().popProtector();
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

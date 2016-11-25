@@ -132,6 +132,6 @@ int main(int argc, char ** argv) {
 	for(uint32_t i = 0; i < 10; i++) {
 		runner.addTest(  TestDenseGeoPointVector::suite() );
 	}
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

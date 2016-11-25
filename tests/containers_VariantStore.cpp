@@ -99,6 +99,6 @@ int main(int argc, char ** argv) {
 	runner.addTest(  VariantStoreTest<4047, 1001, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  VariantStoreTest<10537, 2040, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  VariantStoreTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

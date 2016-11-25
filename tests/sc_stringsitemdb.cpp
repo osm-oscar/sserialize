@@ -68,6 +68,6 @@ int main(int argc, char ** argv) {
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( StringsItemDBTest::suite() );
 // 	runner.eventManager().popProtector();
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

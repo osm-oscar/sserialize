@@ -112,6 +112,6 @@ int main(int argc, char ** argv) {
 	runner.addTest( MultiBitIteratorTest<10, 5034>::suite() );
 	runner.addTest( MultiBitIteratorTest<10, 15034>::suite() );
 	runner.addTest( MultiBitIteratorTest<10, 235034>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

@@ -79,6 +79,6 @@ int main(int argc, char ** argv) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  CFLArrayTest<uint32_t, 1042>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

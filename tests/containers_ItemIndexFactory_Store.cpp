@@ -212,6 +212,6 @@ int main(int argc, char ** argv) {
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
 // 	runner.eventManager().popProtector();
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

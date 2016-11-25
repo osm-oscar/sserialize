@@ -281,5 +281,5 @@ int main(int argc, char ** argv) {
 	ADD_TEST(CompactStaticTrieCreationNode, CompactTrieNodePrivate);
 // 	runner.eventManager().popProtector();
 	bool ok = runner.run();
-	return ok ? 0 : 1;	
+	return ok ? 0 : 1;
 }

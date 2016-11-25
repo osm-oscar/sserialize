@@ -170,6 +170,6 @@ int main(int argc, char ** argv) {
 	runner.addTest( GeoPolygonStoreTest<6,5>::suite() );
 	runner.addTest( GeoPolygonStoreTest<12,10>::suite() );
 	runner.addTest( GeoPolygonStoreTest<47,23>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }

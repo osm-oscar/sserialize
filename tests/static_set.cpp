@@ -125,12 +125,10 @@ int main() {
 
 	if (allOk) {
 		std::cout << "PASSED all test." << std::endl;
-		return 0;
 	}
 	else {
 		std::cout << "FAILED at least one test!" << std::endl;
-		return 1;
 	}
 
-	return 0;
+	return allOk ? 0 : 1;
 }

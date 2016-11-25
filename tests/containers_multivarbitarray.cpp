@@ -129,7 +129,7 @@ int main(int argc, char ** argv) {
 	runner.addTest( MultiVarBitArrayTest<128*1024, 3>::suite() );
 	runner.addTest( MultiVarBitArrayTest<1024*1024, 3>::suite() );
 	runner.addTest( MultiVarBitArraySpecialTest::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }
 

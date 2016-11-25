@@ -85,6 +85,6 @@ int main(int argc, char ** argv) {
 	runner.addTest(  DynamicVectorTest<10>::suite() );
 	runner.addTest(  DynamicVectorTest<100>::suite() );
 	runner.addTest(  DynamicVectorTest<1000>::suite() );
-	runner.run();
-	return 0;
+	bool ok = runner.run();
+	return ok ? 0 : 1;
 }
