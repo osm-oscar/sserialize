@@ -133,7 +133,12 @@ private:
 		}
 		
 		RasterElementPolygons checkedAt(const Point & p) const {
-			return MyRGeoGrid::at(p.lat(), p.lon());
+			try {
+				return MyRGeoGrid::at(p.lat(), p.lon());
+			}
+			catch (const std::out_of_range &) {
+				return RasterElementPolygons();
+			}
 		}
 
 		void getPolygons(const Point & p, std::set<uint32_t> & definiteHits, std::set<uint32_t> & possibleHits) const {
@@ -291,8 +296,9 @@ public:
 		else {
 			for(TPOINT_ITERATOR it(begin); it != end; ++it) {
 				RasterElementPolygons rep( m_polyRaster->checkedAt(*it) );
-				if (rep.enclosing)
+				if (rep.enclosing) {
 					polyIds.insert(rep.enclosing->begin(), rep.enclosing->end());
+				}
 				if (rep.colliding) {
 					for(PolyRasterElement::const_iterator pit(rep.colliding->begin()), pend( rep.colliding->end()); pit != pend; ++pit) {
 						if (!polyIds.count(*pit) && pointInRegion(*it, *m_regionStore[*pit]) ) {
