@@ -366,7 +366,7 @@ bool GeoPolygon<TPointsContainer>::encloses(const GeoPolygon<TPointsContainer>::
 	for(const_iterator oPrev(other.cbegin()), oIt(other.cbegin()+1), oEnd(other.cend()); oIt != oEnd; ++oIt, ++oPrev) {
 		for(const_iterator prev(MyBaseClass::cbegin()), it(MyBaseClass::cbegin()+1), end(MyBaseClass::cend()); it != end; ++it, ++prev)  {
 			if (sserialize::spatial::GeoPoint::intersect(*oPrev, *oIt, *prev, *it)) {
-				return true;
+				return false;
 			}
 		}
 	}
