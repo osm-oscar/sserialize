@@ -338,6 +338,8 @@ void createHandSamplePolygons(SamplePolygonTestData & data) {
 	data.points[8] = GeoPoint(6., 2.);
 	data.points[9] = GeoPoint(4., 3.5);
 	
+	//points on the border are outside of the polygon!
+	
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(0, POLY_B) );
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(1, POLY_C) );
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(2, POLY_I) );
@@ -346,9 +348,9 @@ void createHandSamplePolygons(SamplePolygonTestData & data) {
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(5, POLY_D) );
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(5, POLY_E) );
 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(6, POLY_F) );
-// 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(6, POLY_I) ); //TODO: fix points lying on the border
+// 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(6, POLY_I) );
 // 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(7, POLY_B) );
-	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(8, POLY_B) );
+// 	data.pointPolyIntersects.insert( std::pair<uint32_t, uint32_t>(8, POLY_B) );
 
 	//RECTS
 	data.rects.push_back( GeoRect(0.5, 3., 0.5, 9.) );

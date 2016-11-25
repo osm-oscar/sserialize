@@ -19,13 +19,20 @@ private:
 private:
 	std::string brokenPolyIntersect(uint32_t i, uint32_t j) {
 		std::stringstream ss;
-		ss << "Broken poly-collide between "  << i << " and " << j << std::endl;
+		ss << "Broken poly-collide between polygon["  << i << "]=";
+		m_data.poly(i).asString(ss);
+		ss << " and polygon[" << j << "]=";
+		m_data.poly(j).asString(ss);
+		ss << std::endl;
 		return ss.str();
 	}
 	
 	std::string brokenPolyPointIntersect(uint32_t point, uint32_t poly) {
 		std::stringstream ss;
-		ss << "Broken point/poly intersect between "  << point << " and " << poly << std::endl;
+		ss << "Broken point/poly intersect between point[" << point << "]=" << m_data.points.at(point);
+		ss << " and polygon[" << poly << "]=";
+		m_data.poly(poly).asString(ss);
+		ss << std::endl;
 		return ss.str();
 	}
 public:
@@ -53,11 +60,12 @@ public:
 	void testPointIntersect() {
 		for(uint32_t polyIt = 0; polyIt < m_data.polys.size(); ++polyIt) {
 			for(uint32_t pointsIt = 0; pointsIt < m_data.points.size(); ++pointsIt) {
-				std::string msg = brokenPolyPointIntersect(polyIt, pointsIt);
+				std::string msg = brokenPolyPointIntersect(pointsIt, polyIt);
 				bool shouldIntersect = m_data.pointPolyIntersects.count(std::pair<uint32_t, uint32_t>(pointsIt,polyIt)) > 0;
 				bool intersectResult = m_data.polys.at(polyIt).first.contains( m_data.points.at(pointsIt) );
-				if (intersectResult != shouldIntersect)
+				if (intersectResult != shouldIntersect) {
 					intersectResult = m_data.polys.at(polyIt).first.contains( m_data.points.at(pointsIt) );
+				}
 
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(msg, shouldIntersect, intersectResult);
 			}
