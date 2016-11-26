@@ -1,5 +1,9 @@
 #!/bin/bash
 
+DISABLED_TESTS=(
+	"sserializetests_staging_GenericTrie"
+)
+
 SLOW_TESTS=("sserializetests_algorithm_oom_sort"
 	"sserializetests_containers_ItemIndexFactory_Store"
 	"sserializetests_containers_OOMArray"
@@ -10,7 +14,7 @@ SLOW_TESTS=("sserializetests_algorithm_oom_sort"
 	"sserializetests_util_CompressedMmappedFile"
 	"sserializetests_util_MmappedMemory"
 	"sserializetests_static_Triangulation"
-	)
+)
 
 NORMAL_TESTS=(
 	"sserializetests_containers_ItemIndex"
@@ -36,7 +40,6 @@ FAST_TESTS=(
 	"sserializetests_spatial_GeoPolygon"
 	"sserializetests_spatial_GridRegionTree"
 	"sserializetests_spatial_polygonstore"
-	"sserializetests_staging_GenericTrie"
 	"sserializetests_static_densegeopointvector"
 	"sserializetests_static_DynamicVector"
 	"sserializetests_static_GeoShapes"
