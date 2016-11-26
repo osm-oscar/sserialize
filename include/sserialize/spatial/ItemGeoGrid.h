@@ -19,8 +19,9 @@ public:
 	virtual ~ItemGeoGrid() {
 		for(size_t i = 0; i < storage().size(); ++i) {
 			std::set<uint32_t> * &s = storage().at(i);
-			if (s)
+			if (s) {
 				delete s;
+			}
 			s = 0;
 		}
 	}
@@ -35,8 +36,9 @@ public:
 			allOk = bins[i].valid() && allOk;
 			if (bins[i].valid() && shape->intersects( cellBoundary(bins[i].x, bins[i].y) ) ) {
 				std::set<uint32_t>* & tile = binAt(bins[i].x, bins[i].y);
-				if ( ! tile )
+				if ( ! tile ) {
 					tile = new std::set<uint32_t>();
+				}
 				tile->insert(itemId);
 			}
 		}
@@ -54,8 +56,9 @@ public:
 				#pragma omp critical
 				{
 					std::set<uint32_t>* & tile = binAt(bins[i].x, bins[i].y);
-					if ( ! tile )
+					if ( ! tile ) {
 						tile = new std::set<uint32_t>();
+					}
 					tile->insert(itemId);
 				}
 			}
@@ -69,10 +72,12 @@ public:
 		info.begin(storage().size());
 		Static::ArrayCreator<uint32_t> dc(destination);
 		for(size_t i = 0; i < storage().size(); ++i) {
-			if (!storage().at(i))
+			if (!storage().at(i)) {
 				dc.put( indexFactory.addIndex(std::set<uint32_t>()) );
-			else
+			}
+			else {
 				dc.put( indexFactory.addIndex( *(storage().at(i)) ) );
+			}
 			info(i, "ItemGeoGrid::serialize");
 		}
 		dc.flush();

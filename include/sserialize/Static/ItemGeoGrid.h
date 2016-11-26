@@ -129,12 +129,12 @@ public:
 				}
 			}
 
-			if (definiteBins.size())
+			if (definiteBins.size()) {
 				if (bitSet.size()) {
 					putBinIndicesInto(definiteBins, bitSet);
 					return  ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
 				}
-				else
+				else {
 					if (definiteBins.size() < MAX_INDICE_COUNT_FOR_TREE_MERGE) {
 						return mergeBinIndices(definiteBins, 0, (uint32_t) (definiteBins.size()-1));
 					}
@@ -142,8 +142,11 @@ public:
 						putBinIndicesInto(definiteBins, bitSet);
 						return ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
 					}
-			else if (bitSet.size())
+				}
+			}
+			else if (bitSet.size()) {
 				return ItemIndex::fromBitSet(bitSet, m_indexStore.indexType());
+			}
 		}
 		return ItemIndex();
 	}

@@ -141,12 +141,14 @@ uint32_t GeoWay<TPointsContainer>::size() const { return (uint32_t)m_points.size
 
 template<typename TPointsContainer>
 bool GeoWay<TPointsContainer>::intersects(const GeoRect & rect) const {
-	if (!m_boundary.overlap(rect))
+	if (!m_boundary.overlap(rect)) {
 		return false;
+	}
 	for(const_iterator it(cbegin()), end(cend()); it != end; ++it) {
 		Point p (*it);
-		if (rect.contains(p.lat(), p.lon()))
+		if (rect.contains(p.lat(), p.lon())) {
 			return true;
+		}
 	}
 	return false;
 }
