@@ -138,7 +138,6 @@ public:
 	static ItemIndex constrainedIntersect(const std::vector< ItemIndex > & intersect, uint32_t count, ItemFilter * filter = 0);
 	
 	static ItemIndex uniteK(const sserialize::ItemIndex& a, const sserialize::ItemIndex& b, uint32_t numItems);
-	static inline bool uniteSameResult(ItemIndex::Types t) { return (t & (T_DE | T_RLE_DE | T_WAH | T_SIMPLE)); }
 };
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);
