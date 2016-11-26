@@ -22,7 +22,7 @@ m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(0),
 m_checkIndex(true),
 m_useDeduplication(true),
-m_type(ItemIndex::T_REGLINE)
+m_type(ItemIndex::T_RLE_DE)
 {
 	if (memoryBased)
 		 setIndexFile( UByteArrayAdapter(new std::vector<uint8_t>(), true) );
