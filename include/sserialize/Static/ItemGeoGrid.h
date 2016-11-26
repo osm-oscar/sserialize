@@ -114,21 +114,16 @@ public:
 					UByteArrayAdapter::OffsetType curPos = 0;
 					uint32_t curId = 0;
 					for(;curPos < bDataSize; ++curPos, curId += 8) {
-						uint8_t & src = bData[curPos];
+						uint8_t src = bData.getUint8(curPos);
 						if (src) {
-							uint8_t tmp = src;
-							src = 0;
-							uint8_t shift = 0;
-							while (tmp) {
-								if (tmp & 0x80) {
-									if (m_db.match(curId+shift, rect))
-										src |= 0x1;
+							for(uint8_t selector(0x80), shifts(0), mask(0xFF); src & mask; ++shifts, mask -= selector, selector >>= 1) {
+								if (selector & src) {
+									if (!m_db.match(curId+shifts, rect)) {
+										src &= ~selector;
+									}
 								}
-								tmp <<= 1;
-								src <<= 1;
-								++shift;
 							}
-							src <<= (8-shift); 
+							bData.putUint8(curPos, src);
 						}
 					}
 				}
