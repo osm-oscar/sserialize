@@ -127,6 +127,7 @@ src/spatial/GeoWay.cpp
 src/spatial/GeoRect.cpp
 src/spatial/GeoPolygon.cpp
 src/spatial/GeoMultiPolygon.cpp
+src/spatial/GeoUnionShape.cpp
 src/spatial/RTree.cpp
 src/spatial/GridRTree.cpp
 src/spatial/GeoHierarchy.cpp
