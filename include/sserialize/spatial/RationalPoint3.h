@@ -15,6 +15,7 @@ class RationalPoint3 {
 public:
 	RationalPoint3();
 	RationalPoint3(int64_t xnum, int64_t ynum, int64_t znum, uint64_t denom);
+	RationalPoint3(const mpq_class & x, const mpq_class & y, const mpq_class & z);
 	~RationalPoint3();
 public:
 	int64_t & xnum();

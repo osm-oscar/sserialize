@@ -1,4 +1,7 @@
 #include <sserialize/spatial/RationalPoint3.h>
+#include <sserialize/utility/checks.h>
+#include <gmp.h>
+
 
 namespace sserialize {
 namespace spatial {
@@ -17,6 +20,35 @@ m_ynum(ynum),
 m_znum(znum),
 m_denom(denom)
 {}
+
+
+static mpz_class lcm(const mpz_class & a, const mpz_class & b) {
+	mpz_t tmp;
+	::mpz_init(tmp);
+	mpz_lcm(tmp, a.get_mpz_t(), b.get_mpz_t());
+	mpz_class ret(tmp);
+	::mpz_clear(tmp);
+	return ret;
+}
+
+RationalPoint3::RationalPoint3(const mpq_class & x, const mpq_class & y, const mpq_class & z) {
+	mpz_class myLcm = lcm(lcm(x.get_den(), y.get_den()), z.get_den());
+
+	if (!myLcm.fits_ulong_p()) {
+		throw std::overflow_error("sserialize::spatial::ratss::RationalPoint3: denominators are too large");
+	}
+	mpz_class xnum = x.get_num() * (myLcm / x.get_den());
+	mpz_class ynum = y.get_num() * (myLcm / y.get_den());
+	mpz_class znum = z.get_num() * (myLcm / z.get_den());
+	
+	if(!xnum.fits_ulong_p() || !ynum.fits_ulong_p() || !znum.fits_ulong_p()) {
+		throw std::overflow_error("sserialize::spatial::ratss::RationalPoint3: numerators are too large");
+	}
+	m_xnum = xnum.get_ui();
+	m_ynum = ynum.get_ui();
+	m_znum = znum.get_ui();
+	m_denom = myLcm.get_ui();
+}
 
 RationalPoint3::~RationalPoint3() {}
 
