@@ -90,6 +90,7 @@ src/Static/TriangulationGridLocator.cpp
 src/Static/TriangulationRegionArrangement.cpp
 src/Static/TriangulationGeoHierarchyArrangement.cpp
 src/Static/TracGraph.cpp
+src/Static/Fraction.cpp
 )
 
 set(CONTAINTERS_SOURCES_CPP 
@@ -139,6 +140,7 @@ src/spatial/CellQueryResult.cpp
 src/spatial/CellQueryResultPrivate.cpp
 src/spatial/TreedCQRImp.cpp
 src/spatial/TreedCQR.cpp
+src/spatial/RationalPoint3.cpp
 )
 
 set(ITERATOR_SOURCES_CPP
@@ -173,6 +175,7 @@ src/utility/log.cpp
 src/utility/Compressor.cpp
 src/utility/detail/Compressor/NoneCompressor.cpp
 src/utility/detail/Compressor/LZOCompressor.cpp
+src/utility/Fraction.cpp
 )
 
 set(STAGING_SOURCES_CPP
