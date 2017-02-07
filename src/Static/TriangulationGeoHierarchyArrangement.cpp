@@ -141,7 +141,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 				startFace = m_grid.faceId(*prev);
 			}
 			if (startFace != Triangulation::NullFace) {
-				startFace = tds().traverse(it->lat(), it-> lon(), startFace, [&wct](const Triangulation::Face & face) {
+				startFace = tds().traverse(*it, startFace, [&wct](const Triangulation::Face & face) {
 					SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
 					SSERIALIZE_CHEAP_ASSERT(face.valid())
 					uint32_t cId = wct.parent->cellIdFromFaceId(face.id());

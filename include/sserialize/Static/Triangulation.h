@@ -4,6 +4,7 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/Static/GeoPoint.h>
+#include <sserialize/Static/RationalPoint3.h>
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/algorithm/oom_algorithm.h>
 #include <sserialize/spatial/LatLonCalculations.h>
@@ -167,6 +168,39 @@ struct PrintRemovedEdges {
 	}
 };
 
+template<typename T_SOURCE_POINT, typename T_TARGET_POINT>
+struct Convert {
+	T_TARGET_POINT operator()(const T_SOURCE_POINT & p) const;
+};
+
+template<typename T_TARGET_POINT>
+struct Convert<sserialize::spatial::GeoPoint, T_TARGET_POINT> {
+	T_TARGET_POINT operator()(const sserialize::spatial::GeoPoint & gp) const {
+		return T_TARGET_POINT(gp.lat(), gp.lon());
+	}
+};
+
+template<typename T_SOURCE_POINT>
+struct Convert<T_SOURCE_POINT, sserialize::spatial::GeoPoint> {
+	sserialize::spatial::GeoPoint operator()(const T_SOURCE_POINT & p) const {
+		return sserialize::spatial::GeoPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
+	}
+};
+
+template<typename T_TARGET_POINT>
+struct Convert<sserialize::Static::spatial::ratss::RationalPoint3, T_TARGET_POINT> {
+	T_TARGET_POINT operator()(const sserialize::Static::spatial::ratss::RationalPoint3 & p) const {
+		return T_TARGET_POINT(p.x(), p.y(), p.z());
+	}
+};
+
+template<typename T_SOURCE_POINT>
+struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::RationalPoint3> {
+	sserialize::Static::spatial::ratss::RationalPoint3 operator()(const T_SOURCE_POINT & p) const {
+		return sserialize::Static::spatial::ratss::RationalPoint3(p.x(), p.y(), p.z());
+	}
+};
+
 }}//end namespace detail::Triangulation
 
 /**
@@ -326,10 +360,10 @@ public:
 	///@return faceid where the destination point is inside or NullFace
 	///@param visitor operator()(const Face & face)
 	template<typename TVisitor, typename T_GEOMETRY_TRAITS>
-	uint32_t traverse(double lat, double lon, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
-	///Locate the face the point=(lat, lon) lies in, need exact predicates, hint: id of start face
+	uint32_t traverse(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	///Locate the face the point lies in, need exact predicates, hint: id of start face
 	template<typename T_GEOMETRY_TRAITS>
-	uint32_t locate(double lat, double lon, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	uint32_t locate(const Point & target, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
 	///Explores the triangulation starting at startFace
 	///@param explorer operator()(const Face & face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
 	template<typename T_EXPLORER>
@@ -369,7 +403,7 @@ public:
 
 //TODO:add support for degenerate faces
 template<typename TVisitor, typename T_GEOMETRY_TRAITS>
-uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
+uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
 	typedef T_GEOMETRY_TRAITS K;
 	typedef typename K::Point_2 Point_2;
 	typedef typename K::Orientation_2 Orientation_2;
@@ -378,10 +412,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 		return NullFace;
 	}
 	
-	auto getPoint2 = [](const Vertex & v) {
-		Point gp(v.point());
-		return Point_2(gp.lat(), gp.lon());
-	};
+	detail::Triangulation::Convert<Triangulation::Point, Point_2> mp2kp;
 	
 	//TODO: there's currently no way to tell that the point is identical with a vertex
 	auto returnFaceFromVertex = [](const Vertex & v) -> uint32_t {
@@ -398,8 +429,8 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 	Vertex circleVertex = face(hint).vertex(0);
 	Point_2 cv;
 	
-	Point_2 q(lat, lon); //target
-	Point_2 p(getPoint2(circleVertex)); //start point
+	Point_2 q( mp2kp(target) ); //target
+	Point_2 p( mp2kp(circleVertex.point()) ); //start point
 	
 	//TODO: do initialization step with centroid of face instead of an initial circle step
 
@@ -409,7 +440,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 	
 	while (true) {
 		if (circleVertex.valid()) {
-			cv = getPoint2(circleVertex);
+			cv = mp2kp(circleVertex.point());
 			
 			//reset p to cv, since then we don't have to explicity check if q is inside the active triangle in case s is collinear with p->q
 			//this has the overhead of going back to the former triangle but simplifies the logic
@@ -428,7 +459,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(cvIdx, -1);
 				
 				Vertex myLv(cf.vertex((uint32_t)Triangulation::cw(cvIdx))), myRv(cf.vertex((uint32_t)Triangulation::ccw(cvIdx)));
-				Point_2 myLP(getPoint2(myLv)), myRP(getPoint2(myRv));
+				Point_2 myLP(mp2kp(myLv.point())), myRP(mp2kp(myRv.point()));
 				
 				CGAL::Orientation lvOt = ot(p, q, myLP);
 				CGAL::Orientation rvOt = ot(p, q, myRP);
@@ -506,7 +537,7 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 			SSERIALIZE_CHEAP_ASSERT_EQUAL(curFace.vertexId((uint32_t)rvIndex), rv.id());
 			SSERIALIZE_CHEAP_ASSERT_EQUAL(curFace.vertexId((uint32_t)lvIndex), lv.id());
 			
-			Point_2 sp(getPoint2(sv));
+			Point_2 sp(mp2kp(sv.point()));
 			CGAL::Orientation sot = ot(p, q, sp);
 			if (CGAL::Orientation::COLLINEAR == sot) {
 				//top takes care of q beeing in the current triangle
@@ -552,8 +583,8 @@ uint32_t Triangulation::traverse(double lat, double lon, uint32_t hint, TVisitor
 }
 
 template<typename T_GEOMETRY_TRAITS>
-uint32_t Triangulation::locate(double lat, double lon, uint32_t hint, T_GEOMETRY_TRAITS traits) const {
-	return traverse(lat, lon, hint, [](Face const &) {}, traits);
+uint32_t Triangulation::locate(const Point & target, uint32_t hint, T_GEOMETRY_TRAITS traits) const {
+	return traverse(target, hint, [](Face const &) {}, traits);
 }
 
 template<typename T_EXPLORER>
@@ -953,6 +984,8 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	typedef typename TDS::Face_circulator Face_circulator;
 	typedef typename TDS::Point Point;
 	
+	detail::Triangulation::Convert<Point, Triangulation::Point> kp2mp;
+	
 	faceToFaceId.clear();
 	vertexToVertexId.clear();
 	
@@ -977,12 +1010,11 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	
 	dest.putUint8(2);//VERSION
 	{ //put the points
-		sserialize::spatial::GeoPoint gp;
+		Triangulation::Point gp;
 		sserialize::Static::ArrayCreator<sserialize::spatial::GeoPoint> va(dest);
 		va.reserveOffsets(src.number_of_vertices());
 		for(Finite_vertices_iterator vt(src.finite_vertices_begin()), vtEnd(src.finite_vertices_end()); vt != vtEnd; ++vt) {
-			gp.lat() = CGAL::to_double(vt->point().x());
-			gp.lon() = CGAL::to_double(vt->point().y());
+			gp = kp2mp(vt->point());
 			va.put(gp);
 			vertexToVertexId[vt] = vertexId;
 			++vertexId;
