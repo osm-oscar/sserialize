@@ -201,8 +201,10 @@ ${OPTIONAL_SOURCES_CPP}
 ${EXTERNAL_SOURCES_CPP}
 ${STAGING_SOURCES_CPP}
 )
+add_subdirectory(vendor/libdts2 ${PROJECT_NAME}dts2)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
+target_link_libraries(${PROJECT_NAME} dts2)
 
 IF(NOT CMAKE_CROSSCOMPILING)
 	if(ICU_FOUND)
