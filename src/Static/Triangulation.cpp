@@ -66,12 +66,6 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
 }
 
-bool Triangulation::Face::contains(const Triangulation::Point& p) const {
-	//TODO:speed this up by using a point-in-triangle test
-	std::vector<Point> tmp{ point(0), point(1), point(2) };
-	sserialize::spatial::GeoPolygon gp(std::move(tmp));
-	return gp.contains(p);
-}
 
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {
 	using namespace sserialize::spatial;
