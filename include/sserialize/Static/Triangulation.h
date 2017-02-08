@@ -203,8 +203,7 @@ public:
 	}
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
-	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest);
-	
+	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, bool allowDegenerate = false);
 };
 
 //TODO:add support for degenerate faces
@@ -422,10 +421,9 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 	}
 }
 
-
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 sserialize::UByteArrayAdapter &
-Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest) {
+Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest, bool allowDegenerate) {
 	typedef T_CGAL_TRIANGULATION_DATA_STRUCTURE TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
@@ -565,7 +563,9 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 				}
 				detail::Triangulation::IntPoint<Point> ip0(p0), ip1(p1), ip2(p2);
 				if (ip0 == ip1 || ip0 == ip2 || ip1 == ip2) {
-					throw sserialize::CreationException("Triangulation has degenerate face after serialization");
+					if (!allowDegenerate) {
+						throw sserialize::CreationException("Triangulation has degenerate face after serialization");
+					}
 					fa.set(faceId, Triangulation::Face::FI_IS_DEGENERATE, 1);
 					++degenerateFaceCount;
 				}
