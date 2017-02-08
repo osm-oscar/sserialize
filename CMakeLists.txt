@@ -103,6 +103,7 @@ src/Static/TriangulationRegionArrangement.cpp
 src/Static/TriangulationGeoHierarchyArrangement.cpp
 src/Static/TracGraph.cpp
 src/Static/Fraction.cpp
+src/Static/PointOnS2.cpp
 )
 
 set(CONTAINTERS_SOURCES_CPP 

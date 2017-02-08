@@ -1,6 +1,6 @@
 #include <sserialize/spatial/PointOnS2.h>
 #include <sserialize/utility/checks.h>
-#include <libratss/Conversion.h>
+#include <libratss/ProjectS2.h>
 #include <gmp.h>
 
 
@@ -14,6 +14,14 @@ m_ynum(0),
 m_znum(0),
 m_denom(1)
 {}
+
+PointOnS2::PointOnS2(const GeoPoint & gp) {
+	mpq_class x, y, z;
+	::ratss::ProjectS2 proj;
+	proj.projectFromGeo(gp.lat(), gp.lon(), x, y, z, 64, ::ratss::ProjectS2::ST_FX | ::ratss::ProjectS2::ST_PLANE);
+	init(x, y, z);
+}
+
 
 PointOnS2::PointOnS2(int64_t xnum, int64_t ynum, int64_t znum, uint64_t denom) :
 m_xnum(xnum),
@@ -33,6 +41,12 @@ static mpz_class lcm(const mpz_class & a, const mpz_class & b) {
 }
 
 PointOnS2::PointOnS2(const mpq_class & x, const mpq_class & y, const mpq_class & z) {
+	init(x, y, z);
+}
+
+PointOnS2::~PointOnS2() {}
+
+void PointOnS2::init(const mpq_class & x, const mpq_class & y, const mpq_class & z) {
 	mpz_class myLcm = lcm(lcm(x.get_den(), y.get_den()), z.get_den());
 
 	if (!myLcm.fits_ulong_p()) {
@@ -50,8 +64,6 @@ PointOnS2::PointOnS2(const mpq_class & x, const mpq_class & y, const mpq_class &
 	m_znum = znum.get_ui();
 	m_denom = myLcm.get_ui();
 }
-
-PointOnS2::~PointOnS2() {}
 
 int64_t & PointOnS2::xnum() {
 	return m_xnum;
@@ -95,6 +107,14 @@ Fraction PointOnS2::y() const {
 
 Fraction PointOnS2::z() const {
 	return Fraction(znum(), denom());
+}
+
+
+PointOnS2::operator sserialize::spatial::GeoPoint() const {
+	::ratss::ProjectS2 proj;
+	double lat, lon;
+	proj.toGeo(this->x().toMpq(), this->y().toMpq(), this->z().toMpq(), lat, lon, 64);
+	return GeoPoint(lat, lon);
 }
 
 PointOnS2::operator CGAL::Exact_predicates_exact_constructions_kernel::Point_3() const {

@@ -6,6 +6,8 @@
 /** This is a special class to encode Point in 3D with rational coordinates using libratss
   * In libratss all coordinates of a point have the same denominator 
   *
+  * File format of fixed format:
+  * u64|s64|s64|s64
   */
 
 namespace sserialize {
@@ -18,8 +20,9 @@ public:
 	typedef sserialize::spatial::ratss::PointOnS2 MyBaseClass;
 public:
 	PointOnS2();
-	PointOnS2(int64_t xnum, int64_t ynum, int64_t znum, uint64_t denom);
-	PointOnS2(const sserialize::UByteArrayAdapter & src);
+	explicit PointOnS2(const sserialize::spatial::GeoPoint & gp);
+	explicit PointOnS2(int64_t xnum, int64_t ynum, int64_t znum, uint64_t denom);
+	explicit PointOnS2(sserialize::UByteArrayAdapter src);
 	virtual ~PointOnS2();
 };
 
