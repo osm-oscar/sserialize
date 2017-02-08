@@ -1,7 +1,7 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_DETAIL_TRIANGULATION_H
 #define SSERIALIZE_STATIC_SPATIAL_DETAIL_TRIANGULATION_H
 #include <sserialize/Static/GeoPoint.h>
-#include <sserialize/Static/RationalPoint3.h>
+#include <sserialize/Static/PointOnS2.h>
 #include <sserialize/spatial/LatLonCalculations.h>
 
 #include <queue>
@@ -179,16 +179,16 @@ struct Convert<T_SOURCE_POINT, sserialize::spatial::GeoPoint> {
 };
 
 template<typename T_TARGET_POINT>
-struct Convert<sserialize::Static::spatial::ratss::RationalPoint3, T_TARGET_POINT> {
-	T_TARGET_POINT operator()(const sserialize::Static::spatial::ratss::RationalPoint3 & p) const {
+struct Convert<sserialize::Static::spatial::ratss::PointOnS2, T_TARGET_POINT> {
+	T_TARGET_POINT operator()(const sserialize::Static::spatial::ratss::PointOnS2 & p) const {
 		return T_TARGET_POINT(p.x(), p.y(), p.z());
 	}
 };
 
 template<typename T_SOURCE_POINT>
-struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::RationalPoint3> {
-	sserialize::Static::spatial::ratss::RationalPoint3 operator()(const T_SOURCE_POINT & p) const {
-		return sserialize::Static::spatial::ratss::RationalPoint3(p.x(), p.y(), p.z());
+struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::PointOnS2> {
+	sserialize::Static::spatial::ratss::PointOnS2 operator()(const T_SOURCE_POINT & p) const {
+		return sserialize::Static::spatial::ratss::PointOnS2(p.x(), p.y(), p.z());
 	}
 };
 

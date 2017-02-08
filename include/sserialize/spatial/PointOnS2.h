@@ -1,5 +1,5 @@
-#ifndef SSERIALIZE_SPATIAL_RATIONAL_POINT3_H
-#define SSERIALIZE_SPATIAL_RATIONAL_POINT3_H
+#ifndef SSERIALIZE_SPATIAL_POINT_ON_S2_H
+#define SSERIALIZE_SPATIAL_POINT_ON_S2_H
 #include <sserialize/utility/Fraction.h>
 
 /** This is a special class to encode Point in 3D with rational coordinates using libratss
@@ -11,12 +11,12 @@ namespace sserialize {
 namespace spatial {
 namespace ratss {
 
-class RationalPoint3 {
+class PointOnS2 {
 public:
-	RationalPoint3();
-	RationalPoint3(int64_t xnum, int64_t ynum, int64_t znum, uint64_t denom);
-	RationalPoint3(const mpq_class & x, const mpq_class & y, const mpq_class & z);
-	~RationalPoint3();
+	PointOnS2();
+	PointOnS2(int64_t xnum, int64_t ynum, int64_t znum, uint64_t denom);
+	PointOnS2(const mpq_class & x, const mpq_class & y, const mpq_class & z);
+	~PointOnS2();
 public:
 	int64_t & xnum();
 	const int64_t & xnum() const;

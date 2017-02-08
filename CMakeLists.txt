@@ -140,7 +140,7 @@ src/spatial/CellQueryResult.cpp
 src/spatial/CellQueryResultPrivate.cpp
 src/spatial/TreedCQRImp.cpp
 src/spatial/TreedCQR.cpp
-src/spatial/RationalPoint3.cpp
+src/spatial/PointOnS2.cpp
 )
 
 set(ITERATOR_SOURCES_CPP
