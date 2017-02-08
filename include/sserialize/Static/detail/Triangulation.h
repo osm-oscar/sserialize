@@ -20,6 +20,8 @@ class Triangulation;
 namespace detail {
 namespace Triangulation {
 
+//BEGIN stuff for snapping
+
 template<typename _Tp, typename _Sequence = std::vector<_Tp>,
 	typename _Compare  = std::less<typename _Sequence::value_type> >
 class MyPrioQueue: public std::priority_queue<_Tp, _Sequence, _Compare> {
@@ -156,39 +158,6 @@ struct PrintRemovedEdges {
 	void operator()(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const {
 		std::cout << "Could not add edge " << gp1 << " <-> " << gp2 << " with a length of ";
 		std::cout << std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) ) << '\n';
-	}
-};
-
-template<typename T_SOURCE_POINT, typename T_TARGET_POINT>
-struct Convert {
-	T_TARGET_POINT operator()(const T_SOURCE_POINT & p) const;
-};
-
-template<typename T_TARGET_POINT>
-struct Convert<sserialize::spatial::GeoPoint, T_TARGET_POINT> {
-	T_TARGET_POINT operator()(const sserialize::spatial::GeoPoint & gp) const {
-		return T_TARGET_POINT(gp.lat(), gp.lon());
-	}
-};
-
-template<typename T_SOURCE_POINT>
-struct Convert<T_SOURCE_POINT, sserialize::spatial::GeoPoint> {
-	sserialize::spatial::GeoPoint operator()(const T_SOURCE_POINT & p) const {
-		return sserialize::spatial::GeoPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
-	}
-};
-
-template<typename T_TARGET_POINT>
-struct Convert<sserialize::Static::spatial::ratss::PointOnS2, T_TARGET_POINT> {
-	T_TARGET_POINT operator()(const sserialize::Static::spatial::ratss::PointOnS2 & p) const {
-		return T_TARGET_POINT(p.x(), p.y(), p.z());
-	}
-};
-
-template<typename T_SOURCE_POINT>
-struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::PointOnS2> {
-	sserialize::Static::spatial::ratss::PointOnS2 operator()(const T_SOURCE_POINT & p) const {
-		return sserialize::Static::spatial::ratss::PointOnS2(p.x(), p.y(), p.z());
 	}
 };
 
@@ -548,6 +517,41 @@ uint32_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
 	#endif
 	return numChangedPoints;
 }
+
+//END stuff for snapping
+
+template<typename T_SOURCE_POINT, typename T_TARGET_POINT>
+struct Convert {
+	T_TARGET_POINT operator()(const T_SOURCE_POINT & p) const;
+};
+
+template<typename T_TARGET_POINT>
+struct Convert<sserialize::spatial::GeoPoint, T_TARGET_POINT> {
+	T_TARGET_POINT operator()(const sserialize::spatial::GeoPoint & gp) const {
+		return T_TARGET_POINT(gp.lat(), gp.lon());
+	}
+};
+
+template<typename T_SOURCE_POINT>
+struct Convert<T_SOURCE_POINT, sserialize::spatial::GeoPoint> {
+	sserialize::spatial::GeoPoint operator()(const T_SOURCE_POINT & p) const {
+		return sserialize::spatial::GeoPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
+	}
+};
+
+template<typename T_TARGET_POINT>
+struct Convert<sserialize::Static::spatial::ratss::PointOnS2, T_TARGET_POINT> {
+	T_TARGET_POINT operator()(const sserialize::Static::spatial::ratss::PointOnS2 & p) const {
+		return T_TARGET_POINT(p.x(), p.y(), p.z());
+	}
+};
+
+template<typename T_SOURCE_POINT>
+struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::PointOnS2> {
+	sserialize::Static::spatial::ratss::PointOnS2 operator()(const T_SOURCE_POINT & p) const {
+		return sserialize::Static::spatial::ratss::PointOnS2(p.x(), p.y(), p.z());
+	}
+};
 
 template<typename TPoint>
 struct Compute_centroid {
