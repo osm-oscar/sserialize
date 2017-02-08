@@ -1,5 +1,6 @@
 #include <sserialize/spatial/PointOnS2.h>
 #include <sserialize/utility/checks.h>
+#include <libratss/Conversion.h>
 #include <gmp.h>
 
 
@@ -94,6 +95,17 @@ Fraction PointOnS2::y() const {
 
 Fraction PointOnS2::z() const {
 	return Fraction(znum(), denom());
+}
+
+PointOnS2::operator CGAL::Exact_predicates_exact_constructions_kernel::Point_3() const {
+	typedef typename CGAL::Exact_predicates_exact_constructions_kernel::Point_3 Point_3;
+	typedef typename CGAL::Exact_predicates_exact_constructions_kernel::FT FT;
+	typedef ::ratss::Conversion<FT> Conversion;
+	return Point_3(
+		Conversion::moveFrom(this->x().toMpq()),
+		Conversion::moveFrom(this->y().toMpq()),
+		Conversion::moveFrom(this->z().toMpq())
+	);
 }
 
 }}}//end namespace sserialize
