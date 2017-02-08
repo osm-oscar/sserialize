@@ -67,10 +67,10 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 }
 
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {
-	using namespace sserialize::spatial;
-	return GeoPoint::intersect(p, q, point(0), point(1)) ||
-			GeoPoint::intersect(p, q, point(1), point(2)) ||
-			GeoPoint::intersect(p, q, point(2), point(0));
+	detail::Triangulation::Do_intersect<Triangulation::Point> ci;
+	return ci(p, q, point(0), point(1)) ||
+			ci(p, q, point(1), point(2)) ||
+			ci(p, q, point(2), point(0));
 }
 
 Triangulation::Point Triangulation::Face::centroid() const {

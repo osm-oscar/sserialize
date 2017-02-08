@@ -3,6 +3,8 @@
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/Static/PointOnS2.h>
 #include <sserialize/spatial/LatLonCalculations.h>
+#include <libratss/ProjectS2.h>
+#include <libdts2/Constrained_delaunay_triangulation_with_intersections_base_traits_s2.h>
 
 #include <queue>
 
@@ -10,6 +12,7 @@
 #include <CGAL/enum.h>
 #include <CGAL/intersections.h>
 #include <CGAL/Constrained_triangulation_2.h>
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 
 namespace sserialize {
 namespace Static {
@@ -554,13 +557,15 @@ struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::PointOnS2> {
 };
 
 template<typename TPoint>
-struct Compute_centroid {
+class Compute_centroid {
+public:
 	typedef TPoint Point;
 	Point operator()(const Point & a, const Point & b, const Point & c) const;
 };
 
 template<>
-struct Compute_centroid<sserialize::spatial::GeoPoint> {
+class Compute_centroid<sserialize::spatial::GeoPoint> {
+public:
 	typedef sserialize::spatial::GeoPoint Point;
 	Point operator()(const Point & a, const Point & b, const Point & c) const {
 		double lat = (a.lat() + b.lat() + c.lat()) / 3;
@@ -569,6 +574,70 @@ struct Compute_centroid<sserialize::spatial::GeoPoint> {
 	}
 };
 
+template<>
+class Compute_centroid<sserialize::spatial::ratss::PointOnS2> {
+public:
+	typedef sserialize::spatial::ratss::PointOnS2 Point;
+	Point operator()(const Point & a, const Point & b, const Point & c) const {
+		mpq_class x = (a.x().toMpq() + b.x().toMpq() + c.x().toMpq())/3;
+		mpq_class y = (a.y().toMpq() + b.y().toMpq() + c.y().toMpq())/3;
+		mpq_class z = (a.z().toMpq() + b.z().toMpq() + c.z().toMpq())/3;
+		m_p.snap(
+			::ratss::Conversion<mpq_class>::toMpreal(x, 64),
+			::ratss::Conversion<mpq_class>::toMpreal(y, 64),
+			::ratss::Conversion<mpq_class>::toMpreal(z, 64),
+			x,
+			y,
+			z,
+			31,
+			::ratss::ProjectS2::ST_FX | ::ratss::ProjectS2::ST_PLANE | ::ratss::ProjectS2::ST_NORMALIZE
+		);
+		return Point(x, y, z);
+	}
+private:
+	::ratss::ProjectS2 m_p;
+};
+
+template<>
+class Compute_centroid<sserialize::Static::spatial::ratss::PointOnS2>: public Compute_centroid<sserialize::spatial::ratss::PointOnS2> {
+	using Compute_centroid<sserialize::spatial::ratss::PointOnS2>::operator();
+};
+
+template<typename TPoint>
+class Do_intersect {
+public:
+	typedef TPoint Point;
+	bool operator()(const Point & a, const Point & b) const;
+};
+
+template<>
+class Do_intersect<sserialize::spatial::GeoPoint> {
+public:
+	typedef sserialize::spatial::GeoPoint Point;
+	bool operator()(const Point & a, const Point & b, const Point & c, const Point & d) const {
+		return Point::intersect(a, b, c, d
+		);
+	}
+};
+
+template<>
+class Do_intersect<sserialize::spatial::ratss::PointOnS2> {
+public:
+	typedef sserialize::spatial::ratss::PointOnS2 Point;
+	bool operator()(const Point & a, const Point & b, const Point & c, const Point & d) const {
+		Segment_2 s1((Point_2)a, (Point_2)b);
+		Segment_2 s2((Point_2)c, (Point_2)d);
+		return m_di2(s1, s2);
+	}
+private:
+	typedef CGAL::Exact_predicates_exact_constructions_kernel K;
+	typedef dts2::Constrained_delaunay_triangulation_with_intersections_base_traits_s2<K> Geom_traits;
+	typedef Geom_traits::Point_2 Point_2;
+	typedef Geom_traits::Segment_2 Segment_2;
+	typedef Geom_traits::Do_intersect_2 Do_intersect_2;
+private:
+	Do_intersect_2 m_di2;
+};
 
 }}//end namespace detail::Triangulation
 
