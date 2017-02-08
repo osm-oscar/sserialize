@@ -66,7 +66,6 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
 }
 
-
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {
 	using namespace sserialize::spatial;
 	return GeoPoint::intersect(p, q, point(0), point(1)) ||
@@ -75,10 +74,8 @@ bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triang
 }
 
 Triangulation::Point Triangulation::Face::centroid() const {
-	Triangulation::Point p[] = { point(0), point(1), point(2) };
-	double lat = (p[0].lat() + p[1].lat() + p[2].lat()) / 3;
-	double lon = (p[0].lon() + p[1].lon() + p[2].lon()) / 3;
-	return Triangulation::Point(lat, lon);
+	detail::Triangulation::Compute_centroid<Triangulation::Point> cc;
+	return cc(point(0), point(1), point(2) );
 }
 
 int Triangulation::Face::index(const Triangulation::Vertex& v) const {

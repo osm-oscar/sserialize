@@ -549,6 +549,23 @@ uint32_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
 	return numChangedPoints;
 }
 
+template<typename TPoint>
+struct Compute_centroid {
+	typedef TPoint Point;
+	Point operator()(const Point & a, const Point & b, const Point & c) const;
+};
+
+template<>
+struct Compute_centroid<sserialize::spatial::GeoPoint> {
+	typedef sserialize::spatial::GeoPoint Point;
+	Point operator()(const Point & a, const Point & b, const Point & c) const {
+		double lat = (a.lat() + b.lat() + c.lat()) / 3;
+		double lon = (a.lon() + b.lon() + c.lon()) / 3;
+		return Point(lat, lon);
+	}
+};
+
+
 }}//end namespace detail::Triangulation
 
 }}}//end namespace
