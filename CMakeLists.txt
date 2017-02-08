@@ -1,7 +1,19 @@
 cmake_minimum_required(VERSION 2.8)
 project(sserialize)
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(CMAKE_MODULE_PATH
+	${CMAKE_SOURCE_DIR}/cmake
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake
+)
+
+add_subdirectory(vendor/libdts2 ${PROJECT_NAME}dts2)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${LIBDTS2_INCLUDE_DIR}
+)
+message("sserialize include dirs: ${LIBDTS2_INCLUDE_DIR}")
 
 IF(CMAKE_CROSSCOMPILING)
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
@@ -201,7 +213,6 @@ ${OPTIONAL_SOURCES_CPP}
 ${EXTERNAL_SOURCES_CPP}
 ${STAGING_SOURCES_CPP}
 )
-add_subdirectory(vendor/libdts2 ${PROJECT_NAME}dts2)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
 target_link_libraries(${PROJECT_NAME} dts2)
