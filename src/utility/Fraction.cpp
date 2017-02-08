@@ -49,6 +49,10 @@ uint64_t & Fraction::denominator() {
 	Fraction::operator mpq_class() const {
 		return mpq_class(m_num, m_denom);
 	}
+	
+	mpq_class Fraction::toMpq() const {
+		return mpq_class(m_num, m_denom);
+	}
 #endif
 
 }//end namespace sserialize

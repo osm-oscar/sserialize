@@ -37,6 +37,7 @@ public:
 #if defined(SSERIALIZE_WITH_GMPXX)
 	explicit Fraction(const mpq_class & f);
 	operator mpq_class() const;
+	mpq_class toMpq() const;
 #endif
 public:
 #if defined(SSERIALIZE_WITH_CGAL)
