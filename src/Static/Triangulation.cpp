@@ -66,6 +66,11 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
 }
 
+bool Triangulation::Face::contains(const Triangulation::Point & p) const {
+	assert(false);
+	return false;
+}
+
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {
 	detail::Triangulation::Do_intersect<Triangulation::Point> ci;
 	return ci(p, q, point(0), point(1)) ||
