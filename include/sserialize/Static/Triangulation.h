@@ -19,10 +19,11 @@ namespace Static {
 namespace spatial {
 
 /**
-  * Layout (v1)
+  * Layout (v3)
   * {
   *   VERSION u8
-  *   POINTS sserialize::Array<GeoPoint> gp (id identical with vertex ids)
+  *   u8 feature flag
+  *   POINTS sserialize::Array<Point> gp (id identical with vertex ids)
   *   VERTICES sserialize::MultiVarBitArray
   *   {
   *      FacesBegin u?
@@ -36,11 +37,13 @@ namespace spatial {
   *   }
   * }
   * Changelog:
+  * add feature flags
   */
 
 ///Triangulation of the convex-hull of a set of points
 class Triangulation final {
 public:
+	typedef enum {F_CLEAN_GEOMETRY=0x1, F_DEGENERATE_FACES=0x2, F_BROKEN_GEOMETRY=0x4} FeatureFlags;
 	typedef sserialize::spatial::GeoPoint Point;
 	typedef uint32_t FaceId;
 	typedef uint32_t VertexId;
@@ -154,6 +157,7 @@ private:
 	typedef sserialize::MultiVarBitArray VertexInfos;
 	typedef sserialize::Static::Array<Point> PointsContainer;
 private:
+	uint8_t m_features;
 	PointsContainer m_p;
 	VertexInfos m_vi;
 	FaceInfos m_fi;
@@ -456,7 +460,16 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	}
 	faceCount = faceId;
 	
-	dest.putUint8(2);//VERSION
+	uint8_t features = (allowDegenerate? F_DEGENERATE_FACES : 0);
+	for(Finite_vertices_iterator vIt(src.finite_vertices_begin()), vEnd(src.finite_vertices_end()); vIt != vEnd; ++vIt) {
+		if (detail::Triangulation::IntPoint<Point>::changes(vIt->point())) {
+			features |= F_BROKEN_GEOMETRY;
+			break;
+		}
+	}
+	
+	dest.putUint8(3);//VERSION
+	dest.putUint8(features);
 	{ //put the points
 		Triangulation::Point gp;
 		sserialize::Static::ArrayCreator<sserialize::spatial::GeoPoint> va(dest);

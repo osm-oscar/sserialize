@@ -272,12 +272,15 @@ const Triangulation::Vertex& Triangulation::FaceCirculator::vertex() const {
 	return m_v;
 }
 
-Triangulation::Triangulation() {}
+Triangulation::Triangulation() :
+m_features(Triangulation::F_CLEAN_GEOMETRY)
+{}
 
 Triangulation::Triangulation(const UByteArrayAdapter& d) :
-m_p(d+1),
-m_vi(d+(1+m_p.getSizeInBytes())),
-m_fi(d+(1+m_p.getSizeInBytes()+m_vi.getSizeInBytes()))
+m_features(d.at(1)),
+m_p(d+2),
+m_vi(d+(2+m_p.getSizeInBytes())),
+m_fi(d+(2+m_p.getSizeInBytes()+m_vi.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION, d.at(0), "sserialize::Static::spatial::Triangulation::Triangulation");
 	SSERIALIZE_EQUAL_LENGTH_CHECK(m_p.size(), m_vi.size(), "sserialize::Static::spatial::Triangulation::Triangulation: m_vi != m_p");
