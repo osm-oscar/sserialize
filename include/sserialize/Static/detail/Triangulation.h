@@ -23,6 +23,37 @@ class Triangulation;
 namespace detail {
 namespace Triangulation {
 
+//BEGIN stuff for robust traversal
+
+template<std::size_t T_SIZE>
+class CircularArraySet {
+public:
+	CircularArraySet() : m_pos(0) {
+		clear();
+	}
+	~CircularArraySet() {}
+	bool count(uint32_t id) const {
+		for(uint32_t x : m_d) {
+			if (x == id) {
+				return true;
+			}
+		}
+		return false;
+	}
+	void push(uint32_t id) {
+		m_d[m_pos%T_SIZE] = id;
+		++m_pos;
+	}
+	void clear() {
+		m_d.fill(std::numeric_limits<uint32_t>::max());
+	}
+private:
+	std::array<uint32_t, T_SIZE> m_d;
+	std::size_t m_pos;
+};
+
+//END stuff for robust traversal
+
 //BEGIN stuff for snapping
 
 template<typename _Tp, typename _Sequence = std::vector<_Tp>,
