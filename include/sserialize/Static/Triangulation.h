@@ -4,6 +4,7 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/containers/OOMArray.h>
+#include <sserialize/containers/ArraySet.h>
 #include <sserialize/algorithm/oom_algorithm.h>
 #include <sserialize/spatial/DistanceCalculator.h>
 #include <sserialize/Static/detail/Triangulation.h>
@@ -208,26 +209,35 @@ public:
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, bool allowDegenerate = false);
+	
+protected:
+	template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
+	uint32_t traverse_imp(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+
+	
 };
 
-//TODO:add support for degenerate faces
 template<typename TVisitor, typename T_GEOMETRY_TRAITS>
 uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
+	if (m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) {
+		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, true>(target, hint, visitor, traits);
+	}
+	else {
+		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
+	}
+}
+
+template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
+uint32_t Triangulation::traverse_imp(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
 	typedef T_GEOMETRY_TRAITS K;
+	typedef typename K::FT FT;
 	typedef typename K::Point_2 Point_2;
 	typedef typename K::Orientation_2 Orientation_2;
 	typedef typename K::Collinear_are_ordered_along_line_2 Collinear_are_ordered_along_line_2;
+	typedef typename K::Compute_squared_distance_2 Compute_squared_distance_2;
 	if (!faceCount()) {
 		return NullFace;
 	}
-	
-	detail::Triangulation::Convert<Triangulation::Point, Point_2> mp2kp;
-	
-	//TODO: there's currently no way to tell that the point is identical with a vertex
-	auto returnFaceFromVertex = [](const Vertex & v) -> uint32_t {
-		return v.facesBegin().face().id();
-	};
-	
 	if (hint >= faceCount()) {
 		hint = 0;
 	}
@@ -235,24 +245,118 @@ uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor v
 	Orientation_2 ot(traits.orientation_2_object());
 	//(p,q,r) = 1 iff q is between p and r
 	Collinear_are_ordered_along_line_2 oal(traits.collinear_are_ordered_along_line_2_object());
-	Vertex circleVertex = face(hint).vertex(0);
-	Point_2 cv;
-	
-	Point_2 q( mp2kp(target) ); //target
-	Point_2 p( mp2kp(circleVertex.point()) ); //start point
-	
-	//TODO: do initialization step with centroid of face instead of an initial circle step
+	Compute_squared_distance_2 sqd(traits.compute_squared_distance_2_object());
 
+	detail::Triangulation::Convert<Triangulation::Point, Point_2> mp2kp;
+
+	Vertex circleVertex = face(hint).vertex(0);
+
+	Point_2 p( mp2kp(circleVertex.point()) ); //start point
+	Point_2 q( mp2kp(target) ); //target
+
+	//TODO: there's currently no way to tell that the point is identical with a vertex
+	auto returnFaceFromVertex = [](const Vertex & v) -> uint32_t {
+		return v.facesBegin().face().id();
+	};
+	
+	//does a bfs from startFace in the direction of target until we are at least 10*InPoint::precision away from our startFace
+	//This needs that p is reset to circleVertex
+	FT bfsMinDistFromStart(
+		sqd(
+			Point_2(sserialize::spatial::GeoPoint::toDoubleLat(0), sserialize::spatial::GeoPoint::toDoubleLon(0)),
+			Point_2(sserialize::spatial::GeoPoint::toDoubleLat(10), sserialize::spatial::GeoPoint::toDoubleLon(10))
+		)
+	);
+	auto bfs = [this, &target, &q, &sqd, &mp2kp, &bfsMinDistFromStart](const Face & startFace) -> Vertex {
+		Point_2 startPoint = mp2kp(this->face(startFace.id()).centroid());
+		sserialize::ArraySet<uint32_t> visited;
+		std::vector<uint32_t> queue;
+
+		visited.insert(startFace.id());
+		queue.emplace_back(startFace.id());
+		for(std::size_t i(0); i < queue.size(); ++i) {
+			Face f(this->face(queue[i]));
+			//check if current face contains target 
+			//check if we're far enough away from our start point
+			//use the closest of the 3 vertices to do the circle step afterwards
+			if (f.contains(target) || sqd(mp2kp(f.centroid()), startPoint) > bfsMinDistFromStart) {
+				uint32_t closest = 0;
+				FT minDist(std::numeric_limits<double>::max());
+				for(uint32_t j(0); j < 3; ++j) {
+					FT myDist = sqd(mp2kp(f.point(j)), q);
+					if (myDist < minDist) {
+						closest = j;
+						minDist = myDist;
+					}
+				}
+				return f.vertex(closest);
+			}
+			//add neighborhood
+			for(uint32_t j(0); j < 3; ++j) {
+				if (f.isNeighbor(j)) {
+					uint32_t fnId = f.neighborId(j);
+					if (!visited.count(fnId)) {
+						visited.insert(fnId);
+						queue.push_back(fnId);
+					}
+				}
+			}
+		}
+		throw std::runtime_error("sserialize::Static::spatial::Triangulation::traverse: could not reach target");
+		return Vertex();
+	};
+	
+	Point_2 cv;
 	Point_2 rp,lp;
 	Vertex rv, lv;
 	Face curFace;
 	
+	//BEGIN T_BROKEN_GEOMETRY
+	FT distToTgt = sqd(p, q);
+	std::size_t stepCount = 0;
+	detail::Triangulation::CircularArraySet<16> lastTriangs; //we set this to 16*4 Bytes = one cache line on most processors
+	//END T_BROKEN_GEOMETRY
+	
+	//if T_BROKEN_GEOMETRY then we check every 1000? steps or so if we're closer.
+	//We also check the 10? last seen triangles if we've already visited one
+	//If either checks fails, then something is wrong
+	
 	while (true) {
+		++stepCount;
+		//this check is expensive and should not be called very often
+		//This essentially checks if we made progress and if not in uses bfs to guarantee it
+		//distToTgt get updates every 0xF steps AFTER this
+		if ((stepCount & 0x3FF) == 0x3FF) {
+			FT myDist;
+			if (circleVertex.valid()) {
+				myDist = sqd(mp2kp(circleVertex.point()), q);
+			}
+			else {
+				myDist = sqd(mp2kp(curFace.centroid()), q);
+			}
+			if (myDist >= distToTgt) { //we're not closer than before
+				if (circleVertex.valid()) {
+					circleVertex = bfs(circleVertex.beginFace());
+				}
+				else {
+					circleVertex = bfs(curFace);
+					curFace = Face();
+				}
+				distToTgt = sqd(mp2kp(circleVertex.point()), q);
+			}
+		}
+		
 		if (circleVertex.valid()) {
 			cv = mp2kp(circleVertex.point());
 			
+			if (T_BROKEN_GEOMETRY && (stepCount & 0xF) == 0xF) {
+				using std::min;
+				distToTgt = min(distToTgt, sqd(cv, q));
+			}
+			
 			//reset p to cv, since then we don't have to explicity check if q is inside the active triangle in case s is collinear with p->q
 			//this has the overhead of going back to the former triangle but simplifies the logic
+			//This is also needed for bfs
 			p = cv;
 			
 			if (cv == q) {
@@ -329,6 +433,22 @@ uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor v
 		}
 		else {
 			SSERIALIZE_CHEAP_ASSERT(curFace.valid());
+			
+			if (T_BROKEN_GEOMETRY) {
+				//we should never visit the same triangle twice, something must be wrong
+				if (((m_features & F_DEGENERATE_FACES) && curFace.isDegenerate()) ||
+						lastTriangs.count(curFace.id()))
+				{
+					circleVertex = bfs(curFace);
+					curFace = Face();
+					continue;
+				}
+				else if ((stepCount & 0xF) == 0xF) {
+					using std::min;
+					distToTgt = min(distToTgt, sqd(mp2kp(curFace.centroid()), q));
+				}
+			}
+		
 			//we have a face, r, l, rv and lv are set, find s
 			//p->q does not pass through r or l but may pass through s
 			//p->q intersects l->r with l beeing on the left and r beeing on the right
