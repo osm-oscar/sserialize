@@ -133,21 +133,29 @@ struct IntPoint {
 	}
 };
 
-template<typename T_POINT>
+template<typename T_POINT, typename T_VERTEX_HANDLE>
 struct ConstrainedEdge {
 	typedef T_POINT Point;
+	typedef T_VERTEX_HANDLE Vertex_handle;
 	typedef sserialize::Static::spatial::detail::Triangulation::IntPoint<Point> IntPoint;
 	IntPoint p1;
 	IntPoint p2;
 	double length;
+	Vertex_handle nearVertex; 
 	ConstrainedEdge() : length(-1) {}
-	ConstrainedEdge(const ConstrainedEdge & other) : p1(other.p1), p2(other.p2), length(other.length) {}
-	ConstrainedEdge(const IntPoint & p1, const IntPoint & p2) : p1(p1), p2(p2) {
-		double l1 = (double)p1.lat - (double) p2.lat;
-		double l2 = (double)p1.lon - (double) p2.lon;
-		length = l1*l1 + l2*l2;
-	}
-	ConstrainedEdge(const Point & p1, const Point & p2) : ConstrainedEdge(IntPoint(p1), IntPoint(p2)) {}
+	ConstrainedEdge(const ConstrainedEdge & other) = default;
+	ConstrainedEdge(const IntPoint & p1, const IntPoint & p2, const sserialize::spatial::DistanceCalculator & dc, const Vertex_handle & nearVertex) :
+	ConstrainedEdge(p1, p2, std::abs<double>( dc.calc(p1.latd(), p1.lond(), p2.latd(), p2.lond()) ), nearVertex)
+	{}
+	ConstrainedEdge(const IntPoint & p1, const IntPoint & p2, double length, const Vertex_handle & nearVertex) :
+	p1(p1),
+	p2(p2),
+	length(length),
+	nearVertex(nearVertex)
+	{}
+	ConstrainedEdge(const Point & p1, const Point & p2, double length, const Vertex_handle & nearVertex) :
+	ConstrainedEdge(IntPoint(p1), IntPoint(p2), length, nearVertex)
+	{}
 	bool valid() const {
 		return p1 != p2;
 	}
@@ -175,7 +183,9 @@ struct CEBackInsertIterator {
 	typedef sserialize::Static::spatial::detail::Triangulation::IntPoint<Point> IntPoint;
 	CTD & ctd;
 	CEContainer & dest;
-	CEBackInsertIterator(CTD & ctd, CEContainer & dest) : ctd(ctd), dest(dest) {}
+	const sserialize::spatial::DistanceCalculator & dc;
+	Vertex_handle nearVertex;
+	CEBackInsertIterator(CTD & ctd, CEContainer & dest, sserialize::spatial::DistanceCalculator & dc) : ctd(ctd), dest(dest), dc(dc) {}
 	CEBackInsertIterator & operator++() { return *this; }
 	CEBackInsertIterator & operator++(int) { return *this; }
 	CEBackInsertIterator & operator*() { return *this; }
@@ -184,7 +194,7 @@ struct CEBackInsertIterator {
 		Vertex_handle v2 = e.first->vertex(CTD::ccw(e.second));
 		IntPoint p1(v1->point()), p2(v2->point());
 		if (p1 != p2) {
-			dest.emplace(p1, p2);
+			dest.emplace(p1, p2, std::abs<double>( dc.calc(p1.latd(), p1.lond(), p2.latd(), p2.lond()) ), nearVertex);
 		}
 		return *this;
 	}
@@ -347,213 +357,386 @@ void intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename
 	});
 }
 
-///This will handle points created by intersections of constrained edges
-///This makes all points representable! Beware that this very likely changes the triangulation (removing faces and adding new ones)
-///You should therefore snap points before creating the triangulation
-///@return number of changed points
-template<typename T_CTD, typename T_REMOVED_EDGES>
-uint32_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
+template<typename T_CTD>
+class SnapVertices {
+public:
 	typedef T_CTD TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
 	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
+	typedef typename TDS::Vertex_circulator Vertex_circulator;
 	typedef typename TDS::Point Point;
 	typedef typename TDS::Edge Edge;
 	typedef typename TDS::Locate_type Locate_type;
 	typedef typename TDS::Intersection_tag Intersection_tag;
-	
+private:
 	//internal typedefs
 	typedef detail::Triangulation::IntPoint<Point> IntPoint;
-	typedef detail::Triangulation::ConstrainedEdge<Point> ConstrainedEdge;
+	typedef detail::Triangulation::ConstrainedEdge<Point, Vertex_handle> ConstrainedEdge;
 	typedef detail::Triangulation::MyPrioQueue<ConstrainedEdge> CEContainer;
 	typedef detail::Triangulation::CEBackInsertIterator<TDS, CEContainer> CEBackInsertIterator;
+public:
+	SnapVertices(T_CTD & ctd, double minEdgeLength) :
+	ctd(ctd),
+	minEdgeLength(minEdgeLength),
+	dc(sserialize::spatial::DistanceCalculator::DCT_GEODESIC_ACCURATE)
+	{}
+public:
+	///This will handle points created by intersections of constrained edges
+	///This makes all points representable! Beware that this very likely changes the triangulation (removing faces and adding new ones)
+	///You should therefore snap points before creating the triangulation
+	///@return number of changed points
+	template<typename T_REMOVED_EDGES>
+	uint32_t operator()(T_REMOVED_EDGES re) {
+		//simple version: first get all points that change their coordinates and save these and their incident constraint edges
+		//then remove these vertices and readd the constraints that don't intersect other constraints
+		//avoiding the creation of new , do this until no new intersection points are created
+		
+		//do the first global step which snaps all points
+		{
+			std::vector<Point> rmPoints;
+			std::unordered_set<uint64_t> noConstraintsPoints;
+			
+			CEBackInsertIterator ceIt(ctd, ceQueue, dc);
+			
+			for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+				const Point & p = vt->point();
+				if (!IntPoint::changes(p)) {
+					continue;
+				}
+				//point changes, save it and add its constrained edges
+				ceIt.nearVertex = nearVertex(vt);
+				if( ctd.are_there_incident_constraints(vt) ) {
+					ctd.incident_constraints(vt, ceIt);
+				}
+				else {
+					noConstraintsPoints.emplace(IntPoint(p).toU64());
+				}
+				rmPoints.emplace_back(p);
+			}
+			//now remove all those bad points
+			for(const Point & p : rmPoints) {
+				Face_handle fh;
+				Locate_type lt = (Locate_type) -1;
+				int li;
+				fh = ctd.locate(p, lt, li);
+				if (lt != TDS::VERTEX) {
+					std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
+					continue;
+				}
+				if (li < 4) { //if dimension is 0, then locate returns a NullFace with lt set to VERTEX and li set to 4
+					Vertex_handle v = fh->vertex(li);
+					ctd.remove_incident_constraints(v);
+					ctd.remove(v);
+				}
+			}
+			//add points from edges and points without constraints, we first remove all multiple occurences
+			{
+				std::unordered_set<uint64_t> pts = std::move(noConstraintsPoints);
+				for(const ConstrainedEdge & e : ceQueue.container()) {
+					pts.emplace(e.p1.toU64());
+					pts.emplace(e.p2.toU64());
+				}
+				std::vector<Point> ipts;
+				ipts.reserve(pts.size());
+				for(uint64_t x : pts) {
+					ipts.emplace_back(IntPoint(x).toPoint());
+				}
+				ctd.insert(ipts.begin(), ipts.end());
+				numChangedPoints = (uint32_t) ipts.size();
+	// 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
+			}
+		}
+		
+		uint32_t initialQueueSize = (uint32_t) ceQueue.size();
+		targetQueueRounds = initialQueueSize;
+		uint32_t queueRound = 0;
+		
+		//ceQueue makes sure that long edges come first
+		sserialize::ProgressInfo pinfo;
+		pinfo.begin(targetQueueRounds, "Triangulation::prepare: Processing edges");
+		for(; ceQueue.size() && ceQueue.top().length > minEdgeLength; ++queueRound) {
+			pinfo(queueRound, targetQueueRounds);
+			e = std::move( ceQueue.top() );
+			ceQueue.pop();
+			SSERIALIZE_CHEAP_ASSERT(e.valid());
+			v1 = locateVertex(e.p1, e.nearVertex);
+			v2 = locateVertex(e.p2, v1);
+			if (ctd.is_edge(v1, v2)) {
+				ctd.insert_constraint(v1, v2);
+				continue;
+			}
+			//we have intersections, calculate the intersection points and decide how to snap them
+			intersected = false;
+			Triangulation::intersects(ctd, v1, v2, [this](const Edge & xEdge) -> bool {
+				return this->handleReinsert(xEdge);
+			});
+			//readd constraint, since function above was not called due to no intersection
+			if (!intersected) {
+				ctd.insert_constraint(v1, v2);
+				continue;
+			}
+		}
+		pinfo.end();
+		std::cout << "Processed " << initialQueueSize << " changed constrained edges in " << queueRound << " rounds" << std::endl;
+		for(const ConstrainedEdge & e : ceQueue.container()) {
+			re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
+		}
+		#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+		for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+			SSERIALIZE_EXPENSIVE_ASSERT(!IntPoint::changes(vt->point()));
+		}
+		#endif
+		return numChangedPoints;
+	}
+private:
+// [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue, &targetQueueRounds, &numChangedPoints, &dc]
+	bool handleReinsert(const Edge & xEdge){
+		intersected = true;
+		Point xP;
+		const Point & p1 = v1->point();
+		const Point & p2 = v2->point();
+		const Point & pc = xEdge.first->vertex(TDS::ccw(xEdge.second))->point();
+		const Point & pd = xEdge.first->vertex(TDS::cw(xEdge.second))->point();
+		CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, Intersection_tag());
 
-	//simple version: first get all points that change their coordinates and save these and their incident constraint edges
-	//then remove these vertices and readd the constraints that don't intersect other constraints
-	//avoiding the creation of new , do this until no new intersection points are created
-	
-	auto locateVertex = [&ctd](const IntPoint & p) -> Vertex_handle {
+		SSERIALIZE_CHEAP_ASSERT(!IntPoint::changes(pc));
+		SSERIALIZE_CHEAP_ASSERT(!IntPoint::changes(pd));
+		//maps from distance -> point
+		std::array< std::pair<double, IntPoint>, 4> tmp;
+		tmp[0].second = e.p1;
+		tmp[1].second = e.p2;
+		tmp[2].second = IntPoint(pc);
+		tmp[3].second = IntPoint(pd);
+		tmp[0].first = distanceTo(p1, xP);
+		tmp[1].first = distanceTo(p2, xP);
+		tmp[2].first = distanceTo(pc, xP);
+		tmp[3].first = distanceTo(pd, xP);
+		auto tmpMinIt = std::min_element(tmp.begin(), tmp.end(),
+			[](const std::pair<double, IntPoint> & a, const std::pair<double, IntPoint> & b) {
+				return a.first < b.first;
+			}
+		);
+		
+		IntPoint xIntPoint;
+		bool insertXIntP = false;
+		//now check how far away that point is from one of our endpoints
+		if (tmpMinIt->first < 0.05) { //close enough
+			xIntPoint = tmpMinIt->second;
+		}
+		else {
+			xIntPoint = IntPoint(xP);
+			insertXIntP = true;
+		}
+		const IntPoint & pcInt = tmp[2].second;
+		const IntPoint & pdInt = tmp[3].second;
+
+		//requeue edge and xEdge with their new intersection point
+		//xP and xIntPoint maybe different at this point
+		if (e.p1 != xIntPoint) {
+			ceQueue.emplace(e.p1, xIntPoint, dc, e.nearVertex);
+			++targetQueueRounds;
+		}
+		if (e.p2 != xIntPoint) {
+			ceQueue.emplace(e.p2, xIntPoint, dc, e.nearVertex);
+			++targetQueueRounds;
+		}
+		if (pcInt!= xIntPoint) {
+			ceQueue.emplace(pcInt, xIntPoint, dc, e.nearVertex);
+			++targetQueueRounds;
+		}
+		if (pdInt != xIntPoint) {
+			ceQueue.emplace(pdInt, xIntPoint, dc, e.nearVertex);
+			++targetQueueRounds;
+		}
+		//and remove the constrained on our current edge
+		ctd.remove_constrained_edge(xEdge.first, xEdge.second);
+		if (insertXIntP) {
+			++numChangedPoints; //TODO: if xIntPoint is already in the tds, then this is wrong
+			ctd.insert(xIntPoint.toPoint(), ctd.incident_faces(e.nearVertex));
+		}
+		//its important to return false here since ctd.remove_constrained_edge
+		//changes the triangulation
+		return false; 
+	}
+private:
+	Vertex_handle locateVertex(const IntPoint & p, const Vertex_handle & nearVertex) {
 		Locate_type lt = (Locate_type) -1;
 		int li = 4;
-		auto f = ctd.locate(p.toPoint(), lt, li);
+		auto f = ctd.locate(p.toPoint(), lt, li, ctd.incident_faces(nearVertex));
 		if (lt != TDS::VERTEX) {
 			throw std::runtime_error("Could not locate vertex");
 		}
 		return f->vertex(li);
-	};
+	}
 	
-	sserialize::spatial::DistanceCalculator dc(sserialize::spatial::DistanceCalculator::DCT_GEODESIC_ACCURATE);
-	auto distanceTo = [&dc](const Point & p1, const Point & p2) {
+	//returns a vertex that is nearby and does not change
+	Vertex_handle nearVertex (const Vertex_handle & vh) {
+		Vertex_circulator vc, vcEnd;
+		std::set<Vertex_handle> visited;
+		std::vector<Vertex_handle> queue;
+		queue.push_back(vh);
+		visited.insert(vh);
+		for(std::size_t i(0); i < queue.size(); ++i) {
+			const Vertex_handle & vh = queue[i];
+			if (!IntPoint::changes(vh->point())) {
+				return vh;
+			}
+			vc = ctd.incident_vertices(vh);
+			vcEnd = vc;
+			do {
+				queue.push_back(vc);
+				visited.insert(vc);
+			} while(++vc != vcEnd);
+		}
+		return Vertex_handle();
+	}
+	
+	double distanceTo(const IntPoint & p1, const IntPoint & p2) const {
+		return std::abs<double>( dc.calc(p1.latd(), p1.lond(), p2.latd(), p2.lond()) );
+	}
+	
+	double distanceTo(const Point & p1, const Point & p2) const {
 		double lat1 = CGAL::to_double(p1.x());
 		double lon1 = CGAL::to_double(p1.y());
 		double lat2 = CGAL::to_double(p2.x());
 		double lon2 = CGAL::to_double(p2.y());
 		return std::abs<double>( dc.calc(lat1, lon1, lat2, lon2) );
 	};
-	
-	uint32_t numChangedPoints;
+private:
+	TDS & ctd;
+	double minEdgeLength;
+	sserialize::spatial::DistanceCalculator dc;
+private:
+	uint32_t numChangedPoints = 0;
 	CEContainer ceQueue;
-	//do the first global step which snaps all points
-	{
-		std::vector<Point> rmPoints;
-		std::unordered_set<uint64_t> noConstraintsPoints;
-		
-		CEBackInsertIterator ceIt(ctd, ceQueue);
-		
-		for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-			const Point & p = vt->point();
-			if (!IntPoint::changes(p)) {
-				continue;
-			}
-			//point changes, save it and add its constrained edges
-			if( ctd.are_there_incident_constraints(vt) ) {
-				ctd.incident_constraints(vt, ceIt);
-			}
-			else {
-				noConstraintsPoints.emplace(IntPoint(p).toU64());
-			}
-			rmPoints.emplace_back(p);
-		}
-		//now remove all those bad points
-		for(const Point & p : rmPoints) {
-			Face_handle fh;
-			Locate_type lt = (Locate_type) -1;
-			int li;
-			fh = ctd.locate(p, lt, li);
-			if (lt != TDS::VERTEX) {
-				std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
-				continue;
-			}
-			if (li < 4) { //if dimension is 0, then locate returns a NullFace with lt set to VERTEX and li set to 4
-				Vertex_handle v = fh->vertex(li);
-				ctd.remove_incident_constraints(v);
-				ctd.remove(v);
-			}
-		}
-		//add points from edges and points without constraints, we first remove all multiple occurences
-		{
-			std::unordered_set<uint64_t> pts = std::move(noConstraintsPoints);
-			for(const ConstrainedEdge & e : ceQueue.container()) {
-				pts.emplace(e.p1.toU64());
-				pts.emplace(e.p2.toU64());
-			}
-			std::vector<Point> ipts;
-			ipts.reserve(pts.size());
-			for(uint64_t x : pts) {
-				ipts.emplace_back(IntPoint(x).toPoint());
-			}
-			ctd.insert(ipts.begin(), ipts.end());
-			numChangedPoints = (uint32_t) ipts.size();
-// 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
-		}
-	}
-	
-	uint32_t initialQueueSize = (uint32_t) ceQueue.size();
-	uint32_t targetQueueRounds = initialQueueSize;
-	uint32_t queueRound = 0;
-	
-	//ceQueue makes sure that long edges come first
-	sserialize::ProgressInfo pinfo;
-	pinfo.begin(targetQueueRounds, "Triangulation::prepare: Processing edges");
-	for(; ceQueue.size() && ceQueue.top().length > minEdgeLength; ++queueRound) {
-		pinfo(queueRound, targetQueueRounds);
-		ConstrainedEdge e = ceQueue.top();
-		ceQueue.pop();
-		SSERIALIZE_CHEAP_ASSERT(e.valid());
-		Vertex_handle v1(locateVertex(e.p1));
-		Vertex_handle v2(locateVertex(e.p2));
-		if (ctd.is_edge(v1, v2)) {
-			ctd.insert_constraint(v1, v2);
-			continue;
-		}
-		//we have intersections, calculate the intersection points and decide how to snap them
-		bool intersected = false;
-		Triangulation::intersects(ctd, v1, v2, [&ctd, &distanceTo, &v1, &v2, &e, &intersected, &ceQueue, &targetQueueRounds, &numChangedPoints](const Edge & xEdge) -> bool {
-			intersected = true;
-			Point xP;
-			const Point & p1 = v1->point();
-			const Point & p2 = v2->point();
-			const Point & pc = xEdge.first->vertex(TDS::ccw(xEdge.second))->point();
-			const Point & pd = xEdge.first->vertex(TDS::cw(xEdge.second))->point();
-			CGAL::intersection(ctd.geom_traits(), p1, p2, pc, pd, xP, Intersection_tag());
+	ConstrainedEdge e;
+	Vertex_handle v1;
+	Vertex_handle v2;
+	bool intersected = false;
+	uint32_t targetQueueRounds = 0;
+};
 
-			SSERIALIZE_CHEAP_ASSERT(!IntPoint::changes(pc));
-			SSERIALIZE_CHEAP_ASSERT(!IntPoint::changes(pd));
-			//maps from distance -> point
-			std::array< std::pair<double, IntPoint>, 4> tmp;
-			tmp[0].second = e.p1;
-			tmp[1].second = e.p2;
-			tmp[2].second = IntPoint(pc);
-			tmp[3].second = IntPoint(pd);
-			tmp[0].first = distanceTo(p1, xP);
-			tmp[1].first = distanceTo(p2, xP);
-			tmp[2].first = distanceTo(pc, xP);
-			tmp[3].first = distanceTo(pd, xP);
-			auto tmpMinIt = std::min_element(tmp.begin(), tmp.end(),
-				[](const std::pair<double, IntPoint> & a, const std::pair<double, IntPoint> & b) {
-					return a.first < b.first;
-				}
-			);
-			
-			IntPoint xIntPoint;
-			bool insertXIntP = false;
-			//now check how far away that point is from one of our endpoints
-			if (tmpMinIt->first < 0.05) { //close enough
-				xIntPoint = tmpMinIt->second;
-			}
-			else {
-				xIntPoint = IntPoint(xP);
-				insertXIntP = true;
-			}
-			const IntPoint & pcInt = tmp[2].second;
-			const IntPoint & pdInt = tmp[3].second;
-
-			//requeue edge and xEdge with their new intersection point
-			//xP and xIntPoint maybe different at this point
-			if (e.p1 != xIntPoint) {
-				ceQueue.emplace(e.p1, xIntPoint);
-				++targetQueueRounds;
-			}
-			if (e.p2 != xIntPoint) {
-				ceQueue.emplace(e.p2, xIntPoint);
-				++targetQueueRounds;
-			}
-			if (pcInt!= xIntPoint) {
-				ceQueue.emplace(pcInt, xIntPoint);
-				++targetQueueRounds;
-			}
-			if (pdInt != xIntPoint) {
-				ceQueue.emplace(pdInt, xIntPoint);
-				++targetQueueRounds;
-			}
-			//and remove the constrained on our current edge
-			ctd.remove_constrained_edge(xEdge.first, xEdge.second);
-			if (insertXIntP) {
-				++numChangedPoints; //TODO: if xIntPoint is already in the tds, then this is wrong
-				ctd.insert(xIntPoint.toPoint());
-			}
-			//its important to return false here since ctd.remove_constrained_edge
-			//changes the triangulation
-			return false; 
-		});
-		//readd constraint, since function above was not called due to no intersection
-		if (!intersected) {
-			ctd.insert_constraint(v1, v2);
-			continue;
-		}
-	}
-	pinfo.end();
-	std::cout << "Processed " << initialQueueSize << " changed constrained edges in " << queueRound << " rounds" << std::endl;
-	for(const ConstrainedEdge & e : ceQueue.container()) {
-		re(e.p1.toGeoPoint(), e.p2.toGeoPoint());
-	}
-	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
-		SSERIALIZE_EXPENSIVE_ASSERT(!IntPoint::changes(vt->point()));
-	}
-	#endif
-	return numChangedPoints;
+template<typename T_CTD, typename T_REMOVED_EDGES>
+uint32_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
+	SnapVertices<T_CTD> sv(ctd, minEdgeLength);
+	return sv( re );
 }
+
+template<typename T_CTD>
+struct RemoveDegenerateFaces {
+	typedef T_CTD TDS;
+	typedef typename TDS::Vertex_handle Vertex_handle;
+	typedef typename TDS::Finite_faces_iterator Finite_faces_iterator;
+	typedef typename TDS::Point_2 Point_2;
+	typedef typename TDS::Edge Edge;
+	typedef IntPoint<Point_2> IntP;
+	typedef std::pair<Point_2, Point_2> ConstrainedEdge;
+	
+	RemoveDegenerateFaces(T_CTD & ctd) : ctd(ctd) {}
+	RemoveDegenerateFaces(const RemoveDegenerateFaces &) = delete;
+	
+	TDS & ctd;
+	std::size_t num_contracted_faces = 0;
+	std::vector<Point_2> pts2Remove;
+	std::vector<ConstrainedEdge> edges2Insert;
+
+	void getCCNeighbors(const Vertex_handle & v, std::set<Point_2>  & dest) {
+		if (!ctd.are_there_incident_constraints(v)) {
+			return;
+		}
+		struct MyIt {
+			MyIt(const Vertex_handle & v, std::set<Point_2> & dest) : v(v), dest(dest) {}
+			MyIt & operator=(const Edge & e) {
+				if (e.first->vertex(TDS::ccw(e.second))->point() == v->point()) {
+					dest.emplace(e.first->vertex(TDS::cw(e.second))->point());
+				}
+				else {
+					dest.emplace(e.first->vertex(TDS::ccw(e.second))->point());
+				}
+			}
+			MyIt & operator*() { return *this; }
+			MyIt & operator++() { return *this; }
+			std::set<Point_2> & dest;
+			const Vertex_handle & v;
+		};
+		ctd.incident_constraints(v, MyIt(v, dest));
+	};
+	///This removes degenerate faces by contracting them
+	uint32_t operator()() {
+		while (true) {
+			pts2Remove.clear();
+			edges2Insert.clear();
+			
+			for(Finite_faces_iterator fIt(ctd.finite_vertices_begin()), fEnd(ctd.finite_vertices_end()); fIt != fEnd; ++fIt) {
+				IntP p0(fIt->vertex(0)->point()), p1(fIt->vertex(1)->point()), p2(fIt->vertex(2)->point());
+				bool eq01 = (p0 == p1);
+				bool eq12 = (p1 == p2);
+				bool eq02 = (p0 == p2);
+				if (! (eq01 || eq12 || eq02) ) {
+					continue;
+				}
+				num_contracted_faces += 1;
+				
+				Point_2 np;
+				std::set<Point_2> ccn;
+				if (eq01) { //complete contract
+					getCCNeighbors(fIt->vertex(0), ccn);
+					getCCNeighbors(fIt->vertex(1), ccn);
+					getCCNeighbors(fIt->vertex(2), ccn);
+					ccn.remove(fIt->vertex(0)->point());
+					ccn.remove(fIt->vertex(1)->point());
+					ccn.remove(fIt->vertex(2)->point());
+					pts2Remove.emplace_back( fIt->vertex(0)->point() );
+					pts2Remove.emplace_back( fIt->vertex(1)->point() );
+					pts2Remove.emplace_back( fIt->vertex(2)->point() );
+					np = p0.toPoint();
+				}
+				else if (eq01) { // contract 
+					getCCNeighbors(fIt->vertex(0), ccn);
+					getCCNeighbors(fIt->vertex(1), ccn);
+					ccn.remove(fIt->vertex(0)->point());
+					ccn.remove(fIt->vertex(1)->point());
+					pts2Remove.emplace_back( fIt->vertex(0)->point() );
+					pts2Remove.emplace_back( fIt->vertex(1)->point() );
+					np = p0.toPoint();
+				}
+				else if (eq02) { // contract 
+					getCCNeighbors(fIt->vertex(0), ccn);
+					getCCNeighbors(fIt->vertex(2), ccn);
+					ccn.remove(fIt->vertex(0)->point());
+					ccn.remove(fIt->vertex(2)->point());
+					pts2Remove.emplace_back( fIt->vertex(0)->point() );
+					pts2Remove.emplace_back( fIt->vertex(2)->point() );
+					np = p0.toPoint();
+				}
+				else if (eq12) { // contract 
+					getCCNeighbors(fIt->vertex(1), ccn);
+					getCCNeighbors(fIt->vertex(2), ccn);
+					ccn.remove(fIt->vertex(1)->point());
+					ccn.remove(fIt->vertex(2)->point());
+					pts2Remove.emplace_back( fIt->vertex(1)->point() );
+					pts2Remove.emplace_back( fIt->vertex(2)->point() );
+					np = p1.toPoint();
+				}
+				for(const Point_2 & p : ccn) {
+					edges2Insert.emplace_back(np, p);
+				}
+			}
+			for(const Point_2 & p : pts2Remove) {
+				ctd.remove(p);
+			}
+			for(const ConstrainedEdge & e : edges2Insert) {
+				ctd.insert(e.first, e.second);
+			}
+			if (!pts2Remove.size() && !edges2Insert.size()) {
+				break;
+			}
+		}
+		return num_contracted_faces;
+	}
+};
+
 
 //END stuff for snapping
 
