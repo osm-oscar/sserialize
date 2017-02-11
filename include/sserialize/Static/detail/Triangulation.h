@@ -563,7 +563,13 @@ private:
 	Vertex_handle locateVertex(const IntPoint & p, const Vertex_handle & nearVertex) {
 		Locate_type lt = (Locate_type) -1;
 		int li = 4;
-		auto f = ctd.locate(p.toPoint(), lt, li, ctd.incident_faces(nearVertex));
+		Face_handle f;
+		if (nearVertex != Vertex_handle()) {
+			f = ctd.locate(p.toPoint(), lt, li, ctd.incident_faces(nearVertex));
+		}
+		else {
+			f = ctd.locate(p.toPoint(), lt, li);
+		}
 		if (lt != TDS::VERTEX) {
 			throw std::runtime_error("Could not locate vertex");
 		}
@@ -590,10 +596,6 @@ private:
 			} while(++vc != vcEnd);
 		}
 		return Vertex_handle();
-	}
-	
-	double distanceTo(const IntPoint & p1, const IntPoint & p2) const {
-		return std::abs<double>( dc.calc(p1.latd(), p1.lond(), p2.latd(), p2.lond()) );
 	}
 	
 	double distanceTo(const Point & p1, const Point & p2) const {
