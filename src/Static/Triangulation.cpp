@@ -278,9 +278,9 @@ m_features(Triangulation::F_CLEAN_GEOMETRY)
 
 Triangulation::Triangulation(const UByteArrayAdapter& d) :
 m_features(d.at(1)),
-m_p(d+2),
-m_vi(d+(2+m_p.getSizeInBytes())),
-m_fi(d+(2+m_p.getSizeInBytes()+m_vi.getSizeInBytes()))
+m_p(d+SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_FIXED_HEADER_SIZE),
+m_vi(d+(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_FIXED_HEADER_SIZE+m_p.getSizeInBytes())),
+m_fi(d+(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_FIXED_HEADER_SIZE+m_p.getSizeInBytes()+m_vi.getSizeInBytes()))
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION, d.at(0), "sserialize::Static::spatial::Triangulation::Triangulation");
 	SSERIALIZE_EQUAL_LENGTH_CHECK(m_p.size(), m_vi.size(), "sserialize::Static::spatial::Triangulation::Triangulation: m_vi != m_p");
@@ -290,7 +290,7 @@ m_fi(d+(2+m_p.getSizeInBytes()+m_vi.getSizeInBytes()))
 Triangulation::~Triangulation() {}
 
 UByteArrayAdapter::OffsetType Triangulation::getSizeInBytes() const {
-	return 1+m_vi.getSizeInBytes()+m_p.getSizeInBytes()+m_fi.getSizeInBytes();
+	return SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_FIXED_HEADER_SIZE+m_vi.getSizeInBytes()+m_p.getSizeInBytes()+m_fi.getSizeInBytes();
 }
 
 Triangulation::Face Triangulation::face(uint32_t pos) const {
