@@ -358,7 +358,7 @@ void intersection_points(T_CTD & ctd, typename T_CTD::Vertex_handle sv, typename
 }
 
 template<typename T_CTD>
-class SnapVertices {
+class GeometryCleanBase {
 public:
 	typedef T_CTD TDS;
 	typedef typename TDS::Face_handle Face_handle;
@@ -369,6 +369,102 @@ public:
 	typedef typename TDS::Edge Edge;
 	typedef typename TDS::Locate_type Locate_type;
 	typedef typename TDS::Intersection_tag Intersection_tag;
+	typedef detail::Triangulation::IntPoint<Point> IntPoint;
+public:
+	GeometryCleanBase(T_CTD & ctd) :
+	ctd(ctd), 
+	dc(sserialize::spatial::DistanceCalculator::DCT_GEODESIC_ACCURATE)
+	{}
+protected:
+	Vertex_handle locateVertex(const IntPoint & p, const Vertex_handle & nearVertex) {
+		Locate_type lt = (Locate_type) -1;
+		int li = 4;
+		Face_handle f;
+		if (nearVertex != Vertex_handle()) {
+			f = ctd.locate(p.toPoint(), lt, li, ctd.incident_faces(nearVertex));
+		}
+		else {
+			f = ctd.locate(p.toPoint(), lt, li);
+		}
+		if (lt != TDS::VERTEX) {
+			throw std::runtime_error("Could not locate vertex");
+		}
+		return f->vertex(li);
+	}
+	
+	Vertex_handle locateVertex(const Point & p, const Vertex_handle & nearVertex) {
+		Locate_type lt = (Locate_type) -1;
+		int li = 4;
+		Face_handle f;
+		if (nearVertex != Vertex_handle()) {
+			f = ctd.locate(p, lt, li, ctd.incident_faces(nearVertex));
+		}
+		else {
+			f = ctd.locate(p, lt, li);
+		}
+		if (lt != TDS::VERTEX) {
+			throw std::runtime_error("Could not locate vertex");
+		}
+		return f->vertex(li);
+	}
+	
+	Vertex_handle insert(const Point & p, const Vertex_handle & nearVertex) {
+		if (nearVertex != Vertex_handle()) {
+			return ctd.insert(p, ctd.incident_faces(nearVertex));
+		}
+		else {
+			return ctd.insert(p);
+		}
+		
+	}
+	
+	//returns a vertex that is nearby and does not change
+	Vertex_handle nearVertex (const Vertex_handle & vh) {
+		Vertex_circulator vc, vcEnd;
+		std::set<Vertex_handle> visited;
+		std::vector<Vertex_handle> queue;
+		queue.push_back(vh);
+		visited.insert(vh);
+		for(std::size_t i(0); i < queue.size(); ++i) {
+			const Vertex_handle & vh = queue[i];
+			if (!IntPoint::changes(vh->point())) {
+				return vh;
+			}
+			vc = ctd.incident_vertices(vh);
+			vcEnd = vc;
+			do {
+				queue.push_back(vc);
+				visited.insert(vc);
+			} while(++vc != vcEnd);
+		}
+		return Vertex_handle();
+	}
+	
+	double distanceTo(const Point & p1, const Point & p2) const {
+		double lat1 = CGAL::to_double(p1.x());
+		double lon1 = CGAL::to_double(p1.y());
+		double lat2 = CGAL::to_double(p2.x());
+		double lon2 = CGAL::to_double(p2.y());
+		return std::abs<double>( dc.calc(lat1, lon1, lat2, lon2) );
+	};
+protected:
+	TDS & ctd;
+	sserialize::spatial::DistanceCalculator dc;
+};
+
+template<typename T_CTD>
+class SnapVertices: public GeometryCleanBase<T_CTD> {
+public:
+	typedef T_CTD TDS;
+	typedef typename TDS::Face_handle Face_handle;
+	typedef typename TDS::Vertex_handle Vertex_handle;
+	typedef typename TDS::Finite_vertices_iterator Finite_vertices_iterator;
+	typedef typename TDS::Vertex_circulator Vertex_circulator;
+	typedef typename TDS::Point Point;
+	typedef typename TDS::Edge Edge;
+	typedef typename TDS::Locate_type Locate_type;
+	typedef typename TDS::Intersection_tag Intersection_tag;
+	typedef GeometryCleanBase<T_CTD> MyBaseClass;
 private:
 	//internal typedefs
 	typedef detail::Triangulation::IntPoint<Point> IntPoint;
@@ -377,9 +473,10 @@ private:
 	typedef detail::Triangulation::CEBackInsertIterator<TDS, CEContainer> CEBackInsertIterator;
 public:
 	SnapVertices(T_CTD & ctd, double minEdgeLength) :
-	ctd(ctd),
-	minEdgeLength(minEdgeLength),
-	dc(sserialize::spatial::DistanceCalculator::DCT_GEODESIC_ACCURATE)
+	MyBaseClass(ctd),
+	ctd(MyBaseClass::ctd),
+	dc(MyBaseClass::dc),
+	minEdgeLength(minEdgeLength)
 	{}
 public:
 	///This will handle points created by intersections of constrained edges
@@ -405,7 +502,7 @@ public:
 					continue;
 				}
 				//point changes, save it and add its constrained edges
-				ceIt.nearVertex = nearVertex(vt);
+				ceIt.nearVertex = MyBaseClass::nearVertex(vt);
 				if( ctd.are_there_incident_constraints(vt) ) {
 					ctd.incident_constraints(vt, ceIt);
 				}
@@ -460,8 +557,8 @@ public:
 			e = std::move( ceQueue.top() );
 			ceQueue.pop();
 			SSERIALIZE_CHEAP_ASSERT(e.valid());
-			v1 = locateVertex(e.p1, e.nearVertex);
-			v2 = locateVertex(e.p2, v1);
+			v1 = MyBaseClass::locateVertex(e.p1, e.nearVertex);
+			v2 = MyBaseClass::locateVertex(e.p2, v1);
 			if (ctd.is_edge(v1, v2)) {
 				ctd.insert_constraint(v1, v2);
 				continue;
@@ -508,10 +605,10 @@ private:
 		tmp[1].second = e.p2;
 		tmp[2].second = IntPoint(pc);
 		tmp[3].second = IntPoint(pd);
-		tmp[0].first = distanceTo(p1, xP);
-		tmp[1].first = distanceTo(p2, xP);
-		tmp[2].first = distanceTo(pc, xP);
-		tmp[3].first = distanceTo(pd, xP);
+		tmp[0].first = MyBaseClass::distanceTo(p1, xP);
+		tmp[1].first = MyBaseClass::distanceTo(p2, xP);
+		tmp[2].first = MyBaseClass::distanceTo(pc, xP);
+		tmp[3].first = MyBaseClass::distanceTo(pd, xP);
 		auto tmpMinIt = std::min_element(tmp.begin(), tmp.end(),
 			[](const std::pair<double, IntPoint> & a, const std::pair<double, IntPoint> & b) {
 				return a.first < b.first;
@@ -560,55 +657,9 @@ private:
 		return false; 
 	}
 private:
-	Vertex_handle locateVertex(const IntPoint & p, const Vertex_handle & nearVertex) {
-		Locate_type lt = (Locate_type) -1;
-		int li = 4;
-		Face_handle f;
-		if (nearVertex != Vertex_handle()) {
-			f = ctd.locate(p.toPoint(), lt, li, ctd.incident_faces(nearVertex));
-		}
-		else {
-			f = ctd.locate(p.toPoint(), lt, li);
-		}
-		if (lt != TDS::VERTEX) {
-			throw std::runtime_error("Could not locate vertex");
-		}
-		return f->vertex(li);
-	}
-	
-	//returns a vertex that is nearby and does not change
-	Vertex_handle nearVertex (const Vertex_handle & vh) {
-		Vertex_circulator vc, vcEnd;
-		std::set<Vertex_handle> visited;
-		std::vector<Vertex_handle> queue;
-		queue.push_back(vh);
-		visited.insert(vh);
-		for(std::size_t i(0); i < queue.size(); ++i) {
-			const Vertex_handle & vh = queue[i];
-			if (!IntPoint::changes(vh->point())) {
-				return vh;
-			}
-			vc = ctd.incident_vertices(vh);
-			vcEnd = vc;
-			do {
-				queue.push_back(vc);
-				visited.insert(vc);
-			} while(++vc != vcEnd);
-		}
-		return Vertex_handle();
-	}
-	
-	double distanceTo(const Point & p1, const Point & p2) const {
-		double lat1 = CGAL::to_double(p1.x());
-		double lon1 = CGAL::to_double(p1.y());
-		double lat2 = CGAL::to_double(p2.x());
-		double lon2 = CGAL::to_double(p2.y());
-		return std::abs<double>( dc.calc(lat1, lon1, lat2, lon2) );
-	};
-private:
 	TDS & ctd;
+	sserialize::spatial::DistanceCalculator & dc;
 	double minEdgeLength;
-	sserialize::spatial::DistanceCalculator dc;
 private:
 	uint32_t numChangedPoints = 0;
 	CEContainer ceQueue;
