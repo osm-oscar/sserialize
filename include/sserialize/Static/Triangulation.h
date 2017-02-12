@@ -46,6 +46,7 @@ namespace spatial {
 class Triangulation final {
 public:
 	typedef enum {F_CLEAN_GEOMETRY=0x1, F_DEGENERATE_FACES=0x2, F_BROKEN_GEOMETRY=0x4} FeatureFlags;
+	typedef enum {GCT_NONE=0, GCT_REMOVE_DEGENERATE_FACES, GCT_SNAP_VERTICES} GeometryCleanType;
 	typedef sserialize::spatial::GeoPoint Point;
 	typedef uint32_t FaceId;
 	typedef uint32_t VertexId;
@@ -204,9 +205,7 @@ public:
 	///prepare triangulation for serialization (currently contracts faces that are not representable)
 	///@param minEdgeLength the minimal length an edge has to have in order to be processed
 	template<typename T_CTD, typename T_REMOVED_EDGES = detail::Triangulation::PrintRemovedEdges>
-	inline static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re = T_REMOVED_EDGES(), double minEdgeLength = 0.0) {
-		return detail::Triangulation::snap_vertices(ctd, re, minEdgeLength);
-	}
+	static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, double minEdgeLength);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, bool allowDegenerate = false);
@@ -543,6 +542,20 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 				}
 			}
 		}
+	}
+}
+
+template<typename T_CTD, typename T_REMOVED_EDGES>
+uint32_t
+Triangulation::prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, double minEdgeLength) {
+	if (gct == GCT_REMOVE_DEGENERATE_FACES) {
+		return detail::Triangulation::remove_degenerate_faces(ctd);
+	}
+	else if (gct == GCT_SNAP_VERTICES) {
+		return detail::Triangulation::snap_vertices(ctd, re, minEdgeLength);
+	}
+	else {
+		return 0;
 	}
 }
 
