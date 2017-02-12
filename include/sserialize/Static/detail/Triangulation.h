@@ -78,8 +78,8 @@ struct IntPoint {
 	uint32_t lat;
 	uint32_t lon;
 	
-	double latd() const { return sserialize::spatial::GeoPoint::toIntLat(lat); }
-	double lond() const { return sserialize::spatial::GeoPoint::toIntLon(lon); }
+	double latd() const { return sserialize::spatial::GeoPoint::toDoubleLat(lat); }
+	double lond() const { return sserialize::spatial::GeoPoint::toDoubleLon(lon); }
 	
 	IntPoint() : lat(0xFFFFFFFF), lon(0xFFFFFFFF) {}
 	
