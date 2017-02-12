@@ -677,51 +677,37 @@ uint32_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
 }
 
 template<typename T_CTD>
-struct RemoveDegenerateFaces {
+class RemoveDegenerateFaces: public GeometryCleanBase<T_CTD> {
+public:
+	typedef GeometryCleanBase<T_CTD> MyBaseClass;
 	typedef T_CTD TDS;
 	typedef typename TDS::Vertex_handle Vertex_handle;
 	typedef typename TDS::Finite_faces_iterator Finite_faces_iterator;
-	typedef typename TDS::Point_2 Point_2;
+	typedef typename TDS::Point Point;
 	typedef typename TDS::Edge Edge;
-	typedef IntPoint<Point_2> IntP;
-	typedef std::pair<Point_2, Point_2> ConstrainedEdge;
-	
-	RemoveDegenerateFaces(T_CTD & ctd) : ctd(ctd) {}
-	RemoveDegenerateFaces(const RemoveDegenerateFaces &) = delete;
-	
-	TDS & ctd;
-	std::size_t num_contracted_faces = 0;
-	std::vector<Point_2> pts2Remove;
-	std::vector<ConstrainedEdge> edges2Insert;
-
-	void getCCNeighbors(const Vertex_handle & v, std::set<Point_2>  & dest) {
-		if (!ctd.are_there_incident_constraints(v)) {
-			return;
-		}
-		struct MyIt {
-			MyIt(const Vertex_handle & v, std::set<Point_2> & dest) : v(v), dest(dest) {}
-			MyIt & operator=(const Edge & e) {
-				if (e.first->vertex(TDS::ccw(e.second))->point() == v->point()) {
-					dest.emplace(e.first->vertex(TDS::cw(e.second))->point());
-				}
-				else {
-					dest.emplace(e.first->vertex(TDS::ccw(e.second))->point());
-				}
-			}
-			MyIt & operator*() { return *this; }
-			MyIt & operator++() { return *this; }
-			std::set<Point_2> & dest;
-			const Vertex_handle & v;
-		};
-		ctd.incident_constraints(v, MyIt(v, dest));
+	typedef IntPoint<Point> IntP;
+	struct ConstrainedEdge {
+		ConstrainedEdge(const Point & src, const Point & tgt, const Vertex_handle & nearVertex) :
+		src(src), tgt(tgt), nearVertex(nearVertex)
+		{}
+		ConstrainedEdge(const ConstrainedEdge &) = default;
+		ConstrainedEdge(ConstrainedEdge &&) = default;
+		Point src;
+		Point tgt;
+		Vertex_handle nearVertex;
 	};
+public:
+	RemoveDegenerateFaces(T_CTD & ctd) : MyBaseClass(ctd), ctd(ctd) {}
+	RemoveDegenerateFaces(const RemoveDegenerateFaces &) = delete;
+public:
 	///This removes degenerate faces by contracting them
 	uint32_t operator()() {
 		while (true) {
 			pts2Remove.clear();
 			edges2Insert.clear();
 			
-			for(Finite_faces_iterator fIt(ctd.finite_vertices_begin()), fEnd(ctd.finite_vertices_end()); fIt != fEnd; ++fIt) {
+			for(Finite_faces_iterator fIt(ctd.finite_faces_begin()), fEnd(ctd.finite_faces_end()); fIt != fEnd; ++fIt) {
+				Vertex_handle nearVh = MyBaseClass::nearVertex(fIt->vertex(0));
 				IntP p0(fIt->vertex(0)->point()), p1(fIt->vertex(1)->point()), p2(fIt->vertex(2)->point());
 				bool eq01 = (p0 == p1);
 				bool eq12 = (p1 == p2);
@@ -731,56 +717,76 @@ struct RemoveDegenerateFaces {
 				}
 				num_contracted_faces += 1;
 				
-				Point_2 np;
-				std::set<Point_2> ccn;
+				Point np;
+				std::set<Point> ccn;
 				if (eq01) { //complete contract
 					getCCNeighbors(fIt->vertex(0), ccn);
 					getCCNeighbors(fIt->vertex(1), ccn);
 					getCCNeighbors(fIt->vertex(2), ccn);
-					ccn.remove(fIt->vertex(0)->point());
-					ccn.remove(fIt->vertex(1)->point());
-					ccn.remove(fIt->vertex(2)->point());
-					pts2Remove.emplace_back( fIt->vertex(0)->point() );
-					pts2Remove.emplace_back( fIt->vertex(1)->point() );
-					pts2Remove.emplace_back( fIt->vertex(2)->point() );
+					ccn.erase(fIt->vertex(0)->point());
+					ccn.erase(fIt->vertex(1)->point());
+					ccn.erase(fIt->vertex(2)->point());
+					if (IntP::changes(fIt->vertex(0)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(0)->point(), nearVh);
+					}
+					if (IntP::changes(fIt->vertex(1)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(1)->point(), nearVh );
+					}
+					if (IntP::changes(fIt->vertex(2)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(2)->point(), nearVh );
+					}
 					np = p0.toPoint();
 				}
 				else if (eq01) { // contract 
 					getCCNeighbors(fIt->vertex(0), ccn);
 					getCCNeighbors(fIt->vertex(1), ccn);
-					ccn.remove(fIt->vertex(0)->point());
-					ccn.remove(fIt->vertex(1)->point());
-					pts2Remove.emplace_back( fIt->vertex(0)->point() );
-					pts2Remove.emplace_back( fIt->vertex(1)->point() );
+					ccn.erase(fIt->vertex(0)->point());
+					ccn.erase(fIt->vertex(1)->point());
+					if (IntP::changes(fIt->vertex(0)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(0)->point(), nearVh );
+					}
+					if (IntP::changes(fIt->vertex(1)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(1)->point(), nearVh );
+					}
 					np = p0.toPoint();
 				}
 				else if (eq02) { // contract 
 					getCCNeighbors(fIt->vertex(0), ccn);
 					getCCNeighbors(fIt->vertex(2), ccn);
-					ccn.remove(fIt->vertex(0)->point());
-					ccn.remove(fIt->vertex(2)->point());
-					pts2Remove.emplace_back( fIt->vertex(0)->point() );
-					pts2Remove.emplace_back( fIt->vertex(2)->point() );
+					ccn.erase(fIt->vertex(0)->point());
+					ccn.erase(fIt->vertex(2)->point());
+					if (IntP::changes(fIt->vertex(0)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(0)->point(), nearVh );
+					}
+					if (IntP::changes(fIt->vertex(2)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(2)->point(), nearVh );
+					}
 					np = p0.toPoint();
 				}
 				else if (eq12) { // contract 
 					getCCNeighbors(fIt->vertex(1), ccn);
 					getCCNeighbors(fIt->vertex(2), ccn);
-					ccn.remove(fIt->vertex(1)->point());
-					ccn.remove(fIt->vertex(2)->point());
-					pts2Remove.emplace_back( fIt->vertex(1)->point() );
-					pts2Remove.emplace_back( fIt->vertex(2)->point() );
+					ccn.erase(fIt->vertex(1)->point());
+					ccn.erase(fIt->vertex(2)->point());
+					if (IntP::changes(fIt->vertex(1)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(1)->point(), nearVh );
+					}
+					if (IntP::changes(fIt->vertex(2)->point())) {
+						pts2Remove.emplace_back( fIt->vertex(2)->point(), nearVh );
+					}
 					np = p1.toPoint();
 				}
-				for(const Point_2 & p : ccn) {
-					edges2Insert.emplace_back(np, p);
+				for(const Point & p : ccn) {
+					edges2Insert.emplace_back(np, p, nearVh);
 				}
 			}
-			for(const Point_2 & p : pts2Remove) {
-				ctd.remove(p);
+			for(const std::pair<Point, Vertex_handle> & p : pts2Remove) {
+				ctd.remove(MyBaseClass::locateVertex(p.first, p.second));
 			}
 			for(const ConstrainedEdge & e : edges2Insert) {
-				ctd.insert(e.first, e.second);
+				Vertex_handle v1 = MyBaseClass::insert(e.src, e.nearVertex);
+				Vertex_handle v2 = MyBaseClass::insert(e.src, v2);
+				ctd.insert(v1, v2);
 			}
 			if (!pts2Remove.size() && !edges2Insert.size()) {
 				break;
@@ -788,8 +794,43 @@ struct RemoveDegenerateFaces {
 		}
 		return num_contracted_faces;
 	}
+private:
+	void getCCNeighbors(const Vertex_handle & v, std::set<Point>  & dest) {
+		if (!ctd.are_there_incident_constraints(v)) {
+			return;
+		}
+		struct MyIt {
+			MyIt(const Vertex_handle & v, std::set<Point> & dest) : v(v), dest(dest) {}
+			MyIt & operator=(const Edge & e) {
+				if (e.first->vertex(TDS::ccw(e.second))->point() == v->point()) {
+					dest.emplace(e.first->vertex(TDS::cw(e.second))->point());
+				}
+				else {
+					dest.emplace(e.first->vertex(TDS::ccw(e.second))->point());
+				}
+				return *this;
+			}
+			MyIt & operator*() { return *this; }
+			MyIt & operator++() { return *this; }
+			MyIt & operator++(int) { return *this; }
+			const Vertex_handle & v;
+			std::set<Point> & dest;
+		};
+		ctd.incident_constraints(v, MyIt(v, dest));
+	};
+private:
+	TDS & ctd;
+	std::size_t num_contracted_faces = 0;
+	std::vector< std::pair<Point, Vertex_handle> > pts2Remove;
+	std::vector<ConstrainedEdge> edges2Insert;
+
 };
 
+template<typename T_CTD>
+uint32_t remove_degenerate_faces(T_CTD & ctd) {
+	RemoveDegenerateFaces<T_CTD> rdf(ctd);
+	return rdf();
+}
 
 //END stuff for snapping
 
