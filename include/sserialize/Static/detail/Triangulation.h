@@ -415,7 +415,6 @@ protected:
 		else {
 			return ctd.insert(p);
 		}
-		
 	}
 	
 	//returns a vertex that is nearby and does not change
@@ -491,7 +490,7 @@ public:
 		
 		//do the first global step which snaps all points
 		{
-			std::vector<Point> rmPoints;
+			std::vector< std::pair<Point, Vertex_handle> > rmPoints;
 			std::unordered_set<uint64_t> noConstraintsPoints;
 			
 			CEBackInsertIterator ceIt(ctd, ceQueue, dc);
@@ -509,22 +508,18 @@ public:
 				else {
 					noConstraintsPoints.emplace(IntPoint(p).toU64());
 				}
-				rmPoints.emplace_back(p);
+				rmPoints.emplace_back(p, MyBaseClass::nearVertex(vt));
 			}
 			//now remove all those bad points
-			for(const Point & p : rmPoints) {
-				Face_handle fh;
-				Locate_type lt = (Locate_type) -1;
-				int li;
-				fh = ctd.locate(p, lt, li);
-				if (lt != TDS::VERTEX) {
+			for(const std::pair<Point, Vertex_handle> & p : rmPoints) {
+				Vertex_handle vh = MyBaseClass::locateVertex(p.first, p.second);
+				if (vh == Vertex_handle()) {
 					std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
 					continue;
 				}
-				if (li < 4) { //if dimension is 0, then locate returns a NullFace with lt set to VERTEX and li set to 4
-					Vertex_handle v = fh->vertex(li);
-					ctd.remove_incident_constraints(v);
-					ctd.remove(v);
+				else {
+					ctd.remove_incident_constraints(vh);
+					ctd.remove(vh);
 				}
 			}
 			//add points from edges and points without constraints, we first remove all multiple occurences
