@@ -381,7 +381,7 @@ protected:
 		int li = 4;
 		Face_handle f;
 		if (nearVertex != Vertex_handle()) {
-			f = ctd.locate(p.toPoint(), lt, li, ctd.incident_faces(nearVertex));
+			f = ctd.locate(p.toPoint(), lt, li, nearVertex->face());
 		}
 		else {
 			f = ctd.locate(p.toPoint(), lt, li);
@@ -397,7 +397,7 @@ protected:
 		int li = 4;
 		Face_handle f;
 		if (nearVertex != Vertex_handle()) {
-			f = ctd.locate(p, lt, li, ctd.incident_faces(nearVertex));
+			f = ctd.locate(p, lt, li, nearVertex->face());
 		}
 		else {
 			f = ctd.locate(p, lt, li);
@@ -410,7 +410,7 @@ protected:
 	
 	Vertex_handle insert(const Point & p, const Vertex_handle & nearVertex) {
 		if (nearVertex != Vertex_handle()) {
-			return ctd.insert(p, ctd.incident_faces(nearVertex));
+			return ctd.insert(p, nearVertex->face());
 		}
 		else {
 			return ctd.insert(p);
