@@ -776,7 +776,13 @@ public:
 				}
 			}
 			for(const std::pair<Point, Vertex_handle> & p : pts2Remove) {
-				ctd.remove(MyBaseClass::locateVertex(p.first, p.second));
+				Vertex_handle vh = MyBaseClass::locateVertex(p.first, p.second);
+				if (ctd.are_there_incident_constraints(vh)) {
+					ctd.remove_incident_constraints(vh);
+				}
+				if (vh != Vertex_handle()) {
+					ctd.remove(vh);
+				}
 			}
 			for(const ConstrainedEdge & e : edges2Insert) {
 				Vertex_handle v1 = MyBaseClass::insert(e.src, e.nearVertex);
