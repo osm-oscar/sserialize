@@ -645,7 +645,7 @@ private:
 		ctd.remove_constrained_edge(xEdge.first, xEdge.second);
 		if (insertXIntP) {
 			++numChangedPoints; //TODO: if xIntPoint is already in the tds, then this is wrong
-			ctd.insert(xIntPoint.toPoint(), ctd.incident_faces(e.nearVertex));
+			MyBaseClass::insert(xIntPoint.toPoint(), e.nearVertex);
 		}
 		//its important to return false here since ctd.remove_constrained_edge
 		//changes the triangulation
