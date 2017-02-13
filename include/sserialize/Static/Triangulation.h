@@ -208,7 +208,7 @@ public:
 	static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, double minEdgeLength);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
-	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, bool allowDegenerate = false);
+	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, GeometryCleanType gct);
 	
 protected:
 	template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
@@ -561,7 +561,7 @@ Triangulation::prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, do
 
 template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 sserialize::UByteArrayAdapter &
-Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_ID_MAP & faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP & vertexToVertexId, sserialize::UByteArrayAdapter & dest, bool allowDegenerate) {
+Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, sserialize::Static::spatial::Triangulation::GeometryCleanType gct) {
 	typedef T_CGAL_TRIANGULATION_DATA_STRUCTURE TDS;
 	typedef typename TDS::Face_handle Face_handle;
 	typedef typename TDS::Vertex_handle Vertex_handle;
@@ -594,7 +594,10 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 	}
 	faceCount = faceId;
 	
-	uint8_t features = (allowDegenerate? F_DEGENERATE_FACES : 0);
+	uint8_t features = 0;
+	if ((gct & (GCT_REMOVE_DEGENERATE_FACES | GCT_SNAP_VERTICES)) == 0) {
+		features |= F_DEGENERATE_FACES;
+	}
 	for(Finite_vertices_iterator vIt(src.finite_vertices_begin()), vEnd(src.finite_vertices_end()); vIt != vEnd; ++vIt) {
 		if (detail::Triangulation::IntPoint<Point>::changes(vIt->point())) {
 			features |= F_BROKEN_GEOMETRY;
@@ -710,7 +713,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE & src, T_FACE_TO_FACE_
 				}
 				detail::Triangulation::IntPoint<Point> ip0(p0), ip1(p1), ip2(p2);
 				if (ip0 == ip1 || ip0 == ip2 || ip1 == ip2) {
-					if (!allowDegenerate) {
+					if ((gct & (GCT_REMOVE_DEGENERATE_FACES | GCT_SNAP_VERTICES)) == 0) {
 						throw sserialize::CreationException("Triangulation has degenerate face after serialization");
 					}
 					fa.set(faceId, Triangulation::Face::FI_IS_DEGENERATE, 1);

@@ -55,7 +55,7 @@ public:
 		
 
 		m_strData = sserialize::UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY);
-		sserialize::Static::spatial::Triangulation::append(m_ctr, m_face2FaceId, m_vertex2VertexId, m_strData);
+		sserialize::Static::spatial::Triangulation::append(m_ctr, m_face2FaceId, m_vertex2VertexId, m_strData, sserialize::Static::spatial::Triangulation::GCT_NONE);
 		m_str = sserialize::Static::spatial::Triangulation(m_strData);
 	}
 	virtual void tearDown() {}
