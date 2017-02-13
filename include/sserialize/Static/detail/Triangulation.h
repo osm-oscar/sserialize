@@ -786,7 +786,7 @@ public:
 			}
 			for(const ConstrainedEdge & e : edges2Insert) {
 				Vertex_handle v1 = MyBaseClass::insert(e.src, e.nearVertex);
-				Vertex_handle v2 = MyBaseClass::insert(e.src, v2);
+				Vertex_handle v2 = MyBaseClass::insert(e.tgt, v1);
 				ctd.insert(v1, v2);
 			}
 			if (!pts2Remove.size() && !edges2Insert.size()) {
