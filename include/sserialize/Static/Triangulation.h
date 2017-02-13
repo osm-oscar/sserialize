@@ -713,7 +713,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 				}
 				detail::Triangulation::IntPoint<Point> ip0(p0), ip1(p1), ip2(p2);
 				if (ip0 == ip1 || ip0 == ip2 || ip1 == ip2) {
-					if ((gct & (GCT_REMOVE_DEGENERATE_FACES | GCT_SNAP_VERTICES)) == 0) {
+					if ( !(features & F_DEGENERATE_FACES) ) {
 						throw sserialize::CreationException("Triangulation has degenerate face after serialization");
 					}
 					fa.set(faceId, Triangulation::Face::FI_IS_DEGENERATE, 1);
