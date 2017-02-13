@@ -402,8 +402,8 @@ protected:
 		else {
 			f = ctd.locate(p, lt, li);
 		}
-		if (lt != TDS::VERTEX) {
-			throw std::runtime_error("Could not locate vertex");
+		if (lt != TDS::VERTEX || (lt == TDS::VERTEX && li > 3)) {
+			return Vertex_handle();
 		}
 		return f->vertex(li);
 	}
