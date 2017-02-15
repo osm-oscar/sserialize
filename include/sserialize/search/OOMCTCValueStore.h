@@ -239,7 +239,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 			std::unique_lock<std::mutex> lck(state->flushLock);
 			state->entries->push_back(outBuffer.begin(), outBuffer.end());
 			if (outBuffer.size() > 2*outBufferSize) { //outbuffer was way too large
-				std::cout << "OOMCTCValueStorage: flushing very large=" << outBuffer.size() << " buffer" << std::endl;
+				std::cout << "OOMCTCValueStorage: flushing a buffer that is " << (double)outBuffer.size() / outBufferSize << " times larger than target buffer size" << std::endl;
 				outBuffer.clear();
 				outBuffer.shrink_to_fit();
 			}
