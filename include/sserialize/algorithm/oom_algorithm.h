@@ -287,12 +287,10 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				if (lockTime > cfg->maxWait) {
 					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
 					if (cfg->maxThreadCount-wbi->pausedWorkers > 2) {
-						std::cout << "Pausing worker" << std::endl;
 						wbi->pausedWorkers += 1;
 						while (true) {
 							wbi->cv.wait(wbiLck);
 							if (wbi->wantExtraWorker || state->srcOffset >= state->srcSize) {
-								std::cout << "Resuming worker" << std::endl;
 								wbi->pausedWorkers -= 1;
 								break;
 							}
