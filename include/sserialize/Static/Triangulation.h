@@ -570,6 +570,10 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 	typedef typename TDS::Face_circulator Face_circulator;
 	typedef typename TDS::Point Point;
 	
+	if (src.number_of_vertices() > std::numeric_limits<uint32_t>::max() || src.number_of_faces() > std::numeric_limits<uint32_t>::max()) {
+		throw sserialize::CreationException("sserialize::Static::spatial::Triangulation::append: source has too many vertices or faces");
+	}
+	
 	detail::Triangulation::Convert<Point, Triangulation::Point> kp2mp;
 	
 	faceToFaceId.clear();
