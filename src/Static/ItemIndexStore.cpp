@@ -5,7 +5,7 @@
 #include <sserialize/iterator/UDWIteratorPrivateHD.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
-#include <vendor/libs/minilzo/minilzo.h>
+#include <minilzo/minilzo.h>
 
 namespace sserialize {
 namespace Static {

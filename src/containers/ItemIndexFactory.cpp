@@ -8,7 +8,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/containers/HuffmanTree.h>
 #include <sserialize/iterator/MultiBitBackInserter.h>
-#include <vendor/libs/minilzo/minilzo.h>
+#include <minilzo/minilzo.h>
 #include <unordered_map>
 #include <iostream>
 #include <sstream>

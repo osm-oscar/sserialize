@@ -1,7 +1,7 @@
 #include <sserialize/spatial/GeoPoint.h>
 #include <sserialize/algorithm/utilmath.h>
 #include <cmath>
-#include <vendor/libs/geographiclib/legacy/C/geodesic.h>
+#include <geographiclib/legacy/C/geodesic.h>
 
 namespace sserialize {
 namespace spatial {

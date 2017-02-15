@@ -5,7 +5,7 @@
 #include <sserialize/utility/log.h>
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
-#include "vendor/libs/minilzo/minilzo.h"
+#include <minilzo/minilzo.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
