@@ -4,17 +4,22 @@ find_package(CPPUNIT REQUIRED)
 find_package(ICU 4.9 REQUIRED)
 find_package(Threads)
 find_package(CGAL)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${ICU_INCLUDE_DIRS})
+
+include_directories(
+	${SSERIALIZE_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${ICU_INCLUDE_DIRS}
+)
 
 set(TEST_LIB_SOURCES_CPP
-trietestfuncs.cpp
-printfunctions.cpp
-utilalgos.cpp
-TestItemData.cpp
-datacreationfuncs.cpp
-test_stringcompleter.cpp
-TestBase.cpp
-helpers.cpp
+	trietestfuncs.cpp
+	printfunctions.cpp
+	utilalgos.cpp
+	TestItemData.cpp
+	datacreationfuncs.cpp
+	test_stringcompleter.cpp
+	TestBase.cpp
+	helpers.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${TEST_LIB_SOURCES_CPP})
@@ -29,13 +34,13 @@ ENDMACRO(ADD_TEST_TARGET_SINGLE)
 # IF (CPPUNIT_FOUND)
 
 set(TEST_LIB_LINK_LIBS
-${sserializetests_BINARY_DIR}/libsserializetests.a
-${sserialize_BINARY_DIR}/libsserialize.a
-${CPPUNIT_LIBRARY}
-${ICU_LIBRARIES}
-${ICU_I18N_LIBRARIES}
-${LIBRT_LIBRARIES}
-${CMAKE_THREAD_LIBS_INIT}
+	${SSERIALIZE_LINK_LIBRARIES}
+	sserializetests
+	${CPPUNIT_LIBRARY}
+	${ICU_LIBRARIES}
+	${ICU_I18N_LIBRARIES}
+	${LIBRT_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT}
 )
 
 #containers
