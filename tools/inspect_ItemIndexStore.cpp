@@ -222,6 +222,11 @@ void printHelp() {
 }
 
 int main(int argc, char ** argv) {
+	{ //init rand
+		timeval t1;
+		gettimeofday(&t1, NULL);
+		srand(t1.tv_usec * t1.tv_sec);
+	}
 	std::string inFileName;
 	std::string outFileName;
 	std::vector<int64_t> dumpIndexId;
