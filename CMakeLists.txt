@@ -218,6 +218,7 @@ set(UTILITY_SOURCES_CPP
 	src/utility/detail/Compressor/NoneCompressor.cpp
 	src/utility/detail/Compressor/LZOCompressor.cpp
 	src/utility/Fraction.cpp
+	src/utility/exceptions.cpp
 )
 
 set(STAGING_SOURCES_CPP

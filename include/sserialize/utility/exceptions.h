@@ -2,7 +2,6 @@
 #define SSERIALIZE_EXCPETIONS_H
 #include <exception>
 #include <string>
-#include <sstream>
 
 namespace sserialize {
 
@@ -10,160 +9,97 @@ class Exception: public std::exception {
 private:
 	std::string m_msg;
 protected:
-	void setMsg(const std::string &  msg) { m_msg = msg; }
+	void setMsg(const std::string &  msg);
 public:
-	Exception() {}
-	Exception(const std::string & msg) : m_msg(msg) {}
-	virtual ~Exception() throw() {}
-	virtual const char* what() const throw() { return m_msg.c_str(); }
-	void appendMessage(const std::string & str) {
-		m_msg.reserve(m_msg.size()+1+str.size());
-		m_msg += "\n";
-		m_msg += str;
-	}
+	Exception();
+	Exception(const std::string & msg);
+	virtual ~Exception() throw();
+	virtual const char* what() const throw();
+	void appendMessage(const std::string & str);
 };
 
 class BugException: public Exception {
 public:
-	BugException(const std::string & what) :
-	Exception("BugException: " + what)
-	{}
+	BugException(const std::string & what);
 };
 
 class VersionMissMatchException: public Exception {
 	uint32_t m_wantVersion;
 	uint32_t m_haveVersion;
 public:
-	VersionMissMatchException(const std::string & what, uint32_t want, uint32_t have) :
-	Exception(what), m_wantVersion(want), m_haveVersion(have) {
-		std::stringstream ss;
-		ss << "VersionMissMatchException (want=" << want << ", have=" << have << "): " << what;
-		setMsg(ss.str());
-	}
-	uint32_t wantVersion() const { return m_wantVersion; }
-	uint32_t haveVersion() const { return m_haveVersion; }
+	VersionMissMatchException(const std::string & what, uint32_t want, uint32_t have);
+	uint32_t wantVersion() const throw() ;
+	uint32_t haveVersion() const throw() ;
 };
 
 class OutOfBoundsException: public Exception {
 public:
-	OutOfBoundsException(const std::string & what) :
-	Exception()
-	{
-		setMsg("OutOfBoundsException: " + what);
-	}
+	OutOfBoundsException(const std::string & what);
 };
 
 class IOException: public Exception {
 public:
-	IOException(const std::string & what) :
-	Exception()
-	{
-		setMsg("IOException: " + what);
-	}
+	IOException(const std::string & what);
 };
 
 class TypeMissMatchException: public Exception {
 public:
-	TypeMissMatchException(const std::string & what) :
-	Exception()
-	{
-		setMsg("TypeMissMatchException: " + what);
-	}
+	TypeMissMatchException(const std::string & what);
 };
 
 class CorruptDataException: public Exception {
 public:
-	CorruptDataException(const std::string & what) :
-	Exception()
-	{
-		setMsg("CorruptDataException: " + what);
-	}
+	CorruptDataException(const std::string & what);
 };
 
 class MissingDataException: public Exception {
 public:
-	MissingDataException(const std::string & what) :
-	Exception()
-	{
-		setMsg("MissingDataException: " + what);
-	}
+	MissingDataException(const std::string & what);
 };
 
 class InvalidReferenceException: public Exception {
 public:
-	InvalidReferenceException(const std::string & what) :
-	Exception()
-	{
-		setMsg("InvalidReferenceException: " + what);
-	}
+	InvalidReferenceException(const std::string & what);
 };
 
 class CreationException: public Exception {
 public:
-	CreationException(const std::string & what) :
-	Exception()
-	{
-		setMsg("CreationException: " + what);
-	}
+	CreationException(const std::string & what);
 };
 
 class UnimplementedFunctionException: public Exception {
 public:
-	UnimplementedFunctionException(const std::string & what) :
-	Exception()
-	{
-		setMsg("UnimplementedFunctionException: " + what);
-	}
+	UnimplementedFunctionException(const std::string & what);
 };
 
 class UnsupportedFeatureException: public Exception {
 public:
-	UnsupportedFeatureException(const std::string & what) :
-	Exception()
-	{
-		setMsg("UnsupportedFeatureException: " + what);
-	}
+	UnsupportedFeatureException(const std::string & what);
 };
 
 class ConfigurationException: public Exception {
 public:
-	ConfigurationException(const std::string & where, const std::string & what) :
-	Exception("ConfigurationException in " + where + ": " + what)
-	{}
+	ConfigurationException(const std::string & where, const std::string & what);
 };
 
 class TypeOverflowException: public Exception {
 public:
-	TypeOverflowException(const std::string & what) :
-	Exception("TypeOverflowException:" + what)
-	{}
+	TypeOverflowException(const std::string & what);
 };
 
 class InvalidEnumValueException: public Exception {
 public:
-	InvalidEnumValueException(const std::string & what) :
-	Exception()
-	{
-		setMsg("InvalidEnumValueException: " + what);
-	}
+	InvalidEnumValueException(const std::string & what);
 };
 
 class ConversionException: public Exception {
 public:
-	ConversionException(const std::string & what) :
-	Exception()
-	{
-		setMsg("ConversionException: " + what);
-	}
+	ConversionException(const std::string & what);
 };
 
 class MathException: public Exception {
 public:
-	MathException(const std::string & what) :
-	Exception()
-	{
-		setMsg("MathException: " + what);
-	}
+	MathException(const std::string & what);
 };
 
 }//end namespace
