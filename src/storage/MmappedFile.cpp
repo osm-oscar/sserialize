@@ -390,7 +390,7 @@ std::string MmappedFile::realPath(const std::string & path) {
 	char buf[PATH_MAX];
 	buf[0] = 0;
 	if (!::realpath(path.c_str(), buf)) {
-		throw std::runtime_error("sserialize::MmappedFile::realPath");
+		throw std::runtime_error("sserialize::MmappedFile::realPath: " + std::string( ::strerror(errno) ) );
 	}
 	return std::string(buf);
 }
