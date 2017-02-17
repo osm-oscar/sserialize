@@ -88,7 +88,7 @@ public:
 			UByteArrayAdapter a(m_data, 1 + SerializationInfo<uint64_t>::length + pos1*TLENGTH, TLENGTH);
 			UByteArrayAdapter b(m_data, 1 + SerializationInfo<uint64_t>::length + pos2*TLENGTH, TLENGTH);
 			uint8_t * tmp = new uint8_t[TLENGTH];
-			a.get(tmp, TLENGTH);
+			a.getData(tmp, TLENGTH);
 			a.put(0, b);
 			b.put(0, tmp);
 			delete tmp;
