@@ -21,6 +21,19 @@ PassThroughGeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
 	return m_idxStore.at(m_gh.regionExclusiveCellIdxPtr(regionId));
 }
 
+uint32_t PassThroughGeoHierarchySubGraph::regionCellCount(uint32_t regionId) const {
+	return m_idxStore.idxSize( m_gh.regionCellIdxPtr(regionId) );
+}
+
+std::vector< uint32_t > PassThroughGeoHierarchySubGraph::cellParents(uint32_t cellId) const {
+	std::vector<uint32_t> tmp;
+	tmp.reserve(m_gh.cellParentsSize(cellId));
+	for(uint32_t i(m_gh.cellParentsBegin(cellId)), s(m_gh.cellParentsEnd(cellId)); i < s; ++i) {
+		tmp.emplace_back( m_gh.cellPtr(i) );
+	}
+	return tmp;
+}
+
 uint32_t PassThroughGeoHierarchySubGraph::directParentsSize(uint32_t cellId) const {
 	return m_gh.cellDirectParentsEnd(cellId) - m_gh.cellParentsBegin(cellId);
 }
@@ -88,9 +101,20 @@ GeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {
 	return sserialize::ItemIndex();
 }
 
+uint32_t GeoHierarchySubGraph::regionCellCount(uint32_t regionId) const {
+	return m_regionDesc.at(regionId).cellCount;
+}
+
 uint32_t GeoHierarchySubGraph::directParentsSize(uint32_t cellId) const {
 	const CellDesc & cd = m_cellDesc.at(cellId);
 	return cd.directParentsEnd - cd.parentsBegin;
+}
+
+std::vector< uint32_t > GeoHierarchySubGraph::cellParents(uint32_t cellId) const {
+	return std::vector<uint32_t>(
+			m_cellParentsPtrs.begin()+m_cellDesc.at(cellId).parentsBegin,
+			m_cellParentsPtrs.begin()+m_cellDesc.at(cellId+1).parentsBegin
+		);
 }
 
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
@@ -202,8 +226,16 @@ sserialize::ItemIndex GeoHierarchySubGraph::regionExclusiveCells(uint32_t region
 	return m_ghs->regionExclusiveCells(regionId);
 }
 
+uint32_t GeoHierarchySubGraph::regionCellCount(uint32_t regionId) const {
+	return m_ghs->regionCellCount(regionId);
+}
+
 uint32_t GeoHierarchySubGraph::directParentsSize(uint32_t cellId) const {
 	return m_ghs->directParentsSize(cellId);
+}
+
+std::vector<uint32_t> GeoHierarchySubGraph::cellParents(uint32_t cellId) const {
+	return m_ghs->cellParents(cellId);
 }
 
 }}//end namespace sserialize::spatial

@@ -18,8 +18,10 @@ public:
 	GeoHierarchySubGraph() {}
 	virtual ~GeoHierarchySubGraph() {}
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const = 0;
+	virtual uint32_t regionCellCount(uint32_t regionId) const = 0;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const = 0;
 	virtual uint32_t directParentsSize(uint32_t cellId) const = 0;
+	virtual std::vector<uint32_t> cellParents(uint32_t cellId) const = 0;
 };
 
 }//end namespace interface
@@ -35,7 +37,9 @@ public:
 	virtual ~PassThroughGeoHierarchySubGraph();
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
+	virtual uint32_t regionCellCount(uint32_t regionId) const override;
 	virtual uint32_t directParentsSize(uint32_t cellId) const override;
+	virtual std::vector<uint32_t> cellParents(uint32_t cellId) const override;
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 	sserialize::Static::ItemIndexStore m_idxStore;
@@ -56,15 +60,18 @@ public:
 	virtual ~GeoHierarchySubGraph();
 	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
+	virtual uint32_t regionCellCount(uint32_t regionId) const override;
 	virtual uint32_t directParentsSize(uint32_t cellId) const override;
+	virtual std::vector<uint32_t> cellParents(uint32_t cellId) const override;
 private:
 	typedef std::vector<uint32_t> PointerContainer;
 	
 	struct RegionDesc {
-		RegionDesc() : parentsBegin(0xFFFFFFFF), storeId(0xFFFFFFFF) {}
-		RegionDesc(uint32_t parentsBegin, uint32_t storeId) : parentsBegin(parentsBegin), storeId(storeId) {}
+		RegionDesc() : parentsBegin(0xFFFFFFFF), storeId(0xFFFFFFFF), cellCount(0) {}
+		RegionDesc(uint32_t parentsBegin, uint32_t storeId, uint32_t cellCount) : parentsBegin(parentsBegin), storeId(storeId), cellCount(cellCount) {}
 		uint32_t parentsBegin;
 		uint32_t storeId; //0xFFFFFFFF indicates that this region is not in our hierarchy
+		uint32_t cellCount;
 		inline bool valid() const { return storeId != 0xFFFFFFFF; }
 	};
 	struct CellDesc {
@@ -124,6 +131,8 @@ public:
 	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
 	///@param regionId in ghId
 	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
+	uint32_t regionCellCount(uint32_t regionId) const;
+	   std::vector< uint32_t > cellParents(uint32_t cellId) const;
 	uint32_t directParentsSize(uint32_t cellId) const;
 };
 
@@ -215,7 +224,7 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 		//now move them to the real hierarchy
 		SSERIALIZE_CHEAP_ASSERT(regionInfo.regionDesc.size() == gh.regionSize());
 		for(uint32_t rId(0), s((uint32_t) regionInfo.regionDesc.size()); rId < s; ++rId) {
-			m_regionDesc.emplace_back(m_regionParentsPtrs.size(), regionInfo.regionDesc.at(rId).storeId);
+			m_regionDesc.emplace_back(m_regionParentsPtrs.size(), regionInfo.regionDesc.at(rId).storeId, idxStore.idxSize(gh.regionCellIdxPtr(rId)));
 			m_regionParentsPtrs.insert(m_regionParentsPtrs.end(), regionInfo.parentsBegin(rId), regionInfo.parentsEnd(rId));
 		}
 	}
@@ -289,7 +298,7 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 		m_cellDesc.push_back(cd);
 	}
 	//dummy end regions
-	m_regionDesc.emplace_back(m_regionParentsPtrs.size(), 0);
+	m_regionDesc.emplace_back(m_regionParentsPtrs.size(), 0, 0);
 	m_cellDesc.emplace_back(m_cellParentsPtrs.size(), 0, 0);
 
 	m_cellParentsPtrs.shrink_to_fit();
