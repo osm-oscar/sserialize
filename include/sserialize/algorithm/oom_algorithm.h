@@ -224,7 +224,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
 					if (wbi->pausedWorkers) {
 						wbiLck.unlock();
-						wbi->cv.notify_one();
+						wbi->cv.notify_all();
 					}
 					return; //we're done
 				}
@@ -286,6 +286,9 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				//check if we need to pause processing
 				if (lockTime > cfg->maxWait) {
 					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
+					if (state->srcOffset >= state->srcSize) {
+						continue;
+					}
 					if (cfg->maxThreadCount-wbi->pausedWorkers > 2) {
 						wbi->pausedWorkers += 1;
 						while (true) {
