@@ -463,10 +463,9 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	
 	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo>(
 		m_entries.begin(), m_entries.end(), ltp,
-		otraits.maxMemoryUsage(), std::thread::hardware_concurrency(),
-		otraits.mmt(), 64, 30
+		otraits.maxMemoryUsage(), otraits.sortConcurrency(),
+		otraits.mmt(), 1024, 30
 	);
-	
 	
 	auto entriesBegin = m_entries.begin();
 	entriesBegin.bufferSize(otraits.maxMemoryUsage()/4);

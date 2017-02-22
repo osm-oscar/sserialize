@@ -384,9 +384,10 @@ private:
 	PayloadCreator * m_payloadCreator;
 	uint64_t m_maxMemoryUsage;
 	sserialize::MmappedMemoryType m_mmt;
+	uint32_t m_sortConcurrency;
 public:
-	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt) :
-	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator), m_maxMemoryUsage(maxMemoryUsage), m_mmt(mmt)
+	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt, uint32_t sortConcurrency = 0) :
+	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator), m_maxMemoryUsage(maxMemoryUsage), m_mmt(mmt), m_sortConcurrency(sortConcurrency)
 	{}
 	
 	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
@@ -394,6 +395,7 @@ public:
 	
 	inline uint64_t maxMemoryUsage() const { return m_maxMemoryUsage; }
 	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
+	inline uint32_t sortConcurrency() const { return m_sortConcurrency; }
 };
 
 namespace TrieCreation {
@@ -499,7 +501,7 @@ struct Worker {
 template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits, bool TWithProgressInfo = true>
 void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterator regionsBegin, TRegionIterator regionsEnd,
 					TItemTraits itemTraits, TRegionTraits regionTraits,
-					uint64_t maxMemoryUsage, uint32_t threadCount,
+					uint64_t maxMemoryUsage, uint32_t insertionConcurrency, uint32_t sortConcurrency,
 					sserialize::StringCompleter::SupportedQuerries sq,
 					sserialize::ItemIndexFactory & idxFactory, sserialize::UByteArrayAdapter & dest)
 {
@@ -510,8 +512,8 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	typedef detail::OOMSACTCCreator::InputTraits<RegionTraits> RegionInputTraits;
 	typedef detail::OOMSACTCCreator::OutputTraits OutputTraits;
 	
-	if (!threadCount) {
-		threadCount = std::thread::hardware_concurrency();
+	if (!insertionConcurrency) {
+		insertionConcurrency = std::thread::hardware_concurrency();
 	}
 	
 	dest.putUint8(2); //ctc version
@@ -570,20 +572,20 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 
 		itemState.pinfo.begin("Inserting item strings");
 		std::vector<std::thread> threads;
-		for(uint32_t i(0); i < threadCount; ++i) {
+		for(uint32_t i(0); i < insertionConcurrency; ++i) {
 			threads.emplace_back(ItemWorker(&itemState, itemTraits));
 		}
-		for(uint32_t i(0); i < threadCount; ++i) {
+		for(uint32_t i(0); i < insertionConcurrency; ++i) {
 			threads[i].join();
 		}
 		threads.clear();
 		itemState.pinfo.end();
 		
 		regionState.pinfo.begin("Inserting region strings");
-		for(uint32_t i(0); i < threadCount; ++i) {
+		for(uint32_t i(0); i < insertionConcurrency; ++i) {
 			threads.emplace_back(RegionWorker(&regionState, regionTraits));
 		}
-		for(uint32_t i(0); i < threadCount; ++i) {
+		for(uint32_t i(0); i < insertionConcurrency; ++i) {
 			threads[i].join();
 		}
 		threads.clear();
@@ -604,13 +606,13 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	{
 		std::cout << "Calculating region payload" << std::endl;
 		RegionInputTraits regionInputTraits(regionTraits, &ti, true, sq);
-		vc.insert<TRegionIterator, RegionInputTraits, TWithProgressInfo>(regionsBegin, regionsEnd, regionInputTraits, threadCount);
+		vc.insert<TRegionIterator, RegionInputTraits, TWithProgressInfo>(regionsBegin, regionsEnd, regionInputTraits, insertionConcurrency);
 	}
 	//insert the items
 	{
 		std::cout << "Calculating item payload" << std::endl;
 		ItemInputTraits itemInputTraits(itemTraits, &ti, false, sq);
-		vc.insert<TItemIterator, ItemInputTraits, TWithProgressInfo>(itemsBegin, itemsEnd, itemInputTraits, threadCount);
+		vc.insert<TItemIterator, ItemInputTraits, TWithProgressInfo>(itemsBegin, itemsEnd, itemInputTraits, insertionConcurrency);
 	}
 	
 	//now serialize it
@@ -618,7 +620,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		std::cout << "Serializing payload" << std::endl;
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
-		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED);
+		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency);
 		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
 		pc.flush();
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pc.size(), mst.size());
