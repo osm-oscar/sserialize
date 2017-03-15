@@ -15,8 +15,11 @@ public:
 	HCQR();
 	HCQR(const CellQueryResult & cqr);
 public:
+	///unification
 	HCQR operator+(const HCQR & other) const;
+	///difference
 	HCQR operator-(const HCQR & other) const;
+	///intersection
 	HCQR operator/(const HCQR & other) const;
 public:
 	uint32_t maxItems() const;
