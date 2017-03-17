@@ -32,7 +32,8 @@ namespace std {
 template<typename T_UNARY_FUNC, typename T_RETURN_TYPE, typename T_IT>
 inline typename iterator_traits<T_IT>::difference_type
 distance(const sserialize::TransformIterator<T_UNARY_FUNC, T_RETURN_TYPE, T_IT> & a, const sserialize::TransformIterator<T_UNARY_FUNC, T_RETURN_TYPE, T_IT> & b) {
-	return std::distance(a.base(), b.base());
+	using std::distance;
+	return distance(a.base(), b.base());
 }
 
 }//end namespace std
