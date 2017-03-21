@@ -44,6 +44,7 @@ public:
 	double & maxLon();
 	
 	double diagInM() const;
+	double lengthInM() const;
 	
 	double length() const;
 	
