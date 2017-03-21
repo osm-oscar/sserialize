@@ -95,7 +95,8 @@ double GeoRect::diagInM() const {
 	if (minLat() == maxLat() && minLon() == maxLon()) {
 		return 0.0;
 	}
-	return distanceTo(minLat(), minLon(), maxLat(), maxLon());
+	return std::abs<double>(distanceTo(minLat(), minLon(), maxLat(), maxLon()) );
+}
 }
 
 bool GeoRect::overlap(const GeoRect & other) const {
