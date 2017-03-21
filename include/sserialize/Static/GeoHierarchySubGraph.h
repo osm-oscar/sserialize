@@ -132,7 +132,7 @@ public:
 	///@param regionId in ghId
 	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
 	uint32_t regionCellCount(uint32_t regionId) const;
-	   std::vector< uint32_t > cellParents(uint32_t cellId) const;
+	std::vector< uint32_t > cellParents(uint32_t cellId) const;
 	uint32_t directParentsSize(uint32_t cellId) const;
 };
 
