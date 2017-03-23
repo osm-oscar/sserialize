@@ -1,6 +1,7 @@
 #ifndef SSERIALIZE_GEO_AREA_H
 #define SSERIALIZE_GEO_AREA_H
 #include <sserialize/spatial/GeoPolygon.h>
+#include <numeric>
 
 namespace sserialize {
 namespace spatial {

@@ -2,6 +2,7 @@
 #define SSERIALIZE_UTIL_FINCTIONAL_H
 #include <algorithm>
 #include <assert.h>
+#include <vector>
 
 namespace sserialize {
 
