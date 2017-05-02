@@ -22,9 +22,9 @@ m_lat{other.m_lat[0], other.m_lat[1]},
 m_lon{other.m_lon[0], other.m_lon[1]}
 {}
 
-GeoRect::GeoRect(double lat1, double lat2, double lon1, double lon2) :
-m_lat{lat1, lat2},
-m_lon{lon1, lon2}
+GeoRect::GeoRect(double latMin, double latMax, double lonMin, double lonMax) :
+m_lat{latMin, latMax},
+m_lon{lonMin, lonMax}
 {
 	using std::swap;
 	if (m_lat[0] > m_lat[1])
