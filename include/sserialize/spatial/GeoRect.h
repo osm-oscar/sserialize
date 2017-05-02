@@ -15,6 +15,7 @@ public:
 	GeoRect();
 	GeoRect(const GeoRect & other);
 	GeoRect(double latMin, double latMax, double lonMin, double lonMax);
+	GeoRect(double lat, double lon, double diagInM);
 	///@param str a string holding the definition in the same order as above @GeoRect(double latLeft, double latRight, double lonLeft, double lonRight)
 	///separated by whitespace, if fromLeafletBBox is set then southwest_lng,southwest_lat,northeast_lng,northeast_lat
 	GeoRect(const std::string & str, bool fromLeafletBBox = false);

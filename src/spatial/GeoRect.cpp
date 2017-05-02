@@ -33,6 +33,11 @@ m_lon{lonMin, lonMax}
 		swap(m_lon[0], m_lon[1]);
 }
 
+GeoRect::GeoRect(double lat, double lon, double diagInM) {
+	destinationPoint(lat, lon, 45.0, diagInM/2, maxLat(), maxLon());
+	destinationPoint(lat, lon, 360.0-90.0-45.0, diagInM/2, minLat(), minLon());
+}
+
 GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
 	if (fromLeafletBBox) {
 		std::string tempStr = str;
