@@ -134,6 +134,9 @@ public:
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	T_CQR_TYPE cqrFromRect(const sserialize::spatial::GeoRect & rect) const;
+	
+	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
+	T_CQR_TYPE cqrFromPoint(const sserialize::spatial::GeoPoint & rect, double radius) const;
 
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	T_CQR_TYPE cqrBetween(const sserialize::spatial::GeoPoint & start, const sserialize::spatial::GeoPoint & end, double radius) const;
@@ -206,6 +209,17 @@ T_CQR_TYPE CellTextCompleter::cqrFromRect(const sserialize::spatial::GeoRect & r
 	T_CQR_TYPE retCQR;
 	sserialize::ItemIndex tmp = m_gh.intersectingCells(idxStore(), rect);
 	return T_CQR_TYPE(tmp, m_gh, m_idxStore);
+}
+
+template<typename T_CQR_TYPE>
+T_CQR_TYPE CellTextCompleter::cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) const {
+	if (radius <= 0) {
+		uint32_t cellId = m_ra.cellId(point);
+		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0);
+	}
+	else {
+		return cqrFromRect<T_CQR_TYPE>( sserialize::spatial::GeoRect(point.lat(), point.lon(), radius) );
+	}
 }
 
 template<typename T_CQR_TYPE>
@@ -315,6 +329,11 @@ public:
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	inline T_CQR_TYPE cqrFromRect(const sserialize::spatial::GeoRect & rect) const {
 		return priv()->cqrFromRect<T_CQR_TYPE>(rect);
+	}
+	
+	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
+	inline T_CQR_TYPE cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) {
+		return priv()->cqrFromPoint(point, radius);
 	}
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
