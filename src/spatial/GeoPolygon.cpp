@@ -33,6 +33,52 @@ MyBaseClass()
 }
 
 template<>
+int
+GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::orientation() const {
+// Idea based on http://cs.smith.edu/~orourke/Code/polyorient.C
+	if (size() < 4) {
+		return 0;
+	}
+	//lat is y, lon is x
+	
+	const_iterator it = cbegin();
+	const_iterator end = cend()-1;
+	const_iterator prev = it;
+	const_iterator lowest = it;
+	sserialize::spatial::GeoPoint lp = *lowest;
+	for(; it != end; ++it) {
+		const sserialize::spatial::GeoPoint & gp = *it;
+		if ((gp.lat() < lp.lat()) || (gp.lat() == lp.lat() && gp.lon() > lp.lon())) {
+			lp = gp;
+			lowest = it;
+		}
+	}
+	
+	//prev is at the end
+	if (prev == cbegin()) {
+		prev = cend()-2;
+	}
+	const_iterator next = it+1;
+// 
+// 	a[lon/lat] = prev, b[lon/lat] = it, c[lon/lat] = next with lon=0, lat=1
+//                a[0] * b[1] - a[1] * b[0] +
+//                 a[1] * c[0] - a[0] * c[1] +
+//                 b[0] * c[1] - c[0] * b[1];
+	double area = prev->lon() * it->lat() - prev->lat() * it->lon() +
+			prev->lat() * next->lon() - prev->lon() * next->lat() +
+			it->lon() * next->lat() - next->lon() * prev->lat();
+	return (area > 0 ? 1 : (area < 0 ? -1 : 0));
+}
+
+template<>
+void GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::orient(int ot) {
+	if (orientation() == -ot) {
+		using std::reverse;
+		reverse(points().begin(), points().end());
+	}
+}
+
+template<>
 GeoPolygon<std::vector<sserialize::spatial::GeoPoint> > GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::fromRect(const GeoRect & rect) {
 	std::vector<GeoPoint> points;
 	points.reserve(5);
