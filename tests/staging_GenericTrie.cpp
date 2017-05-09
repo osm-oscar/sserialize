@@ -1,4 +1,4 @@
-#include <staging/templated/GenericTrie.h>
+#include "../staging/templated/GenericTrie.h"
 #include "datacreationfuncs.h"
 #include "TestBase.h"
 

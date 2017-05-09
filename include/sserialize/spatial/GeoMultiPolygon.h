@@ -1,6 +1,7 @@
-#ifndef SSERIALIZE_GEO_AREA_H
-#define SSERIALIZE_GEO_AREA_H
+#ifndef SSERIALIZE_SPATIAL_GEO_MULTI_POLYGON_H
+#define SSERIALIZE_SPATIAL_GEO_MULTI_POLYGON_H
 #include <sserialize/spatial/GeoPolygon.h>
+#include <numeric>
 
 namespace sserialize {
 namespace spatial {
@@ -20,7 +21,7 @@ private:
 	uint32_t m_size;
 	//outer polygons define the region of space
 	PolygonList m_outerPolygons;
-	//Inner polygons are within an enclosing polygon. The space inside ist defined as beeing outside of the enclosing polygon
+	//Inner polygons are within an enclosing polygon. The space inside is defined as beeing outside of the enclosing polygon
 	PolygonList m_innerPolygons;
 	//The outer boundary is the boundary enclosing the whole MultiPolygon
 	GeoRect m_outerBoundary;
@@ -56,6 +57,9 @@ public:
 	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const override;
 	
 	virtual void recalculateBoundary() override;
+	
+	///orient the polygons +1 for counter-clockwise orientation, -1 for clockwise orientation, 0 for no orientation
+	void orient(int outerPolygonOrientation, int innerPolygonOrientation);
 	
 	bool encloses(const GeoPolygon & polygon) const;
 	bool enclosed(const GeoPolygon & polygon) const;
@@ -346,6 +350,18 @@ void GeoMultiPolygon<TPolygonContainer, TPolygon>::recalculateBoundary() {
 	auto c = [](uint32_t v, const GeoPolygon & a) {return v+a.size();};
 	m_size = std::accumulate(m_innerPolygons.cbegin(), m_innerPolygons.cend(), static_cast<uint32_t>(0), c);
 	m_size += std::accumulate(m_outerPolygons.cbegin(), m_outerPolygons.cend(), static_cast<uint32_t>(0), c);
+}
+
+template<typename TPolygonContainer, typename TPolygon>
+void GeoMultiPolygon<TPolygonContainer, TPolygon>::orient(int outerPolygonOrientation, int innerPolygonOrientation) {
+	for(auto it(m_outerPolygons.begin()), end(m_outerPolygons.end()); it != end; ++it) {
+		typename TPolygonContainer::reference poly = *it;
+		poly.orient(outerPolygonOrientation);
+	}
+	for(auto it(m_innerPolygons.begin()), end(m_innerPolygons.end()); it != end; ++it) {
+		typename TPolygonContainer::reference poly = *it;
+		poly.orient(innerPolygonOrientation);
+	}
 }
 
 template<typename TPolygonContainer, typename TPolygon>

@@ -22,15 +22,20 @@ m_lat{other.m_lat[0], other.m_lat[1]},
 m_lon{other.m_lon[0], other.m_lon[1]}
 {}
 
-GeoRect::GeoRect(double lat1, double lat2, double lon1, double lon2) :
-m_lat{lat1, lat2},
-m_lon{lon1, lon2}
+GeoRect::GeoRect(double latMin, double latMax, double lonMin, double lonMax) :
+m_lat{latMin, latMax},
+m_lon{lonMin, lonMax}
 {
 	using std::swap;
 	if (m_lat[0] > m_lat[1])
 		swap(m_lat[0], m_lat[1]);
 	if (m_lon[0] > m_lon[1])
 		swap(m_lon[0], m_lon[1]);
+}
+
+GeoRect::GeoRect(double lat, double lon, double diagInM) {
+	destinationPoint(lat, lon, 45.0, diagInM/2, maxLat(), maxLon());
+	destinationPoint(lat, lon, 360.0-90.0-45.0, diagInM/2, minLat(), minLon());
 }
 
 GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
@@ -95,7 +100,16 @@ double GeoRect::diagInM() const {
 	if (minLat() == maxLat() && minLon() == maxLon()) {
 		return 0.0;
 	}
-	return distanceTo(minLat(), minLon(), maxLat(), maxLon());
+	return std::abs<double>(distanceTo(minLat(), minLon(), maxLat(), maxLon()) );
+}
+
+double GeoRect::lengthInM() const {
+	double dist = 0.0;
+	dist += std::abs<double>( distanceTo(minLat(), minLon(), minLat(), maxLon()) );
+	dist += std::abs<double>( distanceTo(minLat(), maxLon(), maxLat(), maxLon()) );
+	dist += std::abs<double>( distanceTo(maxLat(), maxLon(), maxLat(), minLon()) );
+	dist += std::abs<double>( distanceTo(maxLat(), minLon(), minLat(), minLon()) );
+	return dist;
 }
 
 bool GeoRect::overlap(const GeoRect & other) const {

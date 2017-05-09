@@ -57,6 +57,11 @@ public:
 	template<typename T_GEO_POINT_ITERATOR>
 	bool contains(T_GEO_POINT_ITERATOR begin, T_GEO_POINT_ITERATOR end) const;
 
+	///+1 for counter-clockwise orientation, -1 for clockwise orientation, 0 for no orientation
+	int orientation() const;
+	///+1 for counter-clockwise orientation, -1 for clockwise orientation
+	void orient(int ot);
+
 	///@cond internal calls MyBaseClass::append by default
 	virtual UByteArrayAdapter & append(UByteArrayAdapter & destination) const override {
 		return MyBaseClass::append(destination);
@@ -383,7 +388,6 @@ bool GeoPolygon<TPointsContainer>::contains(T_GEO_POINT_ITERATOR begin, T_GEO_PO
 	return false;
 }
 
-
 ///serializes without type info
 template<typename TPointsContainer>
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPolygon<TPointsContainer> & p) {
@@ -396,6 +400,12 @@ GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(const std::
 
 template<>
 GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::GeoPolygon(std::vector<sserialize::spatial::GeoPoint> && points);
+
+template<>
+int GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::orientation() const;
+
+template<>
+void GeoPolygon< std::vector<sserialize::spatial::GeoPoint> >::orient(int ot);
 
 
 template<>
