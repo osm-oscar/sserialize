@@ -47,4 +47,4 @@ private:
 
 }} //end namespace sserialize::spatial
 
-#endif
+#endif 
