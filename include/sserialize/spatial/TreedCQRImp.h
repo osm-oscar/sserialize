@@ -39,7 +39,7 @@ namespace TreedCellQueryResult  {
 			uint64_t type:4;
 			uint64_t internalIdxId:60;
 		} fetchedNode;
-		FlatNode(Type t) {
+		FlatNode(Type t) : raw(0) {
 			common.type = t;
 		}
 	};
