@@ -39,6 +39,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 			frtA = FT_FM;
 		}
 		//else: frtA is either FT_FM or FT_EMPTY
+		frt = frtA;
 	}
 		return;
 	case FlatNode::T_INTERSECT:
@@ -813,6 +814,7 @@ TreedCQRImp* TreedCQRImp::allToFull() const {
 		const CellDesc & myCD = m_desc[myI];
 		if (myCD.hasTree()) {
 			std::size_t treeBegin = r.m_trees.size();
+			r.m_trees.emplace_back(FlatNode::T_TO_FM);
 			copyTree(*this, myCD, r);
 			r.m_desc.emplace_back(0, myCD.hasFetchedNode, myCD.cellId, 0, treeBegin, r.m_trees.size());
 		}
