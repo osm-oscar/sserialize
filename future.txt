@@ -1,0 +1,90 @@
+
+import Dynamic_length_type;
+import Static_length_type;
+
+AlignmentPolicy {
+	bit_level, byte_level;
+}
+
+LoadPolicy {
+	Full_on_construction, Full_on_first_access, Stream;
+}
+
+//should CRC be passed on to member structs?
+struct: Version, CRC {
+	Bits<5> bits5;
+	Bits<7> bits7;
+	Bits<128> bits128;
+	unsigned<8> byte;
+	signed<8> signe_byte;
+	unsigned<32> unsigned_int;
+	Vector<Dynamic length type> vector1;
+	Vector<Static length type> vector2;
+	Array<Dynamic length type, 5> array1;
+	Array<Static length type, 7> array2;
+};
+
+A Set/Map is a sorted vector with a find function
+A StringTable is a set with a special sort function
+Complex type combinations:
+KeyValueObjectStore:
+
+using StringTable = set;
+using KeyStringTable = StringTable;
+using KeyStringTable = ValueStringTable;
+
+
+unordered struct Item {
+	Bits<22> count;
+	Bits<5> bpk;
+	Bits<5> bpv;
+	v_unsigned<32> keyBegin;
+	v_unsigned<32> keyEnd;
+	
+	22 Bit|5b |5b|   v32   |   v32    | CompactUintArray
+};
+
+ordered struct KeyValueObjectStore: Version {
+	KeyStringTable keys;
+	ValueStringTable values;
+	Vector<KeyValueObjectStoreItem> items;
+};
+
+The definitions are read by a special compiler creating appropriate classes.
+Theses classes abstract the access to the member variables.
+Every class has a memoryManager() allowing one to change load types, possibly preloading, mprotecting members etc.
+Users of classes should subclass the given classes? But how to add algorithms to the data that can be used by users?
+
+Maybe synthesize classes as follows:
+
+struct A {
+	unsigned<32> a;
+};
+
+struct B {
+	A a;
+	unsigned<64> b;
+};
+
+Translates to:
+
+template<typename MEMBER_IMPLEMENTATION_a = Unsigned<32> >
+class A {
+public:
+	MEMBER_IMPLEMENTATION_a::value_type a() const;
+private:
+	MEMBER_IMPLEMENTATION_a m_a;
+};
+
+//where MEMBER_IMPLEMENTATION_a has to provide all the functions of the data class A.
+//Easiest way to do this would be to sub-class A
+//Gcc 6.? supports concepts so we could use these to define the interface of MEMBER_IMPLEMENTATIONs
+template<typename MEMBER_IMPLEMENTATION_a = A, typename MEMBER_IMPLEMENTATION_b = Unsigned<32> >
+class B {
+public:
+	MEMBER_IMPLEMENTATION_a::value_type a() const;
+	MEMBER_IMPLEMENTATION_b::value_type b() const;
+private:
+	MEMBER_IMPLEMENTATION_a m_a;
+	MEMBER_IMPLEMENTATION_b m_b;
+}
