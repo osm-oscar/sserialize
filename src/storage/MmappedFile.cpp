@@ -211,6 +211,57 @@ void MmappedFilePrivate::setSyncOnClose(bool syncOnClose) {
 	m_syncOnClose = syncOnClose;
 }
 
+
+void MmappedFilePrivate::cache(OffsetType begin, SizeType size) {
+	if (begin > m_exposedSize || begin+size < begin) {
+		return;
+	}
+	if (begin+size > m_exposedSize ) {
+		size = m_exposedSize - begin;
+	}
+	long int pageSize =  std::max<long int>(512, sysconf(_SC_PAGE_SIZE) );
+	uint8_t v = 0;
+	for(uint8_t * d(m_data+begin), * s(m_data+m_exposedSize); d < s; d += pageSize) {
+		v += *d;
+	}
+}
+
+void MmappedFilePrivate::drop(OffsetType begin, SizeType size) {
+	if (begin > m_exposedSize || begin+size < begin) {
+		return;
+	}
+	if (begin+size > m_exposedSize ) {
+		size = m_exposedSize - begin;
+	}
+	if (::madvise(m_data+begin, size, MADV_DONTNEED) < 0) {
+		throw std::runtime_error("sserialize::MmappedFile::drop: " + std::string( ::strerror(errno) ) );
+	}
+}
+
+void MmappedFilePrivate::lock(OffsetType begin, SizeType size) {
+	if (begin > m_exposedSize || begin+size < begin) {
+		return;
+	}
+	if (begin+size > m_exposedSize ) {
+		size = m_exposedSize - begin;
+	}
+	if (::mlock(m_data+begin, size) < 0) {
+		throw std::runtime_error("sserialize::MmappedFile::lock: " + std::string( ::strerror(errno) ) );
+	}
+}
+
+void MmappedFilePrivate::unlock(OffsetType begin, SizeType size) {
+	if (begin > m_exposedSize || begin+size < begin) {
+		return;
+	}
+	if (begin+size > m_exposedSize ) {
+		size = m_exposedSize - begin;
+	}
+	if (::munlock(m_data+begin, size) < 0) {
+		throw std::runtime_error("sserialize::MmappedFile::unlock: " + std::string( ::strerror(errno) ) );
+	}
+}
+
 MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & fileNameBase, sserialize::UByteArrayAdapter::OffsetType size) {
 	std::size_t fbSize = fileNameBase.size();
 	char fileName[fbSize+7];
@@ -252,6 +303,22 @@ MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & file
 	return mf;
 }
 
+void MmappedFile::cache(SizeType begin, SizeType size) {
+	priv()->cache(begin, size);
+}
+
+void MmappedFile::drop(SizeType begin, SizeType size) {
+	priv()->drop(begin, size);
+}
+
+void MmappedFile::lock(SizeType begin, SizeType size) {
+	priv()->lock(begin, size);
+}
+
+void MmappedFile::unlock(SizeType begin, SizeType size) {
+	priv()->unlock(begin, size);
+}
+
 bool createFilePrivate(const std::string & fileName, OffsetType size) {
 	int fd = ::open64(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
 	if (fd == -1) {
@@ -275,6 +342,8 @@ bool createFilePrivate(const std::string & fileName, OffsetType size) {
 	::close(fd);
 	return  stFileInfo.st_size >= 0 && static_cast<OffsetType>( stFileInfo.st_size ) >= size;
 }
+
+
 
 bool MmappedFile::createFile(const std::string & fileName, OffsetType size) {
 	return createFilePrivate(fileName, size);

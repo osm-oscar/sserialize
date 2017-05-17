@@ -39,6 +39,11 @@ public:
 	void setDeleteOnClose(bool deleteOnClose);
 	void setSyncOnClose(bool syncOnClose);
 	
+	void cache(SizeType begin, SizeType size);
+	void drop(SizeType begin, SizeType size);
+	void lock(SizeType begin, SizeType size);
+	void unlock(SizeType begin, SizeType size);
+	
 	///returns 0 on error and a instance of MmappedFilePrivate on success
 	static MmappedFilePrivate* createTempFile(const std::string & fileNameBase, UByteArrayAdapter::OffsetType size);
 };
@@ -96,7 +101,19 @@ public:
 	inline void setSyncOnClose(bool syncOnClose) { return priv()->setSyncOnClose(syncOnClose);}
 	/** resizes the file to size bytes. All former data references are invalid after this */
 	inline bool resize(OffsetType size) { return priv()->resizeRounded(size);}
-
+	
+	///Read data into memory 
+	void cache(SizeType begin, SizeType size);
+	
+	///Drop cached data from memory
+	void drop(SizeType begin, SizeType size);
+	
+	///Lock data into memory
+	void lock(SizeType begin, SizeType size);
+	
+	///Unlock data from memory
+	void unlock(SizeType begin, SizeType size);
+	
 public:
 	/** creates a file with at least 1 byte */
 	static bool createFile(const std::string & fileName, OffsetType size);
