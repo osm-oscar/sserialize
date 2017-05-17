@@ -119,11 +119,15 @@ public:
 	
 	typedef enum {
 		//will read the next bytes
-		AT_READ,
+		AT_READ = 0x1,
 		//will write the next bytes
-		AT_WRITE,
+		AT_WRITE = 0x2,
 		//will not use the next bytes
-		AT_DROP
+		AT_DROP = 0x4,
+		//lock the memory region if possible
+		AT_LOCK = 0x8,
+		//unlock the memory region
+		AT_UNLOCK = 0x10
 	} AdviseType;
 	
 	typedef detail::__UByteArrayAdapter::MemoryView MemoryView;
@@ -263,7 +267,7 @@ public: //state manipulation
 public: //storage manipulation
 	void zero();
 
-public://storage manipulation
+public://storage manipulationm
 	/** tries to shrink the underlying data source, use with caution, others Adapter are not notified of this change */
 	bool shrinkStorage(OffsetType byte);
 	/** tries to grow the storage of this adapter by byte bytes.
