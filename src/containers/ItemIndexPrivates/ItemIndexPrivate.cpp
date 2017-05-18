@@ -245,4 +245,60 @@ UByteArrayAdapter::SizeType ItemIndexPrivateEmpty::getSizeInBytes() const {
 	return 0;
 }
 
+namespace detail {
+namespace ItemIndexImpl {
+
+GenericSetOpExecuterAccessors<uint32_t>::PositionIterator
+GenericSetOpExecuterAccessors<uint32_t>::begin(const sserialize::ItemIndexPrivate *) {
+	return 0;
+}
+
+GenericSetOpExecuterAccessors<uint32_t>::PositionIterator
+GenericSetOpExecuterAccessors<uint32_t>::end(const sserialize::ItemIndexPrivate * idx) {
+	return idx->size();
+}
+
+void
+GenericSetOpExecuterAccessors<uint32_t>::next(PositionIterator & it) {
+	++it;
+}
+
+bool
+GenericSetOpExecuterAccessors<uint32_t>::unequal(const PositionIterator & first, const PositionIterator & second) {
+	return first != second;
+}
+
+uint32_t
+GenericSetOpExecuterAccessors<uint32_t>::get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it) {
+	return idx->uncheckedAt(it);
+}
+
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::PositionIterator
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::begin(const sserialize::ItemIndexPrivate * idx) {
+	return sserialize::ItemIndex::const_iterator(idx->cbegin());
+}
+
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::PositionIterator
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::end(const sserialize::ItemIndexPrivate * idx) {
+	return sserialize::ItemIndex::const_iterator(idx->cend());
+}
+
+void
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::next(PositionIterator & it) {
+	++it;
+}
+
+bool
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::unequal(const PositionIterator & first, const PositionIterator & second) {
+	return first != second;
+}
+
+uint32_t
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it) {
+	return *it;
+}
+
+
+}}//end detail::ItemIndexImpl
+
 }//end namespace

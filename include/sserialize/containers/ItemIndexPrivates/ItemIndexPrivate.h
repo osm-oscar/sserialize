@@ -142,6 +142,111 @@ struct SymmetricDifferenceOp {
 	}
 };
 
+template<typename TPositionIterator>
+struct GenericSetOpExecuterAccessors {
+	typedef TPositionIterator PositionIterator;
+	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx);
+	static PositionIterator end(const sserialize::ItemIndexPrivate * idx);
+	static void next(PositionIterator & it);
+	static bool unequal(const PositionIterator & first, const PositionIterator & second);
+	static uint32_t get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it);
+};
+
+template<typename TCreator>
+struct GenericSetOpExecuterInit {
+	static TCreator init(uint32_t maxSize) {
+		return TCreator(maxSize);
+	}
+};
+
+///TFunc is one of the above and
+///TCreator needs to have functions:
+///
+///push_back(uint32_t)
+///flush()
+///getPrivateIndex() -> ItemIndexPrivate*
+template<typename TFunc, typename TCreator, typename TPositionIterator>
+class GenericSetOpExecuter{
+public:
+	typedef TPositionIterator PositionIterator;
+	typedef GenericSetOpExecuterAccessors<PositionIterator> Accessors;
+	typedef GenericSetOpExecuterInit<TCreator> Init;
+public:
+	inline static PositionIterator begin(const sserialize::ItemIndexPrivate * idx) { return Accessors::begin(idx); }
+	inline static PositionIterator end(const sserialize::ItemIndexPrivate * idx) { return Accessors::end(idx); }
+	inline static void next(PositionIterator & it) { Accessors::next(it); }
+	inline static bool unequal(const PositionIterator & first, const PositionIterator & second) { return Accessors::unequal(first, second); }
+	inline static uint32_t get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it) { return Accessors::get(idx, it); }
+	
+	inline static TCreator init(const sserialize::ItemIndexPrivate * first, const sserialize::ItemIndexPrivate * second) {
+		return Init::init( TFunc::maxSize(first, second) );
+	}
+
+	static sserialize::ItemIndexPrivate* execute(const sserialize::ItemIndexPrivate * first, const sserialize::ItemIndexPrivate * second) {
+		TCreator creator( init(first, second) );
+		
+		PositionIterator fIt( begin(first) );
+		PositionIterator fEnd( end(first) );
+		PositionIterator sIt( begin(second) );
+		PositionIterator sEnd( end(second) );
+		
+		for( ;unequal(fIt, fEnd) && unequal(sIt, sEnd); ) {
+			uint32_t fId = get(first, fIt);
+			uint32_t sId = get(second, sIt);
+			if (fId < sId) {
+				if (TFunc::pushFirstSmaller) {
+					creator.push_back(fId);
+				}
+				next(fIt);
+			}
+			else if (sId < fId) {
+				if (TFunc::pushSecondSmaller) {
+					creator.push_back(sId);
+				}
+				next(sIt);
+			}
+			else {
+				if (TFunc::pushEqual) {
+					creator.push_back(fId);
+				}
+				next(fIt);
+				next(sIt);
+			}
+		}
+		if (TFunc::pushFirstRemainder) {
+			for(; unequal(fIt, fEnd); next(fIt)) {
+				creator.push_back(get(first, fIt));
+			}
+		}
+		if (TFunc::pushSecondRemainder) {
+			for(; unequal(sIt, sEnd); next(sIt)) {
+				creator.push_back(get(second, sIt));
+			}
+		}
+		return creator.getPrivateIndex();
+	}
+};
+
+template<>
+struct GenericSetOpExecuterAccessors<uint32_t> {
+	typedef uint32_t PositionIterator;
+	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx);
+	static PositionIterator end(const sserialize::ItemIndexPrivate * idx);
+	static void next(PositionIterator & it);
+	static bool unequal(const PositionIterator & first, const PositionIterator & second);
+	static uint32_t get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it);
+};
+
+template<>
+struct GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator> {
+	typedef sserialize::ItemIndex::const_iterator PositionIterator;
+	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx);
+	static PositionIterator end(const sserialize::ItemIndexPrivate * idx);
+	static void next(PositionIterator & it);
+	static bool unequal(const PositionIterator & first, const PositionIterator & second);
+	static uint32_t get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it);
+};
+
 }}//end namespace detail::ItemIndex
 
 }//end namespace
