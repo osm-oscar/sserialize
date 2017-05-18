@@ -1,9 +1,8 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
-#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateSimple.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateNative.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/iterator/AtStlInputIterator.h>
 #include <sserialize/stats/statfuncs.h>
-#include "ItemIndexSetFunctions.h"
 
 namespace sserialize {
 
@@ -34,104 +33,45 @@ uint32_t ItemIndexPrivate::uncheckedAt(uint32_t pos) const {
 ItemIndexPrivate * ItemIndexPrivate::doUnite(const ItemIndexPrivate * other) const {
 	if (!other)
 		return new ItemIndexPrivateEmpty();
-	uint32_t lowestId = std::min<uint32_t>(first(), other->first());
-	uint32_t highestId = std::max<uint32_t>(last(), other->last());
-	uint32_t summedItemIdCount = size() + other->size();
-	if (highestId - lowestId + 1 < summedItemIdCount) {
-		summedItemIdCount = highestId - lowestId + 1;
-	}
-	UByteArrayAdapter indexFileAdapter( ItemIndexPrivateSimpleCreator::createCache(lowestId, highestId, summedItemIdCount, false) );
-	ItemIndexPrivateSimpleCreator creator(lowestId, highestId, summedItemIdCount, indexFileAdapter);
-
-	uniteWithMerge2(this, other, creator);
-
-	if (creator.size() > 0) {
-		creator.flush();
-		return creator.privateIndex();
-	}
-	else {
-		return new ItemIndexPrivateEmpty();
-	}
+	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
+		detail::ItemIndexImpl::UniteOp,
+		sserialize::detail::ItemIndexPrivate::ItemIndexNativeCreator,
+		uint32_t
+		> SetOpExecuter;
+	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doIntersect(const ItemIndexPrivate * other) const {
 	if (!other)
 		return new ItemIndexPrivateEmpty();
-	uint32_t lowestId = std::min<uint32_t>(first(), other->first());
-	uint32_t highestId = std::max<uint32_t>(last(), other->last());
-	uint32_t smallestIndexSize;
-	uint32_t largestIndexSize;
-	if (size() < other->size()) {
-		smallestIndexSize = size();
-		largestIndexSize = other->size();
-	}
-	else {
-		smallestIndexSize = other->size();
-		largestIndexSize = size();
-	}
-
-	UByteArrayAdapter indexFileAdapter( ItemIndexPrivateSimpleCreator::createCache(lowestId, highestId, smallestIndexSize, false) );
-	ItemIndexPrivateSimpleCreator creator(lowestId, highestId, smallestIndexSize, indexFileAdapter);
-
-	if (this->is_random_access() && other->is_random_access() && (double)smallestIndexSize < (double)largestIndexSize/logTo2((double)largestIndexSize)) {
-		intersectWithBinarySearch(this, other, creator);
-	}
-	else {
-		intersectWithMerge2(this, other, creator);
-	}
-
-	if (creator.size()) {
-		creator.flush();
-		return creator.privateIndex();
-	}
-	else {
-		return new ItemIndexPrivateEmpty();
-	}
+	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
+		detail::ItemIndexImpl::IntersectOp,
+		sserialize::detail::ItemIndexPrivate::ItemIndexNativeCreator,
+		uint32_t
+		> SetOpExecuter;
+	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doDifference(const ItemIndexPrivate * other) const {
 	if (!other)
 		return new ItemIndexPrivateEmpty();
-	uint32_t highestId = last();
-	uint32_t lowestId = first();
-	uint32_t maxStorageSize = std::min<uint32_t>(highestId-lowestId+1, size());
-	UByteArrayAdapter indexFileAdapter( ItemIndexPrivateSimpleCreator::createCache(lowestId, highestId, maxStorageSize, false) );
-	ItemIndexPrivateSimpleCreator creator(lowestId, highestId, maxStorageSize, indexFileAdapter);
-
-	if (size() < other->size() && (double)size() < (double)other->size()/logTo2((double)other->size())) {
-		differenceWithBinarySearch(this, other, creator);
-	}
-	else { //do the merge
-		differenceWithMerge(this, other, creator);
-	}
-
-	if (creator.size()) {
-		creator.flush();
-		return creator.privateIndex();
-	}
-	else {
-		return new ItemIndexPrivateEmpty();
-	}
+	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
+		detail::ItemIndexImpl::DifferenceOp,
+		sserialize::detail::ItemIndexPrivate::ItemIndexNativeCreator,
+		uint32_t
+		> SetOpExecuter;
+	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate * ItemIndexPrivate::doSymmetricDifference(const ItemIndexPrivate * other) const {
 	if (!other)
 		return new ItemIndexPrivateEmpty();
-	uint32_t lowestId = std::min<uint32_t>(first(), other->first());
-	uint32_t highestId = std::max<uint32_t>(last(), other->last());
-	uint32_t maxStorageSize = std::min<uint32_t>(highestId-lowestId+1, size()+other->size());
-	UByteArrayAdapter indexFileAdapter( ItemIndexPrivateSimpleCreator::createCache(lowestId, highestId, maxStorageSize, false) );
-	ItemIndexPrivateSimpleCreator creator(lowestId, highestId, maxStorageSize, indexFileAdapter);
-
-	symmetricDifferenceWithMerge(this, other, creator);
-
-	if (creator.size()) {
-		creator.flush();
-		return creator.privateIndex();
-	}
-	else {
-		return new ItemIndexPrivateEmpty();
-	}
+	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
+		detail::ItemIndexImpl::SymmetricDifferenceOp,
+		sserialize::detail::ItemIndexPrivate::ItemIndexNativeCreator,
+		uint32_t
+		> SetOpExecuter;
+	return SetOpExecuter::execute(this, other);
 }
 
 

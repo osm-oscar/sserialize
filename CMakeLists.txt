@@ -169,7 +169,6 @@ set(CONTAINTERS_SOURCES_CPP
 	src/containers/ItemIndexPrivates/ItemIndexPrivateSimple.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateStlDeque.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateStlVector.cpp
-	src/containers/ItemIndexPrivates/ItemIndexSetFunctions.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateWAH.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateDE.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.cpp
