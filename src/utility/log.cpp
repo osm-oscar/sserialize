@@ -8,6 +8,7 @@
 namespace sserialize {
 
 Log info(sserialize::Log::LL_INFO);
+Log warn(sserialize::Log::LL_WARNING);
 Log debug(sserialize::Log::LL_DEBUG);
 Log err(sserialize::Log::LL_DEBUG);
 
@@ -21,6 +22,7 @@ Log::Log(Log::LogLevel defLevel) : m_defLogLevel(defLevel) {
 #ifdef __ANDROID__
 	switch (defLevel) {
 	case (sserialize::Log::LL_INFO):
+	case (sserialize::Log::LL_WARNING):
 		m_androidLogLevel = ANDROID_LOG_INFO;
 		break;
 	case (sserialize::Log::LL_DEBUG):
@@ -78,8 +80,10 @@ void Log::sbufCmd(Log::CmdTypes t) {
 	m_sbuf.str(std::string());
 }
 
-
-}//End namespace
+sserialize::Log& operator<<(sserialize::Log& log, const char * msg) {
+	log.sbuf() << msg;
+	return log;
+}
 
 sserialize::Log& operator<<(sserialize::Log& log, const std::string & msg) {
 	log.sbuf() << msg;
@@ -109,3 +113,5 @@ sserialize::Log& operator<<(sserialize::Log& log, sserialize::Log::CmdTypes cmdt
 	log.sbufCmd(cmdt);
 	return log;
 }
+
+}//End namespace

@@ -17,7 +17,7 @@ public:
 		endl, flush
 	};
 	enum LogLevel {
-		LL_INFO, LL_DEBUG, LL_ERROR
+		LL_INFO, LL_WARNING, LL_DEBUG, LL_ERROR
 	};
 	static constexpr CmdTypes endl = CmdTypes::endl;
 	static constexpr CmdTypes flush = CmdTypes::flush;
@@ -38,16 +38,20 @@ public:
 };
 
 extern Log info;
+extern Log warn;
 extern Log debug;
 extern Log err;
 
-}//end namespace
-
+sserialize::Log& operator<<(sserialize::Log& log, const char * msg);
 sserialize::Log& operator<<(sserialize::Log& log, const std::string & msg);
 sserialize::Log& operator<<(sserialize::Log& log, int num);
 sserialize::Log& operator<<(sserialize::Log& log, unsigned int num);
 sserialize::Log& operator<<(sserialize::Log& log, double num);
 sserialize::Log& operator<<(sserialize::Log& log, bool value);
 sserialize::Log& operator<<(sserialize::Log& log, sserialize::Log::CmdTypes cmdt);
+
+}//end namespace
+
+
 
 #endif
