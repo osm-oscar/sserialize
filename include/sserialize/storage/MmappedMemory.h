@@ -105,6 +105,7 @@ public:
 	MmappedMemoryInterface() {}
 	virtual ~MmappedMemoryInterface() {}
 	virtual TValue * data() = 0;
+	virtual const TValue * data() const { return const_cast<MmappedMemoryInterface*>(this)->data();}
 	virtual TValue * resize(OffsetType newSize) = 0;
 	virtual OffsetType size() const = 0;
 	virtual MmappedMemoryType type() const = 0;
