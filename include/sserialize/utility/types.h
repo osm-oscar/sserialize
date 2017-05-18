@@ -44,7 +44,7 @@ typedef uint64_t IdType;
 static_assert(sizeof(std::size_t) == sizeof(OffsetType), "std::size_t and OffsetType differ");
 static_assert(sizeof(double) == sizeof(uint64_t), "uint64_t and double differ");
 static_assert(sizeof(float) == sizeof(uint32_t), "uint32_t and float differ");
-#define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFF
+#define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFFF
 #define CHUNKED_MMAP_EXPONENT 23
 #else
 typedef uint64_t OffsetType;
