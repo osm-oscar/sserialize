@@ -962,6 +962,9 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 
 UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writable, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
 	if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
+		#ifndef SSERIALIZE_WITH_THREADS
+			sserialize::warn << "File size exceeds maximum full map size and thread support is disabled. Access to data is NOT thread-safe!";
+		#endif
 		if (chunkSizeExponent == 0) {
 			return UByteArrayAdapter( sserialize::RCPtrWrapper<UByteArrayAdapterPrivate>(
 			#ifdef SSERIALIZE_WITH_THREADS
