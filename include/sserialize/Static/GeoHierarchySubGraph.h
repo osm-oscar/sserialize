@@ -115,7 +115,7 @@ private:
 
 class GeoHierarchySubGraph final {
 public:
-	enum Type {T_PASS_THROUGH, T_IN_MEMORY};
+	enum Type {T_INVALID, T_PASS_THROUGH, T_IN_MEMORY};
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet SubSet;
