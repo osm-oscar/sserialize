@@ -163,8 +163,7 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 
 	if (threadCount > 1 && cellCount() > 1000) {//is 1000 good? probably not
 		struct State {
-			uint32_t srcPos;
-			std::mutex srcPosLck;
+			std::atomic<uint32_t> srcPos;
 			const TreedCQRImp * src;
 			CellQueryResult * dest;
 			std::atomic<uint32_t> emptyCellCount;
@@ -180,16 +179,11 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 			FlattenResultType frt;
 			Proc(State * s) : state(s) {}
 			void operator()() {
-				std::unique_lock<std::mutex> srcPosLck(state->srcPosLck);
-				srcPosLck.unlock();
 				while (true) {
-					srcPosLck.lock();
-					if (state->srcPos >= state->src->cellCount()) {
+					uint32_t myPos = state->srcPos.fetch_add(1, std::memory_order_relaxed);
+					if (myPos >= state->src->cellCount()) {
 						return;
 					}
-					uint32_t myPos = state->srcPos;
-					state->srcPos += 1;
-					srcPosLck.unlock();
 					idx = sserialize::ItemIndex();
 					pmIdxId = 0;
 					frt = FT_NONE;
