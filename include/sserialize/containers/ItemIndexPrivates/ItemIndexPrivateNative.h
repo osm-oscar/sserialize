@@ -140,6 +140,11 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIn
 	
 	uint32_t tmpResultSize = narrow_check<uint32_t>((uint64_t)(tmpResultIt - (mm.begin()+sizeof(uint32_t)))/sizeof(uint32_t));
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpResultSize, maxResultSize);
+	
+	if (!tmpResultSize) {
+		return new ItemIndexPrivateEmpty();
+	}
+	
 	mm.resize((tmpResultSize+1)*sizeof(uint32_t));
 	
 	UByteArrayAdapter tmpD(mm);
