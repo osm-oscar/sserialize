@@ -90,4 +90,44 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::symmetricDifference(const 
 	return genericSetOp<sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp>(cother);
 }
 
+ItemIndexNativeCreator::ItemIndexNativeCreator(uint32_t maxSize) :
+m_mem((maxSize+1)*sizeof(uint32_t), MM_PROGRAM_MEMORY),
+m_it(m_mem.begin()+sizeof(uint32_t))
+{}
+
+ItemIndexNativeCreator::~ItemIndexNativeCreator()
+{}
+
+uint32_t ItemIndexNativeCreator::size() const {
+	return (m_it - (m_mem.begin()+4))/sizeof(uint32_t);
+}
+
+void ItemIndexNativeCreator::push_back(uint32_t id) {
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_it, m_mem.end());
+	if (UNLIKELY_BRANCH(m_it >= m_mem.end())) {
+		throw sserialize::OutOfBoundsException("sserialize::ItemIndexNativeCreator::push_back");
+	}
+	::memmove(m_it, &id, sizeof(uint32_t));
+	m_it += sizeof(uint32_t);
+}
+
+void ItemIndexNativeCreator::flush() {
+	m_mem.resize(m_it - m_mem.begin());
+	data().putUint32(0, size());
+}
+
+ItemIndex ItemIndexNativeCreator::getIndex() {
+	flush();
+	return ItemIndex(data(), sserialize::ItemIndex::T_NATIVE);
+}
+
+sserialize::ItemIndexPrivate * ItemIndexNativeCreator::getPrivateIndex() {
+	flush();
+	return new ItemIndexPrivateNative(data());
+}
+
+UByteArrayAdapter ItemIndexNativeCreator::data() {
+	return UByteArrayAdapter(m_mem);
+}
+
 }}}//end namespace
