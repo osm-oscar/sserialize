@@ -86,11 +86,9 @@ bool ItemIndexPrivateNative::create(T_UINT32_ITERATOR begin, const T_UINT32_ITER
 	return true;
 }
 
-
-
 template<typename TFunc>
 sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIndexPrivateNative * cother) const {
-	uint32_t maxResultSize = TFunc::maxSize(this, cother);
+	size_t maxResultSize = TFunc::maxSize(this, cother);
 	sserialize::MmappedMemory<uint8_t> mm((maxResultSize+1)*sizeof(uint32_t), MM_PROGRAM_MEMORY);
 	
 	uint8_t * tmpResultIt = mm.begin()+sizeof(uint32_t);
@@ -125,19 +123,22 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIn
 			oD += sizeof(uint32_t);
 			myD += sizeof(uint32_t);
 		}
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpResultIt, mm.cend());
 	}
 	if (TFunc::pushFirstRemainder && myDEnd-myD > 0) {
-		uint32_t remainderSize = (uint32_t)(myDEnd-myD);
+		size_t remainderSize = (size_t)(myDEnd-myD);
 		::memmove(tmpResultIt, myD, remainderSize);
 		tmpResultIt += remainderSize;
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpResultIt, mm.cend());
 	}
 	else if (TFunc::pushSecondRemainder && oDEnd-oD > 0) {
-		uint32_t remainderSize = (uint32_t)(oDEnd - oD);
+		size_t remainderSize = (size_t)(oDEnd - oD);
 		::memmove(tmpResultIt, oD, remainderSize);
 		tmpResultIt += remainderSize;
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpResultIt, mm.cend());
 	}
 	
-	uint32_t tmpResultSize = (uint32_t)((uint64_t)(tmpResultIt - (mm.begin()+sizeof(uint32_t)))/sizeof(uint32_t));
+	uint32_t tmpResultSize = narrow_check<uint32_t>((uint64_t)(tmpResultIt - (mm.begin()+sizeof(uint32_t)))/sizeof(uint32_t));
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpResultSize, maxResultSize);
 	mm.resize((tmpResultSize+1)*sizeof(uint32_t));
 	
@@ -145,6 +146,25 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIn
 	tmpD.putUint32(0, tmpResultSize);
 	return new ItemIndexPrivateNative(tmpD);
 }
+
+class ItemIndexNativeCreator {
+public:
+	ItemIndexNativeCreator(uint32_t maxSize);
+	virtual ~ItemIndexNativeCreator();
+	uint32_t size() const;
+	///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
+	void push_back(uint32_t id);
+	///you should not push anything after calling this function
+	void flush();
+	///you should not push anything after calling this function
+	ItemIndex getIndex();
+	///you should not push anything after calling this function
+	sserialize::ItemIndexPrivate * getPrivateIndex();
+	UByteArrayAdapter data();
+private:
+	sserialize::MmappedMemory<uint8_t> m_mem;
+	uint8_t * m_it;
+};
 
 }}}//end namespace
 
