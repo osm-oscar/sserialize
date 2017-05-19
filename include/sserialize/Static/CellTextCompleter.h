@@ -129,6 +129,9 @@ public:
 	template<typename T_CQR_TYPE>
 	T_CQR_TYPE regionExclusiveCells(uint32_t regionId) const;
 	
+	template<typename T_CQR_TYPE, typename T_ITERATOR>
+	T_CQR_TYPE fromCellIds(const T_ITERATOR & begin, const T_ITERATOR & end) const;
+	
 	template<typename T_CQR_TYPE>
 	T_CQR_TYPE fromCellId(uint32_t id) const;
 	
@@ -194,6 +197,17 @@ T_CQR_TYPE CellTextCompleter::regionExclusiveCells(uint32_t storeId) const {
 		return T_CQR_TYPE(m_idxStore.at(cellPtr), m_gh, m_idxStore);
 	}
 	return T_CQR_TYPE();
+}
+
+template<typename T_CQR_TYPE, typename T_ITERATOR>
+T_CQR_TYPE CellTextCompleter::fromCellIds(const T_ITERATOR & begin, const T_ITERATOR & end) const {
+	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
+	if (begin != end) {
+		return T_CQR_TYPE(sserialize::ItemIndex(std::vector<uint32_t>(begin, end)), m_gh, m_idxStore);
+	}
+	else {
+		return T_CQR_TYPE();
+	}
 }
 
 template<typename T_CQR_TYPE>
@@ -319,6 +333,11 @@ public:
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	inline T_CQR_TYPE cqrFromRegionStoreId(uint32_t id) const {
 		return priv()->fromRegionStoreId<T_CQR_TYPE>(id);
+	}
+	
+	template<typename T_CQR_TYPE = sserialize::CellQueryResult, typename T_ITERATOR>
+	inline T_CQR_TYPE cqrFromCellIds(const T_ITERATOR & begin, const T_ITERATOR & end) const {
+		return priv()->fromCellIds<T_CQR_TYPE>(begin, end);
 	}
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
