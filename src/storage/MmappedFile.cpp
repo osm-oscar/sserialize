@@ -70,12 +70,11 @@ bool MmappedFilePrivate::do_open() {
 	m_data = (uint8_t*) ::mmap64(0, m_realSize, mmap_proto, MAP_SHARED, m_fd, 0);
 	
 	if (m_data == MAP_FAILED) {
-		::close(m_fd);
+		if (::close(m_fd) < 0) {
+			throw sserialize::CorruptDataException("sserialize::MmappedFile: " + std::string( ::strerror(errno) ));
+		}
 		return false;
 	}
-	
-	//Bad for performance
-// 	::madvise(m_data, m_realSize, MADV_RANDOM);//TODO:should be part of the interface, not just here
 	
 	return true;
 }
@@ -95,12 +94,12 @@ bool MmappedFilePrivate::do_close() {
 			allOk = do_sync() && allOk;
 		}
 		if (::munmap(m_data, m_realSize) < 0) {
-			::perror("MmappedFilePrivate::do_close()");
+			throw sserialize::CorruptDataException("sserialize::MmappedFile::close: " + std::string( ::strerror(errno) ));
 			allOk = false;
 		}
 	}
-	if (::close(m_fd) == -1) {
-		::perror("MmappedFilePrivate::do_close()");
+	if (::close(m_fd) < 0) {
+		throw sserialize::CorruptDataException("sserialize::MmappedFile::close: " + std::string( ::strerror(errno) ));
 	}
 	m_fd = -1;
 	m_exposedSize = 0;
