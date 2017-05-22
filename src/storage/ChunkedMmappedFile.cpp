@@ -72,9 +72,16 @@ void ChunkedMmappedFile::write(const uint8_t* src, const SizeType destOffset, Si
 	priv()->write(src, destOffset, len);
 }
 
+#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS)
 UByteArrayAdapter ChunkedMmappedFile::dataAdapter() {
 	return UByteArrayAdapter(*this);
 }
+#elif defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS) && defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
+UByteArrayAdapter ChunkedMmappedFile::dataAdapter() {
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous UByteArrayAdapter only.");
+	return UByteArrayAdapter();
+}
+#endif
 
 void ChunkedMmappedFile::setDeleteOnClose(bool deleteOnClose) {
 	priv()->setDeleteOnClose(deleteOnClose);

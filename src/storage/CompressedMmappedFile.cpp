@@ -74,9 +74,16 @@ void CompressedMmappedFile::read(const SizeType offset, uint8_t* dest, SizeType&
 }
 
 
+#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS)
 UByteArrayAdapter CompressedMmappedFile::dataAdapter() {
 	return UByteArrayAdapter(*this);
 }
+#elif defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS) && defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
+UByteArrayAdapter CompressedMmappedFile::dataAdapter() {
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous UByteArrayAdapter only.");
+	return UByteArrayAdapter();
+}
+#endif
 
 void CompressedMmappedFile::setCacheCount(uint32_t count){
 	priv()->setCacheCount(count);

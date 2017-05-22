@@ -21,6 +21,7 @@
 #define BUFFER_SIZE 4096
 
 namespace sserialize {
+namespace UByteArrayAdapterNonContiguous {
 
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateFile::populateCache(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const {
 	SSERIALIZE_CHEAP_ASSERT(len <= m_bufferSize);
@@ -312,4 +313,4 @@ void UByteArrayAdapterPrivateFile::put(UByteArrayAdapter::OffsetType pos, const 
 	updateBufferAfterWrite(pos, src, len);
 }
 
-}//end namespace
+}}//end namespace sserialize::UByteArrayAdapterNonContiguous

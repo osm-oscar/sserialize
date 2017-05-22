@@ -60,7 +60,9 @@ public:
 	void read(const ChunkedMmappedFile::SizeType offset, uint8_t* dest, SizeType& len) const;
 	void write(const uint8_t * src, const SizeType destOffset, SizeType & len);
 	
+	#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 	UByteArrayAdapter dataAdapter();
+	#endif
 
 	void setDeleteOnClose(bool deleteOnClose);
 	void setSyncOnClose(bool syncOnClose);

@@ -1,4 +1,5 @@
 #include <sserialize/containers/GeneralizedTrie/SinglePassTrie.h>
+#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 
 namespace sserialize {
 namespace GeneralizedTrie {
@@ -155,3 +156,5 @@ void SinglePassTrie::createStaticTrie(GeneralizedTrieCreatorConfig& config) {
 }
 
 }}//end namespace
+
+#endif

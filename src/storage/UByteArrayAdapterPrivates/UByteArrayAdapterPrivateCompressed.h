@@ -27,7 +27,8 @@
  */
 
 namespace sserialize {
- 
+namespace UByteArrayAdapterNonContiguous {
+
 class UByteArrayAdapterPrivateCompressed: public UByteArrayAdapterPrivate {
 private:
 	UByteArrayAdapter m_compresseData;
@@ -83,7 +84,13 @@ public:
 	virtual int putVlPackedInt32(uint32_t pos, int32_t value, uint32_t maxLen);
 
 };
-	
-}//end namespace
+
+} //end namespace UByteArrayAdapterNonContiguous
+
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateCompressed;
+#endif
+
+}//end namespace sserialize
 
 #endif

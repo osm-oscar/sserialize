@@ -1,5 +1,4 @@
-#ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
-#define UBYTE_ARRAY_ADAPTER_PRIVATE_COMPRESSED_H
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 #include "UByteArrayAdapterPrivateCompressed.h"
 #ifdef SSERIALIZE_WITH_THREADS
 #include <sserialize/utility/MutexLocker.h>
@@ -26,7 +25,8 @@
  */
 
 namespace sserialize {
- 
+namespace UByteArrayAdapterNonContiguous {
+
 uint32_t UByteArrayAdapterPrivateCompressed::getFreeCacheFrame() {
 	if (m_freeFrameCount > 0) {
 			return m_maxFrameCount-m_freeFrameCount;
@@ -69,5 +69,4 @@ int UByteArrayAdapterPrivateCompressed::putVlPackedUint32(uint32_t pos, uint32_t
 int UByteArrayAdapterPrivateCompressed::putVlPackedPad4Uint32(uint32_t pos, uint32_t value, uint32_t maxLen);
 int UByteArrayAdapterPrivateCompressed::putVlPackedInt32(uint32_t pos, int32_t value, uint32_t maxLen);
 	
-}
-#endif
+}} //end namespace sserialize::UByteArrayAdapterNonContiguous

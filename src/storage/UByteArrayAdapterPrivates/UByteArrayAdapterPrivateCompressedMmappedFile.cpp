@@ -2,6 +2,7 @@
 #include <sserialize/storage/pack_unpack_functions.h>
 
 namespace sserialize {
+namespace UByteArrayAdapterNonContiguous {
 
 UByteArrayAdapterPrivateCompressedMmappedFile::UByteArrayAdapterPrivateCompressedMmappedFile(const CompressedMmappedFile& file) : m_file(file) {}
 UByteArrayAdapterPrivateCompressedMmappedFile::~UByteArrayAdapterPrivateCompressedMmappedFile() {}
@@ -263,4 +264,4 @@ void UByteArrayAdapterPrivateCompressedMmappedFile::put(sserialize::UByteArrayAd
 
 
 
-}//end namespace
+}}//end namespace sserialize::UByteArrayAdapterNonContiguous

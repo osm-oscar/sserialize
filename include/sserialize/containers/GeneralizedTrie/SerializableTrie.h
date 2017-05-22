@@ -1,5 +1,7 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_SERIALIZABLE_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_SERIALIZABLE_TRIE_H
+#include <sserialize/storage/UByteArrayAdapter.h>
+#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 #include <sserialize/containers/GeneralizedTrie/BaseTrie.h>
 #include <sserialize/utility/printers.h>
 
@@ -193,5 +195,5 @@ checkIndexEquality(GeneralizedTrieCreatorConfig /*config*/, sserialize::Static::
 
 }}//end namespace
 
-
+#endif
 #endif

@@ -5,6 +5,7 @@
 #include <array>
 
 namespace sserialize {
+namespace UByteArrayAdapterNonContiguous {
 
 template<typename T_CONTAINER>
 class UByteArrayAdapterPrivateContainer: public UByteArrayAdapterPrivate {
@@ -348,6 +349,12 @@ void UByteArrayAdapterPrivateContainer<T_CONTAINER>::put(UByteArrayAdapter::Offs
 }
 
 
-}
+} //end namespace UByteArrayAdapterNonContiguous
+
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateContainer;
+#endif
+
+} //end namespace sserialize
 
 #endif

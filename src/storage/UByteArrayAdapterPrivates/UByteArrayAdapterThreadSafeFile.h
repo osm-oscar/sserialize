@@ -3,6 +3,7 @@
 #include "UByteArrayAdapterPrivate.h"
 
 namespace sserialize {
+namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateThreadSafeFile: public UByteArrayAdapterPrivate {
 protected:
@@ -79,6 +80,12 @@ public:
 	virtual void put(UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len);
 };
 
-}//end namespace
+}//end namespace UByteArrayAdapterNonContiguous
+
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateThreadSafeFile;
+#endif
+
+} //end namespace sserialize
 
 #endif

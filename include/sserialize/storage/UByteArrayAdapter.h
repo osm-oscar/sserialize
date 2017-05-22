@@ -1,5 +1,18 @@
 #ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
+#if defined(SSERIALIZE_WITH_CONTIGUOUS_UBA_ONLY) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
+	#define SSERIALIZE_UBA_ONLY_CONTIGUOUS
+	#ifdef SSERIALIZE_WITH_CONTIGUOUS_UBA_SOFT_FAIL
+		#define SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
+	#else
+		#undef SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
+	#endif
+	#undef SSERIALIZE_UBA_NON_CONTIGUOUS
+#else
+	#undef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+	#undef SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
+	#define SSERIALIZE_UBA_NON_CONTIGUOUS
+#endif
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
@@ -31,10 +44,27 @@
 namespace sserialize {
 
 class MmappedFile;
-class UByteArrayAdapterPrivate;
+// class UByteArrayAdapterPrivate;
 class ChunkedMmappedFile;
 class CompressedMmappedFile;
 class UByteArrayAdapter;
+
+namespace UByteArrayAdapterOnlyContiguous {
+	class UByteArrayAdapterPrivate;
+}
+
+namespace UByteArrayAdapterNonContiguous {
+	class UByteArrayAdapterPrivate;
+}
+
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivate;
+#else
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivate;
+#endif
+
+
+class UByteArrayAdapterPrivateArray;
 
 namespace detail {
 namespace __UByteArrayAdapter {
@@ -42,17 +72,24 @@ namespace __UByteArrayAdapter {
 	class MemoryView final {
 		friend class sserialize::UByteArrayAdapter;
 	public:
+		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+		typedef sserialize::UByteArrayAdapterPrivateArray MyPrivate;
+		#else
+		typedef sserialize::UByteArrayAdapterPrivate MyPrivate;
+		#endif
+		typedef RCPtrWrapper<MyPrivate> MyPrivatePtr;
+	public:
 		typedef const uint8_t * const_iterator;
 		typedef uint8_t * iterator;
 	private:
 		class MemoryViewImp final: public sserialize::RefCountObject {
-			RCPtrWrapper<UByteArrayAdapterPrivate> m_dataBase;
+			MyPrivatePtr m_dataBase;
 			uint8_t * m_d;
 			OffsetType m_off;
 			OffsetType m_size;
 			bool m_copy;
 		public:
-			MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base);
+			MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, MyPrivate * base);
 			~MemoryViewImp();
 			UByteArrayAdapter dataBase() const;
 			inline uint8_t * get() { return m_d; }
@@ -62,9 +99,9 @@ namespace __UByteArrayAdapter {
 			bool flush(OffsetType len, OffsetType off);
 		};
 	private:
-		RCPtrWrapper<MemoryViewImp> m_priv;
+		sserialize::RCPtrWrapper<MemoryViewImp> m_priv;
 		///@param isCopy: if true, then ptr gets deleted by delete[]
-		MemoryView(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base) : m_priv(new MemoryViewImp(ptr, off, size, isCopy, base)) {}
+		MemoryView(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, MyPrivate * base) : m_priv(new MemoryViewImp(ptr, off, size, isCopy, base)) {}
 	public:
 		MemoryView() {}
 		~MemoryView() {}
@@ -112,6 +149,13 @@ namespace __UByteArrayAdapter {
 
 
 class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, sserialize::SignedOffsetType> {
+public:
+	#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+	typedef sserialize::UByteArrayAdapterPrivateArray MyPrivate;
+	#else
+	typedef sserialize::UByteArrayAdapterPrivate MyPrivate;
+	#endif
+	typedef RCPtrWrapper<MyPrivate> MyPrivatePtr;
 public:
 	typedef sserialize::OffsetType OffsetType;
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
@@ -184,19 +228,20 @@ public://constructors
 	/** @param addOffset add offset to beginning of the array, put/get ptrs stay where they are or are clipped */
 	UByteArrayAdapter(const UByteArrayAdapter & adapter, OffsetType addOffset, OffsetType smallerLen);
 	UByteArrayAdapter(uint8_t * data, OffsetType offSet, OffsetType len);
-	UByteArrayAdapter(std::deque<uint8_t> * data, OffsetType offSet, OffsetType len);
-	UByteArrayAdapter(std::deque<uint8_t> * data);
-	UByteArrayAdapter(std::deque<uint8_t> * data, bool deleteOnClose);
 	UByteArrayAdapter(std::vector<uint8_t> * data, OffsetType offSet, OffsetType len);
 	UByteArrayAdapter(std::vector<uint8_t> * data);
 	UByteArrayAdapter(std::vector<uint8_t> * data, bool deleteOnClose);
-	
 	UByteArrayAdapter(const sserialize::MmappedFile& file, OffsetType offSet, OffsetType len);
 	UByteArrayAdapter(const sserialize::MmappedFile& file);
-	UByteArrayAdapter(const ChunkedMmappedFile & file);
-	UByteArrayAdapter(const CompressedMmappedFile & file);
 	UByteArrayAdapter(const sserialize::MmappedMemory<uint8_t> & mem);
 	UByteArrayAdapter(const MemoryView & mem);
+#if defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL) || defined(SSERIALIZE_UBA_NON_CONTIGUOUS)
+	UByteArrayAdapter(std::deque<uint8_t> * data, OffsetType offSet, OffsetType len);
+	UByteArrayAdapter(std::deque<uint8_t> * data);
+	UByteArrayAdapter(std::deque<uint8_t> * data, bool deleteOnClose);
+	UByteArrayAdapter(const ChunkedMmappedFile & file);
+	UByteArrayAdapter(const CompressedMmappedFile & file);
+#endif
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
 	void swap(UByteArrayAdapter & other);
@@ -421,7 +466,7 @@ private:
 	friend class detail::__UByteArrayAdapter::MemoryView;
 private:
 	/** Data is at offset, not at base address **/
-	RCPtrWrapper<UByteArrayAdapterPrivate> m_priv;
+	MyPrivatePtr m_priv;
 	OffsetType m_offSet;
 	OffsetType m_len;
 	OffsetType m_getPtr;
@@ -432,10 +477,10 @@ private:
 	static std::string m_logFilePrefix;
 	
 private:
-	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv);
-	explicit UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len);
+	explicit UByteArrayAdapter(const MyPrivatePtr & priv);
+	explicit UByteArrayAdapter(const MyPrivatePtr & priv, OffsetType offSet, OffsetType len);
 	///base ctor which sets all member variables, default init to 0
-	explicit UByteArrayAdapter(UByteArrayAdapterPrivate * priv, OffsetType offSet = 0, OffsetType len = 0, OffsetType getPtr = 0, OffsetType putPtr = 0);
+	explicit UByteArrayAdapter(MyPrivate * priv, OffsetType offSet = 0, OffsetType len = 0, OffsetType getPtr = 0, OffsetType putPtr = 0);
 	bool resizeForPush(OffsetType pos, OffsetType length);
 // 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
 };

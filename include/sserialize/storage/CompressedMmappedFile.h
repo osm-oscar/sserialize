@@ -60,7 +60,9 @@ public:
 	uint8_t * data(const SizeType offset);
 	void read(const SizeType offset, uint8_t* dest, SizeType & len) const;
 	
+	#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 	UByteArrayAdapter dataAdapter();
+	#endif
 	void setCacheCount(uint32_t count);
 	
 	/** Creates a CompressedMmappedFile

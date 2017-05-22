@@ -1,5 +1,7 @@
 #ifndef SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
 #define SSERIALIZE_GENERALIZED_TRIE_SINGLE_PASS_TRIE_H
+#include <sserialize/storage/UByteArrayAdapter.h>
+#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 #include <sserialize/containers/GeneralizedTrie/SerializableTrie.h>
 #include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/utility/log.h>
@@ -282,4 +284,5 @@ serializeTrieBottomUp(GeneralizedTrieCreatorConfig & config) {
 
 }}//end namespace
 
+#endif
 #endif

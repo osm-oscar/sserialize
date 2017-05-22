@@ -1,8 +1,22 @@
 #ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_EMPTY_H
 #define UBYTE_ARRAY_ADAPTER_PRIVATE_EMPTY_H
 #include "UByteArrayAdapterPrivate.h"
+#include "UByteArrayAdapterPrivateArray.h"
 
 namespace sserialize {
+namespace UByteArrayAdapterOnlyContiguous {
+
+class UByteArrayAdapterPrivateEmpty: public UByteArrayAdapterPrivateArray {
+	uint8_t m_default;
+public:
+	UByteArrayAdapterPrivateEmpty() : UByteArrayAdapterPrivateArray(&m_default), m_default(0) {}
+	virtual ~UByteArrayAdapterPrivateEmpty() {}
+	virtual UByteArrayAdapter::OffsetType size() const { return 0; }
+};
+
+} //end namespace UByteArrayAdapterOnlyContiguous
+
+namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateEmpty: public UByteArrayAdapterPrivate {
 	uint8_t m_default;
@@ -64,6 +78,14 @@ public:
 	virtual void put(UByteArrayAdapter::OffsetType /*pos*/, const uint8_t * /*src*/, UByteArrayAdapter::OffsetType /*len*/) {};
 };
 
-}//end namespace
+} //end namespace UByteArrayAdapterNonContiguous
+
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivateEmpty;
+#else
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateEmpty;
+#endif
+
+}//end namespace sserialize
 
 #endif

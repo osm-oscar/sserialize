@@ -17,6 +17,7 @@
 #include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
+namespace UByteArrayAdapterNonContiguous {
 
 UByteArrayAdapterPrivateThreadSafeFile::UByteArrayAdapterPrivateThreadSafeFile() :
 UByteArrayAdapterPrivate(),
@@ -282,4 +283,4 @@ void UByteArrayAdapterPrivateThreadSafeFile::put(UByteArrayAdapter::OffsetType p
 	FileHandler::pwrite(m_fd, src, len, pos);
 }
 
-}//end namespace
+}}//end namespace

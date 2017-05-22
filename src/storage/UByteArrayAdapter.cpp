@@ -15,7 +15,7 @@ std::string UByteArrayAdapter::m_logFilePrefix = TEMP_FILE_PREFIX;
 namespace detail {
 namespace __UByteArrayAdapter {
 
-MemoryView::MemoryViewImp::MemoryViewImp(uint8_t * ptr, OffsetType off, OffsetType size, bool isCopy, UByteArrayAdapterPrivate * base) :
+MemoryView::MemoryViewImp::MemoryViewImp(uint8_t* ptr, sserialize::OffsetType off, sserialize::OffsetType size, bool isCopy, sserialize::detail::__UByteArrayAdapter::MemoryView::MyPrivate* base) :
 m_dataBase(base),
 m_d(ptr),
 m_off(off),
@@ -52,12 +52,12 @@ sserialize::UByteArrayAdapter MemoryView::dataBase() const {
 
 //CTORS
 
-UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv) :
+UByteArrayAdapter::UByteArrayAdapter(const MyPrivatePtr & priv) :
 UByteArrayAdapter(priv, 0, priv->size())
 {}
 
-UByteArrayAdapter::UByteArrayAdapter(const RCPtrWrapper<UByteArrayAdapterPrivate> & priv, OffsetType offSet, OffsetType len) :
-UByteArrayAdapter(static_cast<sserialize::UByteArrayAdapterPrivate*>(0), offSet, len)
+UByteArrayAdapter::UByteArrayAdapter(const MyPrivatePtr & priv, OffsetType offSet, OffsetType len) :
+UByteArrayAdapter(static_cast<MyPrivate*>(0), offSet, len)
 {
 	if (!priv.get()) {
 		m_offSet = 0;
@@ -68,7 +68,7 @@ UByteArrayAdapter(static_cast<sserialize::UByteArrayAdapterPrivate*>(0), offSet,
 	}
 }
 
-UByteArrayAdapter::UByteArrayAdapter(UByteArrayAdapterPrivate * priv, OffsetType offSet, OffsetType len, OffsetType getPtr, OffsetType putPtr) :
+UByteArrayAdapter::UByteArrayAdapter(MyPrivate * priv, OffsetType offSet, OffsetType len, OffsetType getPtr, OffsetType putPtr) :
 m_priv(priv),
 m_offSet(offSet),
 m_len(len),
@@ -84,20 +84,6 @@ UByteArrayAdapter(new UByteArrayAdapterPrivateEmpty())
 UByteArrayAdapter::UByteArrayAdapter(uint8_t * data, OffsetType offSet, OffsetType len) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateArray(data), offSet, len)
 {}
-
-UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, OffsetType offSet, OffsetType len) :
-UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), offSet, len)
-{}
-
-UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data) :
-UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), 0, data->size())
-{}
-
-UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, bool deleteOnClose) :
-UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), 0, data->size())
-{
-	m_priv->setDeleteOnClose(deleteOnClose);
-}
 
 UByteArrayAdapter::UByteArrayAdapter(std::vector< uint8_t >* data, OffsetType offSet, OffsetType len) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateVector(data), offSet, len)
@@ -217,14 +203,6 @@ UByteArrayAdapter::UByteArrayAdapter(const MmappedFile & file) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateMmappedFile(file), 0, file.size())
 {}
 
-UByteArrayAdapter::UByteArrayAdapter(const ChunkedMmappedFile & file) :
-UByteArrayAdapter(new UByteArrayAdapterPrivateChunkedMmappedFile(file), 0, file.size())
-{}
-
-UByteArrayAdapter::UByteArrayAdapter(const CompressedMmappedFile & file) :
-UByteArrayAdapter(new UByteArrayAdapterPrivateCompressedMmappedFile(file), 0, file.size())
-{}
-
 UByteArrayAdapter::UByteArrayAdapter(const MmappedMemory<uint8_t> & mem) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateMM(mem), 0, mem.size())
 {}
@@ -232,6 +210,62 @@ UByteArrayAdapter(new UByteArrayAdapterPrivateMM(mem), 0, mem.size())
 UByteArrayAdapter::UByteArrayAdapter(const MemoryView & mem) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateMV(mem), 0, mem.size())
 {}
+
+#ifdef SSERIALIZE_UBA_NON_CONTIGUOUS
+UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, OffsetType offSet, OffsetType len) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), offSet, len)
+{}
+
+UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), 0, data->size())
+{}
+
+UByteArrayAdapter::UByteArrayAdapter(std::deque< uint8_t >* data, bool deleteOnClose) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateDeque(data), 0, data->size())
+{
+	m_priv->setDeleteOnClose(deleteOnClose);
+}
+
+UByteArrayAdapter::UByteArrayAdapter(const ChunkedMmappedFile & file) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateChunkedMmappedFile(file), 0, file.size())
+{}
+
+UByteArrayAdapter::UByteArrayAdapter(const CompressedMmappedFile & file) :
+UByteArrayAdapter(new UByteArrayAdapterPrivateCompressedMmappedFile(file), 0, file.size())
+{}
+#endif
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
+UByteArrayAdapter::UByteArrayAdapter(std::deque<uint8_t> * data, OffsetType offSet, OffsetType len) :
+UByteArrayAdapter()
+{
+	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+}
+
+UByteArrayAdapter::UByteArrayAdapter(std::deque<uint8_t> * data) :
+UByteArrayAdapter()
+{
+	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+}
+
+UByteArrayAdapter::UByteArrayAdapter(std::deque<uint8_t> * data, bool deleteOnClose) :
+UByteArrayAdapter()
+{
+	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+}
+
+UByteArrayAdapter::UByteArrayAdapter(const ChunkedMmappedFile & file) :
+UByteArrayAdapter()
+{
+	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+}
+
+UByteArrayAdapter::UByteArrayAdapter(const CompressedMmappedFile & file) :
+UByteArrayAdapter()
+{
+	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+}
+#endif
+
 
 UByteArrayAdapter::~UByteArrayAdapter() {}
 
@@ -888,7 +922,7 @@ UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool dele
 		sserialize::err("UByteArrayAdapter::writeToDisk", "Fatal: could not open file");
 		return UByteArrayAdapter();
 	}
-	RCPtrWrapper<UByteArrayAdapterPrivate> priv(new UByteArrayAdapterPrivateMmappedFile(tempFile));
+	MyPrivatePtr priv(new UByteArrayAdapterPrivateMmappedFile(tempFile));
 	priv->setDeleteOnClose(deleteOnClose);
 	UByteArrayAdapter adap(priv);
 	adap.m_len = m_len;
@@ -904,7 +938,7 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 	if (size == 0)
 		size = 1;
 
-	sserialize::RCPtrWrapper<UByteArrayAdapterPrivate> priv;
+	MyPrivatePtr priv;
 	switch(mmt) {
 	case sserialize::MM_FILEBASED:
 		{
@@ -952,7 +986,7 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 		return UByteArrayAdapter();
 	}
 	tempFile.setSyncOnClose(true);
-	sserialize::RCPtrWrapper<UByteArrayAdapterPrivate> priv( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
+	MyPrivatePtr priv( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
 	priv->setDeleteOnClose(false);
 	UByteArrayAdapter adap(priv);
 	adap.m_len = size;
@@ -965,8 +999,11 @@ UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writ
 		#ifndef SSERIALIZE_WITH_THREADS
 			sserialize::warn << "File size exceeds maximum full map size and thread support is disabled. Access to data is NOT thread-safe!" << Log::endl;
 		#endif
+		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+		throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
+		#else
 		if (chunkSizeExponent == 0) {
-			return UByteArrayAdapter( sserialize::RCPtrWrapper<UByteArrayAdapterPrivate>(
+			return UByteArrayAdapter( MyPrivatePtr(
 			#ifdef SSERIALIZE_WITH_THREADS
 				new UByteArrayAdapterPrivateThreadSafeFile(fileName, writable)
 			#else
@@ -983,6 +1020,7 @@ UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writ
 				throw sserialize::CorruptDataException("Could not open file " + fileName);
 			}
 		}
+		#endif
 	}
 	else {
 		MmappedFile file(fileName, writable);
@@ -997,6 +1035,9 @@ UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writ
 
 UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool compressed, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
 	if (compressed) {
+		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+		throw sserialize::UnsupportedFeatureException("File is compressed and sserialize was compiled with contiguous UByteArrayAdapter only.");
+		#else
 		CompressedMmappedFile file(fileName);
 		if (file.open()) {
 			return UByteArrayAdapter(file);
@@ -1004,6 +1045,7 @@ UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool c
 		else {
 			throw sserialize::CorruptDataException("Could not open file " + fileName);
 		}
+		#endif
 	}
 	else {
 		return open(fileName, false, maxFullMapSize, chunkSizeExponent);

@@ -4,7 +4,14 @@
 #include <deque>
 
 namespace sserialize {
+namespace UByteArrayAdapterNonContiguous {
 	typedef UByteArrayAdapterPrivateContainer< std::deque<uint8_t> > UByteArrayAdapterPrivateDeque;
-}
+} //end namespace UByteArrayAdapterNonContiguous
+
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateDeque;
+#endif
+
+} //end sserialize
 
 #endif

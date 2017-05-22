@@ -3,7 +3,41 @@
 #include <stdint.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+	#define SSERIALIZE_UBA_CONTIG_CFG_VIRTUAL
+	#define SSERIALIZE_UBA_CONTIG_CFG_OVERRIDE
+#else
+	#define SSERIALIZE_UBA_CONTIG_CFG_VIRTUAL virtual
+	#define SSERIALIZE_UBA_CONTIG_CFG_OVERRIDE override
+#endif
+
 namespace sserialize {
+namespace UByteArrayAdapterOnlyContiguous {
+
+class UByteArrayAdapterPrivate: public RefCountObject {
+protected:
+	bool m_deleteOnClose;
+public:
+	UByteArrayAdapterPrivate() : m_deleteOnClose(false) {}
+	virtual ~UByteArrayAdapterPrivate() {}
+	virtual UByteArrayAdapter::OffsetType size() const = 0;
+
+//support operations
+	/** Shrink data to size bytes */
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) = 0;
+	/** grow data to at least! size bytes */
+	virtual bool growStorage(UByteArrayAdapter::OffsetType size) = 0;
+
+//advise api
+	virtual void advice(UByteArrayAdapter::AdviseType, UByteArrayAdapter::SizeType) {}
+
+//manipulators
+	virtual void setDeleteOnClose(bool del) { m_deleteOnClose = del;}
+};
+
+} //end namespace UByteArrayAdapterOnlyContiguous
+
+namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivate: public RefCountObject {
 protected:
@@ -76,6 +110,14 @@ public:
 	
 	virtual void put(UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len) = 0;
 };
+
+} //end namespace UByteArrayAdapterNonContiguous
+
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivate;
+#else
+using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivate;
+#endif
 
 }//end namespace
 
