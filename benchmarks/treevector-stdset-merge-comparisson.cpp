@@ -243,7 +243,7 @@ TestResult bench(uint32_t bucketCount, uint32_t bucketFillCount, uint32_t testCo
 	if (testSelect & 0x20) {
 		reglineItemIndexBuckets.reserve(bucketCount);
 		for(size_t i = 0; i < bucketCount; i++) {
-			std::deque<uint8_t> * dest = new std::deque<uint8_t>();
+			std::vector<uint8_t> * dest = new std::vector<uint8_t>();
 			sserialize::ItemIndexPrivateRegLine::create(buckets[i], *dest, -1, true);
 			reglineItemIndexBuckets.push_back( sserialize::ItemIndex(sserialize::UByteArrayAdapter(dest, true), sserialize::ItemIndex::T_REGLINE) );
 		}

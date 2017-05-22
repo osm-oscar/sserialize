@@ -32,8 +32,8 @@ protected:
 			m_dbIdRealIdMap[ db.insert(items()[i].strs, items()[i]) ] = items()[i].id;
 		}
 		
-		UByteArrayAdapter stableAdap(new std::deque<uint8_t>(), true);
-		UByteArrayAdapter sdbAdap(new std::deque<uint8_t>(), true);
+		UByteArrayAdapter stableAdap(new std::vector<uint8_t>(), true);
+		UByteArrayAdapter sdbAdap(new std::vector<uint8_t>(), true);
 		db.createStaticStringTable(stableAdap);
 		sdbAdap << db;
 		

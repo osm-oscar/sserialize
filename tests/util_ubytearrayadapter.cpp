@@ -90,7 +90,7 @@ bool testStringsDataStreaming(std::deque<std::string> & strings, UByteArrayAdapt
 }
 
 bool fillAndTestStrings(uint32_t maxStrLen, uint32_t strCount) {
-	std::deque<uint8_t> data(maxStrLen*strCount, 0);
+	std::vector<uint8_t> data(maxStrLen*strCount, 0);
 	UByteArrayAdapter adap(&data);
 
 	std::deque<std::string> strs(createStrings(maxStrLen, strCount));
@@ -100,7 +100,7 @@ bool fillAndTestStrings(uint32_t maxStrLen, uint32_t strCount) {
 }
 
 bool fillAndTestStringsStreaming(uint32_t maxStrLen, uint32_t strCount) {
-	std::deque<uint8_t> data(maxStrLen*strCount, 0);
+	std::vector<uint8_t> data(maxStrLen*strCount, 0);
 	UByteArrayAdapter adap(&data);
 
 	std::deque<std::string> strs(createStrings(maxStrLen, strCount));
@@ -111,7 +111,7 @@ bool fillAndTestStringsStreaming(uint32_t maxStrLen, uint32_t strCount) {
 }
 
 bool fillAndTestStringsData(uint32_t maxStrLen, uint32_t strCount) {
-	std::deque<uint8_t> data(maxStrLen*strCount, 0);
+	std::vector<uint8_t> data(maxStrLen*strCount, 0);
 	UByteArrayAdapter adap(&data);
 
 	std::deque<std::string> strs(createStrings(maxStrLen, strCount));
@@ -121,7 +121,7 @@ bool fillAndTestStringsData(uint32_t maxStrLen, uint32_t strCount) {
 }
 
 bool fillAndTestStringsDataStreaming(uint32_t maxStrLen, uint32_t strCount) {
-	std::deque<uint8_t> data(maxStrLen*strCount, 0);
+	std::vector<uint8_t> data(maxStrLen*strCount, 0);
 	UByteArrayAdapter adap(&data);
 
 	std::deque<std::string> strs(createStrings(maxStrLen, strCount));
@@ -132,7 +132,7 @@ bool fillAndTestStringsDataStreaming(uint32_t maxStrLen, uint32_t strCount) {
 }
 
 bool fillStreamingAndTestStrings(uint32_t maxStrLen, uint32_t strCount) {
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adap(&data);
 
 	std::deque<std::string> strs(createStrings(maxStrLen, strCount));
@@ -143,7 +143,7 @@ bool fillStreamingAndTestStrings(uint32_t maxStrLen, uint32_t strCount) {
 }
 
 bool fillStreamAndTestStringsStreaming(uint32_t maxStrLen, uint32_t strCount) {
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adap(&data);
 
 	std::deque<std::string> strs(createStrings(maxStrLen, strCount));
@@ -280,14 +280,14 @@ bool fillAndTestFixedSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapter 
 }
 
 bool fillAndTestStreamingApi(std::deque<uint32_t> & realNumbers) {
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adapter(&data);
 	fillFixedSizeStreaming(realNumbers, adapter);
 	return testFixedSizeStreaming(realNumbers, adapter);
 }
 
 bool fillFixedSizeStreamingAndTestFixedSize(std::deque<uint32_t> & realNumbers) {
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adapter(&data);
 	fillFixedSizeStreaming(realNumbers, adapter);
 	return testFixedSize(realNumbers, adapter);
@@ -359,7 +359,7 @@ bool fillAndTestVariableSize(std::deque<uint32_t> & realNumbers, UByteArrayAdapt
 }
 
 bool fillStreamingAndTestVariableSizeStreaming(std::deque<uint32_t> & realNumbers) {
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adap(&data);
 	if (!fillVariableSizeStreaming(realNumbers, adap))
 		return false;
@@ -447,7 +447,7 @@ bool fillAndTestVariableSizeNegativeStreaming(std::deque<uint32_t> & realNumbers
 }
 
 bool fillStreamingAndTestVariableSizeNegativeStreaming(std::deque<uint32_t> & realNumbers) {
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adapter(&data);
 	if (!fillVariableSizeNegativeStreaming(realNumbers, adapter))
 		return false;
