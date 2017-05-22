@@ -29,7 +29,7 @@ public:
 	virtual bool growStorage(UByteArrayAdapter::OffsetType size) = 0;
 
 //advise api
-	virtual void advice(UByteArrayAdapter::AdviseType, UByteArrayAdapter::SizeType) {}
+	virtual void advice(UByteArrayAdapter::AdviseType /*at*/, UByteArrayAdapter::SizeType /*begin*/, UByteArrayAdapter::SizeType /*end*/) {}
 
 //manipulators
 	virtual void setDeleteOnClose(bool del) { m_deleteOnClose = del;}
@@ -56,7 +56,7 @@ public:
 	virtual bool growStorage(UByteArrayAdapter::OffsetType size) = 0;
 
 //advise api
-	virtual void advice(UByteArrayAdapter::AdviseType, UByteArrayAdapter::SizeType) {}
+	virtual void advice(UByteArrayAdapter::AdviseType /*at*/, UByteArrayAdapter::SizeType /*begin*/, UByteArrayAdapter::SizeType /*end*/) {}
 
 //manipulators
 	virtual void setDeleteOnClose(bool del) { m_deleteOnClose = del;}

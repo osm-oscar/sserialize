@@ -10,6 +10,7 @@ class UByteArrayAdapterPrivateMmappedFile: public UByteArrayAdapterPrivateArray 
 public:
 	UByteArrayAdapterPrivateMmappedFile(MmappedFile file);
 	virtual ~UByteArrayAdapterPrivateMmappedFile();
+	virtual void advice(UByteArrayAdapter::AdviseType /*at*/, UByteArrayAdapter::SizeType /*begin*/, UByteArrayAdapter::SizeType /*end*/) override;
 	virtual UByteArrayAdapter::OffsetType size() const;
 	virtual void setDeleteOnClose(bool del);
 	/** Shrink data to size bytes */

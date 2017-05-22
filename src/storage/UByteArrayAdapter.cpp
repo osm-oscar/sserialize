@@ -287,6 +287,13 @@ void UByteArrayAdapter::swap(UByteArrayAdapter& other) {
 	swap(m_putPtr, other.m_putPtr);
 }
 
+void UByteArrayAdapter::advice(UByteArrayAdapter::AdviseType type, UByteArrayAdapter::SizeType count) {
+	if (count > m_len) {
+		count = m_len;
+	}
+	m_priv->advice(type, m_offSet, count);
+}
+
 void UByteArrayAdapter::zero() {
 	uint32_t bufLen = 1024*1024;
 	uint8_t * zeros = new uint8_t[bufLen];
