@@ -7,24 +7,15 @@ namespace sserialize {
 class UByteArrayAdapterPrivateMV: public UByteArrayAdapterPrivateArray {
 	UByteArrayAdapter::MemoryView m_data;
 public:
-	UByteArrayAdapterPrivateMV(const UByteArrayAdapter::MemoryView & d) : UByteArrayAdapterPrivateArray(0), m_data(d) {
-		if (m_data.size()) {
-			this->data() = m_data.data();
-		}
-	}
-	virtual ~UByteArrayAdapterPrivateMV() {}
+	UByteArrayAdapterPrivateMV(const UByteArrayAdapter::MemoryView & d);
+	virtual ~UByteArrayAdapterPrivateMV();
 	
-	virtual UByteArrayAdapter::OffsetType size() const override { return m_data.size(); }
+	virtual UByteArrayAdapter::OffsetType size() const override;
 	
-	virtual void setDeleteOnClose(bool /*del*/) override {}
+	virtual void setDeleteOnClose(bool /*del*/) override;
 
-	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType /*size*/) override {
-		return false;
-	}
-
-	virtual bool growStorage(UByteArrayAdapter::OffsetType /*size*/) override {
-		return false;
-	}
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType /*size*/) override;
+	virtual bool growStorage(UByteArrayAdapter::OffsetType /*size*/) override;
 };
 
 }

@@ -97,6 +97,9 @@ set(STORAGE_SOURCES_CPP
 	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateMmappedFile.cpp
 	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateChunkedMmappedFile.cpp
 	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateCompressedMmappedFile.cpp
+	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterPrivateVector.cpp
+	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterMM.cpp
+	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterMV.cpp
 	src/storage/FileHandler.cpp
 )
 
