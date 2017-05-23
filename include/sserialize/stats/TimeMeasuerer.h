@@ -57,6 +57,10 @@ public:
 	inline long elapsedMinutes() {
 		return elapsedSeconds()/60;
 	}
+	
+	inline void reset() {
+		m_begin = m_end;
+	}
 };
 
 std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm);
