@@ -25,11 +25,44 @@ public:
 			delete this;
 		}
 	}
-
 	inline RCBaseType rc() const { return m_rc; }
 private:
 	std::atomic<RCBaseType> m_rc;
 };
+
+class RefCountObjectWithDisable: public sserialize::RefCountObject {
+public:
+	RefCountObjectWithDisable(const RefCountObjectWithDisable & other) = delete;
+	RefCountObjectWithDisable & operator=(const RefCountObjectWithDisable & other) = delete;
+	RefCountObjectWithDisable() : m_enabled(true) {}
+	virtual ~RefCountObjectWithDisable() {}
+
+	inline void rcInc() {
+		if (m_enabled) {
+			RefCountObject::rcInc();
+		}
+	}
+	inline void rcDec() {
+		if (m_enabled) {
+			RefCountObject::rcDec();
+		}
+	}
+	inline bool disableRc() {
+		if (RefCountObject::rc() == 1) {
+			m_enabled = false;
+			return true;
+		}
+		return false;
+	}
+	inline void enableRc() {
+		SSERIALIZE_CHEAP_ASSERT(!m_enabled);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(RefCountObject::rc(), 1);
+		m_enabled = true;
+	}
+private:
+	bool m_enabled;
+};
+
 
 template<typename RCObj>
 class RCPtrWrapper;
