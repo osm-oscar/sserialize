@@ -18,10 +18,10 @@ public:
 	virtual ~RefCountObject() {}
 
 	inline void rcReset() { m_rc = 0; }
-	inline void rcInc() { ++m_rc; }
+	inline void rcInc() { m_rc.fetch_add(1, std::memory_order_relaxed); }
 	inline void rcDec() {
 		SSERIALIZE_CHEAP_ASSERT(m_rc);
-		if (m_rc.fetch_sub(1) == 1) { //check if we are the last
+		if (m_rc.fetch_sub(1, std:: memory_order_acq_rel) == 1) { //check if we are the last
 			delete this;
 		}
 	}
