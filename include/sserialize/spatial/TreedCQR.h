@@ -66,8 +66,8 @@ public:
 	
 	explicit inline operator sserialize::CellQueryResult() const { return toCQR(); }
 	
-	sserialize::CellQueryResult toCQR(uint32_t threadCount = 1) const;
-	sserialize::CellQueryResult toCQR(std::function<bool(std::size_t)> progressFunction, uint32_t threadCount = 1) const;
+	sserialize::CellQueryResult toCQR(uint32_t threadCount = 1, bool keepEmpty = false) const;
+	sserialize::CellQueryResult toCQR(std::function<bool(std::size_t)> progressFunction, uint32_t threadCount = 1, bool keepEmpty = false) const;
 	void dump(std::ostream & out) const;
 	void dump() const;
 };

@@ -74,6 +74,7 @@ public:
 	CellQueryResult * diff(const CellQueryResult * other) const;
 	CellQueryResult * symDiff(const CellQueryResult * other) const;
 	CellQueryResult * allToFull() const;
+	CellQueryResult * removeEmpty(uint32_t realCellCount = 0) const;
 	bool selfCheck();
 };
 

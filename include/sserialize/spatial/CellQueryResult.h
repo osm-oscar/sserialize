@@ -108,6 +108,7 @@ public:
 	CellQueryResult operator-(const CellQueryResult & other) const;
 	CellQueryResult operator^(const CellQueryResult & other) const;
 	CellQueryResult allToFull() const;
+	CellQueryResult removeEmpty() const;
 	
 	bool operator!=(const CellQueryResult & other) const;
 	bool operator==(const CellQueryResult & other) const;

@@ -118,7 +118,7 @@ public:
 	///@pf progress function pf(uint32_t numFinishedCells, uint32_t currentResultCellCount)
 	///iff threadCount > 1 => pf must be thread-safe
 	template<typename T_PROGRESS_FUNCION>
-	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf, uint32_t threadCount) const;
+	sserialize::detail::CellQueryResult * toCQR(T_PROGRESS_FUNCION pf, uint32_t threadCount, bool keepEmpty) const;
 };
 
 template<typename T_PMITEMSPTR_IT>
@@ -156,7 +156,7 @@ m_hasFetchedNodes(false)
 }
 
 template<typename T_PROGRESS_FUNCION>
-sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, uint32_t threadCount) const {
+sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, uint32_t threadCount, bool keepEmpty) const {
 	if (!threadCount) {
 		threadCount = std::thread::hardware_concurrency();
 	}
@@ -233,35 +233,14 @@ sserialize::detail::CellQueryResult *  TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf,
 			threads[i].join();
 		}
 		//check if we have to copy the stuff
-		if (state.emptyCellCount.load() == 0) {
+		if (keepEmpty || state.emptyCellCount.load() == 0) {
 			return state.dest;
 		}
-		//now copy the real stuff
-		{
-			detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore);
-			detail::CellQueryResult & r = *rPtr;
-			
+		else {
 			SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(state.dest->cellCount(), state.emptyCellCount);
-			
 			uint32_t realCellCount = state.dest->cellCount()-state.emptyCellCount;
 			
-			r.m_desc.reserve(realCellCount);
-			r.m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * realCellCount);
-			
-			for(uint32_t i(0), s(state.dest->cellCount()); i < s; ++i) {
-				const detail::CellQueryResult::CellDesc & cd = state.dest->m_desc[i];
-				if (cd.fullMatch) {
-					r.m_desc.emplace_back(cd);
-				}
-				else if (!cd.fetched && state.dest->m_idx[i].idxPtr != 0) { //remove empty indices
-					r.m_idx[r.m_desc.size()].idxPtr = state.dest->m_idx[i].idxPtr;//this has to come first due to the usage of m_desc.size()
-					r.m_desc.emplace_back(cd);
-				}
-				else if (cd.fetched) {
-					r.uncheckedSet((uint32_t)r.m_desc.size(), state.dest->m_idx[i].idx);
-					r.m_desc.emplace_back(cd);//this has to come first due to the usage of m_desc.size()
-				}
-			}
+			detail::CellQueryResult * rPtr = state.dest->removeEmpty(realCellCount);
 			//delete old cqr
 			delete state.dest;
 			

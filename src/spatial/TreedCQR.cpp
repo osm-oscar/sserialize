@@ -119,12 +119,12 @@ void TreedCellQueryResult::dump() const {
 	std::cout << std::endl;
 }
 
-sserialize::CellQueryResult TreedCellQueryResult::toCQR(uint32_t threadCount) const {
-	return CellQueryResult( m_priv->toCQR([](std::size_t, std::size_t) { return true; }, threadCount) );
+sserialize::CellQueryResult TreedCellQueryResult::toCQR(uint32_t threadCount, bool keepEmpty) const {
+	return CellQueryResult( m_priv->toCQR([](std::size_t, std::size_t) { return true; }, threadCount, keepEmpty) );
 }
 
-sserialize::CellQueryResult TreedCellQueryResult::toCQR(std::function<bool(std::size_t)> progressFunction, uint32_t threadCount) const {
-	return CellQueryResult( m_priv->toCQR([&progressFunction](std::size_t progress, std::size_t) { return progressFunction(progress); }, threadCount) );
+sserialize::CellQueryResult TreedCellQueryResult::toCQR(std::function<bool(std::size_t)> progressFunction, uint32_t threadCount, bool keepEmpty) const {
+	return CellQueryResult( m_priv->toCQR([&progressFunction](std::size_t progress, std::size_t) { return progressFunction(progress); }, threadCount, keepEmpty) );
 }
 
 std::ostream& operator<<(std::ostream& out, const TreedCellQueryResult& src) {
