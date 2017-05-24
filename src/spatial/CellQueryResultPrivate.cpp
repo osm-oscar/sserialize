@@ -494,19 +494,24 @@ CellQueryResult * CellQueryResult::allToFull() const {
 	return rPtr;
 }
 
-CellQueryResult * CellQueryResult::removeEmpty(uint32_t realCellCount) const {
+CellQueryResult * CellQueryResult::removeEmpty(uint32_t emptyCellCount) const {
 	detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore);
 	detail::CellQueryResult & r = *rPtr;
 	
-	if (!realCellCount) {
+	if (emptyCellCount > cellCount()) {
+		emptyCellCount = 0;
+	}
+	
+	if (!emptyCellCount) {
 		for(uint32_t i(0), s(cellCount()); i < s; ++i) {
 			const CellDesc & cd = m_desc[i];
 			if ((!cd.fullMatch && idxId(i) == 0) || (cd.fetched && idxSize(i) == 0)) {
-				++realCellCount;
+				++emptyCellCount;
 			}
 		}
 	}
 	
+	uint32_t realCellCount = cellCount() - emptyCellCount;
 	r.m_desc.reserve(realCellCount);
 	r.m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * realCellCount);
 	
