@@ -177,7 +177,11 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 			sserialize::ItemIndex idx;
 			uint32_t pmIdxId;
 			FlattenResultType frt;
-			Proc(State * s) : state(s) {}
+			uint32_t emptyCellCount;
+			Proc(State * s) : state(s), emptyCellCount(0) {}
+			~Proc() {
+				state->emptyCellCount += emptyCellCount;
+			}
 			void operator()() {
 				while (true) {
 					uint32_t myPos = state->srcPos.fetch_add(1, std::memory_order_relaxed);
@@ -205,7 +209,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 						else if (frt == FT_EMPTY) {
 							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
 							state->dest->m_idx[myPos].idxPtr = 0;
-							state->emptyCellCount += 1;
+							emptyCellCount += 1;
 						}
 					}
 					else {
