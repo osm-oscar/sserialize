@@ -278,6 +278,16 @@ UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapt
 	return *this;
 }
 
+#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+bool UByteArrayAdapter::disableRefCounting() {
+	return m_priv->disableRc();
+}
+
+void UByteArrayAdapter::enableRefCounting() {
+	m_priv->enableRc();
+}
+#endif
+
 void UByteArrayAdapter::swap(UByteArrayAdapter& other) {
 	using std::swap;
 	swap(m_priv, other.m_priv);

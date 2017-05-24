@@ -11,10 +11,16 @@
 	#define SSERIALIZE_UBA_CONTIG_CFG_OVERRIDE override
 #endif
 
+#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+	#define SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS RefCountObjectWithDisable
+#else
+	#define SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS RefCountObject
+#endif
+
 namespace sserialize {
 namespace UByteArrayAdapterOnlyContiguous {
 
-class UByteArrayAdapterPrivate: public RefCountObject {
+class UByteArrayAdapterPrivate: public SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS {
 protected:
 	bool m_deleteOnClose;
 public:
@@ -39,7 +45,7 @@ public:
 
 namespace UByteArrayAdapterNonContiguous {
 
-class UByteArrayAdapterPrivate: public RefCountObject {
+class UByteArrayAdapterPrivate: public SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS {
 protected:
 	bool m_deleteOnClose;
 public:
@@ -113,6 +119,7 @@ public:
 
 } //end namespace UByteArrayAdapterNonContiguous
 
+
 #ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivate;
 #else
@@ -121,4 +128,5 @@ using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivate;
 
 }//end namespace
 
+#undef SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS
 #endif

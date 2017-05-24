@@ -13,6 +13,11 @@
 	#undef SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
 	#define SSERIALIZE_UBA_NON_CONTIGUOUS
 #endif
+#if defined(WITH_SSERIALIZE_UBA_OPTIONAL_REFCOUNTING)
+	#define SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+#else
+	#undef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+#endif
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
@@ -244,6 +249,13 @@ public://constructors
 #endif
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
+#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+	///DANGEROUS: Disables refcounting. This is only possible if there is currently only one owner
+	///This owner has to enable recounting prior to its deletion
+	///This operation is NOT thread-safe
+	bool disableRefCounting();
+	void enableRefCounting();
+#endif
 	void swap(UByteArrayAdapter & other);
 public:
 	///Tell UByteArrayAdapter about the intended usage of the next count bytes
