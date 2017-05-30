@@ -352,10 +352,14 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
 	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, TVEConstIterator> VEItemIdIterator;
 	
+	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
+	
 	if (TWithProgressInfo) {
 		std::cout << "OOMCTCValuesCreator: Finalizing" << std::endl;
 	}
+	pinfo.begin(1, "Finalizing");
 	finalize<OutputTraits, TWithProgressInfo>(otraits);
+	pinfo.end();
 	
 	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
 	IndexFactoryOut ifo(otraits.indexFactoryOut());
@@ -375,12 +379,9 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 	} ses;
 	
-	//set a read-buffer size of 100 MiB
-	
-	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
-	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
 	TVEConstIterator eIt(m_entries.begin());
-	eIt.bufferSize(100*1024*1024);
+	eIt.bufferSize(100*1024*1024);//set a read-buffer size of 100 MiB
+	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
 	for(TVEConstIterator eBegin(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
 		NodeIdentifier ni = eIt->nodeId();
 		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {

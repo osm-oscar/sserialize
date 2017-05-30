@@ -512,6 +512,8 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	typedef detail::OOMSACTCCreator::InputTraits<RegionTraits> RegionInputTraits;
 	typedef detail::OOMSACTCCreator::OutputTraits OutputTraits;
 	
+	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
+	
 	if (!insertionConcurrency) {
 		insertionConcurrency = std::thread::hardware_concurrency();
 	}
@@ -520,12 +522,10 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	dest.putUint8(sq);
 	dest.putUint8(sserialize::Static::detail::CellTextCompleter::TT_FLAT_TRIE);
 
-	
+	pinfo.begin(1, "Creating trie");
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
 		typedef sserialize::HashBasedFlatTrie<uint32_t> MyTrieType;
-	
-		std::cout << "Creating trie" << std::endl;
 		MyTrieType myTrie;
 		
 		struct ExactStringsInserter {
@@ -594,6 +594,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		myTrie.finalize();
 		myTrie.append(dest);
 	}
+	pinfo.end();
 	
 	detail::OOMSACTCCreator::MyStaticTrie mst(sserialize::UByteArrayAdapter(dest, flatTrieBaseBegin));
 	
@@ -602,6 +603,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	BaseTraits baseTraits;
 	OOMCTCValuesCreator<BaseTraits> vc(baseTraits);
 	
+	pinfo.begin(1, "Calculating payloads");
 	//insert the regions
 	{
 		std::cout << "Calculating region payload" << std::endl;
@@ -614,10 +616,11 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		ItemInputTraits itemInputTraits(itemTraits, &ti, false, sq);
 		vc.insert<TItemIterator, ItemInputTraits, TWithProgressInfo>(itemsBegin, itemsEnd, itemInputTraits, insertionConcurrency);
 	}
+	pinfo.end();
 	
 	//now serialize it
+	pinfo.begin(1, "Serializing payload");
 	{
-		std::cout << "Serializing payload" << std::endl;
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency);
@@ -625,6 +628,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		pc.flush();
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pc.size(), mst.size());
 	}
+	pinfo.end();
 }
 
 }//end namespace
