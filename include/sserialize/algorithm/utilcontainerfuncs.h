@@ -56,7 +56,8 @@ bool equal(TIterator1 begin1, const TIterator1 & end1, TIterator2 begin2, const 
 namespace detail {
 	template<typename TIterator, typename T_COMPFUNC>
 	void mt_sort_wrap(TIterator begin, TIterator end, T_COMPFUNC compFunc) {
-		std::sort(begin, end, compFunc);
+		using std::sort;
+		sort(begin, end, compFunc);
 	}
 }
 
@@ -64,10 +65,11 @@ namespace detail {
 ///multi-threaded sorting, @param numThreads if 0, numThreads = std::thread::hardware_concurrency()
 template<typename TIterator, typename CompFunc = std::less<typename std::iterator_traits<TIterator>::value_type> >
 void mt_sort(TIterator begin, TIterator end, CompFunc comp, unsigned int numThreads = 0) {
+	using std::distance;
 	if (!numThreads) {
 		numThreads = std::max<unsigned int>(std::thread::hardware_concurrency(), 1);
 	}
-	std::size_t numElements = std::distance(begin, end);
+	std::size_t numElements = distance(begin, end);
 	
 	//improve check of when to sort as this really doesn't make any sense on small data
 	if (numElements > numThreads*10000 && numThreads > 1) {
