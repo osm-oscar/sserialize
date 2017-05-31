@@ -52,6 +52,11 @@ public:
 	void resize(SizeType newSize, const value_type & value = value_type());
 	void clear();
 	void shrink_to_fit();
+	void sync();
+	
+	bool syncOnFlush() const { return m_syncOnFlush; }
+	///if you disable syncOnFlush then read operations may return wrong data (call sync() before)
+	void syncOnFlush(bool v) { m_syncOnFlush = v; }
 	
 	///in Bytes
 	void backBufferSize(sserialize::SizeType s);
@@ -138,6 +143,7 @@ private:
 	int m_fd;
 	std::string m_fn;
 	bool m_delete;
+	bool m_syncOnFlush;
 	sserialize::MmappedMemoryType m_mmt;
 	sserialize::SizeType m_backBufferBegin; //number of entries before back buffer
 	//maximum number of entries in back buffer
@@ -375,7 +381,11 @@ protected:
 
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType bufferSize, SizeType p) {
-	SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	#ifdef SSERIALIZE_NORMAL_ASSERT_ENABLED
+	if (m_syncOnFlush) {
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	}
+	#endif
 	buffer.clear();
 	if (p >= size()) {
 		buffer.shrink_to_fit();
@@ -407,6 +417,7 @@ OOMArray<TValue, TEnable>::OOMArray(const std::string & fileName) :
 m_fd(-1),
 m_fn(fileName),
 m_delete(false),
+m_syncOnFlush(true),
 m_mmt(sserialize::MM_INVALID),
 m_backBufferBegin(0),
 m_backBufferSize((1024*1024)/sizeof(TValue)),
@@ -434,6 +445,7 @@ template<typename TValue, typename TEnable>
 OOMArray<TValue, TEnable>::OOMArray(MmappedMemoryType mmt) :
 m_fd(-1),
 m_delete(true),
+m_syncOnFlush(true),
 m_mmt(mmt),
 m_backBufferBegin(0),
 m_backBufferSize((1024*1024)/sizeof(TValue)),
@@ -474,6 +486,7 @@ OOMArray<TValue, TEnable>::OOMArray(OOMArray<TValue, TEnable> && other) :
 m_fd(other.m_fd),
 m_fn(std::move(other.m_fn)),
 m_delete(other.m_delete),
+m_syncOnFlush(true),
 m_backBufferBegin(other.m_size),
 m_backBufferSize(other.m_backBufferSize),
 m_backBuffer(std::move(other.m_backBuffer)),
@@ -499,6 +512,9 @@ OOMArray<TValue, TEnable>::~OOMArray() {
 		default:
 			break;
 		}
+	}
+	else if (m_syncOnFlush) {
+		sync();
 	}
 }
 
@@ -553,15 +569,26 @@ void OOMArray<TValue, TEnable>::shrink_to_fit() {
 }
 
 template<typename TValue, typename TEnable>
+void OOMArray<TValue, TEnable>::sync() {
+	::fdatasync(m_fd);
+}
+
+template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::flush() {
 	SizeType writeSize = sizeof(TValue)*m_backBuffer.size();
 	if (writeSize) {
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+		#ifdef SSERIALIZE_NORMAL_ASSERT_ENABLED
+		if (m_syncOnFlush) {
+			SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+		}
+		#endif
 		FileHandler::pwrite(m_fd, &(m_backBuffer[0]), writeSize, m_backBufferBegin*sizeof(TValue));
-		::fdatasync(m_fd);
 		m_backBufferBegin += m_backBuffer.size();
 		m_backBuffer.clear();
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+		if (m_syncOnFlush) {
+			::fdatasync(m_fd);
+			SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+		}
 	}
 }
 
@@ -648,8 +675,10 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	delete[] myBuffer;
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(position.p()+count, offset);
 	
-	::fdatasync(m_fd);
-	SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	if (m_syncOnFlush) {
+		::fdatasync(m_fd);
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	}
 	return iterator(this, offset, position.bufferSize());
 }
 
