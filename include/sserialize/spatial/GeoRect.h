@@ -68,6 +68,8 @@ public:
 	    If !this.valid() then *this = other
 	*/
 	void enlarge(const GeoRect & other);
+	void enlarge(double lat, double lon);
+	
 	
 	///Resize this Rect by lat in latitude and lon in longitude
 	void resize(double latFactor, double lonFactor);

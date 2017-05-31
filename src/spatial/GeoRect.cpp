@@ -181,6 +181,22 @@ void GeoRect::enlarge(const GeoRect & other) {
 	}
 }
 
+void GeoRect::enlarge(double lat, double lon) {
+	if (!valid()) {
+		m_lat[0] = lat;
+		m_lat[1] = lat;
+		m_lon[0] = lon;
+		m_lon[1] = lon;
+	}
+	else {
+		m_lat[0] = std::min(m_lat[0], lat);
+		m_lat[1] = std::max(m_lat[1], lat);
+		
+		m_lon[0] = std::min(m_lon[0], lon);
+		m_lon[1] = std::max(m_lon[1], lon);
+	}
+}
+
 void GeoRect::resize(double latFactor, double lonFactor) {
 	double latLen = (maxLat()-minLat())/2.0;
 	double lonLen = (maxLon()-minLon())/2.0;
