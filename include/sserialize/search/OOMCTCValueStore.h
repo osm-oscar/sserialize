@@ -325,6 +325,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	State state(begin, end, &(this->m_entries));
 	
 	state.pinfo.begin("OOMCTCValuesCreator::Inserting");
+	this->m_entries.syncOnFlush(false);
 	std::vector<std::thread> threads;
 	for(uint32_t i(0); i < threadCount; ++i) {
 		threads.emplace_back( Worker(&state, itraits) );
@@ -333,6 +334,8 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		threads[i].join();
 	}
 	threads.clear();
+	this->m_entries.syncOnFlush(true);
+	this->m_entries.sync();
 	state.pinfo.end();
 	return true;
 }
