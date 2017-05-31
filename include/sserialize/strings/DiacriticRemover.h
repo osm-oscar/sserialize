@@ -14,6 +14,8 @@ private:
 	icu::Transliterator * m_transLiterator;
 public:
 	DiacriticRemover() : m_transLiterator(0) {}
+	DiacriticRemover(const DiacriticRemover & other);
+	DiacriticRemover & operator=(const DiacriticRemover & other) = delete;
 	virtual ~DiacriticRemover() { delete m_transLiterator; }
 	UErrorCode init();
 

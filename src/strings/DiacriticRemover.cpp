@@ -1,6 +1,14 @@
 #include <sserialize/strings/DiacriticRemover.h>
+#include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
+
+DiacriticRemover::DiacriticRemover(const DiacriticRemover& other) {
+	m_transLiterator = other.m_transLiterator->clone();
+	if (!m_transLiterator) {
+		throw sserialize::CreationException("Could not create a copy of DiacriticRemover");
+	}
+}
 
 UErrorCode DiacriticRemover::init() {
 	UErrorCode status = U_ZERO_ERROR;
