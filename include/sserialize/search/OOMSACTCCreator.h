@@ -441,12 +441,14 @@ struct Worker {
 	SuffixStrings m_ss;
 	sserialize::StringCompleter::SupportedQuerries m_sq;
 	void flush() {
-		std::unique_lock<std::mutex> lck(m_state->flushLock);
-		for(const std::string & x : m_exactStrings) {
-			*(m_state->esi) = x;
-		}
-		for(const std::string & x : m_suffixStrings) {
-			*(m_state->ssi) = x;
+		{
+			std::unique_lock<std::mutex> lck(m_state->flushLock);
+			for(const std::string & x : m_exactStrings) {
+				*(m_state->esi) = x;
+			}
+			for(const std::string & x : m_suffixStrings) {
+				*(m_state->ssi) = x;
+			}
 		}
 		m_exactStrings.clear(),
 		m_suffixStrings.clear();
@@ -461,9 +463,11 @@ struct Worker {
 				flush();
 				return;
 			}
-			auto item = *(m_state->it);
+			auto itemIt = m_state->it;
 			++(m_state->it);
 			itemLock.unlock();
+			
+			auto item = *itemIt;
 			m_state->incCounter();
 			if (m_state->sq & sserialize::StringCompleter::SQ_EP) {
 				m_es(item, m_eit);
