@@ -595,7 +595,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		threads.clear();
 		regionState.pinfo.end();
 		
-		myTrie.finalize();
+		myTrie.finalize(sortConcurrency);
 		myTrie.append(dest);
 	}
 	pinfo.end();
