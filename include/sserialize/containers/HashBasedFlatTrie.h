@@ -290,7 +290,7 @@ public:
 	
 	///call this if you want to navigate the trie
 	///you can always choose to add more strings to trie, but then you'd have to call this again
-	void finalize();
+	void finalize(uint32_t threadCount = 0);
 	
 	///before using this, finalize has to be called and no inserts were made afterwards
 	NodePtr root() { return NodePtr(m_ht.begin(), m_ht.end(), &m_strHandler); }
@@ -600,7 +600,7 @@ bool HashBasedFlatTrie<TValue>::valid(uint32_t & offendingString) const {
 }
 
 template<typename TValue>
-void HashBasedFlatTrie<TValue>::finalize() {
+void HashBasedFlatTrie<TValue>::finalize(uint32_t threadCount) {
 	const StringHandler * strHandler = &m_strHandler;
 	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	std::cout << "Finalizing HashBasedFlatTrie with size=" << size() << std::endl;
@@ -612,9 +612,9 @@ void HashBasedFlatTrie<TValue>::finalize() {
 	auto sortFunc = [strHandler](const typename HashTable::value_type & a, const typename HashTable::value_type & b) {
 		return sserialize::unicodeIsSmaller(strHandler->strBegin(a.first), strHandler->strEnd(a.first), strHandler->strBegin(b.first), strHandler->strEnd(b.first));
 	};
-	m_ht.mt_sort(sortFunc);
+	m_ht.mt_sort(sortFunc, threadCount);
 	finalize(0, m_ht.size(), 0);
-	m_ht.mt_sort(sortFunc);
+	m_ht.mt_sort(sortFunc, threadCount);
 }
 
 template<typename TValue>
