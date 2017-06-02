@@ -44,7 +44,7 @@ struct MmappedMemoryHelper<TValue, typename std::enable_if< std::is_integral<TVa
 		memmove(dest, srcBegin, (::size_t)(srcEnd-srcBegin)*sizeof(TValue));
 	}
 	static void deinitMemory(TValue * /*begin*/, TValue * /*end*/) {}
-static void deinitMemory(TValue * /*data*/) {}
+	static void deinitMemory(TValue * /*data*/) {}
 };
 
 template<typename TValue>
