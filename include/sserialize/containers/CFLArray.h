@@ -125,6 +125,7 @@ public:
 		m_delete = 0;
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_size, size);
 	}
+	CFLArray(container_type * container) : CFLArray(container, container->size()) {}
 	CFLArray(const CFLArray & other) {
 		m_d.backend = 0;
 		m_d.copy = 0;
@@ -263,7 +264,12 @@ public:
 		if (size() != other.size()) {
 			return false;
 		}
-		return std::equal(begin(), end(), other.begin());
+		using std::equal;
+		return equal(begin(), end(), other.begin());
+	}
+	
+	bool operator!=(const CFLArray & other) const {
+		return ! (*this == other);
 	}
 };
 
