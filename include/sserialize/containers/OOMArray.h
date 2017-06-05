@@ -219,6 +219,10 @@ public:
 		return this;
 	}
 	
+	IteratorBuffer * copy() const {
+		return new IteratorBuffer(m_d, m_bufferBegin, m_bufferSize, m_buffer);
+	}
+	
 	///increment this buffer, if position is within the buffer, nothing happens and nullptr is returned
 	///if it is outside a buffer fill is done if only one parent is present
 	///if there are multiple present, then a new buffer is created
@@ -237,6 +241,12 @@ public:
 		return 0;
 	}
 private:
+	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs, const BufferType & b) :
+	m_d(d),
+	m_bufferBegin(bb),
+	m_bufferSize(bs),
+	m_buffer(b)
+	{}
 private:
 	BaseContainerType * m_d;
 	SizeType m_bufferBegin; //in entries
@@ -274,6 +284,9 @@ public:
 		m_p = std::move(other.m_p);
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return *this;
+	}
+	ConstIterator copy() {
+		return ConstIterator(MyIteratorBufferPtr(m_b->copy()), m_p);
 	}
 	///sync the buffer of this iterator with the backend
 	void sync() { m_b->sync(); }
