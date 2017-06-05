@@ -322,7 +322,8 @@ public:
 			return m_idxFactory->addIndex(tmp);
 		}
 	};
-	class DataOut {
+	
+	class FinalDataOut {
 	public:
 		typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
 	private:
@@ -357,7 +358,7 @@ public:
 			}
 		}
 	public:
-		DataOut(PayloadCreator * pc) :
+		FinalDataOut(PayloadCreator * pc) :
 		m_payloadCreator(pc), m_curNodeId(0), m_curTypes(sserialize::StringCompleter::QT_NONE),
 		m_curData(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY))
 		{}
@@ -373,25 +374,78 @@ public:
 			m_curOffsets.emplace_back( m_curData.tellPutPtr() );
 			m_curData.put(data);
 		}
-		~DataOut() {
+		~FinalDataOut() {
 			flush();
 		}
 	};
+	
+	class UnorderedDataOutPrivate: public RefCountObject {
+	private:
+		typedef sserialize::Static::DynamicVector<sserialize::UByteArrayAdapter> TemporaryPayloadStorage;
+	public:
+		UnorderedDataOutPrivate(FinalDataOut::PayloadCreator * pc) : m_tempStore(1024, 10*1024*1024), m_do(pc) {}
+		~UnorderedDataOutPrivate() {
+			flush();
+		}
+		void put(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
+			std::unique_lock<std::mutex> lck(m_mtx);
+			m_ni2off.emplace_back(ni, m_tempStore.size());
+			m_tempStore.beginRawPush().put(data);
+			m_tempStore.endRawPush();
+		}
+	private:
+		void flush() {
+			using std::sort;
+			sort(m_ni2off.begin(), m_ni2off.end());
+			for(const auto & x : m_ni2off) {
+				m_do(x.first, m_tempStore.dataAt(x.second));
+			}
+		}
+	private:
+		std::mutex m_mtx;
+		std::vector< std::pair<NodeIdentifier, uint32_t> > m_ni2off;
+		TemporaryPayloadStorage m_tempStore;
+		FinalDataOut m_do;
+	};
+	
+	///This DataOut supports unordered-multi-threaded data push
+	class UnorderedDataOut {
+	public:
+		UnorderedDataOut(const sserialize::RCPtrWrapper<UnorderedDataOutPrivate> & priv) : m_priv(priv) {}
+		UnorderedDataOut(const UnorderedDataOut & other) = default;
+		UnorderedDataOut(UnorderedDataOut && other) = default;
+		UnorderedDataOut & operator=(const UnorderedDataOut & other) = default;
+		UnorderedDataOut & operator=(UnorderedDataOut && other) = default;
+		~UnorderedDataOut() {}
+		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
+			m_priv->put(ni, data);
+		}
+	private:
+		sserialize::RCPtrWrapper<UnorderedDataOutPrivate> m_priv;
+	};
+	
 	typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
 	typedef sserialize::ItemIndexFactory ItemIndexFactory;
+	typedef UnorderedDataOut DataOut;
 private:
 	ItemIndexFactory * m_idxFactory;
 	PayloadCreator * m_payloadCreator;
+	UnorderedDataOut m_dataOut;
 	uint64_t m_maxMemoryUsage;
 	sserialize::MmappedMemoryType m_mmt;
 	uint32_t m_sortConcurrency;
 public:
 	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt, uint32_t sortConcurrency = 0) :
-	m_idxFactory(idxFactory), m_payloadCreator(payloadCreator), m_maxMemoryUsage(maxMemoryUsage), m_mmt(mmt), m_sortConcurrency(sortConcurrency)
+	m_idxFactory(idxFactory),
+	m_payloadCreator(payloadCreator),
+	m_dataOut(sserialize::RCPtrWrapper<UnorderedDataOutPrivate>( new UnorderedDataOutPrivate(m_payloadCreator) ) ),
+	m_maxMemoryUsage(maxMemoryUsage),
+	m_mmt(mmt),
+	m_sortConcurrency(sortConcurrency)
 	{}
 	
 	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
-	inline DataOut dataOut() { return DataOut(m_payloadCreator); }
+	inline const DataOut & dataOut() const { return m_dataOut; }
 	
 	inline uint64_t maxMemoryUsage() const { return m_maxMemoryUsage; }
 	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
