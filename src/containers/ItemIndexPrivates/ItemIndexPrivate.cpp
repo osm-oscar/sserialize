@@ -234,7 +234,7 @@ GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::unequal(co
 }
 
 uint32_t
-GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it) {
+GenericSetOpExecuterAccessors<sserialize::ItemIndex::const_iterator>::get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
 	return *it;
 }
 
