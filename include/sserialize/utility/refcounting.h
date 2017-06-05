@@ -56,7 +56,7 @@ public:
 	}
 	inline void enableRc() {
 		SSERIALIZE_CHEAP_ASSERT(!m_enabled);
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(RefCountObject::rc(), 1);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(RefCountObject::rc(), (RCBaseType) 1);
 		m_enabled = true;
 	}
 private:
