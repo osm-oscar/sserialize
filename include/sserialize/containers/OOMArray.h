@@ -299,16 +299,19 @@ public:
 	///The returned reference is invalidated by a call to operator++() or ~ConstIterator() and changes are not carried through
 	TValue * operator->() { return &operator*(); }
 	ConstIterator & operator++() {
-		++m_p;
+		return operator+=(1);
+	}
+	ConstIterator operator+(SizeType count) const {
+		return ConstIterator(m_b, m_p+count);
+	}
+	ConstIterator & operator+=(SizeType count) {
+		m_p += count;
 		MyIteratorBuffer * tmp = m_b->incTo(m_p);
 		if (tmp) {
 			m_b.reset(tmp);
 		}
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(d()->size(), m_p);
 		return *this;
-	}
-	ConstIterator operator+(SizeType count) const {
-		return ConstIterator(m_b, m_p+count);
 	}
 	sserialize::DifferenceType operator-(const ConstIterator & other) const { return (DifferenceType)(m_p) - (DifferenceType)(other.m_p); }
 	bool operator<(const ConstIterator & other) const {
@@ -382,6 +385,7 @@ public:
 		MyBaseClass::operator*() = v;
 	}
 	Iterator & operator++() { MyBaseClass::operator++(); return *this; }
+	Iterator & operator+=(SizeType count) { MyBaseClass::operator+=(count); return *this; }
 	Iterator operator+(SizeType count) const { return Iterator( MyBaseClass::operator+(count) ); }
 	bool operator<(const Iterator & other) const { return MyBaseClass::operator<(other); }
 	sserialize::DifferenceType operator-(const Iterator & other) const { return MyBaseClass::operator-(other); }
