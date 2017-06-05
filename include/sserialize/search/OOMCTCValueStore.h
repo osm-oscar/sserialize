@@ -365,8 +365,14 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	pinfo.end();
 	
 	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
-	IndexFactoryOut ifo(otraits.indexFactoryOut());
-	DataOut dout(otraits.dataOut());
+	
+	struct State {
+		std::mutex eItLock;
+		TVEConstIterator eBegin;
+		TVEConstIterator eIt;
+		TVEConstIterator eEnd;
+		sserialize::OptionalProgressInfo<TWithProgressInfo> & pinfo = pinfo;
+	} state;
 	
 	struct SingleEntryState {
 		std::vector<uint32_t> fmCellIds;
@@ -380,45 +386,103 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 			pmCellIdxPtrs.clear();
 			sd.resize(0);
 		}
-	} ses;
+	};
 	
-	TVEConstIterator eIt(m_entries.begin());
-	eIt.bufferSize(100*1024*1024);//set a read-buffer size of 100 MiB
+	class Worker {
+	public:
+		Worker(State * s, const NodeIdentifierEqualPredicate & nep, OutputTraits & otraits) :
+		state(s),
+		nep(nep),
+		ifo(otraits.indexFactoryOut()),
+		dout(otraits.dataOut()),
+		eIt(state->eBegin.copy())
+		{
+			eIt.bufferSize(s->eIt.bufferSize());
+		}
+		void operator()() {
+			std::unique_lock<std::mutex> lock(state->eItLock);
+			lock.unlock();
+			while (true) {
+				lock.lock();
+				if (state->eIt != state->eEnd) {
+					getNext();
+					using std::distance;
+					state->pinfo(distance(state->eBegin, state->eIt));
+					lock.unlock();
+				}
+				else {
+					return;
+				}
+				handle();
+			}
+		};
+		
+		void getNext() {
+			//reposition to beginning of new entry
+			eIt += (state->eIt - eIt);
+			
+			//now move the global iterator to the next entry
+			NodeIdentifier ni = eIt->nodeId();
+			for(; state->eIt != state->eEnd && nep(state->eIt->nodeId(), ni); ++state->eIt) {}
+		}
+		
+		void handle() {
+			const TVEConstIterator & eEnd = state->eEnd;
+			NodeIdentifier ni = eIt->nodeId();
+			for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
+				//find the end of this cell
+				TVEConstIterator cellBegin(eIt);
+				uint32_t cellId = eIt->cellId();
+				for(;eIt != eEnd && eIt->cellId() == cellId && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt) {}
+				if (cellBegin != eIt) { //there are partial matches
+					uint32_t indexId = ifo(VEItemIdIterator(cellBegin), VEItemIdIterator(eIt));
+					ses.pmCellIds.push_back(cellId);
+					ses.pmCellIdxPtrs.push_back(indexId);
+				}
+				//check if we have full matches
+				if (eIt != eEnd && eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
+					ses.fmCellIds.push_back(cellId);
+					//skip this entry, it's the only one since other fm were removed by finalize()
+					++eIt;
+				}
+			}
+			//serialize the data
+			uint32_t fmIdxPtr = ifo(ses.fmCellIds.begin(), ses.fmCellIds.end());
+			uint32_t pmIdxPtr = ifo(ses.pmCellIds.begin(), ses.pmCellIds.end());
+			sserialize::RLEStream::Creator rlc(ses.sd);
+			rlc.put(fmIdxPtr);
+			rlc.put(pmIdxPtr);
+			for(auto x : ses.pmCellIdxPtrs) {
+				rlc.put(x);
+			}
+			rlc.flush();
+			dout(ni, ses.sd);
+			ses.clear();
+		}
+		
+	private:
+		State * state;
+		NodeIdentifierEqualPredicate nep;
+		IndexFactoryOut ifo;
+		DataOut dout;
+		SingleEntryState ses;
+		TVEConstIterator eIt;
+	};
+	
+	state.eBegin = m_entries.begin();
+	state.eIt = m_entries.begin();
+	state.eEnd = m_entries.end();
+	state.eIt.bufferSize(100*1024*1024);//set a read-buffer size of 100 MiB
+	
 	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
-	for(TVEConstIterator eBegin(m_entries.begin()), eEnd(m_entries.end()); eIt != eEnd;) {
-		NodeIdentifier ni = eIt->nodeId();
-		for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
-			//find the end of this cell
-			TVEConstIterator cellBegin(eIt);
-			uint32_t cellId = eIt->cellId();
-			for(;eIt != eEnd && eIt->cellId() == cellId && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt) {}
-			if (cellBegin != eIt) { //there are partial matches
-				uint32_t indexId = ifo(VEItemIdIterator(cellBegin), VEItemIdIterator(eIt));
-				ses.pmCellIds.push_back(cellId);
-				ses.pmCellIdxPtrs.push_back(indexId);
-			}
-			//check if we have full matches
-			if (eIt != eEnd && eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
-				ses.fmCellIds.push_back(cellId);
-				//skip this entry, it's the only one since other fm were removed by finalize()
-				++eIt;
-			}
-		}
-		//serialize the data
-		uint32_t fmIdxPtr = ifo(ses.fmCellIds.begin(), ses.fmCellIds.end());
-		uint32_t pmIdxPtr = ifo(ses.pmCellIds.begin(), ses.pmCellIds.end());
-		sserialize::RLEStream::Creator rlc(ses.sd);
-		rlc.put(fmIdxPtr);
-		rlc.put(pmIdxPtr);
-		for(auto x : ses.pmCellIdxPtrs) {
-			rlc.put(x);
-		}
-		rlc.flush();
-		dout(ni, ses.sd);
-		ses.clear();
-		//eIt now points to the next node or the end
-		using std::distance;
-		pinfo(distance(eBegin, eIt));
+	std::vector<std::thread> threads;
+	for(uint32_t i(0); i < otraits.payloadConcurrency(); ++i) {
+		threads.emplace_back(
+			Worker(&state, nep, otraits)
+		);
+	}
+	for(std::thread & t : threads) {
+		t.join();
 	}
 	pinfo.end();
 }
