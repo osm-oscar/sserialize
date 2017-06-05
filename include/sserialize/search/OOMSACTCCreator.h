@@ -700,7 +700,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	{
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
-		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency);
+		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency, insertionConcurrency);
 		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
 		pc.flush();
 		outPutTraits.flushPayload();
