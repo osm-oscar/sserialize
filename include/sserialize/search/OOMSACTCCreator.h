@@ -434,14 +434,16 @@ private:
 	uint64_t m_maxMemoryUsage;
 	sserialize::MmappedMemoryType m_mmt;
 	uint32_t m_sortConcurrency;
+	uint32_t m_payloadConcurrency;
 public:
-	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt, uint32_t sortConcurrency = 0) :
+	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt, uint32_t sortConcurrency = 0, uint32_t payloadConcurrency = 0) :
 	m_idxFactory(idxFactory),
 	m_payloadCreator(payloadCreator),
 	m_dataOut(sserialize::RCPtrWrapper<UnorderedDataOutPrivate>( new UnorderedDataOutPrivate(m_payloadCreator) ) ),
 	m_maxMemoryUsage(maxMemoryUsage),
 	m_mmt(mmt),
-	m_sortConcurrency(sortConcurrency)
+	m_sortConcurrency(sortConcurrency),
+	m_payloadConcurrency(payloadConcurrency)
 	{}
 	
 	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
@@ -450,6 +452,7 @@ public:
 	inline uint64_t maxMemoryUsage() const { return m_maxMemoryUsage; }
 	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
 	inline uint32_t sortConcurrency() const { return m_sortConcurrency; }
+	inline uint32_t payloadConcurrency() const { return m_payloadConcurrency; }
 };
 
 namespace TrieCreation {
