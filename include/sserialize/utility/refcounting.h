@@ -47,6 +47,8 @@ public:
 			RefCountObject::rcDec();
 		}
 	}
+	
+	///@WARNING this is a dangerous thing to do. You have to absolutely make sure that nothing has shared ownership if you re-enable reference-counting
 	inline bool disableRc() {
 		if (RefCountObject::rc() == 1) {
 			m_enabled = false;
