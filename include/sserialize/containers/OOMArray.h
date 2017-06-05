@@ -173,7 +173,9 @@ public:
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(m_d->size(), bb);
 		m_d->fill(m_buffer, m_bufferSize, m_bufferBegin);
 	}
+	IteratorBuffer(IteratorBuffer && other) = delete;
 	IteratorBuffer(const IteratorBuffer & other) = delete;
+	IteratorBuffer & operator=(IteratorBuffer && other) = delete;
 	IteratorBuffer & operator=(const IteratorBuffer & other) = delete;
 	virtual ~IteratorBuffer() {
 		m_d = 0;
