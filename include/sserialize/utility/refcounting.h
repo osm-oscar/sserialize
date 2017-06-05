@@ -7,8 +7,22 @@
 
 namespace sserialize {
 
+class RefCountObjectWithDisable;
+
+template<typename RCObj>
+class RCPtrWrapper;
+
+template<typename RCObj>
+class RCWrapper;
+
+template<class RCObj>
+class RefObjRCWrapper;
 
 class RefCountObject {
+	friend class RefCountObjectWithDisable;
+	template<typename RCObj> friend class RCPtrWrapper;
+	template<typename RCObj> friend class RCWrapper;
+	template<class RCObj> friend class RefObjRCWrapper;
 public:
 	typedef uint32_t RCBaseType;
 public:
@@ -18,6 +32,9 @@ public:
 	virtual ~RefCountObject() {}
 
 	inline void rcReset() { m_rc = 0; }
+	inline RCBaseType rc() const { return m_rc; }
+
+private:
 	inline void rcInc() { m_rc.fetch_add(1, std::memory_order_relaxed); }
 	inline void rcDec() {
 		SSERIALIZE_CHEAP_ASSERT(rc() > 0);
@@ -25,29 +42,20 @@ public:
 			delete this;
 		}
 	}
-	inline RCBaseType rc() const { return m_rc; }
 private:
 	std::atomic<RCBaseType> m_rc;
 };
 
 class RefCountObjectWithDisable: public sserialize::RefCountObject {
+	template<typename RCObj> friend class RCPtrWrapper;
+	template<typename RCObj> friend class RCWrapper;
+	template<class RCObj> friend class RefObjRCWrapper;
 public:
 	RefCountObjectWithDisable(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable & operator=(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable() : m_enabled(true) {}
 	virtual ~RefCountObjectWithDisable() {}
 
-	inline void rcInc() {
-		if (m_enabled) {
-			RefCountObject::rcInc();
-		}
-	}
-	inline void rcDec() {
-		if (m_enabled) {
-			RefCountObject::rcDec();
-		}
-	}
-	
 	///@WARNING this is a dangerous thing to do. You have to absolutely make sure that nothing has shared ownership if you re-enable reference-counting
 	inline bool disableRc() {
 		if (RefCountObject::rc() == 1) {
@@ -60,6 +68,17 @@ public:
 		SSERIALIZE_CHEAP_ASSERT(!m_enabled);
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(RefCountObject::rc(), (RCBaseType) 1);
 		m_enabled = true;
+	}
+private:
+	inline void rcInc() {
+		if (m_enabled) {
+			RefCountObject::rcInc();
+		}
+	}
+	inline void rcDec() {
+		if (m_enabled) {
+			RefCountObject::rcDec();
+		}
 	}
 private:
 	bool m_enabled;
