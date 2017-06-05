@@ -355,24 +355,23 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
 	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, TVEConstIterator> VEItemIdIterator;
 	
-	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
-	
-	if (TWithProgressInfo) {
-		std::cout << "OOMCTCValuesCreator: Finalizing" << std::endl;
-	}
-	pinfo.begin(1, "Finalizing");
-	finalize<OutputTraits, TWithProgressInfo>(otraits);
-	pinfo.end();
-	
-	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
-	
 	struct State {
 		std::mutex eItLock;
 		TVEConstIterator eBegin;
 		TVEConstIterator eIt;
 		TVEConstIterator eEnd;
-		sserialize::OptionalProgressInfo<TWithProgressInfo> & pinfo = pinfo;
+		sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
 	} state;
+
+	
+	if (TWithProgressInfo) {
+		std::cout << "OOMCTCValuesCreator: Finalizing" << std::endl;
+	}
+	state.pinfo.begin(1, "Finalizing");
+	finalize<OutputTraits, TWithProgressInfo>(otraits);
+	state.pinfo.end();
+	
+	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
 	
 	struct SingleEntryState {
 		std::vector<uint32_t> fmCellIds;
@@ -474,17 +473,20 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	state.eEnd = m_entries.end();
 	state.eIt.bufferSize(100*1024*1024);//set a read-buffer size of 100 MiB
 	
-	pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
-	std::vector<std::thread> threads;
-	for(uint32_t i(0); i < otraits.payloadConcurrency(); ++i) {
-		threads.emplace_back(
-			Worker(&state, nep, otraits)
-		);
-	}
-	for(std::thread & t : threads) {
+	state.pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
+	{
+		uint32_t numThreads = otraits.payloadConcurrency() == 0 ? std::thread::hardware_concurrency() : otraits.payloadConcurrency();
+		std::vector<std::thread> threads;
+		for(uint32_t i(0); i < numThreads; ++i) {
+			threads.emplace_back(
+				Worker(&state, nep, otraits)
+			);
+		}
+		for(std::thread & t : threads) {
 		t.join();
+		}
 	}
-	pinfo.end();
+	state.pinfo.end();
 }
 
 ///Sorts the storage and makes it unique

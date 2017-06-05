@@ -384,6 +384,7 @@ public:
 		typedef sserialize::Static::DynamicVector<sserialize::UByteArrayAdapter> TemporaryPayloadStorage;
 	public:
 		UnorderedDataOutPrivate(FinalDataOut::PayloadCreator * pc) : m_tempStore(1024, 10*1024*1024), m_do(pc) {}
+		UnorderedDataOutPrivate(const UnorderedDataOutPrivate&) = delete;
 		~UnorderedDataOutPrivate() {
 			flush();
 		}
@@ -420,6 +421,11 @@ public:
 		void operator()(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
 			m_priv->put(ni, data);
 		}
+		///only call this on the last owner
+		void flush() {
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(m_priv->rc(), 1);
+			m_priv.reset(0);
+		}
 	private:
 		sserialize::RCPtrWrapper<UnorderedDataOutPrivate> m_priv;
 	};
@@ -445,14 +451,24 @@ public:
 	m_sortConcurrency(sortConcurrency),
 	m_payloadConcurrency(payloadConcurrency)
 	{}
+	OutputTraits(const OutputTraits &) = default;
+	OutputTraits(OutputTraits &&) = default;
+	~OutputTraits() {}
+	OutputTraits & operator=(const OutputTraits &) = default;
+	OutputTraits & operator=(OutputTraits &&) = default;
 	
 	inline IndexFactoryOut indexFactoryOut() { return IndexFactoryOut(m_idxFactory); }
-	inline const DataOut & dataOut() const { return m_dataOut; }
+	inline DataOut dataOut() const { return m_dataOut; }
 	
 	inline uint64_t maxMemoryUsage() const { return m_maxMemoryUsage; }
 	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
 	inline uint32_t sortConcurrency() const { return m_sortConcurrency; }
 	inline uint32_t payloadConcurrency() const { return m_payloadConcurrency; }
+public:
+	///Flushes the payload, invalidates data out
+	void flushPayload() {
+		m_dataOut.flush();
+	}
 };
 
 namespace TrieCreation {
@@ -687,6 +703,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency);
 		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
 		pc.flush();
+		outPutTraits.flushPayload();
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pc.size(), mst.size());
 	}
 	pinfo.end();
