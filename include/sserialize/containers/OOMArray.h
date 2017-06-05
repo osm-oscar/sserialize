@@ -162,11 +162,6 @@ class IteratorBuffer: public RefCountObject {
 public:
 	typedef std::vector<TValue> BufferType;
 	typedef sserialize::OOMArray<TValue> BaseContainerType;
-private:
-	BaseContainerType * m_d;
-	SizeType m_bufferBegin; //in entries
-	SizeType m_bufferSize; //in entries
-	BufferType m_buffer;
 public:
 	///@param bs in Bytes
 	IteratorBuffer(BaseContainerType * d, SizeType bb, SizeType bs) : m_d(d), m_bufferBegin(bb), m_bufferSize(bs/sizeof(TValue)) {
@@ -241,6 +236,13 @@ public:
 		}
 		return 0;
 	}
+private:
+private:
+	BaseContainerType * m_d;
+	SizeType m_bufferBegin; //in entries
+	SizeType m_bufferSize; //in entries
+	BufferType m_buffer;
+
 };
 
 ///Buffered InputIterator, calls to set() or push_back/emplace_back invalidate this data
