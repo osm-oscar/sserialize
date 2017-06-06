@@ -3,6 +3,11 @@
 #include <algorithm>
 #include <assert.h>
 #include <vector>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
+#include <deque>
 
 namespace sserialize {
 
@@ -105,6 +110,101 @@ T_RETURN treeReduceMap(T_ITERATOR begin, T_ITERATOR end, T_REDFUNC redFunc, T_MA
 					);
 	}
 }
+
+/** @param begin iterator pointing to the first element
+  * @param end iterator pointing past the last element
+  * @param func function that maps two iterator::value_type to a new one
+  */
+template<typename T_ITERATOR, typename T_RETURN, typename T_FUNC>
+class TreeReducer {
+public:
+	typedef T_ITERATOR iterator_type;
+	typedef T_RETURN return_value;
+	typedef typename std::iterator_traits<iterator_type>::difference_type difference_type;
+private:
+	struct Range {
+		Range(difference_type begin, difference_type end) : begin(begin), end(end) {}
+		Range(difference_type begin, difference_type end, T_RETURN value) : begin(begin), end(end), value(value) {}
+		Range(const Range &) = default;
+		Range(Range &&) = default;
+		Range & operator=(const Range &) = default;
+		Range & operator=(Range &&) = default;
+		
+		auto size() { return end-begin; }
+		
+		bool operator<(const Range & other) const { return size() < other.size(); }
+		
+		Range firstHalf() { return Range(begin, begin+(end-begin)/2); }
+		Range secondHalf() { return Range(begin+(end-begin)/2, end); }
+		
+		difference_type begin;
+		difference_type end;
+		
+		T_RETURN value;
+	};
+	struct State {
+		std::atomic<uint64_t> remainingRanges;
+		std::atomic<uint64_t> needWork; 
+		std::deque<Range> ranges;
+		std::mutex lock;
+		std::condition_variable cv;
+		iterator_type begin;
+		iterator_type end;
+	};
+	
+	struct Worker {
+		Worker(State & state) : state(state) {}
+		State & state;
+		void operator()() {
+			std::unique_lock<std::mutex> lock(state.lock);
+			lock.unlock();
+			while(state.remainingRanges.load()) {
+				lock.lock();
+				if (!state.ranges.size()) {
+					++state.needWork;
+					state.cv.wait(lock);
+				}
+				if (state.ranges.size()) {
+					Range r = state.ranges.front();
+					state.ranges.pop_front();
+					if (state.needWork) {
+						state.ranges.push_back(r.firstHalf());
+						state.ranges.push_back(r.secondHalf());
+						lock.unlock();
+						state.cv.notify_one();
+						continue;
+					}
+				}
+			}
+		}
+	};
+public:
+	TreeReducer(uint32_t threadCount = 0) {
+		if (!threadCount) {
+			std::thread::hardware_concurrency();
+		}
+		m_threads.reserve(threadCount);
+		for(uint32_t i(0); i < threadCount; ++i) {
+// 			m_threads.emplace_back(Worker());
+		}
+	}
+	void operator()(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc) {
+		std::vector<std::thread> threads;
+		State state;
+		state.remainingRanges = 1;
+		state.needWork = 0;
+		state.ranges.emplace_back(begin, end);
+	}
+	~TreeReducer() {
+		for(std::thread & t : m_threads) {
+			t.join();
+		}
+	}
+private:
+	std::vector<std::thread> m_threads;
+	State s;
+	std::mutex m_lock;
+};
 
 namespace ReorderMappers {
 	struct Identity {
