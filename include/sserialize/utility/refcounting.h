@@ -6,6 +6,10 @@
 #include <utility>
 
 namespace sserialize {
+namespace detail {
+	template<typename RCObj, typename TEnable = void>
+	class RCBase;
+}
 
 class RefCountObjectWithDisable;
 
@@ -20,9 +24,7 @@ class RefObjRCWrapper;
 
 class RefCountObject {
 	friend class RefCountObjectWithDisable;
-	template<typename RCObj> friend class RCPtrWrapper;
-	template<typename RCObj> friend class RCWrapper;
-	template<class RCObj> friend class RefObjRCWrapper;
+	template<typename RCObj, typename TEnable> friend class detail::RCBase;
 public:
 	typedef uint32_t RCBaseType;
 public:
@@ -47,158 +49,184 @@ private:
 };
 
 class RefCountObjectWithDisable: public sserialize::RefCountObject {
-	template<typename RCObj> friend class RCPtrWrapper;
-	template<typename RCObj> friend class RCWrapper;
-	template<class RCObj> friend class RefObjRCWrapper;
+	template<typename RCObj, typename TEnable> friend class detail::RCBase;
 public:
 	RefCountObjectWithDisable(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable & operator=(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable() : m_enabled(true) {}
 	virtual ~RefCountObjectWithDisable() {}
 
-	///@WARNING this is a dangerous thing to do. You have to absolutely make sure that nothing has shared ownership if you re-enable reference-counting
+	///@WARNING this is a dangerous thing to do. You have to make sure that at least one owner is alive during usage of data
 	inline bool disableRc() {
-		if (RefCountObject::rc() == 1) {
-			m_enabled = false;
-			return true;
-		}
-		return false;
+		m_enabled = false;
+		return true;
 	}
 	inline void enableRc() {
-		SSERIALIZE_CHEAP_ASSERT(!m_enabled);
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(RefCountObject::rc(), (RCBaseType) 1);
 		m_enabled = true;
 	}
+	
+	inline bool enabledRC() const {
+		return m_enabled;
+	}
 private:
-	inline void rcInc() {
-		if (m_enabled) {
-			RefCountObject::rcInc();
-		}
-	}
-	inline void rcDec() {
-		if (m_enabled) {
-			RefCountObject::rcDec();
-		}
-	}
+	using RefCountObject::rcInc;
+	using RefCountObject::rcDec;
 private:
 	bool m_enabled;
 };
 
+namespace detail {
 
 template<typename RCObj>
-class RCPtrWrapper;
-
-template<typename RCObj>
-class RCWrapper {
-public:
-	typedef RCObj element_type;
-	friend class RCPtrWrapper<RCObj>;
-public:
-	RCWrapper() : m_Private(0) {};
-	RCWrapper(RCObj * data) : m_Private(data) { if (m_Private) m_Private->rcInc(); }
-	RCWrapper(const RCWrapper & other) : m_Private(other.m_Private) { if (m_Private) m_Private->rcInc(); }
-	RCWrapper(const RCPtrWrapper<RCObj> & other);
-	virtual ~RCWrapper() {
-		if (m_Private)
-			m_Private->rcDec();
-	}
-
-	RCWrapper & operator=(const RCWrapper & other) {
-		if (other.m_Private)
-			other.m_Private->rcInc();
-		if (m_Private)
-			m_Private->rcDec();
-		m_Private = other.m_Private;
-		return *this;
-	}
-	
-	bool operator==(const RCWrapper & other) { return m_Private == other.m_Private; }
-	
-	inline RefCountObject::RCBaseType privRc() const { return (m_Private ? m_Private->rc() : 0);}
-
+class RCBase<RCObj, typename std::enable_if< std::is_base_of<RefCountObjectWithDisable, RCObj>::value, void >::type > {
 protected:
-	void setPrivate(RCObj * data) {
-		if (data)
-			data->rcInc();
-		if (m_Private)
-			m_Private->rcDec();
-		m_Private = data;
+	RCBase(RCObj* p) : m_priv(0), m_enabled(false)
+	{
+		reset(p);
 	}
-
-	inline RCObj * priv() const { return m_Private; }
-	
+	virtual ~RCBase() {
+		reset(0);
+	}
+protected:
+	bool enabledRC() {
+		return m_enabled;
+	}
+	void reset(RCObj* p) {
+		if (p && p->enabledRC()) {
+			p->rcInc();
+		}
+		rcDec();
+		m_priv = p;
+		m_enabled = p ? p->enabledRC() : false;
+	}
+	void rcInc() {
+		if (priv() && enabledRC()) {
+			priv()->rcInc();
+		}
+	}
+	void rcDec() {
+		if (priv() && enabledRC()) {
+			priv()->rcDec();
+		}
+	}
+	const RCObj * priv() const { return m_priv; }
+	RCObj * priv() { return m_priv; }
 private:
-	RCObj * m_Private;
+	RCObj * m_priv;
+	bool m_enabled;
 };
 
 template<typename RCObj>
-class RCPtrWrapper final {
+class RCBase<RCObj, typename std::enable_if<! std::is_base_of<RefCountObjectWithDisable, RCObj>::value, void >::type > {
+protected:
+	RCBase(RCObj* p) : m_priv(0) {
+		reset(p);
+	}
+	virtual ~RCBase() {
+		reset(0);
+	}
+protected:
+	bool enabledRC() {
+		return true;
+	}
+	void reset(RCObj* p) {
+		if (p) {
+			p->rcInc();
+		}
+		rcDec();
+		m_priv = p;
+	}
+	void rcInc() {
+		if (priv()) {
+			priv()->rcInc();
+		}
+	}
+	void rcDec() {
+		if (priv()) {
+			priv()->rcDec();
+		}
+	}
+	RCObj * priv() const { return m_priv; }
+	RCObj * priv() { return m_priv; }
+private:
+	RCObj * m_priv;
+};
+
+} //end namespace detail
+
+template<typename RCObj>
+class RCWrapper: private detail::RCBase<RCObj> {
+public:
+	typedef RCObj element_type;
+	friend class RCPtrWrapper<RCObj>;
+private:
+	typedef detail::RCBase<RCObj> MyBaseClass;
+public:
+	RCWrapper() : MyBaseClass(0) {};
+	RCWrapper(RCObj * data) : MyBaseClass(data) {}
+	RCWrapper(const RCWrapper & other) : MyBaseClass(other.priv()) {}
+	RCWrapper(const RCPtrWrapper<RCObj> & other);
+	virtual ~RCWrapper() {}
+
+	RCWrapper & operator=(const RCWrapper & other) {
+		reset(other.priv());
+		return *this;
+	}
+	
+	bool operator==(const RCWrapper & other) { return priv() == other.priv(); }
+	
+	RefCountObject::RCBaseType privRc() const { return (priv() ? priv()->rc() : 0);}
+public:
+	using MyBaseClass::priv;
+	using MyBaseClass::reset;
+protected: 
+	void setPrivate(RCObj * data) {
+		MyBaseClass::reset(data);
+	}
+};
+
+template<typename RCObj>
+class RCPtrWrapper final : private detail::RCBase<RCObj> {
 public:
 	typedef RCObj element_type;
 	friend class RCWrapper<RCObj>;
 private:
+	typedef detail::RCBase<RCObj> MyBaseClass;
+private:
 	void safe_bool_func() {}
 	typedef void (RCPtrWrapper<RCObj>:: * safe_bool_type) ();
-private:
-	RCObj * m_priv;
 public:
-	RCPtrWrapper() : m_priv(0) {};
-	explicit RCPtrWrapper(RCObj * data) : m_priv(data) {if (m_priv) m_priv->rcInc();}
-	RCPtrWrapper(const RCPtrWrapper<RCObj> & other) : m_priv(other.m_priv) { if (m_priv) m_priv->rcInc(); }
-	RCPtrWrapper(const RCWrapper<RCObj> & other) : m_priv(other.priv()) { if (m_priv) m_priv->rcInc(); }
-	~RCPtrWrapper() {
-		if (m_priv) {
-			m_priv->rcDec();
-		}
-	}
+	RCPtrWrapper() : MyBaseClass(0) {};
+	explicit RCPtrWrapper(RCObj * data) : MyBaseClass(data) {}
+	RCPtrWrapper(const RCPtrWrapper<RCObj> & other) : MyBaseClass(other.priv()) {}
+	RCPtrWrapper(const RCWrapper<RCObj> & other) : MyBaseClass(other.priv()) {}
+	~RCPtrWrapper() {}
 
 	RCPtrWrapper & operator=(const RCPtrWrapper& other) {
-		if (other.m_priv)
-			other.m_priv->rcInc();
-		if (m_priv)
-			m_priv->rcDec();
-		m_priv = other.m_priv;
+		reset(other.priv());
 		return *this;
 	}
 
-	bool operator==(const RCPtrWrapper & other) { return m_priv == other.m_priv; }
+	bool operator==(const RCPtrWrapper & other) { return priv() == other.priv(); }
 
-	void swap(RCPtrWrapper & other) {
-		using std::swap;
-		swap(m_priv, other.m_priv);
-	}
+	RefCountObject::RCBaseType privRc() const { return (priv() ? priv()->rc() : 0);}
 
-	inline RefCountObject::RCBaseType privRc() const { return (m_priv ? m_priv->rc() : 0);}
-
-	
 	RCObj & operator*() { return *priv();}
 	const RCObj & operator*() const { return *priv();}
 
 	RCObj * operator->() { return priv();}
 	const RCObj * operator->() const { return priv();}
 
-	RCObj * priv() { return m_priv; }
-	const RCObj * priv() const { return m_priv; }
-	
 	RCObj * get() { return priv(); }
 	const RCObj * get() const { return priv(); }
 	
 	operator safe_bool_type() const {
 		return priv() ? &RCPtrWrapper<RCObj>::safe_bool_func : 0;
 	}
-	void reset(RCObj * data) {
-		if (data)
-			data->rcInc();
-		if (m_priv)
-			m_priv->rcDec();
-		m_priv = data;
-	}
+public:
+	using MyBaseClass::reset;
+	using MyBaseClass::priv;
 };
-
-template<typename T>
-void swap(RCPtrWrapper<T> & a, RCPtrWrapper<T> & b) {
-	a.swap(b);
-}
 
 template<typename T, typename... Args>
 RCPtrWrapper<T> make_rcptrwp(Args&&... args) {
@@ -210,52 +238,51 @@ RCPtrWrapper<TBase> make_rcptrwpBD(Args&&... args) {
 	return RCPtrWrapper<TBase>( new TDerived(std::forward<Args>(args)...));
 }
 
-template<class RCObj>
-class RefObjRCWrapper {
-public:
-	RefObjRCWrapper() : m_Private(0), m_rc(0) {};
-	RefObjRCWrapper(RCObj * data) : m_Private(data), m_rc(0) { if (m_Private) m_Private->rcInc(); }
-	RefObjRCWrapper(const RefObjRCWrapper & other) : m_Private(other.m_Private), m_rc(0) { if (m_Private) m_Private->rcInc(); }
-	virtual ~RefObjRCWrapper() { if (m_Private) m_Private->rcDec(); }
-
-	/** This operator just changes the storage pointed to by this object */
-	RefObjRCWrapper & operator=(const RefObjRCWrapper & other) {
-		if (m_Private)
-			m_Private->rcDec();
-		m_Private = other.m_Private;
-		if (m_Private)
-			m_Private->rcInc();
-		return *this;
-	}
-
-	bool operator==(const RefObjRCWrapper & other) { return m_Private == other.m_Private; }
-
-	inline void rcInc() { m_rc++; }
-	inline void rcDec() {
-		SSERIALIZE_CHEAP_ASSERT(m_rc);
-		m_rc--;
-		if (m_rc < 1) { //destructor will decrease privRc
-			delete this;
-		}
-	}
-
-	inline int rc() const { return m_rc; }
-
-	inline int privRc() const { return m_Private->rc();}
-	
-protected:
-	RCObj * priv() { return m_Private; }
-	
-private:
-	RCObj * m_Private;
-	int m_rc;
-};
+// template<class RCObj>
+// class RefObjRCWrapper {
+// public:
+// 	RefObjRCWrapper() : m_Private(0), m_rc(0) {};
+// 	RefObjRCWrapper(RCObj * data) : m_Private(data), m_rc(0) { if (m_Private) m_Private->rcInc(); }
+// 	RefObjRCWrapper(const RefObjRCWrapper & other) : m_Private(other.m_Private), m_rc(0) { if (m_Private) m_Private->rcInc(); }
+// 	virtual ~RefObjRCWrapper() { if (m_Private) m_Private->rcDec(); }
+// 
+// 	/** This operator just changes the storage pointed to by this object */
+// 	RefObjRCWrapper & operator=(const RefObjRCWrapper & other) {
+// 		if (m_Private)
+// 			m_Private->rcDec();
+// 		m_Private = other.m_Private;
+// 		if (m_Private)
+// 			m_Private->rcInc();
+// 		return *this;
+// 	}
+// 
+// 	bool operator==(const RefObjRCWrapper & other) { return m_Private == other.m_Private; }
+// 
+// 	inline void rcInc() { m_rc++; }
+// 	inline void rcDec() {
+// 		SSERIALIZE_CHEAP_ASSERT(m_rc);
+// 		m_rc--;
+// 		if (m_rc < 1) { //destructor will decrease privRc
+// 			delete this;
+// 		}
+// 	}
+// 
+// 	inline int rc() const { return m_rc; }
+// 
+// 	inline int privRc() const { return m_Private->rc();}
+// 	
+// protected:
+// 	RCObj * priv() { return m_Private; }
+// 	
+// private:
+// 	RCObj * m_Private;
+// 	int m_rc;
+// };
 
 template<typename RCObj>
-RCWrapper<RCObj>::RCWrapper(const RCPtrWrapper<RCObj> & other) : m_Private(other.m_priv) {
-	if(m_Private)
-		m_Private->rcInc();
-}
+RCWrapper<RCObj>::RCWrapper(const RCPtrWrapper<RCObj> & other) :
+MyBaseClass(other.priv())
+{}
 
 }//end namespace 
 
