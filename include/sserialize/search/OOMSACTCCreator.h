@@ -423,7 +423,7 @@ public:
 		}
 		///only call this on the last owner
 		void flush() {
-			SSERIALIZE_CHEAP_ASSERT_EQUAL(m_priv->rc(), 1);
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(m_priv->rc(), (uint32_t) 1);
 			m_priv.reset(0);
 		}
 	private:
