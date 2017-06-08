@@ -7,31 +7,30 @@
 
 namespace sserialize {
 namespace detail {
-	template<typename RCObj, typename TEnable = void>
+	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING = false>
 	class RCBase;
 }
 
+class RefCountObjectBase;
+class RefCountObject;
 class RefCountObjectWithDisable;
 
-template<typename RCObj>
+template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
 class RCPtrWrapper;
 
-template<typename RCObj>
+template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
 class RCWrapper;
 
-template<class RCObj>
-class RefObjRCWrapper;
-
-class RefCountObject {
+class RefCountObjectBase {
 	friend class RefCountObjectWithDisable;
-	template<typename RCObj, typename TEnable> friend class detail::RCBase;
+	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
 public:
 	typedef uint32_t RCBaseType;
 public:
-	RefCountObject(const RefCountObject & other) = delete;
-	RefCountObject & operator=(const RefCountObject & other) = delete;
-	RefCountObject() : m_rc(0) {}
-	virtual ~RefCountObject() {}
+	RefCountObjectBase(const RefCountObjectBase & other) = delete;
+	RefCountObjectBase & operator=(const RefCountObjectBase & other) = delete;
+	RefCountObjectBase() : m_rc(0) {}
+	virtual ~RefCountObjectBase() {}
 
 	inline void rcReset() { m_rc = 0; }
 	inline RCBaseType rc() const { return m_rc; }
@@ -44,33 +43,52 @@ private:
 			delete this;
 		}
 	}
+	inline void rcDecWithoutDelete() {
+		SSERIALIZE_CHEAP_ASSERT(rc() > 0);
+		m_rc.fetch_sub(1, std:: memory_order_acq_rel);
+	}
 private:
 	std::atomic<RCBaseType> m_rc;
 };
 
-class RefCountObjectWithDisable: public sserialize::RefCountObject {
-	template<typename RCObj, typename TEnable> friend class detail::RCBase;
+class RefCountObject: public sserialize::RefCountObjectBase {
+	friend class RefCountObjectWithDisable;
+	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
+public:
+	RefCountObject(const RefCountObject & other) = delete;
+	RefCountObjectWithDisable & operator=(const RefCountObject & other) = delete;
+	RefCountObject() = default;
+	virtual ~RefCountObject() {}
+private:
+	///we use this tag for an static assert to make sure that the user chose the right RCWrapper/RCPtrWrapper
+	///Automatic wrapper selection is unfortunately not possible if the object to be refcounted is not fully defined
+	static constexpr bool SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE = false;
+};
+
+class RefCountObjectWithDisable: public sserialize::RefCountObjectBase {
+	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
 public:
 	RefCountObjectWithDisable(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable & operator=(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable() : m_enabled(true) {}
 	virtual ~RefCountObjectWithDisable() {}
-
-	///@WARNING this is a dangerous thing to do. You have to make sure that at least one owner is alive during usage of data
-	inline bool disableRc() {
+private:
+	inline void disableRC() {
 		m_enabled = false;
-		return true;
 	}
-	inline void enableRc() {
+	inline void enableRC() {
 		m_enabled = true;
 	}
-	
 	inline bool enabledRC() const {
 		return m_enabled;
 	}
 private:
-	using RefCountObject::rcInc;
-	using RefCountObject::rcDec;
+	using RefCountObjectBase::rcInc;
+	using RefCountObjectBase::rcDec;
+private:
+	///we use this tag for an static assert to make sure that the user chose the right RCWrapper/RCPtrWrapper
+	///Automatic wrapper selection is unfortunately not possible if the objected to be refcounted is not fully defined
+	static constexpr bool SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE = true;
 private:
 	bool m_enabled;
 };
@@ -78,16 +96,31 @@ private:
 namespace detail {
 
 template<typename RCObj>
-class RCBase<RCObj, typename std::enable_if< std::is_base_of<RefCountObjectWithDisable, RCObj>::value, void >::type > {
-protected:
+class RCBase<RCObj, true > {
+public:
 	RCBase(RCObj* p) : m_priv(0), m_enabled(false)
 	{
+		static_assert(RCObj::SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE == true, "Reference counter object cannot disable reference counting but wrapper can.");
 		reset(p);
 	}
 	virtual ~RCBase() {
 		reset(0);
 	}
-protected:
+	void enableRC() {
+		if (priv() && !m_enabled) {
+			priv()->enableRC();
+			priv()->rcInc();
+			m_enabled = true;
+		}
+	}
+	///Warning: this may leave the object without an owner
+	void disableRC() {
+		if (priv() && m_enabled) {
+			priv()->rcDecWithoutDelete();
+			priv()->enableRC();
+			m_enabled = false;
+		}
+	}
 	bool enabledRC() {
 		return m_enabled;
 	}
@@ -109,7 +142,7 @@ protected:
 			priv()->rcDec();
 		}
 	}
-	const RCObj * priv() const { return m_priv; }
+	RCObj * priv() const { return m_priv; }
 	RCObj * priv() { return m_priv; }
 private:
 	RCObj * m_priv;
@@ -117,15 +150,15 @@ private:
 };
 
 template<typename RCObj>
-class RCBase<RCObj, typename std::enable_if<! std::is_base_of<RefCountObjectWithDisable, RCObj>::value, void >::type > {
-protected:
+class RCBase<RCObj, false > {
+public:
 	RCBase(RCObj* p) : m_priv(0) {
+		static_assert(RCObj::SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE == false, "Reference counted object can disable reference counting but wrapper can't.");
 		reset(p);
 	}
 	virtual ~RCBase() {
 		reset(0);
 	}
-protected:
 	bool enabledRC() {
 		return true;
 	}
@@ -154,18 +187,18 @@ private:
 
 } //end namespace detail
 
-template<typename RCObj>
-class RCWrapper: private detail::RCBase<RCObj> {
+template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING = false>
+class RCWrapper: public detail::RCBase<RCObj, T_CAN_DISABLE_REFCOUNTING> {
 public:
 	typedef RCObj element_type;
-	friend class RCPtrWrapper<RCObj>;
+	friend class RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>;
 private:
-	typedef detail::RCBase<RCObj> MyBaseClass;
+	typedef detail::RCBase<RCObj, T_CAN_DISABLE_REFCOUNTING> MyBaseClass;
 public:
 	RCWrapper() : MyBaseClass(0) {};
 	RCWrapper(RCObj * data) : MyBaseClass(data) {}
 	RCWrapper(const RCWrapper & other) : MyBaseClass(other.priv()) {}
-	RCWrapper(const RCPtrWrapper<RCObj> & other);
+	RCWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other);
 	virtual ~RCWrapper() {}
 
 	RCWrapper & operator=(const RCWrapper & other) {
@@ -185,24 +218,24 @@ protected:
 	}
 };
 
-template<typename RCObj>
-class RCPtrWrapper final : private detail::RCBase<RCObj> {
+template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING = false>
+class RCPtrWrapper final : public detail::RCBase<RCObj, T_CAN_DISABLE_REFCOUNTING> {
 public:
 	typedef RCObj element_type;
-	friend class RCWrapper<RCObj>;
+	friend class RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>;
 private:
-	typedef detail::RCBase<RCObj> MyBaseClass;
-private:
+	typedef detail::RCBase<RCObj,T_CAN_DISABLE_REFCOUNTING> MyBaseClass;
+public:
 	void safe_bool_func() {}
 	typedef void (RCPtrWrapper<RCObj>:: * safe_bool_type) ();
 public:
 	RCPtrWrapper() : MyBaseClass(0) {};
 	explicit RCPtrWrapper(RCObj * data) : MyBaseClass(data) {}
-	RCPtrWrapper(const RCPtrWrapper<RCObj> & other) : MyBaseClass(other.priv()) {}
-	RCPtrWrapper(const RCWrapper<RCObj> & other) : MyBaseClass(other.priv()) {}
+	RCPtrWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
+	RCPtrWrapper(const RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
 	~RCPtrWrapper() {}
 
-	RCPtrWrapper & operator=(const RCPtrWrapper& other) {
+	RCPtrWrapper & operator=(const RCPtrWrapper & other) {
 		reset(other.priv());
 		return *this;
 	}
@@ -228,59 +261,8 @@ public:
 	using MyBaseClass::priv;
 };
 
-template<typename T, typename... Args>
-RCPtrWrapper<T> make_rcptrwp(Args&&... args) {
-	return RCPtrWrapper<T>( new T(std::forward<Args>(args)...));
-}
-
-template<typename TBase, typename TDerived, typename... Args>
-RCPtrWrapper<TBase> make_rcptrwpBD(Args&&... args) {
-	return RCPtrWrapper<TBase>( new TDerived(std::forward<Args>(args)...));
-}
-
-// template<class RCObj>
-// class RefObjRCWrapper {
-// public:
-// 	RefObjRCWrapper() : m_Private(0), m_rc(0) {};
-// 	RefObjRCWrapper(RCObj * data) : m_Private(data), m_rc(0) { if (m_Private) m_Private->rcInc(); }
-// 	RefObjRCWrapper(const RefObjRCWrapper & other) : m_Private(other.m_Private), m_rc(0) { if (m_Private) m_Private->rcInc(); }
-// 	virtual ~RefObjRCWrapper() { if (m_Private) m_Private->rcDec(); }
-// 
-// 	/** This operator just changes the storage pointed to by this object */
-// 	RefObjRCWrapper & operator=(const RefObjRCWrapper & other) {
-// 		if (m_Private)
-// 			m_Private->rcDec();
-// 		m_Private = other.m_Private;
-// 		if (m_Private)
-// 			m_Private->rcInc();
-// 		return *this;
-// 	}
-// 
-// 	bool operator==(const RefObjRCWrapper & other) { return m_Private == other.m_Private; }
-// 
-// 	inline void rcInc() { m_rc++; }
-// 	inline void rcDec() {
-// 		SSERIALIZE_CHEAP_ASSERT(m_rc);
-// 		m_rc--;
-// 		if (m_rc < 1) { //destructor will decrease privRc
-// 			delete this;
-// 		}
-// 	}
-// 
-// 	inline int rc() const { return m_rc; }
-// 
-// 	inline int privRc() const { return m_Private->rc();}
-// 	
-// protected:
-// 	RCObj * priv() { return m_Private; }
-// 	
-// private:
-// 	RCObj * m_Private;
-// 	int m_rc;
-// };
-
-template<typename RCObj>
-RCWrapper<RCObj>::RCWrapper(const RCPtrWrapper<RCObj> & other) :
+template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
+RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>::RCWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) :
 MyBaseClass(other.priv())
 {}
 

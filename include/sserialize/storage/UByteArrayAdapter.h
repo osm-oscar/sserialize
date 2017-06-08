@@ -82,7 +82,11 @@ namespace __UByteArrayAdapter {
 		#else
 		typedef sserialize::UByteArrayAdapterPrivate MyPrivate;
 		#endif
-		typedef RCPtrWrapper<MyPrivate> MyPrivatePtr;
+		#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+		typedef RCPtrWrapper<MyPrivate, true> MyPrivatePtr;
+		#else
+		typedef RCPtrWrapper<MyPrivate, false> MyPrivatePtr;
+		#endif
 	public:
 		typedef const uint8_t * const_iterator;
 		typedef uint8_t * iterator;
@@ -160,7 +164,11 @@ public:
 	#else
 	typedef sserialize::UByteArrayAdapterPrivate MyPrivate;
 	#endif
-	typedef RCPtrWrapper<MyPrivate> MyPrivatePtr;
+	#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+	typedef RCPtrWrapper<MyPrivate, true> MyPrivatePtr;
+	#else
+	typedef RCPtrWrapper<MyPrivate, false> MyPrivatePtr;
+	#endif
 public:
 	typedef sserialize::OffsetType OffsetType;
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
@@ -250,10 +258,8 @@ public://constructors
 	~UByteArrayAdapter();
 	UByteArrayAdapter & operator=(const UByteArrayAdapter & node);
 #ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
-	///DANGEROUS: Disables refcounting. This is only possible if there is currently only one owner
-	///This owner has to enable recounting prior to its deletion
 	///This operation is NOT thread-safe
-	bool disableRefCounting();
+	void disableRefCounting();
 	void enableRefCounting();
 #endif
 	void swap(UByteArrayAdapter & other);

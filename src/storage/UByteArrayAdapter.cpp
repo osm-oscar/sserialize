@@ -279,12 +279,12 @@ UByteArrayAdapter & UByteArrayAdapter::operator=(const UByteArrayAdapter & adapt
 }
 
 #ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
-bool UByteArrayAdapter::disableRefCounting() {
-	return m_priv->disableRc();
+void UByteArrayAdapter::disableRefCounting() {
+	m_priv.disableRC();
 }
 
 void UByteArrayAdapter::enableRefCounting() {
-	m_priv->enableRc();
+	m_priv.enableRC();
 }
 #endif
 
