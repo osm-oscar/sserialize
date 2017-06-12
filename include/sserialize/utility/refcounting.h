@@ -30,7 +30,9 @@ public:
 	RefCountObjectBase(const RefCountObjectBase & other) = delete;
 	RefCountObjectBase & operator=(const RefCountObjectBase & other) = delete;
 	RefCountObjectBase() : m_rc(0) {}
-	virtual ~RefCountObjectBase() {}
+	virtual ~RefCountObjectBase() {
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(RCBaseType(0), m_rc);
+	}
 
 	inline void rcReset() { m_rc = 0; }
 	inline RCBaseType rc() const { return m_rc; }
@@ -44,7 +46,7 @@ private:
 		}
 	}
 	inline void rcDecWithoutDelete() {
-		SSERIALIZE_CHEAP_ASSERT(rc() > 0);
+		SSERIALIZE_CHEAP_ASSERT_LARGER(rc(), RCBaseType(0));
 		m_rc.fetch_sub(1, std:: memory_order_acq_rel);
 	}
 private:
