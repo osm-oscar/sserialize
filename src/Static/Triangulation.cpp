@@ -66,8 +66,8 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
 }
 
-bool Triangulation::Face::contains(const Triangulation::Point & p) const {
-	assert(false);
+bool Triangulation::Face::contains(const Triangulation::Point & /*p*/) const {
+	throw sserialize::UnimplementedFunctionException("sserialize::Static::Triangulation::face::contains");
 	return false;
 }
 
