@@ -702,9 +702,10 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
 		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency, payloadConcurrency);
 		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
-		pc.flush();
 		outPutTraits.flushPayload();
+		pc.flush();
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(pc.size(), mst.size());
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::Static::Array<sserialize::UByteArrayAdapter>(pc.getFlushedData()).size(), mst.size());
 	}
 	pinfo.end();
 }
