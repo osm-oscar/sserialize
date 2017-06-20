@@ -3,6 +3,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <sserialize/utility/assert.h>
+
 namespace sserialize {
 namespace Static {
 namespace spatial {
@@ -19,8 +21,11 @@ public:
 	typedef T_TRA TRA;
 	typedef typename TRA::Triangulation::Face Face;
 public:
+	TRACFGraph();
 	TRACFGraph(const TRA * tra, const Face & rootFace);
+	TRACFGraph(const TRACFGraph &) = default;
 	~TRACFGraph() {}
+	TRACFGraph & operator=(const TRACFGraph &) = default;
 	uint32_t size() const;
 	uint32_t cellId() const;
 	template<typename T_CALLBACK>
@@ -54,47 +59,43 @@ public:
 private:
 	const TRA * m_tra;
 	Face m_rootFace;
-	struct {
+	mutable struct {
 		uint32_t value:31;
 		uint32_t cached:1;
 	} m_size;
 };
 
 template<typename T_TRA>
+TRACFGraph<T_TRA>::TRACFGraph() :
+m_tra(0),
+m_rootFace()
+{
+	m_size.cached = 1;
+	m_size.value = 0;
+}
+
+template<typename T_TRA>
 TRACFGraph<T_TRA>::TRACFGraph(const T_TRA * tra, const typename TRACFGraph<T_TRA>::Face& rootFace) :
 m_tra(tra),
 m_rootFace(rootFace)
 {
+	SSERIALIZE_CHEAP_ASSERT(m_tra);
 	m_size.cached = 0;
 }
 
 template<typename T_TRA>
 uint32_t TRACFGraph<T_TRA>::cellId() const {
+	SSERIALIZE_CHEAP_ASSERT(m_tra);
 	return m_tra->cellIdFromFaceId(m_rootFace.id());
 }
 
 template<typename T_TRA>
 uint32_t TRACFGraph<T_TRA>::size() const {
 	if (!m_size.cached) {
-		uint32_t myCellId = cellId();
-		std::unordered_set<uint32_t> visitedFaces;
-		std::vector<uint32_t> queuedFaces;
-		queuedFaces.push_back(m_rootFace.id());
-		visitedFaces.insert(queuedFaces.back());
-		while(queuedFaces.size()) {
-			Face f( m_tra->tds().face(queuedFaces.back()) );
-			queuedFaces.pop_back();
-			
-			for(int j(0); j < 3; ++j) {
-				uint32_t nId = f.neighborId(j);
-				if (!visitedFaces.count(nId) && m_tra->cellIdFromFaceId(nId) == myCellId) {
-					visitedFaces.insert(nId);
-					queuedFaces.push_back(nId);
-				}
-			}
-		}
+		uint32_t s = 0;
+		this->visitCB([&s](auto) {++s;});
 		m_size.cached = 1;
-		m_size.value = visitedFaces.size();
+		m_size.value = s;
 	}
 	return m_size.value;
 }
