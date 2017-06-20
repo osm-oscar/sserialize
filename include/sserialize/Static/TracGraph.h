@@ -21,6 +21,8 @@ class TracGraph final {
 public:
 	class Node final {
 	public:
+		typedef sserialize::ReadOnlyAtStlIterator<const Node*, Node, int32_t> const_iterator;
+	public:
 		Node() : m_p(0), m_pos(0xFFFFFFFF) {}
 		~Node() {}
 		///identical with cellId
@@ -30,6 +32,13 @@ public:
 		inline uint32_t neighborCount() const { return m_p->nodeInfo().at(id(), NI_NEIGHBOR_COUNT); }
 		inline Node neighbor(uint32_t pos) const { return Node(m_p, neighborId(pos)); }
 		inline uint32_t neighborId(uint32_t pos) const { return m_p->edgeInfo().at( m_p->nodeInfo().at(id(), NI_NEIGHBOR_BEGIN)+pos); }
+		inline Node at(uint32_t pos) const { return neighbor(pos); }
+	public:
+		const_iterator cbegin() const { return const_iterator(0, this); }
+		const_iterator begin() const { return const_iterator(0, this); }
+		
+		const_iterator cend() const { return const_iterator(size(), this); }
+		const_iterator end() const { return const_iterator(size(), this); }
 	private:
 		friend class TracGraph;
 	private:
