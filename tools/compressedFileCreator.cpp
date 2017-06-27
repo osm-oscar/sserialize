@@ -1,6 +1,7 @@
 #include <sserialize/storage/CompressedMmappedFile.h>
 #include <sserialize/storage/MmappedFile.h>
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/strings/stringfunctions.h>
 #include <iostream>
 
 
@@ -29,7 +30,7 @@ int main(int argc, char ** argv) {
 			++i;
 		}
 		else if (str == "-cc" && i+2 < argc) {
-			minCompressionRatio = atof(argv[i+1]);
+			minCompressionRatio = sserialize::stod(argv[i+1]);
 			chunkSizeExponent = atoi(argv[i+2]);
 			i+=2;
 		}

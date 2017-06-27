@@ -43,10 +43,12 @@ GeoRect::GeoRect(const std::string & str, bool fromLeafletBBox) {
 		std::string tempStr = str;
 		std::replace(tempStr.begin(), tempStr.end(), ',', ' ');
 		std::stringstream ss(tempStr);
+		ss.imbue(std::locale("C"));
 		ss >> m_lon[0] >> m_lat[0] >> m_lon[1] >> m_lat[1];
 	}
 	else {
 		std::stringstream ss(str);
+		ss.imbue(std::locale("C"));
 		ss >> m_lat[0] >> m_lat[1] >> m_lon[0] >> m_lon[1];
 	}
 }

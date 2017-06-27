@@ -24,10 +24,10 @@ protected:
 		std::vector<std::string> splitStr = split< std::vector<std::string> >(str, ';');
 		if (splitStr.size() < 4)
 			return false;
-		rect.lat()[0] = std::atof(splitStr[0].c_str() );
-		rect.lat()[1] = std::atof(splitStr[1].c_str() );
-		rect.lon()[0] = std::atof(splitStr[2].c_str() );
-		rect.lon()[1] = std::atof(splitStr[3].c_str() );
+		rect.lat()[0] = sserialize::stod(splitStr[0].c_str() );
+		rect.lat()[1] = sserialize::stod(splitStr[1].c_str() );
+		rect.lon()[0] = sserialize::stod(splitStr[2].c_str() );
+		rect.lon()[1] = sserialize::stod(splitStr[3].c_str() );
 		approximate = false;
 		if (splitStr.size() > 4)
 			approximate = toBool(splitStr[4]);

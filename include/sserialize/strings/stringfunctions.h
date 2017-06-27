@@ -26,6 +26,8 @@ public:
 /** @param str: returns true if str is either yes,true,0, otherwise returns false */
 bool toBool(const std::string & str);
 
+///a locale unaware version
+double stod(const std::string & str);
 
 inline bool isValidUtf8(const std::string & str) {
 	return utf8::is_valid(str.cbegin(), str.cend());
