@@ -265,10 +265,13 @@ void CellQueryResult::dump() const {
 	std::cout << std::endl;
 }
 
+ItemIndex CellQueryResult::cells() const {
+	return m_priv->cells();
+}
+
 std::ostream& operator<<(std::ostream& out, const CellQueryResult& src) {
 	src.dump(out);
 	return out;
 }
-
 
 }

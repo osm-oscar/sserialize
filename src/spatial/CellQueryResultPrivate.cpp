@@ -542,4 +542,12 @@ bool CellQueryResult::selfCheck() {
 	return true;
 }
 
+ItemIndex CellQueryResult::cells() const {
+	std::vector<uint32_t> tmp(m_desc.size(), 0);
+	for(const CellDesc & cd : m_desc) {
+		tmp.emplace_back(cd.cellId);
+	}
+	return sserialize::ItemIndex(tmp);
+}
+
 }}//end namespace

@@ -121,6 +121,7 @@ public:
 	ItemIndex topK(uint32_t numItems) const;
 	void dump(std::ostream & out) const;
 	void dump() const;
+	sserialize::ItemIndex cells() const;
 };
 
 std::ostream & operator<<(std::ostream & out, const CellQueryResult & src);

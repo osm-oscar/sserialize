@@ -76,6 +76,7 @@ public:
 	CellQueryResult * allToFull() const;
 	CellQueryResult * removeEmpty(uint32_t realCellCount = 0) const;
 	bool selfCheck();
+	sserialize::ItemIndex cells() const;
 };
 
 template<typename T_PMITEMSPTR_IT>
