@@ -195,5 +195,62 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 	return sserialize::ItemIndex(std::move(tmp));
 }
 
+sserialize::ItemIndex
+TriangulationGeoHierarchyArrangement::trianglesAlongPath(const TriangulationGeoHierarchyArrangement::Point* begin, const TriangulationGeoHierarchyArrangement::Point* end) const {
+	typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
+	std::vector<uint32_t> faceIds;
+	uint32_t startFace = Triangulation::NullFace;
+	for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
+		if (startFace == Triangulation::NullFace) {
+			startFace = m_grid.faceId(*prev);
+		}
+		if (startFace != Triangulation::NullFace) {
+			faceIds.emplace_back(startFace);
+			startFace = tds().traverse(*it, startFace, [&faceIds](const Triangulation::Face & face) {
+				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
+				SSERIALIZE_CHEAP_ASSERT(face.valid())
+				faceIds.emplace_back(face.id());
+			}, MyGeomTraits());
+		}
+	}
+	std::sort(faceIds.begin(), faceIds.end());
+	faceIds.resize(
+		std::distance(
+			faceIds.begin(),
+			std::unique(faceIds.begin(), faceIds.end())
+		)
+	);
+	faceIds.shrink_to_fit();
+	return sserialize::ItemIndex(faceIds);
+}
+
+sserialize::ItemIndex
+TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const std::vector<Point>::const_iterator & begin, const std::vector<Point>::const_iterator & end) const {
+	const Point * myBegin = &(*begin);
+	const Point * myEnd = &(*end);
+	return this->cellsAlongPath(radius, myBegin, myEnd);
+}
+
+sserialize::ItemIndex
+TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const std::vector<sserialize::spatial::GeoPoint>::iterator & begin, const std::vector<sserialize::spatial::GeoPoint>::iterator & end) const {
+	const sserialize::spatial::GeoPoint * myBegin = &(*begin);
+	const sserialize::spatial::GeoPoint * myEnd = &(*end);
+	return this->cellsAlongPath(radius, myBegin, myEnd);
+}
+
+sserialize::ItemIndex
+TriangulationGeoHierarchyArrangement::trianglesAlongPath(const std::vector<Point>::const_iterator & begin, const std::vector<Point>::const_iterator & end) const {
+	const Point * myBegin = &(*begin);
+	const Point * myEnd = &(*end);
+	return this->trianglesAlongPath(myBegin, myEnd);
+}
+
+sserialize::ItemIndex
+TriangulationGeoHierarchyArrangement::trianglesAlongPath(const std::vector<sserialize::spatial::GeoPoint>::iterator & begin, const std::vector<sserialize::spatial::GeoPoint>::iterator & end) const {
+	const sserialize::spatial::GeoPoint * myBegin = &(*begin);
+	const sserialize::spatial::GeoPoint * myEnd = &(*end);
+	return this->trianglesAlongPath(myBegin, myEnd);
+}
+
 
 }}}//end namespace

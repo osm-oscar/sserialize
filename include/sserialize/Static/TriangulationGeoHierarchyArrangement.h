@@ -58,25 +58,35 @@ public:
 	sserialize::ItemIndex cellsBetween(const Point & start, const Point & end, double radius) const;
 	///at least one point needs to be within the triangulation, if radius==0.0 then a faster triangulation walk will be used
 	sserialize::ItemIndex cellsAlongPath(double radius, const Point * begin, const Point * end) const;
-	inline sserialize::ItemIndex cellsAlongPath(double radius, const std::vector<Point>::const_iterator & begin, const std::vector<Point>::const_iterator & end) const {
-		const Point * myBegin = &(*begin);
-		const Point * myEnd = &(*end);
-		return this->cellsAlongPath(radius, myBegin, myEnd);
-	}
-	inline sserialize::ItemIndex cellsAlongPath(double radius, const std::vector<sserialize::spatial::GeoPoint>::iterator & begin, const std::vector<sserialize::spatial::GeoPoint>::iterator & end) const {
-		const sserialize::spatial::GeoPoint * myBegin = &(*begin);
-		const sserialize::spatial::GeoPoint * myEnd = &(*end);
-		return this->cellsAlongPath(radius, myBegin, myEnd);
-	}
+	sserialize::ItemIndex trianglesAlongPath(const Point * begin, const Point * end) const;
+	
+	sserialize::ItemIndex cellsAlongPath(double radius, const std::vector<Point>::const_iterator & begin, const std::vector<Point>::const_iterator & end) const;
+	sserialize::ItemIndex cellsAlongPath(double radius, const std::vector<sserialize::spatial::GeoPoint>::iterator & begin, const std::vector<sserialize::spatial::GeoPoint>::iterator & end) const;
 	template<typename T_GEOPOINT_ITERATOR>
-	inline sserialize::ItemIndex cellsAlongPath(double radius, const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const {
-		std::vector<sserialize::spatial::GeoPoint> tmp(begin, end);
-		const sserialize::spatial::GeoPoint * myBegin = &(*tmp.begin());
-		const sserialize::spatial::GeoPoint * myEnd = &(*tmp.end());
-		return cellsAlongPath(radius, myBegin, myEnd);
-	}
+	inline sserialize::ItemIndex cellsAlongPath(double radius, const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const;
+	
+	sserialize::ItemIndex trianglesAlongPath(const std::vector<Point>::const_iterator & begin, const std::vector<Point>::const_iterator & end) const;
+	sserialize::ItemIndex trianglesAlongPath(const std::vector<sserialize::spatial::GeoPoint>::iterator & begin, const std::vector<sserialize::spatial::GeoPoint>::iterator & end) const;
+	template<typename T_GEOPOINT_ITERATOR>
+	inline sserialize::ItemIndex trianglesAlongPath(const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const;
 };
 
+
+template<typename T_GEOPOINT_ITERATOR>
+sserialize::ItemIndex TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const {
+	std::vector<sserialize::spatial::GeoPoint> tmp(begin, end);
+	const sserialize::spatial::GeoPoint * myBegin = &(*tmp.begin());
+	const sserialize::spatial::GeoPoint * myEnd = &(*tmp.end());
+	return trianglesAlongPath(myBegin, myEnd);
+}
+
+template<typename T_GEOPOINT_ITERATOR>
+sserialize::ItemIndex TriangulationGeoHierarchyArrangement::trianglesAlongPath(const T_GEOPOINT_ITERATOR& begin, const T_GEOPOINT_ITERATOR& end) const {
+	std::vector<sserialize::spatial::GeoPoint> tmp(begin, end);
+	const sserialize::spatial::GeoPoint * myBegin = &(*tmp.begin());
+	const sserialize::spatial::GeoPoint * myEnd = &(*tmp.end());
+	return trianglesAlongPath(myBegin, myEnd);
+}
 
 }}}//end namespace
 
