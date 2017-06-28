@@ -76,6 +76,10 @@ public:
 	
 	///use equal function
 	bool operator==(const GeoPoint & other) const = delete;
+	
+	///convert to a point type with a constructor taking (lat, lon) as input
+	template<typename T_OTHER_POINT_TYPE>
+	T_OTHER_POINT_TYPE convertTo() const { return T_OTHER_POINT_TYPE(lat(), lon()); }
 };
 
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPoint & point);
