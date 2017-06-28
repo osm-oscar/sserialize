@@ -90,19 +90,32 @@ cellsBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spati
 	WorkContext wct(start, end);
 	wct.parent = this;
 	
-	tds().explore(startFace, [&wct, radius](const Triangulation::Face & f) {
+	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+	typedef K::Point_2 Point_2;
+	typedef K::Segment_2 Segment_2;
+
+	Segment_2 se(start.convertTo<Point_2>(), end.convertTo<Point_2>());
+	
+	tds().explore(startFace, [&wct, &se, radius](const Triangulation::Face & f) {
 		bool ok = false;
 		{
+			Segment_2 se01(f.point(0).convertTo<Point_2>(), f.point(1).convertTo<Point_2>());
+			Segment_2 se02(f.point(0).convertTo<Point_2>(), f.point(2).convertTo<Point_2>());
+			Segment_2 se12(f.point(1).convertTo<Point_2>(), f.point(2).convertTo<Point_2>());
+			ok = CGAL::do_intersect(se, se01) || CGAL::do_intersect(se, se02) || CGAL::do_intersect(se, se12);
+		}
+		if (!ok && radius > 0.0) {
 			sserialize::spatial::GeoPoint ct(f.centroid());
 			double myDist = wct.dc(ct.lat(), ct.lon());
 			myDist = std::fabs<double>(myDist);
-			ok = myDist < radius;
-		}
-		for(int j(0); !ok && j < 3; ++j) {
-			Triangulation::Point fp(f.point(j));
-			double myDist = wct.dc(fp.lat(), fp.lon());
-			myDist = std::fabs<double>(myDist);
-			ok = myDist < radius;
+			ok |= myDist < radius;
+			
+			for(int j(0); !ok && j < 3; ++j) {
+				Triangulation::Point fp(f.point(j));
+				double myDist = wct.dc(fp.lat(), fp.lon());
+				myDist = std::fabs<double>(myDist);
+				ok |= myDist < radius;
+			}
 		}
 		if (ok) {
 			uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
