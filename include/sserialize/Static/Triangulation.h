@@ -187,8 +187,8 @@ public:
 	///traverse the triangulation in a straight line starting from source to target
 	///@return faceid where the destination point is inside or NullFace
 	///@param visitor operator()(const Face & face)
-	template<typename TVisitor, typename T_GEOMETRY_TRAITS>
-	uint32_t traverse(const Point & source, const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	template<typename TVisitor>
+	uint32_t traverse(const Point & source, const Point & target, uint32_t sourceHint, TVisitor visitor) const;
 	
 	///Locate the face the point lies in, need exact predicates, hint: id of start face
 	template<typename T_GEOMETRY_TRAITS>
@@ -239,6 +239,21 @@ uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor v
 			return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
 		}
 	}
+}
+
+
+template<typename TVisitor>
+uint32_t Triangulation::traverse(const Point & source, const Point & target, uint32_t sourceHint, TVisitor visitor) const {
+	assert(m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES) == 0);
+	
+	Face startFace( face(sourceHint) );
+	if (!startFace.valid() || !startFace.contains(source)) {
+		sourceHint = traverse_straight_imp(face(0).centroid(), face(0), source, [](Face const &){});
+	}
+	if (sourceHint == NullFace) {
+		return NullFace;
+	}
+	return traverse_straight_imp(source, startFace, target, visitor);
 }
 
 template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
