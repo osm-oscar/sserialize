@@ -68,10 +68,17 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 
 bool Triangulation::Face::contains(const Triangulation::Point & p) const {
 	detail::Triangulation::Orientation<Triangulation::Point> ot;
-	return
-		CGAL::RIGHT_TURN == ot(point(0), point(Triangulation::cw(0)), p) &&
-		CGAL::LEFT_TURN == ot(point(0), point(Triangulation::ccw(0)), p) &&
-		CGAL::RIGHT == ot(point(Triangulation::cw(0)), point(Triangulation::ccw(0)), p);
+	detail::Triangulation::Equal<Triangulation::Point> eq;
+	CGAL::Sign ot0cw = ot(point(0), point(Triangulation::cw(0)), p);
+	CGAL::Sign ot0ccw = ot(point(0), point(Triangulation::ccw(0)), p);
+	CGAL::Sign otcwccw = ot(point(Triangulation::cw(0)), point(Triangulation::ccw(0)), p);
+	//CGAL::_TURN != x is the same as (CGAL::OPPOSITE_TURN == x || CGAL::COLLINEAR == x)
+	//strongly inside is:
+// 	(CGAL::RIGHT_TURN == ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::RIGHT == otcwccw) 
+	return (CGAL::LEFT_TURN != ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::RIGHT_TURN == otcwccw) ||
+			(CGAL::RIGHT_TURN == ot0cw && CGAL::RIGHT_TURN != ot0ccw && CGAL::RIGHT_TURN == otcwccw) ||
+			(CGAL::RIGHT_TURN == ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::LEFT_TURN != otcwccw) ||
+			(eq(p, point(0)) || eq(p, point(1)) || eq(p, point(2)));
 }
 
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {

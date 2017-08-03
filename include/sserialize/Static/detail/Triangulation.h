@@ -917,6 +917,24 @@ class Compute_centroid<sserialize::Static::spatial::ratss::PointOnS2>: public Co
 };
 
 template<typename TPoint>
+class Equal {
+public:
+	typedef TPoint Point;
+	bool operator()(const Point & a, const Point & b) const {
+		return a == b;
+	}
+};
+
+template<>
+class Equal<sserialize::spatial::GeoPoint> {
+public:
+	typedef sserialize::spatial::GeoPoint Point;
+	bool operator()(const Point & a, const Point & b) const {
+		return sserialize::spatial::equal(a, b, 0);
+	}
+};
+
+template<typename TPoint>
 class Orientation {
 public:
 	typedef TPoint Point;
