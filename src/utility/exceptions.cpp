@@ -27,6 +27,10 @@ void Exception::appendMessage(const std::string & str) {
 	m_msg += str;
 }
 
+InvalidAlgorithmStateException::InvalidAlgorithmStateException(const std::string& what) :
+Exception("InvalidAlgorithmStateException: " + what)
+{}
+
 BugException::BugException(const std::string & what) :
 Exception("BugException: " + what)
 {}

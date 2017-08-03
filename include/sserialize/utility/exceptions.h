@@ -23,6 +23,11 @@ public:
 	BugException(const std::string & what);
 };
 
+class InvalidAlgorithmStateException: public Exception {
+public:
+	InvalidAlgorithmStateException(const std::string & what);
+};
+
 class VersionMissMatchException: public Exception {
 	uint32_t m_wantVersion;
 	uint32_t m_haveVersion;
