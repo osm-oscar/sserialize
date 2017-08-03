@@ -66,9 +66,12 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
 }
 
-bool Triangulation::Face::contains(const Triangulation::Point & /*p*/) const {
-	throw sserialize::UnimplementedFunctionException("sserialize::Static::Triangulation::face::contains");
-	return false;
+bool Triangulation::Face::contains(const Triangulation::Point & p) const {
+	detail::Triangulation::Orientation<Triangulation::Point> ot;
+	return
+		CGAL::RIGHT_TURN == ot(point(0), point(Triangulation::cw(0)), p) &&
+		CGAL::LEFT_TURN == ot(point(0), point(Triangulation::ccw(0)), p) &&
+		CGAL::RIGHT == ot(point(Triangulation::cw(0)), point(Triangulation::ccw(0)), p);
 }
 
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {

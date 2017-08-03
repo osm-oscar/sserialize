@@ -13,6 +13,7 @@
 #include <CGAL/intersections.h>
 #include <CGAL/Constrained_triangulation_2.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
 namespace sserialize {
 namespace Static {
@@ -916,6 +917,31 @@ class Compute_centroid<sserialize::Static::spatial::ratss::PointOnS2>: public Co
 };
 
 template<typename TPoint>
+class Orientation {
+public:
+	typedef TPoint Point;
+	CGAL::Sign operator()(const Point & a, const Point & b, const Point & c) const;
+};
+
+template<>
+class Orientation<sserialize::spatial::GeoPoint> {
+public:
+	typedef sserialize::spatial::GeoPoint Point;
+	CGAL::Sign operator()(const Point & a, const Point & b, const Point & c) const {
+		return m_ot(toP2(a), toP2(b), toP2(c));
+	}
+private:
+	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+	typedef K::Point_2 Point_2;
+private:
+	Point_2 toP2(const Point & a) const {
+		return Point_2(a.lat(), a.lon());
+	}
+private:
+	K::Orientation_2 m_ot;
+};
+
+template<typename TPoint>
 class Do_intersect {
 public:
 	typedef TPoint Point;
@@ -926,6 +952,7 @@ template<>
 class Do_intersect<sserialize::spatial::GeoPoint> {
 public:
 	typedef sserialize::spatial::GeoPoint Point;
+	typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 	bool operator()(const Point & a, const Point & b, const Point & c, const Point & d) const {
 		return Point::intersect(a, b, c, d
 		);
