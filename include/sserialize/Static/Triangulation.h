@@ -549,19 +549,17 @@ uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face &
 	//We can exit a face either through an edge or through a Vertex
 	
 
-	//This function either retuns the face through which the LINE source->target leaves v
+	//This function either returns the face through which the LINE source->target leaves v
 	//OR it returns another vertex that is also on the LINE source->target
-	//If second is true, than the returned value is a face, otherwise it is a vertexid
 	auto vertexStep = [this, &ot, &source, &target](Vertex const & v) -> State {
+		assert(v.valid());
 		State result;
-		if (!v.valid()) {
-			return result;
-		}
 		Triangulation::FaceCirculator fcBegin(v.facesBegin()), fcEnd(v.facesEnd());
 		while (true) {
 			Face const & f = fcBegin.face();
 			assert(!f.isDegenerate());
 			int vp = f.index(v);
+			assert(vp != -1);
 			auto otcw = ot(source, target, f.point(Triangulation::cw(vp)));
 			auto otccw = ot(source, target, f.point(Triangulation::ccw(vp)));
 			
@@ -592,7 +590,7 @@ uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face &
 	};
 	
 	//This function either returns the edge through which the line source->target passes
-	//
+	//or a vertex of f that is collinear to source->target in the direction of target
 	auto faceStep = [this, &ot, &source, &target](Face const & f) -> State {
 		State state;
 		assert(!f.contains(target));
@@ -603,7 +601,7 @@ uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face &
 		};
 		//now check for each edge if source->target leaves through this edge (or is collinear to a supporting vertex)
 		//edge i is defined by the vertex i opposite to it, hence edge i is defined by the vertices cw(i) and ccw(i)
-		//if source->target passed through edge i, then cw(i) is to the left and ccw(i) to the right
+		//if source->target passes through edge i, then cw(i) is to the left and ccw(i) to the right
 		for(int i(0); i < 3; ++i) {
 			if (ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::RIGHT_TURN) { //this is the one
 				state.faceId = f.neighborId(i);
@@ -616,7 +614,7 @@ uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face &
 				state.type = State::VERTEX;
 				return state;
 			}
-			else if ( ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::COLLINEAR) { //we pass through the right edge vertex
+			else if (ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::COLLINEAR) { //we pass through the right edge vertex
 				state.vertexId = f.vertexId(ccw(i));
 				state.faceId = f.id();
 				state.type = State::VERTEX;
