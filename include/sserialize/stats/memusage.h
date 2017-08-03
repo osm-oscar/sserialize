@@ -7,6 +7,7 @@
 
 namespace sserialize {
 
+//note that sizes are meassured in number of pages
 class MemUsage {
 public:
 	MemUsage() {
@@ -24,7 +25,7 @@ public:
 	}
 	unsigned long size,resident,share,text,lib,data,dt;
 	inline void print(const std::string & header, const std::string & footer) const {
-		std::cout << "BEGIN Memory usage -- " << header << std::endl;
+		std::cout << "BEGIN Memory usage [in pages] -- " << header << std::endl;
 		std::cout << "Size: " << size << std::endl;
 		std::cout << "Resident: " << resident << std::endl;
 		std::cout << "Share: " << share << std::endl;
