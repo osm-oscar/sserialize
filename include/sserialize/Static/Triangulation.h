@@ -183,6 +183,13 @@ public:
 	///@param visitor operator()(const Face & face)
 	template<typename TVisitor, typename T_GEOMETRY_TRAITS>
 	uint32_t traverse(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	
+	///traverse the triangulation in a straight line starting from source to target
+	///@return faceid where the destination point is inside or NullFace
+	///@param visitor operator()(const Face & face)
+	template<typename TVisitor, typename T_GEOMETRY_TRAITS>
+	uint32_t traverse(const Point & source, const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	
 	///Locate the face the point lies in, need exact predicates, hint: id of start face
 	template<typename T_GEOMETRY_TRAITS>
 	uint32_t locate(const Point & target, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
@@ -213,6 +220,8 @@ public:
 protected:
 	template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
 	uint32_t traverse_imp(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	template<typename TVisitor, bool T_BROKEN_GEOMETRY>
+	uint32_t traverse_straight_imp(const Point & source, const Face & startFace, const Point & target, TVisitor visitor) const;
 
 	
 };
@@ -223,7 +232,12 @@ uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor v
 		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, true>(target, hint, visitor, traits);
 	}
 	else {
-		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
+		if (hint != NullFace) {
+			return traverse_straight_imp<TVisitor, false>(face(hint).centroid(), face(hint), target, visitor);
+		}
+		else {
+			return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
+		}
 	}
 }
 
@@ -509,6 +523,138 @@ uint32_t Triangulation::traverse_imp(const Point & target, uint32_t hint, TVisit
 	}
 	
 	return NullFace;
+}
+
+template<typename TVisitor, bool T_BROKEN_GEOMETRY>
+uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face & startFace, const Point & target, TVisitor visitor) const {
+	if (!startFace.contains(source)) {
+		throw std::invalid_argument("sserialize::Triangulation::traverse_straight: startFace needs to contain source");
+	}
+	if (T_BROKEN_GEOMETRY) {
+		throw sserialize::UnimplementedFunctionException("sserialize::Triangulation::traverse_straight: no support for broken geometry yet");
+	}
+	
+	struct State {
+		//VERTEX means that the vertex with id vertexId is collinear to source->target
+		typedef enum {INVALID, VERTEX, FACE} Type;
+		uint32_t vertexId;
+		uint32_t faceId;
+		Type type;
+		State() : vertexId(Triangulation::NullVertex), faceId(Triangulation::NullFace), type(INVALID) {}
+	};
+	
+	using OrientationTest = detail::Triangulation::Orientation<Point>;
+	OrientationTest ot;
+	//we now walk from face to face
+	//We can exit a face either through an edge or through a Vertex
+	
+
+	//This function either retuns the face through which the LINE source->target leaves v
+	//OR it returns another vertex that is also on the LINE source->target
+	//If second is true, than the returned value is a face, otherwise it is a vertexid
+	auto vertexStep = [this, &ot, &source, &target](Vertex const & v) -> State {
+		State result;
+		if (!v.valid()) {
+			return result;
+		}
+		Triangulation::FaceCirculator fcBegin(v.facesBegin()), fcEnd(v.facesEnd());
+		while (true) {
+			Face const & f = fcBegin.face();
+			assert(!f.isDegenerate());
+			int vp = f.index(v);
+			auto otcw = ot(source, target, f.point(Triangulation::cw(vp)));
+			auto otccw = ot(source, target, f.point(Triangulation::ccw(vp)));
+			
+			if (otcw == CGAL::LEFT_TURN && otccw == CGAL::RIGHT_TURN) {
+				result.faceId = f.id();
+				result.type = State::FACE;
+				return result;
+			}
+			else if(otcw == CGAL::COLLINEAR && otccw == CGAL::RIGHT_TURN) {
+				result.vertexId = f.vertexId(Triangulation::cw(vp));
+				result.faceId = f.id();
+				result.type = State::VERTEX;
+				return result;
+			}
+			else if (otcw == CGAL::LEFT_TURN && otccw == CGAL::COLLINEAR) {
+				result.vertexId = f.vertexId(Triangulation::ccw(vp));
+				result.faceId = f.id();
+				result.type = State::VERTEX;
+				return result;
+			}
+			if (fcBegin == fcEnd) {
+				return State();
+			}
+			else {
+				++fcBegin;
+			}
+		}
+	};
+	
+	//This function either returns the edge through which the line source->target passes
+	//
+	auto faceStep = [this, &ot, &source, &target](Face const & f) -> State {
+		State state;
+		assert(!f.contains(target));
+		std::array<CGAL::Sign, 3> ots = {
+			ot(source, target, f.point(0)),
+			ot(source, target, f.point(1)),
+			ot(source, target, f.point(2))
+		};
+		//now check for each edge if source->target leaves through this edge (or is collinear to a supporting vertex)
+		//edge i is defined by the vertex i opposite to it, hence edge i is defined by the vertices cw(i) and ccw(i)
+		//if source->target passed through edge i, then cw(i) is to the left and ccw(i) to the right
+		for(int i(0); i < 3; ++i) {
+			if (ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::RIGHT_TURN) { //this is the one
+				state.faceId = f.neighborId(i);
+				state.type = State::FACE;
+				return state;
+			}
+			else if (ots.at(cw(i)) == CGAL::COLLINEAR && ots.at(ccw(i)) == CGAL::RIGHT_TURN) { //we pass through the left edge vertex
+				state.vertexId = f.vertexId(cw(i));
+				state.faceId = f.id();
+				state.type = State::VERTEX;
+				return state;
+			}
+			else if ( ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::COLLINEAR) { //we pass through the right edge vertex
+				state.vertexId = f.vertexId(ccw(i));
+				state.faceId = f.id();
+				state.type = State::VERTEX;
+				return state;
+			}
+		}
+		//this should never happen, it essentially means that source->target does not intersect f
+		throw sserialize::InvalidAlgorithmStateException("sserialize::Static::Triangulation::traverse_straight");
+		return state;
+	};
+	
+	State state;
+	state.faceId = startFace.id();
+	state.type = State::FACE;
+	
+	Face currentFace = face(state.faceId);
+	
+	visitor(currentFace);
+	while (!currentFace.contains(target)) {
+		
+		if (state.type == State::FACE) {
+			state = faceStep(currentFace);
+		}
+		else if (state.type == State::VERTEX) {
+			state = vertexStep(vertex(state.vertexId));
+		}
+		else {
+			assert(state.type == State::INVALID);
+			return NullFace;
+		}
+		
+		if (state.faceId == NullFace) {
+			return NullFace;
+		}
+		currentFace = face(state.faceId);
+		visitor(currentFace);
+	}
+	return currentFace.id();
 }
 
 template<typename T_GEOMETRY_TRAITS>
