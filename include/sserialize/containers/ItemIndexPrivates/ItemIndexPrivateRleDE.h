@@ -235,11 +235,44 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	}
 	aVal >>= 1;
 	bVal >>= 1;
+	
+	auto getNext = [](UByteArrayAdapter & data, uint32_t & val, uint32_t & rle) {
+		val = data.getVlPackedUint32();
+		if (val & 0x1) {
+			rle = val >> 1;
+			val = data.getVlPackedUint32();
+		}
+		val >>= 1;
+	};
 
 	aId = aVal;
 	bId = bVal;
 	
 	while (aIndexIt < aSize && bIndexIt < bSize) {
+
+		if (aRle && aId < bId && TFunc::pushFirstSmaller) {
+		
+			continue;
+		}
+		
+		if (bRle && bId < aId && TFunc::pushSecondSmaller) {
+			
+			continue;
+		}
+		
+		if (aRle && bRle && aId == bId && TFunc::pushEqual) {
+			uint32_t rl = std::min(aRle, bRle);
+			creator.push_rle(aVal, rl);
+			aId += aVal*rl;
+			bId += bVal*rl;
+			aRle -= rl;
+			bRle -= rl;
+			if (!aRle) {
+				getNext();
+			}
+			continue;
+		}
+	
 		if (aId < bId) {
 			if (TFunc::pushFirstSmaller) {
 				creator.push_back(aId);
@@ -248,7 +281,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			if (aRle) {
 				--aRle;
 			}
-				
+			
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
 				if (aVal & 0x1) {
@@ -288,7 +321,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			if (aRle) {
 				--aRle;
 			}
-				
+			
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
 				if (aVal & 0x1) {
@@ -303,7 +336,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			if (bRle) {
 				--bRle;
 			}
-				
+			
 			if (!bRle) {
 				bVal = bData.getVlPackedUint32();
 				if (bVal & 0x1) {
