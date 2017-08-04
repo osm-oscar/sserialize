@@ -188,7 +188,7 @@ public:
 	///@return faceid where the destination point is inside or NullFace
 	///@param visitor operator()(const Face & face)
 	template<typename TVisitor>
-	uint32_t traverse(const Point & source, const Point & target, uint32_t sourceHint, TVisitor visitor) const;
+	uint32_t traverse(const Point & target, const Point & source, uint32_t sourceHint, TVisitor visitor) const;
 	
 	///Locate the face the point lies in, need exact predicates, hint: id of start face
 	template<typename T_GEOMETRY_TRAITS>
@@ -220,7 +220,7 @@ public:
 protected:
 	template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
 	uint32_t traverse_imp(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
-	template<typename TVisitor, bool T_BROKEN_GEOMETRY>
+	template<typename TVisitor>
 	uint32_t traverse_straight_imp(const Point & source, const Face & startFace, const Point & target, TVisitor visitor) const;
 
 	
@@ -232,19 +232,14 @@ uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor v
 		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, true>(target, hint, visitor, traits);
 	}
 	else {
-		if (hint != NullFace) {
-			return traverse_straight_imp<TVisitor, false>(face(hint).centroid(), face(hint), target, visitor);
-		}
-		else {
-			return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
-		}
+		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
 	}
 }
 
 
 template<typename TVisitor>
-uint32_t Triangulation::traverse(const Point & source, const Point & target, uint32_t sourceHint, TVisitor visitor) const {
-	assert(m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES) == 0);
+uint32_t Triangulation::traverse(const Point& target, const Point& source, uint32_t sourceHint, TVisitor visitor) const {
+	assert((m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) == 0);
 	
 	Face startFace( face(sourceHint) );
 	if (!startFace.valid() || !startFace.contains(source)) {
@@ -540,12 +535,12 @@ uint32_t Triangulation::traverse_imp(const Point & target, uint32_t hint, TVisit
 	return NullFace;
 }
 
-template<typename TVisitor, bool T_BROKEN_GEOMETRY>
+template<typename TVisitor>
 uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face & startFace, const Point & target, TVisitor visitor) const {
 	if (!startFace.contains(source)) {
 		throw std::invalid_argument("sserialize::Triangulation::traverse_straight: startFace needs to contain source");
 	}
-	if (T_BROKEN_GEOMETRY) {
+	if (m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) {
 		throw sserialize::UnimplementedFunctionException("sserialize::Triangulation::traverse_straight: no support for broken geometry yet");
 	}
 	
