@@ -210,7 +210,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 
 sserialize::ItemIndex
 TriangulationGeoHierarchyArrangement::trianglesAlongPath(const TriangulationGeoHierarchyArrangement::Point* begin, const TriangulationGeoHierarchyArrangement::Point* end) const {
-	typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
+// 	typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
 	std::vector<uint32_t> faceIds;
 	uint32_t startFace = Triangulation::NullFace;
 	for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
@@ -219,11 +219,11 @@ TriangulationGeoHierarchyArrangement::trianglesAlongPath(const TriangulationGeoH
 		}
 		if (startFace != Triangulation::NullFace) {
 			faceIds.emplace_back(startFace);
-			startFace = tds().traverse(*it, startFace, [&faceIds](const Triangulation::Face & face) {
+			startFace = tds().traverse(*it, *prev, startFace, [&faceIds](const Triangulation::Face & face) {
 				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
 				SSERIALIZE_CHEAP_ASSERT(face.valid())
 				faceIds.emplace_back(face.id());
-			}, MyGeomTraits());
+			});
 		}
 	}
 	std::sort(faceIds.begin(), faceIds.end());
