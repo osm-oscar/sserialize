@@ -68,7 +68,6 @@ Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 
 bool Triangulation::Face::contains(const Triangulation::Point & p) const {
 	detail::Triangulation::Orientation<Triangulation::Point> ot;
-	detail::Triangulation::Equal<Triangulation::Point> eq;
 	CGAL::Sign ot0cw = ot(point(0), point(Triangulation::cw(0)), p);
 	CGAL::Sign ot0ccw = ot(point(0), point(Triangulation::ccw(0)), p);
 	CGAL::Sign otcwccw = ot(point(Triangulation::cw(0)), point(Triangulation::ccw(0)), p);
@@ -78,7 +77,8 @@ bool Triangulation::Face::contains(const Triangulation::Point & p) const {
 	return (CGAL::LEFT_TURN != ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::RIGHT_TURN == otcwccw) ||
 			(CGAL::RIGHT_TURN == ot0cw && CGAL::RIGHT_TURN != ot0ccw && CGAL::RIGHT_TURN == otcwccw) ||
 			(CGAL::RIGHT_TURN == ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::LEFT_TURN != otcwccw) ||
-			(eq(p, point(0)) || eq(p, point(1)) || eq(p, point(2)));
+			//bool -> int = (0|1); if 2 are collinear then p is at the corner of these two, the corner is a vertex of the face
+			(((CGAL::COLLINEAR == ot0cw)+(CGAL::COLLINEAR == ot0ccw)+(CGAL::COLLINEAR == otcwccw)) == 2);
 }
 
 bool Triangulation::Face::intersects(const Triangulation::Point& p, const Triangulation::Point& q) const {
