@@ -433,8 +433,10 @@ protected:
 			vc = ctd.incident_vertices(vh);
 			vcEnd = vc;
 			do {
-				queue.push_back(vc);
-				visited.insert(vc);
+				if (!visited.count(vc)) {
+					queue.push_back(vc);
+					visited.insert(vc);
+				}
 			} while(++vc != vcEnd);
 		}
 		return Vertex_handle();
@@ -502,27 +504,41 @@ public:
 					continue;
 				}
 				//point changes, save it and add its constrained edges
-				ceIt.nearVertex = MyBaseClass::nearVertex(vt);
+				Vertex_handle nv = MyBaseClass::nearVertex(vt);
+				ceIt.nearVertex = nv;
 				if( ctd.are_there_incident_constraints(vt) ) {
 					ctd.incident_constraints(vt, ceIt);
 				}
 				else {
 					noConstraintsPoints.emplace(IntPoint(p).toU64());
 				}
-				rmPoints.emplace_back(p, MyBaseClass::nearVertex(vt));
+				rmPoints.emplace_back(p, nv);
 			}
 			//now remove all those bad points
-			for(const std::pair<Point, Vertex_handle> & p : rmPoints) {
-				Vertex_handle vh = MyBaseClass::locateVertex(p.first, p.second);
-				if (vh == Vertex_handle()) {
-					std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
-					continue;
-				}
-				else {
-					ctd.remove_incident_constraints(vh);
-					ctd.remove(vh);
+			
+			if (rmPoints.size() == ctd.number_of_vertices()) {
+				std::cout << "All points need to be snapped, clearing data" << std::endl;
+				ctd.clear();
+			}
+			else {
+				std::cout << "Removing " << rmPoints.size() << " changing points out of " << ctd.number_of_vertices() << std::endl;
+				for(const std::pair<Point, Vertex_handle> & p : rmPoints) {
+					Vertex_handle vh = MyBaseClass::locateVertex(p.first, p.second);
+					if (vh == Vertex_handle()) {
+						std::cerr << "sserialize::Static::Triangulation::prepare: Could not locate point" << std::endl;
+						continue;
+					}
+					else {
+						ctd.remove_incident_constraints(vh);
+						ctd.remove(vh);
+					}
 				}
 			}
+			#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+			for(Finite_vertices_iterator vt(ctd.finite_vertices_begin()), vtEnd(ctd.finite_vertices_end()); vt != vtEnd; ++vt) {
+				SSERIALIZE_EXPENSIVE_ASSERT(!IntPoint::changes(vt->point()));
+			}
+			#endif
 			//add points from edges and points without constraints, we first remove all multiple occurences
 			{
 				std::unordered_set<uint64_t> pts = std::move(noConstraintsPoints);
@@ -535,6 +551,7 @@ public:
 				for(uint64_t x : pts) {
 					ipts.emplace_back(IntPoint(x).toPoint());
 				}
+				std::cout << "Readding " << ipts.size() << " snapped points" << std::endl;
 				ctd.insert(ipts.begin(), ipts.end());
 				numChangedPoints = (uint32_t) ipts.size();
 	// 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
