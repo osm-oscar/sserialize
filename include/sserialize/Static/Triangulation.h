@@ -763,7 +763,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 		}
 	}
 	if ((gct & GCT_SNAP_VERTICES) && (features & F_BROKEN_GEOMETRY)) {
-		throw sserialize::CreationException("sserialize::Static::spatial::Triangulation: triangulation has brkoen geometry");
+		throw sserialize::CreationException("sserialize::Static::spatial::Triangulation: triangulation has broken geometry");
 	}
 	
 	dest.putUint8(3);//VERSION
