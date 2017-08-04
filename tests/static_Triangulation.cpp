@@ -4,7 +4,7 @@
 //CGAL
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Triangulation_2.h>
-#include <CGAL/Delaunay_triangulation_2.h>
+#include <CGAL/Constrained_Delaunay_triangulation_2.h>
 #include <CGAL/point_generators_2.h>
 #include <CGAL/Unique_hash_map.h>
 
@@ -12,9 +12,9 @@
 
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef CGAL::Triangulation_vertex_base_2<K> Vb;
-typedef CGAL::Triangulation_face_base_2<K> Fb;
+typedef CGAL::Constrained_triangulation_face_base_2<K> Fb;
 typedef CGAL::Triangulation_data_structure_2<Vb,Fb> TDS;
-typedef CGAL::Delaunay_triangulation_2<K, TDS> CDT;
+typedef CGAL::Constrained_triangulation_2<K, TDS> CDT;
 typedef CDT CGALTriangulation;
 
 CGALTriangulation::Point centroid(const CGALTriangulation::Face_handle & fh) {
@@ -22,7 +22,7 @@ CGALTriangulation::Point centroid(const CGALTriangulation::Face_handle & fh) {
 }
 
 
-template<uint32_t NUM_TRIANG_POINTS, uint32_t NUM_TEST_POINTS>
+template<uint32_t NUM_TRIANG_POINTS, uint32_t NUM_TEST_POINTS, sserialize::Static::spatial::Triangulation::GeometryCleanType T_GCT>
 class TriangulationTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( TriangulationTest );
 CPPUNIT_TEST( staticSelfCheck );
@@ -55,11 +55,18 @@ public:
 		CGAL::Random_points_in_disc_2<Point, Creator> g(m_discDiameter);
 		CGAL::cpp11::copy_n(g, NUM_TRIANG_POINTS, std::back_inserter(m_pts));
 		
+		for(const Point & p : m_pts) {
+			assert(sserialize::spatial::GeoPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y())).valid());
+		}
+		
 		m_ctr.insert(m_pts.begin(), m_pts.end());
 		
-
 		m_strData = sserialize::UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY);
-		sserialize::Static::spatial::Triangulation::append(m_ctr, m_face2FaceId, m_vertex2VertexId, m_strData, sserialize::Static::spatial::Triangulation::GCT_NONE);
+		
+		if (m_ctr.number_of_vertices() && T_GCT != sserialize::Static::spatial::Triangulation::GCT_NONE) {
+			sserialize::Static::spatial::Triangulation::prepare(m_ctr, sserialize::Static::spatial::detail::Triangulation::PrintRemovedEdges(), T_GCT, 0.1);
+		}
+		sserialize::Static::spatial::Triangulation::append(m_ctr, m_face2FaceId, m_vertex2VertexId, m_strData, T_GCT);
 		m_str = sserialize::Static::spatial::Triangulation(m_strData);
 	}
 	virtual void tearDown() {}
@@ -141,10 +148,11 @@ public:
 		for(uint32_t faceId(0), s(m_str.faceCount()); faceId < s; ++faceId) {
 			sserialize::Static::spatial::Triangulation::Point ct(m_str.face(faceId).centroid());
 			uint32_t zzfId = m_str.traverse(ct, faceId, FaceOp(), K());
-			uint32_t sfId = m_str.traverse(ct, ct, faceId, FaceOp());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse zigzag", faceId, zzfId);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse straight", faceId, sfId);
-			
+			if (T_GCT == sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES) {
+				uint32_t sfId = m_str.traverse(ct, ct, faceId, FaceOp());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse straight", faceId, sfId);
+			}
 		}
 	}
 	
@@ -153,9 +161,12 @@ public:
 			sserialize::Static::spatial::Triangulation::Vertex v(m_str.vertex(vertexId));
 			sserialize::Static::spatial::Triangulation::Point vp(v.point());
 			uint32_t zzfId = m_str.traverse(vp, v.facesBegin().face().id(), FaceOp(), K());
-			uint32_t sfId = m_str.traverse(vp, v.point(), v.facesBegin().face().id(), FaceOp());
 			CPPUNIT_ASSERT_MESSAGE("traverse zigzag", m_str.face(zzfId).index(v) != -1);
-			CPPUNIT_ASSERT_MESSAGE("traverse straight", m_str.face(sfId).index(v) != -1);
+			
+			if (T_GCT == sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES) {
+				uint32_t sfId = m_str.traverse(vp, v.point(), v.facesBegin().face().id(), FaceOp());
+				CPPUNIT_ASSERT_MESSAGE("traverse straight", m_str.face(sfId).index(v) != -1);
+			}
 		}
 	}
 	
@@ -166,9 +177,12 @@ public:
 			for(int j(0); j < 3; ++j) {
 				if (f.isNeighbor(j)) {
 					uint32_t zzlId = m_str.traverse(ct, f.neighborId(j), FaceOp(), K());
-					uint32_t slId = m_str.traverse(ct, f.neighbor(j).centroid(), f.neighborId(j), FaceOp());
 					CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse zigzag", targetFaceId, zzlId);
-					CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse straight", targetFaceId, slId);
+					
+					if (T_GCT == sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES) {
+						uint32_t slId = m_str.traverse(ct, f.neighbor(j).centroid(), f.neighborId(j), FaceOp());
+						CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse straight", targetFaceId, slId);
+					}
 				}
 			}
 		}
@@ -180,9 +194,12 @@ public:
 			sserialize::Static::spatial::Triangulation::Point ct(f.centroid());
 			for(uint32_t startFaceId(0); startFaceId < s; ++startFaceId) {
 				uint32_t zzlId = m_str.traverse(ct, startFaceId, FaceOp(), K());
-				uint32_t slId = m_str.traverse(ct, m_str.face(startFaceId).centroid(), startFaceId, FaceOp());
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse zigzag", targetFaceId, zzlId);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse straight", targetFaceId, slId);
+				
+				if (T_GCT == sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES) {
+					uint32_t slId = m_str.traverse(ct, m_str.face(startFaceId).centroid(), startFaceId, FaceOp());
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("traverse straight", targetFaceId, slId);
+				}
 			}
 		}
 	}
@@ -193,9 +210,12 @@ public:
 			sserialize::Static::spatial::Triangulation::Point vp(v.point());
 			for(uint32_t startFaceId(0), faceCount(m_str.faceCount()); startFaceId < faceCount; ++startFaceId) {
 				uint32_t zzfId = m_str.traverse(vp, startFaceId, FaceOp(), K());
-				uint32_t sfId = m_str.traverse(vp, m_str.face(startFaceId).centroid(), startFaceId, FaceOp());
 				CPPUNIT_ASSERT_MESSAGE("traverse zigzag", m_str.face(zzfId).index(v) != -1);
-				CPPUNIT_ASSERT_MESSAGE("traverse straight", m_str.face(sfId).index(v) != -1);
+				
+				if (T_GCT == sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES) {
+					uint32_t sfId = m_str.traverse(vp, m_str.face(startFaceId).centroid(), startFaceId, FaceOp());
+					CPPUNIT_ASSERT_MESSAGE("traverse straight", m_str.face(sfId).index(v) != -1);
+				}
 			}
 		}
 	}
@@ -221,9 +241,12 @@ public:
 				fhId = sserialize::Static::spatial::Triangulation::NullFace;
 			}
 			uint32_t zzfId = m_str.traverse(sserialize::spatial::GeoPoint(x, y), m_str.NullFace, FaceOp(), K());
-			uint32_t sfId = m_str.traverse(sserialize::spatial::GeoPoint(x, y), m_str.face(0).centroid(), 0, FaceOp());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("traverse zigzag: faces at ", i), fhId, zzfId);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("traverse straight: faces at ", i), fhId, sfId);
+			
+			if (T_GCT == sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES) {
+				uint32_t sfId = m_str.traverse(sserialize::spatial::GeoPoint(x, y), m_str.face(0).centroid(), 0, FaceOp());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("traverse straight: faces at ", i), fhId, sfId);
+			}
 		}
 	}
 };
@@ -233,10 +256,10 @@ int main(int argc, char ** argv) {
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  TriangulationTest<0, 10>::suite() );
-	runner.addTest(  TriangulationTest<1000, 1000>::suite() );
-	runner.addTest(  TriangulationTest<10000, 1000>::suite() );
-// 	runner.eventManager().popProtector();
+	runner.addTest(  TriangulationTest<10, 10, sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES>::suite() );
+	runner.addTest(  TriangulationTest<1000, 1000, sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES>::suite() );
+	runner.addTest(  TriangulationTest<10000, 1000, sserialize::Static::spatial::Triangulation::GCT_SNAP_VERTICES>::suite() );
+	runner.eventManager().popProtector();
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
