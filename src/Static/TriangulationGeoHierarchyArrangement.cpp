@@ -147,21 +147,20 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 
 	
 	if (radius <= 0.0) {
-		typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
-		uint32_t startFace = Triangulation::NullFace;
+		uint32_t sourceHint = Triangulation::NullFace;
 		for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
-			if (startFace == Triangulation::NullFace) {
-				startFace = m_grid.faceId(*prev);
+			if (sourceHint == Triangulation::NullFace) {
+				sourceHint = m_grid.faceId(*prev);
 			}
-			if (startFace != Triangulation::NullFace) {
-				startFace = tds().traverse(*it, startFace, [&wct](const Triangulation::Face & face) {
+			if (sourceHint != Triangulation::NullFace) {
+				sourceHint = tds().traverse(*it, *prev, [&wct](const Triangulation::Face & face) {
 					SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
 					SSERIALIZE_CHEAP_ASSERT(face.valid())
 					uint32_t cId = wct.parent->cellIdFromFaceId(face.id());
 					if (cId != NullCellId) {
 						wct.result.insert(cId);
 					}
-				}, MyGeomTraits());
+				}, sourceHint, sserialize::Static::spatial::Triangulation::TT_STRAIGHT);
 			}
 		}
 	}
@@ -212,18 +211,18 @@ sserialize::ItemIndex
 TriangulationGeoHierarchyArrangement::trianglesAlongPath(const TriangulationGeoHierarchyArrangement::Point* begin, const TriangulationGeoHierarchyArrangement::Point* end) const {
 // 	typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
 	std::vector<uint32_t> faceIds;
-	uint32_t startFace = Triangulation::NullFace;
+	uint32_t sourceHint = Triangulation::NullFace;
 	for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
-		if (startFace == Triangulation::NullFace) {
-			startFace = m_grid.faceId(*prev);
+		if (sourceHint == Triangulation::NullFace) {
+		sourceHint = m_grid.faceId(*prev);
 		}
-		if (startFace != Triangulation::NullFace) {
-			faceIds.emplace_back(startFace);
-			startFace = tds().traverse(*it, *prev, startFace, [&faceIds](const Triangulation::Face & face) {
+		if (sourceHint != Triangulation::NullFace) {
+			faceIds.emplace_back(sourceHint);
+			sourceHint = tds().traverse(*it, *prev, [&faceIds](const Triangulation::Face & face) {
 				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
 				SSERIALIZE_CHEAP_ASSERT(face.valid())
 				faceIds.emplace_back(face.id());
-			});
+			}, sourceHint, sserialize::Static::spatial::Triangulation::TT_STRAIGHT);
 		}
 	}
 	std::sort(faceIds.begin(), faceIds.end());

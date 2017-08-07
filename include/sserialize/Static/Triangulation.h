@@ -47,6 +47,7 @@ class Triangulation final {
 public:
 	typedef enum {F_CLEAN_GEOMETRY=0x1, F_DEGENERATE_FACES=0x2, F_BROKEN_GEOMETRY=0x4} FeatureFlags;
 	typedef enum {GCT_NONE=0, GCT_REMOVE_DEGENERATE_FACES, GCT_SNAP_VERTICES} GeometryCleanType;
+	typedef enum {TT_ZIG_ZAG=0, TT_STRAIGHT=1} TraversalType;
 	typedef sserialize::spatial::GeoPoint Point;
 	typedef uint32_t FaceId;
 	typedef uint32_t VertexId;
@@ -178,21 +179,15 @@ public:
 	Face face(uint32_t pos) const;
 	Vertex vertex(uint32_t pos) const;
 	
-	///traverse the triangulation in a more or less straight line starting from startFace to endpoint
-	///@return faceid where the destination point is inside or NullFace
-	///@param visitor operator()(const Face & face)
-	template<typename TVisitor, typename T_GEOMETRY_TRAITS>
-	uint32_t traverse(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
-	
 	///traverse the triangulation in a straight line starting from source to target
 	///@return faceid where the destination point is inside or NullFace
 	///@param visitor operator()(const Face & face)
 	template<typename TVisitor>
-	uint32_t traverse(const Point & target, const Point & source, uint32_t sourceHint, TVisitor visitor) const;
+	uint32_t traverse(const Point & target, const Point & source, TVisitor visitor, uint32_t sourceHint = NullFace, TraversalType tt = TT_ZIG_ZAG) const;
 	
 	///Locate the face the point lies in, need exact predicates, hint: id of start face
-	template<typename T_GEOMETRY_TRAITS>
-	uint32_t locate(const Point & target, uint32_t hint = 0, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	uint32_t locate(const Point & target, uint32_t hint = 0) const;
+	
 	///Explores the triangulation starting at startFace
 	///@param explorer operator()(const Face & face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
 	template<typename T_EXPLORER>
@@ -218,42 +213,45 @@ public:
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, GeometryCleanType gct);
 	
 protected:
-	template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
-	uint32_t traverse_imp(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits = T_GEOMETRY_TRAITS()) const;
+	template<typename TVisitor, bool T_BROKEN_GEOMETRY>
+	uint32_t traverse_zz_imp(const Point & target, uint32_t hint, TVisitor visitor) const;
 	template<typename TVisitor>
-	uint32_t traverse_straight_imp(const Point & source, const Face & startFace, const Point & target, TVisitor visitor) const;
+	uint32_t traverse_straight_imp(const Point & target, const Point & source, const Face & startFace, TVisitor visitor) const;
 
 	
 };
 
-template<typename TVisitor, typename T_GEOMETRY_TRAITS>
-uint32_t Triangulation::traverse(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
-	if (m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) {
-		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, true>(target, hint, visitor, traits);
-	}
-	else {
-		return traverse_imp<TVisitor, T_GEOMETRY_TRAITS, false>(target, hint, visitor, traits);
-	}
-}
-
-
 template<typename TVisitor>
-uint32_t Triangulation::traverse(const Point& target, const Point& source, uint32_t sourceHint, TVisitor visitor) const {
-	assert((m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) == 0);
-	
-	Face startFace( face(sourceHint) );
-	if (!startFace.valid() || !startFace.contains(source)) {
-		sourceHint = traverse_straight_imp(face(0).centroid(), face(0), source, [](Face const &){});
+uint32_t Triangulation::traverse(const Point& target, const Point& source, TVisitor visitor, uint32_t sourceHint, TraversalType tt) const {
+
+	if (sourceHint >= faceCount() || !face(sourceHint).contains(source)) {
+		sourceHint = locate(source);
 	}
+	
 	if (sourceHint == NullFace) {
 		return NullFace;
 	}
-	return traverse_straight_imp(source, startFace, target, visitor);
+
+	if (tt == TT_ZIG_ZAG) {
+		if (m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) {
+			return traverse_zz_imp<TVisitor, true>(target, sourceHint, visitor);
+		}
+		else {
+			return traverse_zz_imp<TVisitor, false>(target, sourceHint, visitor);
+		}
+	}
+	else if (TT_STRAIGHT) {
+		assert((m_features & (F_BROKEN_GEOMETRY | F_DEGENERATE_FACES)) == 0);
+		return traverse_straight_imp(target, source, face(sourceHint), visitor);
+	}
+	
+	throw std::invalid_argument("sserialize::Static::Triangulation::traverse: invalid traversal type");
+	return NullFace;
 }
 
-template<typename TVisitor, typename T_GEOMETRY_TRAITS, bool T_BROKEN_GEOMETRY>
-uint32_t Triangulation::traverse_imp(const Point & target, uint32_t hint, TVisitor visitor, T_GEOMETRY_TRAITS traits) const {
-	typedef T_GEOMETRY_TRAITS K;
+template<typename TVisitor, bool T_BROKEN_GEOMETRY>
+uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVisitor visitor) const {
+	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 	typedef typename K::FT FT;
 	typedef typename K::Point_2 Point_2;
 	typedef typename K::Orientation_2 Orientation_2;
@@ -262,6 +260,8 @@ uint32_t Triangulation::traverse_imp(const Point & target, uint32_t hint, TVisit
 	if (!faceCount()) {
 		return NullFace;
 	}
+	K traits;
+	
 	if (hint >= faceCount()) {
 		hint = 0;
 	}
@@ -536,7 +536,7 @@ uint32_t Triangulation::traverse_imp(const Point & target, uint32_t hint, TVisit
 }
 
 template<typename TVisitor>
-uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face & startFace, const Point & target, TVisitor visitor) const {
+uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point & source, const Face & startFace, TVisitor visitor) const {
 	if (!startFace.contains(source)) {
 		throw std::invalid_argument("sserialize::Triangulation::traverse_straight: startFace needs to contain source");
 	}
@@ -663,11 +663,6 @@ uint32_t Triangulation::traverse_straight_imp(const Point & source, const Face &
 		visitor(currentFace);
 	}
 	return currentFace.id();
-}
-
-template<typename T_GEOMETRY_TRAITS>
-uint32_t Triangulation::locate(const Point & target, uint32_t hint, T_GEOMETRY_TRAITS traits) const {
-	return traverse(target, hint, [](Face const &) {}, traits);
 }
 
 template<typename T_EXPLORER>

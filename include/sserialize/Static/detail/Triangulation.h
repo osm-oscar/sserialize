@@ -977,6 +977,13 @@ private:
 };
 
 template<typename TPoint>
+class Collinear_are_ordered_along_line {
+public:
+	typedef TPoint Point;
+	bool operator()(const Point & a, const Point & b, const Point & c) const;
+};
+
+template<typename TPoint>
 class Do_intersect {
 public:
 	typedef TPoint Point;
