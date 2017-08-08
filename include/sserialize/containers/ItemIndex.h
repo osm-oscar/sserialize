@@ -46,10 +46,13 @@ protected:
 public:
 	ItemIndex();
 	ItemIndex(const ItemIndex & idx);
+	explicit ItemIndex(std::initializer_list<uint32_t> l);
 	explicit ItemIndex(const UByteArrayAdapter & index, Types type = T_REGLINE);
 	explicit ItemIndex(const std::deque<uint32_t> & index);
 	explicit ItemIndex(const std::vector<uint32_t> & index);
 	explicit ItemIndex(std::vector<uint32_t> && index);
+	template<typename T_ITERATOR>
+	explicit ItemIndex(const T_ITERATOR & begin, const T_ITERATOR & end) : ItemIndex(std::vector<uint32_t>(begin, end)) {}
 	~ItemIndex();
 	void loadIntoMemory() const;
 	

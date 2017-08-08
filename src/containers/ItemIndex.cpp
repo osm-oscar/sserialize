@@ -57,6 +57,10 @@ ItemIndex::ItemIndex(ItemIndexPrivate * data): RCWrapper< sserialize::ItemIndexP
 
 ItemIndex::ItemIndex(const ItemIndex & other) : RCWrapper< sserialize::ItemIndexPrivate >(other) {}
 
+ItemIndex::ItemIndex(std::initializer_list<uint32_t> l) :
+ItemIndex(std::vector<uint32_t>(l.begin(), l.end()))
+{}
+
 ItemIndex::ItemIndex(const UByteArrayAdapter & index, ItemIndex::Types type) : RCWrapper< sserialize::ItemIndexPrivate >(0) {
 	createPrivate(index, type);
 }
