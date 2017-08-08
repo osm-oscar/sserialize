@@ -136,9 +136,15 @@ m_hasFetchedNodes(false)
 	for(; fmIt != fmEnd && pmIt != pmEnd;) {
 		uint32_t fCellId = *fmIt;
 		uint32_t pCellId = *pmIt;
-		if(fCellId <= pCellId) {
+		if(fCellId < pCellId) {
 			m_desc.emplace_back(1, fCellId, 0);
 			++fmIt;
+		}
+		else if (fCellId == pCellId) {
+			m_desc.emplace_back(1, fCellId, 0);
+			++fmIt;
+			++pmIt;
+			++pmItemsIt;
 		}
 		else {
 			m_desc.emplace_back(0, pCellId, *pmItemsIt);
