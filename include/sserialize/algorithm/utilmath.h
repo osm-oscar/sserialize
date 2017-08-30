@@ -11,7 +11,7 @@
 
 namespace sserialize {
 
-///does a*b/c correctly if the result is smaller thant uint32_t
+///does a*b/c correctly if the result is smaller than uint32_t
 inline uint32_t multiplyDiv32(uint32_t a, uint32_t b, uint32_t c) {
 	return (uint32_t)((static_cast<uint64_t>(a)*b)/c);
 }
