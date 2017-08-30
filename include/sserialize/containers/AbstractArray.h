@@ -13,7 +13,7 @@ template<typename TReturnType>
 class AbstractArrayIterator {
 public:
 	using value_type = TReturnType;
-	using size_type = std::size;
+	using size_type = std::size_t;
 public:
 	AbstractArrayIterator() {}
 	virtual ~AbstractArrayIterator() {}
