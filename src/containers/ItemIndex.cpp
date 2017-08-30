@@ -31,6 +31,9 @@ void ItemIndex::createPrivate(const UByteArrayAdapter & index, const ItemIndex::
 		case (ItemIndex::T_NATIVE):
 			setPrivate( new detail::ItemIndexPrivate::ItemIndexPrivateNative(index) );
 			break;
+		case (ItemIndex::T_ELIAS_FANO):
+			setPrivate( new ItemIndexPrivateEliasFano(index) );
+			break;
 		default:
 			setPrivate( new ItemIndexPrivateEmpty() );
 			break;
@@ -342,6 +345,8 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 	case (ItemIndex::T_REGLINE):
 	case (ItemIndex::T_SIMPLE):
 		return ItemIndex( ItemIndexPrivateSimple::fromBitSet(bitSet) );
+	case (ItemIndex::T_ELIAS_FANO):
+		return ItemIndex( ItemIndexPrivateEliasFano::fromBitSet(bitSet) );
 	case (ItemIndex::T_NATIVE):
 	case (ItemIndex::T_STL_DEQUE):
 	case (ItemIndex::T_STL_VECTOR):

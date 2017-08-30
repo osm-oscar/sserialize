@@ -8,4 +8,5 @@
 #include "ItemIndexPrivateDE.h"
 #include "ItemIndexPrivateRleDE.h"
 #include "ItemIndexPrivateNative.h"
+#include "ItemIndexPrivateEliasFano.h"
 #endif
