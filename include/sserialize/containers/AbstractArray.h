@@ -12,11 +12,14 @@ namespace detail {
 template<typename TReturnType>
 class AbstractArrayIterator {
 public:
+	using value_type = TReturnType;
+	using size_type = std::size;
+public:
 	AbstractArrayIterator() {}
 	virtual ~AbstractArrayIterator() {}
-	virtual TReturnType get() const = 0;
+	virtual value_type get() const = 0;
 	virtual void next() = 0;
-	virtual void ffwd(std::size_t amount) {
+	virtual void ffwd(size_type amount) {
 		while (amount > 0) {
 			next();
 			--amount;
