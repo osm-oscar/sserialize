@@ -152,10 +152,12 @@ struct GenericSetOpExecuterAccessors {
 	static uint32_t get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it);
 };
 
-template<typename TCreator>
+template<typename TCreator, typename TFunc>
 struct GenericSetOpExecuterInit {
-	static TCreator init(uint32_t maxSize) {
-		return TCreator(maxSize);
+	using Creator = TCreator;
+	using SetOpTraits = TFunc;
+	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		return Creator( SetOpTraits::maxSize(first, second) );
 	}
 };
 
@@ -168,9 +170,10 @@ struct GenericSetOpExecuterInit {
 template<typename TFunc, typename TCreator, typename TPositionIterator>
 class GenericSetOpExecuter{
 public:
+	typedef TFunc SetOpTraits;
 	typedef TPositionIterator PositionIterator;
 	typedef GenericSetOpExecuterAccessors<PositionIterator> Accessors;
-	typedef GenericSetOpExecuterInit<TCreator> Init;
+	typedef GenericSetOpExecuterInit<TCreator, SetOpTraits> Init;
 public:
 	inline static PositionIterator begin(const sserialize::ItemIndexPrivate * idx) { return Accessors::begin(idx); }
 	inline static PositionIterator end(const sserialize::ItemIndexPrivate * idx) { return Accessors::end(idx); }
@@ -179,7 +182,7 @@ public:
 	inline static uint32_t get(const sserialize::ItemIndexPrivate * idx, const PositionIterator & it) { return Accessors::get(idx, it); }
 	
 	inline static TCreator init(const sserialize::ItemIndexPrivate * first, const sserialize::ItemIndexPrivate * second) {
-		return Init::init( TFunc::maxSize(first, second) );
+		return Init::init(first, second);
 	}
 
 	static sserialize::ItemIndexPrivate* execute(const sserialize::ItemIndexPrivate * first, const sserialize::ItemIndexPrivate * second) {
