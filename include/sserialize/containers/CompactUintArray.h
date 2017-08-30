@@ -162,7 +162,10 @@ public:
 	std::ostream& dump(std::ostream& out, uint32_t len);
 	void dump();
 	
+	///takes shared-ownership
 	inline const_iterator begin() const { return const_iterator(0, *this); }
+	
+	///takes shared-ownership
 	inline const_iterator cbegin() const { return const_iterator(0, *this); }
 
 	///Creates a new CompactUintArray beginning at dest.tellPutPtr()

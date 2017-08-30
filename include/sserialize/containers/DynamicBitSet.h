@@ -49,7 +49,7 @@ public:
 	DynamicBitSet(const sserialize::UByteArrayAdapter & data);
 	virtual ~DynamicBitSet();
 	void resize(UByteArrayAdapter::OffsetType size);
-	///@param shift: number of bytes to align to expressed as aa power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
+	///@param shift: number of bytes to align to expressed as a power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
 	bool align(uint8_t shift);
 	
 	IdType smallestEntry() const;

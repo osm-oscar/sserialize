@@ -355,9 +355,13 @@ public://conversion functions
 	
 public://get functions with offset
 
-	///This is NOT thread-safe for some backends
+	///The life-time of this reference is only guaranteed til the next call of ANY function
+	///This is therefor not considered to be a good way of accessing the data
+	///Use this only in conjuction with contiguous data AND in read-only mode
 	uint8_t & operator[](const OffsetType pos);
-	///This is NOT thread-safe for some backends
+	///The life-time of this reference is only guaranteed til the next call of ANY function
+	///This is therefor not considered to be a good way of accessing the data
+	///Use this only in conjuction with contiguous data AND in read-only mode
 	const uint8_t & operator[](const OffsetType pos) const;
 	
 	uint8_t at(OffsetType pos) const;
