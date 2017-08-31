@@ -399,14 +399,14 @@ void Triangulation::printStats(std::ostream& out) const {
 	out << "}";
 }
 
-uint32_t Triangulation::locate(const Point& target, uint32_t hint) const {
+uint32_t Triangulation::locate(const Point& target, uint32_t hint, TraversalType tt) const {
 	if (!faceCount()) {
 		return NullFace;
 	}
 	if (hint >= faceCount()) {
 		hint = 0;
 	}
-	return traverse(target, face(hint).centroid(), [](Face const &) {}, hint, TT_ZIG_ZAG);
+	return traverse(target, face(hint).centroid(), [](Face const &) {}, hint, tt);
 }
 
 }}}//end namespace
