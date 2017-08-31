@@ -153,8 +153,10 @@ bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & 
 		ok = ItemIndexPrivateDE::create(idx, dest);
 		break;
 	case ItemIndex::T_RLE_DE:
-		ok = ItemIndexPrivateRleDE::create(idx ,dest);
+		ok = ItemIndexPrivateRleDE::create(idx, dest);
 		break;
+	case ItemIndex::T_ELIAS_FANO:
+		ok = ItemIndexPrivateEliasFano::create(idx, dest);
 	default:
 		break;
 	}

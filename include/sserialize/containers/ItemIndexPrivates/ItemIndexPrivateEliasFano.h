@@ -3,6 +3,8 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/iterator/UnaryCodeIterator.h>
+#include <sserialize/algorithm/utilmath.h>
+#include <sserialize/iterator/TransformIterator.h>
 
 namespace sserialize {
 
@@ -127,8 +129,9 @@ public:
 public:
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
 	template<typename T_ITERATOR>
-	static void create(T_ITERATOR begin, T_ITERATOR end, UByteArrayAdapter & dest);
-	static void create(const std::vector<uint32_t> & src, UByteArrayAdapter & dest);
+	static bool create(T_ITERATOR begin, const T_ITERATOR&  end, sserialize::UByteArrayAdapter& dest);
+	template<typename TSortedContainer>
+	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
 	static uint8_t numLowerBits(uint32_t count, uint32_t max);
 private:
 	uint32_t dataSize() const;
@@ -151,8 +154,59 @@ namespace sserialize {
 
 
 template<typename T_ITERATOR>
-void ItemIndexPrivateEliasFano::create(T_ITERATOR begin, T_ITERATOR end, UByteArrayAdapter & dest) {
-	create(std::vector<uint32_t>(begin, end), dest);
+bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end, UByteArrayAdapter & dest) {
+	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
+	
+	using std::distance;
+	using std::next;
+	
+	auto srcSize = distance(begin, end);
+	
+	if (!srcSize) {
+		dest.putVlPackedUint32(0);
+		return true;
+	}
+	
+	uint32_t lastEntry = *next(begin, srcSize-1);
+	
+	uint8_t lowerBits = numLowerBits(srcSize, lastEntry);
+	uint32_t lbmask = createMask(lowerBits);
+	
+	dest.putVlPackedUint32(srcSize);
+	dest.putVlPackedUint32(lastEntry);
+	
+	//take care of the lower bits
+	{
+		auto t = [lbmask](const uint32_t v) { return v & lbmask; };
+		using MyIt = sserialize::TransformIterator<decltype(t), uint32_t, T_ITERATOR>;
+		CompactUintArray::create(MyIt(t, begin), MyIt(t, end), dest, lowerBits);
+	}
+	
+	//take care of the upper bits
+	{
+		UnaryCodeCreator ucc(dest);
+		
+		//put the gaps of the lower bits
+		uint32_t lastUpper = 0;
+		for(auto it(begin); it != end; ++it) {
+			uint32_t ub = *it >> lowerBits;
+			
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(lastUpper, ub);
+			
+			uint32_t gap = ub - lastUpper;
+			lastUpper = ub;
+			
+			ucc.put(gap);
+		}
+		ucc.flush();
+	}
+	return true;
+}
+
+template<typename TSortedContainer>
+bool
+ItemIndexPrivateEliasFano::create(const TSortedContainer & src, UByteArrayAdapter & dest) {
+	return create(src.begin(), src.end(), dest);
 }
 
 }

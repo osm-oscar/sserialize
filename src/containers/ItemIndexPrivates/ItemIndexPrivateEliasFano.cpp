@@ -1,6 +1,4 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateEliasFano.h>
-#include <sserialize/algorithm/utilmath.h>
-#include <sserialize/iterator/TransformIterator.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 
 namespace sserialize {
@@ -202,14 +200,19 @@ ItemIndexPrivateEliasFano::ItemIndexPrivateEliasFano(const UByteArrayAdapter & d
 m_d(d),
 m_size(m_d.getVlPackedUint32()),
 m_maxIdBegin(sserialize::psize_v<uint32_t>(m_size)),
-m_dataSizeBegin(m_maxIdBegin+sserialize::psize_v<uint32_t>(maxId())),
-m_lowerBitsBegin(m_dataSizeBegin+sserialize::psize_v<uint32_t>(dataSize())),
+m_dataSizeBegin(m_size ? m_maxIdBegin+sserialize::psize_v<uint32_t>(maxId()) : m_maxIdBegin),
+m_lowerBitsBegin(m_size ? m_dataSizeBegin+sserialize::psize_v<uint32_t>(dataSize()) : m_maxIdBegin),
 m_it(cbegin())
 {
 	sserialize::UByteArrayAdapter::SizeType totalSize = 0;
-	totalSize += m_lowerBitsBegin;
-	totalSize += CompactUintArray::minStorageBytes(numLowerBits(), size());
-	totalSize += dataSize();
+	if (m_size) {
+		totalSize += m_lowerBitsBegin;
+		totalSize += CompactUintArray::minStorageBytes(numLowerBits(), size());
+		totalSize += dataSize();
+	}
+	else {
+		totalSize += m_maxIdBegin;
+	}
 	m_d.resize(totalSize);
 }
 
@@ -229,7 +232,12 @@ UByteArrayAdapter ItemIndexPrivateEliasFano::data() const {
 }
 
 uint8_t ItemIndexPrivateEliasFano::bpn() const {
-	return sserialize::multiplyDiv64(getSizeInBytes(), 8, size());
+	if (size()) {
+		return sserialize::multiplyDiv64(getSizeInBytes(), 8, size());
+	}
+	else {
+		return std::numeric_limits<uint8_t>::max();
+	}
 }
 
 uint32_t
@@ -374,53 +382,12 @@ ItemIndexPrivateEliasFano::fromBitSet(const DynamicBitSet & bitSet) {
 	return new ItemIndexPrivateEliasFano(tmp);
 }
 
-void
-ItemIndexPrivateEliasFano::create(const std::vector<uint32_t> & src, UByteArrayAdapter & dest) {
-	
-	using SourceIterator = std::vector<uint32_t>::const_iterator;
-
-	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(src.begin(), src.end()));
-	
-	if (!src.size()) {
-		dest.putVlPackedUint32(0);
-		return;
-	}
-	
-	uint8_t lowerBits = numLowerBits(src.size(), src.back());
-	uint32_t lbmask = createMask(lowerBits);
-	
-	dest.putVlPackedUint32(src.size());
-	dest.putVlPackedUint32(src.back());
-	
-	//take care of the lower bits
-	{
-		auto t = [lbmask](const uint32_t v) { return v & lbmask; };
-		using MyIt = sserialize::TransformIterator<decltype(t), uint32_t, SourceIterator>;
-		CompactUintArray::create(MyIt(t, src.cbegin()), MyIt(t, src.cend()), dest, lowerBits);
-	}
-	
-	//take care of the upper bits
-	{
-		UnaryCodeCreator ucc(dest);
-		
-		//put the gaps of the lower bits
-		uint32_t lastUpper = 0;
-		for(auto it(src.cbegin()), end(src.end()); it != end; ++it) {
-			uint32_t ub = *it >> lowerBits;
-			
-			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(lastUpper, ub);
-			
-			uint32_t gap = ub - lastUpper;
-			lastUpper = ub;
-			
-			ucc.put(gap);
-		}
-		ucc.flush();
-	}
-}
-
 uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t max)
 {
+	if (!count) {
+		return 0;
+	}
+
 	if (max <= count) {
 		throw std::domain_error("sserialize::ItemIndexPrivateEliasFano: expecting strongly monotone sequence");
 	}
@@ -428,22 +395,42 @@ uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t max)
 }
 
 uint32_t ItemIndexPrivateEliasFano::maxId() const {
-	return m_d.getVlPackedUint32(m_maxIdBegin);
+	if (size()) {
+		return m_d.getVlPackedUint32(m_maxIdBegin);
+	}
+	else {
+		return 0;
+	}
 }
 
 uint32_t ItemIndexPrivateEliasFano::dataSize() const {
-	return m_d.getVlPackedUint32(m_dataSizeBegin);
+	if (size()) {
+		return m_d.getVlPackedUint32(m_dataSizeBegin);
+	}
+	else {
+		return 0;
+	}
 }
 
 CompactUintArray
 ItemIndexPrivateEliasFano::lowerBits() const {
-	return CompactUintArray(m_d+m_lowerBitsBegin, numLowerBits(), size());
+	if (size()) {
+		return CompactUintArray(m_d+m_lowerBitsBegin, numLowerBits(), size());
+	}
+	else {
+		return CompactUintArray();
+	}
 }
 
 UnaryCodeIterator ItemIndexPrivateEliasFano::upperBits() const {
-	sserialize::UByteArrayAdapter::OffsetType ubBegin = m_lowerBitsBegin +
-		CompactUintArray::minStorageBytes(numLowerBits(), size());
-	return UnaryCodeIterator(m_d+ubBegin);
+	if (size()) {
+		sserialize::UByteArrayAdapter::OffsetType ubBegin = m_lowerBitsBegin +
+			CompactUintArray::minStorageBytes(numLowerBits(), size());
+		return UnaryCodeIterator(m_d+ubBegin);
+	}
+	else {
+		return UnaryCodeIterator();
+	}
 }
 
 uint8_t ItemIndexPrivateEliasFano::numLowerBits() const {
