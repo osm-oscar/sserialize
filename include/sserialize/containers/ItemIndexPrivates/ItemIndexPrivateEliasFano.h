@@ -138,6 +138,9 @@ private:
 private:
 	UByteArrayAdapter m_d;
 	uint32_t m_size;
+	uint32_t m_maxIdBegin:10;
+	uint32_t m_dataSizeBegin:10;
+	uint32_t m_lowerBitsBegin:10;
 	mutable AbstractArrayIterator<uint32_t> m_it;
 	mutable std::vector<uint32_t> m_cache; //TODO: get rid of this using skip pointers?
 };

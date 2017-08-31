@@ -156,6 +156,42 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	}
 };
 
+template<>
+struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::UniteOp> {
+	using Creator = EliasFanoCreator;
+	using SetOpTraits = sserialize::detail::ItemIndexImpl::UniteOp;
+	
+	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
+		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
+		return Creator(std::max<uint32_t>(mfirst->maxId(), msecond->maxId()));
+	}
+};
+
+template<>
+struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::DifferenceOp> {
+	using Creator = EliasFanoCreator;
+	using SetOpTraits = sserialize::detail::ItemIndexImpl::DifferenceOp;
+	
+	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
+		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
+		return Creator(mfirst->maxId());
+	}
+};
+
+template<>
+struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp> {
+	using Creator = EliasFanoCreator;
+	using SetOpTraits = sserialize::detail::ItemIndexImpl::UniteOp;
+	
+	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
+		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
+		return Creator(std::max<uint32_t>(mfirst->maxId(), msecond->maxId()));
+	}
+};
+
 //END GenericSetOpExecuterInit
 
 }} //end namespace detail::ItemIndexImpl
@@ -165,8 +201,17 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 ItemIndexPrivateEliasFano::ItemIndexPrivateEliasFano(const UByteArrayAdapter & d) :
 m_d(d),
 m_size(m_d.getVlPackedUint32()),
+m_maxIdBegin(sserialize::psize_v<uint32_t>(m_size)),
+m_dataSizeBegin(m_maxIdBegin+sserialize::psize_v<uint32_t>(maxId())),
+m_lowerBitsBegin(m_dataSizeBegin+sserialize::psize_v<uint32_t>(dataSize())),
 m_it(cbegin())
-{}
+{
+	sserialize::UByteArrayAdapter::SizeType totalSize = 0;
+	totalSize += m_lowerBitsBegin;
+	totalSize += CompactUintArray::minStorageBytes(numLowerBits(), size());
+	totalSize += dataSize();
+	m_d.resize(totalSize);
+}
 
 ItemIndexPrivateEliasFano::~ItemIndexPrivateEliasFano() {}
 
@@ -228,7 +273,7 @@ ItemIndexPrivateEliasFano::size() const {
 
 sserialize::UByteArrayAdapter::SizeType
 ItemIndexPrivateEliasFano::getSizeInBytes() const {
-	return psize_v<uint32_t>(m_size) + m_d.size();
+	return m_d.size();
 }
 
 bool
@@ -383,27 +428,20 @@ uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t max)
 }
 
 uint32_t ItemIndexPrivateEliasFano::maxId() const {
-	return m_d.getVlPackedUint32( sserialize::psize_v<uint32_t>(m_size) );
+	return m_d.getVlPackedUint32(m_maxIdBegin);
 }
 
 uint32_t ItemIndexPrivateEliasFano::dataSize() const {
-	return m_d.getVlPackedUint32( sserialize::psize_v<uint32_t>(m_size) + sserialize::psize_v<uint32_t>(maxId()) );
+	return m_d.getVlPackedUint32(m_dataSizeBegin);
 }
 
 CompactUintArray
 ItemIndexPrivateEliasFano::lowerBits() const {
-	sserialize::UByteArrayAdapter::OffsetType lbBegin =
-		sserialize::psize_v<uint32_t>(m_size) +
-		sserialize::psize_v<uint32_t>(maxId()) +
-		sserialize::psize_v<uint32_t>(dataSize());
-	return CompactUintArray(m_d+lbBegin, numLowerBits(), size());
+	return CompactUintArray(m_d+m_lowerBitsBegin, numLowerBits(), size());
 }
 
 UnaryCodeIterator ItemIndexPrivateEliasFano::upperBits() const {
-	sserialize::UByteArrayAdapter::OffsetType ubBegin =
-		sserialize::psize_v<uint32_t>(m_size) +
-		sserialize::psize_v<uint32_t>(maxId()) +
-		sserialize::psize_v<uint32_t>(dataSize()) +
+	sserialize::UByteArrayAdapter::OffsetType ubBegin = m_lowerBitsBegin +
 		CompactUintArray::minStorageBytes(numLowerBits(), size());
 	return UnaryCodeIterator(m_d+ubBegin);
 }

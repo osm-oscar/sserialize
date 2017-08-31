@@ -93,6 +93,7 @@ int main(int argc, char ** argv) {
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_DE>::suite() );
 	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_RLE_DE>::suite() );
+	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_ELIAS_FANO>::suite() );
 // 	runner.eventManager().popProtector();
 	bool ok = runner.run();
 	return ok ? 0 : 1;
