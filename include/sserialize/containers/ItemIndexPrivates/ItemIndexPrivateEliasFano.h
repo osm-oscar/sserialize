@@ -75,16 +75,16 @@ private:
 
 /** Default format is:
   *
-  * -------------------------------------------------------------
-  * COUNT|MAX |DATA SIZE|LOWER BITS      |UPPER BITS
-  * -------------------------------------------------------------
-  * vu32 |vu32|vu32     |CompactUintArray|UnaryCodeStream
-  * -------------------------------------------------------------
+  * ----------------------------------------------------------------------
+  * COUNT|MAX |LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
+  * ----------------------------------------------------------------------
+  * vu32 |vu32|CompactUintArray|vu32                     |UnaryCodeStream
+  * ----------------------------------------------------------------------
   * 
   * where
   * COUNT is the number of entries
   * MAX is the maximum element
-  * DATA SIZE is the size of the UnaryCodeStream
+  * UPPER BITS DATA SIZE is the size of the UnaryCodeStream
   * 
   **/
 
@@ -134,7 +134,7 @@ public:
 	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
 	static uint8_t numLowerBits(uint32_t count, uint32_t max);
 private:
-	uint32_t dataSize() const;
+	uint32_t upperBitsDataSize() const;
 	CompactUintArray lowerBits() const;
 	UnaryCodeIterator upperBits() const;
 	uint8_t numLowerBits() const;
@@ -142,8 +142,8 @@ private:
 	UByteArrayAdapter m_d;
 	uint32_t m_size;
 	uint32_t m_maxIdBegin:10;
-	uint32_t m_dataSizeBegin:10;
 	uint32_t m_lowerBitsBegin:10;
+	uint32_t m_upperBitsBegin:10; //offset from the end of lower bits!
 	mutable AbstractArrayIterator<uint32_t> m_it;
 	mutable std::vector<uint32_t> m_cache; //TODO: get rid of this using skip pointers?
 };
@@ -184,7 +184,8 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 	
 	//take care of the upper bits
 	{
-		UnaryCodeCreator ucc(dest);
+		UByteArrayAdapter upperBitsData(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY));
+		UnaryCodeCreator ucc(upperBitsData);
 		
 		//put the gaps of the lower bits
 		uint32_t lastUpper = 0;
@@ -199,6 +200,9 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 			ucc.put(gap);
 		}
 		ucc.flush();
+		
+		dest.putVlPackedUint32(upperBitsData.size());
+		dest.put(upperBitsData);
 	}
 	return true;
 }

@@ -200,15 +200,17 @@ ItemIndexPrivateEliasFano::ItemIndexPrivateEliasFano(const UByteArrayAdapter & d
 m_d(d),
 m_size(m_d.getVlPackedUint32()),
 m_maxIdBegin(sserialize::psize_v<uint32_t>(m_size)),
-m_dataSizeBegin(m_size ? m_maxIdBegin+sserialize::psize_v<uint32_t>(maxId()) : m_maxIdBegin),
-m_lowerBitsBegin(m_size ? m_dataSizeBegin+sserialize::psize_v<uint32_t>(dataSize()) : m_maxIdBegin),
+m_lowerBitsBegin(m_size ? m_maxIdBegin+sserialize::psize_v<uint32_t>(maxId()) : m_maxIdBegin),
+m_upperBitsBegin(m_maxIdBegin),
 m_it(cbegin())
 {
 	sserialize::UByteArrayAdapter::SizeType totalSize = 0;
 	if (m_size) {
+		m_upperBitsBegin = sserialize::psize_v<uint32_t>(upperBitsDataSize());
 		totalSize += m_lowerBitsBegin;
 		totalSize += CompactUintArray::minStorageBytes(numLowerBits(), size());
-		totalSize += dataSize();
+		totalSize += m_upperBitsBegin;
+		totalSize += upperBitsDataSize();
 	}
 	else {
 		totalSize += m_maxIdBegin;
@@ -403,9 +405,9 @@ uint32_t ItemIndexPrivateEliasFano::maxId() const {
 	}
 }
 
-uint32_t ItemIndexPrivateEliasFano::dataSize() const {
+uint32_t ItemIndexPrivateEliasFano::upperBitsDataSize() const {
 	if (size()) {
-		return m_d.getVlPackedUint32(m_dataSizeBegin);
+		return m_d.getVlPackedUint32(m_lowerBitsBegin+CompactUintArray::minStorageBytes(numLowerBits(), getSizeInBytes()));
 	}
 	else {
 		return 0;
@@ -425,7 +427,8 @@ ItemIndexPrivateEliasFano::lowerBits() const {
 UnaryCodeIterator ItemIndexPrivateEliasFano::upperBits() const {
 	if (size()) {
 		sserialize::UByteArrayAdapter::OffsetType ubBegin = m_lowerBitsBegin +
-			CompactUintArray::minStorageBytes(numLowerBits(), size());
+			CompactUintArray::minStorageBytes(numLowerBits(), size()) +
+			m_upperBitsBegin;
 		return UnaryCodeIterator(m_d+ubBegin);
 	}
 	else {
