@@ -203,6 +203,7 @@ set(CONTAINTERS_SOURCES_CPP
 	src/containers/ItemIndexPrivates/ItemIndexPrivateDE.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
+	src/containers/ItemIndexPrivates/ItemIndexPrivateEliasFano.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
@@ -233,6 +234,7 @@ set(ITERATOR_SOURCES_CPP
 	src/iterator/MultiBitIterator.cpp
 	src/iterator/UDWIterator.cpp
 	src/iterator/UDWIteratorPrivateHD.cpp
+	src/iterator/UnaryCodeIterator.cpp
 )
 
 set(SEARCH_SOURCES_CPP
