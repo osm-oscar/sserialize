@@ -30,6 +30,7 @@ DynamicBitSet createBitSet(const std::set<uint32_t> & src) {
 class DynamicBitSetTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( DynamicBitSetTest );
 CPPUNIT_TEST( testRandomEquality );
+CPPUNIT_TEST( testIterators );
 CPPUNIT_TEST( testIndexCreation );
 CPPUNIT_TEST( testIntersection );
 CPPUNIT_TEST( testMerge );
@@ -64,6 +65,51 @@ public:
 				ss << "id " << i;
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), (realValues.count(j) > 0), bitSet.isSet(j));
 			}
+		}
+	}
+	
+	void testIterators() {
+		srand(0);
+		uint32_t setCount = testCount;
+		{
+			DynamicBitSet bs;
+			CPPUNIT_ASSERT_MESSAGE("Empty bit set: begin != end", bs.cbegin() == bs.cend());
+			
+			bs.set(1);
+			CPPUNIT_ASSERT_MESSAGE("Empty bit set: begin == end", bs.cbegin() != bs.cend());
+			CPPUNIT_ASSERT_EQUAL(*bs.cbegin(), uint64_t(1));
+		}
+
+		{
+			DynamicBitSet bs(sserialize::UByteArrayAdapter::createCache(16, sserialize::MM_PROGRAM_MEMORY));
+			CPPUNIT_ASSERT_MESSAGE("Empty bit set: begin != end", bs.cbegin() == bs.cend());
+			
+			bs.set(1);
+			CPPUNIT_ASSERT_MESSAGE("Bit set with 1: begin == end", bs.cbegin() != bs.cend());
+			CPPUNIT_ASSERT_MESSAGE("Empty bit set: begin+1 != end", bs.cbegin()+1 != bs.cend());
+			CPPUNIT_ASSERT_EQUAL(*bs.cbegin(), uint64_t(1));
+		}
+		
+		for(size_t i = 0; i < setCount; i++) {
+			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
+			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
+			DynamicBitSet bitSet(dest);
+			
+			uint32_t maxNum = *realValues.rbegin();
+			
+			for(std::set<uint32_t>::const_iterator it = realValues.begin(); it != realValues.end(); ++it) {
+				bitSet.set(*it);
+			}
+			
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)realValues.size(), (uint32_t)bitSet.size());
+			
+			DynamicBitSet::const_iterator bsIt(bitSet.cbegin()), bsEnd(bitSet.cend());
+			std::set<uint32_t>::const_iterator rIt(realValues.cbegin()), rEnd(realValues.cend());
+			
+			for(uint32_t i(0), s(realValues.size()); i < s; ++i, ++bsIt, ++rIt) {
+				CPPUNIT_ASSERT_MESSAGE("realvalue != bitset value at i=" + std::to_string(i), *rIt == *bsIt);
+			}
+			CPPUNIT_ASSERT_MESSAGE("bsIt != bsEnd", bsIt == bsEnd);
 		}
 	}
 	

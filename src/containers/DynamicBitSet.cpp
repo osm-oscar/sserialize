@@ -34,10 +34,20 @@ void DynamicBitSetIdIterator::next() {
 	if (m_curShift >= 8) {
 		const UByteArrayAdapter & d = m_p->data();
 		UByteArrayAdapter::OffsetType ds = d.size();
+		
+		
 		//skip to first byte != 0
 		for(; ds > m_off && (m_d = d.at(m_off)) == 0; ++m_off);
-		m_curShift = (ds > m_off ? 0 : 8);
-		next();
+		
+		m_curId = m_off*8;
+		
+		if (m_off >= ds) {
+			m_curShift = 8;
+		}
+		else {
+			m_curShift = 0;
+			next();
+		}
 	}
 	else {
 		if (m_d) {
@@ -212,5 +222,14 @@ DynamicBitSet DynamicBitSet::operator~() const {
 	}
 	return DynamicBitSet(d);
 }
+
+DynamicBitSet::const_iterator DynamicBitSet::cbegin() const {
+	return const_iterator( new detail::DynamicBitSet::DynamicBitSetIdIterator(this, 0) );
+}
+
+DynamicBitSet::const_iterator DynamicBitSet::cend() const {
+	return const_iterator( new detail::DynamicBitSet::DynamicBitSetIdIterator(this, m_data.size()) );
+}
+
 
 }//end namespace
