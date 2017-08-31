@@ -49,6 +49,12 @@ public:
 	UnaryCodeCreator(UByteArrayAdapter & d);
 	~UnaryCodeCreator();
 	void put(UnaryCodeIterator::value_type v);
+	template<typename T_ITERATOR>
+	void put(T_ITERATOR begin, const T_ITERATOR & end) {
+		for(; begin != end; ++begin) {
+			put(*begin);
+		}
+	}
 	void flush();
 private:
 	using chunk_type = UnaryCodeIterator::chunk_type;
