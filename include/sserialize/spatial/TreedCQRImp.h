@@ -184,7 +184,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 			uint32_t pmIdxId;
 			FlattenResultType frt;
 			uint32_t emptyCellCount;
-			Proc(State * s) : state(s), emptyCellCount(0) {}
+			Proc(State * s) : state(s), pmIdxId(0xFFFFFFFF), frt(FT_NONE), emptyCellCount(0) {}
 			~Proc() {
 				state->emptyCellCount += emptyCellCount;
 			}
