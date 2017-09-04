@@ -60,6 +60,7 @@ public:
 	virtual ~CellQueryResult();
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
 	uint32_t idxSize(uint32_t pos) const;
+	///this is thread-safe for different pos
 	const sserialize::ItemIndex & idx(uint32_t pos) const;
 	///This is only correct for (fullMatch() || !fetched())
 	uint32_t idxId(uint32_t pos) const;

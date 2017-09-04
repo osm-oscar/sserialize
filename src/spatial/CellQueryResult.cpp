@@ -175,7 +175,6 @@ CellQueryResult CellQueryResult::allToFull() const {
 	return CellQueryResult(m_priv->allToFull());
 }
 
-
 CellQueryResult CellQueryResult::removeEmpty() const {
 	return CellQueryResult(m_priv->removeEmpty());
 }
