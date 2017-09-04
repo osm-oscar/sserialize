@@ -511,7 +511,7 @@ CellQueryResult * CellQueryResult::removeEmpty(uint32_t emptyCellCount) const {
 	if (!emptyCellCount) {
 		for(uint32_t i(0), s(cellCount()); i < s; ++i) {
 			const CellDesc & cd = m_desc[i];
-			if ((!cd.fullMatch && idxId(i) == 0) || (cd.fetched && idxSize(i) == 0)) {
+			if ((!cd.fullMatch && !cd.fetched && idxId(i) == 0) || (cd.fetched && idxSize(i) == 0)) {
 				++emptyCellCount;
 			}
 		}
