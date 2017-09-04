@@ -248,9 +248,8 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 		}
 		else {
 			SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(state.dest->cellCount(), state.emptyCellCount);
-			uint32_t realCellCount = state.dest->cellCount()-state.emptyCellCount;
 			
-			detail::CellQueryResult * rPtr = state.dest->removeEmpty(realCellCount);
+			detail::CellQueryResult * rPtr = state.dest->removeEmpty(state.emptyCellCount);
 			//delete old cqr
 			delete state.dest;
 			
