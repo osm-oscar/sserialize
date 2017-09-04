@@ -15,7 +15,7 @@ m_d(d),
 m_pos(0),
 m_last(0),
 m_lastChunk(0),
-m_chunkBitPtr(chunk_max_bit)
+m_chunkBitPtr(0)
 {
 	operator++();
 }
@@ -34,10 +34,6 @@ UnaryCodeIterator::operator++() {
 	}
 	m_last = 0;
 	
-	if (!m_chunkBitPtr) {
-		loadNextChunk();
-	}
-	
 	if (m_chunkBitPtr != chunk_max_bit) { //there are still bits in our current byte
 		while (m_chunkBitPtr) {
 			bool isStopBit = (m_lastChunk & m_chunkBitPtr);
@@ -51,8 +47,11 @@ UnaryCodeIterator::operator++() {
 			}
 		}
 	}
-	//from here on we only have full bytes
-	m_chunkBitPtr = chunk_max_bit;
+	
+	SSERIALIZE_CHEAP_ASSERT(!m_chunkBitPtr);
+	
+	//from here on we only have full chunks, not loaded yet
+	
 	while (m_pos < m_d.size()) {
 		loadNextChunk();
 		if (m_lastChunk) { //our stop bit is inside

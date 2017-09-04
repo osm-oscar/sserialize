@@ -18,7 +18,9 @@ public:
 	void testRandom() {
 		for(int i(0); i < test_count; ++i) {
 			std::vector<uint32_t> realValues(test_data_size);
-			sserialize::TestDataGenerator<std::vector<uint32_t>::iterator>::generate(realValues.size(), realValues.begin());
+			for(uint32_t & v : realValues) {
+				v = rand() & 0xFF;
+			}
 			
 			sserialize::UByteArrayAdapter tmp(sserialize::UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 			sserialize::UnaryCodeCreator ucc(tmp);
@@ -29,8 +31,8 @@ public:
 			tmp.resetPtrs();
 			sserialize::UnaryCodeIterator uci(tmp);
 			
-			for(std::size_t i(0), s(realValues.size()); i < s; ++i) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("At i=" + std::to_string(i), realValues.at(i), *uci);
+			for(std::size_t j(0), s(realValues.size()); j < s; ++j) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("Run " + std::to_string(i) + "; Entry " + std::to_string(j), realValues.at(j), *uci);
 				++uci;
 			}
 		}
@@ -48,8 +50,8 @@ public:
 			tmp.resetPtrs();
 			sserialize::UnaryCodeIterator uci(tmp);
 			
-			for(std::size_t i(0), s(realValues.size()); i < s; ++i) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("At i=" + std::to_string(i), realValues.at(i), *uci);
+			for(std::size_t j(0), s(realValues.size()); j < s; ++j) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("Run " + std::to_string(i) + "; Entry " + std::to_string(j), realValues.at(j), *uci);
 				++uci;
 			}
 		}
@@ -70,8 +72,8 @@ public:
 			tmp.resetPtrs();
 			sserialize::UnaryCodeIterator uci(tmp);
 			
-			for(std::size_t i(0), s(realValues.size()); i < s; ++i) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("At i=" + std::to_string(i), realValues.at(i), *uci);
+			for(std::size_t j(0), s(realValues.size()); j < s; ++j) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("Run " + std::to_string(i) + "; Entry " + std::to_string(j), realValues.at(j), *uci);
 				++uci;
 			}
 		}
