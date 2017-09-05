@@ -143,6 +143,13 @@ public:
 				CPPUNIT_ASSERT_MESSAGE("single value index test", srcSet == idx);
 			}
 		}
+		
+		{
+			std::vector<uint32_t> srcSet;
+			ItemIndex idx;
+			create(srcSet, idx);
+			CPPUNIT_ASSERT_MESSAGE("empty index test", srcSet == idx);
+		}
 	}
 	
 	void testIntersect() {
