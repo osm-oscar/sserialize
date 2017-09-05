@@ -226,6 +226,9 @@ public:
 				creator.push_back(get(second, sIt));
 			}
 		}
+		
+		creator.flush();
+		
 		return creator.getPrivateIndex();
 	}
 };

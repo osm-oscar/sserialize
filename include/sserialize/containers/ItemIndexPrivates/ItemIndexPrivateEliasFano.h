@@ -76,13 +76,13 @@ private:
 /** Default format is:
   *
   * ----------------------------------------------------------------------
-  * COUNT|MAX |LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
+  * SIZE|MAX |LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
   * ----------------------------------------------------------------------
   * vu32 |vu32|CompactUintArray|vu32                     |UnaryCodeStream
   * ----------------------------------------------------------------------
   * 
   * where
-  * COUNT is the number of entries
+  * SIZE is the number of entries
   * MAX is the maximum element
   * UPPER BITS DATA SIZE is the size of the UnaryCodeStream
   * 
@@ -128,8 +128,10 @@ public:
 	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const override;
 public:
 	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
+	///create new index beginning at dest.tellPutPtr()
 	template<typename T_ITERATOR>
 	static bool create(T_ITERATOR begin, const T_ITERATOR&  end, sserialize::UByteArrayAdapter& dest);
+	///create new index beginning at dest.tellPutPtr()
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
 	static uint8_t numLowerBits(uint32_t count, uint32_t max);

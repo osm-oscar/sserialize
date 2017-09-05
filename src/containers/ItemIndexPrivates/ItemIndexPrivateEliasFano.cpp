@@ -171,9 +171,8 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	using Creator = EliasFanoCreator;
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::DifferenceOp;
 	
-	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
+	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* /*second*/) {
 		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
 		return Creator(mfirst->maxId());
 	}
 };
@@ -198,15 +197,14 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 
 ItemIndexPrivateEliasFano::ItemIndexPrivateEliasFano(const UByteArrayAdapter & d) :
 m_d(d),
-m_size(m_d.getVlPackedUint32()),
+m_size(m_d.getVlPackedUint32(0)),
 m_maxIdBegin(sserialize::psize_v<uint32_t>(m_size)),
 m_lowerBitsBegin(m_size ? m_maxIdBegin+sserialize::psize_v<uint32_t>(maxId()) : m_maxIdBegin),
-m_upperBitsBegin(m_maxIdBegin),
+m_upperBitsBegin(m_size ? sserialize::psize_v<uint32_t>(upperBitsDataSize()) : m_maxIdBegin),
 m_it(cbegin())
 {
 	sserialize::UByteArrayAdapter::SizeType totalSize = 0;
 	if (m_size) {
-		m_upperBitsBegin = sserialize::psize_v<uint32_t>(upperBitsDataSize());
 		totalSize += m_lowerBitsBegin;
 		totalSize += CompactUintArray::minStorageBytes(numLowerBits(), size());
 		totalSize += m_upperBitsBegin;
@@ -390,10 +388,15 @@ uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t max)
 		return 0;
 	}
 
-	if (max <= count) {
+	if (max+1 < count) {
 		throw std::domain_error("sserialize::ItemIndexPrivateEliasFano: expecting strongly monotone sequence");
 	}
-	return  std::floor( sserialize::logTo2(max) - sserialize::logTo2(count) );
+	
+	if (!max) { //exactly one entry which is 0
+		return 1;
+	}
+	
+	return  std::max<double>(1, std::floor( sserialize::logTo2(max) - sserialize::logTo2(count) ));
 }
 
 uint32_t ItemIndexPrivateEliasFano::maxId() const {
@@ -407,7 +410,7 @@ uint32_t ItemIndexPrivateEliasFano::maxId() const {
 
 uint32_t ItemIndexPrivateEliasFano::upperBitsDataSize() const {
 	if (size()) {
-		return m_d.getVlPackedUint32(m_lowerBitsBegin+CompactUintArray::minStorageBytes(numLowerBits(), getSizeInBytes()));
+		return m_d.getVlPackedUint32(m_lowerBitsBegin+CompactUintArray::minStorageBytes(numLowerBits(), size()));
 	}
 	else {
 		return 0;
