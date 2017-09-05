@@ -10,6 +10,7 @@ EliasFanoIterator::EliasFanoIterator(const CompactUintArray::const_iterator & lb
 m_lb(lb),
 m_ub(ub),
 m_lastUb(lastUb),
+m_baseValue(0),
 m_numLowerBits(numLowerBits)
 {}
 
@@ -17,6 +18,7 @@ EliasFanoIterator::EliasFanoIterator(const CompactUintArray::const_iterator & lb
 m_lb(lb),
 m_ub(ub),
 m_lastUb(0),
+m_baseValue(0),
 m_numLowerBits(lb.data().bpn())
 {}
 
@@ -24,6 +26,7 @@ EliasFanoIterator::EliasFanoIterator(const CompactUintArray::const_iterator & lb
 m_lb(lb),
 m_ub(),
 m_lastUb(0),
+m_baseValue(0),
 m_numLowerBits(lb.data().bpn())
 {}
 
@@ -32,16 +35,17 @@ EliasFanoIterator::~EliasFanoIterator() {}
 EliasFanoIterator::value_type
 EliasFanoIterator::get() const {
 	if (m_numLowerBits) {
-		return ((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb;
+		return (((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb) + m_baseValue;
 	}
 	else {
-		return (m_lastUb + *m_ub);
+		return (m_lastUb + *m_ub) + m_baseValue;
 	}
 }
 
 void
 EliasFanoIterator::next() {
 	m_lastUb += *m_ub;
+	m_baseValue += 1;
 	
 	++m_ub;
 	++m_lb;
@@ -393,13 +397,14 @@ uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t max)
 		return 0;
 	}
 
-	if (max+1 < count) {
-		throw std::domain_error("sserialize::ItemIndexPrivateEliasFano: expecting strongly monotone sequence");
-	}
+// 	if (max+1 < count) {
+// 		throw std::domain_error("sserialize::ItemIndexPrivateEliasFano: expecting strongly monotone sequence");
+// 	}
 	
-	if (!max) { //exactly one entry which is 0
+	if (max < count) { //exactly one entry which is 0
 		return 0;
 	}
+	
 	return std::floor( sserialize::logTo2(max) - sserialize::logTo2(count) );
 }
 

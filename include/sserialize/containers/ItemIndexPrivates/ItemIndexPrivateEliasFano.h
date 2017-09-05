@@ -39,6 +39,7 @@ namespace ItemIndexImpl {
 		CompactUintArray::const_iterator m_lb;
 		UnaryCodeIterator m_ub;
 		uint32_t m_lastUb;
+		uint32_t m_baseValue;
 		uint8_t m_numLowerBits;
 	};
 
@@ -83,8 +84,12 @@ private:
   * 
   * where
   * SIZE is the number of entries
-  * MAX is the maximum element
+  * MAX is the maximum element - (SIZE-1)
   * UPPER BITS DATA SIZE is the size of the UnaryCodeStream
+  * 
+  * The LOWER BITS encode the floor(log(MAX/SIZE)) Bits of each entry
+  * The UPPER BITS the remaining bits as gap-encoding
+  * Note that sequences need to to be strongly montone ascending since for an entry v and position p only v - p is stored
   * 
   **/
 
@@ -159,6 +164,32 @@ template<typename T_ITERATOR>
 bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end, UByteArrayAdapter & dest) {
 	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
 	
+	class MyIterator: public std::iterator<std::forward_iterator_tag, uint32_t> {
+	public:
+		MyIterator(const T_ITERATOR & base, uint32_t offset) : m_base(base), m_off(offset) {}
+		MyIterator(const MyIterator & other) = default;
+		MyIterator(MyIterator && other) = default;
+		MyIterator & operator=(const MyIterator & other) = default;
+		MyIterator & operator=(MyIterator && other) = default;
+		
+		MyIterator & operator++() {
+			++m_base;
+			m_off += 1;
+			return *this;
+		}
+		
+		uint32_t operator*()  {
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(m_off, *m_base);
+			return *m_base - m_off;
+		}
+		
+		bool operator!=(const MyIterator & other) const { return m_base != other.m_base;}
+		bool operator==(const MyIterator & other) const { return m_base == other.m_base;}
+	private:
+		T_ITERATOR m_base;
+		uint32_t m_off;
+	};
+	
 	using std::distance;
 	using std::next;
 	
@@ -171,17 +202,17 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 	
 	uint32_t lastEntry = *next(begin, srcSize-1);
 	
-	uint8_t lowerBits = numLowerBits(srcSize, lastEntry);
+	uint8_t lowerBits = numLowerBits(srcSize, lastEntry - (srcSize-1));
 	uint32_t lbmask = createMask(lowerBits);
 	
 	dest.putVlPackedUint32(srcSize);
-	dest.putVlPackedUint32(lastEntry);
+	dest.putVlPackedUint32(lastEntry - (srcSize-1));
 	
 	//take care of the lower bits
 	if (lowerBits) {
 		auto t = [lbmask](const uint32_t v) { return v & lbmask; };
-		using MyIt = sserialize::TransformIterator<decltype(t), uint32_t, T_ITERATOR>;
-		CompactUintArray::create(MyIt(t, begin), MyIt(t, end), dest, lowerBits);
+		using MyIt = sserialize::TransformIterator<decltype(t), uint32_t, MyIterator>;
+		CompactUintArray::create(MyIt(t, MyIterator(begin, 0)), MyIt(t, MyIterator(end, srcSize)), dest, lowerBits);
 	}
 	
 	//take care of the upper bits
@@ -191,8 +222,9 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 		
 		//put the gaps of the lower bits
 		uint32_t lastUpper = 0;
-		for(auto it(begin); it != end; ++it) {
-			uint32_t ub = *it >> lowerBits;
+		for(uint32_t i(0); i < srcSize; ++i, ++begin) {
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(i, *begin);
+			uint32_t ub = (*begin-i) >> lowerBits;
 			
 			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(lastUpper, ub);
 			
