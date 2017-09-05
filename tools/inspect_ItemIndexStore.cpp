@@ -215,7 +215,7 @@ void printHelp() {
 	-o filename\tout file name\n \
 	-eq filename\tequality test \n \
 	-ds\tdump stats \n \
-	-t type\ttransform to (rline|wah|de|rlede|simple|native) \n \
+	-t type\ttransform to (rline|wah|de|rlede|simple|native|eliasfano) \n \
 	-nd\tdisable deduplication of item index store \n \
 	-c\tcheck item index store \
 	";
@@ -300,6 +300,8 @@ int main(int argc, char ** argv) {
 				transform = sserialize::ItemIndex::T_SIMPLE;
 			else if (t == "native")
 				transform = sserialize::ItemIndex::T_NATIVE;
+			else if (t == "eliasfano")
+				transform = sserialize::ItemIndex::T_ELIAS_FANO;
 			++i;
 		}
 		else if (curArg == "-nd") {
