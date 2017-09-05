@@ -77,14 +77,14 @@ private:
 /** Default format is:
   *
   * ----------------------------------------------------------------------
-  * SIZE|MAX |LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
+  * SIZE|UPPER BOUND|LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
   * ----------------------------------------------------------------------
   * vu32 |vu32|CompactUintArray|vu32                     |UnaryCodeStream
   * ----------------------------------------------------------------------
   * 
   * where
   * SIZE is the number of entries
-  * MAX is the maximum element - (SIZE-1)
+  * UPPER BOUND is ceil(log(maximum element - (SIZE-1)))
   * UPPER BITS DATA SIZE is the size of the UnaryCodeStream
   * 
   * The LOWER BITS encode the floor(log(MAX/SIZE)) Bits of each entry
@@ -103,7 +103,7 @@ public:
 	
 	virtual UByteArrayAdapter data() const;
 public:
-	uint32_t maxId() const;
+	uint32_t upperBound() const;
 public:
 	///load all data into memory (only usefull if the underlying storage is not contigous)
 	virtual void loadIntoMemory() override;
@@ -139,7 +139,10 @@ public:
 	///create new index beginning at dest.tellPutPtr()
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
-	static uint8_t numLowerBits(uint32_t count, uint32_t max);
+	static uint8_t numLowerBits(uint32_t count, uint32_t upperBound);
+	static uint32_t upperBound(uint32_t count, uint32_t largestElement);
+private:
+	static uint32_t upperBoundStorage(uint32_t upperBound);
 private:
 	uint32_t upperBitsDataSize() const;
 	CompactUintArray lowerBits() const;
@@ -148,7 +151,7 @@ private:
 private:
 	UByteArrayAdapter m_d;
 	uint32_t m_size;
-	uint32_t m_maxIdBegin:10;
+	uint32_t m_upperBoundBegin:10;
 	uint32_t m_lowerBitsBegin:10;
 	uint32_t m_upperBitsBegin:10; //offset from the end of lower bits!
 	mutable AbstractArrayIterator<uint32_t> m_it;
@@ -202,11 +205,13 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 	
 	uint32_t lastEntry = *next(begin, srcSize-1);
 	
-	uint8_t lowerBits = numLowerBits(srcSize, lastEntry - (srcSize-1));
+	uint32_t upperBound = ItemIndexPrivateEliasFano::upperBound(srcSize, lastEntry);
+	
+	uint8_t lowerBits = numLowerBits(srcSize, upperBound);
 	uint32_t lbmask = createMask(lowerBits);
 	
 	dest.putVlPackedUint32(srcSize);
-	dest.putVlPackedUint32(lastEntry - (srcSize-1));
+	dest.putVlPackedUint32(ItemIndexPrivateEliasFano::upperBoundStorage(upperBound));
 	
 	//take care of the lower bits
 	if (lowerBits) {
