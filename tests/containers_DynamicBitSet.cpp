@@ -106,8 +106,8 @@ public:
 			DynamicBitSet::const_iterator bsIt(bitSet.cbegin()), bsEnd(bitSet.cend());
 			std::set<uint32_t>::const_iterator rIt(realValues.cbegin()), rEnd(realValues.cend());
 			
-			for(uint32_t i(0), s(realValues.size()); i < s; ++i, ++bsIt, ++rIt) {
-				CPPUNIT_ASSERT_MESSAGE("realvalue != bitset value at i=" + std::to_string(i), *rIt == *bsIt);
+			for(uint32_t j(0), s(realValues.size()); j < s; ++j, ++bsIt, ++rIt) {
+				CPPUNIT_ASSERT_MESSAGE("Run " + std::to_string(i) + "; realvalue != bitset value at j=" + std::to_string(j), *rIt == *bsIt);
 			}
 			CPPUNIT_ASSERT_MESSAGE("bsIt != bsEnd", bsIt == bsEnd);
 		}
