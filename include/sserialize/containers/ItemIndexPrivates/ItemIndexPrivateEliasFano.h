@@ -178,7 +178,7 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 	dest.putVlPackedUint32(lastEntry);
 	
 	//take care of the lower bits
-	{
+	if (lowerBits) {
 		auto t = [lbmask](const uint32_t v) { return v & lbmask; };
 		using MyIt = sserialize::TransformIterator<decltype(t), uint32_t, T_ITERATOR>;
 		CompactUintArray::create(MyIt(t, begin), MyIt(t, end), dest, lowerBits);

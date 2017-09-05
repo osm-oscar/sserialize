@@ -31,7 +31,12 @@ EliasFanoIterator::~EliasFanoIterator() {}
 
 EliasFanoIterator::value_type
 EliasFanoIterator::get() const {
-	return ((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb;
+	if (m_numLowerBits) {
+		return ((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb;
+	}
+	else {
+		return (m_lastUb + *m_ub);
+	}
 }
 
 void
@@ -393,10 +398,9 @@ uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t max)
 	}
 	
 	if (!max) { //exactly one entry which is 0
-		return 1;
+		return 0;
 	}
-	
-	return  std::max<double>(1, std::floor( sserialize::logTo2(max) - sserialize::logTo2(count) ));
+	return std::floor( sserialize::logTo2(max) - sserialize::logTo2(count) );
 }
 
 uint32_t ItemIndexPrivateEliasFano::maxId() const {
@@ -419,8 +423,9 @@ uint32_t ItemIndexPrivateEliasFano::upperBitsDataSize() const {
 
 CompactUintArray
 ItemIndexPrivateEliasFano::lowerBits() const {
-	if (size()) {
-		return CompactUintArray(m_d+m_lowerBitsBegin, numLowerBits(), size());
+	uint8_t nlb = numLowerBits();
+	if (size() && nlb) {
+		return CompactUintArray(m_d+m_lowerBitsBegin, nlb, size());
 	}
 	else {
 		return CompactUintArray();
