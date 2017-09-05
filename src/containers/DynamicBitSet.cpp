@@ -11,63 +11,99 @@ m_p(0),
 m_off(0),
 m_curId(0),
 m_d(0),
-m_curShift(0)
+m_remainingBits(0)
 {}
 
 DynamicBitSetIdIterator::DynamicBitSetIdIterator(const sserialize::DynamicBitSet * p, SizeType offset) :
 m_p(p),
 m_off(offset),
-m_curId(offset*8),
+m_curId(m_off*8),
 m_d(0),
-m_curShift(8)
+m_remainingBits(0)
 {
-	next();
+	if (m_off < m_p->data().size()) {
+		m_d = m_p->data().at(m_off);
+		m_remainingBits = 8;
+		moveToNextSetBit();
+	}
 }
 
 DynamicBitSetIdIterator::~DynamicBitSetIdIterator() {}
+
+void DynamicBitSetIdIterator::moveToNextSetBit() {
+	
+	for(; m_remainingBits && m_d;) {
+		if (m_d & 0x1) {
+			return;
+		}
+		
+		m_d >>= 1;
+		m_remainingBits -= 1;
+		m_curId += 1;
+	}
+	
+	m_curId += m_remainingBits;
+	m_off += 1;
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(m_curId, m_off*8);
+	
+	m_remainingBits = 8;
+	for(; m_off < m_p->data().size();) {
+		m_d = m_p->data().at(m_off);
+		if (m_d) {
+			break;
+		}
+		else {
+			++m_off;
+			m_curId += 8;
+		}
+	}
+	
+	if (m_off >= m_p->data().size()) {
+		m_remainingBits = 0;
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_curId, m_off*8);
+		return;
+	}
+	
+	SSERIALIZE_CHEAP_ASSERT(m_d);
+	
+	for(; m_remainingBits && m_d;) {
+		if (m_d & 0x1) {
+			return;
+		}
+		
+		m_d >>= 1;
+		m_remainingBits -= 1;
+		m_curId += 1;
+	}
+	//we should never get to here
+	SSERIALIZE_CHEAP_ASSERT(false);
+}
 
 SizeType DynamicBitSetIdIterator::get() const {
 	return m_curId;
 }
 
 void DynamicBitSetIdIterator::next() {
-	if (m_curShift >= 8) {
-		const UByteArrayAdapter & d = m_p->data();
-		UByteArrayAdapter::OffsetType ds = d.size();
-		
-		
-		//skip to first byte != 0
-		for(; ds > m_off && (m_d = d.at(m_off)) == 0; ++m_off);
-		
-		m_curId = m_off*8;
-		
-		if (m_off >= ds) {
-			m_curShift = 8;
-		}
-		else {
-			m_curShift = 0;
-			next();
-		}
+	if (m_off >= m_p->data().size()) {
+		return;
 	}
-	else {
-		if (m_d) {
-			for(; m_curShift < 8 && (m_d & 0x1) == 0; ++m_curShift, ++m_curId, m_d >>= 1);
-		}
-		else {
-			m_curId += 8-m_curShift;
-			next();
-		}
-	}
+	//m_remainingBits points to the currently set bit or beyond the data
+	SSERIALIZE_CHEAP_ASSERT(m_off >= m_p->data().size() || m_d & 0x1);
+	m_remainingBits -= 1; //remove currently pointed to bit
+	m_d >>= 1;
+	m_curId += 1;
+	SSERIALIZE_CHEAP_ASSERT(m_remainingBits < 8);
+	moveToNextSetBit();
 }
 
 bool DynamicBitSetIdIterator::notEq(const AbstractArrayIterator<SizeType> * other) const {
 	const DynamicBitSetIdIterator * o = static_cast<const DynamicBitSetIdIterator*>(other);
-	return o->m_off != m_off || o->m_curShift != m_curShift || o->m_curId != m_curId || o->m_d != m_d;
+	return o->m_off != m_off || o->m_remainingBits != m_remainingBits || o->m_curId != m_curId || o->m_d != m_d;
 }
 
 bool DynamicBitSetIdIterator::eq(const AbstractArrayIterator<SizeType> * other) const {
 	const DynamicBitSetIdIterator * o = static_cast<const DynamicBitSetIdIterator*>(other);
-	return o->m_off == m_off && o->m_curShift == m_curShift && o->m_curId == m_curId && o->m_d == m_d;
+	return o->m_off == m_off && o->m_remainingBits == m_remainingBits && o->m_curId == m_curId && o->m_d == m_d;
 }
 
 AbstractArrayIterator<SizeType> * DynamicBitSetIdIterator::copy() const {

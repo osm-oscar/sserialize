@@ -77,7 +77,7 @@ public:
 			
 			bs.set(1);
 			CPPUNIT_ASSERT_MESSAGE("Empty bit set: begin == end", bs.cbegin() != bs.cend());
-			CPPUNIT_ASSERT_EQUAL(*bs.cbegin(), uint64_t(1));
+			CPPUNIT_ASSERT_EQUAL(uint64_t(1), *bs.cbegin());
 		}
 
 		{
@@ -86,8 +86,8 @@ public:
 			
 			bs.set(1);
 			CPPUNIT_ASSERT_MESSAGE("Bit set with 1: begin == end", bs.cbegin() != bs.cend());
-			CPPUNIT_ASSERT_MESSAGE("Empty bit set: begin+1 != end", bs.cbegin()+1 != bs.cend());
-			CPPUNIT_ASSERT_EQUAL(*bs.cbegin(), uint64_t(1));
+			CPPUNIT_ASSERT_MESSAGE("Bit set with 1: begin+1 == end", bs.cbegin()+1 == bs.cend());
+			CPPUNIT_ASSERT_EQUAL(uint64_t(1), *bs.cbegin());
 		}
 		
 		for(size_t i = 0; i < setCount; i++) {
@@ -107,7 +107,7 @@ public:
 			std::set<uint32_t>::const_iterator rIt(realValues.cbegin()), rEnd(realValues.cend());
 			
 			for(uint32_t j(0), s(realValues.size()); j < s; ++j, ++bsIt, ++rIt) {
-				CPPUNIT_ASSERT_MESSAGE("Run " + std::to_string(i) + "; realvalue != bitset value at j=" + std::to_string(j), *rIt == *bsIt);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("Run " + std::to_string(i) + "; realvalue != bitset value at j=" + std::to_string(j), uint64_t(*rIt), uint64_t(*bsIt));
 			}
 			CPPUNIT_ASSERT_MESSAGE("bsIt != bsEnd", bsIt == bsEnd);
 		}

@@ -11,16 +11,6 @@ namespace detail {
 namespace DynamicBitSet {
 
 class DynamicBitSetIdIterator: public sserialize::detail::AbstractArrayIterator<SizeType> {
-private:
-	friend class sserialize::DynamicBitSet;
-private:
-	const sserialize::DynamicBitSet * m_p;
-	UByteArrayAdapter::OffsetType m_off;
-	SizeType m_curId;
-	uint8_t m_d;
-	uint8_t m_curShift;
-	///@param p has to be valid
-	DynamicBitSetIdIterator(const sserialize::DynamicBitSet * p, SizeType offset);
 public:
 	DynamicBitSetIdIterator();
 	virtual ~DynamicBitSetIdIterator();
@@ -29,6 +19,18 @@ public:
 	virtual bool notEq(const AbstractArrayIterator<SizeType> * other) const override;
 	virtual bool eq(const AbstractArrayIterator<SizeType> * other) const override;
 	virtual AbstractArrayIterator<SizeType> * copy() const override;
+private:
+	friend class sserialize::DynamicBitSet;
+private:
+	///@param p has to be valid
+	DynamicBitSetIdIterator(const sserialize::DynamicBitSet * p, SizeType offset);
+	void moveToNextSetBit();
+private:
+	const sserialize::DynamicBitSet * m_p;
+	UByteArrayAdapter::OffsetType m_off;
+	SizeType m_curId; 
+	uint8_t m_d;
+	uint8_t m_remainingBits;
 };
 
 
