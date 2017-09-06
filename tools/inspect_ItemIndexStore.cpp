@@ -186,7 +186,7 @@ UByteArrayAdapter::OffsetType recompressIndexDataHuffman(sserialize::Static::Ite
 
 bool checkCompressedIndex(sserialize::Static::ItemIndexStore & real, sserialize::Static::ItemIndexStore & compressed) {
 	if (real.size() != compressed.size()) {
-		std::cerr << "ItemIndexStore sizes don't match" << std::endl;
+		std::cerr << "ItemIndexStore sizes don't match: src=" << real.size() << ", tgt=" << compressed.size() << std::endl;
 		return false;
 	}
 	ProgressInfo info;
