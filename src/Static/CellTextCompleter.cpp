@@ -126,7 +126,7 @@ bool CellTextCompleter::count(const std::string::const_iterator& begin, const st
 
 CellTextCompleter::Payload::Type CellTextCompleter::typeFromCompletion(const std::string& qs, const sserialize::StringCompleter::QuerryType qt) const {
 	std::string qstr;
-	if (m_sq & sserialize::StringCompleter::SQ_CASE_INSENSITIVE && qs.size() && qs[0] != SSERIALIZE_CELL_TEXT_COMPLETER_TAG_COMPLETION_PREFIX) {
+	if (m_sq & sserialize::StringCompleter::SQ_CASE_INSENSITIVE) {
 		qstr = sserialize::unicode_to_lower(qs);
 	}
 	else {
