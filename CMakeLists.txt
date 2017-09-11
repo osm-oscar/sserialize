@@ -44,11 +44,35 @@ IF (SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	set(MY_COMPILE_DEFINITIONS "-DWITH_SSERIALIZE_EXPENSIVE_ASSERT" ${MY_COMPILE_DEFINITIONS})
 ENDIF (SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 
-add_subdirectory(vendor/libdts2 ${PROJECT_NAME}dts2)
+#enable dt2 on 64 Bit builds
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	add_subdirectory(vendor/libdts2 ${PROJECT_NAME}dts2)
+	
+	set(MY_COMPILE_DEFINITIONS
+		"-DSSERIALIZE_HAS_LIB_RATSS"
+		"-DSSERIALIZE_HAS_LIB_DTS2"
+		${LIBDTS2_COMPILE_DEFINITIONS}
+		${MY_COMPILE_DEFINITIONS}
+	)
+	
+	set(MY_LINK_LIBRARIES
+		${LIBDTS2_LINK_LIBRARIES}
+		${MY_LINK_LIBRARIES}
+	)
+	
+	set(MY_INCLUDE_DIR
+		${LIBDTS2_INCLUDE_DIR}
+	)
+	
+	set(MY_DTS2_SOURCES 
+		src/Static/PointOnS2.cpp
+		src/spatial/PointOnS2.cpp
+	)
+endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 set(SSERIALIZE_INCLUDE_DIR
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
-	${LIBDTS2_INCLUDE_DIR}
+	${MY_INCLUDE_DIR}
 	CACHE STRING "sserialize include directories"
 	FORCE
 )
@@ -61,13 +85,12 @@ set(SSERIALIZE_LIBRARIES
 
 set(SSERIALIZE_LINK_LIBRARIES
 	${PROJECT_NAME}
-	${LIBDTS2_LINK_LIBRARIES}
+	${MY_LINK_LIBRARIES}
 	CACHE STRING "sserialize link libraries"
 	FORCE
 )
 
 set(SSERIALIZE_COMPILE_DEFINITIONS
-	${LIBDTS2_COMPILE_DEFINITIONS}
 	${MY_COMPILE_DEFINITIONS}
 	CACHE STRING "sserialize compile definitions"
 	FORCE
@@ -176,7 +199,6 @@ set(STATIC_SOURCES_CPP
 	src/Static/TriangulationGeoHierarchyArrangement.cpp
 	src/Static/TracGraph.cpp
 	src/Static/Fraction.cpp
-	src/Static/PointOnS2.cpp
 )
 
 set(CONTAINTERS_SOURCES_CPP 
@@ -226,7 +248,6 @@ set(SPATIAL_SOURCES_CPP
 	src/spatial/CellQueryResultPrivate.cpp
 	src/spatial/TreedCQRImp.cpp
 	src/spatial/TreedCQR.cpp
-	src/spatial/PointOnS2.cpp
 )
 
 set(ITERATOR_SOURCES_CPP
@@ -290,11 +311,12 @@ set(SOURCES_CPP
 	${OPTIONAL_SOURCES_CPP}
 	${EXTERNAL_SOURCES_CPP}
 	${STAGING_SOURCES_CPP}
+	${MY_DTS2_SOURCES}
 	${INCLUDE_HEADERS}
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
-target_link_libraries(${PROJECT_NAME} dts2)
+target_link_libraries(${PROJECT_NAME} ${MY_LINK_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${SSERIALIZE_COMPILE_DEFINITIONS})
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
 

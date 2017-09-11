@@ -1,10 +1,13 @@
 #ifndef SSERIALIZE_STATIC_SPATIAL_DETAIL_TRIANGULATION_H
 #define SSERIALIZE_STATIC_SPATIAL_DETAIL_TRIANGULATION_H
 #include <sserialize/Static/GeoPoint.h>
-#include <sserialize/Static/PointOnS2.h>
 #include <sserialize/spatial/LatLonCalculations.h>
-#include <libratss/ProjectS2.h>
-#include <libdts2/Constrained_delaunay_triangulation_with_intersections_base_traits_s2.h>
+#ifdef SSERIALIZE_HAS_LIB_RATSS
+	#include <sserialize/Static/PointOnS2.h>
+	#include <libratss/ProjectS2.h>
+	#include <libdts2/Constrained_delaunay_triangulation_with_intersections_base_traits_s2.h>
+	
+#endif
 
 #include <queue>
 
@@ -872,6 +875,8 @@ struct Convert<T_SOURCE_POINT, sserialize::spatial::GeoPoint> {
 	}
 };
 
+#ifdef HAS_LIB_RATSS
+
 template<typename T_TARGET_POINT>
 struct Convert<sserialize::Static::spatial::ratss::PointOnS2, T_TARGET_POINT> {
 	T_TARGET_POINT operator()(const sserialize::Static::spatial::ratss::PointOnS2 & p) const {
@@ -885,6 +890,8 @@ struct Convert<T_SOURCE_POINT, sserialize::Static::spatial::ratss::PointOnS2> {
 		return sserialize::Static::spatial::ratss::PointOnS2(p.x(), p.y(), p.z());
 	}
 };
+
+#endif
 
 template<typename TPoint>
 class Compute_centroid {
@@ -904,6 +911,7 @@ public:
 	}
 };
 
+#ifdef HAS_LIB_RATSS
 template<>
 class Compute_centroid<sserialize::spatial::ratss::PointOnS2> {
 public:
@@ -932,6 +940,8 @@ template<>
 class Compute_centroid<sserialize::Static::spatial::ratss::PointOnS2>: public Compute_centroid<sserialize::spatial::ratss::PointOnS2> {
 	using Compute_centroid<sserialize::spatial::ratss::PointOnS2>::operator();
 };
+
+#endif
 
 template<typename TPoint>
 class Equal {
@@ -1001,6 +1011,7 @@ public:
 	}
 };
 
+#ifdef HAS_LIB_RATSS
 template<>
 class Do_intersect<sserialize::spatial::ratss::PointOnS2> {
 public:
@@ -1019,6 +1030,8 @@ private:
 private:
 	Do_intersect_2 m_di2;
 };
+
+#endif
 
 }}//end namespace detail::Triangulation
 
