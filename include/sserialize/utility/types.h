@@ -40,7 +40,7 @@ typedef uint64_t SizeType;
 typedef int64_t SignedSizeType;
 typedef int64_t DifferenceType;
 typedef uint64_t IdType;
-static_assert(sizeof(std::size_t) == sizeof(OffsetType), "sizeof(std::size_t) MUST EQUAL sizeof(OffsetType)");
+// static_assert(sizeof(std::size_t) == sizeof(OffsetType), "sizeof(std::size_t) MUST EQUAL sizeof(OffsetType)");
 static_assert(sizeof(double) == sizeof(uint64_t), "sizeof(uint64_t) MUST EQUAL sizeof(double)");
 static_assert(sizeof(float) == sizeof(uint32_t), "sizeof(uint32_t) MUST EQUAL sizeof(float)");
 
