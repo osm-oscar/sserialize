@@ -81,13 +81,7 @@ double inline logTo2(double num) {
 
 //from http://stereopsis.com/log2.html
 inline int32_t fastLog2(uint32_t x)  {
-//enable if bsr not available
-// 	float y = x;
-// 	uint32_t ix = (uint32_t&)x;
-// 	uint32_t exp = (ix >> 23) & 0xFF;
-// 	int32_t log2 = int32_t(exp) - 127;
-// 	return log2;
-
+#if defined(__amd64__)
 	int32_t retval;
 	asm("bsr %%eax, %1;"
 		"mov %0, %%eax"
@@ -96,6 +90,13 @@ inline int32_t fastLog2(uint32_t x)  {
 		: "%eax"
 	);
 	return retval;
+#else
+	float y = x;
+	uint32_t ix = (uint32_t&)x;
+	uint32_t exp = (ix >> 23) & 0xFF;
+	int32_t log2 = int32_t(exp) - 127;
+	return log2;
+#endif
 }
 
 inline uint32_t createMask(uint32_t bpn) {
