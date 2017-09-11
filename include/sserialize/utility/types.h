@@ -34,26 +34,23 @@ namespace sserialize {
 ///OffsetType >= SizeType >= IdType!
 //TODO:OffsetType should be signed so that off_t and OffsetType are the same, SizeType should be unsigned
 
-#ifdef __LP64__
 typedef uint64_t OffsetType;
 typedef int64_t SignedOffsetType;
 typedef uint64_t SizeType;
 typedef int64_t SignedSizeType;
 typedef int64_t DifferenceType;
 typedef uint64_t IdType;
-static_assert(sizeof(std::size_t) == sizeof(OffsetType), "std::size_t and OffsetType differ");
-static_assert(sizeof(double) == sizeof(uint64_t), "uint64_t and double differ");
-static_assert(sizeof(float) == sizeof(uint32_t), "uint32_t and float differ");
-#define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFFF
-#define CHUNKED_MMAP_EXPONENT 23
+static_assert(sizeof(std::size_t) == sizeof(OffsetType), "sizeof(std::size_t) MUST EQUAL sizeof(OffsetType)");
+static_assert(sizeof(double) == sizeof(uint64_t), "sizeof(uint64_t) MUST EQUAL sizeof(double)");
+static_assert(sizeof(float) == sizeof(uint32_t), "sizeof(uint32_t) MUST EQUAL sizeof(float)");
+
+
+#ifdef __LP64__
+	#define MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFFF
+	#define CHUNKED_MMAP_EXPONENT 23
 #else
-typedef uint64_t OffsetType;
-typedef int64_t SignedOffsetType;
-typedef uint64_t SizeType;
-typedef int64_t SignedSizeType;
-typedef uint64_t IdType;
-#define MAX_SIZE_FOR_FULL_MMAP 0x3FFFFFFF
-#define CHUNKED_MMAP_EXPONENT 23
+	#define MAX_SIZE_FOR_FULL_MMAP 0x3FFFFFFF
+	#define CHUNKED_MMAP_EXPONENT 23
 #endif
 
 }//end namespace
