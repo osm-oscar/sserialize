@@ -428,7 +428,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 	}
 	if (bufferSize) {
 		SizeType pe = p+bufferSize;
-		pe = std::min(pe, m_backBuffer.size());
+		pe = std::min<SizeType>(pe, m_backBuffer.size());
 		buffer.insert(buffer.end(), m_backBuffer.begin()+p, m_backBuffer.begin()+pe);
 	}
 	buffer.shrink_to_fit();
