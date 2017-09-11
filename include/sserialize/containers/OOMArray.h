@@ -7,6 +7,7 @@
 #include <sserialize/utility/constants.h>
 #include <sserialize/storage/MmappedFile.h>
 #include <sserialize/utility/assert.h>
+#include <sserialize/utility/types.h>
 #include <vector>
 #include <sys/mman.h>
 #include <errno.h>
