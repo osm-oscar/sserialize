@@ -32,8 +32,8 @@ template<typename S, typename V>
 struct hash< std::pair<S, V> > {
 	std::hash<S> hS;
 	std::hash<V> hV;
-	inline size_t operator()(const pair<S, V> & v) const {
-		size_t seed = 0;
+	inline uint64_t operator()(const pair<S, V> & v) const {
+		uint64_t seed = 0;
 		::hash_combine(seed, v.first, hS);
 		::hash_combine(seed, v.second, hV);
 		return seed;
@@ -43,7 +43,7 @@ struct hash< std::pair<S, V> > {
 template<>
 struct hash< pair<uint32_t, uint32_t> > {
 	std::hash<uint64_t> hS;
-	inline size_t operator()(const pair<uint32_t, uint32_t> & v) const {
+	inline uint64_t operator()(const pair<uint32_t, uint32_t> & v) const {
 		return hS( (static_cast<uint64_t>(v.first) << 32) | static_cast<uint64_t>(v.second) );
 	}
 };
@@ -51,8 +51,8 @@ struct hash< pair<uint32_t, uint32_t> > {
 template<typename T>
 struct hash< std::vector<T> > {
 	std::hash<T> hasher;
-	inline size_t operator()(const std::vector<T> & v) const {
-		size_t seed = 0;
+	inline uint64_t operator()(const std::vector<T> & v) const {
+		uint64_t seed = 0;
 		for(typename std::vector<T>::const_iterator it(v.begin()), end(v.end()); it != end; ++it) {
 			::hash_combine(seed, *it, hasher);
 		}
