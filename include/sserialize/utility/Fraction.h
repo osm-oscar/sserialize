@@ -38,6 +38,12 @@ public:
 	explicit Fraction(const mpq_class & f);
 	operator mpq_class() const;
 	mpq_class toMpq() const;
+	static bool fits_int64(const mpz_class & z);
+	static bool fits_uint64(const mpz_class & z);
+	static int64_t get_int64(const mpz_class & z);
+	static uint64_t get_uint64(const mpz_class & z);
+	static mpz_class to_mpz(int64_t v);
+	static mpz_class to_mpz(uint64_t v);
 #endif
 public:
 #if defined(SSERIALIZE_WITH_CGAL)
