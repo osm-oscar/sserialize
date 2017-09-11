@@ -200,8 +200,8 @@ public:
 	
 	struct NodePtrHash {
 		std::hash<typename Node::RawIterator> hasher;
-		inline size_t operator()(const NodePtr & v) const {
-			size_t seed = 0;
+		inline std::size_t operator()(const NodePtr & v) const {
+			std::size_t seed = 0;
 			::hash_combine(seed, v->rawBegin(), hasher);
 			::hash_combine(seed, v->rawEnd(), hasher);
 			return seed;
@@ -212,7 +212,7 @@ private:
 		const StringHandler * strHandler;
 		HashFunc1(const StringHandler * strHandler = 0) : strHandler(strHandler) {}
 		std::size_t operator()(const key_type & a) const {
-			uint64_t seed = 0;
+			std::size_t seed = 0;
 			typedef const char * const_iterator;
 			for(const_iterator it(strHandler->strBegin(a)), end(strHandler->strEnd(a)); it != end; ++it) {
 				hash_combine(seed, *it);
@@ -224,7 +224,7 @@ private:
 		const StringHandler * strHandler;
 		HashFunc2(const StringHandler * strHandler = 0) : strHandler(strHandler) {}
 		std::size_t operator()(const key_type & a) const {
-			uint64_t seed = 0;
+			std::size_t seed = 0;
 			typedef const char * const_iterator;
 			for(const_iterator rit(strHandler->strEnd(a)-1), rend(strHandler->strBegin(a)-1); rit != rend; --rit) {
 				hash_combine(seed, *rit);

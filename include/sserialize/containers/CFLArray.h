@@ -311,9 +311,9 @@ template<typename T_CONTAINER, typename T_POINTER_GETTER>
 struct hash< sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER> > {
 	typedef typename sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>::value_type value_type;
 	std::hash<value_type> hasher;
-	inline size_t operator()(const sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>& v) const {
+	inline uint64_t operator()(const sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>& v) const {
 		typedef typename sserialize::CFLArray<T_CONTAINER, T_POINTER_GETTER>::const_iterator const_iterator;
-		size_t seed = 0;
+		uint64_t seed = 0;
 		for(const_iterator it(v.cbegin()), end(v.cend()); it != end; ++it) {
 			::hash_combine(seed, *it, hasher);
 		}

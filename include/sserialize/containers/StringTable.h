@@ -39,8 +39,8 @@ namespace std {
 
 	template<>
 	struct hash< sserialize::detail::StringTable::StaticString > {
-		inline size_t operator()(const char * begin, const char * end) const {
-			size_t seed = 0;
+		inline std::size_t operator()(const char * begin, const char * end) const {
+			std::size_t seed = 0;
 			for(; begin != end; ++begin) {
 				::hash_combine(seed, *begin);
 			}
