@@ -41,13 +41,13 @@ private:
 	inline void rcInc() { m_rc.fetch_add(1, std::memory_order_relaxed); }
 	inline void rcDec() {
 		SSERIALIZE_CHEAP_ASSERT(rc() > 0);
-		if (m_rc.fetch_sub(1, std:: memory_order_acq_rel) == 1) { //check if we are the last
+		if (m_rc.fetch_sub(1, std::memory_order_acq_rel) == 1) { //check if we are the last
 			delete this;
 		}
 	}
 	inline void rcDecWithoutDelete() {
 		SSERIALIZE_CHEAP_ASSERT_LARGER(rc(), RCBaseType(0));
-		m_rc.fetch_sub(1, std:: memory_order_acq_rel);
+		m_rc.fetch_sub(1, std::memory_order_acq_rel);
 	}
 private:
 	std::atomic<RCBaseType> m_rc;
@@ -108,6 +108,9 @@ public:
 	virtual ~RCBase() {
 		reset(0);
 	}
+	
+	///Enable reference counting, this is NOT thread-safe
+	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
 	void enableRC() {
 		if (priv() && !m_enabled) {
 			priv()->enableRC();
@@ -115,11 +118,13 @@ public:
 			m_enabled = true;
 		}
 	}
+	///Disable reference counting, this is NOT thread-safe
+	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
 	///Warning: this may leave the object without an owner
 	void disableRC() {
 		if (priv() && m_enabled) {
 			priv()->rcDecWithoutDelete();
-			priv()->enableRC();
+			priv()->disableRC();
 			m_enabled = false;
 		}
 	}
