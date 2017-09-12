@@ -7,7 +7,7 @@
 
 namespace sserialize {
 namespace detail {
-	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING = false>
+	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
 	class RCBase;
 }
 
@@ -100,33 +100,15 @@ namespace detail {
 template<typename RCObj>
 class RCBase<RCObj, true > {
 public:
-	RCBase(RCObj* p) : m_priv(0), m_enabled(false)
+	RCBase(RCObj* p) :
+	m_priv(0),
+	m_enabled(true)
 	{
 		static_assert(RCObj::SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE == true, "Reference counter object cannot disable reference counting but wrapper can.");
 		reset(p);
 	}
 	virtual ~RCBase() {
 		reset(0);
-	}
-	
-	///Enable reference counting, this is NOT thread-safe
-	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
-	void enableRC() {
-		if (priv() && !m_enabled) {
-			priv()->enableRC();
-			priv()->rcInc();
-			m_enabled = true;
-		}
-	}
-	///Disable reference counting, this is NOT thread-safe
-	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
-	///Warning: this may leave the object without an owner
-	void disableRC() {
-		if (priv() && m_enabled) {
-			priv()->rcDecWithoutDelete();
-			priv()->disableRC();
-			m_enabled = false;
-		}
 	}
 	bool enabledRC() {
 		return m_enabled;
@@ -137,7 +119,7 @@ public:
 		}
 		rcDec();
 		m_priv = p;
-		m_enabled = p ? p->enabledRC() : false;
+		m_enabled = !p || p->enabledRC();
 	}
 	void rcInc() {
 		if (priv() && enabledRC()) {
@@ -151,6 +133,28 @@ public:
 	}
 	RCObj * priv() const { return m_priv; }
 	RCObj * priv() { return m_priv; }
+	
+	///Enable reference counting, this is NOT thread-safe
+	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
+	void enableRC() {
+		return;
+		if (priv() && !enabledRC()) {
+			priv()->enableRC();
+			priv()->rcInc();
+			m_enabled = true;
+		}
+	}
+	///Disable reference counting, this is NOT thread-safe
+	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
+	///Warning: this may leave the object without an owner
+	void disableRC() {
+		return;
+		if (priv() && enabledRC()) {
+			priv()->rcDecWithoutDelete();
+			priv()->disableRC();
+			m_enabled = false;
+		}
+	}
 private:
 	RCObj * m_priv;
 	bool m_enabled;
