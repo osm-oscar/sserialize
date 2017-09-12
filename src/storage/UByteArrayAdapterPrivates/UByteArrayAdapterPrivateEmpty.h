@@ -4,6 +4,9 @@
 #include "UByteArrayAdapterPrivateArray.h"
 
 namespace sserialize {
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+inline
+#endif
 namespace UByteArrayAdapterOnlyContiguous {
 
 class UByteArrayAdapterPrivateEmpty: public UByteArrayAdapterPrivateArray {
@@ -16,6 +19,9 @@ public:
 
 } //end namespace UByteArrayAdapterOnlyContiguous
 
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+inline
+#endif
 namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateEmpty: public UByteArrayAdapterPrivate {
@@ -79,13 +85,6 @@ public:
 };
 
 } //end namespace UByteArrayAdapterNonContiguous
-
-#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivateEmpty;
-#else
-using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateEmpty;
-#endif
-
 }//end namespace sserialize
 
 #endif

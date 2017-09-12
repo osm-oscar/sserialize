@@ -7,6 +7,9 @@
 #endif
 
 namespace sserialize {
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+inline
+#endif
 namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateCompressedMmappedFile: public UByteArrayAdapterPrivate {
@@ -75,11 +78,6 @@ public:
 };
 
 } //end namespace UByteArrayAdapterNonContiguous
-
-#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateCompressedMmappedFile;
-#endif
-
 }//end namespace sserialize
 
 

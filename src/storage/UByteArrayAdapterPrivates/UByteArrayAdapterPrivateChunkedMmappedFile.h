@@ -7,6 +7,9 @@
 #endif
 
 namespace sserialize {
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+inline
+#endif
 namespace UByteArrayAdapterNonContiguous {
 
 /** Abstracts access to a chunkedMappedFile. This class guarantees thread-safe access iff it's the only object operating on the chunkedMappedFile! **/
@@ -74,12 +77,6 @@ public:
 	virtual void put(UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len);
 };
 
-} //end namespace UByteArrayAdapterNonContiguous
-
-#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateChunkedMmappedFile;
-#endif
-
-}//end namespace sserialize::UByteArrayAdapterNonContiguous
+}}//end namespace sserialize::UByteArrayAdapterNonContiguous
 
 #endif

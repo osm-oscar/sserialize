@@ -1,8 +1,8 @@
 #ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_PRIVATE_H
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_PRIVATE_H
 
-#include <stdint.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
+#include <stdint.h>
 
 #ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	#define SSERIALIZE_UBA_CONTIG_CFG_VIRTUAL
@@ -12,16 +12,31 @@
 	#define SSERIALIZE_UBA_CONTIG_CFG_OVERRIDE override
 #endif
 
-#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
-	#define SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS RefCountObjectWithDisable
-#else
-	#define SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS RefCountObject
-#endif
-
 namespace sserialize {
+namespace detail {
+namespace __UByteArrayAdapterPrivate {
+
+#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+	inline
+#endif
+	namespace OptionalRefcountingEnabled {
+		using RefCountClass = RefCountObjectWithDisable;
+	}
+#ifndef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+	inline
+#endif
+	namespace OptionalRefcountingDisabled {
+		using RefCountClass = RefCountObject;
+	}
+
+}} //end namespace detail::__UByteArrayAdapterPrivate
+
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+inline
+#endif
 namespace UByteArrayAdapterOnlyContiguous {
 
-class UByteArrayAdapterPrivate: public SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS {
+class UByteArrayAdapterPrivate: public detail::__UByteArrayAdapterPrivate::RefCountClass {
 protected:
 	bool m_deleteOnClose;
 public:
@@ -46,7 +61,7 @@ public:
 
 namespace UByteArrayAdapterNonContiguous {
 
-class UByteArrayAdapterPrivate: public SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS {
+class UByteArrayAdapterPrivate: public detail::__UByteArrayAdapterPrivate::RefCountClass {
 protected:
 	bool m_deleteOnClose;
 public:
@@ -120,14 +135,6 @@ public:
 
 } //end namespace UByteArrayAdapterNonContiguous
 
-
-#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivate;
-#else
-using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivate;
-#endif
-
 }//end namespace
 
-#undef SSERIALIZE_UBA_PRIVATE_REFCOUNT_CLASS
 #endif

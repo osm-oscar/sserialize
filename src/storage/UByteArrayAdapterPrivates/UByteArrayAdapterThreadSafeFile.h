@@ -3,6 +3,10 @@
 #include "UByteArrayAdapterPrivate.h"
 
 namespace sserialize {
+
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+inline
+#endif
 namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateThreadSafeFile: public UByteArrayAdapterPrivate {
@@ -81,11 +85,6 @@ public:
 };
 
 }//end namespace UByteArrayAdapterNonContiguous
-
-#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivateThreadSafeFile;
-#endif
-
 } //end namespace sserialize
 
 #endif
