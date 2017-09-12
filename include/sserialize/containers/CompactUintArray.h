@@ -36,7 +36,7 @@ public:
 class CompactUintArrayPrivateEmpty: public CompactUintArrayPrivate {
 public:
 	CompactUintArrayPrivateEmpty();
-	virtual ~CompactUintArrayPrivateEmpty() {}
+	virtual ~CompactUintArrayPrivateEmpty();
 	virtual uint32_t bpn() const override;
 	virtual uint32_t at(uint32_t pos) const override;
 	virtual uint32_t set(const uint32_t pos, uint32_t value) override;
@@ -48,7 +48,7 @@ private:
 	uint32_t m_bpn;
 public:
 	CompactUintArrayPrivateVarBits(const UByteArrayAdapter & adap, uint32_t bpn);
-	virtual ~CompactUintArrayPrivateVarBits() {}
+	virtual ~CompactUintArrayPrivateVarBits();
 	virtual uint32_t bpn() const override;
 	
 	virtual uint32_t at(const uint32_t pos) const override;
@@ -62,7 +62,7 @@ private:
 	uint32_t m_bpn;
 public:
 	CompactUintArrayPrivateVarBits64(const UByteArrayAdapter & adap, uint32_t bpn);
-	virtual ~CompactUintArrayPrivateVarBits64() {}
+	virtual ~CompactUintArrayPrivateVarBits64();
 	virtual uint32_t bpn() const override;
 	
 	virtual uint32_t at(const uint32_t pos) const override;
@@ -75,7 +75,7 @@ public:
 class CompactUintArrayPrivateU8: public CompactUintArrayPrivate {
 public:
 	CompactUintArrayPrivateU8(const UByteArrayAdapter& adap);
-	virtual ~CompactUintArrayPrivateU8() {}
+	virtual ~CompactUintArrayPrivateU8();
 	virtual uint32_t bpn() const override;
 	virtual uint32_t at(uint32_t pos) const override;
 	/** @param: returns the value set (i.e. if value is to large the nit ets masked */
@@ -85,7 +85,7 @@ public:
 class CompactUintArrayPrivateU16: public CompactUintArrayPrivate {
 public:
 	CompactUintArrayPrivateU16(const UByteArrayAdapter& adap);
-	virtual ~CompactUintArrayPrivateU16() {}
+	virtual ~CompactUintArrayPrivateU16();
 	virtual uint32_t bpn() const override;
 	virtual uint32_t at(uint32_t pos) const override;
 	/** @param: returns the value set (i.e. if value is to large the nit ets masked */
@@ -95,7 +95,7 @@ public:
 class CompactUintArrayPrivateU24: public CompactUintArrayPrivate {
 public:
 	CompactUintArrayPrivateU24(const UByteArrayAdapter& adap);
-	virtual ~CompactUintArrayPrivateU24() {}
+	virtual ~CompactUintArrayPrivateU24();
 	virtual uint32_t bpn() const override;
 	virtual uint32_t at(uint32_t pos) const override;
 	/** @param: returns the value set (i.e. if value is to large the nit ets masked */
@@ -105,7 +105,7 @@ public:
 class CompactUintArrayPrivateU32: public CompactUintArrayPrivate {
 public:
 	CompactUintArrayPrivateU32(const UByteArrayAdapter& adap);
-	virtual ~CompactUintArrayPrivateU32() {}
+	virtual ~CompactUintArrayPrivateU32();
 	virtual uint32_t bpn() const override;
 	virtual uint32_t at(uint32_t pos) const override;
 	/** @param: returns the value set (i.e. if value is to large the nit ets masked */
@@ -163,10 +163,10 @@ public:
 	void dump();
 	
 	///takes shared-ownership
-	inline const_iterator begin() const { return const_iterator(0, *this); }
+	const_iterator begin() const;
 	
 	///takes shared-ownership
-	inline const_iterator cbegin() const { return const_iterator(0, *this); }
+	const_iterator cbegin() const;
 
 	///Creates a new CompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
@@ -186,8 +186,8 @@ public:
 	static uint32_t minStorageBits(const uint64_t number) { return minStorageBits64(number); }
 	static uint32_t minStorageBitsFullBytes64(const uint64_t number);
 	static UByteArrayAdapter::OffsetType minStorageBytes(uint32_t bpn, sserialize::UByteArrayAdapter::OffsetType count);
-	inline bool operator!=(const CompactUintArray & other) const { return data() != other.data(); }
-	inline bool operator==(const CompactUintArray & other) const { return priv() == other.priv() || data() == other.data(); }
+	bool operator!=(const CompactUintArray & other) const;
+	bool operator==(const CompactUintArray & other) const;
 };
 
 template<typename T_SOURCE_CONTAINER>

@@ -37,6 +37,8 @@ uint64_t CompactUintArrayPrivate::set64(const uint32_t pos, uint64_t value) {
 
 CompactUintArrayPrivateEmpty::CompactUintArrayPrivateEmpty(): CompactUintArrayPrivate() {}
 
+CompactUintArrayPrivateEmpty::~CompactUintArrayPrivateEmpty() {}
+
 uint32_t CompactUintArrayPrivateEmpty::bpn() const {
 	return 0;
 }
@@ -63,6 +65,8 @@ m_bpn(bpn)
 		m_mask = 0xFFFFFFFF;
 	else m_mask = (static_cast<uint32_t>(1) << m_bpn) - 1;
 }
+
+CompactUintArrayPrivateVarBits::~CompactUintArrayPrivateVarBits() {}
 
 uint32_t CompactUintArrayPrivateVarBits::bpn() const {
 	return m_bpn;
@@ -141,6 +145,8 @@ m_bpn(bpn)
 	m_mask = createMask64(m_bpn);
 }
 
+CompactUintArrayPrivateVarBits64::~CompactUintArrayPrivateVarBits64() {}
+
 uint32_t CompactUintArrayPrivateVarBits64::bpn() const {
 	return m_bpn;
 }
@@ -214,6 +220,8 @@ uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t va
 CompactUintArrayPrivateU8::CompactUintArrayPrivateU8(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
+CompactUintArrayPrivateU8::~CompactUintArrayPrivateU8() {}
+
 uint32_t CompactUintArrayPrivateU8::bpn() const{
 	return 8;
 }
@@ -235,6 +243,8 @@ uint32_t CompactUintArrayPrivateU8::set(const uint32_t pos, uint32_t value) {
 CompactUintArrayPrivateU16::CompactUintArrayPrivateU16(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
+CompactUintArrayPrivateU16::~CompactUintArrayPrivateU16() {}
+
 uint32_t CompactUintArrayPrivateU16::bpn() const {
 	return 16;
 }
@@ -255,6 +265,8 @@ uint32_t CompactUintArrayPrivateU16::set(const uint32_t pos, uint32_t value) {
 CompactUintArrayPrivateU24::CompactUintArrayPrivateU24(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
+CompactUintArrayPrivateU24::~CompactUintArrayPrivateU24() {}
+
 uint32_t CompactUintArrayPrivateU24::bpn() const {
 	return 24;
 }
@@ -272,6 +284,8 @@ uint32_t CompactUintArrayPrivateU24::set(const uint32_t pos, uint32_t value) {
 
 CompactUintArrayPrivateU32::CompactUintArrayPrivateU32(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
+
+CompactUintArrayPrivateU32::~CompactUintArrayPrivateU32() {}
 
 uint32_t CompactUintArrayPrivateU32::bpn() const {
 	return 32;
@@ -457,6 +471,23 @@ std::ostream & CompactUintArray::dump(std::ostream& out, uint32_t len) {
 
 void CompactUintArray::dump() {
 	dump(std::cout, maxCount());
+}
+
+CompactUintArray::const_iterator CompactUintArray::begin() const {
+	return const_iterator(0, *this);
+}
+	
+CompactUintArray::const_iterator CompactUintArray::cbegin() const {
+	return const_iterator(0, *this);
+}
+
+
+bool CompactUintArray::operator!=(const CompactUintArray & other) const {
+	return data() != other.data();
+}
+
+bool CompactUintArray::operator==(const CompactUintArray & other) const {
+	return priv() == other.priv() || data() == other.data();
 }
 
 uint32_t CompactUintArray::minStorageBits(const uint32_t number) {
