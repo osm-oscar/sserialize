@@ -1034,7 +1034,7 @@ UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writ
 				return UByteArrayAdapter(file);
 			}
 			else {
-				throw sserialize::CorruptDataException("Could not open file " + fileName);
+				throw sserialize::IOException("Could not open file " + fileName);
 			}
 		}
 		#endif
@@ -1045,7 +1045,7 @@ UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writ
 			return UByteArrayAdapter(file);
 		}
 		else {
-			throw sserialize::CorruptDataException("Could not open file " + fileName);
+			throw sserialize::IOException("Could not open file " + fileName);
 		}
 	}
 }
@@ -1060,7 +1060,7 @@ UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool c
 			return UByteArrayAdapter(file);
 		}
 		else {
-			throw sserialize::CorruptDataException("Could not open file " + fileName);
+			throw sserialize::IOException("Could not open file " + fileName);
 		}
 		#endif
 	}
