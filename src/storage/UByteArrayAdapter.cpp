@@ -880,6 +880,8 @@ int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) 
 bool UByteArrayAdapter::putData(OffsetType pos, const uint8_t * data, OffsetType len) {
 	if (m_len < pos+len)
 		return false;
+	if (!len)
+		return true;
 	m_priv->put(m_offSet+pos, data, len);
 	return true;
 }
@@ -887,6 +889,8 @@ bool UByteArrayAdapter::putData(OffsetType pos, const uint8_t * data, OffsetType
 bool UByteArrayAdapter::putData(const OffsetType pos, const std::deque<uint8_t>& data) {
 	if (m_len < pos+data.size())
 		return false;
+	if (!data.size())
+		return true;
 	for(size_t i = 0; i < data.size(); i++) {
 		putUint8(pos+i, data[i]);
 	}
@@ -902,6 +906,10 @@ bool UByteArrayAdapter::putData(const OffsetType pos, const std::vector< uint8_t
 bool UByteArrayAdapter::putData(const OffsetType pos, const UByteArrayAdapter & data) {
 	if (m_len < pos+data.size())
 		return false;
+		
+	if (!data.size()) {
+		return true;
+	}
 
 	if (m_priv->isContiguous()) {
 		return putData(pos, &data[0], data.size());
