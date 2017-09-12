@@ -1013,19 +1013,12 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 
 UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writable, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
 	if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
-		#ifndef SSERIALIZE_WITH_THREADS
-			sserialize::warn << "File size exceeds maximum full map size and thread support is disabled. Access to data is NOT thread-safe!" << Log::endl;
-		#endif
 		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 		throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
 		#else
 		if (chunkSizeExponent == 0) {
 			return UByteArrayAdapter( MyPrivatePtr(
-			#ifdef SSERIALIZE_WITH_THREADS
 				new UByteArrayAdapterPrivateThreadSafeFile(fileName, writable)
-			#else
-				new UByteArrayAdapterPrivateFile(fileName, writable)
-			#endif
 			));
 		}
 		else {

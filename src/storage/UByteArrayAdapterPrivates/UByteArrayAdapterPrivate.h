@@ -1,5 +1,6 @@
-#ifndef UBYTE_ARRAY_ADAPTER_PRIVATE_H
-#define UBYTE_ARRAY_ADAPTER_PRIVATE_H
+#ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_PRIVATE_H
+#define SSERIALIZE_UBYTE_ARRAY_ADAPTER_PRIVATE_H
+
 #include <stdint.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 

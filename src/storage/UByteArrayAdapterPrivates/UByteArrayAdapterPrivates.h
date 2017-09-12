@@ -1,5 +1,6 @@
 #ifndef UBYTE_ARRAY_ADAPTERS_PRIVATE_H
 #define UBYTE_ARRAY_ADAPTERS_PRIVATE_H
+#include "UByteArrayAdapterPrivate.h"
 #include "UByteArrayAdapterPrivateDeque.h"
 #include "UByteArrayAdapterPrivateVector.h"
 #include "UByteArrayAdapterPrivateArray.h"

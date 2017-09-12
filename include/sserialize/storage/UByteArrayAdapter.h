@@ -1,5 +1,6 @@
 #ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
+
 #if defined(WITH_SSERIALIZE_CONTIGUOUS_UBA_ONLY) || defined(WITH_SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 	#define SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	#ifdef WITH_SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
@@ -200,9 +201,9 @@ public:
 public: //static functions
 	static UByteArrayAdapter createCache(OffsetType size, sserialize::MmappedMemoryType mmt);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
-	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
-	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = 0xFFFFFFFFFFFFFFFF, uint8_t chunkSizeExponent = 20);
-	///if chunkSizeExponent == 0 => use UBASeekedFile instead of ChunkedMmappedFile
+	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
+	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
+	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
 	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = CHUNKED_MMAP_EXPONENT);
 	static std::string getTempFilePrefix();
 	static std::string getFastTempFilePrefix();
