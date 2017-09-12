@@ -29,26 +29,16 @@ public:
 public:
 	RefCountObjectBase(const RefCountObjectBase & other) = delete;
 	RefCountObjectBase & operator=(const RefCountObjectBase & other) = delete;
-	RefCountObjectBase() : m_rc(0) {}
-	virtual ~RefCountObjectBase() {
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(RCBaseType(0), m_rc);
-	}
+	RefCountObjectBase();
+	virtual ~RefCountObjectBase();
 
-	inline void rcReset() { m_rc = 0; }
-	inline RCBaseType rc() const { return m_rc; }
+	void rcReset();
+	RCBaseType rc() const;
 
 private:
-	inline void rcInc() { m_rc.fetch_add(1, std::memory_order_relaxed); }
-	inline void rcDec() {
-		SSERIALIZE_CHEAP_ASSERT(rc() > 0);
-		if (m_rc.fetch_sub(1, std::memory_order_acq_rel) == 1) { //check if we are the last
-			delete this;
-		}
-	}
-	inline void rcDecWithoutDelete() {
-		SSERIALIZE_CHEAP_ASSERT_LARGER(rc(), RCBaseType(0));
-		m_rc.fetch_sub(1, std::memory_order_acq_rel);
-	}
+	void rcInc();
+	void rcDec();
+	void rcDecWithoutDelete();
 private:
 	std::atomic<RCBaseType> m_rc;
 };
@@ -60,7 +50,7 @@ public:
 	RefCountObject(const RefCountObject & other) = delete;
 	RefCountObjectWithDisable & operator=(const RefCountObject & other) = delete;
 	RefCountObject() = default;
-	virtual ~RefCountObject() {}
+	virtual ~RefCountObject();
 private:
 	///we use this tag for an static assert to make sure that the user chose the right RCWrapper/RCPtrWrapper
 	///Automatic wrapper selection is unfortunately not possible if the object to be refcounted is not fully defined
@@ -73,17 +63,11 @@ public:
 	RefCountObjectWithDisable(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable & operator=(const RefCountObjectWithDisable & other) = delete;
 	RefCountObjectWithDisable() : m_enabled(true) {}
-	virtual ~RefCountObjectWithDisable() {}
+	virtual ~RefCountObjectWithDisable();
 private:
-	inline void disableRC() {
-		m_enabled = false;
-	}
-	inline void enableRC() {
-		m_enabled = true;
-	}
-	inline bool enabledRC() const {
-		return m_enabled;
-	}
+	void disableRC();
+	void enableRC();
+	bool enabledRC() const;
 private:
 	using RefCountObjectBase::rcInc;
 	using RefCountObjectBase::rcDec;
@@ -139,8 +123,8 @@ public:
 	void enableRC() {
 		return;
 		if (priv() && !enabledRC()) {
-			priv()->enableRC();
 			priv()->rcInc();
+			priv()->enableRC();
 			m_enabled = true;
 		}
 	}
@@ -150,8 +134,8 @@ public:
 	void disableRC() {
 		return;
 		if (priv() && enabledRC()) {
-			priv()->rcDecWithoutDelete();
 			priv()->disableRC();
+			priv()->rcDecWithoutDelete();
 			m_enabled = false;
 		}
 	}
@@ -244,7 +228,7 @@ public:
 	explicit RCPtrWrapper(RCObj * data) : MyBaseClass(data) {}
 	RCPtrWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
 	RCPtrWrapper(const RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
-	~RCPtrWrapper() {}
+	virtual ~RCPtrWrapper() {}
 
 	RCPtrWrapper & operator=(const RCPtrWrapper & other) {
 		reset(other.priv());
