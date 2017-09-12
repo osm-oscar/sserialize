@@ -1,6 +1,5 @@
-#ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
-#define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 
+//this has to come before
 #if defined(WITH_SSERIALIZE_CONTIGUOUS_UBA_ONLY) || defined(WITH_SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
 	#define SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	#ifdef WITH_SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL
@@ -19,6 +18,9 @@
 #else
 	#undef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
 #endif
+
+#ifndef SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
+#define SSERIALIZE_UBYTE_ARRAY_ADAPTER_H
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
@@ -50,27 +52,32 @@
 namespace sserialize {
 
 class MmappedFile;
-// class UByteArrayAdapterPrivate;
 class ChunkedMmappedFile;
 class CompressedMmappedFile;
-class UByteArrayAdapter;
 
-namespace UByteArrayAdapterOnlyContiguous {
-	class UByteArrayAdapterPrivate;
-}
-
-namespace UByteArrayAdapterNonContiguous {
-	class UByteArrayAdapterPrivate;
-}
 
 #ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-using UByteArrayAdapterOnlyContiguous::UByteArrayAdapterPrivate;
+inline namespace __UByteArrayAdapterOnlyContiguous {
+	namespace detail {
+	namespace __UByteArrayAdapter {
+		typedef sserialize::UByteArrayAdapterPrivateArray MyPrivate;
+		
+	}}
 #else
-using UByteArrayAdapterNonContiguous::UByteArrayAdapterPrivate;
+inline namespace __UByteArrayAdapterNonContiguous {
+	namespace detail {
+	namespace __UByteArrayAdapter {
+		typedef sserialize::UByteArrayAdapterPrivate MyPrivate;
+		
+	}}
 #endif
 
+#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+inline namespace __UByteArrayAdapterOptionalRefcounting {
+#else
+inline namespace __UByteArrayAdapterRefcounting {
+#endif
 
-class UByteArrayAdapterPrivateArray;
 
 namespace detail {
 namespace __UByteArrayAdapter {
@@ -156,7 +163,6 @@ namespace __UByteArrayAdapter {
 	};
 	
 }}//end namespace detail::__UByteArrayAdapter
-
 
 class UByteArrayAdapter: public std::iterator<std::random_access_iterator_tag, uint8_t, sserialize::SignedOffsetType> {
 public:
@@ -585,6 +591,10 @@ template<>
 inline void UByteArrayAdapter::put(UByteArrayAdapter::OffsetType pos, const sserialize::UByteArrayAdapter & v) { \
 	putData(pos, v);
 }
+
+
+} //end inline namespace refcounting
+} //end inline namespace for non-contiguous
 
 namespace detail {
 namespace __UByteArrayAdapter {
