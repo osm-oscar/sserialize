@@ -54,11 +54,23 @@ GeoPolygon<std::vector<sserialize::spatial::GeoPoint> >::orientation() const {
 		}
 	}
 	
-	//prev is at the end
-	if (prev == cbegin()) {
-		prev = cend()-2;
+	const_iterator next;
+	
+	if (lowest == cend()-1) {
+		lowest = cbegin();
 	}
-	const_iterator next = it+1;
+	
+	if (lowest == cbegin()) {
+		prev = cend()-2;
+		it = lowest;
+		next = cbegin()+1;
+	}
+	else {
+		prev = lowest-1;
+		it = lowest;
+		next = lowest+1;
+	}
+
 // 
 // 	a[lon/lat] = prev, b[lon/lat] = it, c[lon/lat] = next with lon=0, lat=1
 //                a[0] * b[1] - a[1] * b[0] +
