@@ -7,6 +7,83 @@
 
 namespace sserialize {
 
+void ItemIndexPrivateRleDECreator::flushRle() {
+	if (m_rle) {
+		if (m_rle == 1) { //no rle
+			m_data.putVlPackedUint32(m_lastDiff << 1);
+		}
+		else {
+			m_data.putVlPackedUint32((m_rle << 1) | 0x1);
+			m_data.putVlPackedUint32(m_lastDiff << 1);
+		}
+	}
+	m_rle = 0;
+}
+//flushes the data and header to m_dest
+void ItemIndexPrivateRleDECreator::flushData() {
+	m_dest.setPutPtr(m_beginning);
+	m_dest.putVlPackedUint32(m_count);
+	m_dest.putVlPackedUint32((uint32_t)m_data.size());
+	m_dest.putData(m_data);
+}
+ItemIndexPrivateRleDECreator::ItemIndexPrivateRleDECreator(UByteArrayAdapter & data) :
+m_dest(data),
+m_data(new std::vector<uint8_t>(), true),
+m_beginning(data.tellPutPtr()),
+m_rle(0),
+m_lastDiff(0),
+m_count(0),
+m_prev(0)
+{}
+
+ItemIndexPrivateRleDECreator::~ItemIndexPrivateRleDECreator() {}
+
+uint32_t ItemIndexPrivateRleDECreator::size() const {
+	return m_count;
+}
+
+///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
+void ItemIndexPrivateRleDECreator::push_back(uint32_t id) {
+	uint32_t diff = id - m_prev;
+	if (diff == m_lastDiff) {
+		++m_rle;
+	}
+	else {
+		if (m_rle) {
+			if (m_rle == 1) { //no rle
+				m_data.putVlPackedUint32(m_lastDiff << 1);
+			}
+			else {
+				m_data.putVlPackedUint32((m_rle << 1) | 0x1);
+				m_data.putVlPackedUint32(m_lastDiff << 1);
+			}
+		}
+		m_rle = 1;
+		m_lastDiff = diff;
+	}
+	m_prev = id;
+	++m_count;
+}
+	
+///Does a flush and appends the data which has countInData elements (mainly used by set functions)
+void ItemIndexPrivateRleDECreator::flushWithData(const UByteArrayAdapter & appendData, uint32_t countInData) {
+	flushRle();
+	m_data.putData(appendData);
+	m_count += countInData;
+	flushData();
+}
+
+///you need to call this prior to using toIndex() or using the data
+///you should not push after calling this function
+void ItemIndexPrivateRleDECreator::flush() {
+	flushRle();
+	flushData();
+}
+
+ItemIndex ItemIndexPrivateRleDECreator::getIndex() {
+	return ItemIndex(UByteArrayAdapter(m_dest, m_beginning), ItemIndex::T_RLE_DE);
+}
+
 ItemIndexPrivate * ItemIndexPrivateRleDECreator::getPrivateIndex() {
 	return new ItemIndexPrivateRleDE(UByteArrayAdapter(m_dest, m_beginning));
 }

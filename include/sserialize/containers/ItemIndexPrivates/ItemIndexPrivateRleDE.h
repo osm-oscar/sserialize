@@ -25,7 +25,7 @@ namespace sserialize {
   
 class ItemIndexPrivateRleDE;
   
-class ItemIndexPrivateRleDECreator {
+class ItemIndexPrivateRleDECreator final {
 public:
 	UByteArrayAdapter & m_dest;
 	UByteArrayAdapter m_data;
@@ -35,77 +35,23 @@ public:
 	uint32_t m_count;
 	uint32_t m_prev;
 private:
-	void flushRle() {
-		if (m_rle) {
-			if (m_rle == 1) { //no rle
-				m_data.putVlPackedUint32(m_lastDiff << 1);
-			}
-			else {
-				m_data.putVlPackedUint32((m_rle << 1) | 0x1);
-				m_data.putVlPackedUint32(m_lastDiff << 1);
-			}
-		}
-		m_rle = 0;
-	}
+	void flushRle();
 	//flushes the data and header to m_dest
-	void flushData() {
-		m_dest.setPutPtr(m_beginning);
-		m_dest.putVlPackedUint32(m_count);
-		m_dest.putVlPackedUint32((uint32_t)m_data.size());
-		m_dest.putData(m_data);
-	}
+	void flushData();
 public:
-	ItemIndexPrivateRleDECreator(UByteArrayAdapter & data) :
-	m_dest(data),
-	m_data(new std::vector<uint8_t>(), true),
-	m_beginning(data.tellPutPtr()),
-	m_rle(0),
-	m_lastDiff(0),
-	m_count(0),
-	m_prev(0)
-	{}
-	virtual ~ItemIndexPrivateRleDECreator() {}
-	inline uint32_t size() const { return m_count; }
+	ItemIndexPrivateRleDECreator(UByteArrayAdapter & data);
+	~ItemIndexPrivateRleDECreator();
+	uint32_t size() const;
 	///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
-	void push_back(uint32_t id) {
-		uint32_t diff = id - m_prev;
-		if (diff == m_lastDiff) {
-			++m_rle;
-		}
-		else {
-			if (m_rle) {
-				if (m_rle == 1) { //no rle
-					m_data.putVlPackedUint32(m_lastDiff << 1);
-				}
-				else {
-					m_data.putVlPackedUint32((m_rle << 1) | 0x1);
-					m_data.putVlPackedUint32(m_lastDiff << 1);
-				}
-			}
-			m_rle = 1;
-			m_lastDiff = diff;
-		}
-		m_prev = id;
-		++m_count;
-	}
+	void push_back(uint32_t id);
 	
 	///Does a flush and appends the data which has countInData elements (mainly used by set functions)
-	void flushWithData(const UByteArrayAdapter & appendData, uint32_t countInData) {
-		flushRle();
-		m_data.putData(appendData);
-		m_count += countInData;
-		flushData();
-	}
+	void flushWithData(const UByteArrayAdapter & appendData, uint32_t countInData);
 	///you need to call this prior to using toIndex() or using the data
 	///you should not push after calling this function
-	void flush() {
-		flushRle();
-		flushData();
-	}
+	void flush();
 
-	ItemIndex getIndex() {
-		return ItemIndex(UByteArrayAdapter(m_dest, m_beginning), ItemIndex::T_RLE_DE);
-	}
+	ItemIndex getIndex();
 	
 	ItemIndexPrivate * getPrivateIndex();
 };
