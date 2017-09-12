@@ -79,26 +79,6 @@ double inline logTo2(double num) {
 #endif
 }
 
-//from http://stereopsis.com/log2.html
-inline int32_t fastLog2(uint32_t x)  {
-#if defined(__amd64__)
-	int32_t retval;
-	asm("bsr %%eax, %1;"
-		"mov %0, %%eax"
-		: "=r"(retval)
-		: "r"(x)
-		: "%eax"
-	);
-	return retval;
-#else
-	float y = x;
-	uint32_t ix = (uint32_t&)x;
-	uint32_t exp = (ix >> 23) & 0xFF;
-	int32_t log2 = int32_t(exp) - 127;
-	return log2;
-#endif
-}
-
 inline uint32_t createMask(uint32_t bpn) {
 	return ((bpn == 32) ? std::numeric_limits<uint32_t>::max() : ((static_cast<uint32_t>(1) << bpn) - 1));
 }
@@ -120,6 +100,22 @@ msb(TValue num) {
 		++r;
 	}
 	return r;
+}
+
+//from http://stereopsis.com/log2.html
+inline int32_t fastLog2(uint32_t x)  {
+#if defined(__amd64__)
+	int32_t retval;
+	asm("bsr %%eax, %1;"
+		"mov %0, %%eax"
+		: "=r"(retval)
+		: "r"(x)
+		: "%eax"
+	);
+	return retval;
+#else
+	return msb(x);
+#endif
 }
 
 inline bool geoEq(const double a, const double b) {
