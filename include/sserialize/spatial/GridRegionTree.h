@@ -5,6 +5,7 @@
 #include <sserialize/spatial/GeoPolygon.h>
 #include <sserialize/spatial/GeoMultiPolygon.h>
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/mt/ThreadPool.h>
 #include <unordered_set>
 
 namespace sserialize {
@@ -216,28 +217,41 @@ void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER:
 
 	sserialize::ProgressInfo pinfo;
 	pinfo.begin(initial.tileCount(), "GridRegionTree::create");
-	uint32_t ts = initial.tileCount();
-	uint32_t tileCompletionCount = 0;
-	#pragma omp parallel for schedule(dynamic,1)
-	for(uint32_t tile=0; tile < ts; ++tile) {
-		GeoGrid::GridBin gridBin(initial.select(tile));
-		std::vector<uint32_t> tmp;
-		GeoRect tmpRect(initial.cellBoundary(gridBin));
-		for(uint32_t rIt(0), rEnd((uint32_t) m_regions.size()); rIt != rEnd; ++rIt) {
-			if (m_regions[rIt]->intersects(tmpRect)) {
-				tmp.push_back(rIt);
+	std::atomic<uint32_t> ti(0);
+	uint32_t ts(initial.tileCount());
+	std::atomic<uint32_t> tileCompletionCount(0);
+	std::mutex lck;
+
+	sserialize::ThreadPool::execute([&]() {
+		while (true) {
+			uint32_t tile = ti.fetch_add(1);
+			
+			if (tile >= ts) {
+				return;
 			}
+			
+			GeoGrid::GridBin gridBin(initial.select(tile));
+			std::vector<uint32_t> tmp;
+			GeoRect tmpRect(initial.cellBoundary(gridBin));
+			for(uint32_t rIt(0), rEnd((uint32_t) m_regions.size()); rIt != rEnd; ++rIt) {
+				if (m_regions[rIt]->intersects(tmpRect)) {
+					tmp.push_back(rIt);
+				}
+			}
+			if (tmp.size()) {
+				//put this into a temporary as m_nodePtr will likely change during recursion and therefore the fetched adress on the left is wrong
+				uint32_t tmpRet = insert<T_TYPES_CONTAINER>(refiner, rPtr2IdH, tmp, tmpRect);
+	// 			#pragma omp critical
+				{
+					std::unique_lock<std::mutex> l(lck);
+					m_nodePtr[childPtr+gridBin.tile] = tmpRet;
+				}
+			}
+			++tileCompletionCount;
+			pinfo(tileCompletionCount);
 		}
-		if (tmp.size()) {
-			//put this into a temporary as m_nodePtr will likely change during recursion and therefore the fetched adress on the left is wrong
-			uint32_t tmpRet = insert<T_TYPES_CONTAINER>(refiner, rPtr2IdH, tmp, tmpRect);
-			#pragma omp critical
-			m_nodePtr[childPtr+gridBin.tile] = tmpRet;
-		}
-		#pragma omp atomic
-		++tileCompletionCount;
-		pinfo(tileCompletionCount);
-	}
+	});
+	SSERIALIZE_ASSERT(ti >= ts);
 	pinfo.end();
 }
 
