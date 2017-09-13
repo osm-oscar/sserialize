@@ -464,9 +464,11 @@ std::string MmappedFile::realPath(const std::string & path) {
 }
 
 std::string MmappedFile::dirName(const std::string& path) {
-	char buf[path.size()];
+	char buf[path.size()+1];
+	buf[path.size()] = 0;
 	std::copy(path.begin(), path.end(), buf);
-	return std::string( ::dirname(buf) );
+	std::string result( ::dirname(buf) );
+	return result;
 }
 
 bool MmappedFile::isAbsolute(const std::string& path) {
