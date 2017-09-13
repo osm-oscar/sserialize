@@ -48,6 +48,17 @@ public:
 	
 	///execute task t with threadCount thread by spawning new threads
 	static void execute(QueuedTaskFunction t, uint32_t threadCount = 0);
+	
+	template<typename T_TASKFUNC>
+	static void execute(T_TASKFUNC t, uint32_t threadCount = 0) {
+		execute(QueuedTaskFunction(t), threadCount);
+	}
+	
+	template<typename T_TASKFUNC, typename... Args>
+	static void execute(T_TASKFUNC t, uint32_t threadCount, Args&&...args) {
+		auto tmp = std::bind(t, std::forward<Args>(args)...);
+		return execute(tmp, threadCount);
+	}
 };
 
 }
