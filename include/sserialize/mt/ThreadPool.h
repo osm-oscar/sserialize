@@ -46,14 +46,16 @@ public:
 		return sheduleTask(tmp);
 	}
 	
-	///execute task t with threadCount thread by spawning new threads
+	///execute task t with threadCount threads by spawning new threads
 	static void execute(QueuedTaskFunction t, uint32_t threadCount = 0);
 	
+	///execute task t with threadCount threads by spawning new threads
 	template<typename T_TASKFUNC>
 	static void execute(T_TASKFUNC t, uint32_t threadCount = 0) {
 		execute(QueuedTaskFunction(t), threadCount);
 	}
 	
+	///execute task t with threadCount threads by spawning new threads
 	template<typename T_TASKFUNC, typename... Args>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, Args&&...args) {
 		auto tmp = std::bind(t, std::forward<Args>(args)...);
