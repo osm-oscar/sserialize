@@ -61,6 +61,35 @@ public:
 		auto tmp = std::bind(t, std::forward<Args>(args)...);
 		return execute(tmp, threadCount);
 	}
+	
+	///execute task t with threadCount threads by spawning new threads
+	///Calls t for each element in the range exactly once
+	template<typename T_TASKFUNC, typename T_ITERATOR>
+	static void map(T_TASKFUNC t, T_ITERATOR begin, T_ITERATOR end, uint32_t threadCount = 0) {
+		struct State {
+			T_ITERATOR b;
+			T_ITERATOR e;
+			std::mutex lck;
+			State(T_ITERATOR begin, T_ITERATOR end) : b(begin), e(end) {}
+		};
+		State state(begin, end);
+		execute([&state, t]() {
+			std::unique_lock<std::mutex> lck(state.lck);
+			lck.unlock();
+			while (true) {
+				lck.lock();
+				if (state.b != state.e) {
+					T_ITERATOR m = state.b;
+					++state.b;
+					lck.unlock();
+					t(*m);
+				}
+				else {
+					return;
+				}
+			}
+		}, threadCount);
+	}
 };
 
 }
