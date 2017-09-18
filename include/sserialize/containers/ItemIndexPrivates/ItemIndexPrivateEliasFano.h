@@ -183,7 +183,7 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 		
 		uint32_t operator*()  {
 			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(m_off, *m_base);
-			return *m_base - m_off;
+			return uint32_t(*m_base - m_off);
 		}
 		
 		bool operator!=(const MyIterator & other) const { return m_base != other.m_base;}
@@ -196,14 +196,14 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 	using std::distance;
 	using std::next;
 	
-	auto srcSize = distance(begin, end);
+	uint32_t srcSize = narrow_check<uint32_t>( distance(begin, end) );
 	
 	if (!srcSize) {
 		dest.putVlPackedUint32(0);
 		return true;
 	}
 	
-	uint32_t lastEntry = *next(begin, srcSize-1);
+	uint32_t lastEntry = narrow_check<uint32_t>( *next(begin, srcSize-1) );
 	
 	uint32_t upperBound = ItemIndexPrivateEliasFano::upperBound(srcSize, lastEntry);
 	
@@ -229,7 +229,7 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 		uint32_t lastUpper = 0;
 		for(uint32_t i(0); i < srcSize; ++i, ++begin) {
 			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(i, *begin);
-			uint32_t ub = (*begin-i) >> lowerBits;
+			uint32_t ub = uint32_t( (*begin-i) >> lowerBits );
 			
 			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(lastUpper, ub);
 			
@@ -240,7 +240,7 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 		}
 		ucc.flush();
 		
-		dest.putVlPackedUint32(upperBitsData.size());
+		dest.putVlPackedUint32( narrow_check<uint32_t>(upperBitsData.size()) );
 		dest.put(upperBitsData);
 	}
 	return true;

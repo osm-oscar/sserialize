@@ -35,10 +35,10 @@ EliasFanoIterator::~EliasFanoIterator() {}
 EliasFanoIterator::value_type
 EliasFanoIterator::get() const {
 	if (m_numLowerBits) {
-		return (((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb) + m_baseValue;
+		return EliasFanoIterator::value_type( (((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb) + m_baseValue );
 	}
 	else {
-		return (m_lastUb + *m_ub) + m_baseValue;
+		return EliasFanoIterator::value_type( (m_lastUb + *m_ub) + m_baseValue );
 	}
 }
 
@@ -107,7 +107,7 @@ EliasFanoCreator::~EliasFanoCreator() {
 }
 
 uint32_t EliasFanoCreator::size() const {
-	return m_values.size();
+	return uint32_t( m_values.size() );
 }
 
 void EliasFanoCreator::push_back(uint32_t id) {
@@ -304,7 +304,7 @@ ItemIndexPrivateEliasFano::putInto(DynamicBitSet & bitSet) const {
 	
 	if (m_cache.size() < m_size) {
 		auto it(m_it);
-		for(uint32_t i(m_cache.size()); i < m_size; ++i, ++it) {
+		for(uint32_t i = uint32_t(m_cache.size()); i < m_size; ++i, ++it) {
 			bitSet.set(*it);
 		}
 	}
@@ -316,7 +316,7 @@ ItemIndexPrivateEliasFano::putInto(uint32_t* dest) const {
 	
 	if (m_cache.size() < m_size) {
 		auto it(m_it);
-		for(uint32_t i(m_cache.size()); i < m_size; ++i, ++dest, ++it) {
+		for(uint32_t i = uint32_t(m_cache.size()); i < m_size; ++i, ++dest, ++it) {
 			*dest = *it;
 		}
 	}

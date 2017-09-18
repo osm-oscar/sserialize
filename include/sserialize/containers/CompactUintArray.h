@@ -220,13 +220,13 @@ uint32_t CompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteArrayAdap
 template<typename T_IT>
 uint32_t CompactUintArray::create(T_IT begin, const T_IT & end, UByteArrayAdapter & dest, uint32_t bits) {
 	UByteArrayAdapter::OffsetType spaceNeed;
-	{
+	try {
 		using std::distance;
-		auto myDist = distance(begin, end);
-		if (myDist < 0 || myDist > std::numeric_limits<SizeType>::max()) {
-			throw sserialize::TypeOverflowException("CompactUintArray::create");
-		}
+		uint32_t myDist = narrow_check<uint32_t>( distance(begin, end) );
 		spaceNeed = minStorageBytes(bits, (uint32_t)myDist);
+	}
+	catch (const sserialize::TypeOverflowException &) {
+		throw sserialize::TypeOverflowException("CompactUintArray::create");
 	}
 	if (!dest.reserveFromPutPtr(spaceNeed)) {
 		throw sserialize::IOException("CompactUintArray::create cloud no allocate memory");

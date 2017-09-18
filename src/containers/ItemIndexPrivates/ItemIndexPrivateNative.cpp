@@ -99,7 +99,7 @@ ItemIndexNativeCreator::~ItemIndexNativeCreator()
 {}
 
 uint32_t ItemIndexNativeCreator::size() const {
-	return (m_it - (m_mem.begin()+4))/sizeof(uint32_t);
+	return uint32_t( (m_it - (m_mem.begin()+4))/sizeof(uint32_t) );
 }
 
 void ItemIndexNativeCreator::push_back(uint32_t id) {
