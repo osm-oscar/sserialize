@@ -133,7 +133,7 @@ void Histogram2D::toFile(std::string fileName) {
 	imgGlobalScaleFile.close();
 	imgGlobalScaleGammaFile.close();
 	imgGlobalScaleColorCodedFile.close();
-	delete pic;
+	delete[] pic;
 }
 
 }//end namespace

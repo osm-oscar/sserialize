@@ -173,7 +173,7 @@ std::string LargeCompactTrieNodePrivate::str() const {
 	uint8_t * str = new uint8_t[m_strLen];
 	m_data.getData(m_strBegin, str, m_strLen);
 	std::string st(reinterpret_cast<char*>(str), m_strLen);
-	delete str;
+	delete[] str;
 	return st;
 }
 
