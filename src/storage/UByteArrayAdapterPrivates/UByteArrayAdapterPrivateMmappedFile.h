@@ -11,12 +11,12 @@ public:
 	UByteArrayAdapterPrivateMmappedFile(MmappedFile file);
 	virtual ~UByteArrayAdapterPrivateMmappedFile();
 	virtual void advice(UByteArrayAdapter::AdviseType /*at*/, UByteArrayAdapter::SizeType /*begin*/, UByteArrayAdapter::SizeType /*end*/) override;
-	virtual UByteArrayAdapter::OffsetType size() const;
-	virtual void setDeleteOnClose(bool del);
+	virtual UByteArrayAdapter::OffsetType size() const override;
+	virtual void setDeleteOnClose(bool del) override;
 	/** Shrink data to size bytes */
-	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size);
+	virtual bool shrinkStorage(UByteArrayAdapter::OffsetType size) override;
 	/** grow data to at least! size bytes */
-	virtual bool growStorage(UByteArrayAdapter::OffsetType size);
+	virtual bool growStorage(UByteArrayAdapter::OffsetType size) override;
 };
 
 }//end namespace

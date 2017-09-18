@@ -12,7 +12,7 @@ public:
 	virtual GeoShapeType type() const override;
 	virtual uint32_t size() const  override;
 	virtual GeoRect boundary() const  override;
-	virtual void recalculateBoundary() ;
+	virtual void recalculateBoundary() override;
 	virtual bool intersects(const GeoRect & boundary) const  override;
 	virtual double distance(const sserialize::spatial::GeoShape & other, const sserialize::spatial::DistanceCalculator & distanceCalculator) const override;
 	virtual UByteArrayAdapter & append(sserialize::UByteArrayAdapter & destination) const override;

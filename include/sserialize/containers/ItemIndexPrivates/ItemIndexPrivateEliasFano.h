@@ -101,7 +101,7 @@ public:
 	
 	virtual ItemIndex::Types type() const override;
 	
-	virtual UByteArrayAdapter data() const;
+	virtual UByteArrayAdapter data() const override;
 public:
 	uint32_t upperBound() const;
 public:
@@ -112,8 +112,8 @@ public:
 	virtual uint32_t first() const override;
 	virtual uint32_t last() const override;
 	
-	virtual const_iterator cbegin() const;
-	virtual const_iterator cend() const;
+	virtual const_iterator cbegin() const override;
+	virtual const_iterator cend() const override;
 
 	virtual uint32_t size() const override;
 	
