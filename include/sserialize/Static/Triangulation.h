@@ -546,11 +546,11 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 	
 	struct State {
 		//VERTEX means that the vertex with id vertexId is collinear to source->target
-		typedef enum {INVALID, VERTEX, FACE} Type;
+		enum class Type {INVALID, VERTEX, FACE};
 		uint32_t vertexId;
 		uint32_t faceId;
 		Type type;
-		State() : vertexId(Triangulation::NullVertex), faceId(Triangulation::NullFace), type(INVALID) {}
+		State() : vertexId(Triangulation::NullVertex), faceId(Triangulation::NullFace), type(Type::INVALID) {}
 	};
 	
 	using OrientationTest = detail::Triangulation::Orientation<Point>;
@@ -575,19 +575,19 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 			
 			if (otcw == CGAL::LEFT_TURN && otccw == CGAL::RIGHT_TURN) {
 				result.faceId = f.id();
-				result.type = State::FACE;
+				result.type = State::Type::FACE;
 				return result;
 			}
 			else if(otcw == CGAL::COLLINEAR && otccw == CGAL::RIGHT_TURN) {
 				result.vertexId = f.vertexId(Triangulation::cw(vp));
 				result.faceId = f.id();
-				result.type = State::VERTEX;
+				result.type = State::Type::VERTEX;
 				return result;
 			}
 			else if (otcw == CGAL::LEFT_TURN && otccw == CGAL::COLLINEAR) {
 				result.vertexId = f.vertexId(Triangulation::ccw(vp));
 				result.faceId = f.id();
-				result.type = State::VERTEX;
+				result.type = State::Type::VERTEX;
 				return result;
 			}
 			if (fcBegin == fcEnd) {
@@ -604,30 +604,30 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 	auto faceStep = [this, &ot, &source, &target](Face const & f) -> State {
 		State state;
 		assert(!f.contains(target));
-		std::array<CGAL::Sign, 3> ots = {
+		std::array<CGAL::Sign, 3> ots = {{
 			ot(source, target, f.point(0)),
 			ot(source, target, f.point(1)),
 			ot(source, target, f.point(2))
-		};
+		}};
 		//now check for each edge if source->target leaves through this edge (or is collinear to a supporting vertex)
 		//edge i is defined by the vertex i opposite to it, hence edge i is defined by the vertices cw(i) and ccw(i)
 		//if source->target passes through edge i, then cw(i) is to the left and ccw(i) to the right
 		for(int i(0); i < 3; ++i) {
 			if (ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::RIGHT_TURN) { //this is the one
 				state.faceId = f.neighborId(i);
-				state.type = State::FACE;
+				state.type = State::Type::FACE;
 				return state;
 			}
 			else if (ots.at(cw(i)) == CGAL::COLLINEAR && ots.at(ccw(i)) == CGAL::RIGHT_TURN) { //we pass through the left edge vertex
 				state.vertexId = f.vertexId(cw(i));
 				state.faceId = f.id();
-				state.type = State::VERTEX;
+				state.type = State::Type::VERTEX;
 				return state;
 			}
 			else if (ots.at(cw(i)) == CGAL::LEFT_TURN && ots.at(ccw(i)) == CGAL::COLLINEAR) { //we pass through the right edge vertex
 				state.vertexId = f.vertexId(ccw(i));
 				state.faceId = f.id();
-				state.type = State::VERTEX;
+				state.type = State::Type::VERTEX;
 				return state;
 			}
 		}
@@ -638,21 +638,21 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 	
 	State state;
 	state.faceId = startFace.id();
-	state.type = State::FACE;
+	state.type = State::Type::FACE;
 	
 	Face currentFace = face(state.faceId);
 	
 	visitor(currentFace);
 	while (!currentFace.contains(target)) {
 		
-		if (state.type == State::FACE) {
+		if (state.type == State::Type::FACE) {
 			state = faceStep(currentFace);
 		}
-		else if (state.type == State::VERTEX) {
+		else if (state.type == State::Type::VERTEX) {
 			state = vertexStep(vertex(state.vertexId));
 		}
 		else {
-			assert(state.type == State::INVALID);
+			assert(state.type == State::Type::INVALID);
 			return NullFace;
 		}
 		
