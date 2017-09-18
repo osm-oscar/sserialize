@@ -73,7 +73,7 @@ public:
 
 
 template<typename T_GEOPOINT_ITERATOR>
-sserialize::ItemIndex TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const {
+sserialize::ItemIndex TriangulationGeoHierarchyArrangement::cellsAlongPath(double /*radius*/, const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const {
 	std::vector<sserialize::spatial::GeoPoint> tmp(begin, end);
 	const sserialize::spatial::GeoPoint * myBegin = &(*tmp.begin());
 	const sserialize::spatial::GeoPoint * myEnd = &(*tmp.end());
