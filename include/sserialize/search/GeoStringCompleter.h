@@ -34,7 +34,7 @@ class GeoStringCompleter: public StringCompleter {
 protected:
 	typedef StringCompleter MyParentClass;
 	GeoStringCompleterPrivate * priv() const {
-		return static_cast<GeoStringCompleterPrivate*>( priv() );
+		return static_cast<GeoStringCompleterPrivate*>( StringCompleter::priv() );
 	}
 public:
 	GeoStringCompleter();
@@ -47,6 +47,7 @@ public:
 	std::ostream& printStats(std::ostream& out) const;
 	std::string getName() const;
 };
+
 }
 
 
