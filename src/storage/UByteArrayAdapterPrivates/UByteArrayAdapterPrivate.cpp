@@ -6,7 +6,7 @@ std::string UByteArrayAdapterPrivate::getString(UByteArrayAdapter::OffsetType po
 	uint8_t * buf = new uint8_t[len];
 	get(pos, buf, len);
 	std::string str(buf, buf+len);
-	delete buf;
+	delete[] buf;
 	return str;
 }
 
