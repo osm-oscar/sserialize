@@ -1,12 +1,13 @@
 #ifndef SSERIALIZE_UTIL_SET_FUNCS_H
 #define SSERIALIZE_UTIL_SET_FUNCS_H
 #include <algorithm>
+#include <sserialize/utility/types.h>
 
 namespace sserialize {
 
 template<typename TIter1, typename TIter2>
-std::size_t set_intersection_size(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
-	std::size_t size = 0;
+SizeType set_intersection_size(TIter1 begin1, TIter1 end1, TIter2 begin2, TIter2 end2) {
+	SizeType size = 0;
 	while(begin1 != end1 && begin2 != end2) {
 		if (*begin1 < *begin2) {
 			++begin1;

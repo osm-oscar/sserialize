@@ -13,7 +13,7 @@ template<typename TReturnType>
 class AbstractArrayIterator {
 public:
 	using value_type = TReturnType;
-	using size_type = std::size_t;
+	using size_type = sserialize::SizeType;
 public:
 	AbstractArrayIterator() {}
 	virtual ~AbstractArrayIterator() {}
@@ -91,7 +91,10 @@ public:
 }//end namespace detail
 
 template<typename TReturnType>
-class AbstractArrayIterator: public std::iterator<std::input_iterator_tag, TReturnType, std::size_t> {
+class AbstractArrayIterator: public std::iterator<std::input_iterator_tag, TReturnType, typename detail::AbstractArrayIterator<TReturnType>::size_type > {
+public:
+	typedef typename detail::AbstractArrayIterator<TReturnType>::size_type size_type;
+private:
 	std::unique_ptr< detail::AbstractArrayIterator<TReturnType> > m_priv;
 public:
 	AbstractArrayIterator(detail::AbstractArrayIterator<TReturnType> * it) : m_priv(it) {}
@@ -118,12 +121,12 @@ public:
 		return t;
 	}
 	
-	AbstractArrayIterator operator+=(std::size_t amount) {
+	AbstractArrayIterator operator+=(size_type amount) {
 		m_priv->ffwd(amount);
 		return *this;
 	}
 	
-	AbstractArrayIterator operator+(std::size_t amount) {
+	AbstractArrayIterator operator+(size_type amount) {
 		AbstractArrayIterator t(*this);
 		t.m_priv->ffwd(amount);
 		return t;
