@@ -112,7 +112,9 @@ UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::at(uint32_t pos) const {
 	if (pos >= m_size)
 		pos = m_size-1; //if size==1 => pos = 0
 	if (m_size > 1) {
-		return getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos) + m_idStore.at64(pos) + m_yintercept-m_idOffset;
+		uint64_t positive = getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos) + m_idStore.at64(pos);
+		int64_t negative = m_yintercept-m_idOffset;
+		return (negative > 0 ? positive + uint64_t(negative) : positive - uint64_t(-negative));
 	}
 	else {
 		return m_yintercept;
