@@ -12,8 +12,8 @@ m_idxStore(idxStore)
 PassThroughGeoHierarchySubGraph::~PassThroughGeoHierarchySubGraph() {}
 
 interface::GeoHierarchySubGraph::SubSet
-PassThroughGeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
-	return m_gh.subSet(cqr, sparse);
+PassThroughGeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse, uint32_t threadCount) const {
+	return m_gh.subSet(cqr, sparse, threadCount);
 }
 
 sserialize::ItemIndex
@@ -75,15 +75,15 @@ GeoHierarchySubGraph(gh, idxStore, [](uint32_t) { return true; })
 GeoHierarchySubGraph::~GeoHierarchySubGraph() {}
 
 sserialize::Static::spatial::GeoHierarchy::SubSet
-GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
+GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse, uint32_t threadCount) const {
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > m_cellDesc.size()*0.5 || sparse) {
 		std::vector<SubSet::Node*> nodes(m_regionDesc.size()+1, 0);
 		if (sparse) {
-			rootNode = createSubSet<true>(cqr, &(nodes[0]), (uint32_t) nodes.size());
+			rootNode = createSubSet<true>(cqr, &(nodes[0]), (uint32_t) nodes.size(), threadCount);
 		}
 		else {
-			rootNode = createSubSet<false>(cqr, &(nodes[0]), (uint32_t) nodes.size());
+			rootNode = createSubSet<false>(cqr, &(nodes[0]), (uint32_t) nodes.size(), threadCount);
 		}
 	}
 	else {
@@ -218,8 +218,8 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 GeoHierarchySubGraph::~GeoHierarchySubGraph() {}
 
 sserialize::Static::spatial::GeoHierarchy::SubSet
-GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult & cqr, bool sparse) const {
-	return m_ghs->subSet(cqr, sparse);
+GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const {
+	return m_ghs->subSet(cqr, sparse, threadCount);
 }
 
 sserialize::ItemIndex GeoHierarchySubGraph::regionExclusiveCells(uint32_t regionId) const {

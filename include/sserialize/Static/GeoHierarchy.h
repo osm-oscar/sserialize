@@ -252,7 +252,7 @@ public:
 	typedef sserialize::MultiVarBitArray CellDescriptionType;
 	typedef sserialize::BoundedCompactUintArray CellPtrListType;
 private:
-	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
+	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size, uint32_t threadCount) const;
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
 private:
 	StoreIdToGhIdMap m_storeIdToGhId;
@@ -313,7 +313,7 @@ public:
 	sserialize::spatial::GeoRect regionBoundary(uint32_t id) const;
 	sserialize::spatial::GeoRect cellBoundary(uint32_t id) const;
 	
-	SubSet subSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
+	SubSet subSet(const sserialize::CellQueryResult& cqr, bool sparse, uint32_t threadCount) const;
 	FlatSubSet flatSubSet(const sserialize::CellQueryResult& cqr, bool sparse) const;
 };
 
@@ -467,7 +467,7 @@ public:
 	///@return cells whose bbox intersects @param rect
 	sserialize::ItemIndex intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect) const;
 
-	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->subSet(cqr, sparse); }
+	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const { return m_priv->subSet(cqr, sparse, threadCount); }
 	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }
 };
 

@@ -17,7 +17,7 @@ public:
 public:
 	GeoHierarchySubGraph() {}
 	virtual ~GeoHierarchySubGraph() {}
-	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const = 0;
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const = 0;
 	virtual uint32_t regionCellCount(uint32_t regionId) const = 0;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const = 0;
 	virtual uint32_t directParentsSize(uint32_t cellId) const = 0;
@@ -35,7 +35,7 @@ public:
 public:
 	PassThroughGeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
 	virtual ~PassThroughGeoHierarchySubGraph();
-	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const override;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
 	virtual uint32_t regionCellCount(uint32_t regionId) const override;
 	virtual uint32_t directParentsSize(uint32_t cellId) const override;
@@ -58,7 +58,7 @@ public:
 	template<typename TFilter>
 	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter);
 	virtual ~GeoHierarchySubGraph();
-	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const override;
+	virtual SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const override;
 	virtual sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const override;
 	virtual uint32_t regionCellCount(uint32_t regionId) const override;
 	virtual uint32_t directParentsSize(uint32_t cellId) const override;
@@ -95,7 +95,7 @@ private:
 	};
 private:
 	template<bool SPARSE>
-	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size) const;
+	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size, uint32_t threadCount) const;
 	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
 private://used during construction
 	void getAncestors(uint32_t rid, std::unordered_set<uint32_t> & dest);
@@ -128,7 +128,7 @@ public:
 	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter);
 	GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, Type t);
 	~GeoHierarchySubGraph();
-	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
+	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const;
 	///@param regionId in ghId
 	sserialize::ItemIndex regionExclusiveCells(uint32_t regionId) const;
 	uint32_t regionCellCount(uint32_t regionId) const;
@@ -329,7 +329,7 @@ GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIn
 
 template<bool SPARSE>
 sserialize::Static::spatial::GeoHierarchy::SubSet::Node *
-GeoHierarchySubGraph::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
+GeoHierarchySubGraph::createSubSet(const sserialize::CellQueryResult& cqr, sserialize::Static::spatial::detail::SubSet::Node** nodes, uint32_t size, uint32_t /*threadCount*/) const {
 	SubSet::Node * rootNode = new SubSet::Node(sserialize::Static::spatial::GeoHierarchy::npos, 0);
 
 	const uint32_t * cPPtrsBegin = &(m_cellParentsPtrs[0]);

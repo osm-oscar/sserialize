@@ -432,11 +432,11 @@ sserialize::spatial::GeoRect GeoHierarchy::cellBoundary(uint32_t id) const {
 }
 
 //TODO:implement sparse SubSet creation
-SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse) const {
+SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse, uint32_t threadCount) const {
 	SubSet::Node * rootNode = 0;
 	if (cqr.cellCount() > cellSize()*0.5) {
 		std::vector<SubSet::Node*> nodes(regionSize()+1, 0);
-		rootNode = createSubSet(cqr, &(nodes[0]), (uint32_t) nodes.size());
+		rootNode = createSubSet(cqr, &(nodes[0]), (uint32_t) nodes.size(), threadCount);
 	}
 	else {
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
@@ -464,7 +464,7 @@ FlatSubSet GeoHierarchy::flatSubSet(const sserialize::CellQueryResult& cqr, bool
 	return subSet;
 }
 
-SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size) const {
+SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size, uint32_t threadCount) const {
 	SubSet::Node * rootNode = new SubSet::Node(npos, 0);
 
 	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
