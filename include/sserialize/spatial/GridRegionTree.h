@@ -123,6 +123,7 @@ private:
 private:
 	mutable std::atomic<uint64_t> m_cumulatedResultSetSize;
 	mutable std::atomic<uint64_t> m_intersectTestCount;
+	mutable std::mutex m_lck;
 private:
 	template<typename T_TYPES_CONTAINER, typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
 	void getEnclosing(const GeoRect & bounds, T_REGION_ID_ITERATOR begin, const T_REGION_ID_ITERATOR & end, T_OUTPUT_ITERATOR out);
@@ -220,9 +221,8 @@ void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER:
 	std::atomic<uint32_t> ti(0);
 	uint32_t ts(initial.tileCount());
 	std::atomic<uint32_t> tileCompletionCount(0);
-	std::mutex lck;
 
-	sserialize::ThreadPool::execute([&]() {
+	sserialize::ThreadPool::execute([&,this]() {
 		while (true) {
 			uint32_t tile = ti.fetch_add(1);
 			
@@ -243,7 +243,7 @@ void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER:
 				uint32_t tmpRet = insert<T_TYPES_CONTAINER>(refiner, rPtr2IdH, tmp, tmpRect);
 	// 			#pragma omp critical
 				{
-					std::unique_lock<std::mutex> l(lck);
+					std::unique_lock<std::mutex> l(m_lck);
 					m_nodePtr[childPtr+gridBin.tile] = tmpRet;
 				}
 			}
@@ -259,8 +259,9 @@ void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER:
 template<typename T_TYPES_CONTAINER>
 uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & refiner, const std::unordered_map< sserialize::spatial::GeoRegion*, uint32_t >& rPtr2Id, std::vector< uint32_t > sortedRegions, const sserialize::spatial::GeoRect& maxBounds) {
 	uint32_t nodePtr = NullNodePtr;
-	#pragma omp critical
+// 	#pragma omp critical
 	{
+		std::unique_lock<std::mutex> l(m_lck);
 		nodePtr = (uint32_t) m_nodes.size();
 		m_nodes.push_back(Node(Node::NT_INVALID));
 	}
@@ -275,8 +276,9 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 	GeoGrid newGrid;
 	if (refiner(maxBounds, m_regions, sortedRegions, newGrid)) {
 		uint32_t childPtr = NullNodePtr;
-		#pragma omp critical
+// 		#pragma omp critical
 		{
+			std::unique_lock<std::mutex> l(m_lck);
 			childPtr = (uint32_t) m_nodePtr.size();
 			Node & n = m_nodes[nodePtr];
 			n.internal().type = Node::NT_INTERNAL;
@@ -306,8 +308,9 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 		}
 	}
 	else {
-		#pragma omp critical
+// 		#pragma omp critical
 		{
+			std::unique_lock<std::mutex> l(m_lck);
 			Node & n = m_nodes[nodePtr];
 			n.leaf().type = Node::NT_LEAF;
 			n.leaf().valueBegin = m_leafInfo.size();
