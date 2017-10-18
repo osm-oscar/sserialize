@@ -464,7 +464,7 @@ FlatSubSet GeoHierarchy::flatSubSet(const sserialize::CellQueryResult& cqr, bool
 	return subSet;
 }
 
-SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size, uint32_t threadCount) const {
+SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size, uint32_t /*threadCount*/) const {
 	SubSet::Node * rootNode = new SubSet::Node(npos, 0);
 
 	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
