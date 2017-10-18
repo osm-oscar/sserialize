@@ -97,7 +97,7 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 		}
 		uint32_t num = 0;
 		for(int i = 0; i < testLength; ++i) {
-			num += vec[i];
+			num += vec.at(i);
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
@@ -161,7 +161,7 @@ std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCoun
 		}
 		uint64_t num = 0;
 		for(std::size_t i = 0; i < testLength; ++i) {
-			num += vec[i];
+			num += vec.at(i);
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
