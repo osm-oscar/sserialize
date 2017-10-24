@@ -92,12 +92,10 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 		std::vector<uint32_t> vec;
 		vec.reserve(testLength);
 		tm.begin();
-		for(int i = 0; i < testLength; ++i) {
-			vec.push_back(nums[i]);
-		}
+		vec.assign(nums.begin(), nums.end());
 		uint32_t num = 0;
-		for(int i = 0; i < testLength; ++i) {
-			num += vec.at(i);
+		for(uint32_t x : vec) {
+			num += x;
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
@@ -156,12 +154,10 @@ std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCoun
 		std::vector<uint64_t> vec;
 		vec.reserve(testLength);
 		tm.begin();
-		for(std::size_t i = 0; i < testLength; ++i) {
-			vec.push_back(nums[i]);
-		}
+		vec.assign(nums.cbegin(), nums.cend());
 		uint64_t num = 0;
-		for(std::size_t i = 0; i < testLength; ++i) {
-			num += vec.at(i);
+		for(auto x : vec) {
+			num += x;
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
