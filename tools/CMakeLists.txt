@@ -16,8 +16,9 @@ MACRO(ADD_TOOLS_TARGET _name _sourcefiles)
 ENDMACRO(ADD_TOOLS_TARGET)
 
 set(TOOLS_LIB_LINK_LIBS
-${sserialize_BINARY_DIR}/libsserialize.a
-${LIBRT_LIBRARIES})
+	${SSERIALIZE_LINK_LIBRARIES}
+	${LIBRT_LIBRARIES}
+)
 
 
 add_tools_target_single(inspect_ItemIndexStore)
