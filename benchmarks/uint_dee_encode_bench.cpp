@@ -139,10 +139,10 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 		std::vector<uint32_t> vec;
 		vec.reserve(testLength);
 		tm.begin();
-		vec.assign(nums.begin(), nums.end());
+		::memmove(vec.data(), nums.data(), sizeof(uint32_t)*nums.size());
 		uint32_t num = 0;
-		for(uint32_t x : vec) {
-			num += x;
+		for(uint32_t * iptr(vec.data()), * eptr(vec.data()+vec.size()); iptr < eptr; ++iptr) {
+			num += *iptr;
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
@@ -182,9 +182,9 @@ std::vector<long int> test64Pack(const std::vector<uint64_t> & nums, int testCou
 		uint8_t * dptr = data.data();
 		tm.begin();
 		for(std::size_t i = 0; i < testLength; ++i, dptr += 8) {
-			sserialize::p_cl<uint32_t>(nums[i], dptr);
+			sserialize::p_cl<uint64_t>(nums[i], dptr);
 		}
-		uint32_t num = 0;
+		uint64_t num = 0;
 		for(uint8_t* iptr(data.data()), * eptr(dptr); iptr < eptr; iptr += 8) {
 			num += sserialize::up_cl<uint64_t>(iptr);
 		}
@@ -269,12 +269,12 @@ std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCoun
 
 	for(int testNum = 0; testNum < testCount; ++testNum) {
 		std::vector<uint64_t> vec;
-		vec.reserve(testLength);
+		vec.resize(testLength);
 		tm.begin();
-		vec.assign(nums.cbegin(), nums.cend());
+		::memmove(vec.data(), nums.data(), sizeof(uint64_t)*nums.size());
 		uint64_t num = 0;
-		for(auto x : vec) {
-			num += x;
+		for(uint64_t * iptr(vec.data()), * eptr(vec.data()+vec.size()); iptr < eptr; ++iptr) {
+			num += *iptr;
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
@@ -397,7 +397,7 @@ int main(int argc, char ** argv) {
 			std::cout << std::endl;
 			
 			std::cout << "VEC64C:";
-			printTimeVector(vec64);
+			printTimeVector(vec64c);
 			std::cout << std::endl;
 		}
 		else {
