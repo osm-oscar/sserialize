@@ -2,6 +2,7 @@
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/utility/checks.h>
+#include <sserialize/storage/pack_unpack_functions.h>
 #include <iostream>
 #include <set>
 #include <limits>
@@ -40,6 +41,52 @@ std::vector<uint64_t> createNumbersSet64(uint32_t count) {
 	return ret;
 }
 
+std::vector<long int> test32Pack(const std::vector<uint32_t> & nums, int testCount) {
+	std::size_t testLength = nums.size();
+	std::vector<long int> res;
+	sserialize::TimeMeasurer tm;
+	for(int testNum = 0; testNum < testCount; ++testNum) {
+		std::vector<uint8_t> data;
+		data.resize(testLength*4);
+		uint8_t * dptr = data.data();
+		tm.begin();
+		for(std::size_t i = 0; i < testLength; ++i, dptr += 4) {
+			sserialize::p_cl<uint32_t>(nums[i], dptr);
+		}
+		uint32_t num = 0;
+		for(uint8_t* iptr(data.data()), * eptr(dptr); iptr < eptr; iptr += 4) {
+			num += sserialize::up_cl<uint32_t>(iptr);
+		}
+		tm.end();
+		res.push_back( tm.elapsedTime() );
+	}
+	return res;
+}
+
+std::vector<long int> test32VlPack(const std::vector<uint32_t> & nums, int testCount) {
+	std::size_t testLength = nums.size();
+	std::vector<long int> res;
+	sserialize::TimeMeasurer tm;
+	for(int testNum = 0; testNum < testCount; ++testNum) {
+		std::vector<uint8_t> data;
+		data.resize(testLength*5);
+		uint8_t * dptr = data.data();
+		tm.begin();
+		for(std::size_t i = 0; i < testLength; ++i) {
+			uint32_t len = sserialize::p_v<uint32_t>(nums[i], dptr);
+			dptr += len;
+		}
+		uint32_t num = 0;
+		for(uint8_t* iptr(data.data()), * eptr(dptr); iptr < eptr;) {
+			int len = 5;
+			num += sserialize::up_v<uint32_t>(iptr, &len);
+			iptr += len;
+		}
+		tm.end();
+		res.push_back( tm.elapsedTime() );
+	}
+	return res;
+}
 
 std::vector<long int> test32UBA(const std::vector<uint32_t> & nums, int testCount) {
 	std::size_t testLength = nums.size();
@@ -63,18 +110,18 @@ std::vector<long int> test32UBA(const std::vector<uint32_t> & nums, int testCoun
 }
 
 std::vector<long int> test32VLUBA(const std::vector<uint32_t> & nums, int testCount) {
-	int testLength = sserialize::narrow_check<int>(nums.size());
+	std::size_t testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 	for(int testNum = 0; testNum < testCount; ++testNum) {
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
 		uba.resize(testLength*4);
 		tm.begin();
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			uba.putVlPackedUint32(nums[i]);
 		}
 		uint32_t num = 0;
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			num += uba.getVlPackedUint32();
 		}
 		tm.end();
@@ -84,7 +131,7 @@ std::vector<long int> test32VLUBA(const std::vector<uint32_t> & nums, int testCo
 }
 
 std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCount) {
-	int testLength = sserialize::narrow_check<int>(nums.size());
+	std::size_t testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 
@@ -104,7 +151,7 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 }
 
 std::vector<long int> test32VecChecked(const std::vector<uint32_t> & nums, int testCount) {
-	int testLength = sserialize::narrow_check<int>(nums.size());
+	std::size_t testLength = sserialize::narrow_check<int>(nums.size());
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 
@@ -112,11 +159,11 @@ std::vector<long int> test32VecChecked(const std::vector<uint32_t> & nums, int t
 		std::vector<uint32_t> vec;
 		vec.reserve(testLength);
 		tm.begin();
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			vec.push_back(nums[i]);
 		}
 		uint32_t num = 0;
-		for(int i = 0; i < testLength; ++i) {
+		for(std::size_t i = 0; i < testLength; ++i) {
 			num += vec.at(i);
 		}
 		tm.end();
@@ -124,6 +171,54 @@ std::vector<long int> test32VecChecked(const std::vector<uint32_t> & nums, int t
 	}
 	return res;
 }
+
+std::vector<long int> test64Pack(const std::vector<uint64_t> & nums, int testCount) {
+	std::size_t testLength = nums.size();
+	std::vector<long int> res;
+	sserialize::TimeMeasurer tm;
+	for(int testNum = 0; testNum < testCount; ++testNum) {
+		std::vector<uint8_t> data;
+		data.resize(testLength*8);
+		uint8_t * dptr = data.data();
+		tm.begin();
+		for(std::size_t i = 0; i < testLength; ++i, dptr += 8) {
+			sserialize::p_cl<uint32_t>(nums[i], dptr);
+		}
+		uint32_t num = 0;
+		for(uint8_t* iptr(data.data()), * eptr(dptr); iptr < eptr; iptr += 8) {
+			num += sserialize::up_cl<uint64_t>(iptr);
+		}
+		tm.end();
+		res.push_back( tm.elapsedTime() );
+	}
+	return res;
+}
+
+std::vector<long int> test64VlPack(const std::vector<uint64_t> & nums, int testCount) {
+	std::size_t testLength = nums.size();
+	std::vector<long int> res;
+	sserialize::TimeMeasurer tm;
+	for(int testNum = 0; testNum < testCount; ++testNum) {
+		std::vector<uint8_t> data;
+		data.resize(testLength*9);
+		uint8_t * dptr = data.data();
+		tm.begin();
+		for(std::size_t i = 0; i < testLength; ++i) {
+			uint32_t len = sserialize::p_v<uint64_t>(nums[i], dptr);
+			dptr += len;
+		}
+		uint32_t num = 0;
+		for(uint8_t* iptr(data.data()), * eptr(dptr); iptr < eptr;) {
+			int len = 9;
+			num += sserialize::up_v<uint64_t>(iptr, &len);
+			iptr += len;
+		}
+		tm.end();
+		res.push_back( tm.elapsedTime() );
+	}
+	return res;
+}
+
 
 std::vector<long int> test64UBA(const std::vector<uint64_t> & nums, int testCount) {
 	int testLength = sserialize::narrow_check<int>(nums.size());
@@ -233,23 +328,38 @@ int main(int argc, char ** argv) {
 	std::cout << "#TestLengtEnd: " << testLengthEnd << std::endl;
 	std::cout << "#TestLengthMul: " << testLengthMul << std::endl; 
 	std::cout << "#Test Count: " << testCount << std::endl;
-	std::cout << "#uba32;uba32vl;vec32;vec32c;uba64;uba64vl;vec64;vec64c" << std::endl;
+	std::cout << "#pc32,pvl32,uba32;uba32vl;vec32;vec32c;pc64;pvl64;uba64;uba64vl;vec64;vec64c" << std::endl;
 	sserialize::TimeMeasurer tm;
 	for(; testLengthBegin <= testLengthEnd; testLengthBegin *= testLengthMul) {
 		
 		std::vector<uint32_t> nums = createNumbersSet(testLengthBegin);
 		std::vector<uint64_t> nums64 = createNumbersSet64(testLengthBegin);
 		
+		
+		std::vector<long int> pc32 = test32Pack(nums, testCount);
+		std::vector<long int> pvl32 = test32VlPack(nums, testCount);
 		std::vector<long int> uba32 = test32UBA(nums, testCount);
 		std::vector<long int> uba32vl = test32VLUBA(nums, testCount);
 		std::vector<long int> vec32 = test32Vec(nums, testCount);
 		std::vector<long int> vec32c = test32VecChecked(nums, testCount);
+		
+		std::vector<long int> pc64 = test64Pack(nums64, testCount);
+		std::vector<long int> pvl64 = test64VlPack(nums64, testCount);
 		std::vector<long int> uba64 = test64UBA(nums64, testCount);
 		std::vector<long int> uba64vl = test64VLUBA(nums64, testCount);
 		std::vector<long int> vec64 = test64Vec(nums64, testCount);
 		std::vector<long int> vec64c = test64VecChecked(nums64, testCount);
 		
 		if (printVectors) {
+			
+			std::cout << "P32:";
+			printTimeVector(pc32);
+			std::cout << std::endl;
+			
+			std::cout << "PVL32:";
+			printTimeVector(pvl32);
+			std::cout << std::endl;
+		
 			std::cout << "UBA32:";
 			printTimeVector(uba32);
 			std::cout << std::endl;
@@ -264,6 +374,14 @@ int main(int argc, char ** argv) {
 			
 			std::cout << "VEC32C:";
 			printTimeVector(vec32c);
+			std::cout << std::endl;
+			
+			std::cout << "P64:";
+			printTimeVector(pc64);
+			std::cout << std::endl;
+			
+			std::cout << "PVL64:";
+			printTimeVector(pvl64);
 			std::cout << std::endl;
 
 			std::cout << "UBA64:";
@@ -284,10 +402,15 @@ int main(int argc, char ** argv) {
 		}
 		else {
 			std::cout << testLengthBegin << ";";
+			std::cout << sserialize::statistics::mean(pc32.begin(), pc32.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(pvl32.begin(), pvl32.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(uba32.begin(), uba32.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(uba32vl.begin(), uba32vl.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(vec32.begin(), vec32.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(vec32c.begin(), vec32c.end(), 0) << ";";
+			
+			std::cout << sserialize::statistics::mean(pc64.begin(), pc64.end(), 0) << ";";
+			std::cout << sserialize::statistics::mean(pvl64.begin(), pvl64.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(uba64.begin(), uba64.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(uba64vl.begin(), uba64vl.end(), 0) << ";";
 			std::cout << sserialize::statistics::mean(vec64.begin(), vec64.end(), 0) << ";";
