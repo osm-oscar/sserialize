@@ -137,11 +137,15 @@ std::vector<long int> test32Vec(const std::vector<uint32_t> & nums, int testCoun
 
 	for(int testNum = 0; testNum < testCount; ++testNum) {
 		std::vector<uint32_t> vec;
-		vec.reserve(testLength);
+		vec.resize(testLength);
+		uint32_t * dptr = vec.data();
 		tm.begin();
-		::memmove(vec.data(), nums.data(), sizeof(uint32_t)*nums.size());
+		for(std::size_t i = 0; i < testLength; ++i, ++dptr) {
+			*dptr = nums[i];
+		}
+// 		::memcpy(vec.data(), nums.data(), sizeof(uint32_t)*nums.size());
 		uint32_t num = 0;
-		for(uint32_t * iptr(vec.data()), * eptr(vec.data()+vec.size()); iptr < eptr; ++iptr) {
+		for(uint32_t * iptr(vec.data()), * eptr(dptr); iptr < eptr; ++iptr) {
 			num += *iptr;
 		}
 		tm.end();
@@ -263,17 +267,21 @@ std::vector<long int> test64VLUBA(const std::vector<uint64_t> & nums, int testCo
 }
 
 std::vector<long int> test64Vec(const std::vector<uint64_t> & nums, int testCount) {
-	int testLength = nums.size();
+	std::size_t testLength = nums.size();
 	std::vector<long int> res;
 	sserialize::TimeMeasurer tm;
 
 	for(int testNum = 0; testNum < testCount; ++testNum) {
 		std::vector<uint64_t> vec;
 		vec.resize(testLength);
+		uint64_t * dptr = vec.data();
 		tm.begin();
-		::memmove(vec.data(), nums.data(), sizeof(uint64_t)*nums.size());
+		for(std::size_t i = 0; i < testLength; ++i, ++dptr) {
+			*dptr = nums[i];
+		}
+// 		::memmove(vec.data(), nums.data(), sizeof(uint64_t)*nums.size());
 		uint64_t num = 0;
-		for(uint64_t * iptr(vec.data()), * eptr(vec.data()+vec.size()); iptr < eptr; ++iptr) {
+		for(uint64_t * iptr(vec.data()), * eptr(dptr); iptr < eptr; ++iptr) {
 			num += *iptr;
 		}
 		tm.end();
@@ -317,7 +325,7 @@ int main(int argc, char ** argv) {
 		
 	}
 	
-	bool printVectors = false;
+	bool printVectors = true;
 	
 	int testLengthBegin = atoi(argv[1]);
 	int testLengthEnd = atoi(argv[2]);
@@ -328,6 +336,7 @@ int main(int argc, char ** argv) {
 	std::cout << "#TestLengtEnd: " << testLengthEnd << std::endl;
 	std::cout << "#TestLengthMul: " << testLengthMul << std::endl; 
 	std::cout << "#Test Count: " << testCount << std::endl;
+	std::cout << "Timings are in useconds" << std::endl;
 	std::cout << "#pc32,pvl32,uba32;uba32vl;vec32;vec32c;pc64;pvl64;uba64;uba64vl;vec64;vec64c" << std::endl;
 	sserialize::TimeMeasurer tm;
 	for(; testLengthBegin <= testLengthEnd; testLengthBegin *= testLengthMul) {
