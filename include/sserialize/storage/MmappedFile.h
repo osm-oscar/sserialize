@@ -121,6 +121,8 @@ public:
 	static bool createCacheFile(OffsetType size, sserialize::MmappedFile & dest);
 	static bool truncateFile(const std::string & fileName, OffsetType size);
 	static bool fileExists(const std::string & fileName);
+	static int64_t deviceId(const std::string & path);
+	static int64_t deviceId(int fd);
 	static OffsetType fileSize(const std::string & fileName);
 	static OffsetType fileSize(int fd);
 	/** Not thread-safe **/

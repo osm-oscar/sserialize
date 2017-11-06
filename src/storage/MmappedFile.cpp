@@ -436,6 +436,22 @@ bool MmappedFile::isDirectory(const std::string & fileName) {
 		return false;
 }
 
+int64_t MmappedFile::deviceId(const std::string & path) {
+	struct ::stat64 stFileInfo;
+	if (::stat64(path.c_str(),&stFileInfo) == 0)
+		return stFileInfo.st_dev;
+	else
+		return -1;
+}
+
+int64_t MmappedFile::deviceId(int fd) {
+	struct ::stat64 stFileInfo;
+	if (::fstat64(fd, &stFileInfo) == 0)
+		return stFileInfo.st_dev;
+	else
+		return -1;
+}
+
 bool MmappedFile::createDirectory(const std::string & fileName, __mode_t mode) {
 	if (::mkdir(fileName.c_str(), mode) == 0)  {
 		::chmod(fileName.c_str(), mode);
