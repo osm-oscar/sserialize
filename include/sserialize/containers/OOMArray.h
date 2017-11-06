@@ -48,6 +48,9 @@ public:
 	OOMArray(const OOMArray & other) = delete;
 	OOMArray(OOMArray && other);
 	~OOMArray();
+	///Swap data but don't swap config (like buffer sizes, deletion etc)
+	///invalidates iterators of this and other
+	void swap_data(OOMArray & other);
 	SizeType size() const { return m_backBufferBegin+m_backBuffer.size(); }
 	void reserve(SizeType reserveSize);
 	void resize(SizeType newSize, const value_type & value = value_type());
@@ -129,9 +132,7 @@ public:
 	}
 	
 	///invalidates iterators
-	static iterator move(iterator srcBegin, const iterator & srcEnd, iterator destBegin) {
-		return destBegin.d()->replace(destBegin, std::move(srcBegin), srcEnd);
-	}
+	static iterator move(iterator srcBegin, const iterator & srcEnd, iterator destBegin);
 	
 	///invalidates iterators
 	static iterator move(const_iterator srcBegin, const const_iterator & srcEnd, iterator destBegin) {
@@ -539,6 +540,24 @@ OOMArray<TValue, TEnable>::~OOMArray() {
 		sync();
 	}
 }
+template<typename TValue, typename TEnable>
+void OOMArray<TValue, TEnable>::swap_data(OOMArray & other) {
+	//make sure that backbuffer sizes match what is defined
+	if (m_backBufferSize != other.m_backBufferSize) {
+		SizeType myBackBufferSize = m_backBufferSize;
+		this->backBufferSize( other.m_backBufferSize*sizeof(value_type) );
+		other.backBufferSize( myBackBufferSize*sizeof(value_type) );
+	}
+
+	using std::swap;
+
+	swap(m_fd, other.m_fd);
+	swap(m_fn, other.m_fn);
+	swap(m_mmt, other.m_mmt);
+	swap(m_backBufferSize, other.m_backBufferSize);
+	swap(m_backBufferBegin, other.m_backBufferBegin);
+	swap(m_backBuffer, other.m_backBuffer);
+}
 
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::backBufferSize(SizeType s) {
@@ -702,6 +721,34 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 	}
 	return iterator(this, offset, position.bufferSize());
+}
+
+template<typename TValue, typename TEnable>
+typename OOMArray<TValue, TEnable>::iterator
+OOMArray<TValue, TEnable>::move(iterator srcBegin, const iterator & srcEnd, iterator destBegin) {
+	OOMArray * src = srcBegin.d();
+	OOMArray * dest = destBegin.d();
+	SSERIALIZE_CHEAP_ASSERT(src);
+	SSERIALIZE_CHEAP_ASSERT(dest);
+	
+	//move optimization for files with src >= dest and same mmt
+	if (src->size() >= dest->size() &&
+		srcBegin.p() == 0 && srcEnd.p() == src->size() &&
+		destBegin.p() == 0 &&
+		src->m_mmt == dest->m_mmt &&
+		(
+			src->m_mmt != sserialize::MM_FILEBASED ||
+			sserialize::MmappedFile::deviceId(src->m_fd) == sserialize::MmappedFile::deviceId(dest->m_fd) ||
+			sserialize::MmappedFile::dirName(src->m_fn) == sserialize::MmappedFile::dirName(src->m_fn)
+		)
+	)
+	{
+		src->swap_data(*dest);
+		return dest->end();
+	}
+	else {
+		return dest->replace(destBegin, std::move(srcBegin), srcEnd);
+	}
 }
 
 }//end namespace
