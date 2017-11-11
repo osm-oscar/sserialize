@@ -148,6 +148,24 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		maxThreadCount = std::thread::hardware_concurrency();
 	}
 	
+	constexpr uint64_t INVALID_CHUNK_OFFSET = std::numeric_limits<uint64_t>::max();
+	struct ChunkDescription {
+		uint64_t first;
+		uint64_t second;
+		ChunkDescription() : first(INVALID_CHUNK_OFFSET), second(INVALID_CHUNK_OFFSET) {}
+		ChunkDescription(uint64_t _first, uint64_t _second) : first(_first), second(_second)
+		{
+			SSERIALIZE_CHEAP_ASSERT(valid());
+		}
+		ChunkDescription(const ChunkDescription & other) = default;
+		ChunkDescription & operator=(const ChunkDescription & other) = default;
+		bool valid() const { return first != INVALID_CHUNK_OFFSET && second != INVALID_CHUNK_OFFSET && first < second; }
+		uint64_t size() const {
+			SSERIALIZE_CHEAP_ASSERT(valid());
+			return second-first;
+		}
+	};
+	
 	struct Config {
 		uint32_t maxThreadCount;
 		//maximum time a thread wait before it remove itself from processing
@@ -177,7 +195,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		uint64_t srcOffset;
 		std::mutex ioLock;
 		
-		std::vector< std::pair<uint64_t, uint64_t> > pendingChunks;
+		std::vector< ChunkDescription > pendingChunks;
 		std::vector<InputBuffer> activeChunkBuffers;
 	};
 	
@@ -347,10 +365,10 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBuffers)));
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
+		std::vector<ChunkDescription> nextRoundPendingChunks;
 		detail::oom::IteratorSyncer<TInputOutputIterator>::sync(begin);
 		SrcIterator srcIt(begin);
 		
-		std::vector< std::pair<uint64_t, uint64_t> > nextRoundPendingChunks;
 		state.srcOffset = 0;
 		
 		state.pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
@@ -369,9 +387,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				uint64_t resultChunkBeginOffset = state.srcOffset;
 				uint64_t resultChunkEndOffset = state.pendingChunks.at(cbi+myQueueSize-1).second;
 				for(uint32_t i(0); i < myQueueSize; ++i) {
-					const std::pair<uint64_t, uint64_t> & pendingChunk = state.pendingChunks.at(cbi+i);
-					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(pendingChunk.second, state.srcSize);
-					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(pendingChunk.first, pendingChunk.second);
+					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi+i);
 					state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, begin+pendingChunk.second, chunkBufferSize);
 					pq.push(i);
 				}
