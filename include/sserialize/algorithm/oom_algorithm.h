@@ -429,6 +429,38 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		swap(state.pendingChunks, nextRoundPendingChunks);
 		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
 	}
+///this assumes that there is enough storage space to accomodate twice the data of container
+template<typename TValue, typename TInputOutputIterator, typename TEqual = std::equal_to<TValue>, bool TWithProgressInfo = true>
+void oom_unique(sserialize::OOMArray<TValue> & src, uint64_t maxMemoryUsage = 100*1024*1024, TEqual eq = TEqual()) {
+	using value_type = TValue;
+	
+	uint64_t srcSize = src.size();
+	sserialize::OOMArray<value_type> tmp(srcSize);
+	tmp.backBufferSize(maxMemoryUsage);
+	tmp.reserve(srcSize);
+	
+	OptionalProgressInfo<TWithProgressInfo> pinfo;
+	pinfo.begin(srcSize, "OOMUnique");
+	
+	TInputOutputIterator it(src.begin());
+	TInputOutputIterator end(src.end());
+	uint64_t count = 0;
+	value_type prev = *it;
+	tmp.emplace_back(std::move(*it));
+	for(++it; it != end; ++it, ++count) {
+		if (!eq(*it, prev)) {
+			prev = *it;
+			tmp.emplace_back(std::move(*it));
+		}
+		pinfo(count);
+	}
+	pinfo.end();
+	
+	tmp.flush();
+	
+	SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(srcSize, tmp.size());
+	
+	tmp.swap_data(src);
 }
 
 ///iterators need to point to sorted range
