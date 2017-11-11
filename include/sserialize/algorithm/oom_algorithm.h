@@ -121,7 +121,6 @@ struct IteratorSyncer< detail::OOMArray::Iterator<TValue> > {
 }}//end namespace detail::oom
 
 //TODO: specialise for OOMArray::iterator (special write-back, input buffer size needs to be taken into account)
-//TODO: add dynamic thread count instead of a fixed one. Increase thread count if ioLock time is low and decrease it if ioLock time is high
 
 ///A standard out-of-memory sorting algorithm. It first sorts the input in chunks of size maxMemoryUsage/threadCount
 ///These chunks are then merged together in possibly multiple phases. In a single phase up to queueDepth chunks are merged together.
