@@ -83,6 +83,8 @@ struct InMemorySort {
 	static constexpr bool canSort = false;
 	template<typename TCompare>
 	inline static void sort(const TIterator &/*begin*/, const TIterator &/*end*/, const TCompare &/*compare*/) {}
+	template<typename TEqual>
+	inline static void uniqe(const TIterator &/*begin*/, const TIterator &/*end*/, const TEqual &/*equal*/) {}
 };
 
 template<typename TIterator>
@@ -91,6 +93,10 @@ struct InMemorySort<TIterator, std::random_access_iterator_tag> {
 	template<typename TCompare>
 	inline static void sort(const TIterator & begin, const TIterator & end, const TCompare & compare) {
 		std::sort(begin, end, compare);
+	}
+	template<typename TEqual>
+	inline static TIterator unique(const TIterator & begin, const TIterator & end, const TEqual & equal) {
+		return std::unique(begin, end, equal);
 	}
 };
 
