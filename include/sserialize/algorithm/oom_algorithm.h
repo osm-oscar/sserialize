@@ -141,19 +141,30 @@ struct IteratorSyncer< detail::OOMArray::Iterator<TValue> > {
 ///@param threadCount should be no larger than about 4, 2 should be sufficient for standard io-speeds, used fo the initial chunk sorting, a single chunk then has a size of maxMemoryUsage/threadCount
 ///@param queueDepth the maximum number of chunks to merge in a single round, this directly influences the number of merge rounds
 ///@param comp comparisson operator for strict weak order. This functions needs to be thread-safe <=> threadCount > 1
+///@param equal equality operator, only used if TUniquify is true. This functions needs to be thread-safe <=> threadCount > 1
+///@return points to the last element of the sorted sequence
 ///In general: Larger chunks result in a smaller number of rounds and can be processed with a smaller queue depth reducing random access
 ///Thus for very large data sizes it may be better to use only one thread to create the largest chunks possible
-template<typename TInputOutputIterator, typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>, bool TWithProgressInfo = true>
-void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
+template<
+	typename TInputOutputIterator,
+	typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>,
+	bool TWithProgressInfo = true,
+	bool TUniquify = false,
+	typename EqualFunc = std::equal_to<typename std::iterator_traits<TInputOutputIterator>::value_type>
+>
+TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
 				uint64_t maxMemoryUsage = 0x100000000,
 				uint32_t maxThreadCount = 2,
 				sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED,
 				uint32_t queueDepth = 64,
-				uint32_t maxWait = 10)
+				uint32_t maxWait = 10,
+				EqualFunc equal = EqualFunc())
 {
 	typedef TInputOutputIterator SrcIterator;
 	typedef typename std::iterator_traits<SrcIterator>::value_type value_type;
 	typedef detail::oom::InputBuffer<SrcIterator> InputBuffer;
+// 	using std::next;
+	
 	
 	SSERIALIZE_CHEAP_ASSERT(begin < end);
 	
@@ -190,6 +201,7 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		//tmp buffer size in bytes
 		uint64_t tmpBuffferSize;
 		CompFunc * comp;
+		EqualFunc * equal;
 	};
 	
 	struct WorkerBalanceInfo {
@@ -206,8 +218,11 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		SrcIterator srcIt;
 		uint64_t srcSize;
 		uint64_t srcOffset;
+		///for TUniquify==false -> resultSize = srcSize
+		uint64_t resultSize;
 		std::mutex ioLock;
 		
+		//if TUniquify is true, then these are NOT necessarily contiguous, BUT they are always sorted in ascending order
 		std::vector< ChunkDescription > pendingChunks;
 		std::vector<InputBuffer> activeChunkBuffers;
 	};
@@ -221,11 +236,13 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	cfg.maxMemoryUsage = maxMemoryUsage;
 	cfg.initialChunkSize = maxMemoryUsage/(maxThreadCount*sizeof(value_type));
 	cfg.comp = &comp;
+	cfg.equal = &equal;
 	
 	state.srcIt = begin;
 	using std::distance;
 	state.srcSize = distance(begin, end);
 	state.srcOffset = 0;
+	state.resultSize = 0;
 
 	//now check if we really have to use out-of-memory sorting
 	if (detail::oom::InMemorySort<TInputOutputIterator>::canSort && state.srcSize*sizeof(value_type) <= maxMemoryUsage) {
@@ -233,10 +250,14 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			std::cout << "Using in-memory sorting..." << std::flush;
 		}
 		detail::oom::InMemorySort<TInputOutputIterator>::sort(begin, end, comp);
+		if (TUniquify) {
+			using std::unique;
+			return unique(begin, end, equal);
+		}
 		if (TWithProgressInfo) {
 			std::cout << "done" << std::endl;
 		}
-		return;
+		return end;
 	}
 
 	struct Worker {
@@ -244,8 +265,17 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		Config * cfg;
 		WorkerBalanceInfo * wbi;
 		std::vector<value_type> buffer;
-		Worker(State * state, Config * cfg, WorkerBalanceInfo * wbi) : state(state), cfg(cfg), wbi(wbi) {}
-		Worker(Worker && other) : state(other.state), cfg(other.cfg), wbi(other.wbi), buffer(std::move(other.buffer)) {}
+		uint64_t currentChunkSize;
+		std::size_t currentChunkDescriptionPos;
+		Worker(State * state, Config * cfg, WorkerBalanceInfo * wbi) :
+		state(state), cfg(cfg), wbi(wbi), currentChunkSize(0), currentChunkDescriptionPos(0)
+		{}
+		Worker(Worker && other) :
+		state(other.state), cfg(other.cfg), wbi(other.wbi),
+		buffer(std::move(other.buffer)),
+		currentChunkSize(other.currentChunkSize),
+		currentChunkDescriptionPos(other.currentChunkDescriptionPos)
+		{}
 		void operator()() {
 			sserialize::TimeMeasurer tm;
 			while (true) {
@@ -264,14 +294,15 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 					}
 					return; //we're done
 				}
-				uint64_t myChunkSize = std::min<uint64_t>(cfg->initialChunkSize, state->srcSize-state->srcOffset);
+				currentChunkSize = std::min<uint64_t>(cfg->initialChunkSize, state->srcSize-state->srcOffset);
 				
-				//push the chunk 
-				state->pendingChunks.emplace_back(state->srcOffset, state->srcOffset+myChunkSize);
+				//push the beginning of our chunk
+				currentChunkDescriptionPos = state->pendingChunks.size();
+				state->pendingChunks.emplace_back(state->srcOffset, INVALID_CHUNK_OFFSET);
 				
 				auto chunkBegin = state->srcIt;
-				auto chunkEnd = chunkBegin+myChunkSize;
-				state->srcOffset += myChunkSize;
+				auto chunkEnd = chunkBegin+currentChunkSize;
+				state->srcOffset += currentChunkSize;
 				state->srcIt = chunkEnd;
 				buffer.assign(chunkBegin, chunkEnd);
 				
@@ -290,31 +321,30 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 				using std::sort;
 				sort(buffer.begin(), buffer.end(), *(cfg->comp));
 				
+				if (TUniquify) {
+					using std::unique;
+					auto lastUnique = unique(buffer.begin(), buffer.end(), *(cfg->equal));
+					buffer.resize(std::distance(buffer.begin(), lastUnique));
+				}
+				
 				tm.begin();
 				ioLock.lock();
 				tm.end();
 				
 				lockTime += tm.elapsedSeconds();
 				
+				//correct our ChunkDescription
+				ChunkDescription & cd = state->pendingChunks.at(currentChunkDescriptionPos);
+				cd.second = cd.first + buffer.size();
+				
+				//and the result size
+				state->resultSize += buffer.size();
+				
 				//flush back
 				using std::move;
-				//capture return value if need be
-				#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED) || defined(SSERIALIZE_CHEAP_ASSERT_ENABLED)
-				auto chunkIt =
-				#endif
-				
 				move(buffer.begin(), buffer.end(), chunkBegin);
 				
-				SSERIALIZE_CHEAP_ASSERT(chunkIt == chunkEnd);
-				#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-				{
-					detail::oom::IteratorSyncer<TInputOutputIterator>::sync(chunkIt);
-					using std::is_sorted;
-					SSERIALIZE_EXPENSIVE_ASSERT(is_sorted(chunkIt, chunkEnd, *(cfg->comp)));
-				}
-				#endif
-				
-				state->sortCompleted += myChunkSize;
+				state->sortCompleted += currentChunkSize;
 				state->pinfo(state->sortCompleted);
 				
 				ioLock.unlock();
@@ -359,6 +389,12 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 		state.pinfo.end();
 	}
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.srcSize);
+	if (TUniquify) {
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.resultSize, state.srcSize);
+	}
+	else {
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(state.resultSize, state.srcSize);
+	}
 	
 	//now merge the chunks, use about 1/4 of memory for the temporary storage
 	cfg.tmpBuffferSize = cfg.maxMemoryUsage/4;
@@ -378,41 +414,40 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBuffers)));
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
+		state.pinfo.begin(state.resultSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
+		
 		std::vector<ChunkDescription> nextRoundPendingChunks;
+		
 		detail::oom::IteratorSyncer<TInputOutputIterator>::sync(begin);
-		SrcIterator srcIt(begin);
 		
-		state.srcOffset = 0;
+		//setup temporary store
+		tmp.clear();
+		tmp.reserve(state.resultSize);
+		tmp.backBufferSize(cfg.tmpBuffferSize);
+		tmp.readBufferSize(sizeof(value_type));
 		
-		state.pinfo.begin(state.srcSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
-		for(uint32_t cbi(0), cbs((uint32_t)state.pendingChunks.size()); cbi < cbs; cbi += queueDepth) {
-			SSERIALIZE_CHEAP_ASSERT(!tmp.size());
-			
-			//set the buffer sizes
-			tmp.backBufferSize(cfg.tmpBuffferSize);
-			tmp.readBufferSize(sizeof(value_type));
-			
-			{//fill the activeChunkBuffers and create the chunk for the next round
+		for(uint32_t cbi(0), cbs((uint32_t)state.pendingChunks.size()); cbi < cbs;) {
+			{//fill the activeChunkBuffers
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBuffers.size());
-				SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.pendingChunks.at(cbi).first);
-				uint32_t myQueueSize = std::min<uint32_t>(queueDepth, cbs-cbi);
-				uint64_t chunkBufferSize = cfg.maxMemoryUsage/(myQueueSize);
-				uint64_t resultChunkBeginOffset = state.srcOffset;
-				uint64_t resultChunkEndOffset = state.pendingChunks.at(cbi+myQueueSize-1).second;
-				for(uint32_t i(0); i < myQueueSize; ++i) {
-					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi+i);
-					state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, begin+pendingChunk.second, chunkBufferSize);
-					pq.push(i);
+				uint64_t chunkBufferSize = cfg.maxMemoryUsage/std::min<uint32_t>(queueDepth, cbs-cbi);
+				for(; cbi < cbs && state.activeChunkBuffers.size() < queueDepth; ++cbi) {
+					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi);
+					state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
+					pq.push(state.activeChunkBuffers.size()-1);
 				}
-				nextRoundPendingChunks.emplace_back(resultChunkBeginOffset, resultChunkEndOffset);
 			}
+			
+			//add our result chunk to the queue (we don't know the size yet, just the beginning)
+			nextRoundPendingChunks.emplace_back(tmp.size(), INVALID_CHUNK_OFFSET);
 			
 			while (pq.size()) {
 				uint32_t pqMin = pq.top();
 				pq.pop();
 				InputBuffer & chunkBuffer = state.activeChunkBuffers[pqMin];
 				value_type & v = chunkBuffer.get();
-				tmp.emplace_back(std::move(v));
+				if (!TUniquify || !tmp.size() || !equal(tmp.back(), v)) {
+					tmp.emplace_back(std::move(v));
+				}
 				if (chunkBuffer.next()) {
 					pq.push(pqMin);
 				}
@@ -423,25 +458,65 @@ void oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc com
 			}
 			state.pinfo(state.srcOffset+tmp.size());
 			
-			//flush tmp and set a larger read buffer
-			tmp.flush();
-			tmp.backBufferSize(0);
-			tmp.readBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
-			
-			///move back this part to source
-			using std::move;
-			srcIt = move(tmp.begin(), tmp.end(), srcIt);
-			state.srcOffset += tmp.size();
-			tmp.clear();
-			state.activeChunkBuffers.clear();;
+			if (!TUniquify || nextRoundPendingChunks.back().first != tmp.size()) {
+				nextRoundPendingChunks.back().second = tmp.size();
+			}
+			else {
+				//nothing has been added, remove our chunk from the queue 
+				//this never happens if TUniquify is false,
+				//since then all elements of the chunks are appended to tmp
+				nextRoundPendingChunks.pop_back();
+			}
+			state.activeChunkBuffers.clear();
 		}
-		SSERIALIZE_CHEAP_ASSERT(srcIt == end);
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.srcSize);
+		
+		if (TUniquify) {
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
+		}
+		else {
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(tmp.size(), state.srcSize);
+		}
+		
+		//copy back to source
+		tmp.flush();
+		tmp.backBufferSize(0);
+		tmp.readBufferSize(cfg.tmpBuffferSize/sizeof(value_type));
+		
+		state.resultSize = tmp.size();
+		
+		///move back to source
+		using std::move;
+		move(tmp.begin(), tmp.end(), begin);
+		tmp.clear();
+
 		state.pinfo.end();
 		using std::swap;
 		swap(state.pendingChunks, nextRoundPendingChunks);
-		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
 	}
+	
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	{
+		using std::is_sorted;
+		using std::is_unique;
+		if (TUniquify) {
+			
+		}
+	}
+	#endif
+	
+	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+	if (TUniquify) {
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.resultSize, state.srcSize);
+	}
+	else {
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(state.resultSize, state.srcSize);
+	}
+	#endif
+	
+	return begin+state.resultSize;
+}
+
+
 ///this assumes that there is enough storage space to accomodate twice the data of container
 template<typename TValue, typename TInputOutputIterator, typename TEqual = std::equal_to<TValue>, bool TWithProgressInfo = true>
 void oom_unique(sserialize::OOMArray<TValue> & src, uint64_t maxMemoryUsage = 100*1024*1024, TEqual eq = TEqual()) {
@@ -475,6 +550,7 @@ void oom_unique(sserialize::OOMArray<TValue> & src, uint64_t maxMemoryUsage = 10
 	
 	tmp.swap_data(src);
 }
+
 
 ///iterators need to point to sorted range
 ///Has one additional copy to begin
