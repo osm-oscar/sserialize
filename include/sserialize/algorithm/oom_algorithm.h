@@ -24,39 +24,52 @@ public:
 	typedef TValue value_type;
 private:
 	TSourceIterator m_srcIt;
-	TSourceIterator m_srcEnd;
+	SizeType m_srcPos;
+	SizeType m_srcSize;
 	//in number of entries
-	OffsetType m_bufferSize;
+	SizeType m_bufferSize;
 	std::vector<TValue> m_buffer;
 	iterator m_bufferIt;
 private:
 	void fillBuffer() {
 		m_buffer.clear();
-		OffsetType copyAmount(0);
-		for(; copyAmount < m_bufferSize && m_srcIt != m_srcEnd; ++copyAmount, ++m_srcIt) {
+		SizeType copyAmount(0);
+		for(; copyAmount < m_bufferSize && m_srcPos < m_srcSize; ++copyAmount, ++m_srcPos, ++m_srcIt) {
 			m_buffer.push_back(*m_srcIt);
 		}
 		m_bufferIt = m_buffer.begin();
 	}
 public:
 	InputBuffer() : m_bufferSize(0), m_bufferIt(m_buffer.begin()) {}
+	InputBuffer(const TSourceIterator & srcBegin, const TSourceIterator & srcEnd, SizeType bufferSize) :
+	InputBuffer(srcBegin, std::distance(srcBegin, srcEnd), bufferSize)
+	{
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(0, std::distance(srcBegin, srcEnd));
+	}
 	///@param bufferSize bufferSize in bytes
-	InputBuffer(const TSourceIterator & srcBegin, const TSourceIterator & srcEnd, OffsetType bufferSize) :
+	InputBuffer(const TSourceIterator & srcBegin, SizeType srcSize, SizeType bufferSize) :
 	m_srcIt(srcBegin),
-	m_srcEnd(srcEnd),
+	m_srcPos(0),
+	m_srcSize(srcSize),
 	m_bufferSize(bufferSize/sizeof(value_type))
 	{
 		m_buffer.reserve(m_bufferSize);
 		fillBuffer();
 	}
-	InputBuffer(InputBuffer && other) : m_srcIt(std::move(other.m_srcIt)), m_srcEnd(std::move(other.m_srcEnd)), m_bufferSize(other.m_bufferSize) {
+	InputBuffer(InputBuffer && other) :
+	m_srcIt(std::move(other.m_srcIt)),
+	m_srcPos(other.m_srcPos),
+	m_srcSize(other.m_srcSize),
+	m_bufferSize(other.m_bufferSize)
+	{
 		std::size_t bufferItOffset = other.m_bufferIt - other.m_buffer.begin();
 		m_buffer = std::move(other.m_buffer);
 		m_bufferIt = m_buffer.begin()+bufferItOffset;
 	}
 	InputBuffer & operator=(InputBuffer && other) {
 		m_srcIt = std::move(other.m_srcIt);
-		m_srcEnd = std::move(other.m_srcEnd);
+		m_srcPos = other.m_srcPos;
+		m_srcSize = other.m_srcSize;
 		m_bufferSize = other.m_bufferSize;
 		std::size_t bufferItOffset = other.m_bufferIt - other.m_buffer.begin();
 		m_buffer = std::move(other.m_buffer);
