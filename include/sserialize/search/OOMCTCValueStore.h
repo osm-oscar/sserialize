@@ -531,19 +531,22 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	LessThan ltp(m_traits.nodeIdentifierLessThanComparator());
 	Equal ep(m_traits.nodeIdentifierEqualPredicate());
 	
-	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo>(
+	sserialize::oom_sort<TVEIterator, LessThan, TWithProgressInfo, true, Equal>(
 		m_entries.begin(), m_entries.end(), ltp,
-		otraits.maxMemoryUsage(), otraits.sortConcurrency(),
-		otraits.mmt(), 1024, 30
+		otraits.maxMemoryUsage(),
+		otraits.sortConcurrency(),
+		otraits.mmt(),
+		1024, // queue depth
+		30, //max wait
+		ep
 	);
 	
-	auto entriesBegin = m_entries.begin();
-	entriesBegin.bufferSize(otraits.maxMemoryUsage()/4);
-	auto equalEnd = sserialize::oom_unique<TVEIterator, Equal, TWithProgressInfo>(std::move(entriesBegin), m_entries.end(), otraits.mmt(), otraits.maxMemoryUsage()/2, ep);
-	m_entries.resize(std::distance(m_entries.begin(), equalEnd));
-	m_entries.shrink_to_fit();
-	using std::is_sorted;
-	SSERIALIZE_EXPENSIVE_ASSERT(is_sorted(m_entries.begin(), m_entries.end(), ltp));
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	{
+		using std::is_sorted;
+		SSERIALIZE_EXPENSIVE_ASSERT(is_sorted(m_entries.begin(), m_entries.end(), ltp));
+	}
+	#endif
 	return true;
 }
 
