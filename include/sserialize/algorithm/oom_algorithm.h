@@ -454,11 +454,11 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					pq.push(pqMin);
 				}
 				if (tmp.size() % 1000 == 0) {
-					state.pinfo(state.srcOffset+tmp.size());
+					state.pinfo(tmp.size());
 				}
 				SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
 			}
-			state.pinfo(state.srcOffset+tmp.size());
+			state.pinfo(tmp.size());
 			
 			if (!TUniquify || nextRoundPendingChunks.back().first != tmp.size()) {
 				nextRoundPendingChunks.back().second = tmp.size();
