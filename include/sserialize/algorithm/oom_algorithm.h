@@ -131,6 +131,39 @@ struct IteratorSyncer< detail::OOMArray::Iterator<TValue> > {
 };
 
 
+//This class replaces the content and range of the src iterator of oom_sort with content from temporary storage
+//This is mainly usefull for OOMArray iterators to perform a data swap operation
+template<typename TIterator>
+struct IteratorRangeDataSwaper {
+	using value_type = typename std::iterator_traits<TIterator>::value_type;
+	using SrcIterator = TIterator;
+	using TmpIterator = typename sserialize::OOMArray<value_type>::iterator;
+	static void swap(const TmpIterator & tmpBegin, const TmpIterator & tmpEnd, SrcIterator & begin, SrcIterator & /*end*/) {
+		using std::move;
+		move(tmpBegin, tmpEnd, begin);
+	}
+};
+
+template<typename TValue>
+struct IteratorRangeDataSwaper< sserialize::detail::OOMArray::Iterator<TValue> > {
+	using value_type = TValue;
+	using container_type = sserialize::OOMArray<value_type>;
+	using SrcIterator = typename container_type::iterator;
+	using TmpIterator = typename container_type::iterator;
+	static void swap(const TmpIterator & tmpBegin, const TmpIterator & tmpEnd, SrcIterator & begin, SrcIterator & /*end*/) {
+		container_type * tmpd = const_cast<container_type*>(container_type::backend(tmpBegin));
+		container_type * srcd = const_cast<container_type*>(container_type::backend(begin));
+		
+		if (tmpd->mmt() == srcd->mmt()) {
+			tmpd->swap_data(*srcd);
+		}
+		else {
+			using std::move;
+			move(tmpBegin, tmpEnd, begin);
+		}
+	}
+};
+
 }}//end namespace detail::oom
 
 //TODO: specialise for OOMArray::iterator (special write-back, input buffer size needs to be taken into account)
@@ -488,7 +521,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		
 		///move back to source
 		using std::move;
-		move(tmp.begin(), tmp.end(), begin);
+		detail::oom::IteratorRangeDataSwaper<SrcIterator>::swap(tmp.begin(), tmp.end(), begin, end);
 		tmp.clear();
 
 		state.pinfo.end();
