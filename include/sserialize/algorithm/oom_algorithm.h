@@ -432,8 +432,10 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				uint64_t chunkBufferSize = cfg.maxMemoryUsage/std::min<uint32_t>(queueDepth, cbs-cbi);
 				for(; cbi < cbs && state.activeChunkBuffers.size() < queueDepth; ++cbi) {
 					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi);
-					state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
-					pq.push(state.activeChunkBuffers.size()-1);
+					if (!TUniquify || pendingChunk.size()) {
+						state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
+						pq.push(state.activeChunkBuffers.size()-1);
+					}
 				}
 			}
 			
