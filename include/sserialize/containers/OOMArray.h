@@ -51,6 +51,8 @@ public:
 	///Swap data but don't swap config (like buffer sizes, deletion etc)
 	///invalidates iterators of this and other
 	void swap_data(OOMArray & other);
+	MmappedMemoryType mmt() const { return m_mmt; }
+	const std::string & storageFileName() const { return m_fn; }
 	SizeType size() const { return m_backBufferBegin+m_backBuffer.size(); }
 	void reserve(SizeType reserveSize);
 	void resize(SizeType newSize, const value_type & value = value_type());
@@ -137,6 +139,14 @@ public:
 	///invalidates iterators
 	static iterator move(const_iterator srcBegin, const const_iterator & srcEnd, iterator destBegin) {
 		return destBegin.d()->replace(destBegin, std::move(srcBegin), srcEnd);
+	}
+	
+	static OOMArray* backend(iterator it) {
+		return it.d();
+	}
+	
+	static const OOMArray * backend(const_iterator it) {
+		return it.d();
 	}
 	
 private:
