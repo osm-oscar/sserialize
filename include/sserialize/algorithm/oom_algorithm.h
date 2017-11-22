@@ -166,23 +166,22 @@ struct IteratorRangeDataSwaper< sserialize::detail::OOMArray::Iterator<TValue> >
 
 }}//end namespace detail::oom
 
-//TODO: specialise for OOMArray::iterator (special write-back, input buffer size needs to be taken into account)
-
 ///A standard out-of-memory sorting algorithm. It first sorts the input in chunks of size maxMemoryUsage/threadCount
 ///These chunks are then merged together in possibly multiple phases. In a single phase up to queueDepth chunks are merged together.
 ///@param maxMemoryUsage default is 4 GB
 ///@param threadCount should be no larger than about 4, 2 should be sufficient for standard io-speeds, used fo the initial chunk sorting, a single chunk then has a size of maxMemoryUsage/threadCount
 ///@param queueDepth the maximum number of chunks to merge in a single round, this directly influences the number of merge rounds
-///@param comp comparisson operator for strict weak order. This functions needs to be thread-safe <=> threadCount > 1
+///@param comp comparisson operator. This functions needs to be thread-safe <=> threadCount > 1
 ///@param equal equality operator, only used if TUniquify is true. This functions needs to be thread-safe <=> threadCount > 1
 ///@return points to the last element of the sorted sequence
 ///In general: Larger chunks result in a smaller number of rounds and can be processed with a smaller queue depth reducing random access
 ///Thus for very large data sizes it may be better to use only one thread to create the largest chunks possible
+///TODO: use mt_sort for large chunks if threadCount == 1 or add ability to define a sort operator
 template<
+	bool TUniquify = false,
+	bool TWithProgressInfo = true,
 	typename TInputOutputIterator,
 	typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>,
-	bool TWithProgressInfo = true,
-	bool TUniquify = false,
 	typename EqualFunc = std::equal_to<typename std::iterator_traits<TInputOutputIterator>::value_type>
 >
 TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
@@ -482,6 +481,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				value_type & v = chunkBuffer.get();
 				if (!TUniquify || !tmp.size() || !equal(tmp.back(), v)) {
 					tmp.emplace_back(std::move(v));
+					state.resultSize += 1;
 				}
 				if (chunkBuffer.next()) {
 					pq.push(pqMin);
