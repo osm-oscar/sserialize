@@ -5,11 +5,11 @@
 #include <sserialize/containers/MMVector.h>
 
 void help() {
-	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -w <max wait in s> -st <memory|mmap|oomarray> -sp <source tmp path> -tp <tmp path>" << std::endl;
+	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -w <max wait in s> -st <memory|mmap|oompm|oomff|oomsf> -sp <source tmp path> -tp <tmp path> --u[niquify]" << std::endl;
 }
 
 enum SrcFileType {
-	SFT_INVALID, SFT_MEM, SFT_MMAP, SFT_OOM_ARRAY
+	SFT_INVALID, SFT_MEM, SFT_MMAP, SFT_OOM_ARRAY_FF, SFT_OOM_ARRAY_SF
 };
 
 struct State {
@@ -19,6 +19,7 @@ struct State {
 	uint32_t threadCount = 2;
 	uint32_t queueDepth = 32;
 	uint32_t maxWait = 10;
+	bool uniquify = false;
 };
 
 template<typename T_SRC_CONTAINER_TYPE>
@@ -28,34 +29,68 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
 	
-	pinfo.begin(state.entryCount, "Creating file");
-	for(int64_t i(state.entryCount); i > 0; --i) {
-		data.push_back(i);
-		if ((i & 0x3FF) == 0) {
-			pinfo(state.entryCount-i);
+	if (state.uniquify) {
+		pinfo.begin(state.entryCount/3, "Creating file");
+		for(int64_t i(state.entryCount/3); i > 0; --i) {
+			data.push_back(i);
+			data.push_back(i);
+			data.push_back(i);
+			if ((i & 0x3FF) == 0) {
+				pinfo(state.entryCount/3-i);
+			}
 		}
+		pinfo.end();
+		tm.begin();
+		sserialize::oom_sort<true>(
+			data.begin(), data.end(),
+			std::less<uint64_t>(),
+			state.memorySize, state.threadCount,
+			sserialize::MM_SLOW_FILEBASED, 
+			state.queueDepth, state.maxWait
+		);
+		tm.end();
+		std::cout << "Sorting took " << tm << std::endl;
+		pinfo.begin(state.entryCount/3, "Verifying");
+		for(uint64_t i(0), s(state.entryCount/3); i < s; ++i) {
+			if (data.at(i) != i+1) {
+				std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+			}
+			if (i % 1000 == 0) {
+				pinfo(i);
+			}
+		}
+		pinfo.end();
 	}
-	pinfo.end();
-	tm.begin();
-	sserialize::oom_sort(
-		data.begin(), data.end(),
-		std::less<uint64_t>(),
-		state.memorySize, state.threadCount,
-		sserialize::MM_SLOW_FILEBASED, 
-		state.queueDepth, state.maxWait
-	);
-	tm.end();
-	std::cout << "Sorting took " << tm << std::endl;
-	pinfo.begin(state.entryCount, "Verifying");
-	for(uint64_t i(0), s(state.entryCount); i < s; ++i) {
-		if (data.at(i) != i+1) {
-			std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+	else {
+		pinfo.begin(state.entryCount, "Creating file");
+		for(int64_t i(state.entryCount); i > 0; --i) {
+			data.push_back(i);
+			if ((i & 0x3FF) == 0) {
+				pinfo(state.entryCount-i);
+			}
 		}
-		if (i % 1000 == 0) {
-			pinfo(i);
+		pinfo.end();
+		tm.begin();
+		sserialize::oom_sort<false>(
+			data.begin(), data.end(),
+			std::less<uint64_t>(),
+			state.memorySize, state.threadCount,
+			sserialize::MM_SLOW_FILEBASED, 
+			state.queueDepth, state.maxWait
+		);
+		tm.end();
+		std::cout << "Sorting took " << tm << std::endl;
+		pinfo.begin(state.entryCount, "Verifying");
+		for(uint64_t i(0), s(state.entryCount); i < s; ++i) {
+			if (data.at(i) != i+1) {
+				std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+			}
+			if (i % 1000 == 0) {
+				pinfo(i);
+			}
 		}
+		pinfo.end();
 	}
-	pinfo.end();
 }
 
 int main(int argc, char ** argv) {
@@ -99,13 +134,19 @@ int main(int argc, char ** argv) {
 			else if (token == "mem") {
 				sft = SFT_MEM;
 			}
-			else if (token == "oomarray") {
-				sft = SFT_OOM_ARRAY;
+			else if (token == "oomff") {
+				sft = SFT_OOM_ARRAY_FF;
+			}
+			else if (token == "oomsf") {
+				sft = SFT_OOM_ARRAY_SF;
 			}
 			else {
 				sft = SFT_INVALID;
 			}
 			++i;
+		}
+		else if (token == "-u" || token == "--uniquify") {
+			state.uniquify = true;
 		}
 		else if (token == "-h" || token == "--help") {
 			help();
@@ -113,8 +154,8 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
-	std::cout << "Creating source file at " << sserialize::UByteArrayAdapter::getFastTempFilePrefix() << '\n';
-	std::cout << "Creating tmp file at " << sserialize::UByteArrayAdapter::getTempFilePrefix() << '\n';
+	std::cout << "Fast file path: " << sserialize::UByteArrayAdapter::getFastTempFilePrefix() << '\n';
+	std::cout << "Slow file path: " << sserialize::UByteArrayAdapter::getTempFilePrefix() << '\n';
 	std::cout << "File size: " << sserialize::prettyFormatSize(state.size) << '\n';
 	std::cout << "Memory usage: " << sserialize::prettyFormatSize(state.memorySize) << '\n';
 	std::cout << "Thread count: " << state.threadCount << '\n';
@@ -127,8 +168,11 @@ int main(int argc, char ** argv) {
 	case SFT_MMAP:
 		std::cout << "mmap";
 		break;
-	case SFT_OOM_ARRAY:
-		std::cout << "oomarray";
+	case SFT_OOM_ARRAY_FF:
+		std::cout << "oomarray fast file based";
+		break;
+	case SFT_OOM_ARRAY_SF:
+		std::cout << "oomarray slow file based";
 		break;
 	default:
 		std::cout << "invalid";
@@ -148,9 +192,16 @@ int main(int argc, char ** argv) {
 			worker(data, state);
 			break;
 		}
-	case SFT_OOM_ARRAY:
+	case SFT_OOM_ARRAY_FF:
 		{
 			sserialize::OOMArray<uint64_t> data(sserialize::MM_FAST_FILEBASED);
+			data.backBufferSize(100*1024*1024);
+			worker(data, state);
+			break;
+		}
+	case SFT_OOM_ARRAY_SF:
+		{
+			sserialize::OOMArray<uint64_t> data(sserialize::MM_SLOW_FILEBASED);
 			data.backBufferSize(100*1024*1024);
 			worker(data, state);
 			break;
