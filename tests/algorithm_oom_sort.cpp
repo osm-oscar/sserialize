@@ -11,6 +11,7 @@ CPPUNIT_TEST( testLargeSort);
 CPPUNIT_TEST( testUnique );
 CPPUNIT_TEST( testSortOOMArray );
 CPPUNIT_TEST( testUniqueOOMArray );
+CPPUNIT_TEST( testSortUniqueOOMArray );
 CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
@@ -111,6 +112,36 @@ public:
 			sserialize::mt_sort(realData.begin(), realData.end(), [](uint32_t a, uint32_t b) { return a < b; });
 			auto end2 = std::unique(realData.begin(), realData.end());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of unique part", std::distance(realData.begin(), end2), std::distance(data.begin(), end));
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corrupted in run ", i), std::equal(realData.begin(), end2, data.begin()));
+		}
+	}
+	
+	void testSortUniqueOOMArray() {
+		for(uint32_t i(0); i < 4; ++i) {
+			uint32_t scaleFactor = (16 << i);
+			std::vector<uint32_t> realData(1025*1023*519/scaleFactor);
+			uint32_t tmp = 0;
+			std::generate(realData.begin(), realData.end(), [&tmp]() {
+				if (rand() % 4 == 1) {
+					return tmp;
+				}
+				return ++tmp;
+			});
+			sserialize::OOMArray<uint32_t> data(sserialize::MM_PROGRAM_MEMORY);
+			data.replace(data.end(), realData.begin(), realData.end());
+			
+			sserialize::oom_sort<false, true>(
+				data.begin(), data.end(),
+				std::less<uint32_t>(),
+				(1 << 22)/scaleFactor,
+				sserialize::MM_PROGRAM_MEMORY
+			);
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not unique in run ", i), sserialize::is_unique(data.begin(), data.end()));
+			
+			sserialize::mt_sort(realData.begin(), realData.end(), [](uint32_t a, uint32_t b) { return a < b; });
+			auto end2 = std::unique(realData.begin(), realData.end());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of unique part", std::distance(realData.begin(), end2), std::distance(data.begin(), data.end()));
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corrupted in run ", i), std::equal(realData.begin(), end2, data.begin()));
 		}
 	}

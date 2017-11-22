@@ -12,6 +12,12 @@ struct MyNodeIdentifierLessThanComparator {
 	}
 };
 
+struct MyNodeIdentifierEqualComparator {
+	bool operator()(const MyNodeIdentifier & a, const MyNodeIdentifier & b) {
+		return a == b;
+	}
+};
+
 struct MyLessThan {
 	typedef MyNodeIdentifierLessThanComparator NodeComparator;
 	NodeComparator nc;
@@ -37,6 +43,15 @@ struct MyLessThan {
 	}
 };
 
+struct MyEqual {
+	typedef MyNodeIdentifierEqualComparator NodeComparator;
+	NodeComparator nc;
+	MyEqual(const NodeComparator & nc) : nc(nc) {}
+	bool operator()(const MyValueEntry & a, const MyValueEntry & b) {
+		return a.cellId() == b.cellId() && nc(a.nodeId(), b.nodeId());
+	}
+};
+
 enum SrcFileType {
 	SFT_INVALID, SFT_MEM, SFT_MMAP, SFT_OOM_ARRAY
 };
@@ -51,10 +66,20 @@ void help() {
 
 template<typename TC>
 void work(TC & entries, State & state) {
-	typedef typename TC::iterator MyIterator;
+// 	typedef typename TC::iterator MyIterator;
 	MyNodeIdentifierLessThanComparator nltp;
+	MyNodeIdentifierEqualComparator nep;
 	MyLessThan ltp(nltp);
-	sserialize::oom_sort<MyIterator, MyLessThan, true>(entries.begin(), entries.end(), ltp, state.maxMemoryUsage, 2, sserialize::MM_SLOW_FILEBASED);
+	MyEqual ep(nep);
+	
+	sserialize::oom_sort<true>(
+		entries.begin(), entries.end(),
+		ltp,
+		state.maxMemoryUsage, 2, sserialize::MM_SLOW_FILEBASED,
+		64,
+		10,
+		ep
+	);
 	using std::is_sorted;
 	if(!is_sorted(entries.begin(), entries.end(), ltp)) {
 		std::cout << std::endl;
