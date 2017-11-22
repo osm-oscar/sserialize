@@ -236,7 +236,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		std::back_insert_iterator< std::vector<NodeIdentifier> > itemNodesBI;
 
 		void flush() {
-			std::unique_lock<std::mutex> lck(state->flushLock);
+			std::lock_guard<std::mutex> lck(state->flushLock);
 			state->entries->push_back(outBuffer.begin(), outBuffer.end());
 			if (outBuffer.size() > 2*outBufferSize) { //outbuffer was way too large
 				std::cout << "OOMCTCValueStorage: flushing a buffer that is " << (double)outBuffer.size() / outBufferSize << " times larger than target buffer size" << std::endl;

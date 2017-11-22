@@ -243,7 +243,7 @@ void GridRegionTree::create(const GeoGrid & initial, typename T_TYPES_CONTAINER:
 				uint32_t tmpRet = insert<T_TYPES_CONTAINER>(refiner, rPtr2IdH, tmp, tmpRect);
 	// 			#pragma omp critical
 				{
-					std::unique_lock<std::mutex> l(m_lck);
+					std::lock_guard<std::mutex> l(m_lck);
 					m_nodePtr[childPtr+gridBin.tile] = tmpRet;
 				}
 			}
@@ -261,7 +261,7 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 	uint32_t nodePtr = NullNodePtr;
 // 	#pragma omp critical
 	{
-		std::unique_lock<std::mutex> l(m_lck);
+		std::lock_guard<std::mutex> l(m_lck);
 		nodePtr = (uint32_t) m_nodes.size();
 		m_nodes.push_back(Node(Node::NT_INVALID));
 	}
@@ -278,7 +278,7 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 		uint32_t childPtr = NullNodePtr;
 // 		#pragma omp critical
 		{
-			std::unique_lock<std::mutex> l(m_lck);
+			std::lock_guard<std::mutex> l(m_lck);
 			childPtr = (uint32_t) m_nodePtr.size();
 			Node & n = m_nodes[nodePtr];
 			n.internal().type = Node::NT_INTERNAL;
@@ -310,7 +310,7 @@ uint32_t GridRegionTree::insert(const typename T_TYPES_CONTAINER::GridRefiner & 
 	else {
 // 		#pragma omp critical
 		{
-			std::unique_lock<std::mutex> l(m_lck);
+			std::lock_guard<std::mutex> l(m_lck);
 			Node & n = m_nodes[nodePtr];
 			n.leaf().type = Node::NT_LEAF;
 			n.leaf().valueBegin = m_leafInfo.size();

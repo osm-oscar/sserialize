@@ -389,7 +389,7 @@ public:
 			flush();
 		}
 		void put(const NodeIdentifier & ni, const sserialize::UByteArrayAdapter & data) {
-			std::unique_lock<std::mutex> lck(m_mtx);
+			std::lock_guard<std::mutex> lck(m_mtx);
 			m_ni2off.emplace_back(ni, m_tempStore.size());
 			m_tempStore.beginRawPush().put(data);
 			m_tempStore.endRawPush();
@@ -515,7 +515,7 @@ struct Worker {
 	sserialize::StringCompleter::SupportedQuerries m_sq;
 	void flush() {
 		{
-			std::unique_lock<std::mutex> lck(m_state->flushLock);
+			std::lock_guard<std::mutex> lck(m_state->flushLock);
 			for(const std::string & x : m_exactStrings) {
 				*(m_state->esi) = x;
 			}

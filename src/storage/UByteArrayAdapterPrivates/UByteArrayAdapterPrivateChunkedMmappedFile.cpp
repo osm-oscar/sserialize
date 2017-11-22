@@ -15,7 +15,7 @@ UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateChunkedMmappedFile::size()
 /** Shrink data to size bytes */
 bool UByteArrayAdapterPrivateChunkedMmappedFile::shrinkStorage(UByteArrayAdapter::OffsetType size) {
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	return m_file.resize(size);
 }
@@ -23,7 +23,7 @@ bool UByteArrayAdapterPrivateChunkedMmappedFile::shrinkStorage(UByteArrayAdapter
 /** grow data to at least! size bytes */
 bool UByteArrayAdapterPrivateChunkedMmappedFile::growStorage(UByteArrayAdapter::OffsetType size) {
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	if (m_file.size() < size)
 		return m_file.resize(size);
@@ -37,14 +37,14 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::setDeleteOnClose(bool del) {
 //Access functions
 uint8_t & UByteArrayAdapterPrivateChunkedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) {
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	return m_file.operator[](pos);
 }
 
 const uint8_t & UByteArrayAdapterPrivateChunkedMmappedFile::operator[](UByteArrayAdapter::OffsetType pos) const {
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	return m_file.operator[](pos);
 }
@@ -129,7 +129,7 @@ uint16_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint16(UByteArrayAdapter
 
 uint8_t UByteArrayAdapterPrivateChunkedMmappedFile::getUint8(UByteArrayAdapter::OffsetType pos) const {
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	return m_file[pos];
 }
@@ -235,7 +235,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putInt64(UByteArrayAdapter::Off
 	uint8_t buf[len];
 	p_s64(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -245,7 +245,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putUint64(UByteArrayAdapter::Of
 	uint8_t buf[len];
 	p_u64(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -255,7 +255,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putInt32(UByteArrayAdapter::Off
 	uint8_t buf[len];
 	p_s32(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -265,7 +265,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putUint32(UByteArrayAdapter::Of
 	uint8_t buf[len];
 	p_u32(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -275,7 +275,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putUint24(UByteArrayAdapter::Of
 	uint8_t buf[len];
 	p_u24(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -285,14 +285,14 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putUint16(UByteArrayAdapter::Of
 	uint8_t buf[len];
 	p_u16(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
 
 void UByteArrayAdapterPrivateChunkedMmappedFile::putUint8(UByteArrayAdapter::OffsetType pos, uint8_t value) {
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file[pos] = value;
 }
@@ -302,7 +302,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putOffset(UByteArrayAdapter::Of
 	uint8_t buf[len];
 	p_u40(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -312,7 +312,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putNegativeOffset(UByteArrayAda
 	uint8_t buf[len];
 	p_s40(value, buf);
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(buf, pos, len);
 }
@@ -325,7 +325,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint64(UByteArrayAdap
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
-		std::unique_lock<std::mutex> locker(m_fileLock);
+		std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 		m_file.write(buf, pos, mlen);
 	}
@@ -338,7 +338,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt64(UByteArrayAdapt
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
-		std::unique_lock<std::mutex> locker(m_fileLock);
+		std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 		m_file.write(buf, pos, mlen);
 	}
@@ -351,7 +351,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint32(UByteArrayAdap
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
-		std::unique_lock<std::mutex> locker(m_fileLock);
+		std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 		m_file.write(buf, pos, mlen);
 	}
@@ -364,7 +364,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Uint32(UByteArray
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
-		std::unique_lock<std::mutex> locker(m_fileLock);
+		std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 		m_file.write(buf, pos, mlen);
 	}
@@ -377,7 +377,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt32(UByteArrayAdapt
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
-		std::unique_lock<std::mutex> locker(m_fileLock);
+		std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 		m_file.write(buf, pos, mlen);
 	}
@@ -390,7 +390,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Int32(UByteArrayA
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
-		std::unique_lock<std::mutex> locker(m_fileLock);
+		std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 		m_file.write(buf, pos, mlen);
 	}
@@ -400,7 +400,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Int32(UByteArrayA
 void UByteArrayAdapterPrivateChunkedMmappedFile::put(sserialize::UByteArrayAdapter::OffsetType pos, const uint8_t * src, sserialize::UByteArrayAdapter::OffsetType len) {
 	SizeType mightOverFlow = len;
 #ifdef SSERIALIZE_WITH_THREADS
-	std::unique_lock<std::mutex> locker(m_fileLock);
+	std::lock_guard<std::mutex> locker(m_fileLock);
 #endif
 	m_file.write(src, pos, mightOverFlow);
 }

@@ -822,7 +822,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 							}
 						}
 						{//do the real push
-							std::unique_lock<std::mutex> dALck(dataAccessMtx);
+							std::lock_guard<std::mutex> dALck(dataAccessMtx);
 							for(uint32_t i(0), s((uint32_t) nodeIds.size()); i < s; ++i) {
 								nodeIdToData.at(nodeIds.at(i)) = tmpPayload.size();
 								tmpPayload.beginRawPush().putData(myTmpPayload.dataAt(i));
