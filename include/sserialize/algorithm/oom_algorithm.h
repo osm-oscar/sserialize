@@ -532,7 +532,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
 		using std::is_sorted;
-		using std::is_unique;
+		using sserialize::is_unique;
 		if (TUniquify) {
 			
 		}
