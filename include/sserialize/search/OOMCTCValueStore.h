@@ -359,8 +359,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		std::mutex eItLock;
 		TVEConstIterator eBegin;
 		TVEConstIterator eIt;
-		TVEConstIterator eEnd;
 		uint64_t ePos = 0;
+		uint64_t eSize;
 		sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
 	} state;
 
@@ -405,12 +405,12 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 			lock.unlock();
 			while (true) {
 				lock.lock();
-				if (state->eIt != state->eEnd) {
+				if (state->ePos < state->eSize) {
 					auto eDiff = state->ePos - this->ePos;
 					
 					//now move the global iterator to the next entry
 					NodeIdentifier ni = state->eIt->nodeId();//has to be a copy since state->eIt is going to be changed 
-					for(; state->eIt != state->eEnd && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos) {}
+					for(; state->ePos < state->eSize && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos) {}
 					
 					lock.unlock();
 
@@ -428,23 +428,23 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		};
 		
 		void handle() {
-			const TVEConstIterator & eEnd = state->eEnd;
 			NodeIdentifier ni = eIt->nodeId();
-			for(; eIt != eEnd && nep(eIt->nodeId(), ni);) {
+			for(; ePos < state->eSize && nep(eIt->nodeId(), ni);) {
 				//find the end of this cell
 				TVEConstIterator cellBegin(eIt);
 				uint32_t cellId = eIt->cellId();
-				for(;eIt != eEnd && eIt->cellId() == cellId && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt) {}
+				for(;ePos < state->eSize && eIt->cellId() == cellId && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt, ++ePos) {}
 				if (cellBegin != eIt) { //there are partial matches
 					uint32_t indexId = ifo(VEItemIdIterator(cellBegin), VEItemIdIterator(eIt));
 					ses.pmCellIds.push_back(cellId);
 					ses.pmCellIdxPtrs.push_back(indexId);
 				}
 				//check if we have full matches
-				if (eIt != eEnd && eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
+				if (ePos < state->eSize && eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
 					ses.fmCellIds.push_back(cellId);
 					//skip this entry, it's the only one since other fm were removed by finalize()
 					++eIt;
+					++ePos;
 				}
 			}
 			//serialize the data
@@ -473,7 +473,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	
 	state.eBegin = m_entries.begin();
 	state.eIt = m_entries.begin();
-	state.eEnd = m_entries.end();
+	state.eSize = m_entries.size();
 	state.eIt.bufferSize(100*1024*1024);//set a read-buffer size of 100 MiB
 	
 	state.pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
