@@ -360,6 +360,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		TVEConstIterator eBegin;
 		TVEConstIterator eIt;
 		TVEConstIterator eEnd;
+		uint64_t ePos = 0;
 		sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
 	} state;
 
@@ -394,7 +395,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		nep(nep),
 		ifo(otraits.indexFactoryOut()),
 		dout(otraits.dataOut()),
-		eIt(state->eBegin.copy())
+		eIt(state->eBegin.copy()),
+		ePos(0)
 		{
 			eIt.bufferSize(s->eIt.bufferSize());
 		}
@@ -404,10 +406,19 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 			while (true) {
 				lock.lock();
 				if (state->eIt != state->eEnd) {
-					getNext();
-					using std::distance;
-					state->pinfo(distance(state->eBegin, state->eIt));
+					auto eDiff = state->ePos - this->ePos;
+					
+					//now move the global iterator to the next entry
+					NodeIdentifier ni = state->eIt->nodeId();//has to be a copy since state->eIt is going to be changed 
+					for(; state->eIt != state->eEnd && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos) {}
+					
 					lock.unlock();
+
+					state->pinfo(state->ePos);
+					
+					//reposition our iterator to beginning of new entry
+					eIt += eDiff;
+					ePos += eDiff;
 				}
 				else {
 					return;
@@ -415,15 +426,6 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 				handle();
 			}
 		};
-		
-		void getNext() {
-			//reposition to beginning of new entry
-			eIt += (state->eIt - eIt);
-			
-			//now move the global iterator to the next entry
-			NodeIdentifier ni = eIt->nodeId();
-			for(; state->eIt != state->eEnd && nep(state->eIt->nodeId(), ni); ++state->eIt) {}
-		}
 		
 		void handle() {
 			const TVEConstIterator & eEnd = state->eEnd;
@@ -466,6 +468,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		DataOut dout;
 		SingleEntryState ses;
 		TVEConstIterator eIt;
+		uint64_t ePos;
 	};
 	
 	state.eBegin = m_entries.begin();
