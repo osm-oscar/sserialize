@@ -349,16 +349,27 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	typedef typename Traits::NodeIdentifierEqualPredicate NodeIdentifierEqualPredicate;
 	typedef typename OutputTraits::IndexFactoryOut IndexFactoryOut;
 	typedef typename OutputTraits::DataOut DataOut;
+	typedef std::vector<ValueEntry> BlockBuffer;
 	
 	typedef typename TreeValueEntries::const_iterator TVEConstIterator;
 	
 	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
-	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, TVEConstIterator> VEItemIdIterator;
+	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, typename BlockBuffer::const_iterator> BlockBufferItemIdIterator;
 	
 	struct BlockDescription {
 		BlockDescription() : begin(0), end(0) {}
+		BlockDescription(BlockDescription && other) :
+		begin(other.begin), end(other.end), data(std::move(other.data))
+		{}
+		BlockDescription & operator=(BlockDescription && other) {
+			begin = other.begin;
+			end = other.end;
+			data = std::move(other.data);
+			return *this;
+		}
 		uint64_t begin;
 		uint64_t end; //one passed the end
+		BlockBuffer data;
 	};
 	
 	struct Config {
@@ -378,6 +389,11 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		std::mutex wqLock;
 		std::condition_variable feederCv;
 		std::condition_variable workerCv;
+		
+		//recycled buffers
+		std::mutex rcbLock;
+		std::queue<BlockBuffer> recycledBuffers;
+		
 	} state;
 	
 	struct SingleEntryState {
@@ -418,14 +434,23 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 				//calculate next block
 				
 				BlockDescription block;
+				{
+					std::lock_guard<std::mutex> rcbLock(state->rcbLock);
+					if (!state->recycledBuffers.empty()) {
+						block.data = std::move(state->recycledBuffers.front());
+						state->recycledBuffers.pop();
+						block.data.clear();
+					}
+				}
 				block.begin = state->ePos;
 				NodeIdentifier ni = state->eIt->nodeId();//has to be a copy since state->eIt is going to be changed 
-				for(; state->ePos < state->eSize && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos)
-				{}
+				for(; state->ePos < state->eSize && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos) {
+					block.data.push_back(*(state->eIt));
+				}
 				block.end = state->ePos;
 				
 				lock.lock();
-				state->wq.push(block);
+				state->wq.push(std::move(block));
 				lock.unlock();
 				state->workerCv.notify_one();
 			}
@@ -445,12 +470,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		Worker(State * s, OutputTraits & otraits) :
 		state(s),
 		ifo(otraits.indexFactoryOut()),
-		dout(otraits.dataOut()),
-		eIt(state->eBegin.copy()),
-		ePos(0)
-		{
-			eIt.bufferSize(state->eIt.bufferSize());
-		}
+		dout(otraits.dataOut())
+		{}
 		void operator()() {
 			std::unique_lock<std::mutex> lock(state->wqLock, std::defer_lock);
 			while (true) {
@@ -468,43 +489,40 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 					}
 				}
 				
-				{ //get our block from the queue
-					bd = state->wq.front();
-					state->wq.pop();
-					lock.unlock();
-				}
+				//get our block from the queue
+				bd = std::move(state->wq.front());
+				state->wq.pop();
+				lock.unlock();
+				
 				state->pinfo(bd.begin);
 
-				SSERIALIZE_CHEAP_ASSERT_SMALLER(ePos, bd.begin);
-				
-				auto eDiff = state->ePos - this->ePos;
-
-				//reposition our iterator to beginning of new entry
-				eIt += eDiff;
-				ePos += eDiff;
-
 				handle();
+				
+				//recycle buffer
+				{
+					std::lock_guard<std::mutex> rcbLock(state->rcbLock);
+					state->recycledBuffers.push( std::move(bd.data) );
+				}
 			}
 		};
 		
 		void handle() {
-			NodeIdentifier ni = eIt->nodeId();
-			for(; ePos < bd.end;) {
+			NodeIdentifier ni = bd.data.front().nodeId();
+			for(auto eIt(bd.data.begin()), eEnd(bd.data.end()); eIt != eEnd;) {
 				//find the end of this cell
-				TVEConstIterator cellBegin(eIt);
+				auto cellBegin = eIt;
 				uint32_t cellId = eIt->cellId();
-				for(;ePos < bd.end && eIt->cellId() == cellId && !eIt->fullMatch(); ++eIt, ++ePos) {}
+				for(;eIt < eEnd && eIt->cellId() == cellId && !eIt->fullMatch(); ++eIt) {}
 				if (cellBegin != eIt) { //there are partial matches
-					uint32_t indexId = ifo(VEItemIdIterator(cellBegin), VEItemIdIterator(eIt));
+					uint32_t indexId = ifo(BlockBufferItemIdIterator(cellBegin), BlockBufferItemIdIterator(eIt));
 					ses.pmCellIds.push_back(cellId);
 					ses.pmCellIdxPtrs.push_back(indexId);
 				}
 				//check if we have full matches
-				if (ePos < bd.end && eIt->cellId() == cellId && eIt->fullMatch()) {
+				if (eIt != eEnd && eIt->cellId() == cellId && eIt->fullMatch()) {
 					ses.fmCellIds.push_back(cellId);
 					//skip this entry, it's the only one since other fm were removed by finalize()
 					++eIt;
-					++ePos;
 				}
 			}
 			//serialize the data
@@ -526,8 +544,6 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		IndexFactoryOut ifo;
 		DataOut dout;
 		SingleEntryState ses;
-		TVEConstIterator eIt;
-		uint64_t ePos;
 		BlockDescription bd;
 	};
 	
