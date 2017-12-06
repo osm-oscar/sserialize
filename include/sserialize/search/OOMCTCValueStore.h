@@ -355,24 +355,30 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
 	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, TVEConstIterator> VEItemIdIterator;
 	
+	struct BlockDescription {
+		BlockDescription() : begin(0), end(0) {}
+		uint64_t begin;
+		uint64_t end; //one passed the end
+	};
+	
+	struct Config {
+		uint32_t numThreads;
+		uint32_t queueFill;
+	} cfg;
+	
 	struct State {
-		std::mutex eItLock;
 		TVEConstIterator eBegin;
 		TVEConstIterator eIt;
 		uint64_t ePos = 0;
 		uint64_t eSize;
 		sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
+		
+		//work queue
+		std::queue<BlockDescription> wq;
+		std::mutex wqLock;
+		std::condition_variable feederCv;
+		std::condition_variable workerCv;
 	} state;
-
-	
-	if (TWithProgressInfo) {
-		std::cout << "OOMCTCValuesCreator: Finalizing" << std::endl;
-	}
-	state.pinfo.begin(1, "Finalizing");
-	finalize<OutputTraits, TWithProgressInfo>(otraits);
-	state.pinfo.end();
-	
-	NodeIdentifierEqualPredicate nep(m_traits.nodeIdentifierEqualPredicate());
 	
 	struct SingleEntryState {
 		std::vector<uint32_t> fmCellIds;
@@ -388,59 +394,113 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		}
 	};
 	
+	class Feeder {
+	public:
+		Feeder(Config * c, State * s, const NodeIdentifierEqualPredicate & nep) : cfg(c), state(s), nep(nep) {}
+		void operator()() {
+			std::unique_lock<std::mutex> lock(state->wqLock, std::defer_lock);
+			while (true) {
+				if (state->ePos >= state->eSize) {
+					lock.lock();
+					state->workerCv.notify_all();
+					return;
+				}
+				lock.lock();
+				if (wqFilled()) {
+					state->feederCv.wait(lock);
+					lock.unlock();
+					continue;
+				}
+				SSERIALIZE_CHEAP_ASSERT(!wqFilled());
+				
+				lock.unlock(); //no need to hold the queue lock here
+				
+				//calculate next block
+				
+				BlockDescription block;
+				block.begin = state->ePos;
+				NodeIdentifier ni = state->eIt->nodeId();//has to be a copy since state->eIt is going to be changed 
+				for(; state->ePos < state->eSize && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos)
+				{}
+				block.end = state->ePos;
+				
+				lock.lock();
+				state->wq.push(block);
+				lock.unlock();
+				state->workerCv.notify_one();
+			}
+		}
+	private:
+		bool wqFilled() {
+			return state->wq.size() >= cfg->queueFill;
+		}
+	private:
+		Config * cfg;
+		State * state;
+		NodeIdentifierEqualPredicate nep;
+	};
+	
 	class Worker {
 	public:
-		Worker(State * s, const NodeIdentifierEqualPredicate & nep, OutputTraits & otraits) :
+		Worker(State * s, OutputTraits & otraits) :
 		state(s),
-		nep(nep),
 		ifo(otraits.indexFactoryOut()),
 		dout(otraits.dataOut()),
 		eIt(state->eBegin.copy()),
 		ePos(0)
 		{
-			eIt.bufferSize(s->eIt.bufferSize());
+			eIt.bufferSize(state->eIt.bufferSize());
 		}
 		void operator()() {
-			std::unique_lock<std::mutex> lock(state->eItLock);
-			lock.unlock();
+			std::unique_lock<std::mutex> lock(state->wqLock, std::defer_lock);
 			while (true) {
 				lock.lock();
-				if (state->ePos < state->eSize) {
-					auto eDiff = state->ePos - this->ePos;
-					
-					//now move the global iterator to the next entry
-					NodeIdentifier ni = state->eIt->nodeId();//has to be a copy since state->eIt is going to be changed 
-					for(; state->ePos < state->eSize && nep(state->eIt->nodeId(), ni); ++state->eIt, ++state->ePos) {}
-					
+				
+				if (!state->wq.size()) {
+					if (state->ePos < state->eSize) {
+						state->feederCv.notify_one();
+						state->workerCv.wait(lock);
+						lock.unlock();
+						continue;
+					}
+					else {
+						return;
+					}
+				}
+				
+				{ //get our block from the queue
+					bd = state->wq.front();
+					state->wq.pop();
 					lock.unlock();
+				}
+				state->pinfo(bd.begin);
 
-					state->pinfo(state->ePos);
-					
-					//reposition our iterator to beginning of new entry
-					eIt += eDiff;
-					ePos += eDiff;
-				}
-				else {
-					return;
-				}
+				SSERIALIZE_CHEAP_ASSERT_SMALLER(ePos, bd.begin);
+				
+				auto eDiff = state->ePos - this->ePos;
+
+				//reposition our iterator to beginning of new entry
+				eIt += eDiff;
+				ePos += eDiff;
+
 				handle();
 			}
 		};
 		
 		void handle() {
 			NodeIdentifier ni = eIt->nodeId();
-			for(; ePos < state->eSize && nep(eIt->nodeId(), ni);) {
+			for(; ePos < bd.end;) {
 				//find the end of this cell
 				TVEConstIterator cellBegin(eIt);
 				uint32_t cellId = eIt->cellId();
-				for(;ePos < state->eSize && eIt->cellId() == cellId && !eIt->fullMatch() && nep(eIt->nodeId(), ni); ++eIt, ++ePos) {}
+				for(;ePos < bd.end && eIt->cellId() == cellId && !eIt->fullMatch(); ++eIt, ++ePos) {}
 				if (cellBegin != eIt) { //there are partial matches
 					uint32_t indexId = ifo(VEItemIdIterator(cellBegin), VEItemIdIterator(eIt));
 					ses.pmCellIds.push_back(cellId);
 					ses.pmCellIdxPtrs.push_back(indexId);
 				}
 				//check if we have full matches
-				if (ePos < state->eSize && eIt->cellId() == cellId && eIt->fullMatch() && nep(eIt->nodeId(), ni)) {
+				if (ePos < bd.end && eIt->cellId() == cellId && eIt->fullMatch()) {
 					ses.fmCellIds.push_back(cellId);
 					//skip this entry, it's the only one since other fm were removed by finalize()
 					++eIt;
@@ -463,13 +523,24 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		
 	private:
 		State * state;
-		NodeIdentifierEqualPredicate nep;
 		IndexFactoryOut ifo;
 		DataOut dout;
 		SingleEntryState ses;
 		TVEConstIterator eIt;
 		uint64_t ePos;
+		BlockDescription bd;
 	};
+	
+	if (TWithProgressInfo) {
+		std::cout << "OOMCTCValuesCreator: Finalizing" << std::endl;
+	}
+	state.pinfo.begin(1, "Finalizing");
+	finalize<OutputTraits, TWithProgressInfo>(otraits);
+	state.pinfo.end();
+	
+	cfg.numThreads = otraits.payloadConcurrency() == 0 ? std::thread::hardware_concurrency() : otraits.payloadConcurrency();
+	cfg.numThreads = std::max<uint32_t>(1, cfg.numThreads-1);
+	cfg.queueFill = std::max<uint32_t>(cfg.numThreads+2, 1.5*cfg.numThreads);
 	
 	state.eBegin = m_entries.begin();
 	state.eIt = m_entries.begin();
@@ -478,15 +549,18 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	
 	state.pinfo.begin(std::distance(m_entries.begin(), m_entries.end()), "OOMCTCValueStore::Calculating payload");
 	{
-		uint32_t numThreads = otraits.payloadConcurrency() == 0 ? std::thread::hardware_concurrency() : otraits.payloadConcurrency();
 		std::vector<std::thread> threads;
-		for(uint32_t i(0); i < numThreads; ++i) {
+		threads.reserve(cfg.numThreads+1);
+		threads.emplace_back(
+			Feeder(&cfg, &state, m_traits.nodeIdentifierEqualPredicate())
+		);
+		for(uint32_t i(0); i < cfg.numThreads; ++i) {
 			threads.emplace_back(
-				Worker(&state, nep, otraits)
+				Worker(&state, otraits)
 			);
 		}
 		for(std::thread & t : threads) {
-		t.join();
+			t.join();
 		}
 	}
 	state.pinfo.end();
