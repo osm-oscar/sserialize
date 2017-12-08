@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.0)
-project(sserialize)
+cmake_minimum_required(VERSION 3.6)
+project(sserialize C CXX)
 set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
 )
+
+include(set_highest_cpp)
 
 MACRO(ADD_TARGET_PROPERTIES _target _name)
 	SET(_properties)
@@ -120,9 +122,6 @@ ELSE(CMAKE_CROSSCOMPILING)
 	find_package(Ragel REQUIRED)
 	find_package(Threads)
 ENDIF(CMAKE_CROSSCOMPILING)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
 
 IF(NOT CMAKE_CROSSCOMPILING)
 	find_package(ICU 4.4 REQUIRED)
