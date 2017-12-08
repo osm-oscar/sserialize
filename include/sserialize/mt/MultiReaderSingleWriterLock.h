@@ -42,7 +42,11 @@ public:
 	void acquireWriteLock();
 	void releaseWriteLock();
 private:
+	#if defined(__cplusplus) && __cplusplus > 201402L
+	std::shared_mutex m_mutex;
+	#else
 	std::shared_timed_mutex m_mutex;
+	#endif
 };
 
 }//end namespace
