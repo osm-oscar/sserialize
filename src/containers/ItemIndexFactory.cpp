@@ -204,12 +204,9 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		
 		if (m_useDeduplication) {
 			m_mapLock.acquireWriteLock();
-			uint64_t prevElement = 0;
-			if (m_hash.count(hv)) {
-				prevElement = m_hash[hv];
-			}
-			m_dataOffsets.push_back(DataOffsetEntry({ .prev = prevElement, .id = (uint32_t)id}));
-			m_hash[hv] = m_dataOffsets.size()-1;
+			uint64_t & prevElement = m_hash[hv]; //if hv is not in hash, then value will be init with 0
+			m_dataOffsets.emplace_back(prevElement, (uint32_t)id);
+			prevElement = m_dataOffsets.size()-1;
 			m_mapLock.releaseWriteLock();
 		}
 	}

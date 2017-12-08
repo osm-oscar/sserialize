@@ -25,6 +25,7 @@ namespace sserialize {
 class ItemIndexFactory {
 public:
 	struct DataOffsetEntry {
+		DataOffsetEntry(uint64_t prev, uint32_t id) : prev(prev), id(id) {}
 		uint64_t prev;
 		uint32_t id;
 	} __attribute__ ((packed));
