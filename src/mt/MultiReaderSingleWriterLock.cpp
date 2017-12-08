@@ -1,4 +1,5 @@
 #include <sserialize/mt/MultiReaderSingleWriterLock.h>
+#include <shared_mutex>
 
 namespace sserialize {
 
@@ -52,37 +53,24 @@ void MultiReaderSingleWriterLock::WriteLock::unlock() {
 	}
 }
 
-MultiReaderSingleWriterLock::MultiReaderSingleWriterLock() :
-m_readerCount(0)
+MultiReaderSingleWriterLock::MultiReaderSingleWriterLock()
 {}
 
 MultiReaderSingleWriterLock::~MultiReaderSingleWriterLock()
 {}
 
 void MultiReaderSingleWriterLock::acquireReadLock() {
-	m_writeLockMtx.lock();//wait for writers
-	m_readerCountMtx.lock();
-	++m_readerCount;
-	m_readerCountMtx.unlock();
-	m_writeLockMtx.unlock();
+	m_mutex.lock_shared();
 }
 void MultiReaderSingleWriterLock::releaseReadLock() {
-	m_readerCountMtx.lock();
-	--m_readerCount;
-	m_readerCountMtx.unlock();
-	m_readerCountCv.notify_one();//notify writer about change in reader count
+	m_mutex.unlock_shared();
 }
 
 void MultiReaderSingleWriterLock::acquireWriteLock() {
-	//acquiere CountMax of m_count and m_pendingWriteLock
-	m_writeLockMtx.lock();
-	std::unique_lock<std::mutex> lck(m_readerCountMtx);
-	while(m_readerCount) { //wait until there's no more reader reading. all other readers wait at acquireReadLock, writers at acquiere WriteLock
-		m_readerCountCv.wait(lck);
-	}
+	m_mutex.lock();
 }
 void MultiReaderSingleWriterLock::releaseWriteLock() {
-	m_writeLockMtx.unlock();
+	m_mutex.unlock();
 }
 
 }//end namespace

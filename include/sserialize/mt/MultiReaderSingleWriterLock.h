@@ -1,7 +1,6 @@
 #ifndef SSERIALIZE_MULTI_READER_SINGLE_WRITER_LOCK_H
 #define SSERIALIZE_MULTI_READER_SINGLE_WRITER_LOCK_H
-#include <mutex>
-#include <condition_variable>
+#include <shared_mutex>
 
 namespace sserialize {
 
@@ -43,10 +42,7 @@ public:
 	void acquireWriteLock();
 	void releaseWriteLock();
 private:
-	std::mutex m_readerCountMtx;
-	std::condition_variable m_readerCountCv;
-	uint32_t m_readerCount;
-	std::mutex m_writeLockMtx;
+	std::shared_timed_mutex m_mutex;
 };
 
 }//end namespace
