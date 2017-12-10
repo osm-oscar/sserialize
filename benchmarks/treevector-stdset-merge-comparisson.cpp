@@ -181,8 +181,9 @@ struct TestResult {
 		out << "indexTime: " << indexTime << std::endl;
 		out << "indexVecTime: " << indexVecTime << std::endl;
 		out << "indexWahTime: " << indexWahTime << std::endl;
-		out << "indexRegLineTime: " << indexWahTime << std::endl;
-		out << "indexDETime: " << indexWahTime << std::endl;
+		out << "indexRegLineTime: " << indexReglineTime << std::endl;
+		out << "indexDETime: " << indexDETime << std::endl;
+		out << "indexRLeDETime: " << indexRleDETime << std::endl;
 		out << "vecTime/setTime: " << (double)vecTime/setTime << std::endl;
 		out << "indexTime/setTime: " << (double)indexTime/setTime << std::endl;
 		out << "indexVecTime/setTime: " << (double)indexVecTime/setTime << std::endl;

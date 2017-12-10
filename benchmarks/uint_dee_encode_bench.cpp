@@ -325,7 +325,7 @@ int main(int argc, char ** argv) {
 		
 	}
 	
-	bool printVectors = true;
+	bool printVectors = false;
 	
 	int testLengthBegin = atoi(argv[1]);
 	int testLengthEnd = atoi(argv[2]);
