@@ -85,9 +85,9 @@ std::vector<uint32_t> createNumbersSet(uint32_t count) {
 }
 
 std::vector<uint32_t> mergeVecs(const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
-	if (std::min(a.size(), b.size()) == 0)
-		return std::vector<uint32_t>();
-	std::vector<uint32_t> ret; ret.reserve( std::min(a.size(), b.size()) );
+	std::vector<uint32_t> ret;
+	ret.reserve( a.size() + b.size() );
+	
 	std::vector<uint32_t>::const_iterator aIt = a.begin();
 	std::vector<uint32_t>::const_iterator aEnd = a.end();
 	std::vector<uint32_t>::const_iterator bIt = b.begin();
@@ -112,12 +112,9 @@ std::vector<uint32_t> mergeVecs(const std::vector<uint32_t> & a, const std::vect
 			++bIt;
 		}
 	}
-
-	for(; aIt != aEnd; ++aIt)
-		ret.push_back(*aIt);
-
-	for(; bIt != bEnd; ++bIt)
-		ret.push_back(*bIt);
+	
+	ret.insert(ret.end(), aIt, aEnd);
+	ret.insert(ret.end(), bIt, bEnd);
 
 	return ret;
 }
