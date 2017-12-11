@@ -183,6 +183,12 @@ ItemIndex & ItemIndex::operator^=(const ItemIndex& idx) {
 	return *this;
 }
 
+std::vector<uint32_t> ItemIndex::toVector() const {
+	std::vector<uint32_t> result;
+	putInto(result);
+	return result;
+}
+
 std::set<uint32_t> ItemIndex::toSet() const {
 	std::set<uint32_t> s;
 	uint32_t msize = size();

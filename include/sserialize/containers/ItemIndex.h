@@ -116,6 +116,7 @@ public:
 	ItemIndex & operator^=(const ItemIndex & idx);
 	
 	std::set<uint32_t> toSet() const;
+	std::vector<uint32_t> toVector() const;
 	template<typename T_BACK_INSERTER>
 	void insertInto(T_BACK_INSERTER inserter) {
 		uint32_t s = size();
