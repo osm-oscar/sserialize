@@ -41,8 +41,8 @@ struct TestDataBase {
 	}
 	
 	virtual void run_merge() = 0;
-	virtual std::string name() = 0;
-	virtual int type() = 0;
+	virtual std::string name() const = 0;
+	virtual int type() const = 0;
 	
 	meas_res meanTime() {
 		return sserialize::statistics::mean(times.begin(), times.end(), meas_res(0));
@@ -62,10 +62,10 @@ struct ItemIndexTestData: TestDataBase {
 	virtual void run_merge() override {
 		sserialize::ItemIndex idx = sserialize::ItemIndex::unite(buckets);
 	}
-	virtual std::string name() {
+	virtual std::string name() const {
 		return "ItemIndex::" + sserialize::to_string(t);
 	}
-	virtual int type() {
+	virtual int type() const {
 		return t;
 	}
 };
@@ -91,10 +91,10 @@ struct VectorTreeMergeTestData: TestDataBase {
 			}
 		);
 	}
-	virtual std::string name() {
+	virtual std::string name() const {
 		return "std::vector::tree-merge";
 	}
-	virtual int type() {
+	virtual int type() const {
 		return IT_VECTOR_TREE_MERGE;
 	}
 };
@@ -109,10 +109,10 @@ struct VectorSetMergeTestData: TestDataBase {
 			result.insert(x.cbegin(), x.cend());
 		}
 	}
-	virtual std::string name() {
+	virtual std::string name() const {
 		return "std::vector::set-merge";
 	}
-	virtual int type() {
+	virtual int type() const {
 		return IT_VECTOR_SET_MERGE;
 	}
 };
@@ -171,10 +171,10 @@ struct VectorHeapMergeTestData: TestDataBase {
 			}
 		}
 	}
-	virtual std::string name() {
+	virtual std::string name() const {
 		return "std::vector::heap-merge";
 	}
-	virtual int type() {
+	virtual int type() const {
 		return IT_VECTOR_HEAP_MERGE;
 	}
 };
@@ -255,15 +255,27 @@ struct TestData {
 	}
 	
 	void pretty_results(std::ostream & out) {
-		
+		out << "Bucket count: " << source.size() << '\n';
+		out << "Bucket fill: " << (source.size() ? source.front().size() : std::size_t(0)) << '\n';
+		for(const auto & x : data) {
+			out << x.second->name() << ": " << x.second->meanTime().count() << '\n';
+		}
 	}
 	
 	void plot_header(std::ostream & out) {
-		
+		out << "bcount;bfill";
+		for(const auto & x : data) {
+			out << ';' << x.second->name();
+		}
 	}
 	
 	void plot_results(std::ostream & out) {
+		out << source.size() << ';';
+		out << (source.size() ? source.front().size() : std::size_t(0)) << ';';
 		
+		for(const auto & x : data) {
+			out << ';' << x.second->meanTime().count();
+		}
 	}
 };
 
@@ -285,7 +297,7 @@ int main(int argc, char ** argv) {
 		IT_VECTOR_TREE_MERGE, IT_VECTOR_SET_MERGE, IT_VECTOR_HEAP_MERGE,
 		sserialize::ItemIndex::T_NATIVE,
 		sserialize::ItemIndex::T_WAH,
-		sserialize::ItemIndex::T_ELIAS_FANO,
+// 		sserialize::ItemIndex::T_ELIAS_FANO,
 		sserialize::ItemIndex::T_RLE_DE
 	});
 	
