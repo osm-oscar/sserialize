@@ -52,6 +52,8 @@ public:
 	///return the mean bit per number including header
 	virtual uint8_t bpn() const override;
 	
+	virtual void putInto(uint32_t* dest) const override;
+	
 	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const override;
 	
     virtual UByteArrayAdapter data() const override;

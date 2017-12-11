@@ -39,6 +39,10 @@ uint32_t ItemIndexPrivateNative::at(uint32_t pos) const {
 	return 0;
 }
 
+void ItemIndexPrivateNative::putInto(uint32_t* dest) const {
+	::memmove(dest, m_dataMem.get(), sizeof(uint32_t)*m_size);
+}
+
 uint8_t ItemIndexPrivateNative::bpn() const {
 	return getSizeInBytes()*8/(size()+1);
 }
