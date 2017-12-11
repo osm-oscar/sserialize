@@ -508,4 +508,42 @@ std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & s) {
 	}
 }
 
+std::string to_string(ItemIndex::Types t) {
+	switch (t) {
+	case ItemIndex::T_NULL:
+		return "null";
+	case ItemIndex::T_SIMPLE:
+		return "simple";
+	case ItemIndex::T_REGLINE:
+		return "regline";
+	case ItemIndex::T_WAH:
+		return "wah";
+	case ItemIndex::T_DE:
+		return "de";
+	case ItemIndex::T_RLE_DE:
+		return "rlede";
+	case ItemIndex::T_ELIAS_FANO:
+		return "eliasfano";
+	case ItemIndex::T_NATIVE:
+		return "native";
+	case ItemIndex::T_EMPTY:
+		return "empty";
+	case ItemIndex::T_STL_DEQUE:
+		return "deque";
+	case ItemIndex::T_STL_VECTOR:
+		return "vector";
+	default:
+		return "invalid";
+	}
+}
+
+
 }//end namespace
+
+namespace std {
+
+string to_string(sserialize::ItemIndex::Types t) {
+	return sserialize::to_string(t);
+}
+
+}

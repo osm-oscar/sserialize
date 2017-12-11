@@ -37,8 +37,10 @@ public:
 		T_EMPTY=128,
 		T_INDIRECT=2*T_EMPTY,
 		T_STL_DEQUE=4*T_EMPTY,
-		T_STL_VECTOR=8*T_EMPTY
+		T_STL_VECTOR=8*T_EMPTY,
+		__T_LAST_ENTRY=T_STL_VECTOR
 	};
+	
 	struct ItemFilter {
 		virtual bool operator()(uint32_t id) const = 0;
 	};
@@ -191,6 +193,14 @@ bool operator!=(const TCONTAINER & set, const sserialize::ItemIndex & idx) {
 
 std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & idx);
 
+std::string to_string(sserialize::ItemIndex::Types t);
+
 }//end namespace
+
+namespace std {
+
+std::string to_string(sserialize::ItemIndex::Types t);
+
+}
 
 #endif

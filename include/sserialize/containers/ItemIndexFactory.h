@@ -177,6 +177,7 @@ ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, ItemIndex::Type
 		tmp.resetPtrs();
 		return ItemIndex(tmp, type);
 	}
+	throw sserialize::CreationException("Could not create index with type " + sserialize::to_string(type));
 	return ItemIndex();
 }
 
