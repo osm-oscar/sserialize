@@ -42,8 +42,16 @@ public:
 	ItemIndexPrivateRleDECreator(UByteArrayAdapter & data);
 	~ItemIndexPrivateRleDECreator();
 	uint32_t size() const;
+	///current id
+	uint32_t cId() const;
+	///current delta
+	uint32_t cDelta() const;
+	
 	///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
 	void push_back(uint32_t id);
+	
+	///push a run-length starting from nextId with the given delta and length
+	void push_rle(uint32_t nextId, uint32_t delta, uint32_t length);
 	
 	///Does a flush and appends the data which has countInData elements (mainly used by set functions)
 	void flushWithData(const UByteArrayAdapter & appendData, uint32_t countInData);
@@ -234,7 +242,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			if (aRle) {
 				--aRle;
 			}
-				
+			
 			if (!aRle) {
 				aVal = aData.getVlPackedUint32();
 				if (aVal & 0x1) {
@@ -265,12 +273,11 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 
 	if (TFunc::pushFirstRemainder && aIndexIt < aSize) {
 		if (aRle) {
-			while (aRle) {
-				creator.push_back(aId);
-				aId += aVal;
-				++aIndexIt;
-				--aRle;
-			}
+			creator.push_rle(aId, aVal, aRle-1);
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(creator.cId(), aId+aVal*(aRle-1));
+			aIndexIt += aRle;
+			aId += aVal*aRle;
+			aRle = 0;
 		}
 		else {
 			creator.push_back(aId);
@@ -283,12 +290,11 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	}
 	else if (TFunc::pushSecondRemainder && bIndexIt < bSize) {
 		if (bRle) {
-			while (bRle) {
-				creator.push_back(bId);
-				bId += bVal;
-				++bIndexIt;
-				--bRle;
-			}
+			creator.push_rle(bId, bVal, bRle-1);
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(creator.cId(), bId+bVal*(bRle-1));
+			bIndexIt += bRle;
+			bId += bVal*bRle;
+			bRle = 0;
 		}
 		else {
 			creator.push_back(bId);

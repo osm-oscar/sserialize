@@ -42,6 +42,15 @@ uint32_t ItemIndexPrivateRleDECreator::size() const {
 	return m_count;
 }
 
+uint32_t ItemIndexPrivateRleDECreator::cId() const {
+	return m_prev;
+}
+
+uint32_t ItemIndexPrivateRleDECreator::cDelta() const {
+	return m_lastDiff;
+}
+
+
 ///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
 void ItemIndexPrivateRleDECreator::push_back(uint32_t id) {
 	uint32_t diff = id - m_prev;
@@ -64,7 +73,20 @@ void ItemIndexPrivateRleDECreator::push_back(uint32_t id) {
 	m_prev = id;
 	++m_count;
 }
-	
+
+void ItemIndexPrivateRleDECreator::push_rle(uint32_t nextId, uint32_t delta, uint32_t length) {
+	push_back(nextId);
+	if (length) {
+		push_back(nextId+delta);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_lastDiff, delta);
+		length -= 1;
+		//if length == 0, then this stuff does not change
+		m_rle += length;
+		m_prev += delta*length;
+		m_count += length;
+	}
+}
+
 ///Does a flush and appends the data which has countInData elements (mainly used by set functions)
 void ItemIndexPrivateRleDECreator::flushWithData(const UByteArrayAdapter & appendData, uint32_t countInData) {
 	flushRle();
