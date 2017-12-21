@@ -150,6 +150,25 @@ public:
 			create(srcSet, idx);
 			CPPUNIT_ASSERT_MESSAGE("empty index test", srcSet == idx);
 		}
+		
+		{
+			std::set<uint32_t> srcSet1;
+			std::set<uint32_t> srcSet2;
+			std::set<uint32_t> srcSetUnited;
+			srcSet1.insert(0);
+			srcSet2.insert(0);
+			addRange(1, 99, srcSet1);
+			addRange(99, 198, srcSet2);
+			srcSetUnited.insert(srcSet1.begin(), srcSet1.end());
+			srcSetUnited.insert(srcSet2.begin(), srcSet2.end());
+			ItemIndex idx1, idx2;
+			create(srcSet1, idx1);
+			create(srcSet2, idx2);
+			ItemIndex idxUnited = idx1 + idx2;
+			CPPUNIT_ASSERT_MESSAGE("montone sequence with 0", srcSet1 == idx1);
+			CPPUNIT_ASSERT_MESSAGE("montone sequence with 0", srcSet2 == idx2);
+			CPPUNIT_ASSERT_MESSAGE("montone sequence with 0 unite", srcSetUnited == idxUnited);
+		}
 	}
 	
 	void testIntersect() {
