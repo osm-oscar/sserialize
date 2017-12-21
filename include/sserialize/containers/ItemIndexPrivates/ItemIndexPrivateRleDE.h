@@ -169,6 +169,15 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	UByteArrayAdapter dest( UByteArrayAdapter::createCache(8, sserialize::MM_PROGRAM_MEMORY));
 	ItemIndexPrivateRleDECreator creator(dest);
 
+	auto getNext = [](UByteArrayAdapter & data, uint32_t & val, uint32_t & rle) {
+		val = data.getVlPackedUint32();
+		if (val & 0x1) {
+			rle = val >> 1;
+			val = data.getVlPackedUint32();
+		}
+		val >>= 1;
+	};
+	
 	uint32_t aIndexIt = 0;
 	uint32_t bIndexIt = 0;
 	uint32_t aSize = m_size;
@@ -195,79 +204,137 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	
 	while (aIndexIt < aSize && bIndexIt < bSize) {
 		if (aId < bId) {
-			if (TFunc::pushFirstSmaller) {
-				creator.push_back(aId);
-			}
-		
-			if (aRle) {
-				--aRle;
-			}
+			if (aRle > 4 && aId + 3*aVal < bId) {
+				//the + 1 is needed since aId consumed one rle, which was not subtracted yet
+				uint32_t myRle = (bId - aId)/aVal - ((bId - aId)%aVal > 0 ? 0 : 1) + 1;
 				
-			if (!aRle) {
-				aVal = aData.getVlPackedUint32();
-				if (aVal & 0x1) {
-					aRle = aVal >> 1;
-					aVal = aData.getVlPackedUint32();
+				if (TFunc::pushFirstSmaller) {
+					creator.push_rle(aId, aVal, myRle-1);
 				}
-				aVal >>= 1;
+				
+				aRle -= myRle;
+				aIndexIt += myRle;
+				aId += aVal*(myRle-1);
+				
+				if (!aRle) {
+					getNext(aData, aVal, aRle);
+					aId += aVal;
+				}
+				else {
+					aId += aVal;
+				}
 			}
-			aId += aVal;
-			++aIndexIt;
+			else {
+				if (TFunc::pushFirstSmaller) {
+					creator.push_back(aId);
+				}
+				
+				if (aRle) {
+					--aRle;
+				}
+				
+				if (!aRle) {
+					getNext(aData, aVal, aRle);
+				}
+				aId += aVal;
+				++aIndexIt;
+			}
 		}
 		else if (bId  < aId) {
-			if (TFunc::pushSecondSmaller) {
-				creator.push_back(bId);
-			}
-		
-			if (bRle) {
-				--bRle;
-			}
+			if (bRle > 4 && bId + 3*bVal < aId) {
+				//the + 1 is needed since aId consumed one rle, which was not subtracted yet
+				uint32_t myRle = (aId-bId)/bVal - ((aId-bId)%bVal > 0 ? 0 : 1) + 1;
 				
-			if (!bRle) {
-				bVal = bData.getVlPackedUint32();
-				if (bVal & 0x1) {
-					bRle = bVal >> 1;
-					bVal = bData.getVlPackedUint32();
+				if (TFunc::pushFirstSmaller) {
+					creator.push_rle(bId, bVal, myRle-1);
 				}
-				bVal >>= 1;
+				
+				bRle -= myRle;
+				bIndexIt += myRle;
+				bId += bVal*(myRle-1);
+				
+				if (!bRle) {
+					getNext(bData, bVal, bRle);
+					bId += bVal;
+				}
+				else {
+					bId += bVal;
+				}
 			}
-			bId += bVal;
-			++bIndexIt;
+			else {
+				if (TFunc::pushSecondSmaller) {
+					creator.push_back(bId);
+				}
+			
+				if (bRle) {
+					--bRle;
+				}
+				
+				if (!bRle) {
+					getNext(bData, bVal, bRle);
+				}
+				bId += bVal;
+				++bIndexIt;
+			}
 		}
 		else {
-			if (TFunc::pushEqual) {
-				creator.push_back(aId);
-			}
-			
-			if (aRle) {
-				--aRle;
-			}
-			
-			if (!aRle) {
-				aVal = aData.getVlPackedUint32();
-				if (aVal & 0x1) {
-					aRle = aVal >> 1;
-					aVal = aData.getVlPackedUint32();
-				}
-				aVal >>= 1;
-			}
-			aId += aVal;
-			++aIndexIt;
-
-			if (bRle) {
-				--bRle;
-			}
+			if (aRle > 4 && bRle > 4 && aVal == bVal) { // && aId == bId
+				uint32_t myRle = std::min(aRle, bRle);
 				
-			if (!bRle) {
-				bVal = bData.getVlPackedUint32();
-				if (bVal & 0x1) {
-					bRle = bVal >> 1;
-					bVal = bData.getVlPackedUint32();
+				if (TFunc::pushEqual) {
+					creator.push_rle(aId, aVal, myRle-1);
 				}
-				bVal >>= 1;
+				
+				//adjust variables accordingly
+				aRle -= myRle;
+				aIndexIt += myRle;
+				aId += aVal*(myRle-1);
+				
+				bRle -= myRle;
+				bIndexIt += myRle;
+				bId += bVal*(myRle-1);
+				
+				if (!aRle) {
+					getNext(aData, aVal, aRle);
+					aId += aVal;
+				}
+				else {
+					aId += aVal;
+				}
+
+				if (!bRle) {
+					getNext(bData, bVal, bRle);
+					bId += bVal;
+				}
+				else {
+					bId += bVal;
+				}
 			}
-			bId += bVal;
-			++bIndexIt;
+			else {
+				if (TFunc::pushEqual) {
+					creator.push_back(aId);
+				}
+				
+				if (aRle) {
+					--aRle;
+				}
+				
+				if (!aRle) {
+					getNext(aData, aVal, aRle);
+				}
+				aId += aVal;
+				++aIndexIt;
+
+				if (bRle) {
+					--bRle;
+				}
+					
+				if (!bRle) {
+					getNext(bData, bVal, bRle);
+				}
+				bId += bVal;
+				++bIndexIt;
+			}
 		}
 	}
 
