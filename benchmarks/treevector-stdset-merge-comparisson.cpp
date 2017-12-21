@@ -2,8 +2,8 @@
 #include <vector>
 #include <set>
 #include <queue>
-#include <sserialize/containers/ItemIndexFactory.h>
 #include <random>
+#include <sserialize/containers/ItemIndexFactory.h>
 
 template<typename TFunc>
 struct ComparissonCountMerger {
@@ -121,7 +121,8 @@ struct BoundedRandomNumberGenerator: NumberGenerator {
 enum IndexType {
 	__IT_FIRST_OWN=2*sserialize::ItemIndex::__T_LAST_ENTRY,
 	IT_VECTOR_TREE_MERGE=__IT_FIRST_OWN,
-	IT_VECTOR_SET_MERGE=2*IT_VECTOR_TREE_MERGE,
+	IT_VECTOR_SLICE_MERGE=2*IT_VECTOR_TREE_MERGE,
+	IT_VECTOR_SET_MERGE=2*IT_VECTOR_SLICE_MERGE,
 	IT_VECTOR_HEAP_MERGE=2*IT_VECTOR_SET_MERGE,
 	__IT_MERGE_WITH_VECTOR=2*IT_VECTOR_HEAP_MERGE,
 	__IT_MERGE_WITH_HEAP=2*__IT_MERGE_WITH_VECTOR
@@ -301,6 +302,110 @@ struct VectorTreeMergeTestData: TestDataBase {
 	}
 };
 
+struct VectorSliceMergeTestData: TestDataBase {
+
+	struct SliceDescription {
+		SliceDescription(std::vector<uint32_t>::iterator begin, std::vector<uint32_t>::iterator end) :
+		begin(begin),
+		end(end)
+		{}
+		SliceDescription(const SliceDescription &) = default;
+		SliceDescription & operator=(const SliceDescription &) = default;
+		std::size_t size() const { return end-begin; }
+		std::vector<uint32_t>::iterator begin;
+		std::vector<uint32_t>::iterator end;
+	};
+	
+	const std::vector< std::vector<uint32_t> > * buckets;
+	std::vector<uint32_t> buffers[2];
+	std::vector<SliceDescription> slices[2];
+
+	VectorSliceMergeTestData(const std::vector< std::vector<uint32_t> > & src) : buckets(&src) {}
+	virtual ~VectorSliceMergeTestData() override {}
+	
+	virtual void run_merge() override {
+		prepare_data();
+		op_data();
+		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
+		clear_data();
+	}
+	virtual std::string name() const {
+		return "std::vector::slice-merge";
+	}
+	virtual int type() const {
+		return IT_VECTOR_TREE_MERGE;
+	}
+	
+	void prepare_data() {
+		std::size_t totalSize = 0;
+		for(const auto & x : *buckets) {
+			totalSize += x.size();
+		}
+		
+		buffers[0].resize(totalSize, 0);
+		buffers[1].resize(totalSize, 0);
+		slices[0].reserve(buckets->size());
+		slices[1].reserve(buckets->size());
+		
+		auto dbegin = buffers[0].begin();
+		auto dit = dbegin;
+		for(const auto & x : *buckets) {
+			auto sliceBegin = dit;
+			dit = std::copy(x.cbegin(), x.cend(), dit);
+			slices[0].emplace_back(sliceBegin, dit);
+		}
+	}
+	
+	void op_data() {
+		int bSrc = 0;
+		int bDst = 1;
+		
+		while (slices[bSrc].size() > 1) {
+			auto dstBegin = buffers[bDst].begin();
+			auto dstIt = dstBegin;
+			
+			std::size_t i(1);
+			std::size_t s(slices[bSrc].size());
+			for(; i < s; i+= 2) {
+				
+				const SliceDescription & sd1 = slices[bSrc].at(i-1);
+				const SliceDescription & sd2 = slices[bSrc].at(i);
+				
+				auto sliceBegin = dstIt;
+				dstIt = std::set_union(sd1.begin, sd1.end, sd2.begin, sd2.end, dstIt);
+				slices[bDst].emplace_back(sliceBegin, dstIt);
+			}
+			//there might be one left, we have to copy its data and put the slice into the queue
+			if (i-1 < s) {
+				const SliceDescription & sd1 = slices[bSrc].at(i-1);
+				auto sliceBegin = dstIt;
+				dstIt = std::copy(sd1.begin, sd1.end, dstIt);
+				slices[bDst].emplace_back(sliceBegin, dstIt);
+			}
+			slices[bSrc].clear();
+			
+			std::swap(bSrc, bDst);
+		}
+		
+		if (bSrc == 1) {
+			std::swap(buffers[0], buffers[1]);
+			std::swap(slices[0], slices[1]);
+			std::swap(bSrc, bDst);
+		}
+		
+		buffers[0].resize(slices[0].front().size());
+	}
+	
+	void clear_data() {
+		for(int i(0); i < 2; ++i) {
+			buffers[i].clear();
+			buffers[i].shrink_to_fit();
+			slices[i].clear();
+			slices[i].shrink_to_fit();
+		}
+	}
+};
+
 struct VectorSetMergeTestData: TestDataBase {
 	const std::vector< std::vector<uint32_t> > * buckets;
 	VectorSetMergeTestData(const std::vector< std::vector<uint32_t> > & src) : buckets(&src) {}
@@ -455,6 +560,9 @@ struct TestData {
 			case IT_VECTOR_TREE_MERGE:
 				data[t].reset( new VectorTreeMergeTestData(source) );
 				break;
+			case IT_VECTOR_SLICE_MERGE:
+				data[t].reset( new VectorSliceMergeTestData(source) );
+				break;
 			case IT_VECTOR_SET_MERGE:
 				data[t].reset( new VectorSetMergeTestData(source) );
 				break;
@@ -512,6 +620,7 @@ int main(int argc, char ** argv) {
 	std::vector<Config> cfgs;
 	std::vector<int> types({
 		IT_VECTOR_TREE_MERGE,
+		IT_VECTOR_SLICE_MERGE,
 // 		IT_VECTOR_SET_MERGE,
 // 		IT_VECTOR_HEAP_MERGE,
 		sserialize::ItemIndex::T_NATIVE,
