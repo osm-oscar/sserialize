@@ -5,53 +5,118 @@
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <random>
 
-
-std::default_random_engine random_engine(0);
-
-std::vector<uint32_t> createNumbersSet(uint32_t count, uint32_t max) {
-	std::set<uint32_t> ret;
-	//Fill the first
-	std::uniform_int_distribution<int> d(1, max);
-	
-	for(uint32_t i(0); i < count; ++i) {
-		ret.insert( d(random_engine) );
-	}
-	return std::vector<uint32_t>(ret.begin(), ret.end());
-}
-
-static std::vector<uint32_t> merge(const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
-	std::vector<uint32_t> result;
-	result.resize(a.size()+b.size());
-	auto aIt(a.cbegin());
-	auto aEnd(a.cend());
-	auto bIt(b.cbegin());
-	auto bEnd(b.cend());
-	auto rIt(result.begin());
-	while (aIt != aEnd && bIt != bEnd) {
-		if (*aIt == *bIt) {
-			*rIt = *aIt;
-			++aIt;
-			++bIt;
+template<typename TFunc>
+struct ComparissonCountMerger {
+	ComparissonCountMerger(uint64_t * counter) : counter(counter) {}
+	ComparissonCountMerger(const ComparissonCountMerger &) = default;
+	ComparissonCountMerger& operator=(const ComparissonCountMerger &) = default;
+	std::vector<uint32_t> operator()(const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
+		std::vector<uint32_t> result;
+		auto aIt(a.cbegin());
+		auto aEnd(a.cend());
+		auto bIt(b.cbegin());
+		auto bEnd(b.cend());
+		while (aIt != aEnd && bIt != bEnd) {
+			if (*aIt == *bIt) {
+				if (TFunc::pushFirstSmaller) {
+					result.emplace_back(*aIt);
+				}
+				*counter += 1;
+				++aIt;
+				++bIt;
+			}
+			else if (*aIt < *bIt) {
+				if (TFunc::pushSecondSmaller) {
+					result.emplace_back(*aIt);
+				}
+				*counter += 2;
+				++aIt;
+			}
+			else { //bItemId is smaller
+				if (TFunc::pushEqual) {
+					result.emplace_back(*aIt);
+				}
+				*counter += 3;
+				++bIt;
+			}
 		}
-		else if (*aIt < *bIt) {
-			*rIt = *aIt;
-			++aIt;
+		result.insert(result.end(), aIt, aEnd);
+		result.insert(result.end(), bIt, bEnd);
+		return result;
+	}
+	uint64_t * counter;
+};
+
+struct NumberGenerator {
+	enum Types {
+		NG_RANDOM,
+		NG_RANDOM_BOUNDED,
+		NG_MONOTONE_INCREASING
+	};
+	virtual void generate(std::vector< std::vector<uint32_t> > & src, uint32_t bucketSize, uint32_t bucketCount) = 0;
+};
+
+struct RandomNumberGenerator: NumberGenerator {
+	RandomNumberGenerator(uint32_t seed) :
+	re(seed),
+	dist(0, std::numeric_limits<int32_t>::max())
+	{}
+	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
+	{
+		src.resize(bucketCount);
+		for(std::vector<uint32_t> & bucket : src) {
+			bucket.clear();
+			bucket.reserve(bucketSize);
+			for(uint32_t i(0); i < bucketSize; ++i) {
+				bucket.push_back( dist(re) );
+			}
+			auto e = std::unique(bucket.begin(), bucket.end());
+			bucket.resize(e - bucket.begin());
 		}
-		else { //bItemId is smaller
-			*rIt = *bIt;
-			++bIt;
+	}
+	std::default_random_engine re;
+	std::uniform_int_distribution<int> dist;
+};
+
+struct MonotoneIncreasingNumberGenerator: NumberGenerator {
+	MonotoneIncreasingNumberGenerator()
+	{}
+	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
+	{
+		src.resize(bucketCount);
+		uint32_t counter = 1;
+		for(std::vector<uint32_t> & bucket : src) {
+			bucket.clear();
+			bucket.resize(bucketSize);
+			for(uint32_t i(1); i < bucketSize; ++i) {
+				bucket[i] = counter;
+				++counter;
+			}
+			bucket[0] = 0;
 		}
-		++rIt;
 	}
-	for(; aIt != aEnd; ++aIt, ++rIt) {
-		*rIt = *aIt;
+};
+
+struct BoundedRandomNumberGenerator: NumberGenerator {
+	BoundedRandomNumberGenerator(uint32_t seed) :
+	re(seed)
+	{}
+	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
+	{
+		std::uniform_int_distribution<int> dist(0, bucketSize*bucketCount);
+		src.resize(bucketCount);
+		for(std::vector<uint32_t> & bucket : src) {
+			bucket.clear();
+			bucket.reserve(bucketSize);
+			for(uint32_t i(0); i < bucketSize; ++i) {
+				bucket.push_back( dist(re) );
+			}
+			auto e = std::unique(bucket.begin(), bucket.end());
+			bucket.resize(e - bucket.begin());
+		}
 	}
-	for(; bIt != bEnd; ++bIt, ++rIt) {
-		*rIt = *bIt;
-	}
-	result.resize(rIt-result.begin());
-	return result;
-}
+	std::default_random_engine re;
+};
 
 enum IndexType {
 	__IT_FIRST_OWN=2*sserialize::ItemIndex::__T_LAST_ENTRY,
@@ -62,20 +127,31 @@ enum IndexType {
 	__IT_MERGE_WITH_HEAP=2*__IT_MERGE_WITH_VECTOR
 };
 
+enum OperationType {
+	OT_MERGE,
+	OT_INTERSECT
+};
+
 struct TestDataBase {
 	using meas_res = std::chrono::milliseconds;
 	std::vector<meas_res> times;
 	
 	 virtual ~TestDataBase() {}
 	
-	void run() {
+	void run(OperationType ot) {
 		auto start = std::chrono::high_resolution_clock::now();
-		run_merge();
+		if (ot == OT_MERGE) {
+			run_merge();
+		}
+		else if (ot == OT_INTERSECT) {
+			run_intersect();
+		}
 		auto stop = std::chrono::high_resolution_clock::now();
 		times.push_back( std::chrono::duration_cast<meas_res>(stop-start) );
 	}
 	
 	virtual void run_merge() = 0;
+	virtual void run_intersect() {}
 	virtual std::string name() const = 0;
 	virtual int type() const = 0;
 	
@@ -115,7 +191,11 @@ struct ItemIndexMergeWithVectorTestData: ItemIndexTestData {
 		std::vector<uint32_t> result = sserialize::treeReduceMap<std::vector<sserialize::ItemIndex>::const_iterator, std::vector<uint32_t> >(
 			buckets.cbegin(), buckets.cend(),
 			[](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
-				return merge(a, b);
+				std::vector<uint32_t> result;
+				result.resize(a.size()+b.size());
+				auto e = std::set_union(a.cbegin(), a.cend(), b.cbegin(), b.cend(), result.begin());
+				result.resize(e - result.begin());
+				return result;
 			},
 			[](const sserialize::ItemIndex & a) {
 				return a.toVector();
@@ -204,7 +284,11 @@ struct VectorTreeMergeTestData: TestDataBase {
 		auto result = sserialize::treeReduce(
 			buckets->cbegin(), buckets->cend(),
 			[](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
-				return merge(a, b);
+				std::vector<uint32_t> result;
+				result.resize(a.size()+b.size());
+				auto e = std::set_union(a.cbegin(), a.cend(), b.cbegin(), b.cend(), result.begin());
+				result.resize(e - result.begin());
+				return result;
 			}
 		);
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
@@ -296,47 +380,60 @@ struct VectorHeapMergeTestData: TestDataBase {
 	}
 };
 
+struct Config {
+	Config(uint32_t num_buckets, uint32_t bucket_fill) : num_buckets(num_buckets), bucket_fill(bucket_fill) {}
+	NumberGenerator::Types ngt;
+	uint32_t num_buckets;
+	uint32_t bucket_fill;
+	OperationType ot;
+	std::vector<IndexType> tests;
+};
+
 struct TestData {
+	OperationType ot = OT_MERGE;
 	std::vector< std::vector<uint32_t> > source;
 	std::vector<uint32_t> result;
-	uint64_t treeMergeComparisonCount;
+	uint64_t treeMergeComparisonCount = 0;
 	std::map<int, std::unique_ptr<TestDataBase> > data;
 	
-	void init(uint32_t num_buckets, uint32_t bucket_fill) {
-		source.reserve(num_buckets);
-		for(uint32_t i(0); i < num_buckets; ++i) {
-			source.emplace_back( createNumbersSet(bucket_fill, sserialize::narrow_check<uint32_t>(num_buckets*bucket_fill)) );
+	void init(const Config & cfg) {
+		ot = cfg.ot;
+		
+		std::unique_ptr<NumberGenerator> ng;
+		switch (cfg.ngt) {
+		case NumberGenerator::NG_RANDOM:
+			ng.reset( new RandomNumberGenerator(0) );
+			break;
+		case NumberGenerator::NG_RANDOM_BOUNDED:
+			ng.reset( new BoundedRandomNumberGenerator(0) );
+			break;
+		case NumberGenerator::NG_MONOTONE_INCREASING:
+			ng.reset( new MonotoneIncreasingNumberGenerator() );
+			break;
+		default:
+			throw std::runtime_error("Invalid number generator type");
+			break;
 		}
 		
-		auto mergef = [this](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
-			std::vector<uint32_t> result;
-			auto aIt(a.cbegin());
-			auto aEnd(a.cend());
-			auto bIt(b.cbegin());
-			auto bEnd(b.cend());
-			while (aIt != aEnd && bIt != bEnd) {
-				if (*aIt == *bIt) {
-					result.emplace_back(*aIt);
-					treeMergeComparisonCount += 1;
-					++aIt;
-					++bIt;
-				}
-				else if (*aIt < *bIt) {
-					result.emplace_back(*aIt);
-					treeMergeComparisonCount += 2;
-					++aIt;
-				}
-				else { //bItemId is smaller
-					result.emplace_back(*bIt);
-					treeMergeComparisonCount += 3;
-					++bIt;
-				}
-			}
-			result.insert(result.end(), aIt, aEnd);
-			result.insert(result.end(), bIt, bEnd);
-			return result;
-		};
-		result = sserialize::treeReduce(source.cbegin(), source.cend(), mergef);
+		ng->generate(source, cfg.bucket_fill, cfg.num_buckets);
+		
+		switch (cfg.ot) {
+		case OT_MERGE:
+		{
+			ComparissonCountMerger<sserialize::detail::ItemIndexImpl::UniteOp> so(&treeMergeComparisonCount);
+			result = sserialize::treeReduce(source.cbegin(), source.cend(), so);
+			break;
+		}
+		case OT_INTERSECT:
+		{
+			ComparissonCountMerger<sserialize::detail::ItemIndexImpl::IntersectOp> so(&treeMergeComparisonCount);
+			result = sserialize::treeReduce(source.cbegin(), source.cend(), so);
+			break;
+		}
+		default:
+			throw std::runtime_error("Invalid set operation type");
+			break;
+		}
 		std::cout << "initial result size: " << result.size() << std::endl;
 	}
 	
@@ -373,7 +470,7 @@ struct TestData {
 	void run(uint32_t count = 1) {
 		for(uint32_t i(0); i < count; ++i) {
 			for(auto & x : data) {
-				x.second->run();
+				x.second->run(ot);
 			}
 		}
 	}
@@ -403,50 +500,111 @@ struct TestData {
 	}
 };
 
-struct Config {
-	Config(uint32_t num_buckets, uint32_t bucket_fill) : num_buckets(num_buckets), bucket_fill(bucket_fill) {}
-	uint32_t num_buckets;
-	uint32_t bucket_fill;
-	std::vector<IndexType> tests;
-};
-
 void printHelp() {
-	std::cout << "\nNeed testCount bucketCount fillCount [bucketCount fillCount ... ]" << std::endl;
+	std::cout << "\nprg -t <bucketCount> <bucketSize> [ -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount>] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
 }
 
 int main(int argc, char ** argv) {
 	uint32_t testCount;
+	NumberGenerator::Types ngt = NumberGenerator::NG_RANDOM;
+	OperationType ot = OT_MERGE;
+	
 	std::vector<Config> cfgs;
 	std::vector<int> types({
-		IT_VECTOR_TREE_MERGE, IT_VECTOR_SET_MERGE, IT_VECTOR_HEAP_MERGE,
+		IT_VECTOR_TREE_MERGE,
+// 		IT_VECTOR_SET_MERGE,
+// 		IT_VECTOR_HEAP_MERGE,
 		sserialize::ItemIndex::T_NATIVE,
 		sserialize::ItemIndex::T_WAH,
 // 		sserialize::ItemIndex::T_ELIAS_FANO,
 		sserialize::ItemIndex::T_RLE_DE,
-		sserialize::ItemIndex::T_NATIVE | __IT_MERGE_WITH_VECTOR,
-		sserialize::ItemIndex::T_WAH | __IT_MERGE_WITH_VECTOR,
-		sserialize::ItemIndex::T_RLE_DE | __IT_MERGE_WITH_VECTOR,
-		sserialize::ItemIndex::T_NATIVE | __IT_MERGE_WITH_HEAP,
-		sserialize::ItemIndex::T_WAH | __IT_MERGE_WITH_HEAP,
-		sserialize::ItemIndex::T_RLE_DE | __IT_MERGE_WITH_HEAP
+// 		sserialize::ItemIndex::T_NATIVE | __IT_MERGE_WITH_VECTOR,
+// 		sserialize::ItemIndex::T_WAH | __IT_MERGE_WITH_VECTOR,
+// 		sserialize::ItemIndex::T_RLE_DE | __IT_MERGE_WITH_VECTOR,
+// 		sserialize::ItemIndex::T_NATIVE | __IT_MERGE_WITH_HEAP,
+// 		sserialize::ItemIndex::T_WAH | __IT_MERGE_WITH_HEAP,
+// 		sserialize::ItemIndex::T_RLE_DE | __IT_MERGE_WITH_HEAP
 	});
-	
-	if (argc < 3 || argc % 2 != 0) {
+	if (argc < 4) {
 		printHelp();
 		return -1;
 	}
-	
-	testCount = ::atoi(argv[1]);
-	for(int i(2); i < argc; i += 2) {
-		cfgs.emplace_back(
-			::atoi(argv[i]),
-			::atoi(argv[i+1])
-		);
+
+	for(int i(1); i < argc; ++i) {
+		std::string token(argv[i]);
+		if (token == "-t") {
+			if (i+2 >= argc) {
+				printHelp();
+				return -1;
+			}
+			cfgs.emplace_back(
+				::atoi(argv[i+1]),
+				::atoi(argv[i+2])
+			);
+			i += 2;
+		}
+		else if (token == "-o") {
+			if (i+1 >= argc) {
+				printHelp();
+				return -1;
+			}
+			std::string type(argv[i+1]);
+			if (type == "m" || type == "union" || type == "unite" || type == "merge") {
+				ot = OT_MERGE;
+			}
+			else if (type == "i" || type == "intersection" || type == "intersect") {
+				ot = OT_INTERSECT;
+			}
+			else {
+				printHelp();
+				return -1;
+			}
+			i += 1;
+		}
+		else if (token == "-g") {
+			if (i+1 >= argc) {
+				printHelp();
+				return -1;
+			}
+			std::string ng(argv[i+1]);
+			if (ng == "r" || ng == "random") {
+				ngt = NumberGenerator::NG_RANDOM;
+			}
+			else if (ng == "rb" || ng == "br" || ng == "bounded-random") {
+				ngt = NumberGenerator::NG_RANDOM_BOUNDED;
+			}
+			else if (ng == "ms" || ng == "monotone-sequence") {
+				ngt = NumberGenerator::NG_MONOTONE_INCREASING;
+			}
+			else {
+				printHelp();
+				return -1;
+			}
+			i += 1;
+		}
+		else if (token == "-c") {
+			if (i+1 >= argc) {
+				printHelp();
+				return -1;
+			}
+			testCount = ::atoi(argv[i+1]);
+			i += 1;
+		}
+		else if (token == "-h") {
+			printHelp();
+			return 0;
+		}
 	}
 	
+	//copy global setting for now
+	for(Config & c : cfgs) {
+		c.ngt = ngt;
+		c.ot = ot;
+	}
+
 	for(const Config & c : cfgs) {
 		TestData td;
-		td.init(c.num_buckets, c.bucket_fill);
+		td.init(c);
 		for(int t : types) {
 			td.add_test(t);
 		}
