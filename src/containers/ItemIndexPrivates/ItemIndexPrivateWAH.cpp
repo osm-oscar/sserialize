@@ -228,6 +228,8 @@ ItemIndexPrivate * ItemIndexPrivateWAH::fromBitSet(const DynamicBitSet & bitSet)
 	return new ItemIndexPrivateWAH(tmpData);
 }
 
+namespace {
+
 struct OutPutHandler {
 	UByteArrayAdapter & data;
 	uint32_t outPutWord;
@@ -252,7 +254,7 @@ struct OutPutHandler {
 		if ((nextWord & 0x1) && (outPutWord & 0x1)) { //both are run length encodings, check if we can merge them
 			if ((nextWord & 0x2) == (outPutWord & 0x2)) { //equal rle type
 				//add the lengths
-				outPutWord = (outPutWord + (nextWord & (~static_cast<uint32_t>(0x3))));
+				outPutWord = (outPutWord + (nextWord & (~static_cast<uint32_t>(0x3)))); //BUG: check overflow
 			}
 			else {
 				push();
@@ -275,6 +277,7 @@ struct OutPutHandler {
 	}
 };
 
+} //end protection namespace
 ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPrivate * other) const {
 	if (other->type() != ItemIndex::T_WAH)
 		return ItemIndexPrivate::doIntersect(other);
