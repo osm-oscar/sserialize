@@ -17,31 +17,35 @@ struct ComparissonCountMerger {
 		auto bIt(b.cbegin());
 		auto bEnd(b.cend());
 		while (aIt != aEnd && bIt != bEnd) {
-			if (*aIt == *bIt) {
+			if (*aIt < *bIt) {
 				if (TFunc::pushFirstSmaller) {
 					result.emplace_back(*aIt);
 				}
 				*counter += 1;
 				++aIt;
-				++bIt;
 			}
-			else if (*aIt < *bIt) {
+			else if (*bIt < *aIt) {
 				if (TFunc::pushSecondSmaller) {
-					result.emplace_back(*aIt);
+					result.emplace_back(*bIt);
 				}
 				*counter += 2;
-				++aIt;
+				++bIt;
 			}
-			else { //bItemId is smaller
+			else {
 				if (TFunc::pushEqual) {
 					result.emplace_back(*aIt);
 				}
 				*counter += 3;
+				++aIt;
 				++bIt;
 			}
 		}
-		result.insert(result.end(), aIt, aEnd);
-		result.insert(result.end(), bIt, bEnd);
+		if (TFunc::pushFirstRemainder) {
+			result.insert(result.end(), aIt, aEnd);
+		}
+		if (TFunc::pushSecondRemainder) {
+			result.insert(result.end(), bIt, bEnd);
+		}
 		return result;
 	}
 	uint64_t * counter;
@@ -70,6 +74,7 @@ struct RandomNumberGenerator: NumberGenerator {
 			for(uint32_t i(0); i < bucketSize; ++i) {
 				bucket.push_back( dist(re) );
 			}
+			std::sort(bucket.begin(), bucket.end());
 			auto e = std::unique(bucket.begin(), bucket.end());
 			bucket.resize(e - bucket.begin());
 		}
@@ -111,6 +116,7 @@ struct BoundedRandomNumberGenerator: NumberGenerator {
 			for(uint32_t i(0); i < bucketSize; ++i) {
 				bucket.push_back( dist(re) );
 			}
+			std::sort(bucket.begin(), bucket.end());
 			auto e = std::unique(bucket.begin(), bucket.end());
 			bucket.resize(e - bucket.begin());
 		}
@@ -174,6 +180,8 @@ struct ItemIndexTestData: TestDataBase {
 	virtual void run_merge() override {
 		sserialize::ItemIndex result = sserialize::ItemIndex::unite(buckets);
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
+// 		result.dump(std::cout); //for debugging
+// 		std::cout << std::endl;
 	}
 	virtual std::string name() const {
 		return "ItemIndex::" + sserialize::to_string(t);
@@ -305,15 +313,15 @@ struct VectorTreeMergeTestData: TestDataBase {
 struct VectorSliceMergeTestData: TestDataBase {
 
 	struct SliceDescription {
-		SliceDescription(std::vector<uint32_t>::iterator begin, std::vector<uint32_t>::iterator end) :
+		SliceDescription(std::vector<uint32_t>::const_iterator begin, std::vector<uint32_t>::const_iterator end) :
 		begin(begin),
 		end(end)
 		{}
 		SliceDescription(const SliceDescription &) = default;
 		SliceDescription & operator=(const SliceDescription &) = default;
 		std::size_t size() const { return end-begin; }
-		std::vector<uint32_t>::iterator begin;
-		std::vector<uint32_t>::iterator end;
+		std::vector<uint32_t>::const_iterator begin;
+		std::vector<uint32_t>::const_iterator end;
 	};
 	
 	const std::vector< std::vector<uint32_t> > * buckets;
@@ -347,12 +355,8 @@ struct VectorSliceMergeTestData: TestDataBase {
 		slices[0].reserve(buckets->size());
 		slices[1].reserve(buckets->size());
 		
-		auto dbegin = buffers[0].begin();
-		auto dit = dbegin;
-		for(const auto & x : *buckets) {
-			auto sliceBegin = dit;
-			dit = std::copy(x.cbegin(), x.cend(), dit);
-			slices[0].emplace_back(sliceBegin, dit);
+		for(auto & x : *buckets) {
+			slices[0].emplace_back(x.begin(), x.end());
 		}
 	}
 	
@@ -392,8 +396,6 @@ struct VectorSliceMergeTestData: TestDataBase {
 			std::swap(slices[0], slices[1]);
 			std::swap(bSrc, bDst);
 		}
-		
-		buffers[0].resize(slices[0].front().size());
 	}
 	
 	void clear_data() {
@@ -613,7 +615,7 @@ void printHelp() {
 }
 
 int main(int argc, char ** argv) {
-	uint32_t testCount;
+	uint32_t testCount = 1;
 	NumberGenerator::Types ngt = NumberGenerator::NG_RANDOM;
 	OperationType ot = OT_MERGE;
 	
