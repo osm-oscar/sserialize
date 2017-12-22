@@ -452,7 +452,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 		case(0x0 | 0x3): //myval no rle, oVal one-rle
 		case(0x8 | 0x3):
 		{
-			oHandler.append((0x4 | 0x3)); //one zero-rle
+			oHandler.append((0x4 | 0x3)); //one one-rle
 			myVal = 0;
 			oVal -= static_cast<uint32_t>(0x1) << 2;
 			break;
