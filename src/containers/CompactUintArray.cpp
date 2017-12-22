@@ -526,7 +526,7 @@ UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint32_t bpn, UB
 BoundedCompactUintArray::BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d) :
 CompactUintArray(0)
 {
-	int len;
+	int len = -1;
 	uint64_t sizeBits = d.getVlPackedUint64(0, &len);
 	
 	if (UNLIKELY_BRANCH(len < 0)) {
