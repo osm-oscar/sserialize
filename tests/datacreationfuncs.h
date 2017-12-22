@@ -25,6 +25,7 @@ struct TestDataGenerator<T_OUTPUT_ITERATOR, uint32_t> {
 	}
 };
 
+//starting from begin, end is one passend the end
 template<typename TCONTAINER>
 void addRange(uint32_t begin, uint32_t end, TCONTAINER & dest) {
 	for(;begin < end; ++begin)
