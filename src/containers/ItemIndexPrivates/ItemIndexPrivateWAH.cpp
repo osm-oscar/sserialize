@@ -278,6 +278,7 @@ struct OutPutHandler {
 };
 
 } //end protection namespace
+
 ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPrivate * other) const {
 	if (other->type() != ItemIndex::T_WAH)
 		return ItemIndexPrivate::doIntersect(other);
@@ -294,11 +295,19 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 	
 	uint32_t myVal = 0;
 	uint32_t oVal = 0;
-	while(myIt.hasNext() && oIt.hasNext()) {
-		if ( ! (myVal >> 2) )
+	while (true) {
+		if ( ! (myVal >> 2) ) {
+			if (!myIt.hasNext()) {
+				break;
+			}
 			myVal = myIt.next();
-		if ( !(oVal >> 2) )
+		}
+		if ( !(oVal >> 2) ) {
+			if (!oIt.hasNext()) {
+				break;
+			}
 			oVal = oIt.next();
+		}
 		
 		uint32_t pushType = 0x1; //default to 1 zero-rle
 		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
@@ -370,9 +379,6 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 		}
 		}; //end switch
 	}
-	if (myVal >> 2) {
-		oHandler.append(myVal);
-	}
 	
 	uint32_t idCount = oHandler.flush();
 	oData.putUint32(0, (uint32_t) (oData.tellPutPtr()-8));
@@ -397,11 +403,19 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 	
 	uint32_t myVal = 0;
 	uint32_t oVal = 0;
-	while(myIt.hasNext() && oIt.hasNext()) {
-		if ( ! (myVal >> 2) )
+	while(true) {
+		if ( ! (myVal >> 2) ) {
+			if (!myIt.hasNext()) {
+				break;
+			}
 			myVal = myIt.next();
-		if ( !(oVal >> 2) )
+		}
+		if ( !(oVal >> 2) ) {
+			if (!oIt.hasNext()) {
+				break;
+			}
 			oVal = oIt.next();
+		}
 
 		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
 		switch (types) {
@@ -471,7 +485,8 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 		}
 		}; //end switch
 	}
-	if (myVal >> 2) {
+	
+	if (myVal >> 2 || ((myVal & 0x1) == 0 && myVal >> 1)) { //myVal can be an rle or a non-rle
 		oHandler.append(myVal);
 	}
 	while(myIt.hasNext()) {
@@ -479,7 +494,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::unite(const sserialize::ItemIndexPrivate
 		oHandler.append(myVal);
 	}
 	
-	if (oVal >> 2) {
+	if (oVal >> 2 || ((oVal & 0x1) == 0 && oVal >> 1)) {
 		oHandler.append(oVal);
 	}
 	while(oIt.hasNext()) {
@@ -511,11 +526,19 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 	
 	uint32_t myVal = 0;
 	uint32_t oVal = 0;
-	while(myIt.hasNext() && oIt.hasNext()) {
-		if ( ! (myVal >> 2) )
+	while (true) {
+		if ( ! (myVal >> 2) ) {
+			if (!myIt.hasNext()) {
+				break;
+			}
 			myVal = myIt.next();
-		if ( !(oVal >> 2) )
+		}
+		if ( !(oVal >> 2) ) {
+			if (!oIt.hasNext()) {
+				break;
+			}
 			oVal = oIt.next();
+		}
 		
 		uint32_t pushType = myVal & 0x3; //default to myVal
 		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
@@ -587,7 +610,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 		}
 		};
 	}
-	if (myVal >> 2) {
+	if (myVal >> 2 || ((myVal & 0x1) == 0 && myVal >> 1)) { //myVal can be an rle or a non-rle
 		oHandler.append(myVal);
 	}
 	while(myIt.hasNext()) {
@@ -619,11 +642,19 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 	
 	uint32_t myVal = 0;
 	uint32_t oVal = 0;
-	while(myIt.hasNext() && oIt.hasNext()) {
-		if ( ! (myVal >> 2) )
+	while (true) {
+		if ( ! (myVal >> 2) ) {
+			if (!myIt.hasNext()) {
+				break;
+			}
 			myVal = myIt.next();
-		if ( !(oVal >> 2) )
+		}
+		if ( !(oVal >> 2) ) {
+			if (!oIt.hasNext()) {
+				break;
+			}
 			oVal = oIt.next();
+		}
 		
 		uint8_t types = ((myVal & 0x3) << 2) | (oVal & 0x3);
 		switch (types) {
@@ -696,7 +727,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 		}; //end switch
 	}
 	
-	if (myVal >> 2) {
+	if (myVal >> 2 || ((myVal & 0x1) == 0 && myVal >> 1)) { //myVal can be an rle or a non-rle
 		oHandler.append(myVal);
 	}
 	while(myIt.hasNext()) {
@@ -704,7 +735,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::symmetricDifference(const sserialize::It
 		oHandler.append(myVal);
 	}
 	
-	if (oVal >> 2) {
+	if (oVal >> 2 || ((oVal & 0x1) == 0 && oVal >> 1)) {
 		oHandler.append(oVal);
 	}
 	while(oIt.hasNext()) {
