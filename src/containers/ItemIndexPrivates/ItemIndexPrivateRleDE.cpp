@@ -53,6 +53,7 @@ uint32_t ItemIndexPrivateRleDECreator::cDelta() const {
 
 ///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
 void ItemIndexPrivateRleDECreator::push_back(uint32_t id) {
+	SSERIALIZE_CHEAP_ASSERT(m_count == 0 || m_prev < id);
 	uint32_t diff = id - m_prev;
 	if (diff == m_lastDiff) {
 		++m_rle;
@@ -75,6 +76,7 @@ void ItemIndexPrivateRleDECreator::push_back(uint32_t id) {
 }
 
 void ItemIndexPrivateRleDECreator::push_rle(uint32_t nextId, uint32_t delta, uint32_t length) {
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), delta);
 	push_back(nextId);
 	if (length) {
 		push_back(nextId+delta);

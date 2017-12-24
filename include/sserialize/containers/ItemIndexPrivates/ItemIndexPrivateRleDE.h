@@ -202,11 +202,16 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	aId = aVal;
 	bId = bVal;
 	
+	constexpr bool FastRleProcessing = true;
+	
 	while (aIndexIt < aSize && bIndexIt < bSize) {
 		if (aId < bId) {
-			if (aRle > 4 && aId + 3*aVal < bId) {
+			if (FastRleProcessing && aRle > 1 && aId + aVal < bId) {
 				//the + 1 is needed since aId consumed one rle, which was not subtracted yet
 				uint32_t myRle = (bId - aId)/aVal - ((bId - aId)%aVal > 0 ? 0 : 1) + 1;
+				myRle = std::min<uint32_t>(myRle, aRle);
+				SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(1), myRle);
+				SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(myRle, aRle);
 				
 				if (TFunc::pushFirstSmaller) {
 					creator.push_rle(aId, aVal, myRle-1);
@@ -241,11 +246,14 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			}
 		}
 		else if (bId  < aId) {
-			if (bRle > 4 && bId + 3*bVal < aId) {
-				//the + 1 is needed since aId consumed one rle, which was not subtracted yet
+			if (FastRleProcessing && bRle > 1 && bId + bVal < aId) {
+				//the + 1 is needed since bId consumed one rle, which was not subtracted yet
 				uint32_t myRle = (aId-bId)/bVal - ((aId-bId)%bVal > 0 ? 0 : 1) + 1;
+				myRle = std::min<uint32_t>(myRle, bRle);
+				SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(1), myRle);
+				SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(myRle, bRle);
 				
-				if (TFunc::pushFirstSmaller) {
+				if (TFunc::pushSecondSmaller) {
 					creator.push_rle(bId, bVal, myRle-1);
 				}
 				
@@ -278,7 +286,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			}
 		}
 		else {
-			if (aRle > 4 && bRle > 4 && aVal == bVal) { // && aId == bId
+			if (FastRleProcessing && aRle > 2 && bRle > 2 && aVal == bVal) { // && aId == bId
 				uint32_t myRle = std::min(aRle, bRle);
 				
 				if (TFunc::pushEqual) {
@@ -351,7 +359,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			++aIndexIt;
 		}
 		
-		//from here on,  the differences are equal to the ones in aData
+		//from here on, the differences are equal to the ones in aData
 		aData.shrinkToGetPtr();
 		creator.flushWithData(aData, aSize - aIndexIt);
 	}
@@ -367,7 +375,7 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 			creator.push_back(bId);
 			++bIndexIt;
 		}
-		//from here on,  the differences are equal to the ones in aData
+		//from here on, the differences are equal to the ones in aData
 		bData.shrinkToGetPtr();
 		creator.flushWithData(bData, bSize - bIndexIt);
 	}
