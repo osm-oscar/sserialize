@@ -55,7 +55,10 @@ struct NumberGenerator {
 	enum Types {
 		NG_RANDOM,
 		NG_RANDOM_BOUNDED,
-		NG_MONOTONE_INCREASING
+		NG_MONOTONE_INCREASING,
+		NG_RANDOM_BOUNDED_KERNEL_20,
+		NG_RANDOM_BOUNDED_KERNEL_50,
+		NG_RANDOM_BOUNDED_KERNEL_70,
 	};
 	virtual void generate(std::vector< std::vector<uint32_t> > & src, uint32_t bucketSize, uint32_t bucketCount) = 0;
 };
@@ -124,6 +127,36 @@ struct BoundedRandomNumberGenerator: NumberGenerator {
 	std::default_random_engine re;
 };
 
+struct BoundedRandomWithKernelNumberGenerator: NumberGenerator {
+	BoundedRandomWithKernelNumberGenerator(uint32_t seed, uint32_t kernel) :
+	re(seed),
+	kernel(kernel)
+	{}
+	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
+	{
+		std::uniform_int_distribution<int> dist(0, bucketSize*bucketCount);
+		
+		std::vector<uint32_t> kernel;
+		for(uint32_t i(0), s((bucketSize*this->kernel)/100); i < s; ++i) {
+			kernel.push_back( dist(re) );
+		}
+		
+		src.resize(bucketCount);
+		for(std::vector<uint32_t> & bucket : src) {
+			bucket = kernel;
+			bucket.reserve(bucketSize);
+			for(;bucket.size() < bucketSize;) {
+				bucket.push_back( dist(re) );
+			}
+			std::sort(bucket.begin(), bucket.end());
+			auto e = std::unique(bucket.begin(), bucket.end());
+			bucket.resize(e - bucket.begin());
+		}
+	}
+	std::default_random_engine re;
+	uint32_t kernel;
+};
+
 enum IndexType {
 	__IT_FIRST_OWN=2*sserialize::ItemIndex::__T_LAST_ENTRY,
 	IT_VECTOR_TREE_MERGE=__IT_FIRST_OWN,
@@ -158,7 +191,7 @@ struct TestDataBase {
 	}
 	
 	virtual void run_merge() = 0;
-	virtual void run_intersect() {}
+	virtual void run_intersect() = 0;
 	virtual std::string name() const = 0;
 	virtual int type() const = 0;
 	
@@ -183,6 +216,12 @@ struct ItemIndexTestData: TestDataBase {
 // 		result.dump(std::cout); //for debugging
 // 		std::cout << std::endl;
 	}
+	virtual void run_intersect() override {
+		sserialize::ItemIndex result = sserialize::ItemIndex::intersect(buckets);
+		std::cout << name() << "::result-size: " << result.size() << std::endl;
+// 		result.dump(std::cout); //for debugging
+// 		std::cout << std::endl;
+	}
 	virtual std::string name() const {
 		return "ItemIndex::" + sserialize::to_string(t);
 	}
@@ -203,6 +242,22 @@ struct ItemIndexMergeWithVectorTestData: ItemIndexTestData {
 				std::vector<uint32_t> result;
 				result.resize(a.size()+b.size());
 				auto e = std::set_union(a.cbegin(), a.cend(), b.cbegin(), b.cend(), result.begin());
+				result.resize(e - result.begin());
+				return result;
+			},
+			[](const sserialize::ItemIndex & a) {
+				return a.toVector();
+			}
+		);
+		std::cout << name() << "::result-size: " << result.size() << std::endl;
+	}
+	virtual void run_intersect() {
+		std::vector<uint32_t> result = sserialize::treeReduceMap<std::vector<sserialize::ItemIndex>::const_iterator, std::vector<uint32_t> >(
+			buckets.cbegin(), buckets.cend(),
+			[](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
+				std::vector<uint32_t> result;
+				result.resize(a.size()+b.size());
+				auto e = std::set_intersection(a.cbegin(), a.cend(), b.cbegin(), b.cend(), result.begin());
 				result.resize(e - result.begin());
 				return result;
 			},
@@ -276,6 +331,7 @@ struct ItemIndexHeapMergeTestData: ItemIndexTestData {
 		}
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
+	virtual void run_intersect() {}
 	virtual std::string name() const {
 		return "ItemIndex-with-heap::" + sserialize::to_string(t);
 	}
@@ -296,6 +352,19 @@ struct VectorTreeMergeTestData: TestDataBase {
 				std::vector<uint32_t> result;
 				result.resize(a.size()+b.size());
 				auto e = std::set_union(a.cbegin(), a.cend(), b.cbegin(), b.cend(), result.begin());
+				result.resize(e - result.begin());
+				return result;
+			}
+		);
+		std::cout << name() << "::result-size: " << result.size() << std::endl;
+	}
+	virtual void run_intersect() {
+		auto result = sserialize::treeReduce(
+			buckets->cbegin(), buckets->cend(),
+			[](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
+				std::vector<uint32_t> result;
+				result.resize(a.size()+b.size());
+				auto e = std::set_intersection(a.cbegin(), a.cend(), b.cbegin(), b.cend(), result.begin());
 				result.resize(e - result.begin());
 				return result;
 			}
@@ -333,7 +402,13 @@ struct VectorSliceMergeTestData: TestDataBase {
 	
 	virtual void run_merge() override {
 		prepare_data();
-		op_data();
+		op_data<OT_MERGE>();
+		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
+		clear_data();
+	}
+	virtual void run_intersect() {
+		prepare_data();
+		op_data<OT_INTERSECT>();
 		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
 		clear_data();
 	}
@@ -360,6 +435,7 @@ struct VectorSliceMergeTestData: TestDataBase {
 		}
 	}
 	
+	template<OperationType T_OT>
 	void op_data() {
 		int bSrc = 0;
 		int bDst = 1;
@@ -376,7 +452,12 @@ struct VectorSliceMergeTestData: TestDataBase {
 				const SliceDescription & sd2 = slices[bSrc].at(i);
 				
 				auto sliceBegin = dstIt;
-				dstIt = std::set_union(sd1.begin, sd1.end, sd2.begin, sd2.end, dstIt);
+				if (T_OT == OT_MERGE) {
+					dstIt = std::set_union(sd1.begin, sd1.end, sd2.begin, sd2.end, dstIt);
+				}
+				else if (T_OT == OT_INTERSECT) {
+					dstIt = std::set_intersection(sd1.begin, sd1.end, sd2.begin, sd2.end, dstIt);
+				}
 				slices[bDst].emplace_back(sliceBegin, dstIt);
 			}
 			//there might be one left, we have to copy its data and put the slice into the queue
@@ -419,6 +500,7 @@ struct VectorSetMergeTestData: TestDataBase {
 		}
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
+	virtual void run_intersect() {}
 	virtual std::string name() const {
 		return "std::vector::set-merge";
 	}
@@ -479,6 +561,7 @@ struct VectorHeapMergeTestData: TestDataBase {
 		}
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
+	virtual void run_intersect() {}
 	virtual std::string name() const {
 		return "std::vector::heap-merge";
 	}
@@ -516,6 +599,15 @@ struct TestData {
 			break;
 		case NumberGenerator::NG_MONOTONE_INCREASING:
 			ng.reset( new MonotoneIncreasingNumberGenerator() );
+			break;
+		case NumberGenerator::NG_RANDOM_BOUNDED_KERNEL_20:
+			ng.reset( new BoundedRandomWithKernelNumberGenerator(0, 20) );
+			break;
+		case NumberGenerator::NG_RANDOM_BOUNDED_KERNEL_50:
+			ng.reset( new BoundedRandomWithKernelNumberGenerator(0, 50) );
+			break;
+		case NumberGenerator::NG_RANDOM_BOUNDED_KERNEL_70:
+			ng.reset( new BoundedRandomWithKernelNumberGenerator(0, 70) );
 			break;
 		default:
 			throw std::runtime_error("Invalid number generator type");
@@ -686,6 +778,15 @@ int main(int argc, char ** argv) {
 			}
 			else if (ng == "ms" || ng == "monotone-sequence") {
 				ngt = NumberGenerator::NG_MONOTONE_INCREASING;
+			}
+			else if (ng == "rbk20" || ng == "bounded-random-kernel-20") {
+				ngt = NumberGenerator::NG_RANDOM_BOUNDED_KERNEL_20;
+			}
+			else if (ng == "rbk50" || ng == "bounded-random-kernel-50") {
+				ngt = NumberGenerator::NG_RANDOM_BOUNDED_KERNEL_50;
+			}
+			else if (ng == "rbk70" || ng == "bounded-random-kernel-70") {
+				ngt = NumberGenerator::NG_RANDOM_BOUNDED_KERNEL_70;
 			}
 			else {
 				printHelp();
