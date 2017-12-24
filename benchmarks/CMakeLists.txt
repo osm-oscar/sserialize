@@ -35,7 +35,7 @@ MACRO(ADD_BENCH_TARGET_SINGLE _name)
 	add_dependencies("${PROJECT_NAME}_${_name}" sserialize)
 ENDMACRO(ADD_BENCH_TARGET_SINGLE)
 
-ADD_BENCH_TARGET_SINGLE(treevector-stdset-merge-comparisson)
+ADD_BENCH_TARGET_SINGLE(itemindex)
 ADD_BENCH_TARGET_SINGLE(dynamic_bitset_benchmark)
 ADD_BENCH_TARGET_SINGLE(dynamic_bitset_file_bench)
 ADD_BENCH_TARGET_SINGLE(uint_dee_encode_bench)
