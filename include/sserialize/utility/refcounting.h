@@ -121,7 +121,7 @@ public:
 	///Enable reference counting, this is NOT thread-safe
 	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
 	void enableRC() {
-		return;
+// 		return;
 		if (priv() && !enabledRC()) {
 			priv()->rcInc();
 			priv()->enableRC();
@@ -132,7 +132,7 @@ public:
 	///No other thread is allowed to change either the reference counter or the state of reference counting during this operation
 	///Warning: this may leave the object without an owner
 	void disableRC() {
-		return;
+// 		return;
 		if (priv() && enabledRC()) {
 			priv()->disableRC();
 			priv()->rcDecWithoutDelete();
