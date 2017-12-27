@@ -9,4 +9,5 @@
 #include "ItemIndexPrivateRleDE.h"
 #include "ItemIndexPrivateNative.h"
 #include "ItemIndexPrivateEliasFano.h"
+#include "ItemIndexPrivatePFoR.h"
 #endif

@@ -33,8 +33,9 @@ public:
 		T_RLE_DE=16,
 		T_NATIVE=32,
 		T_ELIAS_FANO=64,
+		T_PFOR=128,
 		//the following are all in-memory
-		T_EMPTY=128,
+		T_EMPTY=256,
 		T_INDIRECT=2*T_EMPTY,
 		T_STL_DEQUE=4*T_EMPTY,
 		T_STL_VECTOR=8*T_EMPTY,
