@@ -207,6 +207,15 @@ UByteArrayAdapter::UByteArrayAdapter(const MmappedMemory<uint8_t> & mem) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateMM(mem), 0, mem.size())
 {}
 
+
+UByteArrayAdapter::UByteArrayAdapter(OffsetType size, sserialize::MmappedMemoryType mmt) :
+UByteArrayAdapter( UByteArrayAdapter::createCache(size, mmt) )
+{}
+
+UByteArrayAdapter::UByteArrayAdapter(OffsetType size, std::string fileName) :
+UByteArrayAdapter(  )
+{}
+
 UByteArrayAdapter::UByteArrayAdapter(const MemoryView & mem) :
 UByteArrayAdapter(new UByteArrayAdapterPrivateMV(mem), 0, mem.size())
 {}

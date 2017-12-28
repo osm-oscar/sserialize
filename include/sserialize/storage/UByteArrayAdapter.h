@@ -249,6 +249,9 @@ public://constructors
 	UByteArrayAdapter(const sserialize::MmappedFile& file);
 	UByteArrayAdapter(const sserialize::MmappedMemory<uint8_t> & mem);
 	UByteArrayAdapter(const MemoryView & mem);
+	UByteArrayAdapter(OffsetType size, sserialize::MmappedMemoryType mmt);
+	UByteArrayAdapter(OffsetType size, std::string fileName);
+	
 #if defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL) || defined(SSERIALIZE_UBA_NON_CONTIGUOUS)
 	UByteArrayAdapter(std::deque<uint8_t> * data, OffsetType offSet, OffsetType len);
 	UByteArrayAdapter(std::deque<uint8_t> * data);
