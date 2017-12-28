@@ -6,142 +6,191 @@ namespace detail {
 namespace ItemIndexImpl {
 
 
-PFoRIterator::PFoRIterator(uint32_t firstId, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
-m_lb(lb),
-m_ub(ub),
-m_lastUb(lastUb),
-m_baseValue(0),
-m_numLowerBits(numLowerBits)
+PFoRIterator::PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
+m_data(data),
+m_bits(bits),
+m_indexPos(0),
+m_indexSize(idxSize),
+m_blockPos(0),
+m_block(data)
 {}
 
-EliasFanoIterator::EliasFanoIterator(const CompactUintArray::const_iterator & lb, const UnaryCodeIterator & ub) :
-m_lb(lb),
-m_ub(ub),
-m_lastUb(0),
-m_baseValue(0),
-m_numLowerBits(lb.data().bpn())
+
+PFoRIterator::PFoRIterator(uint32_t idxSize) :
+m_indexPos(idxSize),
+m_indexSize(idxSize),
+m_blockPos(0)
 {}
 
-EliasFanoIterator::EliasFanoIterator(const CompactUintArray::const_iterator & lb) :
-m_lb(lb),
-m_ub(),
-m_lastUb(0),
-m_baseValue(0),
-m_numLowerBits(lb.data().bpn())
-{}
+PFoRIterator::~PFoRIterator() {}
 
-EliasFanoIterator::~EliasFanoIterator() {}
-
-EliasFanoIterator::value_type
-EliasFanoIterator::get() const {
-	if (m_numLowerBits) {
-		return EliasFanoIterator::value_type( (((m_lastUb + *m_ub) << m_numLowerBits) | *m_lb) + m_baseValue );
-	}
-	else {
-		return EliasFanoIterator::value_type( (m_lastUb + *m_ub) + m_baseValue );
-	}
+PFoRIterator::value_type
+PFoRIterator::get() const {
+	return m_block.at(m_blockPos);
 }
 
 void
-EliasFanoIterator::next() {
-	m_lastUb += *m_ub;
-	m_baseValue += 1;
+PFoRIterator::next() {
+	if (m_indexPos < m_indexSize) {
+		++m_indexPos;
+		++m_blockPos;
+		if (m_blockPos >= m_block.size() && m_indexPos < m_indexSize) {
+			//there is exactly one partial block at the end
+			//all blocks before have the same blocksize
+			uint32_t defaultBlockSize = ItemIndexPrivatePFoR::BlockSizes.at(m_bits.at(0));
+			uint32_t blockSize = std::min<uint32_t>(m_indexSize-m_indexPos, defaultBlockSize);
+			uint32_t blockNum = m_indexPos/m_indexSize;
+			uint32_t blockBits = m_bits.at(blockNum+1);
+			m_block = PFoRBlock(m_data, m_block.back(), blockSize, blockBits);
+		}
+	}
 	
-	++m_ub;
-	++m_lb;
 }
 
 bool
-EliasFanoIterator::notEq(const MyBaseClass * other) const {
-	const EliasFanoIterator * myOther = dynamic_cast<const EliasFanoIterator*>(other);
+PFoRIterator::notEq(const MyBaseClass * other) const {
+	const PFoRIterator * myOther = dynamic_cast<const PFoRIterator*>(other);
 	
 	if (!myOther) {
 		return true;
 	}
 
-	return m_lb != myOther->m_lb;
+	return m_indexPos != myOther->m_indexPos;
 }
 
-bool EliasFanoIterator::eq(const MyBaseClass * other) const {
-	const EliasFanoIterator * myOther = dynamic_cast<const EliasFanoIterator*>(other);
+bool PFoRIterator::eq(const MyBaseClass * other) const {
+	const PFoRIterator * myOther = dynamic_cast<const PFoRIterator*>(other);
 	
 	if (!myOther) {
 		return false;
 	}
 	
-	return m_lb == myOther->m_lb;
+	return m_indexPos == myOther->m_indexPos;
 }
 
-EliasFanoIterator::MyBaseClass * EliasFanoIterator::copy() const {
-	return new EliasFanoIterator(m_lb, m_ub, m_lastUb, m_numLowerBits);
+PFoRIterator::MyBaseClass * PFoRIterator::copy() const {
+	return new PFoRIterator(*this);
 }
 
 //BEGIN CREATOR
 
-EliasFanoCreator::EliasFanoCreator(uint32_t /*maxId*/) :
-m_data(new UByteArrayAdapter( UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY) )),
+PFoRCreator::PFoRCreator() :
+m_fixedSize(false),
+m_size(0),
+m_blockSizeOffset(ItemIndexPrivatePFoR::BlockSizes[ItemIndexPrivatePFoR::DefaultBlockSizeOffset]),
+m_prev(0),
+m_blockBits(1, m_blockSizeOffset),
+m_data(0, MM_PROGRAM_MEMORY),
+m_dest( new UByteArrayAdapter(0, MM_PROGRAM_MEMORY) ),
 m_putPtr(0),
 m_delete(true)
-{}
+{
+	
+}
 
-EliasFanoCreator::EliasFanoCreator(sserialize::UByteArrayAdapter& data, uint32_t /*maxId*/) :
-m_data(&data),
-m_putPtr(data.tellPutPtr()),
+PFoRCreator::PFoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset) :
+m_fixedSize(false),
+m_size(0),
+m_blockSizeOffset(blockSizeOffset),
+m_prev(0),
+m_blockBits(1, m_blockSizeOffset),
+m_data(0, MM_PROGRAM_MEMORY),
+m_dest(&data),
+m_putPtr(m_dest->tellPutPtr()),
 m_delete(false)
-{}
+{
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
+}
 
-EliasFanoCreator::EliasFanoCreator(EliasFanoCreator&& other) :
+PFoRCreator::PFoRCreator(UByteArrayAdapter & data, uint32_t finalSize, uint32_t blockSizeOffset) :
+m_fixedSize(true),
+m_size(finalSize),
+m_blockSizeOffset(blockSizeOffset),
+m_prev(0),
+m_blockBits(1, m_blockSizeOffset),
+m_data(0, MM_PROGRAM_MEMORY),
+m_dest(&data),
+m_putPtr(m_dest->tellPutPtr()),
+m_delete(false)
+{
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSize, ItemIndexPrivatePFoR::BlockSizes.size());
+}
+
+PFoRCreator::PFoRCreator(PFoRCreator&& other) :
+m_fixedSize(other.m_fixedSize),
+m_size(other.m_size),
+m_blockSizeOffset(other.m_blockSizeOffset),
 m_values(std::move(other.m_values)),
-m_data(other.m_data),
+m_prev(other.m_prev),
+m_blockBits(std::move(other.m_blockBits)),
+m_data(std::move(other.m_data)),
+m_dest(std::move(other.m_dest)),
 m_putPtr(other.m_putPtr),
 m_delete(other.m_delete)
 {
-	other.m_data = 0;
+	other.m_dest = 0;
 	other.m_delete = false;
 }
 
-EliasFanoCreator::~EliasFanoCreator() {
+PFoRCreator::~PFoRCreator() {
 	if (m_delete) {
-		delete m_data;
+		delete m_dest;
 	}
 }
 
-uint32_t EliasFanoCreator::size() const {
-	return uint32_t( m_values.size() );
+uint32_t PFoRCreator::size() const {
+	return m_size;
 }
 
-void EliasFanoCreator::push_back(uint32_t id) {
-	if (size() && m_values.back() >= id) {
-		throw std::domain_error("sserialize::ItemIndexPrivateEliasFanoCreator: ids have to be strongly-monotone");
+void PFoRCreator::push_back(uint32_t id) {
+	SSERIALIZE_CHEAP_ASSERT(m_prev == 0 || m_prev < id);
+	m_values.push_back(id - m_prev);
+	m_prev = id;
+	if (m_values.size() == ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]) {
+		flushBlock();
 	}
-	m_values.push_back(id);
 }
 
-void EliasFanoCreator::flush() {
-	data().setPutPtr(m_putPtr);
-	ItemIndexPrivateEliasFano::create(m_values, data());
+void PFoRCreator::flushBlock() {
+	if (!m_values.size()) {
+		return;
+	}
+	if (!m_fixedSize) {
+		m_size += m_values.size();
+	}
+	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end());
+	m_values.clear();
 }
 
+void PFoRCreator::flush() {
+	if (m_values.size()) {
+		flushBlock();
+	}
+	m_dest->putVlPackedUint32(m_size);
+	m_dest->putVlPackedUint32(m_data.size());
+	m_dest->putData(m_data);
+	CompactUintArray::create(m_blockBits, *m_dest);
+}
 
-UByteArrayAdapter EliasFanoCreator::flushedData() const {
+UByteArrayAdapter PFoRCreator::flushedData() const {
 	UByteArrayAdapter d(data());
 	d.setGetPtr(m_putPtr);
 	return d;
 }
 
-ItemIndex EliasFanoCreator::getIndex() {
-	return ItemIndex(flushedData(), ItemIndex::T_ELIAS_FANO);
+ItemIndex PFoRCreator::getIndex() {
+	return ItemIndex(flushedData(), ItemIndex::T_PFOR);
 }
 
-ItemIndexPrivate * EliasFanoCreator::getPrivateIndex() {
-	return new ItemIndexPrivateEliasFano(flushedData());
+ItemIndexPrivate * PFoRCreator::getPrivateIndex() {
+	return new ItemIndexPrivatePFoR(flushedData());
 }
 
-UByteArrayAdapter& EliasFanoCreator::data() {
+UByteArrayAdapter& PFoRCreator::data() {
 	return *m_data;
 }
 
-const UByteArrayAdapter& EliasFanoCreator::data() const {
+const UByteArrayAdapter& PFoRCreator::data() const {
 	return *m_data;
 }
 
