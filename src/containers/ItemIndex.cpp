@@ -34,6 +34,9 @@ void ItemIndex::createPrivate(const UByteArrayAdapter & index, const ItemIndex::
 		case (ItemIndex::T_ELIAS_FANO):
 			setPrivate( new ItemIndexPrivateEliasFano(index) );
 			break;
+		case (ItemIndex::T_PFOR):
+			setPrivate( new ItemIndexPrivatePFoR(index) );
+			break;
 		default:
 			setPrivate( new ItemIndexPrivateEmpty() );
 			break;
@@ -353,6 +356,8 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
 		return ItemIndex( ItemIndexPrivateSimple::fromBitSet(bitSet) );
 	case (ItemIndex::T_ELIAS_FANO):
 		return ItemIndex( ItemIndexPrivateEliasFano::fromBitSet(bitSet) );
+	case (ItemIndex::T_PFOR):
+		return ItemIndex( ItemIndexPrivatePFoR::fromBitSet(bitSet) );
 	case (ItemIndex::T_NATIVE):
 	case (ItemIndex::T_STL_DEQUE):
 	case (ItemIndex::T_STL_VECTOR):
@@ -530,6 +535,8 @@ std::string to_string(ItemIndex::Types t) {
 		return "rlede";
 	case ItemIndex::T_ELIAS_FANO:
 		return "eliasfano";
+	case ItemIndex::T_PFOR:
+		return "pfor";
 	case ItemIndex::T_NATIVE:
 		return "native";
 	case ItemIndex::T_EMPTY:
