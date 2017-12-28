@@ -214,7 +214,7 @@ public:
 			uint32_t count = 0;
 			for(std::set<uint32_t>::iterator it = intersected.begin(); it != intersected.end(); ++it, ++count) {
 				std::stringstream ss;
-				ss << "id at " << count;
+				ss << "run " << runs << " id at " << count;
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, intIdx.at(count));
 			}
 		}
