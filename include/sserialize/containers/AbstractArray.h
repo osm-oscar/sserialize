@@ -97,6 +97,7 @@ public:
 private:
 	std::unique_ptr< detail::AbstractArrayIterator<TReturnType> > m_priv;
 public:
+	AbstractArrayIterator() {}
 	AbstractArrayIterator(detail::AbstractArrayIterator<TReturnType> * it) : m_priv(it) {}
 	AbstractArrayIterator(const AbstractArrayIterator & other) : m_priv((other.m_priv.get() ? other.m_priv->copy() : 0)) {}
 	virtual ~AbstractArrayIterator() {}
