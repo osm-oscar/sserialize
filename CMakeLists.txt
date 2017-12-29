@@ -226,6 +226,7 @@ set(CONTAINTERS_SOURCES_CPP
 	src/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateEliasFano.cpp
+	src/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.cpp
 )
 
 set(SPATIAL_SOURCES_CPP

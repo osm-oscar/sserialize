@@ -5,15 +5,46 @@ namespace sserialize {
 namespace detail {
 namespace ItemIndexImpl {
 
+PFoRBlock::PFoRBlock() :
+m_dataSize(0)
+{}
+
+PFoRBlock::PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
+	m_dataSize = decodeBlock(d, prev, size, bpn, std::back_inserter(m_values));
+}
+
+uint32_t PFoRBlock::size() const {
+	return m_values.size();
+}
+
+sserialize::UByteArrayAdapter::SizeType PFoRBlock::getSizeInBytes() const {
+	return m_dataSize;
+}
+
+uint32_t PFoRBlock::front() const {
+	return m_values.front();
+}
+
+uint32_t PFoRBlock::back() const {
+	return m_values.back();
+}
+
+uint32_t PFoRBlock::at(uint32_t pos) const {
+	return m_values.at(pos);
+}
 
 PFoRIterator::PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
 m_data(data),
 m_bits(bits),
 m_indexPos(0),
 m_indexSize(idxSize),
-m_blockPos(0),
-m_block(data)
-{}
+m_blockPos(0)
+{
+	if (m_indexPos < m_indexSize) {
+		fetchBlock(m_data, 0);
+		m_data += m_block.getSizeInBytes();
+	}
+}
 
 
 PFoRIterator::PFoRIterator(uint32_t idxSize) :
@@ -34,14 +65,9 @@ PFoRIterator::next() {
 	if (m_indexPos < m_indexSize) {
 		++m_indexPos;
 		++m_blockPos;
-		if (m_blockPos >= m_block.size() && m_indexPos < m_indexSize) {
-			//there is exactly one partial block at the end
-			//all blocks before have the same blocksize
-			uint32_t defaultBlockSize = ItemIndexPrivatePFoR::BlockSizes.at(m_bits.at(0));
-			uint32_t blockSize = std::min<uint32_t>(m_indexSize-m_indexPos, defaultBlockSize);
-			uint32_t blockNum = m_indexPos/m_indexSize;
-			uint32_t blockBits = m_bits.at(blockNum+1);
-			m_block = PFoRBlock(m_data, m_block.back(), blockSize, blockBits);
+		if (m_blockPos >= m_block.size()) {
+			fetchBlock(m_data, m_block.back());
+			m_data += m_block.getSizeInBytes();
 		}
 	}
 	
@@ -71,6 +97,21 @@ bool PFoRIterator::eq(const MyBaseClass * other) const {
 PFoRIterator::MyBaseClass * PFoRIterator::copy() const {
 	return new PFoRIterator(*this);
 }
+
+bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
+	if (m_indexPos < m_indexSize) {
+		//there is exactly one partial block at the end
+		//all blocks before have the same blocksize
+		uint32_t defaultBlockSize = ItemIndexPrivatePFoR::BlockSizes.at(m_bits.at(0));
+		uint32_t blockNum = m_indexPos/m_indexSize;
+		uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_indexSize - blockNum*defaultBlockSize);
+		uint32_t blockBits = m_bits.at(blockNum+1);
+		m_block = PFoRBlock(d, prev, blockSize, blockBits);
+		return true;
+	}
+	return false;
+}
+
 
 //BEGIN CREATOR
 
@@ -113,7 +154,7 @@ m_dest(&data),
 m_putPtr(m_dest->tellPutPtr()),
 m_delete(false)
 {
-	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSize, ItemIndexPrivatePFoR::BlockSizes.size());
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
 }
 
 PFoRCreator::PFoRCreator(PFoRCreator&& other) :
@@ -159,6 +200,7 @@ void PFoRCreator::flushBlock() {
 		m_size += m_values.size();
 	}
 	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end());
+	m_blockBits.push_back(blockBits);
 	m_values.clear();
 }
 
@@ -187,11 +229,11 @@ ItemIndexPrivate * PFoRCreator::getPrivateIndex() {
 }
 
 UByteArrayAdapter& PFoRCreator::data() {
-	return *m_data;
+	return *m_dest;
 }
 
 const UByteArrayAdapter& PFoRCreator::data() const {
-	return *m_data;
+	return *m_dest;
 }
 
 
@@ -246,6 +288,12 @@ struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::
 
 //BEGIN INDEX
 
+const std::array<const uint32_t, 25> ItemIndexPrivatePFoR::BlockSizes = {
+	1, 2, 4, 8, 16, 32, 64, 128, 256, 512, //10 entries
+	1024, 2048, 4096, 8192, 16384, 32768, 65536, //7 entries
+	24, 48, 96, 192, 384, 768, 1536, 3072 // 8 entriess
+};
+
 ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(UByteArrayAdapter d) :
 m_d(d)
 {
@@ -257,11 +305,13 @@ m_d(d)
 	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5);
 	
 	sserialize::SizeType totalSize = psize_vu32(m_size) + psize_vu32(blockDataSize) +
-		m_blocks.size() + CompactUintArray::minStorageBytes(5, blockCount());
+	m_blocks.size() + CompactUintArray::minStorageBytes(5, blockCount());
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(totalSize, m_d.size());
 	if (m_d.size() != totalSize) {
 		m_d = UByteArrayAdapter(m_d, 0, totalSize);
 	}
+	
+	m_it = cbegin();
 	
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(m_bits.at(0), BlockSizes.size());
 }
@@ -396,7 +446,7 @@ ItemIndexPrivatePFoR::unite(const sserialize::ItemIndexPrivate * other) const {
 
 ItemIndexPrivate *
 ItemIndexPrivatePFoR::difference(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivatePFoR*>(other);
+	const ItemIndexPrivatePFoR * cother = dynamic_cast<const ItemIndexPrivatePFoR*>(other);
 	if (!cother) {
 		return ItemIndexPrivate::doDifference(other);
 	}
