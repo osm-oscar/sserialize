@@ -201,49 +201,42 @@ const UByteArrayAdapter& PFoRCreator::data() const {
 //BEGIN GenericSetOpExecuterInit
 
 template<>
-struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::IntersectOp> {
-	using Creator = EliasFanoCreator;
+struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::IntersectOp> {
+	using Creator = PFoRCreator;
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::IntersectOp;
 	
-	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
-		return Creator(std::min<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
+	static Creator init(const sserialize::ItemIndexPrivate*, const sserialize::ItemIndexPrivate*) {
+		return Creator();
 	}
 };
 
 template<>
-struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::UniteOp> {
-	using Creator = EliasFanoCreator;
+struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::UniteOp> {
+	using Creator = PFoRCreator;
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::UniteOp;
 	
-	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
-		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
+	static Creator init(const sserialize::ItemIndexPrivate*, const sserialize::ItemIndexPrivate*) {
+		return Creator();
 	}
 };
 
 template<>
-struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::DifferenceOp> {
-	using Creator = EliasFanoCreator;
+struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::DifferenceOp> {
+	using Creator = PFoRCreator;
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::DifferenceOp;
 	
-	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* /*second*/) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		return Creator(mfirst->upperBound());
+	static Creator init(const sserialize::ItemIndexPrivate*, const sserialize::ItemIndexPrivate*) {
+		return Creator();
 	}
 };
 
 template<>
-struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp> {
-	using Creator = EliasFanoCreator;
-	using SetOpTraits = sserialize::detail::ItemIndexImpl::UniteOp;
+struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp> {
+	using Creator = PFoRCreator;
+	using SetOpTraits = sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp;
 	
-	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
-		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
+	static Creator init(const sserialize::ItemIndexPrivate*, const sserialize::ItemIndexPrivate*) {
+		return Creator();
 	}
 };
 
@@ -253,43 +246,40 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 
 //BEGIN INDEX
 
-ItemIndexPrivateEliasFano::ItemIndexPrivateEliasFano(const UByteArrayAdapter & d) :
-m_d(d),
-m_size(m_d.getVlPackedUint32(0)),
-m_upperBoundBegin(sserialize::psize_v<uint32_t>(m_size)),
-m_lowerBitsBegin(m_size ? m_upperBoundBegin+sserialize::psize_v<uint32_t>(upperBoundStorage(upperBound())) : m_upperBoundBegin),
-m_upperBitsBegin(m_size ? sserialize::psize_v<uint32_t>(upperBitsDataSize()) : m_upperBoundBegin),
-m_it(cbegin())
+ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(UByteArrayAdapter d) :
+m_d(d)
 {
-	sserialize::UByteArrayAdapter::SizeType totalSize = 0;
-	if (m_size) {
-		totalSize += m_lowerBitsBegin;
-		totalSize += CompactUintArray::minStorageBytes(numLowerBits(), size());
-		totalSize += m_upperBitsBegin;
-		totalSize += upperBitsDataSize();
+	m_size = d.getVlPackedUint32();
+	uint32_t blockDataSize = d.getVlPackedUint32();
+	d.shrinkToGetPtr();
+	
+	m_blocks = UByteArrayAdapter(d, 0, blockDataSize);
+	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5);
+	
+	sserialize::SizeType totalSize = psize_vu32(m_size) + psize_vu32(blockDataSize) +
+		m_blocks.size() + CompactUintArray::minStorageBytes(5, blockCount());
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(totalSize, m_d.size());
+	if (m_d.size() != totalSize) {
+		m_d = UByteArrayAdapter(m_d, 0, totalSize);
 	}
-	else {
-		totalSize += m_upperBoundBegin;
-	}
-	m_d.resize(totalSize);
+	
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(m_bits.at(0), BlockSizes.size());
 }
 
-ItemIndexPrivateEliasFano::~ItemIndexPrivateEliasFano() {}
+ItemIndexPrivatePFoR::~ItemIndexPrivatePFoR() {}
 
-ItemIndex::Types ItemIndexPrivateEliasFano::type() const {
-	return ItemIndex::T_ELIAS_FANO;
+ItemIndex::Types ItemIndexPrivatePFoR::type() const {
+	return ItemIndex::T_PFOR;
 }
 
 void
-ItemIndexPrivateEliasFano::loadIntoMemory() {
-	;
-}
+ItemIndexPrivatePFoR::loadIntoMemory() {}
 
-UByteArrayAdapter ItemIndexPrivateEliasFano::data() const {
+UByteArrayAdapter ItemIndexPrivatePFoR::data() const {
     return m_d;
 }
 
-uint8_t ItemIndexPrivateEliasFano::bpn() const {
+uint8_t ItemIndexPrivatePFoR::bpn() const {
 	if (size()) {
 		return sserialize::multiplyDiv64(getSizeInBytes(), 8, size());
 	}
@@ -299,7 +289,7 @@ uint8_t ItemIndexPrivateEliasFano::bpn() const {
 }
 
 uint32_t
-ItemIndexPrivateEliasFano::at(uint32_t pos) const {
+ItemIndexPrivatePFoR::at(uint32_t pos) const {
 	if (pos >= m_size) {
 		throw std::out_of_range("ItemIndex::at with pos=" + std::to_string(pos) + "; size=" + std::to_string(size()));
 	}
@@ -313,42 +303,42 @@ ItemIndexPrivateEliasFano::at(uint32_t pos) const {
 }
 
 uint32_t
-ItemIndexPrivateEliasFano::first() const {
+ItemIndexPrivatePFoR::first() const {
 	return at(0);
 }
 
 uint32_t
-ItemIndexPrivateEliasFano::last() const {
+ItemIndexPrivatePFoR::last() const {
 	return at(m_size-1);
 }
 
-ItemIndexPrivateEliasFano::const_iterator
-ItemIndexPrivateEliasFano::cbegin() const {
-	return new detail::ItemIndexImpl::EliasFanoIterator(lowerBits().cbegin(), upperBits());
+ItemIndexPrivatePFoR::const_iterator
+ItemIndexPrivatePFoR::cbegin() const {
+	return new detail::ItemIndexImpl::PFoRIterator(size(), m_bits, m_blocks);
 }
 
-ItemIndexPrivateEliasFano::const_iterator
-ItemIndexPrivateEliasFano::cend() const {
-	return new detail::ItemIndexImpl::EliasFanoIterator(lowerBits().cbegin()+m_size);
+ItemIndexPrivatePFoR::const_iterator
+ItemIndexPrivatePFoR::cend() const {
+	return new detail::ItemIndexImpl::PFoRIterator(size());
 }
 
 uint32_t
-ItemIndexPrivateEliasFano::size() const {
+ItemIndexPrivatePFoR::size() const {
 	return m_size;
 }
 
 sserialize::UByteArrayAdapter::SizeType
-ItemIndexPrivateEliasFano::getSizeInBytes() const {
+ItemIndexPrivatePFoR::getSizeInBytes() const {
 	return m_d.size();
 }
 
 bool
-ItemIndexPrivateEliasFano::is_random_access() const {
+ItemIndexPrivatePFoR::is_random_access() const {
 	return false;
 }
 
 void
-ItemIndexPrivateEliasFano::putInto(DynamicBitSet & bitSet) const {
+ItemIndexPrivatePFoR::putInto(DynamicBitSet & bitSet) const {
 	bitSet.set(m_cache.cbegin(), m_cache.cend());
 	
 	if (m_cache.size() < m_size) {
@@ -360,7 +350,7 @@ ItemIndexPrivateEliasFano::putInto(DynamicBitSet & bitSet) const {
 }
 
 void
-ItemIndexPrivateEliasFano::putInto(uint32_t* dest) const {
+ItemIndexPrivatePFoR::putInto(uint32_t* dest) const {
 	dest = std::copy(m_cache.cbegin(), m_cache.cend(), dest);
 	
 	if (m_cache.size() < m_size) {
@@ -372,157 +362,81 @@ ItemIndexPrivateEliasFano::putInto(uint32_t* dest) const {
 }
 
 ItemIndexPrivate *
-ItemIndexPrivateEliasFano::uniteK(const sserialize::ItemIndexPrivate * other, uint32_t /*numItems*/) const {
+ItemIndexPrivatePFoR::uniteK(const sserialize::ItemIndexPrivate * other, uint32_t /*numItems*/) const {
 	return unite(other);
 }
 
 ItemIndexPrivate *
-ItemIndexPrivateEliasFano::intersect(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
+ItemIndexPrivatePFoR::intersect(const sserialize::ItemIndexPrivate * other) const {
+	const ItemIndexPrivatePFoR * cother = dynamic_cast<const ItemIndexPrivatePFoR*>(other);
 	if (!cother) {
 		return ItemIndexPrivate::doIntersect(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::IntersectOp,
-		detail::ItemIndexImpl::EliasFanoCreator,
+		detail::ItemIndexImpl::PFoRCreator,
 		sserialize::ItemIndex::const_iterator
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate *
-ItemIndexPrivateEliasFano::unite(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
+ItemIndexPrivatePFoR::unite(const sserialize::ItemIndexPrivate * other) const {
+	const ItemIndexPrivatePFoR * cother = dynamic_cast<const ItemIndexPrivatePFoR*>(other);
 	if (!cother) {
 		return ItemIndexPrivate::doUnite(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::UniteOp,
-		detail::ItemIndexImpl::EliasFanoCreator,
+		detail::ItemIndexImpl::PFoRCreator,
 		sserialize::ItemIndex::const_iterator
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate *
-ItemIndexPrivateEliasFano::difference(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
+ItemIndexPrivatePFoR::difference(const sserialize::ItemIndexPrivate * other) const {
+	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivatePFoR*>(other);
 	if (!cother) {
 		return ItemIndexPrivate::doDifference(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::DifferenceOp,
-		detail::ItemIndexImpl::EliasFanoCreator,
+		detail::ItemIndexImpl::PFoRCreator,
 		sserialize::ItemIndex::const_iterator
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate *
-ItemIndexPrivateEliasFano::symmetricDifference(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
+ItemIndexPrivatePFoR::symmetricDifference(const sserialize::ItemIndexPrivate * other) const {
+	const ItemIndexPrivatePFoR * cother = dynamic_cast<const ItemIndexPrivatePFoR*>(other);
 	if (!cother) {
 		return ItemIndexPrivate::doSymmetricDifference(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::SymmetricDifferenceOp,
-		detail::ItemIndexImpl::EliasFanoCreator,
+		detail::ItemIndexImpl::PFoRCreator,
 		sserialize::ItemIndex::const_iterator
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
 
 ItemIndexPrivate *
-ItemIndexPrivateEliasFano::fromBitSet(const DynamicBitSet & bitSet) {
+ItemIndexPrivatePFoR::fromBitSet(const DynamicBitSet & bitSet) {
 	sserialize::UByteArrayAdapter tmp(UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY));
 	create(bitSet.cbegin(), bitSet.cend(), tmp);
 	tmp.resetPtrs();
-	return new ItemIndexPrivateEliasFano(tmp);
+	return new ItemIndexPrivatePFoR(tmp);
 }
 
-uint8_t ItemIndexPrivateEliasFano::numLowerBits(uint32_t count, uint32_t upperBound)
-{
-	if (!count) {
-		return 0;
-	}
-
-// 	if (max+1 < count) {
-// 		throw std::domain_error("sserialize::ItemIndexPrivateEliasFano: expecting strongly monotone sequence");
-// 	}
-	
-	if (upperBound < count) { //exactly one entry which is 0
-		return 0;
-	}
-	
-	return std::floor( sserialize::logTo2(upperBound) - sserialize::logTo2(count) );
+uint32_t ItemIndexPrivatePFoR::blockSize() const {
+	return BlockSizes[m_bits.at(0)];
 }
 
-
-uint32_t ItemIndexPrivateEliasFano::upperBound(uint32_t count, uint32_t largestElement) {
-	largestElement -= (count-1);
-
-	uint32_t l2 = uint32_t(1) << sserialize::msb(largestElement);
-
-	if (l2 == largestElement) {
-		return l2;
-	}
-	else if (! (l2 << 1)) {
-		throw std::domain_error("sserialize::ItemIndexPrivateEliasFano: unable to encode sequence: maximum element is too large");
-	}
-	return l2 << 1;
+uint32_t ItemIndexPrivatePFoR::blockCount() const {
+	return m_size/blockSize();
 }
-
-
-uint32_t ItemIndexPrivateEliasFano::upperBoundStorage(uint32_t upperBound) {
-	return sserialize::msb(upperBound);
-}
-
-uint32_t ItemIndexPrivateEliasFano::upperBound() const {
-	if (size()) {
-		return uint32_t(1) << m_d.getVlPackedUint32(m_upperBoundBegin);
-	}
-	else {
-		return 0;
-	}
-}
-
-uint32_t ItemIndexPrivateEliasFano::upperBitsDataSize() const {
-	if (size()) {
-		return m_d.getVlPackedUint32(m_lowerBitsBegin+CompactUintArray::minStorageBytes(numLowerBits(), size()));
-	}
-	else {
-		return 0;
-	}
-}
-
-CompactUintArray
-ItemIndexPrivateEliasFano::lowerBits() const {
-	uint8_t nlb = numLowerBits();
-	if (size() && nlb) {
-		return CompactUintArray(m_d+m_lowerBitsBegin, nlb, size());
-	}
-	else {
-		return CompactUintArray();
-	}
-}
-
-UnaryCodeIterator ItemIndexPrivateEliasFano::upperBits() const {
-	if (size()) {
-		sserialize::UByteArrayAdapter::OffsetType ubBegin = m_lowerBitsBegin +
-			CompactUintArray::minStorageBytes(numLowerBits(), size()) +
-			m_upperBitsBegin;
-		return UnaryCodeIterator(m_d+ubBegin);
-	}
-	else {
-		return UnaryCodeIterator();
-	}
-}
-
-uint8_t ItemIndexPrivateEliasFano::numLowerBits() const {
-	return numLowerBits(size(), upperBound());
-}
-
-
 
 //END INDEX
 

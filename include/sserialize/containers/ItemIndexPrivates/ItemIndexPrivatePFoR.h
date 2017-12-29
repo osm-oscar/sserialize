@@ -17,10 +17,11 @@ class PForCreator;
 
 /** A single frame of reference block
   * Data format is as follows:
-  * --------------------------------
-  * DATA            |OUTLIERS
-  * --------------------------------
-  * CompactUintArray|vu32*
+  * 
+  * struct {
+  *   CompactUintArray data;
+  *   List< v_unsigned<32> > outliers;
+  * }
   * 
   * Since the delta between two successive entries is at least 1,
   * a zero encodes an exception located in the outliers section
@@ -146,12 +147,6 @@ private:
   *     CompactUintArray<5> blockDesc;
   * }
   * 
-  * where
-  * SIZE is the number of entries
-  * BLOCK_DATA contains the index encoded in PForBlocks
-  * BLOCK_BITSIZES encodes the bpn of PFoRBlock as BLOCK_BITSIZE = bpn-1
-  * BLOCK_SIZE is an offset into the block sizes array
-  * 
   **/
 
 class ItemIndexPrivatePFoR: public ItemIndexPrivate {
@@ -164,7 +159,7 @@ public:
 		24, 48, 96, 192, 384, 768, 1536, 3072 // 8 entriess
 	};
 public:
-	ItemIndexPrivatePFoR(const UByteArrayAdapter & d);
+	ItemIndexPrivatePFoR(sserialize::UByteArrayAdapter d);
 	virtual ~ItemIndexPrivatePFoR();
 	
 	virtual ItemIndex::Types type() const override;
@@ -206,12 +201,13 @@ public:
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
 private:
-	uint32_t firstId() const;
+	uint32_t blockSize() const;
+	uint32_t blockCount() const;
 private:
 	UByteArrayAdapter m_d;
 	uint32_t m_size;
-	uint32_t m_firstId;
-	uint32_t m_blockSize;
+	UByteArrayAdapter m_blocks;
+	CompactUintArray m_bits;
 	mutable AbstractArrayIterator<uint32_t> m_it;
 	mutable std::vector<uint32_t> m_cache;
 };
