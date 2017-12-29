@@ -377,7 +377,7 @@ inline int32_t up_vs32(uint8_t * s, int * len) { return up_v<int32_t>(s, len);}
 inline int64_t up_vs64(uint8_t* s, int* len) { return up_v<int64_t>(s, len);}
 
 template<typename UnsignedType>
-uint32_t psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s) {
+sserialize::SizeType psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s) {
 	uint32_t i = 0;
 	do {
 		s >>= 7;
@@ -387,7 +387,7 @@ uint32_t psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value &
 }
 
 template<typename SignedType>
-uint32_t psize_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s) {
+sserialize::SizeType psize_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s) {
 	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
 	UnsignedType tmp;
 	if (s < 0) {
@@ -402,19 +402,19 @@ uint32_t psize_v(typename std::enable_if<std::is_signed<SignedType>::value && st
 	return psize_v<UnsignedType>(tmp);
 }
 
-inline uint32_t psize_vu32(uint32_t s) {
+inline auto psize_vu32(uint32_t s) {
 	return psize_v<uint32_t>(s);
 }
 
-inline uint32_t psize_vs32(int32_t s) {
+inline auto psize_vs32(int32_t s) {
 	return psize_v<int32_t>(s);
 }
 
-inline uint32_t psize_vu64(uint64_t s) {
+inline auto psize_vu64(uint64_t s) {
 	return psize_v<uint64_t>(s);
 }
 
-inline uint32_t psize_vs64(int64_t s) {
+inline auto psize_vs64(int64_t s) {
 	return psize_v<int64_t>(s);
 }
 
