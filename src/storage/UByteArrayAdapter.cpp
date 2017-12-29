@@ -213,7 +213,7 @@ UByteArrayAdapter( UByteArrayAdapter::createCache(size, mmt) )
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(OffsetType size, std::string fileName) :
-UByteArrayAdapter(  )
+UByteArrayAdapter( UByteArrayAdapter::createFile(size, fileName) )
 {}
 
 UByteArrayAdapter::UByteArrayAdapter(const MemoryView & mem) :
@@ -1029,7 +1029,17 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 	return adap;
 }
 
-UByteArrayAdapter UByteArrayAdapter::open(const std::string& fileName, bool writable, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
+UByteArrayAdapter UByteArrayAdapter::open(
+	const std::string& fileName,
+	bool writable,
+	UByteArrayAdapter::OffsetType maxFullMapSize,
+	#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+	uint8_t chunkSizeExponent
+	#else
+	uint8_t
+	#endif
+	)
+{
 	if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
 		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 		throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
