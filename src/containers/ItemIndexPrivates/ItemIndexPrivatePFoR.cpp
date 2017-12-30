@@ -42,10 +42,8 @@ m_blockPos(0)
 {
 	if (m_indexPos < m_indexSize) {
 		fetchBlock(m_data, 0);
-		m_data += m_block.getSizeInBytes();
 	}
 }
-
 
 PFoRIterator::PFoRIterator(uint32_t idxSize) :
 m_indexPos(idxSize),
@@ -67,7 +65,6 @@ PFoRIterator::next() {
 		++m_blockPos;
 		if (m_blockPos >= m_block.size()) {
 			fetchBlock(m_data, m_block.back());
-			m_data += m_block.getSizeInBytes();
 		}
 	}
 	
@@ -107,6 +104,7 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 		uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_indexSize - blockNum*defaultBlockSize);
 		uint32_t blockBits = m_bits.at(blockNum+1);
 		m_block = PFoRBlock(d, prev, blockSize, blockBits);
+		m_data += m_block.getSizeInBytes();
 		return true;
 	}
 	return false;
@@ -118,16 +116,14 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 PFoRCreator::PFoRCreator() :
 m_fixedSize(false),
 m_size(0),
-m_blockSizeOffset(ItemIndexPrivatePFoR::BlockSizes[ItemIndexPrivatePFoR::DefaultBlockSizeOffset]),
+m_blockSizeOffset(ItemIndexPrivatePFoR::DefaultBlockSizeOffset),
 m_prev(0),
 m_blockBits(1, m_blockSizeOffset),
 m_data(0, MM_PROGRAM_MEMORY),
 m_dest( new UByteArrayAdapter(0, MM_PROGRAM_MEMORY) ),
 m_putPtr(0),
 m_delete(true)
-{
-	
-}
+{}
 
 PFoRCreator::PFoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset) :
 m_fixedSize(false),
@@ -190,6 +186,7 @@ void PFoRCreator::push_back(uint32_t id) {
 	if (m_values.size() == ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]) {
 		flushBlock();
 	}
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_values.size(), ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]);
 }
 
 void PFoRCreator::flushBlock() {
@@ -199,7 +196,17 @@ void PFoRCreator::flushBlock() {
 	if (!m_fixedSize) {
 		m_size += m_values.size();
 	}
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	auto blockDataBegin = m_data.tellPutPtr();
+	#endif
 	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end());
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	{
+		UByteArrayAdapter blockData(m_data);
+		blockData.setPutPtr(blockDataBegin);
+		PFoRBlock block(blockData, 0, m_values.size(), blockBits);
+	}
+	#endif
 	m_blockBits.push_back(blockBits);
 	m_values.clear();
 }
@@ -297,23 +304,33 @@ const std::array<const uint32_t, 25> ItemIndexPrivatePFoR::BlockSizes = {
 ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(UByteArrayAdapter d) :
 m_d(d)
 {
+	sserialize::SizeType totalSize = 0;
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(uint32_t(0), d.tellGetPtr());
 	m_size = d.getVlPackedUint32();
 	uint32_t blockDataSize = d.getVlPackedUint32();
+	
+	totalSize += d.tellGetPtr();
+	
 	d.shrinkToGetPtr();
 	
 	m_blocks = UByteArrayAdapter(d, 0, blockDataSize);
 	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5);
 	
-	sserialize::SizeType totalSize = psize_vu32(m_size) + psize_vu32(blockDataSize) +
-	m_blocks.size() + CompactUintArray::minStorageBytes(5, blockCount());
+	uint32_t blockSizeOffset = m_bits.at(0);
+	uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes.at(blockSizeOffset);
+	uint32_t blockCount = m_size/blockSize + uint32_t(m_size%blockSize != 0);
+	
+	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5, blockCount);
+	
+	totalSize += blockDataSize;
+	totalSize += m_bits.getSizeInBytes();
+	
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(totalSize, m_d.size());
 	if (m_d.size() != totalSize) {
 		m_d = UByteArrayAdapter(m_d, 0, totalSize);
 	}
 	
 	m_it = cbegin();
-	
-	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(m_bits.at(0), BlockSizes.size());
 }
 
 ItemIndexPrivatePFoR::~ItemIndexPrivatePFoR() {}
