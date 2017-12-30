@@ -33,6 +33,23 @@ uint32_t PFoRBlock::at(uint32_t pos) const {
 	return m_values.at(pos);
 }
 
+
+PFoRBlock::const_iterator PFoRBlock::begin() const {
+	return m_values.begin();
+}
+
+PFoRBlock::const_iterator PFoRBlock::cbegin() const {
+	return m_values.cbegin();
+}
+
+PFoRBlock::const_iterator PFoRBlock::end() const {
+	return m_values.end();
+}
+
+PFoRBlock::const_iterator PFoRBlock::cend() const {
+	return m_values.cend();
+}
+
 PFoRIterator::PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
 m_data(data),
 m_bits(bits),
@@ -206,6 +223,12 @@ void PFoRCreator::flushBlock() {
 		UByteArrayAdapter blockData(m_data);
 		blockData.setPutPtr(blockDataBegin);
 		PFoRBlock block(blockData, 0, m_values.size(), blockBits);
+		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_values.size(), block.size());
+		uint32_t realId = 0;
+		for(uint32_t i(0); i < m_values.size(); ++i) {
+			realId += m_values[i];
+			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(realId, block.at(i));
+		}
 	}
 	#endif
 	m_blockBits.push_back(blockBits);

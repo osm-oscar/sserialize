@@ -31,6 +31,8 @@ class PForCreator;
 
 class PFoRBlock final {
 public:
+	typedef std::vector<uint32_t>::const_iterator const_iterator;
+public:
 	PFoRBlock();
 	PFoRBlock(const PFoRBlock&) = default;
 	PFoRBlock(PFoRBlock&&) = default;
@@ -43,6 +45,10 @@ public:
 	uint32_t front() const;
 	uint32_t back() const;
 	uint32_t at(uint32_t pos) const;
+	const_iterator begin() const;
+	const_iterator cbegin() const;
+	const_iterator end() const;
+	const_iterator cend() const;
 public:
 	template<typename T_OUTPUT_ITERATOR>
 	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, T_OUTPUT_ITERATOR out);
@@ -287,9 +293,9 @@ void PFoRCreator::optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, 
 		return;
 	}
 	
-	uint32_t mindv = *begin;
-	uint32_t maxdv = *begin;
-	for(auto it(begin+1); begin != end; ++begin) {
+	uint32_t mindv = std::numeric_limits<uint32_t>::max();
+	uint32_t maxdv = std::numeric_limits<uint32_t>::min();
+	for(auto it(begin); begin != end; ++begin) {
 		mindv = std::max<uint32_t>(mindv, *it);
 		maxdv = std::max<uint32_t>(maxdv, *it);
 	}
