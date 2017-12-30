@@ -65,6 +65,7 @@ PFoRIterator::next() {
 		++m_blockPos;
 		if (m_blockPos >= m_block.size()) {
 			fetchBlock(m_data, m_block.back());
+			m_blockPos = 0;
 		}
 	}
 	
@@ -100,7 +101,7 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 		//there is exactly one partial block at the end
 		//all blocks before have the same blocksize
 		uint32_t defaultBlockSize = ItemIndexPrivatePFoR::BlockSizes.at(m_bits.at(0));
-		uint32_t blockNum = m_indexPos/m_indexSize;
+		uint32_t blockNum = m_indexPos/defaultBlockSize;
 		uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_indexSize - blockNum*defaultBlockSize);
 		uint32_t blockBits = m_bits.at(blockNum+1);
 		m_block = PFoRBlock(d, prev, blockSize, blockBits);
@@ -320,7 +321,7 @@ m_d(d)
 	uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes.at(blockSizeOffset);
 	uint32_t blockCount = m_size/blockSize + uint32_t(m_size%blockSize != 0);
 	
-	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5, blockCount);
+	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5, blockCount+1);
 	
 	totalSize += blockDataSize;
 	totalSize += m_bits.getSizeInBytes();

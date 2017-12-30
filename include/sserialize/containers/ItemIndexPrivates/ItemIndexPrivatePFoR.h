@@ -221,7 +221,7 @@ namespace ItemIndexImpl {
 
 template<typename T_OUTPUT_ITERATOR>
 sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, T_OUTPUT_ITERATOR out) {
-	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellPutPtr());
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	sserialize::SizeType getPtr = d.tellGetPtr();
 	CompactUintArray arr(d, bpn, size);
 	d.incGetPtr(arr.getSizeInBytes());
