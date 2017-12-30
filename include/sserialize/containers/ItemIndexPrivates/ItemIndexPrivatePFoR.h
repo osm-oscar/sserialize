@@ -297,7 +297,7 @@ void PFoRCreator::optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, 
 	uint32_t mindv = std::numeric_limits<uint32_t>::max();
 	uint32_t maxdv = std::numeric_limits<uint32_t>::min();
 	for(auto it(begin); begin != end; ++begin) {
-		mindv = std::max<uint32_t>(mindv, *it);
+		mindv = std::min<uint32_t>(mindv, *it);
 		maxdv = std::max<uint32_t>(maxdv, *it);
 	}
 	
@@ -312,6 +312,8 @@ void PFoRCreator::optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, 
 			optBits = bits;
 		}
 	}
+	
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), optStorageSize);
 }
 
 template<typename T_ITERATOR>
