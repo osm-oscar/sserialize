@@ -113,7 +113,7 @@ public:
 			uint32_t len = sserialize::p_v<uint32_t>(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32 len", realLen, len);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32", sserialize::up_v<uint32_t>(buf, 0), num);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), len, sserialize::psize_vu32(num));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), sserialize::SizeType(len), sserialize::psize_vu32(num));
 
 
 			if (bpn < 32) {
@@ -126,7 +126,7 @@ public:
 				
 				uint32_t len = sserialize::p_v<int32_t>(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_sv32", sserialize::up_v<int32_t>(buf, 0), sNum);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), len, sserialize::psize_vs32(sNum));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), sserialize::SizeType(len), sserialize::psize_vs32(sNum));
 			}
 		}
 		
@@ -179,7 +179,7 @@ public:
 			uint32_t len = sserialize::p_v<uint64_t>(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64 len", realLen, len);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64", sserialize::up_v<uint64_t>(buf, 0), num);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), len, sserialize::psize_v<uint64_t>(num));
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), sserialize::SizeType(len), sserialize::psize_v<uint64_t>(num));
 
 
 			if (bpn < 64) {
@@ -192,7 +192,7 @@ public:
 				
 				uint32_t len = sserialize::p_v<int64_t>(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("pack/unpack", sserialize::up_v<int64_t>(buf, 0), sNum);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), len, sserialize::psize_v<int64_t>(sNum));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), sserialize::SizeType(len), sserialize::psize_v<int64_t>(sNum));
 			}
 		}
 		
