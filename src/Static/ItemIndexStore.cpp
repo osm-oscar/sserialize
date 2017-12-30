@@ -3,8 +3,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/iterator/UDWIterator.h>
 #include <sserialize/iterator/UDWIteratorPrivateHD.h>
-#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h>
-#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h>
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
 #include <minilzo/minilzo.h>
 
 namespace sserialize {
@@ -241,13 +240,29 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 
 	uint32_t largestIndex = 0;
 	sserialize::UByteArrayAdapter::SizeType largestSpaceUsageIndex = 0;
+	std::array<uint32_t, 32> sizeHisto;
+	sizeHisto.fill(0);
 	for(uint32_t i(0), s(size()); i < s; ++i) {
 		sserialize::ItemIndex idx(at(i));
+		sizeHisto.at( sserialize::msb(idx.size()) ) += 1;
 		largestIndex = std::max<uint32_t>(largestIndex, idx.size());
 		largestSpaceUsageIndex = std::max(largestSpaceUsageIndex, idx.getSizeInBytes());
 	}
 	out << "Largest index size: " << largestIndex << std::endl;
 	out << "Largest space usage: " << largestSpaceUsageIndex << std::endl;
+	out << "Size historgram [i>v]: ";
+	for(uint32_t i(0); i < sizeHisto.size(); ++i) {
+		if (sizeHisto.at(i)) {
+			if (i<15) {
+				out << (uint32_t(1) << (i+1));
+			}
+			else {
+				out << "2^" << i+1;
+			}
+			out << ": " << double(100*sizeHisto.at(i))/size() << ", ";
+		}
+	}
+	out << std::endl;
 
 	uint64_t totalElementCount = 0;
 	uint64_t sizeOfSelectedIndices = 0;
@@ -298,6 +313,25 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered
 	idEntropy = - idEntropy;
 	out << "Id entropy: " << idEntropy << std::endl;
 	out << "Id discrete entropy: " << idDiscreteEntropy << std::endl;
+	{ //index specific stats
+		if (indexType() == ItemIndex::T_PFOR) {
+			std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
+			std::map<uint32_t, uint32_t> bcOcc;
+			bsOcc.fill(0);
+			for(uint32_t i(0), s(size()); i < s; ++i) {
+				sserialize::ItemIndexPrivatePFoR idx( rawDataAt(i) );
+				bsOcc.at(idx.blockSizeOffset()) += 1;
+			}
+			out << "ItemIndexPFoR::BlockSize histogram: ";
+			for(uint32_t i(0); i < bsOcc.size(); ++i) {
+				if (bsOcc.at(i)) {
+					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << double(100*bsOcc.at(i))/size() << ", ";
+				}
+			}
+		}
+		out << std::endl;
+	}
+	
 	out << "Static::ItemIndexStore::Stats->END" << std::endl;
 	return out;
 }
