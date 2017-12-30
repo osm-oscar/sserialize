@@ -242,7 +242,8 @@ void PFoRCreator::flush() {
 	m_dest->putVlPackedUint32(m_size);
 	m_dest->putVlPackedUint32(m_data.size());
 	m_dest->putData(m_data);
-	CompactUintArray::create(m_blockBits, *m_dest);
+	uint32_t bits = CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(bits, ItemIndexPrivatePFoR::BlockDescBitWidth);
 }
 
 UByteArrayAdapter PFoRCreator::flushedData() const {
@@ -325,6 +326,8 @@ const std::array<const uint32_t, 25> ItemIndexPrivatePFoR::BlockSizes = {
 	24, 48, 96, 192, 384, 768, 1536, 3072 // 8 entriess
 };
 
+constexpr uint32_t ItemIndexPrivatePFoR::BlockDescBitWidth;
+
 ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(UByteArrayAdapter d) :
 m_d(d)
 {
@@ -338,13 +341,13 @@ m_d(d)
 	d.shrinkToGetPtr();
 	
 	m_blocks = UByteArrayAdapter(d, 0, blockDataSize);
-	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5);
+	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), ItemIndexPrivatePFoR::BlockDescBitWidth);
 	
 	uint32_t blockSizeOffset = m_bits.at(0);
 	uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes.at(blockSizeOffset);
 	uint32_t blockCount = m_size/blockSize + uint32_t(m_size%blockSize != 0);
 	
-	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), 5, blockCount+1);
+	m_bits = CompactUintArray(UByteArrayAdapter(d, blockDataSize), ItemIndexPrivatePFoR::BlockDescBitWidth, blockCount+1);
 	
 	totalSize += blockDataSize;
 	totalSize += m_bits.getSizeInBytes();

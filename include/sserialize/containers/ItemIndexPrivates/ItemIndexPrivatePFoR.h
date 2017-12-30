@@ -164,6 +164,7 @@ public:
 	//maximum number of entries a single block may hold
 	static constexpr uint32_t DefaultBlockSizeOffset = 9;
 	static const std::array<const uint32_t, 25> BlockSizes;
+	static constexpr uint32_t BlockDescBitWidth = 5;
 public:
 	ItemIndexPrivatePFoR(sserialize::UByteArrayAdapter d);
 	virtual ~ItemIndexPrivatePFoR();
@@ -331,7 +332,7 @@ uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
 		uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[i];
 		uint32_t numFullBlocks = dv.size()/blockSize;
 		uint32_t numPartialBlocks = dv.size()%blockSize > 0; // int(false)==0, int(true)==1
-		sserialize::SizeType ds = CompactUintArray::minStorageBytes(5, 1+numFullBlocks+numPartialBlocks);
+		sserialize::SizeType ds = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
 		for(auto it(dv.begin()), end(dv.end()); it < end; it += blockSize) {
 			auto blockEnd = it + std::min<std::ptrdiff_t>(blockSize, end-it);
 			uint32_t myOptBits, myBlockStorageSize;
@@ -355,9 +356,9 @@ template<typename T_ITERATOR>
 bool ItemIndexPrivatePFoR::create(T_ITERATOR begin, const T_ITERATOR & end, UByteArrayAdapter & dest) {
 	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
 	using std::distance;
-	uint32_t blockSize = detail::ItemIndexImpl::PFoRCreator::optBlockSizeOffset(begin, end);
+	uint32_t blockSizeOffset = detail::ItemIndexImpl::PFoRCreator::optBlockSizeOffset(begin, end);
 	uint32_t size = distance(begin, end);
-	detail::ItemIndexImpl::PFoRCreator creator(dest, size, blockSize);
+	detail::ItemIndexImpl::PFoRCreator creator(dest, size, blockSizeOffset);
 	for(; begin != end; ++begin) {
 		creator.push_back(*begin);
 	}
