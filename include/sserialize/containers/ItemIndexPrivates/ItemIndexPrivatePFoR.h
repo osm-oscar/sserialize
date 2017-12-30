@@ -207,7 +207,8 @@ public:
 	///create new index beginning at dest.tellPutPtr()
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
-private:
+public:
+	uint32_t blockSizeOffset() const;
 	uint32_t blockSize() const;
 	uint32_t blockCount() const;
 private:
@@ -324,10 +325,9 @@ uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
 		dv.resize(distance(begin, end));
 		uint32_t prev = 0;
 		uint32_t count = 0;
-		for(auto it(begin); it != end; ++it) {
+		for(auto it(begin); it != end; ++it, ++count) {
 			dv[count] = (*it - prev);
 			prev = *it;
-			++count;
 		}
 	}
 	uint32_t optBlockSizeOffset = ItemIndexPrivatePFoR::BlockSizes.size()-1;

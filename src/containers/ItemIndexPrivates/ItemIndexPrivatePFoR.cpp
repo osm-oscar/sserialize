@@ -524,8 +524,12 @@ ItemIndexPrivatePFoR::fromBitSet(const DynamicBitSet & bitSet) {
 	return new ItemIndexPrivatePFoR(tmp);
 }
 
+uint32_t ItemIndexPrivatePFoR::blockSizeOffset() const {
+	return m_bits.at(0);
+}
+
 uint32_t ItemIndexPrivatePFoR::blockSize() const {
-	return BlockSizes[m_bits.at(0)];
+	return BlockSizes[blockSizeOffset()];
 }
 
 uint32_t ItemIndexPrivatePFoR::blockCount() const {
