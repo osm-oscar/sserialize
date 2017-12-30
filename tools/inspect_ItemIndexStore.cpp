@@ -215,10 +215,10 @@ void printHelp() {
 	-o filename\tout file name\n \
 	-eq filename\tequality test \n \
 	-ds\tdump stats \n \
-	-t type\ttransform to (rline|wah|de|rlede|simple|native|eliasfano) \n \
+	-t type\ttransform to (rline|wah|de|rlede|simple|native|eliasfano|pfor) \n \
 	-nd\tdisable deduplication of item index store \n \
 	-c\tcheck item index store \
-	";
+	" << std::endl;
 }
 
 int main(int argc, char ** argv) {
@@ -302,6 +302,8 @@ int main(int argc, char ** argv) {
 				transform = sserialize::ItemIndex::T_NATIVE;
 			else if (t == "eliasfano")
 				transform = sserialize::ItemIndex::T_ELIAS_FANO;
+			else if (t == "pfor")
+				transform = sserialize::ItemIndex::T_PFOR;
 			++i;
 		}
 		else if (curArg == "-nd") {
@@ -453,10 +455,7 @@ int main(int argc, char ** argv) {
 	}
 	
 	if (dumpStats) {
-		std::cout <<  "#element count\tindex size" << std::endl;
-		for(uint32_t i = 0; i < store.size(); ++i) {
-			std::cout << store.at(i).size() << "\t" << store.rawDataAt(i).size() << std::endl;
-		}
+		store.printStats(std::cout);
 	}
 	
 	if (!equalityTest.empty()) {
