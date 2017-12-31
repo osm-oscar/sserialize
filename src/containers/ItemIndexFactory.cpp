@@ -73,7 +73,7 @@ UByteArrayAdapter ItemIndexFactory::at(sserialize::OffsetType offset) const {
 }
 
 void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
-	if (size()) { //clear eversthing
+	if (size()) { //clear everything
 		m_hitCount = 0;
 		m_hash.clear();
 		m_dataOffsets.clear();
@@ -214,6 +214,20 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		++m_hitCount;
 	}
 	return narrow_check<uint32_t>(id);
+}
+
+void ItemIndexFactory::recalculateDeduplicationData() {
+	m_mapLock.acquireWriteLock();
+	m_hash.clear();
+	m_dataOffsets.clear();
+	std::vector<uint8_t> idxData;
+	for(uint32_t id(0), s(size()); id < s; ++id) {
+		auto hv = hashFunc( this->indexDataById(id) );
+		uint64_t & prevElement = m_hash[hv];
+		m_dataOffsets.emplace_back(prevElement, id);
+		prevElement = m_dataOffsets.size()-1;
+	}
+	m_mapLock.releaseWriteLock();
 }
 
 UByteArrayAdapter ItemIndexFactory::getFlushedData() {

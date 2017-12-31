@@ -47,7 +47,7 @@ private:
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
 	MultiReaderSingleWriterLock m_mapLock;
 	MultiReaderSingleWriterLock m_dataLock;
-	
+private:
 	uint64_t hashFunc(const UByteArrayAdapter & v);
 	uint64_t hashFunc(const std::vector< uint8_t >& v);
 	///returns the id of the index or -1 if none was found @thread-safety: yes
@@ -78,8 +78,11 @@ public:
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	//default is on
 	void setDeduplication(bool dedup) { m_useDeduplication  = dedup; }
-		
-	inline ItemIndex indexById(uint32_t id) const { return indexByOffset(m_idToOffsets.at(id));}
+	
+	void recalculateDeduplicationData();
+	
+	inline UByteArrayAdapter indexDataById(uint32_t id) const { return m_indexStore+m_idToOffsets.at(id); }
+	inline ItemIndex indexById(uint32_t id) const { return indexByOffset(m_idToOffsets.at(id)); }
 	inline uint32_t idxSize(uint32_t id) const { return m_idxSizes.at(id); }
 
 	template<class TSortedContainer>
