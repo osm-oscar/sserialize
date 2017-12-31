@@ -721,6 +721,7 @@ int main(int argc, char ** argv) {
 		sserialize::ItemIndex::T_WAH,
 // 		sserialize::ItemIndex::T_ELIAS_FANO,
 		sserialize::ItemIndex::T_RLE_DE,
+// 		sserialize::ItemIndex::T_PFOR,
 // 		sserialize::ItemIndex::T_NATIVE | __IT_MERGE_WITH_VECTOR,
 // 		sserialize::ItemIndex::T_WAH | __IT_MERGE_WITH_VECTOR,
 // 		sserialize::ItemIndex::T_RLE_DE | __IT_MERGE_WITH_VECTOR,
