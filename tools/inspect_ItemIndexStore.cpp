@@ -477,26 +477,7 @@ int main(int argc, char ** argv) {
 	
 	if (transform != ItemIndex::T_NULL) {
 		if (outFileName.empty()) {
-			outFileName = inFileName;
-			switch (transform) {
-			case ItemIndex::T_SIMPLE:
-				outFileName += ".simple";
-				break;
-			case ItemIndex::T_REGLINE:
-				outFileName += ".rline";
-				break;
-			case ItemIndex::T_DE:
-				outFileName += ".de";
-				break;
-			case ItemIndex::T_RLE_DE:
-				outFileName += ".rlede";
-				break;
-			case ItemIndex::T_WAH:
-				outFileName += ".wah";
-				break;
-			default:
-				return -1;
-			}
+			outFileName = inFileName + sserialize::to_string(transform);
 		}
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
 		ItemIndexFactory factory;
