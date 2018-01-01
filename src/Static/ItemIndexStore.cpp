@@ -229,11 +229,7 @@ UByteArrayAdapter ItemIndexStore::getHuffmanTreeData() const {
 }
 
 std::ostream& ItemIndexStore::printStats(std::ostream& out) const {
-	std::unordered_set<uint32_t> indexIds;
-	for(uint32_t i = 0; i < size(); i++)
-		indexIds.insert(i);
-	std::function<bool(uint32_t)> filter = [](uint32_t) { return true; };
-	return printStats(out, filter);
+	return printStats(out, [](uint32_t) { return true; });
 }
 
 std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const {
