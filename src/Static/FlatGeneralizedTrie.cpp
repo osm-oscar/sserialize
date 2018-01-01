@@ -271,7 +271,7 @@ std::ostream& FlatGST::printStats(std::ostream& out) const {
 		indexPtrs.insert(e.suffixPtr());
 		indexPtrs.insert(e.suffixPrefixPtr());
 	}
-	m_idxStore.printStats(out, indexPtrs);
+	m_idxStore.printStats(out, [&indexPtrs](uint32_t id) -> bool { return indexPtrs.count(id); });
 	
 	out << "FlatGST::Stats::End" << std::endl;
 	return out;
