@@ -162,8 +162,9 @@ private:
 class ItemIndexPrivatePFoR: public ItemIndexPrivate {
 public:
 	//maximum number of entries a single block may hold
-	static constexpr uint32_t DefaultBlockSizeOffset = 9;
-	static const std::array<const uint32_t, 25> BlockSizes;
+	static const uint32_t DefaultBlockSizeOffset;
+	///Available block sizes. Note that these are NOT ordered
+	static const std::array<const uint32_t, 32> BlockSizes;
 	static constexpr uint32_t BlockDescBitWidth = 5;
 public:
 	ItemIndexPrivatePFoR(sserialize::UByteArrayAdapter d);
@@ -334,6 +335,9 @@ uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
 	sserialize::SizeType optDataSize = std::numeric_limits<sserialize::SizeType>::max();
 	for(uint32_t i(0), s(ItemIndexPrivatePFoR::BlockSizes.size()); i < s; ++i) {
 		uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[i];
+		if (blockSize >= 2*dv.size()) {
+			continue;
+		}
 		uint32_t numFullBlocks = dv.size()/blockSize;
 		uint32_t numPartialBlocks = dv.size()%blockSize > 0; // int(false)==0, int(true)==1
 		sserialize::SizeType ds = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
@@ -346,9 +350,6 @@ uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
 		if (ds < optDataSize) {
 			optBlockSizeOffset = i;
 			optDataSize = ds;
-		}
-		if (blockSize >= dv.size()) {
-			break;
 		}
 	}
 	return optBlockSizeOffset;

@@ -242,7 +242,10 @@ void PFoRCreator::flush() {
 	m_dest->putVlPackedUint32(m_size);
 	m_dest->putVlPackedUint32(m_data.size());
 	m_dest->putData(m_data);
-	uint32_t bits = CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
+	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+	uint32_t bits =
+	#endif
+		CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(bits, ItemIndexPrivatePFoR::BlockDescBitWidth);
 }
 
@@ -320,11 +323,14 @@ struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::
 
 //BEGIN INDEX
 
-const std::array<const uint32_t, 25> ItemIndexPrivatePFoR::BlockSizes = {
-	1, 2, 4, 8, 16, 32, 64, 128, 256, 512, //10 entries
-	1024, 2048, 4096, 8192, 16384, 32768, 65536, //7 entries
-	24, 48, 96, 192, 384, 768, 1536, 3072 // 8 entriess
+const std::array<const uint32_t, 32> ItemIndexPrivatePFoR::BlockSizes = {
+	1, 2, 4, 6, 8, 12, 16, 20, 24, 28, //10 entries
+	32, 48, 64, 96, 128, 192, 256, 384, 512, 768, //10 entries
+	1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384, 24576, //10 entries
+	32768, 65536 //2 entries
 };
+
+const uint32_t ItemIndexPrivatePFoR::DefaultBlockSizeOffset = 14;
 
 constexpr uint32_t ItemIndexPrivatePFoR::BlockDescBitWidth;
 
