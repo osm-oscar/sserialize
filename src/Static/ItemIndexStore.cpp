@@ -260,16 +260,10 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		
 		std::array<uint32_t, 32> sizeHisto;
 		
-		uint64_t wordAlignedBitSetSize = 0;
-		
 		std::unordered_map<uint32_t, uint32_t> idFreqs;
 		
 		//pfor index stats
 		std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
-		
-		
-		//temporary buffers
-		std::unordered_set<uint32_t> wabtmp;
 		
 		Stats() {
 			sizeHisto.fill(0);
@@ -277,7 +271,6 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		}
 		
 		void update(const sserialize::ItemIndex & idx, const std::vector<uint32_t> & data) {
-			wabtmp.clear();
 			auto idxStorageSize = idx.getSizeInBytes();
 			numIdx += 1;
 			sizeHisto.at( sserialize::msb(idx.size()) ) += 1;
@@ -287,10 +280,8 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			siSummedIdxSize += data.size();
 			
 			for(uint32_t x : data)  {
-				wabtmp.insert(x/8);
 				idFreqs[x] += 1;
 			}
-			wordAlignedBitSetSize += wabtmp.size();
 			if (idx.type() == ItemIndex::T_PFOR) {
 				const sserialize::ItemIndexPrivatePFoR * pidx = static_cast<const sserialize::ItemIndexPrivatePFoR*>(idx.priv());
 				bsOcc.at(pidx->blockSizeOffset()) += 1;
@@ -305,7 +296,6 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			for(std::size_t i(0), s(sizeHisto.size()); i < s; ++i) {
 				sizeHisto[i] += other.sizeHisto[i];
 			}
-			wordAlignedBitSetSize += other.wordAlignedBitSetSize;
 			for(const auto & x : other.idFreqs) {
 				idFreqs[x.first] += x.second;
 			}
@@ -333,7 +323,6 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			out << "Summed idx.size()):" << siSummedIdxSize << std::endl;
 			out << "Storage size: " << siStorageSize << std::endl;
 			out << "Mean bits/id (headers included): " << double(siStorageSize*8)/siSummedIdxSize << std::endl;
-			out << "Minimum storage need for word aligned bit set (compression-ratio 100%): " << wordAlignedBitSetSize << std::endl;
 			long double idEntropy = 0;
 			long double idDiscreteEntropy = 0;
 			for(auto it(idFreqs.begin()), end(idFreqs.end()); it != end; ++it) {
