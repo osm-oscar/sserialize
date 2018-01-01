@@ -18,9 +18,6 @@ namespace sserialize {
   * Data is delta encoded with rle. Type of word is selected by the least significant bit.
   * If data[i] & 0x1 then data is a rle and the next varuint32 tells the difference between the (data[i] >> 1) elements
   *
-  *
-  * TODO:  make sure that for COUNT==1 the size can be dropped
-  *
   */
   
 class ItemIndexPrivateRleDE;
