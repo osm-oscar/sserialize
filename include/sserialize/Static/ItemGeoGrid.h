@@ -187,7 +187,7 @@ public:
 		out << "Smallest index: " << smallestsIdx << std::endl;
 		out << "Largest index: " << largestIdx << std::endl;
 		out << "IndexStore Information: " << std::endl;
-		m_indexStore.printStats(out, indexIds);
+		m_indexStore.printStats(out, [indexIds](uint32_t id) -> bool { return indexIds.count(id);});
 		out << "ItemGeoGrid Stats --END" << std::endl;
 		return out;
 	}

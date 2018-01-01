@@ -660,7 +660,7 @@ std::ostream& ItemIndexStoreFromFactory::printStats(std::ostream& out) const {
 	return out;
 }
 
-std::ostream& ItemIndexStoreFromFactory::printStats(std::ostream& out, const std::unordered_set<uint32_t> & /*indexIds*/) const {
+std::ostream& ItemIndexStoreFromFactory::printStats(std::ostream& out, std::function<bool(uint32_t)>) const {
 	return out;
 }
 

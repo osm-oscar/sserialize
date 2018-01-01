@@ -4,7 +4,9 @@
 #include <sserialize/iterator/UDWIterator.h>
 #include <sserialize/iterator/UDWIteratorPrivateHD.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivates.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <minilzo/minilzo.h>
+#include <mutex>
 
 namespace sserialize {
 namespace Static {
@@ -230,108 +232,176 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out) const {
 	std::unordered_set<uint32_t> indexIds;
 	for(uint32_t i = 0; i < size(); i++)
 		indexIds.insert(i);
-	return printStats(out, indexIds);
+	std::function<bool(uint32_t)> filter = [](uint32_t) { return true; };
+	return printStats(out, filter);
 }
 
-std::ostream& ItemIndexStore::printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const {
+std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const {
+	uint32_t threadCount = std::max<uint32_t>(1, std::thread::hardware_concurrency()/2);
 	out << "Static::ItemIndexStore::Stats->BEGIN (info depends on selected indices)" << std::endl;
 	out << "Storage size  of ItemIndexStore: " << getSizeInBytes() << std::endl;
-	out << "size: " << indexIds.size() << std::endl;
-
-	uint32_t largestIndex = 0;
-	sserialize::UByteArrayAdapter::SizeType largestSpaceUsageIndex = 0;
-	std::array<uint32_t, 32> sizeHisto;
-	sizeHisto.fill(0);
-	for(uint32_t i(0), s(size()); i < s; ++i) {
-		sserialize::ItemIndex idx(at(i));
-		sizeHisto.at( sserialize::msb(idx.size()) ) += 1;
-		largestIndex = std::max<uint32_t>(largestIndex, idx.size());
-		largestSpaceUsageIndex = std::max(largestSpaceUsageIndex, idx.getSizeInBytes());
-	}
-	out << "Largest index size: " << largestIndex << std::endl;
-	out << "Largest space usage: " << largestSpaceUsageIndex << std::endl;
-	out << "Size historgram [i>v]: ";
-	for(uint32_t i(0); i < sizeHisto.size(); ++i) {
-		if (sizeHisto.at(i)) {
-			if (i<15) {
-				out << (uint32_t(1) << (i+1));
-			}
-			else {
-				out << "2^" << i+1;
-			}
-			out << ": " << double(100*sizeHisto.at(i))/size() << ", ";
-		}
-	}
-	out << std::endl;
-
-	uint64_t totalElementCount = 0;
-	uint64_t sizeOfSelectedIndices = 0;
-	long double meanBitsPerId = 0;
-	for(std::unordered_set<uint32_t>::const_iterator idIt = indexIds.begin(); idIt != indexIds.end(); ++idIt) {
-		uint32_t i = *idIt;
-		ItemIndex idx(at(i));
-		totalElementCount += idx.size();
-		meanBitsPerId += idx.size()*idx.bpn();
-		sizeOfSelectedIndices += idx.getSizeInBytes();
-	}
-	meanBitsPerId /= totalElementCount;
 	
-	out << "Total element count (sum idx.size()):" << totalElementCount << std::endl;
-	out << "Size of selected indices: " << sizeOfSelectedIndices << std::endl;
-	out << "Mean bits per id: " << meanBitsPerId << std::endl;
-	out << "Mean bits per id (headers included): " << (long double)sizeOfSelectedIndices/totalElementCount*8 << std::endl;
+	struct State {
+		uint32_t size;
+		std::atomic<uint32_t> i;
+		std::mutex lock;
+		ProgressInfo pinfo;
+	} state;
+	state.size = this->size();
+	state.i = 0;
 
-	uint64_t wordAlignedBitSetSize = 0;
-	std::unordered_set<uint32_t> wabSet;
-	std::unordered_map<uint32_t, uint32_t> idFreqs;
-	for(std::unordered_set<uint32_t>::const_iterator idIt = indexIds.begin(); idIt != indexIds.end(); ++idIt) {
-		uint32_t i = *idIt;
-		ItemIndex idx(at(i));
-		for(uint32_t j(0), s(idx.size()); j < s; j++)  {
-			uint32_t id = idx.at(j);
-			
-			wabSet.insert(id/8);
-			
-			if (idFreqs.count(id) == 0) {
-				idFreqs[id] = 0;
-			}
-			idFreqs[id] += 1;
-		}
-		wordAlignedBitSetSize += wabSet.size();
-		wabSet.clear();
-	}
-	out << "Minimum storage need for word aligned bit set (compression-ratio 100%): " << wordAlignedBitSetSize << std::endl;
-	
-	long double idEntropy = 0;
-	long double idDiscreteEntropy = 0;
-	for(std::unordered_map<uint32_t, uint32_t>::iterator it = idFreqs.begin(); it != idFreqs.end(); ++it) {
-		long double wn = (double)it->second/totalElementCount;
-		long double log2res = logTo2(wn);
-		idEntropy += wn * log2res;
-		idDiscreteEntropy += wn * ceil( - log2res );
-	}
-	idEntropy = - idEntropy;
-	out << "Id entropy: " << idEntropy << std::endl;
-	out << "Id discrete entropy: " << idDiscreteEntropy << std::endl;
-	{ //index specific stats
-		if (indexType() == ItemIndex::T_PFOR) {
-			std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
-			std::map<uint32_t, uint32_t> bcOcc;
+	struct Stats {
+		uint32_t numIdx = 0;
+		uint32_t maxSizeIdx = 0;
+		sserialize::SizeType maxSpaceIdx = 0;
+		
+		sserialize::SizeType siStorageSize = 0;
+		uint64_t siSummedIdxSize = 0;
+		
+		std::array<uint32_t, 32> sizeHisto;
+		
+		uint64_t wordAlignedBitSetSize = 0;
+		
+		std::unordered_map<uint32_t, uint32_t> idFreqs;
+		
+		//pfor index stats
+		std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
+		
+		
+		//temporary buffers
+		std::unordered_set<uint32_t> wabtmp;
+		
+		Stats() {
+			sizeHisto.fill(0);
 			bsOcc.fill(0);
-			for(uint32_t i(0), s(size()); i < s; ++i) {
-				sserialize::ItemIndexPrivatePFoR idx( rawDataAt(i) );
-				bsOcc.at(idx.blockSizeOffset()) += 1;
+		}
+		
+		void update(const sserialize::ItemIndex & idx, const std::vector<uint32_t> & data) {
+			wabtmp.clear();
+			auto idxStorageSize = idx.getSizeInBytes();
+			numIdx += 1;
+			sizeHisto.at( sserialize::msb(idx.size()) ) += 1;
+			maxSizeIdx = std::max<uint32_t>(maxSizeIdx, idx.size());
+			maxSpaceIdx = std::max(maxSpaceIdx, idxStorageSize);
+			siStorageSize += idxStorageSize;
+			siSummedIdxSize += data.size();
+			
+			for(uint32_t x : data)  {
+				wabtmp.insert(x/8);
+				idFreqs[x] += 1;
 			}
+			wordAlignedBitSetSize += wabtmp.size();
+			if (idx.type() == ItemIndex::T_PFOR) {
+				const sserialize::ItemIndexPrivatePFoR * pidx = static_cast<const sserialize::ItemIndexPrivatePFoR*>(idx.priv());
+				bsOcc.at(pidx->blockSizeOffset()) += 1;
+			}
+		}
+		
+		void update(const Stats & other) {
+			numIdx += other.numIdx;
+			maxSizeIdx = std::max(maxSizeIdx, other.maxSizeIdx);
+			siStorageSize += other.siStorageSize;
+			siSummedIdxSize += other.siSummedIdxSize;
+			for(std::size_t i(0), s(sizeHisto.size()); i < s; ++i) {
+				sizeHisto[i] += other.sizeHisto[i];
+			}
+			wordAlignedBitSetSize += other.wordAlignedBitSetSize;
+			for(const auto & x : other.idFreqs) {
+				idFreqs[x.first] += x.second;
+			}
+			for(std::size_t i(0), s(bsOcc.size()); i < s; ++i) {
+				bsOcc[i] += other.bsOcc[i];
+			}
+		}
+		
+		void print(std::ostream & out) {
+			out << "Largest index size: " << maxSizeIdx << std::endl;
+			out << "Largest space usage: " << maxSpaceIdx << std::endl;
+			out << "Size historgram [i>v]: ";
+			for(uint32_t i(0); i < sizeHisto.size(); ++i) {
+				if (sizeHisto.at(i)) {
+					if (i<15) {
+						out << (uint32_t(1) << (i+1));
+					}
+					else {
+						out << "2^" << i+1;
+					}
+					out << ": " << double(100*sizeHisto.at(i))/numIdx << ", ";
+				}
+			}
+			out << std::endl;
+			out << "Summed idx.size()):" << siSummedIdxSize << std::endl;
+			out << "Storage size: " << siStorageSize << std::endl;
+			out << "Mean bits/id (headers included): " << double(siStorageSize*8)/siSummedIdxSize << std::endl;
+			out << "Minimum storage need for word aligned bit set (compression-ratio 100%): " << wordAlignedBitSetSize << std::endl;
+			long double idEntropy = 0;
+			long double idDiscreteEntropy = 0;
+			for(auto it(idFreqs.begin()), end(idFreqs.end()); it != end; ++it) {
+				long double wn = double(it->second)/siSummedIdxSize;
+				long double log2res = logTo2(wn);
+				idEntropy += wn * log2res;
+				idDiscreteEntropy += wn * ceil( - log2res );
+			}
+			idEntropy = -idEntropy;
+			out << "Id entropy: " << idEntropy << std::endl;
+			out << "Id discrete entropy: " << idDiscreteEntropy << std::endl;
 			out << "ItemIndexPFoR::BlockSize histogram: ";
 			for(uint32_t i(0); i < bsOcc.size(); ++i) {
 				if (bsOcc.at(i)) {
-					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << double(100*bsOcc.at(i))/size() << ", ";
+					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << double(100*bsOcc.at(i))/numIdx << ", ";
 				}
 			}
+			out << std::endl;
 		}
-		out << std::endl;
+	} stats;
+	
+	struct Worker {
+		State * state;
+		Stats * globalStats;
+		const ItemIndexStore * store;
+		std::function<bool(uint32_t)> filter;
+	
+		Stats stats;
+		std::vector<uint32_t> buffer;
+		Worker(State * state, Stats * stats, const ItemIndexStore * store, const std::function<bool(uint32_t)> & filter) :
+		state(state),
+		globalStats(stats),
+		store(store),
+		filter(filter)
+		{}
+		void operator()() {
+			while(true) {
+				uint32_t idxId = state->i.fetch_add(1, std::memory_order_relaxed);
+				if (idxId >= state->size) {
+					break;
+				}
+				if ( !filter(idxId) ) {
+					continue;
+				}
+				if (idxId % 1000 == 0) {
+					state->pinfo(idxId);
+				}
+				sserialize::ItemIndex idx = store->at(idxId);
+				idx.putInto(buffer);
+				stats.update(idx, buffer);
+				buffer.clear();
+			}
+			std::lock_guard<std::mutex> lck(state->lock);
+			globalStats->update(stats);
+		}
+	};
+	
+	state.pinfo.begin(size(), "ItemIndexStore::calcStats");
+	std::vector<std::thread> threads;
+	for(uint32_t i(0); i < threadCount; ++i) {
+		threads.emplace_back( Worker(&state, &stats, this, filter) );
 	}
 	
+	for(std::thread & x : threads) {
+		x.join();
+	}
+	state.pinfo.end();
+	stats.print(out);
 	out << "Static::ItemIndexStore::Stats->END" << std::endl;
 	return out;
 }

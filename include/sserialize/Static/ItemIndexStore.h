@@ -38,7 +38,7 @@ public:
 	virtual ItemIndex at(uint32_t pos) const = 0;
 	virtual uint32_t idxSize(uint32_t pos) const = 0;
 	virtual std::ostream& printStats(std::ostream& out) const = 0;
-	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const = 0;
+	virtual std::ostream& printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const = 0;
 	virtual SortedOffsetIndex & getIndex() = 0;
 	virtual const UByteArrayAdapter & getData() const = 0;
 	virtual RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const = 0;
@@ -108,7 +108,7 @@ public:
 	inline ItemIndex at(uint32_t pos) const { return priv()->at(pos);}
 	inline uint32_t idxSize(uint32_t pos) const { return priv()->idxSize(pos); }
 	inline std::ostream& printStats(std::ostream& out) const { return priv()->printStats(out); }
-	inline std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const { return priv()->printStats(out, indexIds);}
+	inline std::ostream& printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const { return priv()->printStats(out, filter);}
 	inline SortedOffsetIndex & getIndex() { return priv()->getIndex();}
 	inline const UByteArrayAdapter & getData() const { return priv()->getData(); }
 	inline RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const { return priv()->getHuffmanTree(); }
@@ -153,7 +153,7 @@ public:
 	virtual ItemIndex at(uint32_t pos) const override;
 	virtual inline uint32_t idxSize(uint32_t pos) const override { return m_idxSizes.at(pos); }
 	virtual std::ostream& printStats(std::ostream& out) const override;
-	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const override;
+	virtual std::ostream& printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const override;
 	virtual inline SortedOffsetIndex & getIndex() override { return m_index;}
 	virtual inline const UByteArrayAdapter & getData() const override { return m_data; }
 	virtual inline RCPtrWrapper<HuffmanDecoder> getHuffmanTree() const override { return m_hd; }

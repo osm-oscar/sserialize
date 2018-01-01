@@ -205,7 +205,7 @@ public:
 	virtual ItemIndex at(uint32_t pos) const override;
 	virtual uint32_t idxSize(uint32_t pos) const override;
 	virtual std::ostream& printStats(std::ostream& out) const override;
-	virtual std::ostream& printStats(std::ostream& out, const std::unordered_set<uint32_t> & indexIds) const override;
+	virtual std::ostream& printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const override;
 	virtual sserialize::Static::SortedOffsetIndex & getIndex() override;
 	virtual const UByteArrayAdapter & getData() const override;
 	virtual RCPtrWrapper<Static::HuffmanDecoder> getHuffmanTree() const override;

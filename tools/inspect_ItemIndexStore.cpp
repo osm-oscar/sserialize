@@ -329,6 +329,10 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 	
+	#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+		adap.disableRefCounting();
+	#endif
+	
 	sserialize::Static::ItemIndexStore store(adap);
 	std::cout << "ItemIndexStore Information:" << std::endl;
 	std::cout << "size=" << store.size() << std::endl;
@@ -499,4 +503,8 @@ int main(int argc, char ** argv) {
 			}
 		}
 	}
+	
+	#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
+		adap.enableRefCounting();
+	#endif
 }
