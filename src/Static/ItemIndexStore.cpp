@@ -256,7 +256,7 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		
 		std::array<uint32_t, 32> sizeHisto;
 		
-		std::unordered_map<uint32_t, uint32_t> idFreqs;
+		std::vector<uint32_t> idFreqs;
 		
 		//pfor index stats
 		std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
@@ -276,6 +276,9 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			siSummedIdxSize += data.size();
 			
 			for(uint32_t x : data)  {
+				if (x >= idFreqs.size()) {
+					idFreqs.resize(x+1, 0);
+				}
 				idFreqs[x] += 1;
 			}
 			if (idx.type() == ItemIndex::T_PFOR) {
@@ -292,8 +295,9 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			for(std::size_t i(0), s(sizeHisto.size()); i < s; ++i) {
 				sizeHisto[i] += other.sizeHisto[i];
 			}
-			for(const auto & x : other.idFreqs) {
-				idFreqs[x.first] += x.second;
+			idFreqs.resize(std::max(idFreqs.size(), other.idFreqs.size()), 0);
+			for(std::size_t i(0), s(other.idFreqs.size()); i < s; ++i) {
+				idFreqs[i] += other.idFreqs[i];
 			}
 			for(std::size_t i(0), s(bsOcc.size()); i < s; ++i) {
 				bsOcc[i] += other.bsOcc[i];
@@ -322,10 +326,12 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			long double idEntropy = 0;
 			long double idDiscreteEntropy = 0;
 			for(auto it(idFreqs.begin()), end(idFreqs.end()); it != end; ++it) {
-				long double wn = double(it->second)/siSummedIdxSize;
-				long double log2res = logTo2(wn);
-				idEntropy += wn * log2res;
-				idDiscreteEntropy += wn * ceil( - log2res );
+				if (*it) {
+					long double wn = double(*it)/siSummedIdxSize;
+					long double log2res = logTo2(wn);
+					idEntropy += wn * log2res;
+					idDiscreteEntropy += wn * ceil( - log2res );
+				}
 			}
 			idEntropy = -idEntropy;
 			out << "Id entropy: " << idEntropy << std::endl;
