@@ -278,9 +278,9 @@ sserialize::SizeType PFoRCreator::storageSize(T_ITERATOR begin, T_ITERATOR end, 
 	using std::distance;
 	std::size_t dist = distance(begin, end);
 	sserialize::SizeType s = CompactUintArray::minStorageBytes(bits, dist);
-	for(; begin != end; ++begin) {
-		if ( CompactUintArray::minStorageBits(*begin) > bits) {
-			s += sserialize::psize_vu32(*begin);
+	for(auto it(begin); it != end; ++it) {
+		if ( CompactUintArray::minStorageBits(*it) > bits) {
+			s += sserialize::psize_vu32(*it);
 		}
 	}
 	return s;
@@ -297,7 +297,7 @@ void PFoRCreator::optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, 
 	
 	uint32_t mindv = std::numeric_limits<uint32_t>::max();
 	uint32_t maxdv = std::numeric_limits<uint32_t>::min();
-	for(auto it(begin); begin != end; ++begin) {
+	for(auto it(begin); it != end; ++it) {
 		mindv = std::min<uint32_t>(mindv, *it);
 		maxdv = std::max<uint32_t>(maxdv, *it);
 	}
