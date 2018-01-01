@@ -290,6 +290,7 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		void update(const Stats & other) {
 			numIdx += other.numIdx;
 			maxSizeIdx = std::max(maxSizeIdx, other.maxSizeIdx);
+			maxSpaceIdx = std::max(maxSpaceIdx, other.maxSpaceIdx);
 			siStorageSize += other.siStorageSize;
 			siSummedIdxSize += other.siSummedIdxSize;
 			for(std::size_t i(0), s(sizeHisto.size()); i < s; ++i) {
@@ -305,10 +306,11 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		}
 		
 		void print(std::ostream & out) {
-			out << "Largest index size: " << maxSizeIdx << std::endl;
-			out << "Largest space usage: " << maxSpaceIdx << std::endl;
-			out << "Size historgram [i>v]: ";
-			for(uint32_t i(0); i < sizeHisto.size(); ++i) {
+			out << "#selected indices: " << numIdx << std::endl;
+			out << "max(idx.size): " << maxSizeIdx << std::endl;
+			out << "max(idx.getSizeInBytes): " << maxSpaceIdx << std::endl;
+			out << "Size histogram [i>v]: ";
+			for(std::size_t i(0), s(sizeHisto.size()); i < s; ++i) {
 				if (sizeHisto.at(i)) {
 					if (i<15) {
 						out << (uint32_t(1) << (i+1));
@@ -316,7 +318,7 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 					else {
 						out << "2^" << i+1;
 					}
-					out << ": " << double(100*sizeHisto.at(i))/numIdx << ", ";
+					out << ": " << 100*double(sizeHisto.at(i))/numIdx << ", ";
 				}
 			}
 			out << std::endl;
@@ -337,9 +339,9 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			out << "Id entropy: " << idEntropy << std::endl;
 			out << "Id discrete entropy: " << idDiscreteEntropy << std::endl;
 			out << "ItemIndexPFoR::BlockSize histogram: ";
-			for(uint32_t i(0); i < bsOcc.size(); ++i) {
+			for(std::size_t i(0), s(bsOcc.size()); i < s; ++i) {
 				if (bsOcc.at(i)) {
-					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << double(100*bsOcc.at(i))/numIdx << ", ";
+					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << 100*double(bsOcc.at(i))/numIdx << ", ";
 				}
 			}
 			out << std::endl;
