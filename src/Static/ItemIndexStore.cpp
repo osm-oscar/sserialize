@@ -259,11 +259,30 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		std::vector<uint32_t> idFreqs;
 		
 		//pfor index stats
-		std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
+		struct PFoR {
+			std::array<uint32_t, ItemIndexPrivatePFoR::BlockSizes.size()> bsOcc;
+			std::array<uint32_t, 32> bcHisto;
+			PFoR() { 
+				bsOcc.fill(0);
+				bcHisto.fill(0);
+			}
+			void update(const sserialize::ItemIndex & idx, const std::vector<uint32_t> & /*data*/) {
+				const sserialize::ItemIndexPrivatePFoR * pidx = static_cast<const sserialize::ItemIndexPrivatePFoR*>(idx.priv());
+				bsOcc.at(pidx->blockSizeOffset()) += 1;
+				bcHisto.at( sserialize::msb(pidx->blockCount()) ) += 1;
+			}
+			void update(const PFoR & other) {
+				for(std::size_t i(0), s(bsOcc.size()); i < s; ++i) {
+					bsOcc[i] += other.bsOcc[i];
+				}
+				for(std::size_t i(0), s(bcHisto.size()); i < s; ++i) {
+					bcHisto[i] += other.bcHisto[i];
+				}
+			}
+		} pfor;
 		
 		Stats() {
 			sizeHisto.fill(0);
-			bsOcc.fill(0);
 		}
 		
 		void update(const sserialize::ItemIndex & idx, const std::vector<uint32_t> & data) {
@@ -282,8 +301,7 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 				idFreqs[x] += 1;
 			}
 			if (idx.type() == ItemIndex::T_PFOR) {
-				const sserialize::ItemIndexPrivatePFoR * pidx = static_cast<const sserialize::ItemIndexPrivatePFoR*>(idx.priv());
-				bsOcc.at(pidx->blockSizeOffset()) += 1;
+				pfor.update(idx, data);
 			}
 		}
 		
@@ -300,9 +318,7 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			for(std::size_t i(0), s(other.idFreqs.size()); i < s; ++i) {
 				idFreqs[i] += other.idFreqs[i];
 			}
-			for(std::size_t i(0), s(bsOcc.size()); i < s; ++i) {
-				bsOcc[i] += other.bsOcc[i];
-			}
+			pfor.update(other.pfor);
 		}
 		
 		void print(std::ostream & out) {
@@ -339,9 +355,22 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 			out << "Id entropy: " << idEntropy << std::endl;
 			out << "Id discrete entropy: " << idDiscreteEntropy << std::endl;
 			out << "ItemIndexPFoR::BlockSize histogram: ";
-			for(std::size_t i(0), s(bsOcc.size()); i < s; ++i) {
-				if (bsOcc.at(i)) {
-					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << 100*double(bsOcc.at(i))/numIdx << ", ";
+			for(std::size_t i(0), s(pfor.bsOcc.size()); i < s; ++i) {
+				if (pfor.bsOcc.at(i)) {
+					out << ItemIndexPrivatePFoR::BlockSizes.at(i) << ": " << 100*double(pfor.bsOcc.at(i))/numIdx << ", ";
+				}
+			}
+			out << std::endl;
+			out << "ItemIndexPFoR block count histogram: ";
+			for(std::size_t i(0), s(pfor.bcHisto.size()); i < s; ++i) {
+				if (pfor.bcHisto.at(i)) {
+					if (i<15) {
+						out << (uint32_t(1) << (i+1));
+					}
+					else {
+						out << "2^" << i+1;
+					}
+					out << ": " << 100*double(pfor.bcHisto.at(i))/numIdx << ", ";
 				}
 			}
 			out << std::endl;
