@@ -120,11 +120,17 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 	UByteArrayAdapter ds(&s, false);
 	bool mok = create(idx, ds, m_type);
 	SSERIALIZE_CHEAP_ASSERT(mok);
+	if (m_checkIndex) {
+		sserialize::ItemIndex sidx(ds, type());
+		if (idx != sidx) {
+			throw sserialize::CreationException("Created index does not match source");
+		}
+	}
 	if (mok) {
 		return addIndex(s, narrow_check<uint32_t>(idx.size()));
 	}
 	else {
-		return 0;
+		throw sserialize::CreationException("Failed to create index");
 	}
 }
 
