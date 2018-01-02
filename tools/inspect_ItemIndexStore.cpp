@@ -488,6 +488,7 @@ int main(int argc, char ** argv) {
 		factory.setType(transform);
 		factory.setIndexFile(outData);
 		factory.setDeduplication(deduplication);
+		factory.setCheckIndex(checkCompressed);
 		std::cout << "Transforming index" << std::endl;
 		factory.insert(store);
 		std::cout << "Serializing IndexStore" << std::endl;
