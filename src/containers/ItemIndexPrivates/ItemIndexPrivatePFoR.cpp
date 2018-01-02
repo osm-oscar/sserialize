@@ -131,6 +131,24 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 
 //BEGIN CREATOR
 
+PFoRCreator::OptimizerData::Entry::Entry() :
+// m_vsize(0),
+m_bits(0)
+{}
+
+PFoRCreator::OptimizerData::Entry::Entry(uint32_t id) :
+// m_vsize(sserialize::psize_vu32(id)),
+m_bits(CompactUintArray::minStorageBits(id))
+{}
+
+uint8_t PFoRCreator::OptimizerData::Entry::vsize() const {
+	return sserialize::psize_vu32(uint32_t(1) << (bits()-1));
+}
+
+uint8_t PFoRCreator::OptimizerData::Entry::bits() const {
+	return m_bits;
+}
+
 PFoRCreator::PFoRCreator() :
 m_fixedSize(false),
 m_size(0),

@@ -91,6 +91,32 @@ private:
 
 class PFoRCreator final {
 public:
+	struct OptimizerData {
+		class Entry {
+		public:
+			Entry();
+			Entry(uint32_t id);
+			Entry(const Entry &) = default;
+			Entry & operator=(const Entry&) = default;
+			uint8_t vsize() const;
+			uint8_t bits() const;
+		private:
+// 			uint8_t m_vsize;
+			uint8_t m_bits;
+		};
+		std::vector<Entry> entries;
+		
+		OptimizerData() = default;
+		OptimizerData(const OptimizerData &) = default;
+		OptimizerData(OptimizerData &&) = default;
+		OptimizerData & operator=(const OptimizerData&) = default;
+		OptimizerData & operator=(OptimizerData &&) = default;
+		
+		inline std::size_t size() const { return entries.size(); }
+		inline std::vector<Entry>::const_iterator begin() const { return entries.begin(); }
+		inline std::vector<Entry>::const_iterator end() const { return entries.end(); }
+	};
+public:
 	PFoRCreator(const PFoRCreator& other) = delete;
 	PFoRCreator & operator=(const PFoRCreator & other) = delete;
 public:
