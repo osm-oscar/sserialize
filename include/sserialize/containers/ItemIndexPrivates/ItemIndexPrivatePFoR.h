@@ -141,8 +141,8 @@ public:
 public:
 	
 	///begin->end are delta values, data after dest.tellPutPtr()
-	template<typename T_ITERATOR>
-	static uint32_t encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATOR begin, T_ITERATOR end);
+	template<typename T_ITERATOR, typename T_OD_ITERATOR>
+	static uint32_t encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATOR begin, T_ITERATOR end, T_OD_ITERATOR odbegin, T_OD_ITERATOR odend);
 
 	///begin->end are delta values
 	template<typename T_ITERATOR>
@@ -158,7 +158,12 @@ public:
 	
 	///begin->end are absolute values
 	template<typename T_ITERATOR>
-	static uint32_t optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end);
+	static bool create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter& dest);
+	
+	static uint32_t optBlockSizeOffset(const OptimizerData & od);
+	
+private:
+	static const std::array<uint32_t, 32> BlockSizeTestOrder;
 private:
 	UByteArrayAdapter & data();
 	const UByteArrayAdapter & data() const;
@@ -169,6 +174,7 @@ private:
 	uint32_t m_blockSizeOffset;
 	//holds delta values!
 	BlockCache m_values;
+	std::vector<OptimizerData::Entry> m_od;
 	uint32_t m_prev;
 	std::vector<uint8_t> m_blockBits;
 	UByteArrayAdapter m_data;
@@ -280,15 +286,16 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 	return d.tellGetPtr() - getPtr;
 }
 
-template<typename T_ITERATOR>
-uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter & dest, T_ITERATOR begin, T_ITERATOR end) {
+template<typename T_ITERATOR, typename T_OD_ITERATOR>
+uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATOR begin, T_ITERATOR end, T_OD_ITERATOR odbegin, T_OD_ITERATOR odend) {
 	using std::distance;
 	uint32_t optBits(32), optStorageSize;
-	PFoRCreator::optBits(begin, end, optBits, optStorageSize);
+	PFoRCreator::optBitsOD(odbegin, odend, optBits, optStorageSize);
 	std::vector<uint32_t> dv;
 	std::vector<uint32_t> outliers;
-	for(T_ITERATOR it(begin); it != end; ++it) {
-		if (CompactUintArray::minStorageBits(*it) > optBits || *it == 0) {
+	T_OD_ITERATOR odit = odbegin;
+	for(T_ITERATOR it(begin); it != end; ++it, ++odit) {
+		if (odit->bits() > optBits || *it == 0) {
 			dv.push_back(0);
 			outliers.push_back(*it);
 		}
@@ -297,7 +304,7 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter & dest, T_ITERAT
 			dv.push_back(*it);
 		}
 	}
-	uint32_t resultBits = CompactUintArray::create(dv, dest);
+	uint32_t resultBits = CompactUintArray::create(dv, dest, optBits);
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(optBits, resultBits);
 	for(uint32_t x : outliers) {
 		dest.putVlPackedUint32(x);
@@ -384,53 +391,25 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 }
 
 template<typename T_ITERATOR>
-uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
+bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter & dest) {
+	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
 	OptimizerData od;
 	od.init<true>(begin, end);
-	
-	if (od.size() < 1) {
-		return 0;
-	}
 
-	uint32_t optBlockSizeOffset = ItemIndexPrivatePFoR::BlockSizes.size()-1;
-	sserialize::SizeType optStorageSize = std::numeric_limits<sserialize::SizeType>::max();
-	for(uint32_t i(0), s(ItemIndexPrivatePFoR::BlockSizes.size()); i < s; ++i) {
-		uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[i];
-		if (blockSize >= 2*od.size()) {
-			continue;
-		}
-		uint32_t numFullBlocks = od.size()/blockSize;
-		uint32_t numPartialBlocks = od.size()%blockSize > 0; // int(false)==0, int(true)==1
-		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
-		storageSize += numFullBlocks+numPartialBlocks; //every block occupies at least one Byte
-		for(auto it(od.entries.cbegin()), end(od.entries.cend()); it < end && storageSize < optStorageSize; it += blockSize) {
-			auto blockEnd = it + std::min<std::ptrdiff_t>(blockSize, end-it);
-			uint32_t myOptBlockBits, myBlockStorageSize;
-			PFoRCreator::optBitsOD(it, blockEnd, myOptBlockBits, myBlockStorageSize);
-			storageSize += myBlockStorageSize-1; //the 1 accounts is needed since we already added 1 Byte for this block above
-		}
-		if (storageSize < optStorageSize) {
-			optBlockSizeOffset = i;
-			optStorageSize = storageSize;
-		}
+	uint32_t blockSizeOffset = PFoRCreator::optBlockSizeOffset(od);
+	detail::ItemIndexImpl::PFoRCreator creator(dest, od.size(), blockSizeOffset);
+	for(; begin != end; ++begin) {
+		creator.push_back(*begin);
 	}
-	return optBlockSizeOffset;
+	creator.flush();
+	return true;
 }
 
 }} //end namespace detail::ItemIndexImpl
 
 template<typename T_ITERATOR>
 bool ItemIndexPrivatePFoR::create(T_ITERATOR begin, const T_ITERATOR & end, UByteArrayAdapter & dest) {
-	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
-	using std::distance;
-	uint32_t blockSizeOffset = detail::ItemIndexImpl::PFoRCreator::optBlockSizeOffset(begin, end);
-	uint32_t size = distance(begin, end);
-	detail::ItemIndexImpl::PFoRCreator creator(dest, size, blockSizeOffset);
-	for(; begin != end; ++begin) {
-		creator.push_back(*begin);
-	}
-	creator.flush();
-	return true;
+	return detail::ItemIndexImpl::PFoRCreator::create(begin, end, dest);
 }
 
 template<typename TSortedContainer>

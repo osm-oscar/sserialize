@@ -218,6 +218,7 @@ uint32_t PFoRCreator::size() const {
 void PFoRCreator::push_back(uint32_t id) {
 	SSERIALIZE_CHEAP_ASSERT(m_prev == 0 || m_prev < id);
 	m_values.push_back(id - m_prev);
+	m_od.emplace_back( m_values.back() );
 	m_prev = id;
 	if (m_values.size() == ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]) {
 		flushBlock();
@@ -235,7 +236,7 @@ void PFoRCreator::flushBlock() {
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	auto blockDataBegin = m_data.tellPutPtr();
 	#endif
-	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end());
+	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end(), m_od.begin(), m_od.end());
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
 		UByteArrayAdapter blockData(m_data, blockDataBegin);
@@ -250,6 +251,7 @@ void PFoRCreator::flushBlock() {
 	#endif
 	m_blockBits.push_back(blockBits);
 	m_values.clear();
+	m_od.clear();
 }
 
 void PFoRCreator::flush() {
@@ -288,6 +290,51 @@ const UByteArrayAdapter& PFoRCreator::data() const {
 	return *m_dest;
 }
 
+
+const std::array<uint32_t, 32> PFoRCreator::BlockSizeTestOrder = {
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+	10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+	20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+	30, 31
+};
+
+uint32_t PFoRCreator::optBlockSizeOffset(const OptimizerData & od) {
+
+	if (od.size() < 1) {
+		return 0;
+	}
+
+	uint32_t optBlockSizeOffset = ItemIndexPrivatePFoR::BlockSizes.size()-1;
+	sserialize::SizeType optStorageSize = std::numeric_limits<sserialize::SizeType>::max();
+	
+	auto f = [&od, &optBlockSizeOffset,&optStorageSize](uint32_t blockSizeOffset) {
+		uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset];
+		if (blockSize >= 2*od.size()) {
+			return;
+		}
+		uint32_t numFullBlocks = od.size()/blockSize;
+		uint32_t numPartialBlocks = od.size()%blockSize > 0; // int(false)==0, int(true)==1
+		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
+		storageSize += numFullBlocks+numPartialBlocks; //every block occupies at least one Byte
+		for(auto it(od.entries.cbegin()), end(od.entries.cend()); it < end && storageSize < optStorageSize; it += blockSize) {
+			auto blockEnd = it + std::min<std::ptrdiff_t>(blockSize, end-it);
+			uint32_t myOptBlockBits, myBlockStorageSize;
+			PFoRCreator::optBitsOD(it, blockEnd, myOptBlockBits, myBlockStorageSize);
+			storageSize += myBlockStorageSize-1; //the 1 accounts is needed since we already added 1 Byte for this block above
+		}
+		if (storageSize < optStorageSize) {
+			optBlockSizeOffset = blockSizeOffset;
+			optStorageSize = storageSize;
+		}
+	};
+	
+	///try to start with a good block size first
+	
+	for(uint32_t i(0), s(BlockSizeTestOrder.size()); i < s; ++i) {
+		f(BlockSizeTestOrder[i]);
+	}
+	return optBlockSizeOffset;
+}
 
 
 //END CREATOR
