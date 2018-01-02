@@ -91,6 +91,7 @@ private:
 
 class PFoRCreator final {
 public:
+	using BlockCache = std::vector<uint32_t>;
 	struct OptimizerData {
 		class Entry {
 		public:
@@ -160,7 +161,7 @@ private:
 	uint32_t m_size;
 	uint32_t m_blockSizeOffset;
 	//holds delta values!
-	std::vector<uint32_t> m_values;
+	BlockCache m_values;
 	uint32_t m_prev;
 	std::vector<uint8_t> m_blockBits;
 	UByteArrayAdapter m_data;
