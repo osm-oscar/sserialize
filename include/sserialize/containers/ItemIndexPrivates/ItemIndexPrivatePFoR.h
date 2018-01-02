@@ -284,7 +284,7 @@ template<typename T_ITERATOR>
 uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter & dest, T_ITERATOR begin, T_ITERATOR end) {
 	using std::distance;
 	std::size_t ds = distance(begin, end);
-	uint32_t optBits, optStorageSize;
+	uint32_t optBits(32), optStorageSize;
 	PFoRCreator::optBits(begin, end, optBits, optStorageSize);
 	std::vector<uint32_t> dv;
 	std::vector<uint32_t> outliers;
@@ -355,6 +355,8 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 	std::size_t ds = distance(begin, end);
 
 	if (ds < 1) {
+		optBits = 0;
+		optStorageSize = 0;
 		return;
 	}
 	
