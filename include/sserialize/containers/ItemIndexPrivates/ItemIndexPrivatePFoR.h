@@ -385,36 +385,32 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 
 template<typename T_ITERATOR>
 uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
-	std::vector<uint32_t> dv;
-	{
-		using std::distance;
-		dv.resize(distance(begin, end));
-		uint32_t prev = 0;
-		uint32_t count = 0;
-		for(auto it(begin); it != end; ++it, ++count) {
-			dv[count] = (*it - prev);
-			prev = *it;
-		}
+	OptimizerData od;
+	od.init<true>(begin, end);
+	
+	if (od.size() < 1) {
+		return 0;
 	}
+
 	uint32_t optBlockSizeOffset = ItemIndexPrivatePFoR::BlockSizes.size()-1;
-	sserialize::SizeType optDataSize = std::numeric_limits<sserialize::SizeType>::max();
+	sserialize::SizeType optStorageSize = std::numeric_limits<sserialize::SizeType>::max();
 	for(uint32_t i(0), s(ItemIndexPrivatePFoR::BlockSizes.size()); i < s; ++i) {
 		uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[i];
-		if (blockSize >= 2*dv.size()) {
+		if (blockSize >= 2*od.size()) {
 			continue;
 		}
-		uint32_t numFullBlocks = dv.size()/blockSize;
-		uint32_t numPartialBlocks = dv.size()%blockSize > 0; // int(false)==0, int(true)==1
-		sserialize::SizeType ds = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
-		for(auto it(dv.cbegin()), end(dv.cend()); it < end; it += blockSize) {
+		uint32_t numFullBlocks = od.size()/blockSize;
+		uint32_t numPartialBlocks = od.size()%blockSize > 0; // int(false)==0, int(true)==1
+		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
+		for(auto it(od.entries.cbegin()), end(od.entries.cend()); it < end; it += blockSize) {
 			auto blockEnd = it + std::min<std::ptrdiff_t>(blockSize, end-it);
 			uint32_t myOptBlockBits, myBlockStorageSize;
-			PFoRCreator::optBits(it, blockEnd, myOptBlockBits, myBlockStorageSize);
-			ds += myBlockStorageSize;
+			PFoRCreator::optBitsOD(it, blockEnd, myOptBlockBits, myBlockStorageSize);
+			storageSize += myBlockStorageSize;
 		}
-		if (ds < optDataSize) {
+		if (storageSize < optStorageSize) {
 			optBlockSizeOffset = i;
-			optDataSize = ds;
+			optStorageSize = storageSize;
 		}
 	}
 	return optBlockSizeOffset;
