@@ -160,7 +160,7 @@ public:
 	template<typename T_ITERATOR>
 	static bool create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter& dest);
 	
-	static uint32_t optBlockSizeOffset(const OptimizerData & od);
+	static void optBlockCfg(const OptimizerData & od, uint32_t & optBlockSizeOffset, uint32_t & optBlockStorageSize);
 	
 private:
 	static const std::array<uint32_t, 32> BlockSizeTestOrder;
@@ -396,7 +396,8 @@ bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArra
 	OptimizerData od;
 	od.init<true>(begin, end);
 
-	uint32_t blockSizeOffset = PFoRCreator::optBlockSizeOffset(od);
+	uint32_t blockSizeOffset, blockStorageSize;
+	PFoRCreator::optBlockCfg(od, blockSizeOffset, blockStorageSize);
 	detail::ItemIndexImpl::PFoRCreator creator(dest, od.size(), blockSizeOffset);
 	for(; begin != end; ++begin) {
 		creator.push_back(*begin);
