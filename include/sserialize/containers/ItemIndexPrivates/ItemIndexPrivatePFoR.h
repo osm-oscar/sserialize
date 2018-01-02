@@ -152,6 +152,10 @@ public:
 	template<typename T_ITERATOR>
 	static void optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, uint32_t & optStorageSize);
 	
+	///begin->end are iterators to OptimizerData::Entry
+	template<typename T_ITERATOR>
+	static void optBitsOD(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, uint32_t & optStorageSize);
+	
 	///begin->end are absolute values
 	template<typename T_ITERATOR>
 	static uint32_t optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end);
@@ -337,30 +341,41 @@ sserialize::SizeType PFoRCreator::storageSize(T_ITERATOR begin, T_ITERATOR end, 
 	return s;
 }
 
+///begin->end are delta values
 template<typename T_ITERATOR>
 void PFoRCreator::optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, uint32_t & optStorageSize) {
+	OptimizerData od;
+	od.init<false>(begin, end);
+	optBitsOD(od.entries.begin(), od.entries.end(), optBits, optStorageSize);
+}
+
+template<typename T_IT>
+void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t & optStorageSize) {
 	using std::distance;
 	std::size_t ds = distance(begin, end);
-	
+
 	if (ds < 1) {
 		return;
 	}
 	
-	uint32_t mindv = std::numeric_limits<uint32_t>::max();
-	uint32_t maxdv = std::numeric_limits<uint32_t>::min();
+	uint32_t minbits(std::numeric_limits<uint32_t>::max());
+	uint32_t maxbits(std::numeric_limits<uint32_t>::min());
 	for(auto it(begin); it != end; ++it) {
-		mindv = std::min<uint32_t>(mindv, *it);
-		maxdv = std::max<uint32_t>(maxdv, *it);
+		minbits = std::min<uint32_t>(minbits, it->bits());
+		maxbits = std::max<uint32_t>(maxbits, it->bits());
 	}
-	
-	uint32_t minbits = CompactUintArray::minStorageBits(mindv);
-	uint32_t maxbits = CompactUintArray::minStorageBits(maxdv);
+
 	optBits = maxbits;
 	optStorageSize = std::numeric_limits<uint32_t>::max();
 	for(uint32_t bits(minbits); bits <= maxbits; ++bits) {
-		auto s = storageSize(begin, end, bits);
-		if (s < optStorageSize) {
-			optStorageSize = s;
+		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(bits, ds);
+		for(auto it(begin); it != end; ++it) {
+			if ( it->bits() > bits) {
+				storageSize += it->vsize();
+			}
+		}
+		if (storageSize < optStorageSize) {
+			optStorageSize = storageSize;
 			optBits = bits;
 		}
 	}
