@@ -238,8 +238,7 @@ void PFoRCreator::flushBlock() {
 	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end());
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
-		UByteArrayAdapter blockData(m_data);
-		blockData.setPutPtr(blockDataBegin);
+		UByteArrayAdapter blockData(m_data, blockDataBegin);
 		PFoRBlock block(blockData, 0, m_values.size(), blockBits);
 		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_values.size(), block.size());
 		uint32_t realId = 0;
