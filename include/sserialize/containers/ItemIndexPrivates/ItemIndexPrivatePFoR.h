@@ -402,11 +402,12 @@ uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
 		uint32_t numFullBlocks = od.size()/blockSize;
 		uint32_t numPartialBlocks = od.size()%blockSize > 0; // int(false)==0, int(true)==1
 		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
+		storageSize += numFullBlocks+numPartialBlocks; //every block occupies at least one Byte
 		for(auto it(od.entries.cbegin()), end(od.entries.cend()); it < end && storageSize < optStorageSize; it += blockSize) {
 			auto blockEnd = it + std::min<std::ptrdiff_t>(blockSize, end-it);
 			uint32_t myOptBlockBits, myBlockStorageSize;
 			PFoRCreator::optBitsOD(it, blockEnd, myOptBlockBits, myBlockStorageSize);
-			storageSize += myBlockStorageSize;
+			storageSize += myBlockStorageSize-1; //the 1 accounts is needed since we already added 1 Byte for this block above
 		}
 		if (storageSize < optStorageSize) {
 			optBlockSizeOffset = i;
