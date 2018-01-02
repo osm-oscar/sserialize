@@ -369,7 +369,7 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 	optStorageSize = std::numeric_limits<uint32_t>::max();
 	for(uint32_t bits(minbits); bits <= maxbits; ++bits) {
 		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(bits, ds);
-		for(auto it(begin); it != end; ++it) {
+		for(auto it(begin); it != end && storageSize < optStorageSize; ++it) {
 			if ( it->bits() > bits) {
 				storageSize += it->vsize();
 			}
@@ -402,7 +402,7 @@ uint32_t PFoRCreator::optBlockSizeOffset(T_ITERATOR begin, T_ITERATOR end) {
 		uint32_t numFullBlocks = od.size()/blockSize;
 		uint32_t numPartialBlocks = od.size()%blockSize > 0; // int(false)==0, int(true)==1
 		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(ItemIndexPrivatePFoR::BlockDescBitWidth, 1+numFullBlocks+numPartialBlocks);
-		for(auto it(od.entries.cbegin()), end(od.entries.cend()); it < end; it += blockSize) {
+		for(auto it(od.entries.cbegin()), end(od.entries.cend()); it < end && storageSize < optStorageSize; it += blockSize) {
 			auto blockEnd = it + std::min<std::ptrdiff_t>(blockSize, end-it);
 			uint32_t myOptBlockBits, myBlockStorageSize;
 			PFoRCreator::optBitsOD(it, blockEnd, myOptBlockBits, myBlockStorageSize);
