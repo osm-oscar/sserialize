@@ -280,26 +280,6 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 	return d.tellGetPtr() - getPtr;
 }
 
-template<bool T_ABSOLUTE, typename T_ITERATOR>
-void PFoRCreator::OptimizerData::init(T_ITERATOR begin, T_ITERATOR end) {
-	using std::distance;
-	std::size_t ds = distance(begin, end);
-	entries.resize(ds);
-	auto odIt = entries.begin();
-	if (T_ABSOLUTE) {
-		uint32_t prev = 0;
-		for(auto it(begin); it != end; ++it, ++odIt) {
-			*odIt = Entry(*it - prev);
-			prev = *it;
-		}
-	}
-	else {
-		for(auto it(begin); it != end; ++it, ++odIt) {
-			*odIt = Entry(*it);
-		}
-	}
-}
-
 template<typename T_ITERATOR>
 uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter & dest, T_ITERATOR begin, T_ITERATOR end) {
 	using std::distance;
@@ -326,6 +306,26 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter & dest, T_ITERAT
 	}
 	
 	return resultBits;
+}
+
+template<bool T_ABSOLUTE, typename T_ITERATOR>
+void PFoRCreator::OptimizerData::init(T_ITERATOR begin, T_ITERATOR end) {
+	using std::distance;
+	std::size_t ds = distance(begin, end);
+	entries.resize(ds);
+	auto odIt = entries.begin();
+	if (T_ABSOLUTE) {
+		uint32_t prev = 0;
+		for(auto it(begin); it != end; ++it, ++odIt) {
+			*odIt = Entry(*it - prev);
+			prev = *it;
+		}
+	}
+	else {
+		for(auto it(begin); it != end; ++it, ++odIt) {
+			*odIt = Entry(*it);
+		}
+	}
 }
 
 template<typename T_ITERATOR>
