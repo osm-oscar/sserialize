@@ -116,6 +116,9 @@ public:
 		inline std::size_t size() const { return entries.size(); }
 		inline std::vector<Entry>::const_iterator begin() const { return entries.begin(); }
 		inline std::vector<Entry>::const_iterator end() const { return entries.end(); }
+		
+		template<bool T_ABSOLUTE, typename T_ITERATOR>
+		void init(T_ITERATOR begin, T_ITERATOR end);
 	};
 public:
 	PFoRCreator(const PFoRCreator& other) = delete;
@@ -271,6 +274,26 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 		++out;
 	}
 	return d.tellGetPtr() - getPtr;
+}
+
+template<bool T_ABSOLUTE, typename T_ITERATOR>
+void PFoRCreator::OptimizerData::init(T_ITERATOR begin, T_ITERATOR end) {
+	using std::distance;
+	std::size_t ds = distance(begin, end);
+	entries.resize(ds);
+	auto odIt = entries.begin();
+	if (T_ABSOLUTE) {
+		uint32_t prev = 0;
+		for(auto it(begin); it != end; ++it, ++odIt) {
+			*odIt = Entry(*it - prev);
+			prev = *it;
+		}
+	}
+	else {
+		for(auto it(begin); it != end; ++it, ++odIt) {
+			*odIt = Entry(*it);
+		}
+	}
 }
 
 template<typename T_ITERATOR>
