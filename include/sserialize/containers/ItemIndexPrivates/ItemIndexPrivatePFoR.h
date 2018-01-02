@@ -283,12 +283,10 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 template<typename T_ITERATOR>
 uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter & dest, T_ITERATOR begin, T_ITERATOR end) {
 	using std::distance;
-	std::size_t ds = distance(begin, end);
 	uint32_t optBits(32), optStorageSize;
 	PFoRCreator::optBits(begin, end, optBits, optStorageSize);
 	std::vector<uint32_t> dv;
 	std::vector<uint32_t> outliers;
-	UByteArrayAdapter tmp(CompactUintArray::minStorageBytes(optBits, ds), MM_PROGRAM_MEMORY);
 	for(T_ITERATOR it(begin); it != end; ++it) {
 		if (CompactUintArray::minStorageBits(*it) > optBits || *it == 0) {
 			dv.push_back(0);
