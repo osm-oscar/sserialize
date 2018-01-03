@@ -233,22 +233,7 @@ void PFoRCreator::flushBlock() {
 	if (!m_fixedSize) {
 		m_size += m_values.size();
 	}
-	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	auto blockDataBegin = m_data.tellPutPtr();
-	#endif
 	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end(), m_od.begin(), m_od.end());
-	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	{
-		UByteArrayAdapter blockData(m_data, blockDataBegin);
-		PFoRBlock block(blockData, 0, m_values.size(), blockBits);
-		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_values.size(), block.size());
-		uint32_t realId = 0;
-		for(uint32_t i(0); i < m_values.size(); ++i) {
-			realId += m_values[i];
-			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(realId, block.at(i));
-		}
-	}
-	#endif
 	m_blockBits.push_back(blockBits);
 	m_values.clear();
 	m_od.clear();

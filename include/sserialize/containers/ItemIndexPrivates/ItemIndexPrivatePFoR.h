@@ -289,7 +289,11 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 template<typename T_ITERATOR, typename T_OD_ITERATOR>
 uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATOR begin, T_ITERATOR end, T_OD_ITERATOR odbegin, T_OD_ITERATOR odend) {
 	using std::distance;
-	uint32_t optBits(32), optStorageSize;
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(std::ptrdiff_t(distance(begin, end)), std::ptrdiff_t(distance(odbegin, odend)));
+	SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+	
+	
+	uint32_t optBits(32), optStorageSize(0);
 	PFoRCreator::optBitsOD(odbegin, odend, optBits, optStorageSize);
 	std::vector<uint32_t> dv;
 	std::vector<uint32_t> outliers;
@@ -309,6 +313,21 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 	for(uint32_t x : outliers) {
 		dest.putVlPackedUint32(x);
 	}
+	
+	
+	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	{
+		UByteArrayAdapter blockData(dest, blockDataBegin);
+		PFoRBlock block(blockData, 0, dv.size(), optBits);
+		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(dv.size(), block.size());
+		uint32_t realId = 0;
+		uint32_t i = 0;
+		for(auto it(begin); it != end; ++it, ++i) {
+			realId += *it;;
+			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(realId, block.at(i));
+		}
+	}
+	#endif
 	
 	return resultBits;
 }
