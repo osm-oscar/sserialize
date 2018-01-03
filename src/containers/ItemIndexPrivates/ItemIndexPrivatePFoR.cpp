@@ -378,6 +378,31 @@ struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::
 
 //END GenericSetOpExecuterInit
 
+//BEGIN GenericSetOpExecuterAccessors
+
+template<>
+struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::PFoRIterator> > {
+	typedef detail::ItemIndexImpl::PFoRIterator PositionIteratorBase;
+	typedef std::unique_ptr<PositionIteratorBase> PositionIterator;
+	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx) {
+		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cbegin()) );
+	}
+	static PositionIterator end(const sserialize::ItemIndexPrivate * idx) {
+		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cend()) );
+	}
+	static void next(PositionIterator & it) {
+		it->PositionIteratorBase::next();
+	}
+	static bool unequal(const PositionIterator & first, const PositionIterator & second) {
+		return first->PositionIteratorBase::notEq(second.get());
+	}
+	static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
+		return it->PositionIteratorBase::get();
+	}
+};
+
+//END GenericSetOpExecuterAccessors
+
 }} //end namespace detail::ItemIndexImpl
 
 //BEGIN INDEX
@@ -534,7 +559,7 @@ ItemIndexPrivatePFoR::intersect(const sserialize::ItemIndexPrivate * other) cons
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::IntersectOp,
 		detail::ItemIndexImpl::PFoRCreator,
-		sserialize::ItemIndex::const_iterator
+		std::unique_ptr<detail::ItemIndexImpl::PFoRIterator>
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
@@ -548,7 +573,7 @@ ItemIndexPrivatePFoR::unite(const sserialize::ItemIndexPrivate * other) const {
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::UniteOp,
 		detail::ItemIndexImpl::PFoRCreator,
-		sserialize::ItemIndex::const_iterator
+		std::unique_ptr<detail::ItemIndexImpl::PFoRIterator>
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
@@ -562,7 +587,7 @@ ItemIndexPrivatePFoR::difference(const sserialize::ItemIndexPrivate * other) con
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::DifferenceOp,
 		detail::ItemIndexImpl::PFoRCreator,
-		sserialize::ItemIndex::const_iterator
+		std::unique_ptr<detail::ItemIndexImpl::PFoRIterator>
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
@@ -576,7 +601,7 @@ ItemIndexPrivatePFoR::symmetricDifference(const sserialize::ItemIndexPrivate * o
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
 		detail::ItemIndexImpl::SymmetricDifferenceOp,
 		detail::ItemIndexImpl::PFoRCreator,
-		sserialize::ItemIndex::const_iterator
+		std::unique_ptr<detail::ItemIndexImpl::PFoRIterator>
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
 }
