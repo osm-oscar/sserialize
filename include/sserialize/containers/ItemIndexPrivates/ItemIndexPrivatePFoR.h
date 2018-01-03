@@ -414,16 +414,50 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 template<typename T_ITERATOR>
 bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter & dest) {
 	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
+	std::vector<uint32_t> dv;
 	OptimizerData od;
-	od.init<true>(begin, end);
+	uint32_t blockSizeOffset(0), blockStorageSize(0);
+	uint32_t blockSize(0), blockCount(0);
+	std::vector<uint8_t> metadata;
 
-	uint32_t blockSizeOffset, blockStorageSize;
-	PFoRCreator::optBlockCfg(od, blockSizeOffset, blockStorageSize);
-	detail::ItemIndexImpl::PFoRCreator creator(dest, od.size(), blockSizeOffset);
-	for(; begin != end; ++begin) {
-		creator.push_back(*begin);
+	{
+		using std::distance;
+		dv.resize(distance(begin, end), 0);
+		uint32_t prev = 0;
+		auto dvit = dv.begin();
+		for(auto it(begin); it != end; ++it, ++dvit) {
+			*dvit = *it - prev;
+			prev = *it;
+		}
 	}
-	creator.flush();
+	od.init<false>(dv.begin(), dv.end());
+
+	if (dv.size()) {
+		PFoRCreator::optBlockCfg(od, blockSizeOffset, blockStorageSize);
+		blockSize = ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset];
+		blockCount = dv.size()/blockSize + ((dv.size()%blockSize)>0);
+	}
+	
+	metadata.resize(blockCount+1);
+	metadata.front() = blockSizeOffset;
+	
+	dest.putVlPackedUint32(dv.size()); //idx size
+	dest.putVlPackedUint32(blockStorageSize); // block data size
+	
+	SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+	
+	if (od.size()) { //now comes the block data
+		auto odit = od.begin();
+		auto mdit = metadata.begin()+1;
+		for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, odit += blockSize, ++mdit) {
+			uint32_t myBlockSize = std::min<uint32_t>(blockSize, dvend-dvit);
+			uint32_t blockBits = encodeBlock(dest, dvit, dvit+myBlockSize, odit, odit+myBlockSize);
+			*mdit = blockBits;
+		}
+	}
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(blockStorageSize, dest.tellPutPtr() - blockDataBegin);
+
+	sserialize::CompactUintArray::create(metadata, dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
 	return true;
 }
 
