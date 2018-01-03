@@ -100,6 +100,7 @@ public:
 			Entry(const Entry &) = default;
 			Entry & operator=(const Entry&) = default;
 			uint8_t vsize() const;
+			/// bits() == 0 iff id == 0, otherwise bits() == CompactUintArray::minStorageBits(id)
 			uint8_t bits() const;
 		private:
 // 			uint8_t m_vsize;
@@ -305,6 +306,7 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 		}
 		else {
 			SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), *it);
+			SSERIALIZE_CHEAP_ASSERT_SMALLER(uint8_t(0), odit->bits());
 			dv.push_back(*it);
 		}
 	}
@@ -314,6 +316,7 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 		dest.putVlPackedUint32(x);
 	}
 	
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(optStorageSize, dest.tellPutPtr() - blockDataBegin);
 	
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
@@ -387,7 +390,7 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 	uint32_t minbits(std::numeric_limits<uint32_t>::max());
 	uint32_t maxbits(std::numeric_limits<uint32_t>::min());
 	for(auto it(begin); it != end; ++it) {
-		minbits = std::min<uint32_t>(minbits, it->bits());
+		minbits = std::min<uint32_t>(minbits, std::max<uint8_t>(1, it->bits()));
 		maxbits = std::max<uint32_t>(maxbits, it->bits());
 	}
 
@@ -396,7 +399,7 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 	for(uint32_t bits(minbits); bits <= maxbits; ++bits) {
 		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(bits, inputSize);
 		for(auto it(begin); it != end && storageSize < optStorageSize; ++it) {
-			if ( it->bits() > bits) {
+			if (it->bits() == 0 || it->bits() > bits) {
 				storageSize += it->vsize();
 			}
 		}
