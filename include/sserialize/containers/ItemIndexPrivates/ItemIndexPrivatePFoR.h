@@ -376,9 +376,9 @@ void PFoRCreator::optBits(T_ITERATOR begin, T_ITERATOR end, uint32_t & optBits, 
 template<typename T_IT>
 void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t & optStorageSize) {
 	using std::distance;
-	std::size_t ds = distance(begin, end);
+	std::size_t inputSize = distance(begin, end);
 
-	if (ds < 1) {
+	if (inputSize < 1) {
 		optBits = 0;
 		optStorageSize = 0;
 		return;
@@ -394,7 +394,7 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 	optBits = maxbits;
 	optStorageSize = std::numeric_limits<uint32_t>::max();
 	for(uint32_t bits(minbits); bits <= maxbits; ++bits) {
-		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(bits, ds);
+		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(bits, inputSize);
 		for(auto it(begin); it != end && storageSize < optStorageSize; ++it) {
 			if ( it->bits() > bits) {
 				storageSize += it->vsize();
