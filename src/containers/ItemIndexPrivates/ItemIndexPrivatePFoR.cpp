@@ -138,11 +138,11 @@ m_bits(0)
 
 PFoRCreator::OptimizerData::Entry::Entry(uint32_t id) :
 // m_vsize(sserialize::psize_vu32(id)),
-m_bits(CompactUintArray::minStorageBits(id))
+m_bits(id == 0 ? uint32_t(0) : CompactUintArray::minStorageBits(id))
 {}
 
 uint8_t PFoRCreator::OptimizerData::Entry::vsize() const {
-	return sserialize::psize_vu32(uint32_t(1) << (bits()-1));
+	return sserialize::psize_vu32( bits() == 0 ? 0 : sserialize::createMask(uint32_t(bits())) );
 }
 
 uint8_t PFoRCreator::OptimizerData::Entry::bits() const {
