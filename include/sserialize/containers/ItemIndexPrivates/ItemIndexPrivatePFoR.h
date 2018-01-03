@@ -296,17 +296,17 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 	
 	uint32_t optBits(32), optStorageSize(0);
 	PFoRCreator::optBitsOD(odbegin, odend, optBits, optStorageSize);
-	std::vector<uint32_t> dv;
+	std::vector<uint32_t> dv(distance(odbegin, odend), 0);
 	std::vector<uint32_t> outliers;
-	T_OD_ITERATOR odit = odbegin;
-	for(T_ITERATOR it(begin); it != end; ++it, ++odit) {
+	auto odit = odbegin;
+	auto dvit = dv.begin();
+	for(T_ITERATOR it(begin); it != end; ++it, ++odit, ++dvit) {
 		if (odit->bits() > optBits || *it == 0) {
-			dv.push_back(0);
 			outliers.push_back(*it);
 		}
 		else {
 			SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), *it);
-			dv.push_back(*it);
+			*dvit = *it;
 		}
 	}
 	uint32_t resultBits = CompactUintArray::create(dv, dest, optBits);
