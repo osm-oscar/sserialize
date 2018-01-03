@@ -126,6 +126,7 @@ public:
 	PFoRCreator & operator=(const PFoRCreator & other) = delete;
 public:
 	PFoRCreator();
+	PFoRCreator(uint32_t blockSizeOffset);
 	PFoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset);
 	PFoRCreator(UByteArrayAdapter & data, uint32_t finalSize, uint32_t blockSizeOffset);
 	PFoRCreator(PFoRCreator && other);

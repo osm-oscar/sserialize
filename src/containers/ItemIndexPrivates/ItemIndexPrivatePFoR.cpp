@@ -150,9 +150,13 @@ uint8_t PFoRCreator::OptimizerData::Entry::bits() const {
 }
 
 PFoRCreator::PFoRCreator() :
+PFoRCreator(ItemIndexPrivatePFoR::DefaultBlockSizeOffset)
+{}
+
+PFoRCreator::PFoRCreator(uint32_t blockSizeOffset) :
 m_fixedSize(false),
 m_size(0),
-m_blockSizeOffset(ItemIndexPrivatePFoR::DefaultBlockSizeOffset),
+m_blockSizeOffset(blockSizeOffset),
 m_prev(0),
 m_blockBits(1, m_blockSizeOffset),
 m_data(0, MM_PROGRAM_MEMORY),
