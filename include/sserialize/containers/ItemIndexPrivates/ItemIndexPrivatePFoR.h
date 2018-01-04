@@ -395,28 +395,43 @@ void PFoRCreator::optBitsOD(T_IT begin, T_IT end, uint32_t & optBits, uint32_t &
 		return;
 	}
 	
-	uint32_t minbits(std::numeric_limits<uint32_t>::max());
-	uint32_t maxbits(std::numeric_limits<uint32_t>::min());
+	//storageSizes[i] = storage size if i-1 bits are used
+	std::array<uint32_t, 33> storageSizes;
+	storageSizes.fill(0);
+	
+	//we know the following: input is > 0 except for begin
+	//for increasing bits we have the following
+	//the fixed array part strongly increases
+	//the variable part decreases
+	//we now simply compute for each bit the added amount of storage
 	for(auto it(begin); it != end; ++it) {
-		minbits = std::min<uint32_t>(minbits, std::max<uint8_t>(1, it->bits()));
-		maxbits = std::max<uint32_t>(maxbits, it->bits());
+		storageSizes[it->bits()] += it->vsize();
 	}
-
-	optBits = maxbits;
+	
+	//sum them up from largest to smallest
+	storageSizes[32] += storageSizes[0]; 
+	for(uint32_t bits(31); bits > 0; --bits) {
+		storageSizes[bits] += storageSizes[bits+1];
+	}
+	
+	//now storageSizes[i] = size of var storage if i-1 bits are used
+	
+	//add the fixed array storage size,
+	for(uint32_t bits=2; bits < 33; ++bits) {
+		storageSizes[bits] += CompactUintArray::minStorageBytes(bits-1, inputSize);
+	}
+	
+	//now find the minimum
 	optStorageSize = std::numeric_limits<uint32_t>::max();
-	for(uint32_t bits(minbits); bits <= maxbits; ++bits) {
-		sserialize::SizeType storageSize = CompactUintArray::minStorageBytes(bits, inputSize);
-		for(auto it(begin); it != end && storageSize < optStorageSize; ++it) {
-			if (it->bits() == 0 || it->bits() > bits) {
-				storageSize += it->vsize();
-			}
-		}
-		if (storageSize < optStorageSize) {
-			optStorageSize = storageSize;
-			optBits = bits;
+	optBits = 0;
+	for(uint32_t bits=2; bits < 33; ++bits) {
+		if (storageSizes[bits] < optStorageSize) {
+			optStorageSize = storageSizes[bits];
+			optBits = bits-1;
 		}
 	}
 	
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), optBits);
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), optStorageSize);
 }
 
