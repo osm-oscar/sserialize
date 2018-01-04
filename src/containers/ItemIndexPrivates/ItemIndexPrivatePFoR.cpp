@@ -132,17 +132,20 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 //BEGIN CREATOR
 
 PFoRCreator::OptimizerData::Entry::Entry() :
-// m_vsize(0),
+m_vsize(0),
 m_bits(0)
 {}
 
 PFoRCreator::OptimizerData::Entry::Entry(uint32_t id) :
-// m_vsize(sserialize::psize_vu32(id)),
+m_vsize(0),
 m_bits(id == 0 ? uint32_t(0) : CompactUintArray::minStorageBits(id))
 {}
 
 uint8_t PFoRCreator::OptimizerData::Entry::vsize() const {
-	return sserialize::psize_vu32( bits() == 0 ? 0 : sserialize::createMask(uint32_t(bits())) );
+	if (!m_vsize) {
+		m_vsize = sserialize::psize_vu32( bits() == 0 ? 0 : sserialize::createMask(uint32_t(bits())) );
+	}
+	return m_vsize;
 }
 
 uint8_t PFoRCreator::OptimizerData::Entry::bits() const {
