@@ -9,8 +9,10 @@ PFoRBlock::PFoRBlock() :
 m_dataSize(0)
 {}
 
-PFoRBlock::PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
-	m_dataSize = decodeBlock(d, prev, size, bpn, std::back_inserter(m_values));
+PFoRBlock::PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) :
+m_values(size)
+{
+	m_dataSize = decodeBlock(d, prev, size, bpn, m_values.begin());
 }
 
 uint32_t PFoRBlock::size() const {
@@ -19,6 +21,11 @@ uint32_t PFoRBlock::size() const {
 
 sserialize::UByteArrayAdapter::SizeType PFoRBlock::getSizeInBytes() const {
 	return m_dataSize;
+}
+
+void PFoRBlock::update(const UByteArrayAdapter& d, uint32_t prev, uint32_t size, uint32_t bpn) {
+	m_values.resize(size);
+	m_dataSize = decodeBlock(d, prev, size, bpn, m_values.begin());
 }
 
 uint32_t PFoRBlock::front() const {
@@ -121,11 +128,15 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 		uint32_t blockNum = m_indexPos/defaultBlockSize;
 		uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_indexSize - blockNum*defaultBlockSize);
 		uint32_t blockBits = m_bits.at(blockNum+1);
-		m_block = PFoRBlock(d, prev, blockSize, blockBits);
+		m_block.update(d, prev, blockSize, blockBits);
 		m_data += m_block.getSizeInBytes();
 		return true;
 	}
 	return false;
+}
+
+uint32_t PFoRIterator::blockCount() const {
+	return m_bits.maxCount() - 1;
 }
 
 

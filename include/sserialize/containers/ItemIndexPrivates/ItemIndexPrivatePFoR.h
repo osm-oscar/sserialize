@@ -42,6 +42,7 @@ public:
 	PFoRBlock & operator=(PFoRBlock &&) = default;
 	uint32_t size() const;
 	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
+	void update(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn);
 	uint32_t front() const;
 	uint32_t back() const;
 	uint32_t at(uint32_t pos) const;
