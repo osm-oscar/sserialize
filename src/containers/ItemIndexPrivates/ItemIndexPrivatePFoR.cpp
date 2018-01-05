@@ -143,20 +143,17 @@ uint32_t PFoRIterator::blockCount() const {
 //BEGIN CREATOR
 
 PFoRCreator::OptimizerData::Entry::Entry() :
-m_vsize(0),
 m_bits(0)
 {}
 
 PFoRCreator::OptimizerData::Entry::Entry(uint32_t id) :
-m_vsize(0),
 m_bits(id == 0 ? uint32_t(0) : CompactUintArray::minStorageBits(id))
 {}
 
 uint8_t PFoRCreator::OptimizerData::Entry::vsize() const {
-	if (!m_vsize) {
-		m_vsize = sserialize::psize_vu32( bits() == 0 ? 0 : sserialize::createMask(uint32_t(bits())) );
-	}
-	return m_vsize;
+	uint8_t r =  m_bits == 0? 1 : (m_bits/7 + uint8_t((m_bits%7)>0));
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(r, sserialize::psize_vu32( bits() == 0 ? 0 : sserialize::createMask(uint32_t(bits())) ));
+	return r;
 }
 
 uint8_t PFoRCreator::OptimizerData::Entry::bits() const {

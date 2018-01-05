@@ -104,8 +104,6 @@ public:
 			/// bits() == 0 iff id == 0, otherwise bits() == CompactUintArray::minStorageBits(id)
 			uint8_t bits() const;
 		private:
-			//iff vsize == 0, then it has not been computed yet
-			mutable uint8_t m_vsize;
 			uint8_t m_bits;
 		};
 		std::vector<Entry> entries;
