@@ -4,17 +4,25 @@
 namespace sserialize {
 
 MultiBitBackInserter::MultiBitBackInserter() : 
+m_data(new sserialize::UByteArrayAdapter()),
+m_delete(true),
 m_curInByteOffset(0)
 {}
 
 MultiBitBackInserter::MultiBitBackInserter(UByteArrayAdapter & data) :
-m_data(data),
+m_data(&data),
+m_delete(false),
 m_curInByteOffset(0)
 {
 	m_buffer.fill(0);
 }
 
-MultiBitBackInserter::~MultiBitBackInserter() {}
+MultiBitBackInserter::~MultiBitBackInserter() {
+	if (m_delete) {
+		delete m_data;
+		m_data = 0;
+	}
+}
 
 void MultiBitBackInserter::push_back(uint64_t value, uint8_t length) {
 	value = value & createMask64(length);
@@ -22,7 +30,7 @@ void MultiBitBackInserter::push_back(uint64_t value, uint8_t length) {
 	if (8-m_curInByteOffset >= length) {
 		m_buffer[0] |= ( value << ((8-m_curInByteOffset)-length) );
 		if (8-m_curInByteOffset == length) {
-			m_data.putUint8(m_buffer[0]);
+			data().putUint8(m_buffer[0]);
 			m_curInByteOffset = 0;
 			m_buffer[0] = 0;
 		}
@@ -45,7 +53,7 @@ void MultiBitBackInserter::push_back(uint64_t value, uint8_t length) {
 			m_buffer[byteSpan-1] |= value;
 			value >>= 8;
 		}
-		m_data.putData(m_buffer.begin(), pushLen);
+		data().putData(m_buffer.begin(), pushLen);
 		m_buffer.fill(0);
 		m_buffer[0] = overlap;
 	}
@@ -53,14 +61,14 @@ void MultiBitBackInserter::push_back(uint64_t value, uint8_t length) {
 
 void MultiBitBackInserter::flush() {
 	if (m_curInByteOffset) {
-		m_data.putUint8(m_buffer[0]);
+		data().putUint8(m_buffer[0]);
 		m_curInByteOffset = 0;
 		m_buffer[0] = 0;
 	}
 }
 
 UByteArrayAdapter & MultiBitBackInserter::data() {
-	return m_data;
+	return *m_data;
 }
 
 

@@ -5,14 +5,18 @@
 
 namespace sserialize {
 
-class MultiBitBackInserter {
-	UByteArrayAdapter m_data;
+class MultiBitBackInserter final {
+	UByteArrayAdapter * m_data;
+	bool m_delete;
 	uint8_t m_curInByteOffset;
 	std::array<uint8_t, 9> m_buffer;
 public:
+	MultiBitBackInserter(const MultiBitBackInserter &) = delete;
+	MultiBitBackInserter & operator=(const MultiBitBackInserter &) = delete;
+public:
 	MultiBitBackInserter();
 	MultiBitBackInserter(UByteArrayAdapter & data);
-	virtual ~MultiBitBackInserter();
+	~MultiBitBackInserter();
 	void push_back(uint64_t value, uint8_t length);
 	void flush();
 	UByteArrayAdapter & data();
