@@ -197,6 +197,8 @@ std::ostream & operator<<(std::ostream & out, const sserialize::ItemIndex & idx)
 
 std::string to_string(sserialize::ItemIndex::Types t);
 
+bool from_string(const std::string & str, sserialize::ItemIndex::Types & type);
+
 }//end namespace
 
 namespace std {

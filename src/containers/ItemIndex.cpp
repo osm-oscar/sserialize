@@ -533,12 +533,12 @@ std::string to_string(ItemIndex::Types t) {
 		return "de";
 	case ItemIndex::T_RLE_DE:
 		return "rlede";
+	case ItemIndex::T_NATIVE:
+		return "native";
 	case ItemIndex::T_ELIAS_FANO:
 		return "eliasfano";
 	case ItemIndex::T_PFOR:
 		return "pfor";
-	case ItemIndex::T_NATIVE:
-		return "native";
 	case ItemIndex::T_EMPTY:
 		return "empty";
 	case ItemIndex::T_STL_DEQUE:
@@ -550,6 +550,37 @@ std::string to_string(ItemIndex::Types t) {
 	}
 }
 
+bool from_string(const std::string& str, ItemIndex::Types& type) {
+	if (str == "simple")
+		type = sserialize::ItemIndex::T_SIMPLE;
+	else if (str == "rline")
+		type = sserialize::ItemIndex::T_REGLINE;
+	else if (str == "wah")
+		type = sserialize::ItemIndex::T_WAH;
+	else if (str == "de")
+		type = sserialize::ItemIndex::T_DE;
+	else if (str == "rlede")
+		type = sserialize::ItemIndex::T_RLE_DE;
+	else if (str == "native")
+		type = sserialize::ItemIndex::T_NATIVE;
+	else if (str == "eliasfano")
+		type = sserialize::ItemIndex::T_ELIAS_FANO;
+	else if (str == "pfor")
+		type = sserialize::ItemIndex::T_PFOR;
+	else if (str == "pfor")
+		type = sserialize::ItemIndex::T_PFOR;
+	else if (str == "empty")
+		type = sserialize::ItemIndex::T_EMPTY;
+	else if (str == "deque")
+		type = sserialize::ItemIndex::T_STL_DEQUE;
+	else if (str == "vector")
+		type = sserialize::ItemIndex::T_STL_VECTOR;
+	else {
+		type = sserialize::ItemIndex::T_NULL;
+		return false;
+	}
+	return true;
+}
 
 }//end namespace
 
