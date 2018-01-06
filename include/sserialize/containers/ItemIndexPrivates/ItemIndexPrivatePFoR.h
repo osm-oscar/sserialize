@@ -2,6 +2,8 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_PFOR_H
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
 #include <sserialize/containers/CompactUintArray.h>
+#include <sserialize/iterator/MultiBitIterator.h>
+#include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/utility/assert.h>
 #include <limits>
@@ -20,7 +22,7 @@ class PForCreator;
   * Data format is as follows:
   * 
   * struct {
-  *   CompactUintArray data;
+  *   MultiBitIterator data;
   *   List< v_unsigned<32> > outliers;
   * }
   * 
@@ -274,10 +276,10 @@ template<typename T_OUTPUT_ITERATOR>
 sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, T_OUTPUT_ITERATOR out) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	sserialize::SizeType getPtr = d.tellGetPtr();
-	CompactUintArray arr(d, bpn, size);
-	d.incGetPtr(arr.getSizeInBytes());
-	for(uint32_t i(0); i < size; ++i) {
-		uint32_t v = arr.at(i);
+	MultiBitIterator it(d);
+	d.incGetPtr(CompactUintArray::minStorageBytes(bpn, size));
+	for(uint32_t i(0); i < size; ++i, it += bpn) {
+		uint32_t v = it.get32(bpn);
 		if (v == 0) {
 			v = d.getVlPackedUint32();
 		}
@@ -304,21 +306,21 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 	if (!dest.reserveFromPutPtr(dvStorageSize)) {
 		throw sserialize::CreationException("Could not allocate storage");
 	}
-	CompactUintArray dv(UByteArrayAdapter(dest, dest.tellPutPtr()), optBits, blockSize);
-	
-	uint32_t dvit = 0;
+	MultiBitBackInserter dvit(dest);
 	std::vector<uint32_t> outliers;
+	
 	auto odit = odbegin;
-	for(T_ITERATOR it(begin); it != end; ++it, ++odit, ++dvit) {
+	for(T_ITERATOR it(begin); it != end; ++it, ++odit) {
 		if (odit->bits() > optBits || *it == 0) {
 			outliers.push_back(*it);
+			dvit.push_back(0, optBits);
 		}
 		else {
 			SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), *it);
-			dv.set(dvit, *it);
+			dvit.push_back(*it, optBits);
 		}
 	}
-	dest.incPutPtr(dvStorageSize);
+	dvit.flush();
 	for(uint32_t x : outliers) {
 		dest.putVlPackedUint32(x);
 	}
