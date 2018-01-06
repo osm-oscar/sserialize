@@ -81,21 +81,62 @@ public:
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
 	
+	int selectedTests = 0;
+	
+	for (int i(0); i < argc; ++i) {
+		std::string token(argv[i]);
+		if (token == "-t" && i+1 < argc) {
+			token = std::string(argv[i+1]);
+			sserialize::ItemIndex::Types t;
+			sserialize::from_string(token, t);
+			selectedTests |= t;
+			++i;
+		}
+	}
+	
+	if (selectedTests == 0) {
+		selectedTests = 0xFFFFFFFF;
+	}
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	
-	runner.addTest(  ItemIndexPrivateStlContainerTest< std::vector<uint32_t> >::suite() );
-	runner.addTest(  ItemIndexPrivateStlContainerTest< std::deque<uint32_t> >::suite() );
+	if (selectedTests & sserialize::ItemIndex::T_STL_VECTOR) {
+		runner.addTest(  ItemIndexPrivateStlContainerTest< std::vector<uint32_t> >::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_STL_DEQUE) {
+		runner.addTest(  ItemIndexPrivateStlContainerTest< std::deque<uint32_t> >::suite() );
+	}
 	
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_SIMPLE>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_REGLINE>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_NATIVE>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_WAH>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_DE>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_RLE_DE>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_ELIAS_FANO>::suite() );
-	runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_PFOR>::suite() );
-// 	runner.eventManager().popProtector();
+	if (selectedTests & sserialize::ItemIndex::T_SIMPLE) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_SIMPLE>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_REGLINE) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_REGLINE>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_NATIVE) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_NATIVE>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_WAH) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_WAH>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_DE) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_DE>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_RLE_DE) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_RLE_DE>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_ELIAS_FANO) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_ELIAS_FANO>::suite() );
+	}
+	if (selectedTests & sserialize::ItemIndex::T_PFOR) {
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_PFOR>::suite() );
+	}
+	
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
+	
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
