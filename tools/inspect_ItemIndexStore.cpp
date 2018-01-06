@@ -288,22 +288,7 @@ int main(int argc, char ** argv) {
 		}
 		else if (curArg == "-t" && i+1 < argc) {
 			std::string t(argv[i+1]);
-			if (t == "rline")
-				transform = sserialize::ItemIndex::T_REGLINE;
-			else if (t == "wah")
-				transform = sserialize::ItemIndex::T_WAH;
-			else if (t == "de")
-				transform = sserialize::ItemIndex::T_DE;
-			else if (t == "rlede")
-				transform = sserialize::ItemIndex::T_RLE_DE;
-			else if (t == "simple")
-				transform = sserialize::ItemIndex::T_SIMPLE;
-			else if (t == "native")
-				transform = sserialize::ItemIndex::T_NATIVE;
-			else if (t == "eliasfano")
-				transform = sserialize::ItemIndex::T_ELIAS_FANO;
-			else if (t == "pfor")
-				transform = sserialize::ItemIndex::T_PFOR;
+			sserialize::from_string(t, transform);
 			++i;
 		}
 		else if (curArg == "-nd") {
