@@ -6,6 +6,7 @@ namespace tests {
 
 int TestBase::argc = 0;
 char ** TestBase::argv = 0;
+bool TestBase::sm_popProtector = false;
 
 TestBase::TestBase() {
 	if (!argc) {
@@ -32,8 +33,17 @@ void TestBase::init(int argc, char ** argv) {
 		else if (token == "--tc-shm-file" && i+1 < argc) {
 			sserialize::FileHandler::setShmPrefix(std::string(argv[i+1]));
 		}
+		else if (token == "--pop-protector") {
+			sm_popProtector = true;
+		}
 	}
 }
+
+
+bool TestBase::popProtector(){
+	return sm_popProtector;
+}
+
 
 
 }} //end namespace sserialize:.tests

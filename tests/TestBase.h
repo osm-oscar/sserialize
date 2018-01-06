@@ -18,10 +18,11 @@ public:
 	virtual ~TestBase();
 public:
 	static void init(int argc, char ** argv);
+	static bool popProtector();
 private:
 	static int argc;
 	static char ** argv;
-	
+	static bool sm_popProtector;
 };
 
 }} //end namespace sserialize::tests
