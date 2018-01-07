@@ -52,9 +52,8 @@ public:
 	const_iterator cbegin() const;
 	const_iterator end() const;
 	const_iterator cend() const;
-public:
-	template<typename T_OUTPUT_ITERATOR>
-	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, T_OUTPUT_ITERATOR out);
+private:
+	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn);
 private:
 	std::vector<uint32_t> m_values;
 	sserialize::UByteArrayAdapter::SizeType m_dataSize;
@@ -271,24 +270,6 @@ namespace sserialize {
 namespace detail {
 namespace ItemIndexImpl {
 
-
-template<typename T_OUTPUT_ITERATOR>
-sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, T_OUTPUT_ITERATOR out) {
-	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
-	sserialize::SizeType getPtr = d.tellGetPtr();
-	MultiBitIterator it(d);
-	d.incGetPtr(CompactUintArray::minStorageBytes(bpn, size));
-	for(uint32_t i(0); i < size; ++i, it += bpn) {
-		uint32_t v = it.get32(bpn);
-		if (v == 0) {
-			v = d.getVlPackedUint32();
-		}
-		prev += v;
-		*out = prev;
-		++out;
-	}
-	return d.tellGetPtr() - getPtr;
-}
 
 template<typename T_ITERATOR, typename T_OD_ITERATOR>
 uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATOR begin, T_ITERATOR end, T_OD_ITERATOR odbegin, T_OD_ITERATOR odend) {

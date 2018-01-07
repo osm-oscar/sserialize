@@ -12,7 +12,7 @@ m_dataSize(0)
 PFoRBlock::PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) :
 m_values(size)
 {
-	m_dataSize = decodeBlock(d, prev, size, bpn, m_values.begin());
+	m_dataSize = decodeBlock(d, prev, size, bpn);
 }
 
 uint32_t PFoRBlock::size() const {
@@ -24,8 +24,7 @@ sserialize::UByteArrayAdapter::SizeType PFoRBlock::getSizeInBytes() const {
 }
 
 void PFoRBlock::update(const UByteArrayAdapter& d, uint32_t prev, uint32_t size, uint32_t bpn) {
-	m_values.resize(size);
-	m_dataSize = decodeBlock(d, prev, size, bpn, m_values.begin());
+	m_dataSize = decodeBlock(d, prev, size, bpn);
 }
 
 uint32_t PFoRBlock::front() const {
@@ -56,6 +55,66 @@ PFoRBlock::const_iterator PFoRBlock::end() const {
 PFoRBlock::const_iterator PFoRBlock::cend() const {
 	return m_values.cend();
 }
+
+//TODO: decode fixed bit part with sse or something like that if blocks are large
+//It may already be a lot faster if we can increase the ipc of the code
+//The problem is as follows: input are n bit numbers arranged in an array of uint8_t in big endian (most significant byte first)
+//pad n bit to 32 and do ntoh on padded bytes
+
+sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn) {
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
+	m_values.resize(size);
+	sserialize::SizeType getPtr = d.tellGetPtr();
+	sserialize::SizeType arrStorageSize = CompactUintArray::minStorageBytes(bpn, size);
+#if 0
+	MultiBitIterator ait(UByteArrayAdapter(d, 0, arrStorageSize));
+	d.incGetPtr(arrStorageSize);
+	for(uint32_t i(0); i < size; ++i, ait += bpn) {
+		uint32_t v = ait.get32(bpn);
+		if (v == 0) {
+			v = d.getVlPackedUint32();
+		}
+		prev += v;
+		m_values[i] = prev;
+	}
+#else
+	sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
+	d.incGetPtr(arrStorageSize);
+	uint32_t mask = sserialize::createMask(bpn);
+	const uint8_t * dit = mv.data();
+	//in theory this loop can be computed in parallel (and hopefully is executed in parallel by the processor)
+	for(uint32_t i(0); i < size; ++i) {
+		uint64_t buffer = 0;
+		//calculate source byte begin and end and end intra byte offset
+		sserialize::SizeType eb = sserialize::SizeType(i)*bpn/8;
+		sserialize::SizeType ee = sserialize::SizeType(i+1)*bpn/8;
+		sserialize::SizeType ie = 8-(sserialize::SizeType(i+1)*bpn%8);
+		//copy these into our buffer
+		int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
+		char * bit = ((char*)&buffer);
+		const uint8_t * mydit = dit+eb+(len-1);
+		for(int i(0); i < len; ++i, ++bit, --mydit) {
+			*bit = *mydit;
+		}
+// 		::memmove(((char*)&buffer)+(8-len), dit+eb, len);
+		buffer = le64toh(buffer);
+		buffer >>= ie;
+		buffer &= mask;
+		m_values[i] = buffer;
+	}
+	
+	for(uint32_t i(0); i < size; ++i) {
+		uint32_t v = m_values[i];
+		if (v == 0) {
+			v = d.getVlPackedUint32();
+		}
+		prev += v;
+		m_values[i] = prev;
+	}
+#endif
+	return d.tellGetPtr() - getPtr;
+}
+
 
 PFoRIterator::PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
 m_data(data),
