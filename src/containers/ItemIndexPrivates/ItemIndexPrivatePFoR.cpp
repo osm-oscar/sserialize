@@ -97,22 +97,14 @@ PFoRIterator::next() {
 
 bool
 PFoRIterator::notEq(const MyBaseClass * other) const {
-	const PFoRIterator * myOther = dynamic_cast<const PFoRIterator*>(other);
-	
-	if (!myOther) {
-		return true;
-	}
-
+	SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const PFoRIterator*>(other));
+	const PFoRIterator * myOther = static_cast<const PFoRIterator*>(other);
 	return m_indexPos != myOther->m_indexPos;
 }
 
 bool PFoRIterator::eq(const MyBaseClass * other) const {
-	const PFoRIterator * myOther = dynamic_cast<const PFoRIterator*>(other);
-	
-	if (!myOther) {
-		return false;
-	}
-	
+	SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const PFoRIterator*>(other));
+	const PFoRIterator * myOther = static_cast<const PFoRIterator*>(other);
 	return m_indexPos == myOther->m_indexPos;
 }
 
