@@ -299,7 +299,7 @@ void PFoRCreator::flushBlock() {
 	if (!m_fixedSize) {
 		m_size += m_values.size();
 	}
-	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end(), m_od.begin(), m_od.end());
+	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_od.begin(), m_od.end());
 	m_blockBits.push_back(blockBits);
 	m_values.clear();
 	m_od.clear();
