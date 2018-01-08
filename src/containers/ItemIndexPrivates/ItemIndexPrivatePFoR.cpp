@@ -225,9 +225,7 @@ m_data(0, MM_PROGRAM_MEMORY),
 m_dest( new UByteArrayAdapter(0, MM_PROGRAM_MEMORY) ),
 m_putPtr(0),
 m_delete(true)
-{
-	m_storageSizes.fill(0);
-}
+{}
 
 PFoRCreator::PFoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset) :
 m_fixedSize(false),
@@ -241,7 +239,6 @@ m_putPtr(m_dest->tellPutPtr()),
 m_delete(false)
 {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
-	m_storageSizes.fill(0);
 }
 
 PFoRCreator::PFoRCreator(UByteArrayAdapter & data, uint32_t finalSize, uint32_t blockSizeOffset) :
@@ -256,7 +253,6 @@ m_putPtr(m_dest->tellPutPtr()),
 m_delete(false)
 {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
-	m_storageSizes.fill(0);
 }
 
 PFoRCreator::PFoRCreator(PFoRCreator&& other) :
@@ -264,7 +260,6 @@ m_fixedSize(other.m_fixedSize),
 m_size(other.m_size),
 m_blockSizeOffset(other.m_blockSizeOffset),
 m_values(std::move(other.m_values)),
-m_storageSizes(std::move(other.m_storageSizes)),
 m_prev(other.m_prev),
 m_blockBits(std::move(other.m_blockBits)),
 m_data(std::move(other.m_data)),
@@ -290,7 +285,6 @@ void PFoRCreator::push_back(uint32_t id) {
 	SSERIALIZE_CHEAP_ASSERT(m_prev == 0 || m_prev < id);
 	m_values.push_back(id - m_prev);
 	m_od.emplace_back( m_values.back() );
-	m_storageSizes[m_od.back().bits()] = m_od.back().vsize();
 	m_prev = id;
 	if (m_values.size() == ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]) {
 		flushBlock();
@@ -305,13 +299,10 @@ void PFoRCreator::flushBlock() {
 	if (!m_fixedSize) {
 		m_size += m_values.size();
 	}
-	uint32_t optBits, optStorageSize;
-	optBitsDist(m_storageSizes, m_values.size(), optBits, optStorageSize);
-	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end(), m_od.begin(), m_od.end(), optBits, optStorageSize);
+	uint32_t blockBits = encodeBlock(m_data, m_values.begin(), m_values.end(), m_od.begin(), m_od.end());
 	m_blockBits.push_back(blockBits);
 	m_values.clear();
 	m_od.clear();
-	m_storageSizes.fill(0);
 }
 
 void PFoRCreator::flush() {

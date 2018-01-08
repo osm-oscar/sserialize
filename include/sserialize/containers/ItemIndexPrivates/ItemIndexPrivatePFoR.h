@@ -183,7 +183,6 @@ private:
 	//holds delta values!
 	BlockCache m_values;
 	std::vector<OptimizerData::Entry> m_od;
-	std::array<uint32_t, 33> m_storageSizes;
 	uint32_t m_prev;
 	std::vector<uint8_t> m_blockBits;
 	UByteArrayAdapter m_data;
