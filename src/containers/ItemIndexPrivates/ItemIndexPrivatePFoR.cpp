@@ -393,6 +393,35 @@ void PFoRCreator::optBlockCfg(const OptimizerData & od, uint32_t & optBlockSizeO
 	optBlockStorageSize = optStorageSize - optMetaDataSize;
 }
 
+void PFoRCreator::optBitsDist(std::array< uint32_t, int(33) >& storageSizes, std::size_t inputSize, uint32_t& optBits, uint32_t& optStorageSize) {
+	//sum them up from largest to smallest
+	storageSizes[32] += storageSizes[0]; 
+	for(uint32_t bits(31); bits > 0; --bits) {
+		storageSizes[bits] += storageSizes[bits+1];
+	}
+	
+	//now storageSizes[i] = size of var storage if i-1 bits are used
+	
+	//add the fixed array storage size,
+	for(uint32_t bits=2; bits < 33; ++bits) {
+		storageSizes[bits] += CompactUintArray::minStorageBytes(bits-1, inputSize);
+	}
+	
+	//now find the minimum
+	optStorageSize = std::numeric_limits<uint32_t>::max();
+	optBits = 0;
+	for(uint32_t bits=2; bits < 33; ++bits) {
+		if (storageSizes[bits] < optStorageSize) {
+			optStorageSize = storageSizes[bits];
+			optBits = bits-1;
+		}
+	}
+	
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), optBits);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), optStorageSize);
+}
+
+
 
 //END CREATOR
 
