@@ -285,20 +285,22 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 
 template<typename T_IT, typename T_OD_IT>
 uint32_t PFoRCreator::encodeBlock(UByteArrayAdapter& dest, T_IT begin, T_OD_IT odbegin, T_OD_IT odend, uint32_t optBits, uint32_t optStorageSize) {
-	SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockSize, std::distance(odbegin, odend));
 	SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+
+	auto blockSize = std::distance(odbegin, odend);
+	auto arrStorageSize = CompactUintArray::minStorageBytes(optBits, blockSize);
 	
 	if (!dest.reserveFromPutPtr(optStorageSize)) {
 		throw sserialize::CreationException("Could not allocate storage");
 	}
 
+	UByteArrayAdapter outliers(dest, dest.tellPutPtr()+arrStorageSize);
 	MultiBitBackInserter dvit(dest);
-	std::vector<uint32_t> outliers;
 	
 	auto odit = odbegin;
 	for(auto it(begin); odit != odend; ++it, ++odit) {
 		if (odit->bits() > optBits || *it == 0) {
-			outliers.push_back(*it);
+			outliers.putVlPackedUint32(*it);
 			dvit.push_back(0, optBits);
 		}
 		else {
@@ -307,9 +309,7 @@ uint32_t PFoRCreator::encodeBlock(UByteArrayAdapter& dest, T_IT begin, T_OD_IT o
 		}
 	}
 	dvit.flush();
-	for(uint32_t x : outliers) {
-		dest.putVlPackedUint32(x);
-	}
+	dest.incPutPtr(optStorageSize-arrStorageSize);
 	
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(optStorageSize, dest.tellPutPtr() - blockDataBegin);
 	
