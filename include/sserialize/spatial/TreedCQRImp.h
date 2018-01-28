@@ -74,6 +74,7 @@ private:
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 	sserialize::Static::ItemIndexStore m_idxStore;
+	int m_flags;
 	std::vector<CellDesc> m_desc;
 	std::vector<FlatNode> m_trees;
 	std::vector<ItemIndex> m_fetchedIdx;
@@ -106,6 +107,7 @@ public:
 	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
 	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
+	int flags() const { return m_flags; }
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline bool hasTree(uint32_t pos) const { return m_desc[pos].hasTree();}
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
@@ -230,7 +232,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 		
 		State state;
 		state.src = this;
-		state.dest = new detail::CellQueryResult(m_gh, m_idxStore);
+		state.dest = new detail::CellQueryResult(m_gh, m_idxStore, flags());
 		state.dest->m_desc.resize(cellCount(), detail::CellQueryResult::CellDesc(0, 0, 0));
 		state.dest->m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
 
@@ -259,7 +261,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 	}
 	else {
 	
-		detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore);
+		detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore, m_flags);
 		detail::CellQueryResult & r = *rPtr;
 		
 		r.m_desc.reserve(cellCount());

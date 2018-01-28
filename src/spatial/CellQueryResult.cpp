@@ -77,29 +77,63 @@ CellQueryResult::CellQueryResult() :
 m_priv(new detail::CellQueryResult())
 {}
 
-CellQueryResult::CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore) : 
-m_priv( new detail::CellQueryResult(fullMatches, gh, idxStore) )
+CellQueryResult::CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags) : 
+m_priv( new detail::CellQueryResult(fullMatches, gh, idxStore, flags) )
 {}
 
 
-CellQueryResult::CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
-m_priv( new detail::CellQueryResult(fullMatch, cellId, gh, idxStore, cellIdxId) )
+CellQueryResult::CellQueryResult(
+	bool fullMatch,
+	uint32_t cellId,
+	const GeoHierarchy & gh,
+	const ItemIndexStore & idxStore,
+	uint32_t cellIdxId,
+	int flags)
+:
+m_priv( new detail::CellQueryResult(fullMatch, cellId, gh, idxStore, cellIdxId, flags) )
 {}
 
-CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
-m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
+CellQueryResult::CellQueryResult(
+	const sserialize::ItemIndex& fullMatches,
+	const sserialize::ItemIndex& partialMatches,
+	const sserialize::CompactUintArray::const_iterator& partialMatchesItemsPtrBegin,
+	const sserialize::CellQueryResult::GeoHierarchy& gh,
+	const sserialize::CellQueryResult::ItemIndexStore& idxStore,
+	int flags)
+:
+m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore, flags))
 {}
 
-CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, const sserialize::RLEStream& partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
-m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
+CellQueryResult::CellQueryResult(
+	const sserialize::ItemIndex& fullMatches,
+	const sserialize::ItemIndex& partialMatches,
+	const sserialize::RLEStream& partialMatchesItemsPtrBegin,
+	const sserialize::CellQueryResult::GeoHierarchy& gh,
+	const sserialize::CellQueryResult::ItemIndexStore& idxStore,
+	int flags)
+:
+m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore, flags))
 {}
 
-CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, std::vector< uint32_t >::const_iterator partialMatchesItemsPtrBegin, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
-m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore))
+CellQueryResult::CellQueryResult(
+	const sserialize::ItemIndex& fullMatches,
+	const sserialize::ItemIndex& partialMatches,
+	std::vector< uint32_t >::const_iterator partialMatchesItemsPtrBegin,
+	const sserialize::CellQueryResult::GeoHierarchy& gh,
+	const sserialize::CellQueryResult::ItemIndexStore& idxStore,
+	int flags)
+:
+m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore, flags))
 {}
 
-CellQueryResult::CellQueryResult(const sserialize::ItemIndex& fullMatches, const sserialize::ItemIndex& partialMatches, std::vector< sserialize::ItemIndex >::const_iterator partialMatchesIdx, const sserialize::CellQueryResult::GeoHierarchy& gh, const sserialize::CellQueryResult::ItemIndexStore& idxStore) :
-m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesIdx, gh, idxStore))
+CellQueryResult::CellQueryResult(
+	const sserialize::ItemIndex& fullMatches,
+	const sserialize::ItemIndex& partialMatches,
+	std::vector<sserialize::ItemIndex>::const_iterator partialMatchesIdx,
+	const sserialize::CellQueryResult::GeoHierarchy& gh,
+	const sserialize::CellQueryResult::ItemIndexStore& idxStore,
+	int flags) :
+m_priv(new detail::CellQueryResult(fullMatches, partialMatches, partialMatchesIdx, gh, idxStore, flags))
 {}
 
 CellQueryResult::~CellQueryResult() {}
@@ -117,6 +151,10 @@ const Static::spatial::GeoHierarchy& CellQueryResult::geoHierarchy() const {
 
 const CellQueryResult::ItemIndexStore& CellQueryResult::idxStore() const {
 	return m_priv->idxStore();
+}
+
+int CellQueryResult::flags() const {
+	return m_priv->flags();
 }
 
 uint32_t CellQueryResult::cellCount() const {

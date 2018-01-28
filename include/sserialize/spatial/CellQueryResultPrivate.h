@@ -5,6 +5,8 @@
 #include <memory>
 #include <string.h>
 
+//TODO: add support to mix CQRs with cell local and cell global item ids
+
 namespace sserialize {
 namespace detail {
 namespace TreedCellQueryResult {
@@ -39,30 +41,33 @@ private:
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 	sserialize::Static::ItemIndexStore m_idxStore;
+	int m_flags;
 	std::vector<CellDesc> m_desc;
 	IndexDesc * m_idx;
 private:
 	void uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx);
-	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	static bool flagCheck(int first, int second);
+	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 public:
 	CellQueryResult();
-	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
-	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId);
+	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
 	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
 	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
+	inline int flags() const { return m_flags; }
 	
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	virtual ~CellQueryResult();
 	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
 	uint32_t idxSize(uint32_t pos) const;
 	///this is thread-safe for different pos
 	const sserialize::ItemIndex & idx(uint32_t pos) const;
-	///This is only correct for (fullMatch() || !fetched())
+	///This is only correct for (fullMatch() || !fetched()) and cell global item ids
 	uint32_t idxId(uint32_t pos) const;
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
@@ -82,9 +87,10 @@ public:
 
 template<typename T_PMITEMSPTR_IT>
 CellQueryResult::CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-				T_PMITEMSPTR_IT pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+				T_PMITEMSPTR_IT pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags) :
 m_gh(gh),
-m_idxStore(idxStore)
+m_idxStore(idxStore),
+m_flags(flags)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
 
