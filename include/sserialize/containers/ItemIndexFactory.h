@@ -111,6 +111,8 @@ public:
 	
 	template<typename TSortedContainer>
 	static ItemIndex create(const TSortedContainer& idx, sserialize::ItemIndex::Types type);
+	
+	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, sserialize::ItemIndex::Types type);
 
 };
 

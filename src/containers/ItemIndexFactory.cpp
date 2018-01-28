@@ -8,6 +8,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/containers/HuffmanTree.h>
 #include <sserialize/iterator/MultiBitBackInserter.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include <minilzo/minilzo.h>
 #include <unordered_map>
 #include <iostream>
@@ -618,6 +619,11 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	bitneed.putUint8(bitsForUncompressedSizes);
 	std::cout << "Total size: " << dest.tellPutPtr()-beginOffset << std::endl;
 	return dest.tellPutPtr()-beginOffset;
+}
+
+ItemIndex ItemIndexFactory::range(uint32_t begin, uint32_t end, uint32_t step, ItemIndex::Types type) {
+	sserialize::RangeGenerator<uint32_t> rg(begin, end, step);
+	return create(rg, type);
 }
 
 namespace detail {
