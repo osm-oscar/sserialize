@@ -38,6 +38,14 @@ struct Iterator: public IteratorBase<TSizeType> {
 	inline difference_type operator-(const Iterator & other) const {
 		return ((difference_type)MyBaseClass::m_v-(difference_type)other.MyBaseClass::m_v)/MyBaseClass::m_stride;
 	}
+	inline Iterator & operator+=(SizeType d) {
+		MyBaseClass::m_v += d*MyBaseClass::m_stride;
+		return *this;
+	}
+	inline Iterator & operator-=(SizeType d) {
+		MyBaseClass::m_v -= d*MyBaseClass::m_stride;
+		return *this;
+	}
 	inline bool operator>(const Iterator & other) const {
 		return MyBaseClass::m_v > other.MyBaseClass::m_v;
 	}
