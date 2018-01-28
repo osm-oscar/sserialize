@@ -57,12 +57,6 @@ public:
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 	typedef detail::CellQueryResultIterator const_iterator;
-private:
-	friend class sserialize::TreedCellQueryResult;
-private:
-	RCPtrWrapper<detail::CellQueryResult> m_priv;
-private:
-	CellQueryResult(detail::CellQueryResult * priv);
 public:
 	CellQueryResult();
 	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
@@ -122,6 +116,12 @@ public:
 	void dump(std::ostream & out) const;
 	void dump() const;
 	sserialize::ItemIndex cells() const;
+private:
+	friend class sserialize::TreedCellQueryResult;
+private:
+	CellQueryResult(detail::CellQueryResult * priv);
+private:
+	RCPtrWrapper<detail::CellQueryResult> m_priv;
 };
 
 std::ostream & operator<<(std::ostream & out, const CellQueryResult & src);
