@@ -81,8 +81,11 @@ public:
 	
 	void recalculateDeduplicationData();
 	
-	inline UByteArrayAdapter indexDataById(uint32_t id) const { return m_indexStore+m_idToOffsets.at(id); }
-	inline ItemIndex indexById(uint32_t id) const { return indexByOffset(m_idToOffsets.at(id)); }
+	inline UByteArrayAdapter::SizeType dataSizeById(uint32_t id) const {
+		return (id+1 < m_idToOffsets.size() ? m_idToOffsets.at(id+1) : m_idToOffsets.size()) - m_idToOffsets.at(id);
+	}
+	inline UByteArrayAdapter indexDataById(uint32_t id) const { return sserialize::UByteArrayAdapter(m_indexStore, m_idToOffsets.at(id), dataSizeById(id)); }
+	inline ItemIndex indexById(uint32_t id) const { return ItemIndex(indexDataById(id), m_type); }
 	inline uint32_t idxSize(uint32_t id) const { return m_idxSizes.at(id); }
 
 	template<class TSortedContainer>
