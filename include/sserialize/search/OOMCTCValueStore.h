@@ -276,7 +276,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 				if (fmPred(item)) {
 					e.setFullMatch();
 				}
-				else {
+				else if (!ItemIdExtractor::HasCellLocalIds) {
 					e.itemId(itemIdE(item));
 				}
 				itemCellsE(item, itemCellsBI);
@@ -285,6 +285,9 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 					e.nodeId(node);
 					for(uint32_t cellId : itemCells) {
 						e.cellId(cellId);
+						if (ItemIdExtractor::HasCellLocalIds) {
+							e.itemId(itemIdE(item, cellId));
+						}
 						outBuffer.push_back(e);
 					}
 					flushOnFull();
