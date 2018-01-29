@@ -285,7 +285,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 					e.nodeId(node);
 					for(uint32_t cellId : itemCells) {
 						e.cellId(cellId);
-						if (ItemIdExtractor::HasCellLocalIds) {
+						if (ItemIdExtractor::HasCellLocalIds && !e.fullMatch()) {
 							e.itemId(itemIdE(item, cellId));
 						}
 						outBuffer.push_back(e);
