@@ -3,13 +3,9 @@
 #include <fstream>
 
 namespace sserialize {
-	inline bool breakHere(bool stop) {
-		if (stop)
-			return true;
-		else
-			return false;
-	}
-	
+
+	bool breakHere();
+	bool breakHereIf(bool stop);
 	
 	template<typename T_CONTAINER>
 	bool dumpToFile(const char * fileName, const T_CONTAINER & c) {
