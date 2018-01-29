@@ -466,7 +466,7 @@ int main(int argc, char ** argv) {
 	
 	if (transform != ItemIndex::T_NULL) {
 		if (outFileName.empty()) {
-			outFileName = inFileName + sserialize::to_string(transform);
+			outFileName = inFileName + "." + sserialize::to_string(transform);
 		}
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
 		ItemIndexFactory factory;
