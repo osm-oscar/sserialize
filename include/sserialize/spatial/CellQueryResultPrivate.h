@@ -81,6 +81,7 @@ public:
 	CellQueryResult * symDiff(const CellQueryResult * other) const;
 	CellQueryResult * allToFull() const;
 	CellQueryResult * removeEmpty(uint32_t emptyCellCount = 0) const;
+	CellQueryResult * toGlobalItemIds() const;
 	bool selfCheck();
 	sserialize::ItemIndex cells() const;
 };

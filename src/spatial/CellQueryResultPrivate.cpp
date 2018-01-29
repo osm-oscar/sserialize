@@ -580,6 +580,20 @@ CellQueryResult * CellQueryResult::removeEmpty(uint32_t emptyCellCount) const {
 	return rPtr;
 }
 
+CellQueryResult * CellQueryResult::toGlobalItemIds() const {
+	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	
+	uint32_t totalSize = cellCount();
+	rPtr->m_desc.reserve(totalSize);
+	rPtr->m_desc = m_desc;
+	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
+	
+	//TODO: implement this
+	
+	throw sserialize::UnimplementedFunctionException("CellQueryResult::toGlobalItemIds");
+	return rPtr;
+}
+
 bool CellQueryResult::selfCheck() {
 	uint32_t cellCount = m_gh.cellSize();
 	for(const CellDesc & d : m_desc) {

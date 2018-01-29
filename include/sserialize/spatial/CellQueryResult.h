@@ -124,6 +124,7 @@ public:
 	const_iterator cend() const;
 	ItemIndex flaten() const;
 	ItemIndex topK(uint32_t numItems) const;
+	CellQueryResult toGlobalItemIds() const;
 	void dump(std::ostream & out) const;
 	void dump() const;
 	sserialize::ItemIndex cells() const;
