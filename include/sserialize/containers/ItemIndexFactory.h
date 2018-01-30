@@ -40,7 +40,7 @@ private:
 	DataOffsetContainer m_dataOffsets;
 	IdToOffsetsType m_idToOffsets;
 	ItemIndexSizesContainer m_idxSizes;
-	std::atomic<uint32_t> m_hitCount;
+	std::atomic<uint64_t> m_hitCount;
 	bool m_checkIndex;
 	bool m_useDeduplication;
 	ItemIndex::Types m_type;
