@@ -581,16 +581,44 @@ CellQueryResult * CellQueryResult::removeEmpty(uint32_t emptyCellCount) const {
 }
 
 CellQueryResult * CellQueryResult::toGlobalItemIds() const {
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	if ((flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) == 0 ||
+		(flags() & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS) != 0) {
+		throw sserialize::TypeMissMatchException("sserialize::CellQueryResult::toGlobalItemIds: No cell local item ids to process");
+	}
+	int newFlags = m_flags - sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS + sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS;
+	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
 	
 	uint32_t totalSize = cellCount();
 	rPtr->m_desc.reserve(totalSize);
 	rPtr->m_desc = m_desc;
 	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
 	
-	//TODO: implement this
 	
-	throw sserialize::UnimplementedFunctionException("CellQueryResult::toGlobalItemIds");
+	std::vector<uint32_t> tmpidx;
+	for(uint32_t i(0); i < totalSize; ++i) {
+		const CellDesc & cd = m_desc[i];
+		if (cd.fullMatch) {
+			rPtr->m_desc.emplace_back(cd);
+		}
+		else { //TODO: speed this up with caches
+			if (cd.fetched) {
+				this->idx(i).putInto(tmpidx);
+			}
+			else {
+				m_idxStore.at( this->idxId(i) ).putInto(tmpidx);
+			}
+			//TODO: speed up mapping
+			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
+			for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
+				uint32_t localId = tmpidx[j];
+				uint32_t globalId = cellIdx.at(localId);
+				tmpidx[j] = globalId;
+			}
+			rPtr->m_desc.emplace_back(0x0, 0x1, cd.cellId);
+			rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType()));
+			tmpidx.clear();
+		}
+	}
 	return rPtr;
 }
 
