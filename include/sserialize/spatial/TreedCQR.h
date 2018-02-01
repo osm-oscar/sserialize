@@ -30,21 +30,34 @@ private:
 	TreedCellQueryResult(detail::TreedCellQueryResult::TreedCQRImp * priv);
 public:
 	TreedCellQueryResult();
-	TreedCellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCellQueryResult(const ItemIndex & fullMatches,
+					const GeoHierarchy & gh,
+					const ItemIndexStore & idxStore,
+					int flags = CellQueryResult::FF_DEFAULTS);
 	///cellIdxId is ignored if fullMatch is set
-	TreedCellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId);
+	TreedCellQueryResult(bool fullMatch,
+					uint32_t cellId,
+					const GeoHierarchy & gh,
+					const ItemIndexStore & idxStore,
+					uint32_t cellIdxId,
+					int flags = CellQueryResult::FF_DEFAULTS);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+					const GeoHierarchy & gh,
+					const ItemIndexStore & idxStore,
+					int flags = CellQueryResult::FF_DEFAULTS);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+					const GeoHierarchy & gh,
+					const ItemIndexStore & idxStore,
+					int flags = CellQueryResult::FF_DEFAULTS);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					std::vector<sserialize::ItemIndex>::const_iterator partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
+					int flags = CellQueryResult::FF_DEFAULTS);
 	explicit TreedCellQueryResult(const sserialize::CellQueryResult & cqr);
 	virtual ~TreedCellQueryResult();
 	TreedCellQueryResult(const TreedCellQueryResult & other);
@@ -52,6 +65,7 @@ public:
 	
 	const GeoHierarchy & geoHierarchy() const;
 	const ItemIndexStore & idxStore() const;
+	int flags() const;
 	
 	uint32_t cellCount() const;
 	uint32_t cellId(uint32_t position) const;

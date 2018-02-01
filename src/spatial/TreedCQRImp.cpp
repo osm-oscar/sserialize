@@ -16,6 +16,16 @@ namespace sserialize {
 namespace detail {
 namespace TreedCellQueryResult  {
 
+ItemIndex TreedCQRImp::fmIdx(uint32_t cellId) const {
+	if (m_flags & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) {
+		return sserialize::ItemIndexFactory::range(0, m_gh.cellItemsCount(cellId), 1, defaultIndexType());
+	}
+	else {
+		SSERIALIZE_ASSERT(m_flags & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);
+		return m_idxStore.at( m_gh.cellItemsPtr(cellId) );
+	}
+}
+
 void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const {
 	switch(n->common.type) {
 	case FlatNode::T_PM_LEAF:
@@ -113,7 +123,7 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 				aIdx = m_idxStore.at(pmIdxIdA); 
 			}
 			else if (frtA == FT_FM) {
-				aIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
+				aIdx = fmIdx(cellId);
 			}
 			if (frtB == FT_PM) {
 				bIdx = m_idxStore.at(pmIdxIdB);
@@ -128,13 +138,13 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 				aIdx = m_idxStore.at(pmIdxIdA); 
 			}
 			else if (frtA == FT_FM) {
-				aIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
+				aIdx = fmIdx(cellId);
 			}
 			if (frtB == FT_PM) {
 				bIdx = m_idxStore.at(pmIdxIdB);
 			}
 			else if (frtB == FT_FM) {
-				bIdx = m_idxStore.at( m_gh.cellItemsPtr(cellId) );
+				bIdx = fmIdx(cellId);
 			}
 			idx = aIdx ^ bIdx;
 			frt = ((idx.size() > 0) ? FT_FETCHED : FT_EMPTY);
@@ -154,9 +164,14 @@ TreedCQRImp::TreedCQRImp() :
 m_hasFetchedNodes(false)
 {}
 
-TreedCQRImp::TreedCQRImp(const ItemIndex & fmIdx, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+TreedCQRImp::TreedCQRImp(
+	const ItemIndex & fmIdx,
+	const GeoHierarchy & gh,
+	const ItemIndexStore & idxStore,
+	int flags) :
 m_gh(gh),
 m_idxStore(idxStore),
+m_flags(flags),
 m_hasFetchedNodes(false)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend());
@@ -168,9 +183,16 @@ m_hasFetchedNodes(false)
 	}
 }
 
-TreedCQRImp::TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId) :
+TreedCQRImp::TreedCQRImp(
+	bool fullMatch,
+	uint32_t cellId,
+	const GeoHierarchy & gh,
+	const ItemIndexStore & idxStore,
+	uint32_t cellIdxId,
+	int flags) :
 m_gh(gh),
 m_idxStore(idxStore),
+m_flags(flags),
 m_hasFetchedNodes(false)
 {
 	uint32_t totalSize = 1;
@@ -178,9 +200,13 @@ m_hasFetchedNodes(false)
 	m_desc.push_back( CellDesc((fullMatch ? (uint32_t)1 : 0), cellId, ((uint32_t)fullMatch ? 0 : cellIdxId) ) );
 }
 
-TreedCQRImp::TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+TreedCQRImp::TreedCQRImp(
+	const GeoHierarchy & gh,
+	const ItemIndexStore & idxStore,
+	int flags) :
 m_gh(gh),
 m_idxStore(idxStore),
+m_flags(flags),
 m_hasFetchedNodes(false)
 {}
 
@@ -190,9 +216,11 @@ TreedCQRImp::TreedCQRImp(
 	const sserialize::ItemIndex & pmIdx,
 	std::vector<sserialize::ItemIndex>::const_iterator pmItemsIt,
 	const GeoHierarchy & gh,
-	const ItemIndexStore & idxStore) :
+	const ItemIndexStore & idxStore,
+	int flags) :
 m_gh(gh),
 m_idxStore(idxStore),
+m_flags(flags),
 m_hasFetchedNodes(pmIdx.size())
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
@@ -254,6 +282,7 @@ m_hasFetchedNodes(pmIdx.size())
 TreedCQRImp::TreedCQRImp(const sserialize::CellQueryResult & cqr) :
 m_gh(cqr.geoHierarchy()),
 m_idxStore(cqr.idxStore()),
+m_flags(cqr.flags()),
 m_hasFetchedNodes(false)
 {
 	for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
@@ -364,9 +393,14 @@ void TreedCQRImp::copyFetchedIndices(const TreedCQRImp& src, TreedCQRImp & dest,
 	dest.m_hasFetchedNodes = true;
 }
 
+bool TreedCQRImp::flagCheck(int first, int second) {
+	return (first | second) == first;
+}
+
 TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
+	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const TreedCQRImp & o = *other;
-	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
+	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore, flags());
 	TreedCQRImp & r = *rPtr;
 	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for( ;myI < myEnd && oI < oEnd; ) {
@@ -469,8 +503,9 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 }
 
 TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
+	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const TreedCQRImp & o = *other;
-	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
+	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore, flags());
 	TreedCQRImp & r = *rPtr;
 	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
@@ -587,8 +622,9 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 }
 
 TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
+	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const TreedCQRImp & o = *other;
-	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
+	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore, flags());
 	TreedCQRImp & r = *rPtr;
 	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
@@ -684,8 +720,9 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 }
 
 TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
+	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const TreedCQRImp & o = *other;
-	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
+	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore, flags());
 	TreedCQRImp & r = *rPtr;
 	std::size_t myI(0), myEnd(m_desc.size()), oI(0), oEnd(o.m_desc.size());
 	for(; myI < myEnd && oI < oEnd;) {
@@ -811,7 +848,7 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 }
 
 TreedCQRImp* TreedCQRImp::allToFull() const {
-	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore);
+	TreedCQRImp * rPtr = new TreedCQRImp(m_gh, m_idxStore, flags());
 	TreedCQRImp & r = *rPtr;
 	r.m_desc.reserve(m_desc.size());
 	r.m_trees.reserve(m_trees.size()+m_desc.size());

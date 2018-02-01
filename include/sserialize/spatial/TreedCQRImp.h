@@ -80,7 +80,8 @@ private:
 	std::vector<ItemIndex> m_fetchedIdx;
 	bool m_hasFetchedNodes;
 private:
-	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+	sserialize::ItemIndex fmIdx(uint32_t cellId) const;
 	///flattens a cell tree, @pmIdxId set iff frt == FT_PM, @idx set iff frt == FT_FETCHED
 	void flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const;
 	///copy the tree of the cell at cellPos while taking care of indexes
@@ -89,17 +90,27 @@ private:
 	///copies fetched index and adjusts the tree index pointers accordingly
 	///the internal index pointers point to indexes in src before and to indexes in dest afterwards
 	static void copyFetchedIndices(const TreedCQRImp& src, TreedCQRImp & dest, CellDesc& destCD);
+	
+	static bool flagCheck(int first, int second);
 public:
 	TreedCQRImp();
-	TreedCQRImp(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
-	TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId);
+	TreedCQRImp(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+	TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
 	
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>
-	TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
-	TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore);
+	TreedCQRImp(const sserialize::ItemIndex & fmIdx,
+				const sserialize::ItemIndex & pmIdx,
+				T_PMITEMSPTR_IT pmItemsBegin,
+				const GeoHierarchy & gh,
+				const ItemIndexStore & idxStore,
+				int flags);
+	TreedCQRImp(const sserialize::ItemIndex & fmIdx,
+				const sserialize::ItemIndex & pmIdx,
+				std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin,
+				const GeoHierarchy & gh,
+				const ItemIndexStore & idxStore,
+				int flags);
 	TreedCQRImp(const sserialize::CellQueryResult & cqr);
 	
 	virtual ~TreedCQRImp();
@@ -124,10 +135,15 @@ public:
 };
 
 template<typename T_PMITEMSPTR_IT>
-TreedCQRImp::TreedCQRImp(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-				T_PMITEMSPTR_IT pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore) :
+TreedCQRImp::TreedCQRImp(const sserialize::ItemIndex & fmIdx,
+	const sserialize::ItemIndex & pmIdx,
+	T_PMITEMSPTR_IT pmItemsIt,
+	const GeoHierarchy & gh,
+	const ItemIndexStore & idxStore,
+	int flags) :
 m_gh(gh),
 m_idxStore(idxStore),
+m_flags(flags),
 m_hasFetchedNodes(false)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
@@ -261,7 +277,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 	}
 	else {
 	
-		detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore, m_flags);
+		detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore, flags());
 		detail::CellQueryResult & r = *rPtr;
 		
 		r.m_desc.reserve(cellCount());
