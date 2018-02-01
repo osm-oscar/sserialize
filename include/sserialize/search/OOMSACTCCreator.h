@@ -589,14 +589,24 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	typedef detail::OOMSACTCCreator::InputTraits<RegionTraits> RegionInputTraits;
 	typedef detail::OOMSACTCCreator::OutputTraits OutputTraits;
 	
+	static_assert( ItemTraits::ItemId::HasCellLocalIds == RegionTraits::ItemId::HasCellLocalIds, "ItemTraits and RegionTraits MUST have the same cell local item id specification");
 	sserialize::OptionalProgressInfo<TWithProgressInfo> pinfo;
 	
 	if (!insertionConcurrency) {
 		insertionConcurrency = std::thread::hardware_concurrency();
 	}
 	
-	dest.putUint8(2); //ctc version
+	int flags = sserialize::CellQueryResult::FF_NONE;
+	if (ItemTraits::ItemId::HasCellLocalIds) {
+		flags = sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS;
+	}
+	else {
+		flags = sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS;
+	}
+	
+	dest.putUint8(3); //ctc version
 	dest.putUint8(sq);
+	dest.putUint8(flags);
 	dest.putUint8(sserialize::Static::detail::CellTextCompleter::TT_FLAT_TRIE);
 
 	pinfo.begin(1, "Creating trie");

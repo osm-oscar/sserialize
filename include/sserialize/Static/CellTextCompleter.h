@@ -17,26 +17,27 @@
 	#define SSERIALIZE_CELL_TEXT_COMPLETER_TAG_COMPLETION_PREFIX '@'
 #endif
 
-#define SSERIALIZE_STATIC_CELL_TEXT_COMPLETER_VERSION 2
+#define SSERIALIZE_STATIC_CELL_TEXT_COMPLETER_VERSION 3
 
 namespace sserialize {
 namespace Static {
 
-/** FileFormat v2
+/** FileFormat v3
   *
-  * --------------------------------------------------------------------------------------------------------
-  * VERSION|SupportedQuerries|TrieTypeMarker|TrieType<CellTextCompleter::Payload>
-  * --------------------------------------------------------------------------------------------------------
-  *  u8    |u8               |uint8         |
+  * struct CellTextCompleter {
+  *   uint<8> version(3);
+  *   uint<8> supportedQueries;
+  *   uint<8> cqrFlags;
+  *   uint<8> TrieTypeMarker;
+  *   TrieType<CellTextCompleter::Payload> trie;
+  * }
   * 
-  * Payload format:
-  *
-  * -------------------------------------------------------------------------
-  * Types|Offsets|(fmPtr|pPtr|pItemsPtr)
-  * -------------------------------------------------------------------------
-  *  u8  |vu32   |RLEStream
-  * 
-  * The first offset is always 0 and will not be stored, offsets are stored in relative distance
+  * struct CellTextCompleter::Payload {
+  *   uint<8> types;
+  *   //The first offset is always 0 and will not be stored, offsets are stored in relative distance
+  *   vuint<32> offsets;
+  *   RLEStream ptrs; // in order fmPtr, pPtr, pItemsPtr
+  * }
   * 
   */
 namespace detail {
@@ -95,6 +96,7 @@ public:
 private:
 	sserialize::StringCompleter::SupportedQuerries m_sq;
 	TrieTypeMarker m_tt;
+	int m_flags;
 	Trie m_trie;
 	sserialize::Static::ItemIndexStore m_idxStore;
 	sserialize::Static::spatial::GeoHierarchy m_gh;
@@ -108,6 +110,9 @@ public:
 	inline const Static::spatial::GeoHierarchy & geoHierarchy() const { return m_gh;}
 	inline const sserialize::Static::ItemIndexStore & idxStore() const { return m_idxStore; }
 	inline const sserialize::Static::spatial::TriangulationGeoHierarchyArrangement & regionArrangement() const { return m_ra; }
+	
+	///defined by sserialize::CellQueryResult::FeatureFlags
+	inline int flags() const { return m_flags; }
 	
 	bool count(const std::string::const_iterator& begin, const std::string::const_iterator& end) const;
 	Payload::Type typeFromCompletion(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const;
@@ -152,10 +157,10 @@ template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::complete(const std::string& qstr, const sserialize::StringCompleter::QuerryType qt) const {
 	try {
 		Payload::Type t(typeFromCompletion(qstr, qt));
-		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_gh, m_idxStore);
+		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_gh, m_idxStore, flags());
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
-		return T_CQR_TYPE();
+		return T_CQR_TYPE(flags());
 	}
 }
 
@@ -163,10 +168,10 @@ template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::regions(const std::string& qstr, const sserialize::StringCompleter::QuerryType qt) const {
 	try {
 		Payload::Type t(typeFromCompletion(qstr, qt));
-		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_gh, m_idxStore);
+		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_gh, m_idxStore, flags());
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
-		return T_CQR_TYPE();
+		return T_CQR_TYPE(flags());
 	}
 }
 
@@ -174,10 +179,10 @@ template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::items(const std::string& qstr, const sserialize::StringCompleter::QuerryType qt) const {
 	try {
 		Payload::Type t(typeFromCompletion(qstr, qt));
-		return T_CQR_TYPE(sserialize::ItemIndex(), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_gh, m_idxStore);
+		return T_CQR_TYPE(sserialize::ItemIndex(), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_gh, m_idxStore, flags());
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
-		return T_CQR_TYPE();
+		return T_CQR_TYPE(flags());
 	}
 }
 
@@ -185,51 +190,51 @@ template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::fromRegionStoreId(uint32_t storeId) const {
 	if (storeId < m_gh.regionSize()) {
 		uint32_t regionCellPtr = m_gh.regionCellIdxPtr(m_gh.storeIdToGhId(storeId));
-		return T_CQR_TYPE(m_idxStore.at(regionCellPtr), m_gh, m_idxStore);
+		return T_CQR_TYPE(m_idxStore.at(regionCellPtr), m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE();
+	return T_CQR_TYPE(flags());
 }
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::regionExclusiveCells(uint32_t storeId) const {
 	if (storeId < m_gh.regionSize()) {
 		uint32_t cellPtr = m_gh.regionExclusiveCellIdxPtr(m_gh.storeIdToGhId(storeId));
-		return T_CQR_TYPE(m_idxStore.at(cellPtr), m_gh, m_idxStore);
+		return T_CQR_TYPE(m_idxStore.at(cellPtr), m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE();
+	return T_CQR_TYPE(flags());
 }
 
 template<typename T_CQR_TYPE, typename T_ITERATOR>
 T_CQR_TYPE CellTextCompleter::fromCellIds(const T_ITERATOR & begin, const T_ITERATOR & end) const {
 	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
 	if (begin != end) {
-		return T_CQR_TYPE(sserialize::ItemIndex(std::vector<uint32_t>(begin, end)), m_gh, m_idxStore);
+		return T_CQR_TYPE(sserialize::ItemIndex(std::vector<uint32_t>(begin, end)), m_gh, m_idxStore, flags());
 	}
 	else {
-		return T_CQR_TYPE();
+		return T_CQR_TYPE(flags());
 	}
 }
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::fromCellId(uint32_t cellId) const {
 	if (cellId < m_gh.cellSize()) {
-		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0);
+		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0, flags());
 	}
-	return T_CQR_TYPE();
+	return T_CQR_TYPE(flags());
 }
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::cqrFromRect(const sserialize::spatial::GeoRect & rect) const {
 	T_CQR_TYPE retCQR;
 	sserialize::ItemIndex tmp = m_gh.intersectingCells(idxStore(), rect);
-	return T_CQR_TYPE(tmp, m_gh, m_idxStore);
+	return T_CQR_TYPE(tmp, m_gh, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) const {
 	if (radius <= 0) {
 		uint32_t cellId = m_ra.cellId(point);
-		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0);
+		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0, flags());
 	}
 	else {
 		return cqrFromRect<T_CQR_TYPE>( sserialize::spatial::GeoRect(point.lat(), point.lon(), radius) );
@@ -240,18 +245,18 @@ template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::cqrBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spatial::GeoPoint& end, double radius) const {
 	sserialize::ItemIndex idx( m_ra.cellsBetween(start, end, radius) );
 	if (idx.size()) {
-		return T_CQR_TYPE(idx, m_gh, m_idxStore);
+		return T_CQR_TYPE(idx, m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE();
+	return T_CQR_TYPE(flags());
 }
 
 template<typename T_CQR_TYPE, typename T_GEOPOINT_ITERATOR>
 T_CQR_TYPE CellTextCompleter::cqrAlongPath(double radius, const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const {
 	sserialize::ItemIndex idx( m_ra.cellsAlongPath(radius, begin, end) );
 	if (idx.size()) {
-		return T_CQR_TYPE(idx, m_gh, m_idxStore);
+		return T_CQR_TYPE(idx, m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE();
+	return T_CQR_TYPE(flags());
 }
 
 }//end namespace detail
@@ -304,6 +309,10 @@ public:
 	
 	inline Payload::Type typeFromCompletion(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const {
 		return priv()->typeFromCompletion(qstr, qt);
+	}
+	
+	inline int flags() const {
+		return priv()->flags();
 	}
 	
 	inline bool count(const std::string::const_iterator & begin, const std::string::const_iterator & end) const {

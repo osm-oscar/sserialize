@@ -94,6 +94,7 @@ const sserialize::UByteArrayAdapter & d, const sserialize::Static::ItemIndexStor
 const sserialize::Static::spatial::GeoHierarchy & gh, const sserialize::Static::spatial::TriangulationGeoHierarchyArrangement & ra) :
 m_sq( (sserialize::StringCompleter::SupportedQuerries) d.at(1) ),
 m_tt( (TrieTypeMarker) d.at(2) ),
+m_flags(d.at(3) ),
 m_idxStore(idxStore),
 m_gh(gh),
 m_ra(ra)
@@ -102,10 +103,10 @@ m_ra(ra)
 	try {
 		switch (m_tt) {
 		case TT_TRIE:
-			m_trie = Trie( Trie::PrivPtrType(new TrieType(d+3)) );
+			m_trie = Trie( Trie::PrivPtrType(new TrieType(d+4)) );
 			break;
 		case TT_FLAT_TRIE:
-			m_trie = Trie( Trie::PrivPtrType(new FlatTrieType(d+3)) );
+			m_trie = Trie( Trie::PrivPtrType(new FlatTrieType(d+4)) );
 			break;
 		default:
 			throw sserialize::TypeMissMatchException("sserialize::CellTextCompleter::CellTextCompleter unkown trie type");
