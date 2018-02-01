@@ -73,8 +73,8 @@ CellQueryResult::CellQueryResult(detail::CellQueryResult * priv) :
 m_priv(priv)
 {}
 
-CellQueryResult::CellQueryResult() :
-m_priv(new detail::CellQueryResult())
+CellQueryResult::CellQueryResult(int flags) :
+m_priv(new detail::CellQueryResult(flags))
 {}
 
 CellQueryResult::CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags) : 

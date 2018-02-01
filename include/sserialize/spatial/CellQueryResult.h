@@ -64,30 +64,30 @@ public:
 		FF_DEFAULTS=FF_CELL_GLOBAL_ITEM_IDS
 	} FeatureFlags;
 public:
-	CellQueryResult();
-	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags = FF_DEFAULTS);
+	CellQueryResult(int flags = FF_DEFAULTS);
+	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	///cellIdxId is ignored if fullMatch is set
-	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags = FF_DEFAULTS);
+	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
-					int flags = FF_DEFAULTS);
+					int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
-					int flags = FF_DEFAULTS);
+					int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					std::vector<uint32_t>::const_iterator partialMatchesItemsPtrBegin,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
-					int flags = FF_DEFAULTS);
+					int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					std::vector<sserialize::ItemIndex>::const_iterator partialMatchesIdx,
 					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
-					int flags = FF_DEFAULTS);
+					int flags);
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);

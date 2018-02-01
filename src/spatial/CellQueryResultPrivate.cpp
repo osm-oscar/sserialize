@@ -5,8 +5,8 @@
 namespace sserialize {
 namespace detail {
 
-CellQueryResult::CellQueryResult() :
-m_flags(sserialize::CellQueryResult::FF_NONE),
+CellQueryResult::CellQueryResult(int flags) :
+m_flags(flags),
 m_idx(0)
 {}
 
