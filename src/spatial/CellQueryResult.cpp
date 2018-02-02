@@ -281,6 +281,11 @@ CellQueryResult CellQueryResult::toGlobalItemIds() const {
 	return CellQueryResult( m_priv->toGlobalItemIds() );
 }
 
+CellQueryResult CellQueryResult::toCellLocalItemIds() const {
+	SSERIALIZE_CHEAP_ASSERT(flags() & FF_CELL_GLOBAL_ITEM_IDS);
+	return CellQueryResult( m_priv->toCellLocalItemIds() );
+}
+
 void CellQueryResult::dump(std::ostream & out) const {
 	out << "CQR<" << cellCount() << ">";
 	if (!cellCount()) {

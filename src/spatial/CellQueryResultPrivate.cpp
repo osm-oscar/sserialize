@@ -622,6 +622,56 @@ CellQueryResult * CellQueryResult::toGlobalItemIds() const {
 	return rPtr;
 }
 
+
+CellQueryResult * CellQueryResult::toCellLocalItemIds() const {
+	if ((flags() & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS) == 0 ||
+		(flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) != 0) {
+		throw sserialize::TypeMissMatchException("sserialize::CellQueryResult::toCellLocalItemIds: No cell global item ids to process");
+	}
+	int newFlags = m_flags - sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS + sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS;
+	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
+	
+	uint32_t totalSize = cellCount();
+	rPtr->m_desc.reserve(totalSize);
+	rPtr->m_desc = m_desc;
+	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
+	
+	
+	std::vector<uint32_t> tmpidx;
+	for(uint32_t i(0); i < totalSize; ++i) {
+		const CellDesc & cd = m_desc[i];
+		if (cd.fullMatch) {
+			rPtr->m_desc.emplace_back(cd);
+		}
+		else { //TODO: speed this up with caches
+			sserialize::ItemIndex srcIdx;
+			if (cd.fetched) {
+				srcIdx = this->idx(i);
+			}
+			else {
+				srcIdx =  m_idxStore.at( this->idxId(i) );
+			}
+			//TODO: speed up mapping using caches
+			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(srcIdx.size(), cellIdx.size());
+			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL((cellIdx / srcIdx), srcIdx);
+			auto srcIt = srcIdx.begin();
+			auto cIt = cellIdx.begin();
+			for(uint32_t localId(0), i(0), s(srcIdx.size()); i < s; ++localId, ++cIt) {
+				if (*srcIt == *cIt) {
+					tmpidx.emplace_back(localId);
+					++srcIt;
+					++i;
+				}
+			}
+			rPtr->m_desc.emplace_back(0x0, 0x1, cd.cellId);
+			rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType()));
+			tmpidx.clear();
+		}
+	}
+	return rPtr;
+}
+
 bool CellQueryResult::selfCheck() {
 	uint32_t cellCount = m_gh.cellSize();
 	for(const CellDesc & d : m_desc) {
