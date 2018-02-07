@@ -151,7 +151,7 @@ public:
 	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
 	///Sparse SubSets have no itemcounts and need a recursive flattening strategy
 	inline bool sparse() const { return m_sparse; }
-	sserialize::ItemIndex idx(const NodePtr & node) const;
+	sserialize::ItemIndex items(const NodePtr & node) const;
 	sserialize::ItemIndex cells(const NodePtr & node) const;
 	sserialize::ItemIndex topK(const NodePtr & node, uint32_t numItems) const;
 	uint32_t storeId(const NodePtr & node) const;

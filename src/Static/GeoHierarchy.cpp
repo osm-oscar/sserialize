@@ -20,12 +20,12 @@ void SubSet::Node::dump() {
 	dump(std::cout);
 }
 
-sserialize::ItemIndex SubSet::idx(const NodePtr & node) const {
+sserialize::ItemIndex SubSet::items(const NodePtr & node) const {
 
 	struct MapFunc {
 		const SubSet * subset;
 		sserialize::ItemIndex operator()(uint32_t pos) const {
-			return subset->cqr().idx(pos);
+			return subset->cqr().items(pos);
 		}
 	} mapfunc;
 	mapfunc.subset = this;
