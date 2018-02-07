@@ -95,8 +95,8 @@ public:
 // 	typedef Trie::Node Node;
 private:
 	sserialize::StringCompleter::SupportedQuerries m_sq;
-	TrieTypeMarker m_tt;
 	int m_flags;
+	TrieTypeMarker m_tt;
 	Trie m_trie;
 	sserialize::Static::ItemIndexStore m_idxStore;
 	sserialize::Static::spatial::GeoHierarchy m_gh;
