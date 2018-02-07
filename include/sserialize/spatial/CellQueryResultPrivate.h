@@ -67,6 +67,8 @@ public:
 	uint32_t idxSize(uint32_t pos) const;
 	///this is thread-safe for different pos
 	const sserialize::ItemIndex & idx(uint32_t pos) const;
+	///this is thread-safe for different pos
+	sserialize::ItemIndex items(uint32_t pos) const;
 	///This is only correct for (fullMatch() || !fetched()) and cell global item ids
 	uint32_t idxId(uint32_t pos) const;
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }

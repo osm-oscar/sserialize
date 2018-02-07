@@ -177,6 +177,24 @@ const sserialize::ItemIndex & CellQueryResult::idx(uint32_t pos) const {
 	return (m_idx+pos)->idx;
 }
 
+sserialize::ItemIndex CellQueryResult::items(uint32_t pos) const {
+	if (flags() & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS) {
+		return idx(pos);
+	}
+	else {
+			SSERIALIZE_CHEAP_ASSERT(flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS);
+			const CellDesc & cd = m_desc.at(pos);
+			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
+			std::vector<uint32_t> tmpidx;
+			for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
+				uint32_t localId = tmpidx[j];
+				uint32_t globalId = cellIdx.at(localId);
+				tmpidx[j] = globalId;
+			}
+			return sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType());
+	}
+}
+
 uint32_t CellQueryResult::idxId(uint32_t pos) const {
 	const CellDesc & cd = m_desc[pos];
 	if (cd.fullMatch) {

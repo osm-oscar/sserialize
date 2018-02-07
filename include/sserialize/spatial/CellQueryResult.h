@@ -102,7 +102,9 @@ public:
 	sserialize::ItemIndex::Types defaultIndexType() const;
 	uint32_t idxSize(uint32_t pos) const;
 	uint32_t cellId(uint32_t pos) const;
+    //not that this may return cell local ids, items() instead to retrieve global item ids
 	sserialize::ItemIndex idx(uint32_t pos) const;
+    sserialize::ItemIndex items(uint32_t pos) const;
 	///This is only correct for ( ((features&FF_CELL_LOCAL_ITEM_IDS)== 0 && fullMatch) || !fetched())
 	uint32_t idxId(uint32_t pos) const;
 	bool fetched(uint32_t pos) const;

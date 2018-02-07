@@ -181,6 +181,10 @@ sserialize::ItemIndex CellQueryResult::idx(uint32_t pos) const {
 	return m_priv->idx(pos);
 }
 
+sserialize::ItemIndex CellQueryResult::items(uint32_t pos) const {
+	return m_priv->items(pos);
+}
+
 uint32_t CellQueryResult::idxId(uint32_t pos) const {
 	return m_priv->idxId(pos);
 }
