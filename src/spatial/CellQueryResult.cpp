@@ -229,6 +229,9 @@ bool CellQueryResult::operator==(const CellQueryResult& other) const {
 	if (cellCount() != other.cellCount()) {
 		return false;
 	}
+	if (flags() != other.flags()) {
+		return false;
+	}
 	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
 		if (cellId(i) != other.cellId(i)) {
 			return false;
@@ -267,13 +270,17 @@ CellQueryResult::const_iterator CellQueryResult::cend() const {
 }
 
 sserialize::ItemIndex CellQueryResult::flaten() const {
-	SSERIALIZE_CHEAP_ASSERT((flags() & FF_CELL_LOCAL_ITEM_IDS) == 0);
+	if ((flags() & FF_CELL_LOCAL_ITEM_IDS) != 0) {
+		throw sserialize::UnimplementedFunctionException("CellQueryResult::flaten: cell local ids are not supported yet");	
+	}
 	auto func = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; } ;
 	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func);
 }
 
 ItemIndex CellQueryResult::topK(uint32_t numItems) const {
-	SSERIALIZE_CHEAP_ASSERT((flags() & FF_CELL_LOCAL_ITEM_IDS) == 0);
+	if ((flags() & FF_CELL_LOCAL_ITEM_IDS) != 0) {
+		throw sserialize::UnimplementedFunctionException("CellQueryResult::topK: cell local ids are not supported yet");	
+	}
 	auto func = [numItems](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex {
 		return sserialize::ItemIndex::uniteK(a, b, numItems);
 	};
@@ -291,7 +298,14 @@ CellQueryResult CellQueryResult::toCellLocalItemIds() const {
 }
 
 void CellQueryResult::dump(std::ostream & out) const {
-	out << "CQR<" << cellCount() << ">";
+	out << "CQR<" << cellCount();
+	if (flags() & FF_CELL_LOCAL_ITEM_IDS) {
+		out << ", local ids";
+	}
+	else {
+		out << ", global ids";
+	}
+	out << ">";
 	if (!cellCount()) {
 		out << "{}";
 		return;
