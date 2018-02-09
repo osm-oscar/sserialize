@@ -349,12 +349,12 @@ const UByteArrayAdapter& PFoRCreator::data() const {
 }
 
 
-const std::array<uint32_t, 32> PFoRCreator::BlockSizeTestOrder = {
+const std::array<uint32_t, 32> PFoRCreator::BlockSizeTestOrder{{
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 	10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 	20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
 	30, 31
-};
+}};
 
 void PFoRCreator::optBlockCfg(const OptimizerData & od, uint32_t & optBlockSizeOffset, uint32_t & optBlockStorageSize) {
 
@@ -505,12 +505,12 @@ struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::PFo
 
 //BEGIN INDEX
 
-const std::array<const uint32_t, 32> ItemIndexPrivatePFoR::BlockSizes = {
+const std::array<const uint32_t, 32> ItemIndexPrivatePFoR::BlockSizes{{
 	1, 2, 4, 6, 8, 12, 16, 20, 24, 28, //10 entries
 	32, 48, 64, 96, 128, 192, 256, 384, 512, 768, //10 entries
 	1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384, 24576, //10 entries
 	32768, 65536 //2 entries
-};
+}};
 
 const uint32_t ItemIndexPrivatePFoR::DefaultBlockSizeOffset = 14;
 
