@@ -26,6 +26,11 @@ class RefCountObjectBase {
 	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
 public:
 	typedef uint32_t RCBaseType;
+#ifdef SSERIALIZE_GATHER_STATS_REF_COUNTING
+public:
+	static std::atomic<uint64_t> GlobalRc;
+	static std::atomic<uint64_t> GlobalRcChanges;
+#endif
 public:
 	RefCountObjectBase(const RefCountObjectBase & other) = delete;
 	RefCountObjectBase & operator=(const RefCountObjectBase & other) = delete;

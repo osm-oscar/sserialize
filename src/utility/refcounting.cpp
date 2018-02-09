@@ -2,6 +2,11 @@
 
 namespace sserialize {
 
+#ifdef SSERIALIZE_GATHER_STATS_REF_COUNTING
+std::atomic<uint64_t> RefCountObjectBase::GlobalRc{0};
+std::atomic<uint64_t> RefCountObjectBase::GlobalRcChanges{0};
+#endif
+
 RefCountObjectBase::RefCountObjectBase() : m_rc(0) {}
 RefCountObjectBase::~RefCountObjectBase() {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(RCBaseType(0), m_rc);
@@ -17,6 +22,10 @@ RefCountObjectBase::RCBaseType RefCountObjectBase::rc() const {
 
 void RefCountObjectBase::rcInc() {
 	m_rc.fetch_add(1, std::memory_order_relaxed);
+	#ifdef SSERIALIZE_GATHER_STATS_REF_COUNTING
+	GlobalRc.fetch_add(1, std::memory_order_relaxed);
+	GlobalRcChanges.fetch_add(1, std::memory_order_relaxed);
+	#endif
 }
 
 void RefCountObjectBase::rcDec() {
@@ -24,16 +33,22 @@ void RefCountObjectBase::rcDec() {
 	if (m_rc.fetch_sub(1, std::memory_order_acq_rel) == 1) { //check if we are the last
 		delete this;
 	}
+	#ifdef SSERIALIZE_GATHER_STATS_REF_COUNTING
+	GlobalRc.fetch_sub(1, std::memory_order_relaxed);
+	GlobalRcChanges.fetch_add(1, std::memory_order_relaxed);
+	#endif
 }
 
 void RefCountObjectBase::rcDecWithoutDelete() {
 	SSERIALIZE_CHEAP_ASSERT_LARGER(rc(), RCBaseType(0));
 	m_rc.fetch_sub(1, std::memory_order_acq_rel);
+	#ifdef SSERIALIZE_GATHER_STATS_REF_COUNTING
+	GlobalRc.fetch_sub(1, std::memory_order_relaxed);
+	GlobalRcChanges.fetch_add(1, std::memory_order_relaxed);
+	#endif
 }
 
-
 RefCountObject::~RefCountObject() {}
-
 
 RefCountObjectWithDisable::~RefCountObjectWithDisable() {}
 
