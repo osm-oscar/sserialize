@@ -204,7 +204,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		maxThreadCount = std::thread::hardware_concurrency();
 	}
 	
-	constexpr uint64_t INVALID_CHUNK_OFFSET = std::numeric_limits<uint64_t>::max();
+	static constexpr uint64_t INVALID_CHUNK_OFFSET = std::numeric_limits<uint64_t>::max();
 	struct ChunkDescription {
 		uint64_t first;
 		uint64_t second;
