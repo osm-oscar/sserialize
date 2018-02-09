@@ -19,6 +19,15 @@
 #else
 	#undef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
 #endif
+
+#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+	#define SSERIALIZE_NAMESPACE_INLINE_UBA_ONLY_CONTIGUOUS inline
+	#define SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
+#else
+	#define SSERIALIZE_NAMESPACE_INLINE_UBA_ONLY_CONTIGUOUS
+	#define SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS inline
+#endif
+
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
@@ -55,10 +64,12 @@ class ChunkedMmappedFile;
 class CompressedMmappedFile;
 class UByteArrayAdapter;
 
+SSERIALIZE_NAMESPACE_INLINE_UBA_ONLY_CONTIGUOUS
 namespace UByteArrayAdapterOnlyContiguous {
 	class UByteArrayAdapterPrivate;
 }
 
+SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
 namespace UByteArrayAdapterNonContiguous {
 	class UByteArrayAdapterPrivate;
 }

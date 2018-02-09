@@ -31,9 +31,7 @@ namespace __UByteArrayAdapterPrivate {
 
 }} //end namespace detail::__UByteArrayAdapterPrivate
 
-#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-inline
-#endif
+SSERIALIZE_NAMESPACE_INLINE_UBA_ONLY_CONTIGUOUS
 namespace UByteArrayAdapterOnlyContiguous {
 
 class UByteArrayAdapterPrivate: public detail::__UByteArrayAdapterPrivate::RefCountClass {
@@ -59,6 +57,7 @@ public:
 
 } //end namespace UByteArrayAdapterOnlyContiguous
 
+SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
 namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivate: public detail::__UByteArrayAdapterPrivate::RefCountClass {
