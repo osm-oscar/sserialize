@@ -608,7 +608,6 @@ CellQueryResult * CellQueryResult::toGlobalItemIds() const {
 	
 	uint32_t totalSize = cellCount();
 	rPtr->m_desc.reserve(totalSize);
-	rPtr->m_desc = m_desc;
 	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
 	
 	
@@ -632,6 +631,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds() const {
 				uint32_t globalId = cellIdx.at(localId);
 				tmpidx[j] = globalId;
 			}
+			SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(tmpidx.begin(), tmpidx.end()));
 			rPtr->m_desc.emplace_back(0x0, 0x1, cd.cellId);
 			rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType()));
 			tmpidx.clear();
@@ -651,7 +651,6 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds() const {
 	
 	uint32_t totalSize = cellCount();
 	rPtr->m_desc.reserve(totalSize);
-	rPtr->m_desc = m_desc;
 	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
 	
 	
