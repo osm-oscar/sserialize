@@ -15,20 +15,7 @@
 namespace sserialize {
 namespace detail {
 namespace __UByteArrayAdapterPrivate {
-
-#ifdef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
-	inline
-#endif
-	namespace OptionalRefcountingEnabled {
-		using RefCountClass = RefCountObjectWithDisable;
-	}
-#ifndef SSERIALIZE_UBA_OPTIONAL_REFCOUNTING
-	inline
-#endif
-	namespace OptionalRefcountingDisabled {
-		using RefCountClass = RefCountObject;
-	}
-
+	using RefCountClass = RefCountObject;
 }} //end namespace detail::__UByteArrayAdapterPrivate
 
 SSERIALIZE_NAMESPACE_INLINE_UBA_ONLY_CONTIGUOUS

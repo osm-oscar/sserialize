@@ -11,9 +11,7 @@ namespace detail {
 	class RCBase;
 }
 
-class RefCountObjectBase;
 class RefCountObject;
-class RefCountObjectWithDisable;
 
 template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
 class RCPtrWrapper;
@@ -21,8 +19,7 @@ class RCPtrWrapper;
 template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
 class RCWrapper;
 
-class RefCountObjectBase {
-	friend class RefCountObjectWithDisable;
+class RefCountObject {
 	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
 public:
 	typedef uint32_t RCBaseType;
@@ -33,58 +30,24 @@ public:
 	std::atomic<uint32_t> LocalRcChanges;
 #endif
 public:
-	RefCountObjectBase(const RefCountObjectBase & other) = delete;
-	RefCountObjectBase & operator=(const RefCountObjectBase & other) = delete;
-	RefCountObjectBase();
-	virtual ~RefCountObjectBase();
+	RefCountObject(const RefCountObject & other) = delete;
+	RefCountObject & operator=(const RefCountObject & other) = delete;
+	RefCountObject();
+	virtual ~RefCountObject();
 
-	void rcReset();
 	RCBaseType rc() const;
-
-private:
+public:
 	void rcInc();
 	void rcDec();
 	void rcDecWithoutDelete();
-private:
-	std::atomic<RCBaseType> m_rc;
-};
-
-class RefCountObject: public sserialize::RefCountObjectBase {
-	friend class RefCountObjectWithDisable;
-	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
-public:
-	RefCountObject(const RefCountObject & other) = delete;
-	RefCountObjectWithDisable & operator=(const RefCountObject & other) = delete;
-	RefCountObject() = default;
-	virtual ~RefCountObject();
-private:
-	///we use this tag for an static assert to make sure that the user chose the right RCWrapper/RCPtrWrapper
-	///Automatic wrapper selection is unfortunately not possible if the object to be refcounted is not fully defined
-	static constexpr bool SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE = false;
-};
-
-class RefCountObjectWithDisable: public sserialize::RefCountObjectBase {
-	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING> friend class detail::RCBase;
-public:
-	RefCountObjectWithDisable(const RefCountObjectWithDisable & other) = delete;
-	RefCountObjectWithDisable & operator=(const RefCountObjectWithDisable & other) = delete;
-	RefCountObjectWithDisable() : m_enabled(true) {}
-	virtual ~RefCountObjectWithDisable();
-private:
 	void disableRC();
 	void enableRC();
+	///relaxed memory order!
 	bool enabledRC() const;
 private:
-	using RefCountObjectBase::rcInc;
-	using RefCountObjectBase::rcDec;
-private:
-	///we use this tag for an static assert to make sure that the user chose the right RCWrapper/RCPtrWrapper
-	///Automatic wrapper selection is unfortunately not possible if the objected to be refcounted is not fully defined
-	static constexpr bool SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE = true;
-private:
-	bool m_enabled;
+	///the lower bit indicates if ref-counting is enabled or not
+	std::atomic<RCBaseType> m_rc;
 };
-
 namespace detail {
 
 template<typename RCObj>
@@ -94,7 +57,6 @@ public:
 	m_priv(0),
 	m_enabled(true)
 	{
-		static_assert(RCObj::SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE == true, "Reference counter object cannot disable reference counting but wrapper can.");
 		reset(p);
 	}
 	virtual ~RCBase() {
@@ -154,7 +116,6 @@ template<typename RCObj>
 class RCBase<RCObj, false > {
 public:
 	RCBase(RCObj* p) : m_priv(0) {
-		static_assert(RCObj::SSERIALIZE_REF_COUNT_OBJECT_CAN_DISABLE == false, "Reference counted object can disable reference counting but wrapper can't.");
 		reset(p);
 	}
 	virtual ~RCBase() {

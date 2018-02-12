@@ -119,7 +119,7 @@ bool ItemIndexIterator::valid() const {
 ItemIndexIterator& ItemIndexIterator::operator++() {
 	if (priv()->rc() > 1) {
 		ItemIndexIteratorPrivate * newPriv = priv()->copy();
-		newPriv->rcReset();
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(uint32_t(0), newPriv->rc());
 		setPrivate(newPriv);
 	}
 	priv()->next();
@@ -129,7 +129,7 @@ ItemIndexIterator& ItemIndexIterator::operator++() {
 ItemIndexIterator& ItemIndexIterator::reset() {
 	if (priv()->rc() > 1) {
 		ItemIndexIteratorPrivate * newPriv = priv()->copy();
-		newPriv->rcReset();
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(uint32_t(0), newPriv->rc());
 		setPrivate(newPriv);
 	}
 	priv()->reset();
