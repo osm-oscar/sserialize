@@ -30,6 +30,7 @@ public:
 public:
 	static std::atomic<uint64_t> GlobalRc;
 	static std::atomic<uint64_t> GlobalRcChanges;
+	std::atomic<uint32_t> LocalRcChanges;
 #endif
 public:
 	RefCountObjectBase(const RefCountObjectBase & other) = delete;
