@@ -269,12 +269,12 @@ CellQueryResult::const_iterator CellQueryResult::cend() const {
 	return const_iterator(m_priv, m_priv->cellCount());
 }
 
-sserialize::ItemIndex CellQueryResult::flaten() const {
+sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 	if ((flags() & FF_CELL_LOCAL_ITEM_IDS) != 0) {
 		throw sserialize::UnimplementedFunctionException("CellQueryResult::flaten: cell local ids are not supported yet");	
 	}
 	auto func = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; } ;
-	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func);
+	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func, threadCount);
 }
 
 ItemIndex CellQueryResult::topK(uint32_t numItems) const {

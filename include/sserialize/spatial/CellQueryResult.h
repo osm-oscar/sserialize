@@ -125,7 +125,7 @@ public:
 	const_iterator cbegin() const;
 	const_iterator end() const;
 	const_iterator cend() const;
-	ItemIndex flaten() const;
+	ItemIndex flaten(uint32_t threadCount = 1) const;
 	ItemIndex topK(uint32_t numItems) const;
 	CellQueryResult toGlobalItemIds(uint32_t threadCount = 1) const;
 	CellQueryResult toCellLocalItemIds() const;
