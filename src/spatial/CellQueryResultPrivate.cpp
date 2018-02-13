@@ -667,7 +667,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 		Worker w(&state);
 		w();
 	}
-	SSERIALIZE_CHEAP_ASSERT_EQUAL(cellCount(), rPtr->cellCount());
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(cellCount(), state.rPtr->cellCount());
 	return state.rPtr;
 }
 
