@@ -287,9 +287,9 @@ ItemIndex CellQueryResult::topK(uint32_t numItems) const {
 	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func);
 }
 
-CellQueryResult CellQueryResult::toGlobalItemIds() const {
+CellQueryResult CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 	SSERIALIZE_CHEAP_ASSERT(flags() & FF_CELL_LOCAL_ITEM_IDS);
-	return CellQueryResult( m_priv->toGlobalItemIds() );
+	return CellQueryResult( m_priv->toGlobalItemIds(threadCount) );
 }
 
 CellQueryResult CellQueryResult::toCellLocalItemIds() const {

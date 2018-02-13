@@ -1,6 +1,7 @@
 #include <sserialize/spatial/CellQueryResultPrivate.h>
 #include <sserialize/containers/ItemIndexFactory.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/mt/ThreadPool.h>
 
 namespace sserialize {
 namespace detail {
@@ -598,46 +599,76 @@ CellQueryResult * CellQueryResult::removeEmpty(uint32_t emptyCellCount) const {
 	return rPtr;
 }
 
-CellQueryResult * CellQueryResult::toGlobalItemIds() const {
+CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 	if ((flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) == 0 ||
 		(flags() & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS) != 0) {
 		throw sserialize::TypeMissMatchException("sserialize::CellQueryResult::toGlobalItemIds: No cell local item ids to process");
 	}
 	int newFlags = m_flags - sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS + sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS;
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
 	
-	uint32_t totalSize = cellCount();
-	rPtr->m_desc.reserve(totalSize);
-	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
+	struct State {
+		uint32_t totalSize;
+		const CellQueryResult * that;
+		CellQueryResult * rPtr;
+		std::atomic<uint32_t> i{0};
+	} state;
+	state.totalSize = cellCount();
+	state.that = this;
+	state.rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
+	state.rPtr->m_desc.resize(state.totalSize);
+	state.rPtr->m_idx = (IndexDesc*) ::malloc(state.totalSize * sizeof(IndexDesc));
 	
-	
-	std::vector<uint32_t> tmpidx;
-	for(uint32_t i(0); i < totalSize; ++i) {
-		const CellDesc & cd = m_desc[i];
-		if (cd.fullMatch) {
-			rPtr->m_desc.emplace_back(cd);
+	struct Worker {
+		State * state;
+		std::vector<uint32_t> tmpidx;
+		void operator()() {
+			while (true) {
+				uint32_t i = state->i.fetch_add(1, std::memory_order_relaxed);
+				if (i >= state->totalSize) {
+					break;
+				}
+				const CellDesc & cd = state->that->m_desc[i];
+				if (cd.fullMatch) {
+					state->rPtr->m_desc[i] = cd;
+				}
+				else { //TODO: speed this up with caches
+					if (cd.fetched) {
+						state->that->idx(i).putInto(tmpidx);
+					}
+					else {
+						state->that->m_idxStore.at( state->that->idxId(i) ).putInto(tmpidx);
+					}
+					//TODO: speed up mapping
+					sserialize::ItemIndex cellIdx =state->that->m_idxStore.at( state->that->m_gh.cellItemsPtr(cd.cellId) );
+					for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
+						uint32_t localId = tmpidx[j];
+						uint32_t globalId = cellIdx.at(localId);
+						tmpidx[j] = globalId;
+					}
+					SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(tmpidx.begin(), tmpidx.end()));
+					state->rPtr->m_desc[i] = CellDesc(0x0, 0x1, cd.cellId);
+					state->rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx,state->that->m_idxStore.indexType()));
+					tmpidx.clear();
+				}
+			}
 		}
-		else { //TODO: speed this up with caches
-			if (cd.fetched) {
-				this->idx(i).putInto(tmpidx);
-			}
-			else {
-				m_idxStore.at( this->idxId(i) ).putInto(tmpidx);
-			}
-			//TODO: speed up mapping
-			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
-			for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
-				uint32_t localId = tmpidx[j];
-				uint32_t globalId = cellIdx.at(localId);
-				tmpidx[j] = globalId;
-			}
-			SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(tmpidx.begin(), tmpidx.end()));
-			rPtr->m_desc.emplace_back(0x0, 0x1, cd.cellId);
-			rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType()));
-			tmpidx.clear();
-		}
+		Worker(State * state) : state(state) {}
+		Worker(const Worker & other) : state(other.state) {}
+	};
+	
+	if (threadCount == 0) {
+		threadCount = std::thread::hardware_concurrency();
 	}
-	return rPtr;
+	
+	if (threadCount > 1) {
+		sserialize::ThreadPool::execute(Worker(&state), threadCount);
+	}
+	else {
+		Worker w(&state);
+		w();
+	}
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(cellCount(), rPtr->cellCount());
+	return state.rPtr;
 }
 
 

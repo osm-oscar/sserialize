@@ -22,6 +22,7 @@ private:
 	friend class sserialize::detail::TreedCellQueryResult::TreedCQRImp;
 	
 	struct CellDesc {
+		CellDesc() {}
 		CellDesc(uint32_t inFullMatch, uint32_t inFetched, uint32_t inCellId) {
 			fullMatch = inFullMatch;
 			fetched = inFetched;
@@ -83,7 +84,7 @@ public:
 	CellQueryResult * symDiff(const CellQueryResult * other) const;
 	CellQueryResult * allToFull() const;
 	CellQueryResult * removeEmpty(uint32_t emptyCellCount = 0) const;
-	CellQueryResult * toGlobalItemIds() const;
+	CellQueryResult * toGlobalItemIds(uint32_t threadCount) const;
 	CellQueryResult * toCellLocalItemIds() const;
 	bool selfCheck();
 	sserialize::ItemIndex cells() const;
