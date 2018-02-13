@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <assert.h>
 #include <vector>
+#include <thread>
+#include <mutex>
 
 namespace sserialize {
 
@@ -81,6 +83,72 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc) {
 						treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin+(end-begin)/2, end, redFunc)
 					);
 	}
+}
+
+/** @param begin iterator pointing to the first element
+  * @param end iterator pointing past the last element
+  * @param func function that maps two iterator::value_type to a new one
+  */
+template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
+T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t threadCount) {
+	if (threadCount == 0) {
+		threadCount = 1;
+	}
+	if (threadCount == 1) {
+		return treeReduce(begin, end, redFunc);
+	}
+	using std::distance;
+	
+	struct State {
+		T_ITERATOR & begin;
+		T_FUNC & redFunc;
+		
+		std::size_t inputSize;
+		std::size_t blockSize;
+		std::vector<T_RETURN> storage;
+		std::mutex lock;
+		State(T_ITERATOR begin, T_FUNC redFunc) : begin(begin), redFunc(redFunc) {}
+	};
+	State state(begin, redFunc);
+	state.inputSize = distance(begin, end);
+	
+	if (state.inputSize == 0) {
+		return T_RETURN();
+	}
+	
+	threadCount = std::min<std::size_t>(state.inputSize, threadCount);
+	state.blockSize = state.inputSize/threadCount + std::size_t(state.inputSize%threadCount > 0);
+	
+	struct Worker {
+		State * state;
+		void operator()(std::size_t blockNum) {
+			std::size_t blockBeginOffset = state->blockSize*blockNum;
+			
+			if (blockBeginOffset >= state->inputSize) {
+				return;
+			}
+			std::size_t blockSize = std::min(state->blockSize, state->inputSize - blockBeginOffset);
+			
+			using std::next;
+			T_ITERATOR blockBegin = next(state->begin, blockBeginOffset);
+			T_ITERATOR blockEnd = next(blockBegin, blockSize);
+			T_RETURN result = treeReduce(blockBegin, blockEnd, state->redFunc);
+			state->lock.lock();
+			state->storage.emplace_back( std::move(result) );
+			state->lock.unlock();
+		};
+		Worker(State * state) : state(state) {}
+	};
+
+	std::vector<std::thread> threads;
+	threads.reserve(threadCount);
+	for(uint32_t i(0); i < threadCount; ++i) {
+		threads.emplace_back(Worker(&state), i);
+	}
+	for(auto & t : threads) {
+		t.join();
+	}
+	return treeReduce(state.storage.begin(), state.storage.end(), redFunc);
 }
 
 /** @param begin iterator pointing to the first element
