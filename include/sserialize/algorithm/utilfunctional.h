@@ -107,7 +107,7 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t t
 		std::size_t blockSize;
 		std::vector<T_RETURN> storage;
 		std::mutex lock;
-		State(T_ITERATOR begin, T_FUNC redFunc) : begin(begin), redFunc(redFunc) {}
+		State(T_ITERATOR & begin, T_FUNC & redFunc) : begin(begin), redFunc(redFunc) {}
 	};
 	State state(begin, redFunc);
 	state.inputSize = distance(begin, end);
