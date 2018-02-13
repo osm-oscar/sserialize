@@ -292,9 +292,9 @@ CellQueryResult CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 	return CellQueryResult( m_priv->toGlobalItemIds(threadCount) );
 }
 
-CellQueryResult CellQueryResult::toCellLocalItemIds() const {
+CellQueryResult CellQueryResult::toCellLocalItemIds(uint32_t threadCount) const {
 	SSERIALIZE_CHEAP_ASSERT(flags() & FF_CELL_GLOBAL_ITEM_IDS);
-	return CellQueryResult( m_priv->toCellLocalItemIds() );
+	return CellQueryResult( m_priv->toCellLocalItemIds(threadCount) );
 }
 
 void CellQueryResult::dump(std::ostream & out) const {

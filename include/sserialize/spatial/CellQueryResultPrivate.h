@@ -85,7 +85,7 @@ public:
 	CellQueryResult * allToFull() const;
 	CellQueryResult * removeEmpty(uint32_t emptyCellCount = 0) const;
 	CellQueryResult * toGlobalItemIds(uint32_t threadCount) const;
-	CellQueryResult * toCellLocalItemIds() const;
+	CellQueryResult * toCellLocalItemIds(uint32_t threadCount) const;
 	bool selfCheck();
 	sserialize::ItemIndex cells() const;
 };

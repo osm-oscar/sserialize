@@ -128,7 +128,7 @@ public:
 	ItemIndex flaten(uint32_t threadCount = 1) const;
 	ItemIndex topK(uint32_t numItems) const;
 	CellQueryResult toGlobalItemIds(uint32_t threadCount = 1) const;
-	CellQueryResult toCellLocalItemIds() const;
+	CellQueryResult toCellLocalItemIds(uint32_t threadCount = 1) const;
 	void dump(std::ostream & out) const;
 	void dump() const;
 	sserialize::ItemIndex cells() const;

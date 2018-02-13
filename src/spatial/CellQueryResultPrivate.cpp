@@ -672,52 +672,82 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 }
 
 
-CellQueryResult * CellQueryResult::toCellLocalItemIds() const {
+CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) const {
 	if ((flags() & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS) == 0 ||
 		(flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) != 0) {
 		throw sserialize::TypeMissMatchException("sserialize::CellQueryResult::toCellLocalItemIds: No cell global item ids to process");
 	}
 	int newFlags = m_flags - sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS + sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS;
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
+
+	struct State {
+		uint32_t totalSize;
+		const CellQueryResult * that;
+		CellQueryResult * rPtr;
+		std::atomic<uint32_t> i{0};
+	} state;
+	state.totalSize = cellCount();
+	state.that = this;
+	state.rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
+	state.rPtr->m_desc.resize(state.totalSize);
+	state.rPtr->m_idx = (IndexDesc*) ::malloc(state.totalSize * sizeof(IndexDesc));
 	
-	uint32_t totalSize = cellCount();
-	rPtr->m_desc.reserve(totalSize);
-	rPtr->m_idx = (IndexDesc*) ::malloc(totalSize * sizeof(IndexDesc));
-	
-	
-	std::vector<uint32_t> tmpidx;
-	for(uint32_t i(0); i < totalSize; ++i) {
-		const CellDesc & cd = m_desc[i];
-		if (cd.fullMatch) {
-			rPtr->m_desc.emplace_back(cd);
-		}
-		else { //TODO: speed this up with caches
-			sserialize::ItemIndex srcIdx;
-			if (cd.fetched) {
-				srcIdx = this->idx(i);
-			}
-			else {
-				srcIdx =  m_idxStore.at( this->idxId(i) );
-			}
-			//TODO: speed up mapping using caches
-			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
-			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(srcIdx.size(), cellIdx.size());
-			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL((cellIdx / srcIdx), srcIdx);
-			auto srcIt = srcIdx.begin();
-			auto cIt = cellIdx.begin();
-			for(uint32_t localId(0), i(0), s(srcIdx.size()); i < s; ++localId, ++cIt) {
-				if (*srcIt == *cIt) {
-					tmpidx.emplace_back(localId);
-					++srcIt;
-					++i;
+	struct Worker {
+		State * state;
+		std::vector<uint32_t> tmpidx;
+		void operator()() {
+			while (true) {
+				uint32_t i = state->i.fetch_add(1, std::memory_order_relaxed);
+				if (i >= state->totalSize) {
+					break;
+				}
+				const CellDesc & cd = state->that->m_desc[i];
+				if (cd.fullMatch) {
+					state->rPtr->m_desc[i] = cd;
+				}
+				else { //TODO: speed this up with caches
+					sserialize::ItemIndex srcIdx;
+					if (cd.fetched) {
+						srcIdx = state->that->idx(i);
+					}
+					else {
+						srcIdx =  state->that->m_idxStore.at( state->that->idxId(i) );
+					}
+					//TODO: speed up mapping using caches
+					sserialize::ItemIndex cellIdx = state->that->m_idxStore.at( state->that->m_gh.cellItemsPtr(cd.cellId) );
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(srcIdx.size(), cellIdx.size());
+					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL((cellIdx / srcIdx), srcIdx);
+					auto srcIt = srcIdx.begin();
+					auto cIt = cellIdx.begin();
+					for(uint32_t localId(0), i(0), s(srcIdx.size()); i < s; ++localId, ++cIt) {
+						if (*srcIt == *cIt) {
+							tmpidx.emplace_back(localId);
+							++srcIt;
+							++i;
+						}
+					}
+					state->rPtr->m_desc[i] = CellDesc(0x0, 0x1, cd.cellId);
+					state->rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, state->that->m_idxStore.indexType()));
+					tmpidx.clear();
 				}
 			}
-			rPtr->m_desc.emplace_back(0x0, 0x1, cd.cellId);
-			rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType()));
-			tmpidx.clear();
 		}
+		Worker(State * state) : state(state) {}
+		Worker(const Worker & other) : state(other.state) {}
+	};
+	
+	if (threadCount == 0) {
+		threadCount = std::thread::hardware_concurrency();
 	}
-	return rPtr;
+	
+	if (threadCount > 1) {
+		sserialize::ThreadPool::execute(Worker(&state), threadCount);
+	}
+	else {
+		Worker w(&state);
+		w();
+	}
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(cellCount(), state.rPtr->cellCount());
+	return state.rPtr;
 }
 
 bool CellQueryResult::selfCheck() {
