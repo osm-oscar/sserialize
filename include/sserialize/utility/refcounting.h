@@ -5,6 +5,9 @@
 #include <atomic>
 #include <utility>
 
+//enable ref-counting stats
+// #define SSERIALIZE_GATHER_STATS_REF_COUNTING
+
 namespace sserialize {
 namespace detail {
 	template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
