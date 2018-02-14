@@ -209,6 +209,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		uint64_t first;
 		uint64_t second;
 		ChunkDescription() : first(INVALID_CHUNK_OFFSET), second(INVALID_CHUNK_OFFSET) {}
+		ChunkDescription(uint64_t _first) : first(_first), second(INVALID_CHUNK_OFFSET) {}
 		ChunkDescription(uint64_t _first, uint64_t _second) : first(_first), second(_second)
 		{
 			SSERIALIZE_CHEAP_ASSERT(valid());
@@ -330,7 +331,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				
 				//push the beginning of our chunk
 				currentChunkDescriptionPos = state->pendingChunks.size();
-				state->pendingChunks.emplace_back(state->srcOffset, INVALID_CHUNK_OFFSET);
+				state->pendingChunks.emplace_back(state->srcOffset);
 				
 				auto chunkBegin = state->srcIt;
 				auto chunkEnd = chunkBegin+currentChunkSize;
@@ -472,7 +473,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			}
 			
 			//add our result chunk to the queue (we don't know the size yet, just the beginning)
-			nextRoundPendingChunks.emplace_back(tmp.size(), INVALID_CHUNK_OFFSET);
+			nextRoundPendingChunks.emplace_back(tmp.size());
 			
 			while (pq.size()) {
 				uint32_t pqMin = pq.top();
