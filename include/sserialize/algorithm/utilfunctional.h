@@ -133,9 +133,20 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t t
 			T_ITERATOR blockBegin = next(state->begin, blockBeginOffset);
 			T_ITERATOR blockEnd = next(blockBegin, blockSize);
 			T_RETURN result = treeReduce(blockBegin, blockEnd, state->redFunc);
-			state->lock.lock();
+			std::unique_lock<std::mutex> lck(state->lock);
 			state->storage.emplace_back( std::move(result) );
-			state->lock.unlock();
+			while(true) {
+				if (state->storage.size() < 2) {
+					return;
+				}
+				std::vector<T_RETURN> myStorage;
+				state->storage.swap(myStorage);
+				lck.unlock();
+				T_RETURN result = treeReduce(myStorage.begin(), myStorage.end(), state->redFunc);
+				lck.lock();
+				state->storage.emplace_back(std::move(result));
+			}
+			
 		};
 		Worker(State * state) : state(state) {}
 	};
