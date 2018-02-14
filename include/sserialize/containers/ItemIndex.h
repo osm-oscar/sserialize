@@ -42,6 +42,12 @@ public:
 		__T_LAST_ENTRY=T_STL_VECTOR
 	};
 	
+	///You can check if an index supports fast random access using these masks
+	enum RandomAccess {
+		RANDOM_ACCESS_NO=T_WAH|T_DE|T_RLE_DE|T_ELIAS_FANO|T_PFOR|T_INDIRECT,
+		RANDOM_ACCESS_YES=T_SIMPLE|T_REGLINE|T_NATIVE|T_EMPTY|T_STL_DEQUE|T_STL_VECTOR
+	};
+	
 	struct ItemFilter {
 		virtual bool operator()(uint32_t id) const = 0;
 	};
