@@ -94,9 +94,7 @@ public:
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
 			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 			DynamicBitSet bitSet(dest);
-			
-			uint32_t maxNum = *realValues.rbegin();
-			
+						
 			for(std::set<uint32_t>::const_iterator it = realValues.begin(); it != realValues.end(); ++it) {
 				bitSet.set(*it);
 			}
@@ -104,7 +102,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)realValues.size(), (uint32_t)bitSet.size());
 			
 			DynamicBitSet::const_iterator bsIt(bitSet.cbegin()), bsEnd(bitSet.cend());
-			std::set<uint32_t>::const_iterator rIt(realValues.cbegin()), rEnd(realValues.cend());
+			std::set<uint32_t>::const_iterator rIt(realValues.cbegin());
 			
 			for(uint32_t j(0), s(realValues.size()); j < s; ++j, ++bsIt, ++rIt) {
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("Run " + std::to_string(i) + "; realvalue != bitset value at j=" + std::to_string(j), uint64_t(*rIt), uint64_t(*bsIt));

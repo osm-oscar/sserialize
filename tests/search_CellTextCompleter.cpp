@@ -331,7 +331,7 @@ public:
 			pmi = sserialize::ItemIndex( std::move(pmiTmp) );
 		}
 		
-		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), gh, sserialize::Static::ItemIndexStore());
+		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), gh, sserialize::Static::ItemIndexStore(), sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);
 	}
 };
 
@@ -505,9 +505,12 @@ public:
 	};
 	typedef ExactStrings SuffixStrings;
 	struct ItemId {
+		static constexpr bool HasCellLocalIds = false;
 		uint32_t operator()(const item_type & item) { return item.id; }
+		uint32_t operator()(const item_type & item, uint32_t) { return item.id; }
 	};
 	struct ItemCells {
+		static constexpr bool HasCellLocalIds = false;
 		template<typename TOutputIterator>
 		void operator()(const item_type & item, TOutputIterator out) {
 			for(const auto & x : item.cells) {
@@ -552,7 +555,7 @@ private:
 public:
 	OOMCTCTest() : CTCBaseTest() {}
 	virtual ~OOMCTCTest() {}
-	virtual void setUp() {
+	virtual void setUp() override{
 		sserialize::ItemIndexFactory idxFactory(true);
 		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		
@@ -565,7 +568,7 @@ public:
 		sserialize::Static::ItemIndexStore idxStore(idxFactory.getFlushedData());
 		m_ctc = sserialize::Static::CellTextCompleter(dest, idxStore, ra().gh);
 	}
-	virtual void tearDown() {}
+	virtual void tearDown() override {}
 };
 
 int main(int argc, char ** argv) {

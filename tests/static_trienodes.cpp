@@ -136,7 +136,7 @@ private:
 		config.rawNodeData.swap(nodeData);
 	}
 public:
-	virtual void setUp() {
+	virtual void setUp() override {
 		m_config.charWidth = T_CHAR_WIDTH;
 		m_config.indexType = (sserialize::Static::TrieNodePrivate::IndexTypes) T_INDEX_TYPE;
 		
