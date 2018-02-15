@@ -576,6 +576,10 @@ UByteArrayAdapter& UByteArrayAdapter::operator-=(OffsetType offSet) {
 	return *this;
 }
 
+bool UByteArrayAdapter::isContiguous() const {
+	return m_priv->isContiguous();
+}
+
 UByteArrayAdapter UByteArrayAdapter::begin() const {
 	return *this;
 }

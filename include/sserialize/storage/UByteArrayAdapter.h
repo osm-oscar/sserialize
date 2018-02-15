@@ -314,6 +314,7 @@ public: //iterator api
 	UByteArrayAdapter begin() const;
 	UByteArrayAdapter end() const;
 	bool equal(const sserialize::UByteArrayAdapter& b) const;
+	bool isContiguous() const;
 
 public: //comparisson
 	bool equalContent(const sserialize::UByteArrayAdapter & b) const;
