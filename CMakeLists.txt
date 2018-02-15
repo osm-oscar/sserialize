@@ -12,6 +12,7 @@ IF(CMAKE_CROSSCOMPILING)
 ELSE(CMAKE_CROSSCOMPILING)
 	find_package(LIBRT REQUIRED)
 	find_package(Ragel REQUIRED)
+	find_package(Cryptopp REQUIRED)
 	find_package(ICU 4.4 REQUIRED)
 	find_package(Threads)
 ENDIF(CMAKE_CROSSCOMPILING)
@@ -90,6 +91,7 @@ set(SSERIALIZE_INCLUDE_DIR
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
 	"${CMAKE_CURRENT_SOURCE_DIR}/vendor/libs"
 	${ICU_INCLUDE_DIRS}
+	${CRYPTOPP_INCLUDE_DIR}
 	${MY_INCLUDE_DIR}
 	CACHE STRING "sserialize include directories"
 	FORCE
@@ -106,6 +108,7 @@ set(SSERIALIZE_LINK_LIBRARIES
 	${MY_LINK_LIBRARIES}
 	${ICU_LIBRARIES}
 	${LIBRT_LIBRARIES}
+	${CRYPTOPP_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 	CACHE STRING "sserialize link libraries"
 	FORCE
@@ -128,7 +131,6 @@ include_directories(
 	${SSERIALIZE_INCLUDE_DIR}
 )
 
-	find_package(Cryptopp REQUIRED)
 set(RAGEL_FLAGS "-G2")
 
 RAGEL_PARSER(src/search/SetOpTreePrivateSimple_parser.rl)
