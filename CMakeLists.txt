@@ -4,7 +4,17 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
 )
 
-include(set_highest_cpp)
+IF(CMAKE_CROSSCOMPILING)
+	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
+	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH) 
+	find_package(Ragel REQUIRED)
+	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE})
+ELSE(CMAKE_CROSSCOMPILING)
+	find_package(LIBRT REQUIRED)
+	find_package(Ragel REQUIRED)
+	find_package(ICU 4.4 REQUIRED)
+	find_package(Threads)
+ENDIF(CMAKE_CROSSCOMPILING)
 
 MACRO(ADD_TARGET_PROPERTIES _target _name)
 	SET(_properties)
@@ -19,6 +29,8 @@ MACRO(ADD_TARGET_PROPERTIES _target _name)
 	ENDIF(NOT _old_properties)
 	SET_TARGET_PROPERTIES(${_target} PROPERTIES ${_name} "${_old_properties} ${_properties}")
 ENDMACRO(ADD_TARGET_PROPERTIES)
+
+include(set_highest_cpp)
 
 set(MY_COMPILE_DEFINITIONS
 	"-DCGAL_HAS_THREADS"
@@ -76,6 +88,8 @@ endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 set(SSERIALIZE_INCLUDE_DIR
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
+	"${CMAKE_CURRENT_SOURCE_DIR}/vendor/libs"
+	${ICU_INCLUDE_DIRS}
 	${MY_INCLUDE_DIR}
 	CACHE STRING "sserialize include directories"
 	FORCE
@@ -90,6 +104,9 @@ set(SSERIALIZE_LIBRARIES
 set(SSERIALIZE_LINK_LIBRARIES
 	${PROJECT_NAME}
 	${MY_LINK_LIBRARIES}
+	${ICU_LIBRARIES}
+	${LIBRT_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT}
 	CACHE STRING "sserialize link libraries"
 	FORCE
 )
@@ -109,29 +126,9 @@ mark_as_advanced(
 
 include_directories(
 	${SSERIALIZE_INCLUDE_DIR}
-	"${CMAKE_CURRENT_SOURCE_DIR}/vendor/libs"
 )
 
-IF(CMAKE_CROSSCOMPILING)
-	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
-	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH) 
-	find_package(Ragel REQUIRED)
-	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE})
-ELSE(CMAKE_CROSSCOMPILING)
-	find_package(LIBRT REQUIRED)
-	find_package(Ragel REQUIRED)
-	find_package(Threads)
-ENDIF(CMAKE_CROSSCOMPILING)
-
-IF(NOT CMAKE_CROSSCOMPILING)
-	find_package(ICU 4.4 REQUIRED)
-	set(OPTIONAL_SOURCES_CPP
-		src/containers/GeneralizedTrie/SinglePassTrie.cpp
-		src/strings/DiacriticRemover.cpp
-	)
 	find_package(Cryptopp REQUIRED)
-ENDIF(NOT CMAKE_CROSSCOMPILING)
-
 set(RAGEL_FLAGS "-G2")
 
 RAGEL_PARSER(src/search/SetOpTreePrivateSimple_parser.rl)
@@ -294,6 +291,13 @@ set(UTILITY_SOURCES_CPP
 set(STAGING_SOURCES_CPP
 )
 
+IF(NOT CMAKE_CROSSCOMPILING)
+	set(OPTIONAL_SOURCES_CPP
+		src/containers/GeneralizedTrie/SinglePassTrie.cpp
+		src/strings/DiacriticRemover.cpp
+	)
+ENDIF(NOT CMAKE_CROSSCOMPILING)
+
 set(EXTERNAL_SOURCES_CPP
 	vendor/libs/minilzo/minilzo.c
 	vendor/libs/geographiclib/legacy/C/geodesic.c
@@ -325,10 +329,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC ${SSERIALIZE_COMPILE_DEFINITIO
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
 
 IF(NOT CMAKE_CROSSCOMPILING)
-	if(ICU_FOUND)
-		include_directories(${ICU_INCLUDE_DIRS})
-		target_link_libraries(${PROJECT_NAME} ${ICU_LIBRARIES} ${LIBRT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-	endif(ICU_FOUND)
 	add_subdirectory(tests ${PROJECT_NAME}tests EXCLUDE_FROM_ALL)
 	add_subdirectory(tools ${PROJECT_NAME}-tools EXCLUDE_FROM_ALL)
 	add_subdirectory(benchmarks ${PROJECT_NAME}benchmarks EXCLUDE_FROM_ALL)
