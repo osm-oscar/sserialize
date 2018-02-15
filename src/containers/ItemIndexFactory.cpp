@@ -134,7 +134,6 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, ItemIndexFact
 		return -1;
 	}
 	else {
-		m_mapLock.acquireReadLock();
 		uint32_t id = m_hash.at(hv);
 		m_mapLock.releaseReadLock();
 		return id;
