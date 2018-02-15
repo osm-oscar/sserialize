@@ -29,7 +29,8 @@ public:
 		uint64_t prev;
 		uint32_t id;
 	} __attribute__ ((packed));
-	typedef std::unordered_map< uint64_t, uint64_t > DataHashType;
+	typedef uint64_t DataHashKey;
+	typedef std::unordered_map<DataHashKey, uint64_t > DataHashType;
 	typedef sserialize::MMVector<DataOffsetEntry> DataOffsetContainer;
 	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
 	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
@@ -48,10 +49,10 @@ private:
 	MultiReaderSingleWriterLock m_mapLock;
 	MultiReaderSingleWriterLock m_dataLock;
 private:
-	uint64_t hashFunc(const UByteArrayAdapter & v);
-	uint64_t hashFunc(const std::vector< uint8_t >& v);
+	DataHashKey hashFunc(const UByteArrayAdapter & v);
+	DataHashKey hashFunc(const std::vector< uint8_t >& v);
 	///returns the id of the index or -1 if none was found @thread-safety: yes
-	int64_t getIndex(const std::vector< uint8_t >& v, uint64_t & hv);
+	int64_t getIndex(const std::vector< uint8_t >& v, DataHashKey & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
 	///adds the data of an index to store, @thread-safety: true
 	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize = 0);

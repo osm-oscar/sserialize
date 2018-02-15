@@ -118,7 +118,7 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	return res;
 }
 
-uint64_t ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
+ItemIndexFactory::DataHashKey ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
 	uint64_t h = 0;
 	UByteArrayAdapter::MemoryView mv(v.asMemView());
 	for(UByteArrayAdapter::MemoryView::const_iterator it(mv.cbegin()), end(mv.cend()); it != end; ++it) {
@@ -127,7 +127,7 @@ uint64_t ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
 	return h;
 }
 
-uint64_t ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
+ItemIndexFactory::DataHashKey ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
 	uint64_t h = 0;
 	for(std::vector<uint8_t>::const_iterator it(v.begin()), end(v.end()); it != end; ++it) {
 		hash_combine(h, (const char)*it);
@@ -135,7 +135,7 @@ uint64_t ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
 	return h;
 }
 
-int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, uint64_t & hv) {
+int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, ItemIndexFactory::DataHashKey & hv) {
 	if (v.size() == 0)
 		return -1;
 	hv = hashFunc(v);
@@ -188,7 +188,7 @@ Static::ItemIndexStore ItemIndexFactory::asItemIndexStore() {
 }
 
 uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize) {
-	uint64_t hv;
+	ItemIndexFactory::DataHashKey hv;
 	int64_t id = -1;
 	if (m_useDeduplication) {
 		id = getIndex(idx, hv);
