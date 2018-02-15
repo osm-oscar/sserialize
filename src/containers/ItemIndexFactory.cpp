@@ -17,7 +17,6 @@
 namespace sserialize {
 
 ItemIndexFactory::ItemIndexFactory(bool memoryBased) :
-m_dataOffsets(sserialize::MM_SHARED_MEMORY),
 m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
 m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(0),
@@ -33,7 +32,6 @@ m_compressionType(Static::ItemIndexStore::IC_NONE)
 }
 
 ItemIndexFactory::ItemIndexFactory(ItemIndexFactory && other) :
-m_dataOffsets(sserialize::MM_SHARED_MEMORY),
 m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
 m_idxSizes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(other.m_hitCount.load()),
@@ -45,7 +43,6 @@ m_compressionType(other.m_compressionType)
 	m_header = std::move(other.m_header);
 	m_indexStore = std::move(other.m_indexStore);
 	m_hash = std::move(other.m_hash);
-	m_dataOffsets = std::move(other.m_dataOffsets);
 	m_idToOffsets = std::move(other.m_idToOffsets);
 	m_idxSizes = std::move(other.m_idxSizes);
 	//default init read-write-lock
@@ -62,7 +59,6 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	m_header = std::move(other.m_header);
 	m_indexStore = std::move(other.m_indexStore);
 	m_hash = std::move(other.m_hash);
-	m_dataOffsets = std::move(other.m_dataOffsets);
 	m_idToOffsets = std::move(other.m_idToOffsets);
 	m_idxSizes = std::move(other.m_idxSizes);
 	//default init read-write-lock
@@ -77,7 +73,6 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	if (size()) { //clear everything
 		m_hitCount = 0;
 		m_hash.clear();
-		m_dataOffsets.clear();
 		m_idToOffsets.clear();
 		m_idxSizes.clear();
 	}
@@ -97,7 +92,6 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 	m_idToOffsets.reserve(store.size()+size());
 	m_idxSizes.reserve(store.size()+size());
 	if (m_useDeduplication) {
-		m_dataOffsets.reserve(store.size()+m_dataOffsets.size());
 		m_hash.reserve(store.size()+size());
 	}
 	std::vector<uint32_t> res;
@@ -119,25 +113,20 @@ std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemInd
 }
 
 ItemIndexFactory::DataHashKey ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
-	uint64_t h = 0;
 	UByteArrayAdapter::MemoryView mv(v.asMemView());
-	for(UByteArrayAdapter::MemoryView::const_iterator it(mv.cbegin()), end(mv.cend()); it != end; ++it) {
-		hash_combine(h, (const char)*it);
-	}
-	return h;
+	sserialize::ShaHasher<UByteArrayAdapter::MemoryView> hasher;
+	return hasher(mv);
 }
 
 ItemIndexFactory::DataHashKey ItemIndexFactory::hashFunc(const std::vector<uint8_t> & v) {
-	uint64_t h = 0;
-	for(std::vector<uint8_t>::const_iterator it(v.begin()), end(v.end()); it != end; ++it) {
-		hash_combine(h, (const char)*it);
-	}
-	return h;
+	sserialize::ShaHasher< std::vector<uint8_t> > hasher;
+	return hasher(v);
 }
 
 int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, ItemIndexFactory::DataHashKey & hv) {
-	if (v.size() == 0)
+	if (v.size() == 0) {
 		return -1;
+	}
 	hv = hashFunc(v);
 	m_mapLock.acquireReadLock();
 	if (m_hash.count(hv) == 0) {
@@ -145,23 +134,11 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, ItemIndexFact
 		return -1;
 	}
 	else {
-		DataOffsetEntry doe = m_dataOffsets.at(m_hash[hv]);
+		m_mapLock.acquireReadLock();
+		uint32_t id = m_hash.at(hv);
 		m_mapLock.releaseReadLock();
-		while (true) {
-			if (indexInStore(v, doe.id)) {
-				return doe.id;
-			}
-			if (doe.prev) {
-				m_mapLock.acquireReadLock();
-				doe =  m_dataOffsets.at(doe.prev);
-				m_mapLock.releaseReadLock();
-			}
-			else {
-				break;
-			}
-		}
+		return id;
 	}
-	return -1;
 }
 
 bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint32_t id) {
@@ -205,9 +182,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		
 		if (m_useDeduplication) {
 			m_mapLock.acquireWriteLock();
-			uint64_t & prevElement = m_hash[hv]; //if hv is not in hash, then value will be init with 0
-			m_dataOffsets.emplace_back(prevElement, (uint32_t)id);
-			prevElement = m_dataOffsets.size()-1;
+			m_hash[hv] = id;
 			m_mapLock.releaseWriteLock();
 		}
 	}
@@ -220,13 +195,11 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 void ItemIndexFactory::recalculateDeduplicationData() {
 	m_mapLock.acquireWriteLock();
 	m_hash.clear();
-	m_dataOffsets.clear();
 	std::vector<uint8_t> idxData;
 	for(uint32_t id(0), s(size()); id < s; ++id) {
 		auto hv = hashFunc( this->indexDataById(id) );
-		uint64_t & prevElement = m_hash[hv];
-		m_dataOffsets.emplace_back(prevElement, id);
-		prevElement = m_dataOffsets.size()-1;
+		SSERIALIZE_NORMAL_ASSERT(m_hash.count(hv) == 0);
+		m_hash[hv] = id;
 	}
 	m_mapLock.releaseWriteLock();
 }

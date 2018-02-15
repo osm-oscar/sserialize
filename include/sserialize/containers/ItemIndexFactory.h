@@ -14,6 +14,7 @@
 #include <sserialize/storage/pack_unpack_functions.h>
 #include <sserialize/mt/MultiReaderSingleWriterLock.h>
 #include <sserialize/containers/MMVector.h>
+#include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 
@@ -24,21 +25,14 @@ namespace sserialize {
 
 class ItemIndexFactory {
 public:
-	struct DataOffsetEntry {
-		DataOffsetEntry(uint64_t prev, uint32_t id) : prev(prev), id(id) {}
-		uint64_t prev;
-		uint32_t id;
-	} __attribute__ ((packed));
-	typedef uint64_t DataHashKey;
-	typedef std::unordered_map<DataHashKey, uint64_t > DataHashType;
-	typedef sserialize::MMVector<DataOffsetEntry> DataOffsetContainer;
+	typedef ShaHasherDigestData DataHashKey;
+	typedef std::unordered_map<DataHashKey, uint32_t> DataHashType; //Hash->id
 	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
 	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
 private:
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
 	DataHashType m_hash;
-	DataOffsetContainer m_dataOffsets;
 	IdToOffsetsType m_idToOffsets;
 	ItemIndexSizesContainer m_idxSizes;
 	std::atomic<uint64_t> m_hitCount;
