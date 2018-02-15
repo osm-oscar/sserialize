@@ -6,6 +6,103 @@
 #include <cryptopp/sha3.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 
+namespace CryptoPP {
+
+class SHA3_128 : public SHA3
+{
+public:
+	CRYPTOPP_CONSTANT(DIGESTSIZE = 16)
+
+	//! \brief Construct a SHA3-128 message digest
+	SHA3_128() : SHA3(DIGESTSIZE) {}
+	CRYPTOPP_CONSTEXPR static const char *StaticAlgorithmName() {return "SHA3-128";}
+};
+
+} // end namespace CryptoPP
+
+namespace sserialize {
+
+struct ShaHasherDigestData {
+	std::array<uint8_t, 16> data;
+	auto begin() { return data.begin(); }
+	auto begin() const { return data.begin(); }
+	auto end() { return data.end(); }
+	auto end() const { return data.end(); }
+	bool operator==(const ShaHasherDigestData & other) const { return data == other.data; }
+	bool operator!=(const ShaHasherDigestData & other) const { return data != other.data; }
+};
+
+template<typename T>
+class ShaHasher;
+
+template<>
+class ShaHasher<sserialize::UByteArrayAdapter::MemoryView> {
+public:
+	static constexpr uint32_t DigestSize = 16;
+	using Hasher = CryptoPP::SHA3_128;
+	using DigestData = ShaHasherDigestData;
+	using value_type = sserialize::UByteArrayAdapter::MemoryView;
+public:
+	inline DigestData operator()(const value_type & value) const {
+		Hasher hasher;
+		DigestData data;
+		hasher.CalculateDigest(data.begin(), value.begin(), value.size());
+		return data;
+	}
+};
+
+template<>
+class ShaHasher<sserialize::UByteArrayAdapter> {
+public:
+	static constexpr uint32_t DigestSize = 16;
+	static constexpr sserialize::UByteArrayAdapter::SizeType UpdateBlockSize = 1024*1024*1024;
+	using Hasher = CryptoPP::SHA3_128;
+	using DigestData = ShaHasherDigestData;
+	using value_type = sserialize::UByteArrayAdapter;
+public:
+	ShaHasher() : m_updateBlockSize(UpdateBlockSize) {}
+	inline DigestData operator()(const value_type & value) const {
+		if (value.isContiguous() || value.size() < m_updateBlockSize) {
+			return m_h(value.asMemView());
+		}
+		else {
+			Hasher hasher;
+			DigestData data;
+			sserialize::UByteArrayAdapter::SizeType pos = 0;
+			sserialize::UByteArrayAdapter::SizeType size = value.size();
+			for(;pos < size; pos += m_updateBlockSize, size -= m_updateBlockSize) {
+				auto blockSize = std::min(m_updateBlockSize, size);
+				auto memv = value.getMemView(pos, blockSize);
+				hasher.Update(memv.begin(), blockSize);
+			}
+			hasher.Final(data.begin());
+			return data;
+		}
+	}
+private:
+	ShaHasher<sserialize::UByteArrayAdapter::MemoryView> m_h;
+	sserialize::UByteArrayAdapter::SizeType m_updateBlockSize;
+};
+
+template<>
+class ShaHasher<std::vector<uint8_t>> {
+public:
+	static constexpr uint32_t DigestSize = 16;
+	static constexpr sserialize::UByteArrayAdapter::SizeType UpdateBlockSize = 1024*1024*1024;
+	using Hasher = CryptoPP::SHA3_128;
+	using DigestData = ShaHasherDigestData;
+	using value_type = std::vector<uint8_t>;
+public:
+	inline DigestData operator()(const value_type & value) const {
+		Hasher hasher;
+		DigestData data;
+		hasher.CalculateDigest(data.begin(), &(value[0]), value.size());
+		return data;
+	}
+};
+	
+} //end namespace sserialize
+
 
 //from http://stackoverflow.com/questions/7222143/unordered-map-hash-function-c, which is from boost
 
@@ -83,21 +180,16 @@ struct hash< std::vector<T> > {
 	}
 };
 
-}//end namespace std
-
-namespace CryptoPP {
-
-class SHA3_128 : public SHA3
-{
-public:
-	CRYPTOPP_CONSTANT(DIGESTSIZE = 16)
-
-	//! \brief Construct a SHA3-128 message digest
-	SHA3_128() : SHA3(DIGESTSIZE) {}
-	CRYPTOPP_CONSTEXPR static const char *StaticAlgorithmName() {return "SHA3-128";}
+template<>
+struct hash< sserialize::ShaHasherDigestData > {
+	inline std::size_t operator()(const sserialize::ShaHasherDigestData & v) const {
+		std::size_t h;
+		::memmove(&h, v.begin(), sizeof(h));
+		return h;
+	}
 };
 
-} // end namespace CryptoPP
+}//end namespace std
 
 namespace sserialize {
 
@@ -120,75 +212,6 @@ template<typename TPtr>
 struct DerefSmaler {
 	inline bool operator()(const TPtr & t1, const TPtr & t2) const {
 		return *t1 < *t2;
-	}
-};
-
-template<typename T>
-class ShaHasher;
-
-template<>
-class ShaHasher<sserialize::UByteArrayAdapter::MemoryView> {
-public:
-	static constexpr uint32_t DigestSize = 16;
-	using Hasher = CryptoPP::SHA3_128;
-	using DigestData = std::array<uint8_t, DigestSize>;
-	using value_type = sserialize::UByteArrayAdapter::MemoryView;
-public:
-	inline DigestData operator()(const value_type & value) const {
-		Hasher hasher;
-		DigestData data;
-		hasher.CalculateDigest(data.begin(), value.begin(), value.size());
-		return data;
-	}
-};
-
-template<>
-class ShaHasher<sserialize::UByteArrayAdapter> {
-public:
-	static constexpr uint32_t DigestSize = 16;
-	static constexpr sserialize::UByteArrayAdapter::SizeType UpdateBlockSize = 1024*1024*1024;
-	using Hasher = CryptoPP::SHA3_128;
-	using DigestData = std::array<uint8_t, DigestSize>;
-	using value_type = sserialize::UByteArrayAdapter;
-public:
-	ShaHasher() : m_updateBlockSize(UpdateBlockSize) {}
-	inline DigestData operator()(const value_type & value) const {
-		if (value.isContiguous() || value.size() < m_updateBlockSize) {
-			return m_h(value.asMemView());
-		}
-		else {
-			Hasher hasher;
-			DigestData data;
-			sserialize::UByteArrayAdapter::SizeType pos = 0;
-			sserialize::UByteArrayAdapter::SizeType size = value.size();
-			for(;pos < size; pos += m_updateBlockSize, size -= m_updateBlockSize) {
-				auto blockSize = std::min(m_updateBlockSize, size);
-				auto memv = value.getMemView(pos, blockSize);
-				hasher.Update(memv.begin(), blockSize);
-			}
-			hasher.Final(data.begin());
-			return data;
-		}
-	}
-private:
-	ShaHasher<sserialize::UByteArrayAdapter::MemoryView> m_h;
-	sserialize::UByteArrayAdapter::SizeType m_updateBlockSize;
-};
-
-template<>
-class ShaHasher<std::vector<uint8_t>> {
-public:
-	static constexpr uint32_t DigestSize = 16;
-	static constexpr sserialize::UByteArrayAdapter::SizeType UpdateBlockSize = 1024*1024*1024;
-	using Hasher = CryptoPP::SHA3_128;
-	using DigestData = std::array<uint8_t, DigestSize>;
-	using value_type = std::vector<uint8_t>;
-public:
-	inline DigestData operator()(const value_type & value) const {
-		Hasher hasher;
-		DigestData data;
-		hasher.CalculateDigest(data.begin(), &(value[0]), value.size());
-		return data;
 	}
 };
 
