@@ -129,6 +129,7 @@ IF(NOT CMAKE_CROSSCOMPILING)
 		src/containers/GeneralizedTrie/SinglePassTrie.cpp
 		src/strings/DiacriticRemover.cpp
 	)
+	find_package(Cryptopp REQUIRED)
 ENDIF(NOT CMAKE_CROSSCOMPILING)
 
 set(RAGEL_FLAGS "-G2")
