@@ -433,16 +433,29 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	cfg.tmpBuffferSize = cfg.maxMemoryUsage/4;
 	cfg.maxMemoryUsage -= cfg.tmpBuffferSize;
 	sserialize::OOMArray<value_type> tmp(mmt);
-	
+
+	struct PrioElement {
+		value_type value;
+		uint32_t chunkBuffer;
+		PrioElement(const value_type & value, uint32_t chunkBuffer) : value(value), chunkBuffer(chunkBuffer) {}
+		PrioElement(const PrioElement &) = default;
+		PrioElement & operator=(const PrioElement &) = default;
+	};
+
 	struct PrioComp {
 		CompFunc * comp;
 		std::vector<InputBuffer> * chunkBuffers;
-		bool operator()(uint32_t a, uint32_t b) { return !( (*comp)(chunkBuffers->at(a).get(), chunkBuffers->at(b).get()) ); }
+		bool operator()(uint32_t a, uint32_t b) {
+			return !( (*comp)(chunkBuffers->at(a).get(), chunkBuffers->at(b).get()) );
+		}
+		bool operator()(const PrioElement & a, const PrioElement & b) {
+			return !( (*comp)(a.value, b.value) );
+		}
 		PrioComp(CompFunc * comp, std::vector<InputBuffer> * chunkBuffers) : comp(comp), chunkBuffers(chunkBuffers) {}
 		PrioComp(const PrioComp & other) : comp(other.comp), chunkBuffers(other.chunkBuffers) {}
 	};
-	
-	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
+
+	typedef std::priority_queue<PrioElement, std::vector<PrioElement>, PrioComp> MyPrioQ;
 	
 	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBuffers)));
 	
@@ -467,7 +480,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi);
 					if (!TUniquify || pendingChunk.size()) {
 						state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
-						pq.push(state.activeChunkBuffers.size()-1);
+						pq.emplace(state.activeChunkBuffers.back().get(), state.activeChunkBuffers.size()-1);
 					}
 				}
 			}
@@ -476,16 +489,16 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			nextRoundPendingChunks.emplace_back(tmp.size());
 			
 			while (pq.size()) {
-				uint32_t pqMin = pq.top();
-				pq.pop();
-				InputBuffer & chunkBuffer = state.activeChunkBuffers[pqMin];
-				value_type & v = chunkBuffer.get();
-				if (!TUniquify || !tmp.size() || !equal(tmp.back(), v)) {
-					tmp.emplace_back(std::move(v));
+				const PrioElement & pqElem = pq.top();
+				if (!TUniquify || !tmp.size() || !equal(tmp.back(), pqElem.value)) {
+					tmp.emplace_back(pqElem.value);
 					state.resultSize += 1;
 				}
+				uint32_t elemBuffer = pqElem.chunkBuffer;
+				InputBuffer & chunkBuffer = state.activeChunkBuffers[elemBuffer];
+				pq.pop();
 				if (chunkBuffer.next()) {
-					pq.push(pqMin);
+					pq.emplace(chunkBuffer.get(), elemBuffer);
 				}
 				if (tmp.size() % 1000 == 0) {
 					state.pinfo(tmp.size());
