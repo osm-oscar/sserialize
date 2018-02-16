@@ -2,6 +2,12 @@
 #include <shared_mutex>
 
 namespace sserialize {
+	
+#if defined(__cplusplus) && __cplusplus > 201402L
+inline namespace MultiReaderSingleWriterLock_shared_mutex {
+#else
+inline namespace MultiReaderSingleWriterLock_shared_timed_mutex {
+#endif
 
 MultiReaderSingleWriterLock::ReadLock::ReadLock(MultiReaderSingleWriterLock & lock) :
 m_lock(lock),
@@ -72,5 +78,7 @@ void MultiReaderSingleWriterLock::acquireWriteLock() {
 void MultiReaderSingleWriterLock::releaseWriteLock() {
 	m_mutex.unlock();
 }
+
+}//end inline protection namespace
 
 }//end namespace

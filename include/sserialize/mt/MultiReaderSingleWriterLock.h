@@ -3,6 +3,12 @@
 #include <shared_mutex>
 
 namespace sserialize {
+	
+#if defined(__cplusplus) && __cplusplus > 201402L
+inline namespace MultiReaderSingleWriterLock_shared_mutex {
+#else
+inline namespace MultiReaderSingleWriterLock_shared_timed_mutex {
+#endif
 
 //Reader preferred multiple reader single writer lock
 //There's no queue, conseuqnelt there might be starvation of writers
@@ -48,6 +54,8 @@ private:
 	std::shared_timed_mutex m_mutex;
 	#endif
 };
+
+}//end inline protection namespace
 
 }//end namespace
 #endif
