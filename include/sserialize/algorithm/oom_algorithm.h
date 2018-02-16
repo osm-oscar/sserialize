@@ -258,6 +258,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		//if TUniquify is true, then these are NOT necessarily contiguous, BUT they are always sorted in ascending order
 		std::vector< ChunkDescription > pendingChunks;
 		std::vector<InputBuffer> activeChunkBuffers;
+		std::vector<value_type> activeChunkBufferValues;
 	};
 	
 	Config cfg;
@@ -436,15 +437,19 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	
 	struct PrioComp {
 		CompFunc * comp;
-		std::vector<InputBuffer> * chunkBuffers;
-		bool operator()(uint32_t a, uint32_t b) { return !( (*comp)(chunkBuffers->at(a).get(), chunkBuffers->at(b).get()) ); }
-		PrioComp(CompFunc * comp, std::vector<InputBuffer> * chunkBuffers) : comp(comp), chunkBuffers(chunkBuffers) {}
-		PrioComp(const PrioComp & other) : comp(other.comp), chunkBuffers(other.chunkBuffers) {}
+		std::vector<value_type> * chunkBufferValues;
+		bool operator()(uint32_t a, uint32_t b) {
+			const value_type & av = (*chunkBufferValues)[a];
+			const value_type & bv = (*chunkBufferValues)[b];
+			return !( (*comp)(av, bv) );
+		}
+		PrioComp(CompFunc * comp, std::vector<value_type> * chunkBufferValues) : comp(comp), chunkBufferValues(chunkBufferValues) {}
+		PrioComp(const PrioComp & other) : comp(other.comp), chunkBufferValues(other.chunkBufferValues) {}
 	};
 	
 	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
 	
-	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBuffers)));
+	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBufferValues)));
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
 		state.pinfo.begin(state.resultSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
@@ -462,11 +467,13 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		for(uint32_t cbi(0), cbs((uint32_t)state.pendingChunks.size()); cbi < cbs;) {
 			{//fill the activeChunkBuffers
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBuffers.size());
+				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBufferValues.size());
 				uint64_t chunkBufferSize = cfg.maxMemoryUsage/std::min<uint32_t>(queueDepth, cbs-cbi);
 				for(; cbi < cbs && state.activeChunkBuffers.size() < queueDepth; ++cbi) {
 					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi);
 					if (!TUniquify || pendingChunk.size()) {
 						state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
+						state.activeChunkBufferValues.emplace_back(state.activeChunkBuffers.back().get());
 						pq.push(state.activeChunkBuffers.size()-1);
 					}
 				}
@@ -479,12 +486,13 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				uint32_t pqMin = pq.top();
 				pq.pop();
 				InputBuffer & chunkBuffer = state.activeChunkBuffers[pqMin];
-				value_type & v = chunkBuffer.get();
+				value_type & v = state.activeChunkBufferValues[pqMin];
 				if (!TUniquify || !tmp.size() || !equal(tmp.back(), v)) {
 					tmp.emplace_back(std::move(v));
 					state.resultSize += 1;
 				}
 				if (chunkBuffer.next()) {
+					state.activeChunkBufferValues[pqMin] = chunkBuffer.get();
 					pq.push(pqMin);
 				}
 				if (tmp.size() % 1000 == 0) {
@@ -504,6 +512,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				nextRoundPendingChunks.pop_back();
 			}
 			state.activeChunkBuffers.clear();
+			state.activeChunkBufferValues.clear();
 		}
 		
 		if (TUniquify) {
