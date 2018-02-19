@@ -14,6 +14,19 @@
  *------------------------------------------------------------------------------------------------------------------------------------------------------
  *   1   |    1     |        1           |OffsetType|datalength|SortedOffsetIndex|Array<u32> |HuffmanDecoder    |     u8       |CompactUintArray
  *
+ * struct ItemIndexStore {
+ *   uint<8> version;
+ *   uint<8> indexTypes;
+ *   uint<8> indexCompressionType;
+ *   OffsetType dataLength;
+ *   Array<Data, dataLength> data;
+ *   SortedOffsetIndex offsets;
+ *   Array< uint<32>, offsets.size> indexSizes;
+ *   HuffmanDecoder huffmanDecodeTable;
+ *   uint<8> decompressedSizeTableEntryLength;
+ *   CompactUintArray<decompressedSizeTableEntryLength> decompressionSizeTable;
+ * };
+ * 
  * 
  * There are 3 different compression modes which can be partialy mixed wit the following decompression order
  * [LZO][VARUINT32|HUFFMAN]

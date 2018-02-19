@@ -472,12 +472,13 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	}
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(3);
+	dest.putUint8(4);
 	dest.putUint8(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_VARUINT32);
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
 	std::vector<UByteArrayAdapter::OffsetType> newOffsets;
+	std::vector<uint32_t> idxSizes;
 	newOffsets.reserve(store.size());
 	
 	
@@ -489,6 +490,11 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
 		uint32_t indexSize = data.getUint32();
 		uint32_t indexCount = data.getUint32();
+		
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexSize, store.rawDataAt(newOffsets.size()-1).getUint32(0));
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexCount, store.rawDataAt(newOffsets.size()-1).getUint32(4));
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexSize+8, store.rawDataAt(newOffsets.size()-1).size());
+		
 		dest.putVlPackedUint32(indexSize);
 		dest.putVlPackedUint32(indexCount);
 		indexSize = indexSize / 4;
@@ -499,10 +505,21 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 		pinfo(data.tellGetPtr());
 	}
 	pinfo.end("Encoded words");
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(store.size(), newOffsets.size());
 	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
-	std::cout << "Offset index created. Total size: " << dest.tellPutPtr()-beginOffset;
+	std::cout << "Offset index created. Current size: " << dest.tellPutPtr()-beginOffset;
+	//add the index sizes table
+	{
+		sserialize::Static::ArrayCreator<uint32_t> ac(dest);
+		ac.reserveOffsets(store.size());
+		for(uint32_t i(0), s(store.size()); i < s; ++i) {
+			ac.put(store.idxSize(i));
+		}
+		ac.flush();
+	}
+	std::cout << "Total size: " << dest.tellPutPtr()-beginOffset;
 	return dest.tellPutPtr()-beginOffset;
 }
 
