@@ -19,10 +19,12 @@ public:
 public:
 	static void init(int argc, char ** argv);
 	static bool popProtector();
+	static bool printHelp();
 private:
 	static int argc;
 	static char ** argv;
 	static bool sm_popProtector;
+	static bool sm_printHelp;
 };
 
 }} //end namespace sserialize::tests

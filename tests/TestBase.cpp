@@ -1,4 +1,5 @@
 #include "TestBase.h"
+#include <ostream>
 #include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace sserialize {
@@ -7,6 +8,7 @@ namespace tests {
 int TestBase::argc = 0;
 char ** TestBase::argv = 0;
 bool TestBase::sm_popProtector = false;
+bool TestBase::sm_printHelp = false;
 
 TestBase::TestBase() {
 	if (!argc) {
@@ -36,12 +38,27 @@ void TestBase::init(int argc, char ** argv) {
 		else if (token == "--pop-protector") {
 			sm_popProtector = true;
 		}
+		else if (token == "--help" || token == "-h") {
+			sm_printHelp = true;
+		}
+	}
+	
+	if (printHelp()) {
+		std::cout << "Default options available: \n" \
+					"--tc-fast-temp-file\tpath to fast temp files\n" \
+					"--tc-slow-temp-file\tpath to slow temp files\n" \
+					"--tc-shm-file\tpath to shm temp files\n" \
+					"--pop-protector\tpop exeception protector" << std::endl;
 	}
 }
 
 
 bool TestBase::popProtector(){
 	return sm_popProtector;
+}
+
+bool TestBase::printHelp() {
+	return sm_printHelp;
 }
 
 
