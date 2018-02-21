@@ -320,8 +320,8 @@ uint32_t PFoRCreator::encodeBlock(UByteArrayAdapter& dest, T_IT begin, T_OD_IT o
 		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(blockSize, block.size());
 		uint32_t realId = 0;
 		auto it(begin);
-		for(uint32_t i = 0; i < blockSize; ++i) {
-			realId += *it;;
+		for(uint32_t i = 0; i < blockSize; ++i, ++it) {
+			realId += *it;
 			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(realId, block.at(i));
 		}
 	}
