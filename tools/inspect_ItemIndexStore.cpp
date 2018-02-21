@@ -242,7 +242,7 @@ int main(int argc, char ** argv) {
 	bool checkIndex = false;
 	bool deduplication = true;
 	std::string equalityTest;
-	ItemIndex::Types transform = ItemIndex::T_NULL;
+	int transform = ItemIndex::T_NULL;
 	
 	for(int i = 1; i < argc; i++) {
 		std::string curArg(argv[i]);
@@ -288,7 +288,9 @@ int main(int argc, char ** argv) {
 		}
 		else if (curArg == "-t" && i+1 < argc) {
 			std::string t(argv[i+1]);
-			sserialize::from_string(t, transform);
+			sserialize::ItemIndex::Types type;
+			sserialize::from_string(t, type);
+			transform |= type;
 			++i;
 		}
 		else if (curArg == "-nd") {
@@ -306,6 +308,10 @@ int main(int argc, char ** argv) {
 		}
 		printHelp();
 		return 1;
+	}
+	
+	if (sserialize::popCount(transform) > 1) {
+		transform |= ItemIndex::T_MULTIPLE;
 	}
 	
 	sserialize::UByteArrayAdapter adap( UByteArrayAdapter::open(inFileName) );
@@ -466,7 +472,13 @@ int main(int argc, char ** argv) {
 	
 	if (transform != ItemIndex::T_NULL) {
 		if (outFileName.empty()) {
-			outFileName = inFileName + "." + sserialize::to_string(transform);
+			outFileName = inFileName + ".";
+			if (transform & ItemIndex::T_MULTIPLE) {
+				outFileName += "multi";
+			}
+			else {
+				sserialize::to_string(ItemIndex::Types(transform));
+			}
 		}
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
 		ItemIndexFactory factory;
