@@ -78,7 +78,7 @@ public:
 	ItemIndex toIndex(int type) const;
 	
 	template<typename T_OUTPUT_ITERATOR>
-	void putInto(T_OUTPUT_ITERATOR out) {
+	void putInto(T_OUTPUT_ITERATOR out) const {
 		UByteArrayAdapter::OffsetType s = m_data.size();
 		UByteArrayAdapter::OffsetType i = 0;
 		SizeType id = 0;
