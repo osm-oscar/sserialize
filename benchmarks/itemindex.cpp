@@ -222,10 +222,10 @@ struct ItemIndexTestData: TestDataBase {
 // 		result.dump(std::cout); //for debugging
 // 		std::cout << std::endl;
 	}
-	virtual std::string name() const {
+	virtual std::string name() const override {
 		return "ItemIndex::" + sserialize::to_string(t);
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return t;
 	}
 };
@@ -251,7 +251,7 @@ struct ItemIndexMergeWithVectorTestData: ItemIndexTestData {
 		);
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual void run_intersect() {
+	virtual void run_intersect() override {
 		std::vector<uint32_t> result = sserialize::treeReduceMap<std::vector<sserialize::ItemIndex>::const_iterator, std::vector<uint32_t> >(
 			buckets.cbegin(), buckets.cend(),
 			[](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
@@ -267,10 +267,10 @@ struct ItemIndexMergeWithVectorTestData: ItemIndexTestData {
 		);
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual std::string name() const {
+	virtual std::string name() const override {
 		return "ItemIndex-with-vector::" + sserialize::to_string(t);
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return ItemIndexTestData::type() | __IT_MERGE_WITH_VECTOR;
 	}
 };
@@ -331,11 +331,11 @@ struct ItemIndexHeapMergeTestData: ItemIndexTestData {
 		}
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual void run_intersect() {}
-	virtual std::string name() const {
+	virtual void run_intersect() override {}
+	virtual std::string name() const override {
 		return "ItemIndex-with-heap::" + sserialize::to_string(t);
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return ItemIndexTestData::type() | __IT_MERGE_WITH_HEAP;
 	}
 };
@@ -358,7 +358,7 @@ struct VectorTreeMergeTestData: TestDataBase {
 		);
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual void run_intersect() {
+	virtual void run_intersect() override {
 		auto result = sserialize::treeReduce(
 			buckets->cbegin(), buckets->cend(),
 			[](const std::vector<uint32_t> & a, const std::vector<uint32_t> & b) {
@@ -371,10 +371,10 @@ struct VectorTreeMergeTestData: TestDataBase {
 		);
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual std::string name() const {
+	virtual std::string name() const override {
 		return "std::vector::tree-merge";
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return IT_VECTOR_TREE_MERGE;
 	}
 };
@@ -406,16 +406,16 @@ struct VectorSliceMergeTestData: TestDataBase {
 		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
 		clear_data();
 	}
-	virtual void run_intersect() {
+	virtual void run_intersect() override {
 		prepare_data();
 		op_data<OT_INTERSECT>();
 		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
 		clear_data();
 	}
-	virtual std::string name() const {
+	virtual std::string name() const override {
 		return "std::vector::slice-merge";
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return IT_VECTOR_TREE_MERGE;
 	}
 	
@@ -500,11 +500,11 @@ struct VectorSetMergeTestData: TestDataBase {
 		}
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual void run_intersect() {}
-	virtual std::string name() const {
+	virtual void run_intersect() override {}
+	virtual std::string name() const override {
 		return "std::vector::set-merge";
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return IT_VECTOR_SET_MERGE;
 	}
 };
@@ -561,11 +561,11 @@ struct VectorHeapMergeTestData: TestDataBase {
 		}
 		std::cout << name() << "::result-size: " << result.size() << std::endl;
 	}
-	virtual void run_intersect() {}
-	virtual std::string name() const {
+	virtual void run_intersect() override {}
+	virtual std::string name() const override {
 		return "std::vector::heap-merge";
 	}
-	virtual int type() const {
+	virtual int type() const override {
 		return IT_VECTOR_HEAP_MERGE;
 	}
 };
