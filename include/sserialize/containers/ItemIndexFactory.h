@@ -202,7 +202,7 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 	type = ok ? type : ItemIndex::T_NULL;
 #if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	if (type != ItemIndex::T_NULL) {
-		sserialize::ItemIndex sIdx(dest+destBegin, type);
+		sserialize::ItemIndex sIdx(dest+destBegin, ItemIndex::Types(type));
 		ok = (sIdx == idx);
 	}
 #endif
