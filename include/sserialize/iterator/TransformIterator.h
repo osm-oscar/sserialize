@@ -15,6 +15,9 @@ private:
 public:
 	///mapper function gets default constructed
 	TransformIterator(T_IT it) : m_it(it) {}
+	///args are passed t othe iterator
+	template<typename ...Args>
+	TransformIterator(T_UNARY_FUNC func, Args... args) : m_func(func), m_it(std::forward<Args>(args)...) {}
 	///@param func: functoid
 	TransformIterator(T_UNARY_FUNC func, T_IT it) : m_func(func), m_it(it) {}
 	virtual ~TransformIterator() {}
