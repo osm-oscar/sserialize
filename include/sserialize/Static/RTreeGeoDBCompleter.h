@@ -38,7 +38,7 @@ public:
 		else {
 			m_rtree.intersect(rect, bitSet, &m_intersecter);
 		}
-		return bitSet.toIndex(m_rtree.indexStore().indexType());
+		return bitSet.toIndex(m_rtree.indexStore().indexTypes());
 	}
 	virtual ItemIndexIterator partialComplete(const sserialize::spatial::GeoRect & rect, bool approximate) {
 		return ItemIndexIterator( complete(rect, approximate) );

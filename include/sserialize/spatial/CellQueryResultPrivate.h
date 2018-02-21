@@ -64,7 +64,7 @@ public:
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	virtual ~CellQueryResult();
-	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
+	int defaultIndexTypes() const { return m_idxStore.indexTypes(); }
 	uint32_t idxSize(uint32_t pos) const;
 	///this is thread-safe for different pos
 	const sserialize::ItemIndex & idx(uint32_t pos) const;

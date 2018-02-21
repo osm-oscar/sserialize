@@ -165,8 +165,8 @@ uint32_t CellQueryResult::maxItems() const {
 	return m_priv->maxItems();
 }
 
-sserialize::ItemIndex::Types CellQueryResult::defaultIndexType() const {
-	return m_priv->defaultIndexType();
+int CellQueryResult::defaultIndexTypes() const {
+	return m_priv->defaultIndexTypes();
 }
 
 uint32_t CellQueryResult::idxSize(uint32_t pos) const {

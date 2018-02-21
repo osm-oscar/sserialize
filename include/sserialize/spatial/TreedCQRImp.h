@@ -117,7 +117,7 @@ public:
 	
 	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
 	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
-	sserialize::ItemIndex::Types defaultIndexType() const { return m_idxStore.indexType(); }
+	int defaultIndexTypes() const { return m_idxStore.indexTypes(); }
 	int flags() const { return m_flags; }
 	inline bool fullMatch(uint32_t pos) const { return m_desc[pos].fullMatch; }
 	inline bool hasTree(uint32_t pos) const { return m_desc[pos].hasTree();}

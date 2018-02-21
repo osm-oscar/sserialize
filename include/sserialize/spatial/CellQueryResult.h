@@ -100,7 +100,7 @@ public:
 	uint32_t cellCount() const;
 	///complexity: O(cellCount())
 	uint32_t maxItems() const;
-	sserialize::ItemIndex::Types defaultIndexType() const;
+	int defaultIndexTypes() const;
 	uint32_t idxSize(uint32_t pos) const;
 	uint32_t cellId(uint32_t pos) const;
     //not that this may return cell local ids, items() instead to retrieve global item ids

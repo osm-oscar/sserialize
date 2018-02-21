@@ -117,7 +117,7 @@ ItemIndex RTree::intersect(const sserialize::spatial::GeoRect & rect, ElementInt
 			}
 		}
 		if (intersectedIds.size()) {
-			return fullyContained + ItemIndexFactory::create(intersectedIds, m_indexStore.indexType());
+			return fullyContained + ItemIndexFactory::create(intersectedIds, m_indexStore.indexTypes());
 		}
 		return fullyContained;
 	}

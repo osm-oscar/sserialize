@@ -54,14 +54,14 @@ inline void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) 
 void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_map<uint32_t, uint32_t> & alphabet, uint32_t & charSize) {
 	UByteArrayAdapter data = store.getData();
 	UByteArrayAdapter::OffsetType size = data.size();
-	if (store.indexType() == ItemIndex::T_WAH) {
+	if (store.indexTypes() == ItemIndex::T_WAH) {
 		charSize = 4;
 		for(UByteArrayAdapter::OffsetType i = 0; i < size; i += charSize) {
 			uint32_t character = data.getUint32(i);
 			incAlphabet(alphabet, character);
 		}
 	}
-	else if (store.indexType() == ItemIndex::T_RLE_DE) {
+	else if (store.indexTypes() == ItemIndex::T_RLE_DE) {
 		for(UByteArrayAdapter::OffsetType i = 0; i < size; ) {
 			uint32_t curIndexSize = data.getUint32(i);
 			i += 4;
@@ -114,7 +114,7 @@ void dumpDataHistoFunc(sserialize::Static::ItemIndexStore & store, 	uint8_t alph
 }
 
 UByteArrayAdapter::OffsetType recompressVarUintShannon(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	if (store.indexType() != ItemIndex::T_WAH) {
+	if (store.indexTypes() != ItemIndex::T_WAH) {
 		std::cerr << "Unsupported index format" << std::endl;
 		return 0;
 	}

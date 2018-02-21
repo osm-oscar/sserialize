@@ -19,6 +19,7 @@ namespace sserialize {
 ItemIndexFactory::ItemIndexFactory(bool memoryBased) :
 m_idToOffsets(sserialize::MM_SLOW_FILEBASED),
 m_idxSizes(sserialize::MM_SLOW_FILEBASED),
+m_idxTypes(sserialize::MM_SLOW_FILEBASED),
 m_hitCount(0),
 m_checkIndex(true),
 m_useDeduplication(true),
@@ -45,6 +46,7 @@ m_compressionType(other.m_compressionType)
 	m_hash = std::move(other.m_hash);
 	m_idToOffsets = std::move(other.m_idToOffsets);
 	m_idxSizes = std::move(other.m_idxSizes);
+	m_idxTypes = std::move(other.m_idxTypes);
 	//default init read-write-lock
 }
 
@@ -61,12 +63,28 @@ ItemIndexFactory & ItemIndexFactory::operator=(ItemIndexFactory && other) {
 	m_hash = std::move(other.m_hash);
 	m_idToOffsets = std::move(other.m_idToOffsets);
 	m_idxSizes = std::move(other.m_idxSizes);
+	m_idxTypes = std::move(other.m_idxTypes);
 	//default init read-write-lock
 	return *this;
 }
 
+int ItemIndexFactory::types() const {
+	return m_type;
+}
+
+ItemIndex::Types ItemIndexFactory::type(uint32_t pos) const {
+	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
+		return ItemIndex::Types(m_idxTypes.at(pos));
+	}
+	return ItemIndex::Types(m_type);
+}
+
 UByteArrayAdapter ItemIndexFactory::at(sserialize::OffsetType offset) const {
 	return m_indexStore+offset;
+}
+
+void ItemIndexFactory::setType(int type) {
+	m_type = type;
 }
 
 void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
@@ -75,6 +93,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 		m_hash.clear();
 		m_idToOffsets.clear();
 		m_idxSizes.clear();
+		m_idxTypes.clear();
 	}
 
 	m_header = data;
@@ -163,7 +182,8 @@ Static::ItemIndexStore ItemIndexFactory::asItemIndexStore() {
 	return sserialize::Static::ItemIndexStore( new sserialize::detail::ItemIndexStoreFromFactory(this) );
 }
 
-uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize) {
+uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize, ItemIndex::Types type) {
+	SSERIALIZE_CHEAP_ASSERT(type & m_type);
 	ItemIndexFactory::DataHashKey hv;
 	int64_t id = -1;
 	if (m_useDeduplication) {
@@ -174,9 +194,12 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		sserialize::UByteArrayAdapter::OffsetType dataOffset = m_indexStore.tellPutPtr();
 		m_indexStore.putData(idx);
 		id = m_idToOffsets.size();
-		SSERIALIZE_CHEAP_ASSERT_EQUAL((std::size_t)id, m_idToOffsets.size()); //check for wrap around of ids
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(std::size_t(id), m_idToOffsets.size()); //check for wrap around of ids
 		m_idToOffsets.push_back(dataOffset);
 		m_idxSizes.push_back(idxSize);
+		if (m_type & ItemIndex::T_MULTIPLE) {
+			m_idxTypes.push_back(type);
+		}
 		m_dataLock.releaseWriteLock();
 		
 		if (m_useDeduplication) {
@@ -245,6 +268,10 @@ OffsetType ItemIndexFactory::flush() {
 	}
 #endif
 	m_indexStore << m_idxSizes;
+	if (m_type & ItemIndex::T_MULTIPLE) {
+		uint32_t bits = sserialize::fastLog2(m_type - ItemIndex::T_MULTIPLE);
+		CompactUintArray::create(m_idxTypes, m_indexStore, bits);
+	}
 	std::cout << std::endl;
 	std::cout << "done." << std::endl;
 
@@ -265,14 +292,14 @@ void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
 void createAlphabet(sserialize::Static::ItemIndexStore & store, std::unordered_map<uint32_t, uint32_t> & alphabet, uint32_t & charSize) {
 	UByteArrayAdapter data = store.getData();
 	UByteArrayAdapter::OffsetType size = data.size();
-	if (store.indexType() == ItemIndex::T_WAH) {
+	if (store.indexTypes() == ItemIndex::T_WAH) {
 		charSize = 4;
 		for(UByteArrayAdapter::OffsetType i = 0; i < size; i += charSize) {
 			uint32_t character = data.getUint32(i);
 			incAlphabet(alphabet, character);
 		}
 	}
-	else if (store.indexType() == ItemIndex::T_RLE_DE) {
+	else if (store.indexTypes() == ItemIndex::T_RLE_DE) {
 		for(UByteArrayAdapter::OffsetType i = 0; i < size; ) {
 			uint32_t curIndexSize = data.getUint32(i);
 			i += 4;
@@ -448,10 +475,10 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::
 		return 0;
 	}
 
-	if (store.indexType() == ItemIndex::T_WAH) {
+	if (store.indexTypes() == ItemIndex::T_WAH) {
 		return compressWithHuffmanWAH(store, dest);
 	}
-	else if (store.indexType() == ItemIndex::T_RLE_DE) {
+	else if (store.indexTypes() == ItemIndex::T_RLE_DE) {
 		return compressWithHuffmanRLEDE(store, dest);
 	}
 	else {
@@ -461,7 +488,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithHuffman(sserialize::
 }
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
-	if (store.indexType() != ItemIndex::T_WAH) {
+	if (store.indexTypes() != ItemIndex::T_WAH) {
 		std::cerr << "Unsupported index format" << std::endl;
 		return 0;
 	}
@@ -529,7 +556,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
 	dest.putUint8(4);//version
-	dest.putUint8(store.indexType());
+	dest.putUint8(store.indexTypes());
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_LZO | store.compressionType());
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
@@ -606,6 +633,15 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		return 0;
 	}
 	bitneed.putUint8(bitsForUncompressedSizes);
+	//finally the index type info
+	if (store.indexTypes() & ItemIndex::T_MULTIPLE) {
+		auto deref = [&store](uint32_t pos) -> int {
+			return store.indexType(pos);
+		};
+		using MyIterator = sserialize::TransformIterator<decltype(deref), int, sserialize::RangeGenerator<uint32_t>::const_iterator>;
+		uint32_t bits = sserialize::fastLog2(store.indexTypes() - ItemIndex::T_MULTIPLE);
+		CompactUintArray::create(MyIterator(deref, 0), MyIterator(deref, store.size()), dest, bits);
+	}
 	std::cout << "Total size: " << dest.tellPutPtr()-beginOffset << std::endl;
 	return dest.tellPutPtr()-beginOffset;
 }
@@ -626,8 +662,12 @@ uint32_t ItemIndexStoreFromFactory::size() const {
 	return m_idxFactory->size();
 }
 
-ItemIndex::Types ItemIndexStoreFromFactory::indexType() const {
-	return m_idxFactory->type();
+int ItemIndexStoreFromFactory::indexTypes() const {
+	return m_idxFactory->types();
+}
+
+ItemIndex::Types ItemIndexStoreFromFactory::indexType(uint32_t pos) const {
+	return m_idxFactory->type(pos);
 }
 
 uint32_t ItemIndexStoreFromFactory::compressionType() const {

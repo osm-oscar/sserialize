@@ -6,7 +6,7 @@
 #include <unordered_set>
 #define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 4
 
-/*Version 4
+/*Version 4.1
  *
  *
  *------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -25,11 +25,15 @@
  *   HuffmanDecoder huffmanDecodeTable;
  *   uint<8> decompressedSizeTableEntryLength;
  *   CompactUintArray<decompressedSizeTableEntryLength> decompressionSizeTable;
+ *   CompactUintArray<log2(indexTypes)> indexTypeInfo;
  * };
  * 
  * 
  * There are 3 different compression modes which can be partialy mixed wit the following decompression order
  * [LZO][VARUINT32|HUFFMAN]
+ * 
+ * If indexTypes has more than one index active (popCount(indexTypes) > 1)
+ * then the indexTypeInfo array is present and indicates for each entry the type
  *
  *
  */
@@ -44,7 +48,9 @@ public:
 	virtual ~ItemIndexStore() {}
 	virtual OffsetType getSizeInBytes() const = 0;
 	virtual uint32_t size() const = 0;
-	virtual ItemIndex::Types indexType() const = 0;
+	///returns the types this store has, possibly multiple!
+	virtual int indexTypes() const = 0;
+	virtual ItemIndex::Types indexType(uint32_t pos) const = 0;
 	virtual uint32_t compressionType() const = 0;
 	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const = 0;
 	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const = 0;
@@ -114,7 +120,8 @@ public:
 	~ItemIndexStore() {}
 	inline OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
 	inline uint32_t size() const { return priv()->size(); }
-	inline ItemIndex::Types indexType() const { return priv()->indexType(); }
+	inline int indexTypes() const { return priv()->indexTypes(); }
+	inline ItemIndex::Types indexType(uint32_t pos) const { return priv()->indexType(pos); }
 	inline IndexCompressionType compressionType() const { return (IndexCompressionType) priv()->compressionType(); }
 	inline UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const { return priv()->dataSize(pos); }
 	inline UByteArrayAdapter rawDataAt(uint32_t pos) const { return priv()->rawDataAt(pos); }
@@ -146,20 +153,22 @@ private:
 	};
 private:
 	uint8_t m_version;
-	ItemIndex::Types m_type;
+	int m_type;
 	IndexCompressionType m_compression;
 	UByteArrayAdapter m_data;
 	SortedOffsetIndex m_index;
 	Static::Array<uint32_t> m_idxSizes;
 	RCPtrWrapper<HuffmanDecoder> m_hd;
 	RCPtrWrapper<LZODecompressor> m_lzod;
+	CompactUintArray m_idxTypeInfo;
 public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);
 	virtual ~ItemIndexStore();
 	virtual OffsetType getSizeInBytes() const override;
 	virtual uint32_t size() const override;
-	virtual inline ItemIndex::Types indexType() const override { return m_type; }
+	virtual int indexTypes() const override;
+	virtual ItemIndex::Types indexType(uint32_t pos) const override;
 	virtual uint32_t compressionType() const  override { return m_compression; }
 	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const override;
 	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const override;

@@ -103,7 +103,7 @@ m_compression(sserialize::Static::ItemIndexStore::IC_NONE)
 
 ItemIndexStore::ItemIndexStore(UByteArrayAdapter data) :
 m_version(data.getUint8(0)),
-m_type((ItemIndex::Types) data.getUint8(1) ),
+m_type(data.getUint8(1)),
 m_compression((IndexCompressionType) data.getUint8(2))
 {
 	data.resetGetPtr();
@@ -111,6 +111,10 @@ m_compression((IndexCompressionType) data.getUint8(2))
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, m_version, "Static::ItemIndexStore");
 	OffsetType dataLength = data.getOffset();
 	data.shrinkToGetPtr();
+	
+	if ( sserialize::popCount(m_type) > 1) {
+		m_type |= ItemIndex::T_MULTIPLE;
+	}
 	
 	m_data = UByteArrayAdapter(data, 0, dataLength);
 	data += dataLength;
@@ -128,15 +132,31 @@ m_compression((IndexCompressionType) data.getUint8(2))
 	
 	if  (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		m_lzod.reset(new LZODecompressor(data));
+		data += m_lzod->getSizeInBytes();
 	}
 	
+	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
+		uint32_t bits = sserialize::fastLog2(m_type - sserialize::ItemIndex::T_MULTIPLE);
+		m_idxTypeInfo = CompactUintArray(data, bits, size());
+		data += m_idxTypeInfo.getSizeInBytes();
+	}
 }
-
 
 ItemIndexStore::~ItemIndexStore() {}
 
 uint32_t ItemIndexStore::size() const {
 	return m_index.size();
+}
+
+int ItemIndexStore::indexTypes() const {
+	return m_type;
+}
+
+ItemIndex::Types ItemIndexStore::indexType(uint32_t pos) const {
+	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
+		return ItemIndex::Types(m_idxTypeInfo.at(pos));
+	}
+	return ItemIndex::Types(m_type);
 }
 
 OffsetType ItemIndexStore::getSizeInBytes() const {
@@ -149,6 +169,9 @@ OffsetType ItemIndexStore::getSizeInBytes() const {
 	}
 	if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		r += m_lzod->getSizeInBytes();
+	}
+	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
+		r += m_idxTypeInfo.getSizeInBytes();
 	}
 	return r;
 }
@@ -182,28 +205,31 @@ UByteArrayAdapter ItemIndexStore::rawDataAt(uint32_t pos) const {
 }
 
 ItemIndex ItemIndexStore::at(uint32_t pos) const {
-	if (pos >= size())
+	if (pos >= size()) {
 		return ItemIndex();
+	}
+	
+	ItemIndex::Types type = indexType(pos);
 	
 	UByteArrayAdapter idxData = rawDataAt(pos);
 	if (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
 		idxData = m_lzod->decompress(pos, idxData);
 	}
 	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
-		if (m_type == ItemIndex::T_WAH) {
+		if (type == ItemIndex::T_WAH) {
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
 		}
-		else if (m_type == ItemIndex::T_RLE_DE) {
+		else if (type == ItemIndex::T_RLE_DE) {
 			return ItemIndex::createInstance<ItemIndexPrivateRleDE>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
 		}
 	}
 	else if (m_compression & sserialize::Static::ItemIndexStore::IC_VARUINT32) {
-		if (m_type == ItemIndex::T_WAH) {
+		if (type == ItemIndex::T_WAH) {
 			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(idxData)));
 		}
 	}
 	else { //no further compression
-		return ItemIndex(idxData, m_type);
+		return ItemIndex(idxData, type);
 	}
 	return ItemIndex();
 }

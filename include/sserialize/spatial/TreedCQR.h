@@ -69,7 +69,7 @@ public:
 	
 	uint32_t cellCount() const;
 	uint32_t cellId(uint32_t position) const;
-	sserialize::ItemIndex::Types defaultIndexType() const;
+	int defaultIndexTypes() const;
 	bool fullMatch(uint32_t pos) const;
 	
 	TreedCellQueryResult operator/(const TreedCellQueryResult & other) const;

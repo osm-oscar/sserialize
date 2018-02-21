@@ -18,7 +18,7 @@ namespace TreedCellQueryResult  {
 
 ItemIndex TreedCQRImp::fmIdx(uint32_t cellId) const {
 	if (m_flags & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) {
-		return sserialize::ItemIndexFactory::range(0, m_gh.cellItemsCount(cellId), 1, defaultIndexType());
+		return sserialize::ItemIndexFactory::range(0, m_gh.cellItemsCount(cellId), 1, defaultIndexTypes());
 	}
 	else {
 		SSERIALIZE_ASSERT(m_flags & sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);

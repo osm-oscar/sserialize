@@ -93,8 +93,8 @@ uint32_t TreedCellQueryResult::cellId(uint32_t position) const {
 	return m_priv->cellId(position);
 }
 
-sserialize::ItemIndex::Types TreedCellQueryResult::defaultIndexType() const {
-	return m_priv->defaultIndexType();
+int TreedCellQueryResult::defaultIndexTypes() const {
+	return m_priv->defaultIndexTypes();
 }
 
 bool TreedCellQueryResult::fullMatch(uint32_t pos) const {

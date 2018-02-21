@@ -162,8 +162,8 @@ const sserialize::ItemIndex & CellQueryResult::idx(uint32_t pos) const {
 	if (cd.fullMatch) {
 		if (flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) {
 			uint32_t cellSize = m_gh.cellItemsCount(cd.cellId);
-			auto idxType = m_idxStore.indexType();
-			that->uncheckedSet(pos, sserialize::ItemIndexFactory::range(0, cellSize, 1, idxType));
+			auto idxTypes = m_idxStore.indexTypes();
+			that->uncheckedSet(pos, sserialize::ItemIndexFactory::range(0, cellSize, 1, idxTypes));
 		}
 		else {
 			uint32_t idxId = m_gh.cellItemsPtr(cd.cellId);
@@ -192,7 +192,7 @@ sserialize::ItemIndex CellQueryResult::items(uint32_t pos) const {
 				uint32_t globalId = cellIdx.at(localId);
 				tmpidx[j] = globalId;
 			}
-			return sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexType());
+			return sserialize::ItemIndexFactory::create(tmpidx, m_idxStore.indexTypes());
 	}
 }
 
@@ -648,7 +648,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 					}
 					SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(tmpidx.begin(), tmpidx.end()));
 					state->rPtr->m_desc[i] = CellDesc(0x0, 0x1, cd.cellId);
-					state->rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx,state->that->m_idxStore.indexType()));
+					state->rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, state->that->m_idxStore.indexTypes()));
 					tmpidx.clear();
 				}
 			}
@@ -727,7 +727,7 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 						}
 					}
 					state->rPtr->m_desc[i] = CellDesc(0x0, 0x1, cd.cellId);
-					state->rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, state->that->m_idxStore.indexType()));
+					state->rPtr->uncheckedSet(i, sserialize::ItemIndexFactory::create(tmpidx, state->that->m_idxStore.indexTypes()));
 					tmpidx.clear();
 				}
 			}

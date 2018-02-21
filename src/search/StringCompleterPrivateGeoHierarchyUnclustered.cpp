@@ -60,7 +60,7 @@ ItemIndex GeoHierarchyUnclustered::complete(const std::string & str, sserialize:
 			uint32_t ghRegionId = m_gh.storeIdToGhId(regionId);
 			m_store.at(m_gh.regionItemsPtr(ghRegionId)).putInto(bitSet);
 		}
-		itemIdx = sserialize::ItemIndex::fromBitSet(bitSet, m_store.indexType()) + itemIdx;
+		itemIdx = sserialize::ItemIndex::fromBitSet(bitSet, itemIdx.type()) + itemIdx;
 	}
 	return itemIdx;
 }

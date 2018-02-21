@@ -29,16 +29,18 @@ public:
 	typedef std::unordered_map<DataHashKey, uint32_t> DataHashType; //Hash->id
 	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
 	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
+	typedef sserialize::MMVector<uint8_t> ItemIndexTypesContainer;
 private:
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
 	DataHashType m_hash;
 	IdToOffsetsType m_idToOffsets;
 	ItemIndexSizesContainer m_idxSizes;
+	ItemIndexTypesContainer m_idxTypes;
 	std::atomic<uint64_t> m_hitCount;
 	bool m_checkIndex;
 	bool m_useDeduplication;
-	ItemIndex::Types m_type;
+	int m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
 	MultiReaderSingleWriterLock m_mapLock;
 	MultiReaderSingleWriterLock m_dataLock;
@@ -48,9 +50,8 @@ private:
 	///returns the id of the index or -1 if none was found @thread-safety: yes
 	int64_t getIndex(const std::vector< uint8_t >& v, DataHashKey & hv);
 	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
-	///adds the data of an index to store, @thread-safety: true
-	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize = 0);
-	inline ItemIndex indexByOffset(OffsetType offSet) const { return ItemIndex(m_indexStore+offSet, m_type); }
+	///adds the data of an index to store @thread-safety: true
+	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize, ItemIndex::Types type);
 public://deleted functions
 	ItemIndexFactory(const ItemIndexFactory & other) = delete;
 	ItemIndexFactory & operator=(const ItemIndexFactory & other) = delete;
@@ -60,12 +61,13 @@ public:
 	~ItemIndexFactory();
 	ItemIndexFactory & operator=(ItemIndexFactory && other);
 	uint32_t size() { return (uint32_t)m_idToOffsets.size();}
-	ItemIndex::Types type() const { return m_type; }
+	int types() const;
+	ItemIndex::Types type(uint32_t pos) const;
 	Static::ItemIndexStore::IndexCompressionType compressionType() const { return m_compressionType; }
 	UByteArrayAdapter at(OffsetType offset) const;
-	///Sets the type. should not be called after having added indices
-	void setType(ItemIndex::Types type) { m_type = type;}
-	///create the index Store at the beginning of data
+	///Sets the type of the indexes. If T_MULTIPLE is set, then the index with the smallest size is chosen to be stored
+	void setType(int type);
+	///create the ItemIndexStore at the beginning of data
 	void setIndexFile(UByteArrayAdapter data);
 	///insert IndexStore
 	std::vector<uint32_t> insert(const sserialize::Static::ItemIndexStore & store);
@@ -80,7 +82,7 @@ public:
 		return (id+1 < m_idToOffsets.size() ? m_idToOffsets.at(id+1) : m_idToOffsets.size()) - m_idToOffsets.at(id);
 	}
 	inline UByteArrayAdapter indexDataById(uint32_t id) const { return sserialize::UByteArrayAdapter(m_indexStore, m_idToOffsets.at(id), dataSizeById(id)); }
-	inline ItemIndex indexById(uint32_t id) const { return ItemIndex(indexDataById(id), m_type); }
+	inline ItemIndex indexById(uint32_t id) const { return ItemIndex(indexDataById(id), type(id)); }
 	inline uint32_t idxSize(uint32_t id) const { return m_idxSizes.at(id); }
 
 	template<class TSortedContainer>
@@ -119,16 +121,15 @@ template<class TSortedContainer>
 uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 	std::vector<uint8_t> s;
 	UByteArrayAdapter ds(&s, false);
-	bool mok = create(idx, ds, m_type);
-	SSERIALIZE_CHEAP_ASSERT(mok);
-	if (m_checkIndex) {
-		sserialize::ItemIndex sidx(ds, type());
-		if (idx != sidx) {
-			throw sserialize::CreationException("Created index does not match source");
+	ItemIndex::Types type = create(idx, ds, m_type);
+	if (type != ItemIndex::T_NULL) {
+		if (m_checkIndex) {
+			sserialize::ItemIndex sidx(ds, type);
+			if (idx != sidx) {
+				throw sserialize::CreationException("Created index does not match source");
+			}
 		}
-	}
-	if (mok) {
-		return addIndex(s, narrow_check<uint32_t>(idx.size()));
+		return addIndex(s, narrow_check<uint32_t>(idx.size()), type);
 	}
 	else {
 		throw sserialize::CreationException("Failed to create index");
@@ -232,7 +233,8 @@ public:
 	virtual ~ItemIndexStoreFromFactory() {}
 	virtual OffsetType getSizeInBytes() const override;
 	virtual uint32_t size() const override;
-	virtual ItemIndex::Types indexType() const override;
+	virtual int indexTypes() const override;
+	virtual ItemIndex::Types indexType(uint32_t pos) const override;
 	virtual uint32_t compressionType() const override;
 	virtual UByteArrayAdapter::OffsetType dataSize(uint32_t pos) const override;
 	virtual UByteArrayAdapter rawDataAt(uint32_t pos) const override;

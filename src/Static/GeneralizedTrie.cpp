@@ -265,7 +265,7 @@ ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNo
 			if (node.childCount()) {
 				DynamicBitSet bitSet(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY));
 				insertIndexRecursive(node, IT_SUFFIXPREFIX, bitSet);
-				return bitSet.toIndex(m_indexStore.indexType());
+				return bitSet.toIndex(m_indexStore.indexTypes());
 			}
 			else {
 				if (node.hasMergeIndex() && node.hasExactIndex())
@@ -296,7 +296,7 @@ ItemIndex GeneralizedTrie::getItemIndexFromNode(const sserialize::Static::TrieNo
 			if (node.childCount()) {
 				DynamicBitSet bitSet(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY));
 				insertIndexRecursive(node, IT_PREFIX, bitSet);
-				return bitSet.toIndex(m_indexStore.indexType());
+				return bitSet.toIndex(m_indexStore.indexTypes());
 			}
 			else if (node.hasExactIndex())
 				return indexFromId(node.getExactIndexPtr());
