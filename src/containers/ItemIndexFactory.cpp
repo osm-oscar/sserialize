@@ -9,6 +9,7 @@
 #include <sserialize/containers/HuffmanTree.h>
 #include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/iterator/RangeGenerator.h>
+#include <sserialize/iterator/TransformIterator.h>
 #include <minilzo/minilzo.h>
 #include <unordered_map>
 #include <iostream>
@@ -269,8 +270,10 @@ OffsetType ItemIndexFactory::flush() {
 #endif
 	m_indexStore << m_idxSizes;
 	if (m_type & ItemIndex::T_MULTIPLE) {
-		uint32_t bits = sserialize::fastLog2(m_type - ItemIndex::T_MULTIPLE);
-		CompactUintArray::create(m_idxTypes, m_indexStore, bits);
+		uint32_t bits = sserialize::msb( sserialize::msb( uint32_t(m_type - ItemIndex::T_MULTIPLE) ) );
+		auto tf = [](uint8_t v) {return sserialize::msb(v); };
+		using MyIterator = sserialize::TransformIterator<decltype(tf), uint32_t, ItemIndexTypesContainer::const_iterator>;
+		CompactUintArray::create(MyIterator(tf, m_idxTypes.begin()), MyIterator(tf, m_idxTypes.end()), m_indexStore, bits);
 	}
 	std::cout << std::endl;
 	std::cout << "done." << std::endl;

@@ -136,7 +136,7 @@ m_compression((IndexCompressionType) data.getUint8(2))
 	}
 	
 	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
-		uint32_t bits = sserialize::fastLog2(m_type - sserialize::ItemIndex::T_MULTIPLE);
+		uint32_t bits = sserialize::msb(sserialize::msb(uint32_t(m_type - sserialize::ItemIndex::T_MULTIPLE)));
 		m_idxTypeInfo = CompactUintArray(data, bits, size());
 		data += m_idxTypeInfo.getSizeInBytes();
 	}
@@ -154,7 +154,7 @@ int ItemIndexStore::indexTypes() const {
 
 ItemIndex::Types ItemIndexStore::indexType(uint32_t pos) const {
 	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
-		return ItemIndex::Types(m_idxTypeInfo.at(pos));
+		return ItemIndex::Types(1 << m_idxTypeInfo.at(pos));
 	}
 	return ItemIndex::Types(m_type);
 }
