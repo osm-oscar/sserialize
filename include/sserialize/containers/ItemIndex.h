@@ -161,7 +161,7 @@ public:
 		return ItemIndex( new T_INDEX_TYPE() );
 	}
 
-	static ItemIndex fromBitSet(const sserialize::DynamicBitSet & bitSet, sserialize::ItemIndex::Types type);
+	static ItemIndex fromBitSet(const sserialize::DynamicBitSet & bitSet, int type);
 	
 	static ItemIndex fusedIntersectDifference(const std::vector<ItemIndex> & intersect, const std::vector<ItemIndex> & substract, uint32_t count, ItemFilter * filter = 0);
 	static ItemIndex constrainedIntersect(const std::vector< ItemIndex > & intersect, uint32_t count, ItemFilter * filter = 0);

@@ -6,6 +6,7 @@
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/storage/MmappedFile.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/containers/ItemIndexFactory.h>
 
 namespace sserialize {
 
@@ -341,9 +342,17 @@ ItemIndex ItemIndex::fromFile(const std::string & fileName, bool deleteOnClose){
 	return ItemIndex(UByteArrayAdapter(tempIndexFile));
 }
 
-ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, Types type) {
-	if (!bitSet.data().size())
+ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, int type) {
+	if (!bitSet.data().size()) {
 		return ItemIndex();
+	}
+	
+	if (type & T_MULTIPLE) {
+		std::vector<uint32_t> tmp;
+		bitSet.putInto(std::back_inserter(tmp));
+		return ItemIndexFactory::create(tmp, type);
+	}
+	
 	switch (type) {
 	case (ItemIndex::T_DE):
 		return ItemIndex( ItemIndexPrivateDE::fromBitSet(bitSet) );
