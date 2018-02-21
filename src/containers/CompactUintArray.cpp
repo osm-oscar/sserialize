@@ -356,7 +356,12 @@ RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 {
 	setPrivate(array, bitsPerNumber);
 	if (array.size() < CompactUintArray::minStorageBytes(bitsPerNumber, max_size)) {
-		throw sserialize::OutOfBoundsException("CompactUintArray: data is too small");
+		auto wantSize = CompactUintArray::minStorageBytes(bitsPerNumber, max_size);
+		throw sserialize::OutOfBoundsException(
+				"CompactUintArray(bpn=" + std::to_string(bitsPerNumber) +
+				", max_size=" + std::to_string(max_size) + "): data is too small: " +
+				std::to_string(array.size()) + " < " + std::to_string(wantSize)
+		);
 	}
 	m_maxCount = max_size;
 }
