@@ -104,13 +104,14 @@ public:
 	static UByteArrayAdapter::OffsetType compressWithVarUint(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
 	static UByteArrayAdapter::OffsetType compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest);
 	
+	///@return the type created if type & ItemIndex::T_MULTIPLE, ItemIndex::T_NULL if creation failed
 	template<typename TSortedContainer>
-	static bool create(const TSortedContainer& idx, sserialize::UByteArrayAdapter& dest, sserialize::ItemIndex::Types type);
+	static ItemIndex::Types create(const TSortedContainer& idx, sserialize::UByteArrayAdapter& dest, int type);
 	
 	template<typename TSortedContainer>
-	static ItemIndex create(const TSortedContainer& idx, sserialize::ItemIndex::Types type);
+	static ItemIndex create(const TSortedContainer& idx, int type);
 	
-	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, sserialize::ItemIndex::Types type);
+	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, int type);
 
 };
 
@@ -135,7 +136,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 }
 
 template<typename TSortedContainer>
-bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, ItemIndex::Types type) {
+ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, int type) {
 	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	if (!std::is_sorted(idx.cbegin(), idx.cend())) {
 		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted index");	
@@ -145,50 +146,77 @@ bool ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & 
 	}
 	UByteArrayAdapter::OffsetType destBegin = dest.tellPutPtr();
 	#endif
-	bool ok = false;
-	switch(type) {
-	case ItemIndex::T_NATIVE:
-		ok = sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx, dest);
-		break;
-	case ItemIndex::T_SIMPLE:
-		ok = ItemIndexPrivateSimple::create(idx, dest);
-		break;
-	case ItemIndex::T_REGLINE:
-		ok = ItemIndexPrivateRegLine::create(idx, dest, -1, true);
-		break;
-	case ItemIndex::T_WAH:
-		ok = ItemIndexPrivateWAH::create(idx, dest);
-		break;
-	case ItemIndex::T_DE:
-		ok = ItemIndexPrivateDE::create(idx, dest);
-		break;
-	case ItemIndex::T_RLE_DE:
-		ok = ItemIndexPrivateRleDE::create(idx, dest);
-		break;
-	case ItemIndex::T_ELIAS_FANO:
-		ok = ItemIndexPrivateEliasFano::create(idx, dest);
-	case ItemIndex::T_PFOR:
-		ok = ItemIndexPrivatePFoR::create(idx, dest);
-	default:
-		break;
+
+	auto c = [&idx](UByteArrayAdapter & dest, int type) -> bool {
+		bool ok = false;
+		switch(type) {
+		case ItemIndex::T_NATIVE:
+			ok = sserialize::detail::ItemIndexPrivate::ItemIndexPrivateNative::create(idx, dest);
+			break;
+		case ItemIndex::T_SIMPLE:
+			ok = ItemIndexPrivateSimple::create(idx, dest);
+			break;
+		case ItemIndex::T_REGLINE:
+			ok = ItemIndexPrivateRegLine::create(idx, dest, -1, true);
+			break;
+		case ItemIndex::T_WAH:
+			ok = ItemIndexPrivateWAH::create(idx, dest);
+			break;
+		case ItemIndex::T_DE:
+			ok = ItemIndexPrivateDE::create(idx, dest);
+			break;
+		case ItemIndex::T_RLE_DE:
+			ok = ItemIndexPrivateRleDE::create(idx, dest);
+			break;
+		case ItemIndex::T_ELIAS_FANO:
+			ok = ItemIndexPrivateEliasFano::create(idx, dest);
+		case ItemIndex::T_PFOR:
+			ok = ItemIndexPrivatePFoR::create(idx, dest);
+		default:
+			break;
+		}
+		return ok;
+	};
+	if (type & ItemIndex::T_MULTIPLE) {
+		type &= ~ItemIndex::T_MULTIPLE;
+		int ct = 1; //T_SIMPLE
+		int bestType = ItemIndex::T_NULL;
+		sserialize::UByteArrayAdapter::SizeType bestSize = std::numeric_limits<sserialize::UByteArrayAdapter::SizeType>::max();
+		sserialize::UByteArrayAdapter tmp(new std::vector<uint8_t>(), true);
+		while(type) {
+			if (type & 0x1) {
+				bool ok = c(tmp, ItemIndex::Types(ct));
+				if (ok && tmp.size() < bestSize) {
+					bestSize = tmp.size();
+					bestType = ct;
+				}
+				tmp.resize(0);
+			}
+			type >>= 1;
+			ct <<= 1;
+		}
+		type = bestType;
 	}
+	bool ok = c(dest, type);
+	type = ok ? type : ItemIndex::T_NULL;
 #if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
-	if (ok) {
+	if (type != ItemIndex::T_NULL) {
 		sserialize::ItemIndex sIdx(dest+destBegin, type);
 		ok = (sIdx == idx);
 	}
 #endif
-	return ok;
+	return ItemIndex::Types(type);
 }
 
 template<typename TSortedContainer>
-ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, ItemIndex::Types type) {
+ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, int type) {
 	UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
-	if (create(idx, tmp, type)) {
+	ItemIndex::Types rt = create(idx, tmp, type);
+	if (rt != ItemIndex::T_NULL) {
 		tmp.resetPtrs();
-		return ItemIndex(tmp, type);
+		return ItemIndex(tmp, rt);
 	}
-	throw sserialize::CreationException("Could not create index with type " + sserialize::to_string(type));
+	throw sserialize::CreationException("Could not create index with type " + std::to_string(type));
 	return ItemIndex();
 }
 

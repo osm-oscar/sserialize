@@ -610,7 +610,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	return dest.tellPutPtr()-beginOffset;
 }
 
-ItemIndex ItemIndexFactory::range(uint32_t begin, uint32_t end, uint32_t step, ItemIndex::Types type) {
+ItemIndex ItemIndexFactory::range(uint32_t begin, uint32_t end, uint32_t step, int type) {
 	sserialize::RangeGenerator<uint32_t> rg(begin, end, step);
 	return create(rg, type);
 }
