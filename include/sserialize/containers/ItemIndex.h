@@ -39,7 +39,9 @@ public:
 		T_INDIRECT=2*T_EMPTY,
 		T_STL_DEQUE=4*T_EMPTY,
 		T_STL_VECTOR=8*T_EMPTY,
-		__T_LAST_ENTRY=T_STL_VECTOR
+		__T_LAST_ENTRY=T_STL_VECTOR,
+		//The following indicates that the type has to be encoded in the data or somewhere else
+		T_MULTIPLE=0x8000 
 	};
 	
 	///You can check if an index supports fast random access using these masks
