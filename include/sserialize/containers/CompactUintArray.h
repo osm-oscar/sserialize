@@ -156,7 +156,7 @@ public:
 	UByteArrayAdapter & data();
 	const UByteArrayAdapter & data() const;
 
-	/** @param: returns the value set (i.e. if value is to large the nit ets masked */
+	/** @param: returns the value set (i.e. if value is too large then it gets masked */
 	uint32_t set(const uint32_t pos, const uint32_t value);
 	uint64_t set64(const uint32_t pos, const uint64_t value);
 	std::ostream& dump(std::ostream& out, uint32_t len);

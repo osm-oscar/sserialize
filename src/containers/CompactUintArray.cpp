@@ -355,6 +355,9 @@ CompactUintArray::CompactUintArray(const sserialize::UByteArrayAdapter& array, u
 RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 {
 	setPrivate(array, bitsPerNumber);
+	if (array.size() < CompactUintArray::minStorageBytes(bitsPerNumber, max_size)) {
+		throw sserialize::OutOfBoundsException("CompactUintArray: data is too small");
+	}
 	m_maxCount = max_size;
 }
 
