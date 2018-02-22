@@ -477,7 +477,7 @@ int main(int argc, char ** argv) {
 				outFileName += "multi";
 			}
 			else {
-				sserialize::to_string(ItemIndex::Types(transform));
+				outFileName += sserialize::to_string(ItemIndex::Types(transform));
 			}
 		}
 		UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
