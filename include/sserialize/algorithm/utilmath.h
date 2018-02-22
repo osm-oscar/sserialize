@@ -91,6 +91,7 @@ inline uint32_t saturatedAdd32(const uint32_t a, const uint32_t b) {
 	return (a > std::numeric_limits<uint32_t>::max() - b) ? std::numeric_limits<uint32_t>::max() : a + b;
 }
 
+///@return position of the most significant bit starting with 0 or 0 if non is present
 template<typename TValue>
 inline
 typename std::enable_if<std::is_integral<TValue>::value && std::is_unsigned<TValue>::value, uint32_t>::type 
