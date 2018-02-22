@@ -136,7 +136,7 @@ m_compression((IndexCompressionType) data.getUint8(2))
 	}
 	
 	if (m_type & sserialize::ItemIndex::T_MULTIPLE) {
-		uint32_t bits = sserialize::msb(sserialize::msb(uint32_t(m_type - sserialize::ItemIndex::T_MULTIPLE)));
+		uint32_t bits = sserialize::msb(sserialize::msb(uint32_t(m_type - sserialize::ItemIndex::T_MULTIPLE))) + 1;
 		m_idxTypeInfo = CompactUintArray(data, bits, size());
 		data += m_idxTypeInfo.getSizeInBytes();
 	}

@@ -270,7 +270,7 @@ OffsetType ItemIndexFactory::flush() {
 #endif
 	m_indexStore << m_idxSizes;
 	if (m_type & ItemIndex::T_MULTIPLE) {
-		uint32_t bits = sserialize::msb( sserialize::msb( uint32_t(m_type - ItemIndex::T_MULTIPLE) ) );
+		uint32_t bits = sserialize::msb( sserialize::msb( uint32_t(m_type - ItemIndex::T_MULTIPLE) ) ) + 1;
 		auto tf = [](uint8_t v) {return sserialize::msb(v); };
 		using MyIterator = sserialize::TransformIterator<decltype(tf), uint32_t, ItemIndexTypesContainer::const_iterator>;
 		CompactUintArray::create(MyIterator(tf, m_idxTypes.begin()), MyIterator(tf, m_idxTypes.end()), m_indexStore, bits);
@@ -639,10 +639,10 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	//finally the index type info
 	if (store.indexTypes() & ItemIndex::T_MULTIPLE) {
 		auto deref = [&store](uint32_t pos) -> int {
-			return store.indexType(pos);
+			return sserialize::msb( uint32_t(store.indexType(pos)) );
 		};
 		using MyIterator = sserialize::TransformIterator<decltype(deref), int, sserialize::RangeGenerator<uint32_t>::const_iterator>;
-		uint32_t bits = sserialize::fastLog2(store.indexTypes() - ItemIndex::T_MULTIPLE);
+		uint32_t bits = sserialize::msb(sserialize::msb(uint32_t(store.indexTypes() - ItemIndex::T_MULTIPLE))) + 1;
 		CompactUintArray::create(MyIterator(deref, 0), MyIterator(deref, store.size()), dest, bits);
 	}
 	std::cout << "Total size: " << dest.tellPutPtr()-beginOffset << std::endl;
