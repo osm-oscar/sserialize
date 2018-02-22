@@ -11,17 +11,17 @@
 
 using namespace sserialize;
 
-template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, ItemIndex::Types T_IDX_TYPE>
+template<uint32_t T_SET_COUNT, uint32_t T_MAX_SET_FILL, int T_IDX_TYPE>
 class ItemIndexFactoryTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( ItemIndexFactoryTest );
-CPPUNIT_TEST( testSerializedEquality );
 CPPUNIT_TEST( testSameId );
 CPPUNIT_TEST( testIdxSize );
+CPPUNIT_TEST( testIdxFromId );
+CPPUNIT_TEST( testInitFromStatic );
+CPPUNIT_TEST( testSerializedEquality );
 // CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
-CPPUNIT_TEST( testInitFromStatic );
 CPPUNIT_TEST( testCompressionVarUint );
-CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST_SUITE_END();
 private:
 	ItemIndexFactory m_idxFactory;
@@ -76,8 +76,6 @@ public:
 		CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_idxFactory.flush());
 
 		UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
-
-
 		Static::ItemIndexStore sdb(dataAdap);
 		
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), sdb.size());
@@ -205,6 +203,7 @@ int main(int argc, char ** argv) {
 	if (sserialize::tests::TestBase::printHelp()) {
 		return 0;
 	}
+	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  ItemIndexFactoryTest<64, 512, ItemIndex::T_SIMPLE>::suite() );
@@ -212,10 +211,13 @@ int main(int argc, char ** argv) {
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_RLE_DE>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_WAH>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_PFOR>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_MULTIPLE|ItemIndex::T_RLE_DE|ItemIndex::T_NATIVE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_MULTIPLE|ItemIndex::T_PFOR|ItemIndex::T_RLE_DE|ItemIndex::T_ELIAS_FANO|ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<4047, 1001, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
-// 	runner.eventManager().popProtector();
+	runner.addTest(  ItemIndexFactoryTest<10537, 2040, ItemIndex::T_NATIVE>::suite() );
 	if (sserialize::tests::TestBase::popProtector()) {
 		runner.eventManager().popProtector();
 	}
