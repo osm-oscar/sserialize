@@ -84,6 +84,7 @@ public:
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
 			uint32_t idxId = m_setIds[i];
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("Index Type at " + std::to_string(i), m_idxFactory.type(idxId), sdb.indexType(idxId));
 			ItemIndex idx = sdb.at( idxId );
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Index at ", i), m_sets[i] == idx);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("Index size at", i), m_idxFactory.idxSize(idxId), sdb.idxSize(idxId));
