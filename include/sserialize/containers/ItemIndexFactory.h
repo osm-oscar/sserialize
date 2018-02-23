@@ -171,8 +171,10 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 			break;
 		case ItemIndex::T_ELIAS_FANO:
 			ok = ItemIndexPrivateEliasFano::create(idx, dest);
+			break;
 		case ItemIndex::T_PFOR:
 			ok = ItemIndexPrivatePFoR::create(idx, dest);
+			break;
 		default:
 			break;
 		}
