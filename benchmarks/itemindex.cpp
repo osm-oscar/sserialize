@@ -703,7 +703,7 @@ struct TestData {
 };
 
 void printHelp() {
-	std::cout << "\nprg -t <bucketCount> <bucketSize> [ -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount>] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
+	std::cout << "\nprg -t <bucketCount> <bucketSize> [ -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount> [-i <index type>]* ] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
 }
 
 int main(int argc, char ** argv) {
@@ -713,15 +713,15 @@ int main(int argc, char ** argv) {
 	
 	std::vector<Config> cfgs;
 	std::vector<int> types({
-		IT_VECTOR_TREE_MERGE,
-		IT_VECTOR_SLICE_MERGE,
+// 		IT_VECTOR_TREE_MERGE,
+// 		IT_VECTOR_SLICE_MERGE,
 // 		IT_VECTOR_SET_MERGE,
 // 		IT_VECTOR_HEAP_MERGE,
-		sserialize::ItemIndex::T_NATIVE,
-		sserialize::ItemIndex::T_WAH,
+// 		sserialize::ItemIndex::T_NATIVE,
+// 		sserialize::ItemIndex::T_WAH,
 // 		sserialize::ItemIndex::T_ELIAS_FANO,
-		sserialize::ItemIndex::T_RLE_DE,
-		sserialize::ItemIndex::T_PFOR,
+// 		sserialize::ItemIndex::T_RLE_DE,
+// 		sserialize::ItemIndex::T_PFOR,
 // 		sserialize::ItemIndex::T_NATIVE | __IT_MERGE_WITH_VECTOR,
 // 		sserialize::ItemIndex::T_WAH | __IT_MERGE_WITH_VECTOR,
 // 		sserialize::ItemIndex::T_RLE_DE | __IT_MERGE_WITH_VECTOR,
@@ -802,6 +802,26 @@ int main(int argc, char ** argv) {
 			}
 			testCount = ::atoi(argv[i+1]);
 			i += 1;
+		}
+		else if (token == "-i") {
+			if (i+1 >= argc) {
+				printHelp();
+				return -1;
+			}
+			token = std::string(argv[i+1]);
+			sserialize::ItemIndex::Types tmpt = sserialize::ItemIndex::T_NULL;
+			sserialize::from_string(token, tmpt);
+			if (tmpt != sserialize::ItemIndex::T_NULL) {
+				types.push_back(tmpt);
+			}
+			else if (token == "vector") {
+				types.push_back(IT_VECTOR_TREE_MERGE);
+				types.push_back(IT_VECTOR_SLICE_MERGE);
+			}
+			else {
+				std::cerr << "Invalid index type: " << token << std::endl;
+			}
+			++i;
 		}
 		else if (token == "-h") {
 			printHelp();
