@@ -79,11 +79,13 @@ UnaryCodeIterator::operator++() {
 }
 
 bool UnaryCodeIterator::operator!=(const UnaryCodeIterator& other) const {
-	return m_pos != other.m_pos || m_chunkBitPtr != other.m_chunkBitPtr || m_last != other.m_last || m_d != other.m_d;
+	SSERIALIZE_CHEAP_ASSERT(m_d == other.m_d);
+	return m_pos != other.m_pos || m_chunkBitPtr != other.m_chunkBitPtr || m_last != other.m_last;
 }
 
 bool UnaryCodeIterator::operator==(const UnaryCodeIterator& other) const {
-	return m_pos == other.m_pos && m_chunkBitPtr == other.m_chunkBitPtr && m_last == other.m_last && m_d == other.m_d;
+	SSERIALIZE_CHEAP_ASSERT(m_d == other.m_d);
+	return m_pos == other.m_pos && m_chunkBitPtr == other.m_chunkBitPtr && m_last == other.m_last;
 }
 
 void UnaryCodeIterator::loadNextChunk() {
