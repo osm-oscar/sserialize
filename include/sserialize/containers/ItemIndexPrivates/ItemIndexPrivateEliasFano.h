@@ -48,8 +48,8 @@ public:
 	EliasFanoCreator(const EliasFanoCreator& other) = delete;
 	EliasFanoCreator & operator=(const EliasFanoCreator & other) = delete;
 public:
-	EliasFanoCreator(uint32_t maxId);
-	EliasFanoCreator(UByteArrayAdapter & data, uint32_t maxId);
+	EliasFanoCreator(uint32_t maxId, uint32_t sizeHint);
+	EliasFanoCreator(UByteArrayAdapter & data, uint32_t maxId, uint32_t sizeHint);
 	EliasFanoCreator(EliasFanoCreator && other);
 	~EliasFanoCreator();
 	uint32_t size() const;

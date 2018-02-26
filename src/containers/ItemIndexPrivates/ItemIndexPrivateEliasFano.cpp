@@ -70,17 +70,21 @@ EliasFanoIterator::MyBaseClass * EliasFanoIterator::copy() const {
 
 //BEGIN CREATOR
 
-EliasFanoCreator::EliasFanoCreator(uint32_t /*maxId*/) :
+EliasFanoCreator::EliasFanoCreator(uint32_t /*maxId*/, uint32_t sizeHint) :
 m_data(new UByteArrayAdapter( UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY) )),
 m_putPtr(0),
 m_delete(true)
-{}
+{
+	m_values.reserve(sizeHint);
+}
 
-EliasFanoCreator::EliasFanoCreator(sserialize::UByteArrayAdapter& data, uint32_t /*maxId*/) :
+EliasFanoCreator::EliasFanoCreator(sserialize::UByteArrayAdapter& data, uint32_t /*maxId*/, uint32_t sizeHint) :
 m_data(&data),
 m_putPtr(data.tellPutPtr()),
 m_delete(false)
-{}
+{
+	m_values.reserve(sizeHint);
+}
 
 EliasFanoCreator::EliasFanoCreator(EliasFanoCreator&& other) :
 m_values(std::move(other.m_values)),
@@ -155,7 +159,7 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
 		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
 		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
-		return Creator(std::min<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
+		return Creator(std::min<uint32_t>(mfirst->upperBound(), msecond->upperBound()), 0);
 	}
 };
 
@@ -169,7 +173,7 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
 		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
 		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
-		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
+		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()), std::max<uint32_t>(mfirst->size(), msecond->size()));
 	}
 };
 
@@ -178,10 +182,16 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	using Creator = EliasFanoCreator;
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::DifferenceOp;
 	
-	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* /*second*/) {
+	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
 		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(first));
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
 		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
-		return Creator(mfirst->upperBound());
+		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
+		
+		auto mfirst_size = mfirst->size();
+		auto msecond_size = msecond->size();
+		auto rsize = mfirst_size > msecond_size ? mfirst_size-msecond_size : 0;
+		return Creator(mfirst->upperBound(), rsize);
 	}
 };
 
@@ -195,7 +205,7 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
 		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
 		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
-		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
+		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()), 0);
 	}
 };
 
