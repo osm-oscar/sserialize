@@ -103,9 +103,11 @@ uint32_t EliasFanoCreator::size() const {
 }
 
 void EliasFanoCreator::push_back(uint32_t id) {
+#ifdef SSERIALIZE_NORMAL_ASSERT_ENABLED
 	if (size() && m_values.back() >= id) {
 		throw std::domain_error("sserialize::ItemIndexPrivateEliasFanoCreator: ids have to be strongly-monotone");
 	}
+#endif
 	m_values.push_back(id);
 }
 
