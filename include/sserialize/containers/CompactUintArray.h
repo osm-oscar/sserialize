@@ -229,7 +229,7 @@ uint32_t CompactUintArray::create(T_IT begin, const T_IT & end, UByteArrayAdapte
 		throw sserialize::TypeOverflowException("CompactUintArray::create");
 	}
 	if (!dest.reserveFromPutPtr(spaceNeed)) {
-		throw sserialize::IOException("CompactUintArray::create cloud no allocate memory");
+		throw sserialize::IOException("CompactUintArray::create could not allocate memory");
 	}
 	UByteArrayAdapter data(dest);
 	data.shrinkToPutPtr();
