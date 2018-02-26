@@ -126,11 +126,11 @@ public:
 	static constexpr uint32_t npos = 0xFFFFFFFF;
 
 	struct CompactUintArrayIteratorDerefer {
-		inline CompactUintArray::value_type operator()(const CompactUintArray & c, SizeType pos) const { return c.at64(pos); }
+		inline CompactUintArray::value_type operator()(const CompactUintArray * c, SizeType pos) const { return c->at64(pos); }
 	};
 
 	typedef RCWrapper< sserialize::CompactUintArrayPrivate > MyBaseClass;
-	typedef ReadOnlyAtStlIterator<CompactUintArray, value_type, SizeType, CompactUintArrayIteratorDerefer> const_iterator;
+	typedef ReadOnlyAtStlIterator<const CompactUintArray *, value_type, SizeType, CompactUintArrayIteratorDerefer> const_iterator;
 private:
 	SizeType m_maxCount;
 protected:
@@ -268,8 +268,8 @@ public:
 	///Creates a new BoundedCompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
 	static uint32_t create(const T_SOURCE_CONTAINER& src, sserialize::UByteArrayAdapter& dest);
-	inline const_iterator end() const { return const_iterator(m_size, *this);}
-	inline const_iterator cend() const { return const_iterator(m_size, *this);}
+	inline const_iterator end() const { return const_iterator(m_size, this);}
+	inline const_iterator cend() const { return const_iterator(m_size, this);}
 	template<typename T_OUTPUT_ITERATOR>
 	void copyInto(T_OUTPUT_ITERATOR out);
 };

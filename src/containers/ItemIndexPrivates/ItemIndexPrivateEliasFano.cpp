@@ -19,7 +19,7 @@ m_lb(lb),
 m_ub(ub),
 m_lastUb(0),
 m_baseValue(0),
-m_numLowerBits(lb.data().bpn())
+m_numLowerBits(lb.data()->bpn())
 {}
 
 EliasFanoIterator::EliasFanoIterator(const CompactUintArray::const_iterator & lb) :
@@ -27,7 +27,7 @@ m_lb(lb),
 m_ub(),
 m_lastUb(0),
 m_baseValue(0),
-m_numLowerBits(lb.data().bpn())
+m_numLowerBits(lb.data()->bpn())
 {}
 
 EliasFanoIterator::~EliasFanoIterator() {}

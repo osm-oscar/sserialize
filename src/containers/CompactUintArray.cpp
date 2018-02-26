@@ -482,11 +482,11 @@ void CompactUintArray::dump() {
 }
 
 CompactUintArray::const_iterator CompactUintArray::begin() const {
-	return const_iterator(0, *this);
+	return const_iterator(0, this);
 }
 	
 CompactUintArray::const_iterator CompactUintArray::cbegin() const {
-	return const_iterator(0, *this);
+	return const_iterator(0, this);
 }
 
 
