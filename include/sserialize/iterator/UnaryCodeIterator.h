@@ -21,11 +21,12 @@ public:
 	UnaryCodeIterator(const sserialize::UByteArrayAdapter & d);
 	UnaryCodeIterator(const UnaryCodeIterator & other) = default;
 	~UnaryCodeIterator();
+	UnaryCodeIterator & operator=(UnaryCodeIterator const & other) = default;
 public:
 	value_type operator*() const;
 	UnaryCodeIterator & operator++();
 public:
-	bool operator=(UnaryCodeIterator const & other) const;
+	bool operator==(UnaryCodeIterator const & other) const;
 	bool operator!=(UnaryCodeIterator const & other) const;
 private:
 	friend class UnaryCodeCreator;

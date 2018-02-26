@@ -82,7 +82,7 @@ bool UnaryCodeIterator::operator!=(const UnaryCodeIterator& other) const {
 	return m_pos != other.m_pos || m_chunkBitPtr != other.m_chunkBitPtr || m_last != other.m_last || m_d != other.m_d;
 }
 
-bool UnaryCodeIterator::operator=(const UnaryCodeIterator& other) const {
+bool UnaryCodeIterator::operator==(const UnaryCodeIterator& other) const {
 	return m_pos == other.m_pos && m_chunkBitPtr == other.m_chunkBitPtr && m_last == other.m_last && m_d == other.m_d;
 }
 
