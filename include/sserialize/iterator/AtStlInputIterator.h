@@ -60,27 +60,33 @@ public:
 	}
 	
 	bool operator==(const ReadOnlyAtStlIterator & other) const {
-		return m_pos == other.m_pos && m_data == other.m_data;
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return m_pos == other.m_pos;
 	}
 	
 	bool operator!=(const ReadOnlyAtStlIterator & other) const {
-		return m_pos != other.m_pos || m_data != other.m_data;
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return m_pos != other.m_pos;
 	}
 	
 	bool operator<(const ReadOnlyAtStlIterator & other) const {
-		return m_pos < other.m_pos && m_data == other.m_data;
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return m_pos < other.m_pos;
 	}
 
 	bool operator<=(const ReadOnlyAtStlIterator & other) const {
-		return m_pos <= other.m_pos && m_data == other.m_data;
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return m_pos <= other.m_pos;
 	}
 
 	bool operator>(const ReadOnlyAtStlIterator & other) const {
-		return m_pos > other.m_pos && m_data == other.m_data;
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return m_pos > other.m_pos;
 	}
 
 	bool operator>=(const ReadOnlyAtStlIterator & other) const {
-		return m_pos >= other.m_pos && m_data == other.m_data;
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return m_pos >= other.m_pos;
 	}
 		
 	ReadOnlyAtStlIterator operator++(int) {
@@ -120,7 +126,8 @@ public:
 	}
 
 	difference_type operator-(const ReadOnlyAtStlIterator & other) const {
-		return (m_data == other.m_data ? (difference_type)(m_pos) - (difference_type)(other.m_pos) : std::numeric_limits<difference_type>::max());
+		SSERIALIZE_CHEAP_ASSERT(m_data == other.m_data);
+		return difference_type(m_pos) - difference_type(other.m_pos);
 	}
 	
 	T_RETURN_TYPE operator*() const {
