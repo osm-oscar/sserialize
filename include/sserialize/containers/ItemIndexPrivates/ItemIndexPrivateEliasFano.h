@@ -145,8 +145,8 @@ private:
 	static uint32_t upperBoundStorage(uint32_t upperBound);
 private:
 	uint32_t upperBitsDataSize() const;
-	CompactUintArray lowerBits() const;
-	UnaryCodeIterator upperBits() const;
+	const CompactUintArray & lowerBits() const;
+	const UnaryCodeIterator & upperBits() const;
 	uint8_t numLowerBits() const;
 private:
 	UByteArrayAdapter m_d;
@@ -154,6 +154,8 @@ private:
 	uint32_t m_upperBoundBegin:10;
 	uint32_t m_lowerBitsBegin:10;
 	uint32_t m_upperBitsBegin:10; //offset from the end of lower bits!
+	CompactUintArray m_lowerBits;
+	UnaryCodeIterator m_upperBits;
 	mutable AbstractArrayIterator<uint32_t> m_it;
 	mutable std::vector<uint32_t> m_cache; //TODO: get rid of this using skip pointers?
 };

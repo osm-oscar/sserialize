@@ -247,6 +247,15 @@ m_it(cbegin())
 		totalSize += m_upperBoundBegin;
 	}
 	m_d.resize(totalSize);
+	
+	uint8_t nlb = numLowerBits();
+	if (size() && nlb) {
+		m_lowerBits = CompactUintArray(m_d+m_lowerBitsBegin, nlb, size());
+	}
+	if (size()) {
+		auto ubBegin = m_lowerBitsBegin + CompactUintArray::minStorageBytes(numLowerBits(), size()) + m_upperBitsBegin;
+		m_upperBits = UnaryCodeIterator(m_d+ubBegin);
+	}
 }
 
 ItemIndexPrivateEliasFano::~ItemIndexPrivateEliasFano() {}
@@ -466,27 +475,14 @@ uint32_t ItemIndexPrivateEliasFano::upperBitsDataSize() const {
 	}
 }
 
-CompactUintArray
+const CompactUintArray &
 ItemIndexPrivateEliasFano::lowerBits() const {
-	uint8_t nlb = numLowerBits();
-	if (size() && nlb) {
-		return CompactUintArray(m_d+m_lowerBitsBegin, nlb, size());
-	}
-	else {
-		return CompactUintArray();
-	}
+	return m_lowerBits;
 }
 
-UnaryCodeIterator ItemIndexPrivateEliasFano::upperBits() const {
-	if (size()) {
-		sserialize::UByteArrayAdapter::OffsetType ubBegin = m_lowerBitsBegin +
-			CompactUintArray::minStorageBytes(numLowerBits(), size()) +
-			m_upperBitsBegin;
-		return UnaryCodeIterator(m_d+ubBegin);
-	}
-	else {
-		return UnaryCodeIterator();
-	}
+const UnaryCodeIterator &
+ItemIndexPrivateEliasFano::upperBits() const {
+	return m_upperBits;
 }
 
 uint8_t ItemIndexPrivateEliasFano::numLowerBits() const {
