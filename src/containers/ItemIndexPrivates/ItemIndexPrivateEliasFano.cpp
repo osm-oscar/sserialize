@@ -149,8 +149,10 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::IntersectOp;
 	
 	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(first));
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
+		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
+		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
 		return Creator(std::min<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
 	}
 };
@@ -161,8 +163,10 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::UniteOp;
 	
 	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(first));
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
+		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
+		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
 		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
 	}
 };
@@ -173,7 +177,8 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::DifferenceOp;
 	
 	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* /*second*/) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(first));
+		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
 		return Creator(mfirst->upperBound());
 	}
 };
@@ -184,8 +189,10 @@ struct GenericSetOpExecuterInit<EliasFanoCreator, sserialize::detail::ItemIndexI
 	using SetOpTraits = sserialize::detail::ItemIndexImpl::UniteOp;
 	
 	static Creator init(const sserialize::ItemIndexPrivate* first, const sserialize::ItemIndexPrivate* second) {
-		const ItemIndexPrivateEliasFano * mfirst = dynamic_cast<const ItemIndexPrivateEliasFano *>(first);
-		const ItemIndexPrivateEliasFano * msecond = dynamic_cast<const ItemIndexPrivateEliasFano *>(second);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(first));
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const ItemIndexPrivateEliasFano *>(second));
+		const ItemIndexPrivateEliasFano * mfirst = static_cast<const ItemIndexPrivateEliasFano *>(first);
+		const ItemIndexPrivateEliasFano * msecond = static_cast<const ItemIndexPrivateEliasFano *>(second);
 		return Creator(std::max<uint32_t>(mfirst->upperBound(), msecond->upperBound()));
 	}
 };
@@ -346,8 +353,7 @@ ItemIndexPrivateEliasFano::uniteK(const sserialize::ItemIndexPrivate * other, ui
 
 ItemIndexPrivate *
 ItemIndexPrivateEliasFano::intersect(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
-	if (!cother) {
+	if (other->type() != ItemIndex::T_ELIAS_FANO) {
 		return ItemIndexPrivate::doIntersect(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
@@ -360,8 +366,7 @@ ItemIndexPrivateEliasFano::intersect(const sserialize::ItemIndexPrivate * other)
 
 ItemIndexPrivate *
 ItemIndexPrivateEliasFano::unite(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
-	if (!cother) {
+	if (other->type() != ItemIndex::T_ELIAS_FANO) {
 		return ItemIndexPrivate::doUnite(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
@@ -374,8 +379,7 @@ ItemIndexPrivateEliasFano::unite(const sserialize::ItemIndexPrivate * other) con
 
 ItemIndexPrivate *
 ItemIndexPrivateEliasFano::difference(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
-	if (!cother) {
+	if (other->type() != ItemIndex::T_ELIAS_FANO) {
 		return ItemIndexPrivate::doDifference(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
@@ -388,8 +392,7 @@ ItemIndexPrivateEliasFano::difference(const sserialize::ItemIndexPrivate * other
 
 ItemIndexPrivate *
 ItemIndexPrivateEliasFano::symmetricDifference(const sserialize::ItemIndexPrivate * other) const {
-	const ItemIndexPrivateEliasFano * cother = dynamic_cast<const ItemIndexPrivateEliasFano*>(other);
-	if (!cother) {
+	if (other->type() != ItemIndex::T_ELIAS_FANO) {
 		return ItemIndexPrivate::doSymmetricDifference(other);
 	}
 	typedef detail::ItemIndexImpl::GenericSetOpExecuter<
