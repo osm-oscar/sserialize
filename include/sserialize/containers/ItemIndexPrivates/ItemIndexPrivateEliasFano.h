@@ -219,12 +219,23 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 	if (lowerBits) {
 		auto t = [lbmask](const uint32_t v) { return v & lbmask; };
 		using MyIt = sserialize::TransformIterator<decltype(t), uint32_t, MyIterator>;
-		CompactUintArray::create(MyIt(t, MyIterator(begin, 0)), MyIt(t, MyIterator(end, srcSize)), dest, lowerBits);
+		UByteArrayAdapter::OffsetType spaceNeed = CompactUintArray::minStorageBytes(lowerBits, srcSize);
+		if (!dest.reserveFromPutPtr(spaceNeed)) {
+			throw sserialize::IOException("ItemIndexEliasFano:create could not allocate memory");
+		}
+		UByteArrayAdapter data(dest);
+		data.shrinkToPutPtr();
+		CompactUintArray carr(data, lowerBits);
+		MyIt mbegin(t, MyIterator(begin, 0)), mend(t, MyIterator(end, srcSize));
+		for(uint32_t pos = 0; mbegin != mend; ++mbegin, ++pos) {
+			carr.set(pos, *mbegin);
+		}
+		dest.incPutPtr(spaceNeed);
 	}
 	
 	//take care of the upper bits
 	{
-		UByteArrayAdapter upperBitsData(UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY));
+		UByteArrayAdapter upperBitsData(UByteArrayAdapter::createCache(srcSize, sserialize::MM_PROGRAM_MEMORY));
 		UnaryCodeCreator ucc(upperBitsData);
 		
 		//put the gaps of the lower bits
@@ -242,7 +253,7 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 		}
 		ucc.flush();
 		
-		dest.putVlPackedUint32( narrow_check<uint32_t>(upperBitsData.size()) );
+		dest.putVlPackedUint32( narrow_check<uint32_t>(upperBitsData.tellPutPtr()) );
 		dest.put(upperBitsData);
 	}
 	return true;
