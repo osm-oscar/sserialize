@@ -120,7 +120,6 @@ void EliasFanoCreator::flush() {
 	ItemIndexPrivateEliasFano::create(m_values, data());
 }
 
-
 UByteArrayAdapter EliasFanoCreator::flushedData() const {
 	UByteArrayAdapter d(data());
 	d.setGetPtr(m_putPtr);
@@ -142,8 +141,6 @@ UByteArrayAdapter& EliasFanoCreator::data() {
 const UByteArrayAdapter& EliasFanoCreator::data() const {
 	return *m_data;
 }
-
-
 
 //END CREATOR
 
@@ -223,13 +220,13 @@ struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::Eli
 	static PositionIterator end(const sserialize::ItemIndexPrivate * idx) {
 		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cend()) );
 	}
-	static void next(PositionIterator & it) {
+	inline static void next(PositionIterator & it) {
 		it->PositionIteratorBase::next();
 	}
-	static bool unequal(const PositionIterator & first, const PositionIterator & second) {
+	inline static bool unequal(const PositionIterator & first, const PositionIterator & second) {
 		return first->PositionIteratorBase::notEq(second.get());
 	}
-	static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
+	inline static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
 		return it->PositionIteratorBase::get();
 	}
 };
