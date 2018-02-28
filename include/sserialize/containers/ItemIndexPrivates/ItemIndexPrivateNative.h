@@ -154,10 +154,10 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateNative::genericSetOp(const ItemIn
 	return new ItemIndexPrivateNative(tmpD);
 }
 
-class ItemIndexNativeCreator {
+class ItemIndexNativeCreator final {
 public:
 	ItemIndexNativeCreator(uint32_t maxSize);
-	virtual ~ItemIndexNativeCreator();
+	~ItemIndexNativeCreator();
 	uint32_t size() const;
 	///push only in ascending order (id need to be unique and larger than the one before! otherwise this will eat your kitten!
 	void push_back(uint32_t id);
