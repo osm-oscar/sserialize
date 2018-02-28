@@ -22,6 +22,7 @@ m_chunkBitPtr(0)
 
 UnaryCodeIterator::~UnaryCodeIterator() {}
 
+INLINE_WITH_LTO
 UnaryCodeIterator::value_type
 UnaryCodeIterator::operator*() const {
 	return m_last;
@@ -88,6 +89,7 @@ bool UnaryCodeIterator::operator==(const UnaryCodeIterator& other) const {
 	return m_pos == other.m_pos && m_chunkBitPtr == other.m_chunkBitPtr && m_last == other.m_last;
 }
 
+INLINE_WITH_LTO
 void UnaryCodeIterator::loadNextChunk() {
 	m_lastChunk = m_d.get<chunk_type>(m_pos);
 	m_chunkBitPtr = chunk_max_bit;

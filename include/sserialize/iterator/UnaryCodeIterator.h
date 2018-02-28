@@ -36,6 +36,7 @@ private:
 	static constexpr uint32_t chunk_size = SerializationInfo<chunk_type>::length;
 	static constexpr chunk_type chunk_max_bit = chunk_type(1) << (chunk_bits-1);
 private:
+	//inlined in lto builds
 	void loadNextChunk();
 private:
 	UByteArrayAdapter m_d;
