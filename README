@@ -22,3 +22,10 @@ T_YOUR_TYPE(const sserialize::UByteArrayAdapter & src);
 You are encouraged to provide an apropriate overload for the SerializationInfo class.
 
 Make sure to read the documentation of UByteArrayAdapter before implementing your serialization functions
+
+# gcov
+ * set CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1
+ * build with "-g --coverage -fprofile-arcs -ftest-coverage"
+ * run programs
+ * files are places in CMakeFiles/target.dir/...
+ * run gcov CMakeFiles/targetdir/...path-to-object-file[.o] //strip the o
