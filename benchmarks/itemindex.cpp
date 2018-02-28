@@ -586,7 +586,7 @@ struct TestData {
 	uint64_t treeMergeComparisonCount = 0;
 	std::map<int, std::unique_ptr<TestDataBase> > data;
 	
-	void init(const Config & cfg) {
+	void init_data(const Config & cfg) {
 		ot = cfg.ot;
 		
 		std::unique_ptr<NumberGenerator> ng;
@@ -615,7 +615,9 @@ struct TestData {
 		}
 		
 		ng->generate(source, cfg.bucket_fill, cfg.num_buckets);
-		
+	}
+	
+	void init_baseline(const Config & cfg) {
 		switch (cfg.ot) {
 		case OT_MERGE:
 		{
@@ -703,13 +705,14 @@ struct TestData {
 };
 
 void printHelp() {
-	std::cout << "\nprg -t <bucketCount> <bucketSize> [ -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount> [-i <index type>]* ] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
+	std::cout << "\nprg -t <bucketCount> <bucketSize> [ --no-baseline -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount> [-i <index type>]* ] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
 }
 
 int main(int argc, char ** argv) {
 	uint32_t testCount = 1;
 	NumberGenerator::Types ngt = NumberGenerator::NG_RANDOM;
 	OperationType ot = OT_MERGE;
+	bool noBaseLine = false;
 	
 	std::vector<Config> cfgs;
 	std::vector<int> types({
@@ -823,6 +826,9 @@ int main(int argc, char ** argv) {
 			}
 			++i;
 		}
+		else if (token == "--no-baseline") {
+			noBaseLine = true;
+		}
 		else if (token == "-h") {
 			printHelp();
 			return 0;
@@ -837,7 +843,10 @@ int main(int argc, char ** argv) {
 
 	for(const Config & c : cfgs) {
 		TestData td;
-		td.init(c);
+		td.init_data(c);
+		if (!noBaseLine) {
+			td.init_baseline(c);
+		}
 		for(int t : types) {
 			td.add_test(t);
 		}
