@@ -16,4 +16,10 @@
 	#define DEPRECATED(func) func
 #endif
 
+#ifdef SSERIALIZE_WITH_INLINE_IN_LTO
+	#define INLINE_WITH_LTO __attribute__((used)) inline
+#else
+	#define INLINE_WITH_LTO
+#endif
+
 #endif
