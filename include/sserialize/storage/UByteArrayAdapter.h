@@ -196,7 +196,9 @@ public:
 		//lock the memory region if possible
 		AT_LOCK = 0x8,
 		//unlock the memory region
-		AT_UNLOCK = 0x10
+		AT_UNLOCK = 0x10,
+		//load the next bytes into memory
+		AT_LOAD=0x20,
 	} AdviseType;
 	
 	typedef detail::__UByteArrayAdapter::MemoryView MemoryView;

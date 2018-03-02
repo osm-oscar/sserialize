@@ -14,6 +14,7 @@ UByteArrayAdapterPrivateMmappedFile::~UByteArrayAdapterPrivateMmappedFile() {}
 void UByteArrayAdapterPrivateMmappedFile::advice(UByteArrayAdapter::AdviseType at, UByteArrayAdapter::SizeType begin, UByteArrayAdapter::SizeType end) {
 	switch(at) {
 	case UByteArrayAdapter::AT_READ:
+	case UByteArrayAdapter::AT_LOAD:
 		m_file.cache(begin, end-begin);
 		break;
 	case UByteArrayAdapter::AT_DROP:
