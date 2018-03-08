@@ -62,9 +62,11 @@ CPPUNIT_TEST_SUITE_END();
 protected:
 	template<typename T_SORTED_CONTAINER>
 	bool createBase(const T_SORTED_CONTAINER & srcSet, sserialize::ItemIndex & idx) {
-		sserialize::UByteArrayAdapter dest(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
+		sserialize::UByteArrayAdapter dest(1, sserialize::MM_PROGRAM_MEMORY);
 		bool ok = sserialize::ItemIndexFactory::create(srcSet, dest, T_TYPE);
 		idx = sserialize::ItemIndex(dest, T_TYPE);
+		CPPUNIT_ASSERT_MESSAGE("index from index data unequal", sserialize::ItemIndex(idx.data(), T_TYPE) == idx);
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("Index data size incorrect", dest.size(), idx.getSizeInBytes());
 		return ok;
 	}
 
