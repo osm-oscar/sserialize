@@ -23,7 +23,8 @@ public:
 namespace sserialize {
 
 struct ShaHasherDigestData {
-	std::array<uint8_t, 16> data;
+	static constexpr std::size_t DigestSize = 16;
+	std::array<uint8_t, DigestSize> data;
 	auto begin() { return data.begin(); }
 	auto begin() const { return data.begin(); }
 	auto end() { return data.end(); }
@@ -184,7 +185,7 @@ template<>
 struct hash< sserialize::ShaHasherDigestData > {
 	inline std::size_t operator()(const sserialize::ShaHasherDigestData & v) const {
 		std::size_t h;
-		::memmove(&h, v.begin(), sizeof(h));
+		::memmove(&h, v.begin(), std::min<std::size_t>(sizeof(h), sserialize::ShaHasherDigestData::DigestSize));
 		return h;
 	}
 };
