@@ -417,7 +417,7 @@ ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & i
 				substractPrivates.push_back( static_cast<ItemIndexPrivateWAH*>( it->priv() ) );
 			}
 		}
-		ItemIndexPrivateWAH::fusedIntersectDifference(intersectPrivates, substractPrivates, count, filter);
+		return ItemIndexPrivateWAH::fusedIntersectDifference(intersectPrivates, substractPrivates, count, filter);
 		break;
 	}
 	default:
