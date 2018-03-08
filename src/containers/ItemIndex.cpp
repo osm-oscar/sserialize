@@ -418,6 +418,7 @@ ItemIndex ItemIndex::fusedIntersectDifference(const std::vector< ItemIndex > & i
 			}
 		}
 		ItemIndexPrivateWAH::fusedIntersectDifference(intersectPrivates, substractPrivates, count, filter);
+		break;
 	}
 	default:
 		ItemIndex idx = ItemIndex::intersect( intersect ) - ItemIndex::unite( subtract );
