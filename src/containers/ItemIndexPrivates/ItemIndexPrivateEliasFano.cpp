@@ -242,8 +242,7 @@ m_d(d),
 m_size(m_d.getVlPackedUint32(0)),
 m_upperBoundBegin(sserialize::psize_v<uint32_t>(m_size)),
 m_lowerBitsBegin(m_size ? m_upperBoundBegin+sserialize::psize_v<uint32_t>(upperBoundStorage(upperBound())) : m_upperBoundBegin),
-m_upperBitsBegin(m_size ? sserialize::psize_v<uint32_t>(upperBitsDataSize()) : m_upperBoundBegin),
-m_it(cbegin())
+m_upperBitsBegin(m_size ? sserialize::psize_v<uint32_t>(upperBitsDataSize()) : m_upperBoundBegin)
 {
 	sserialize::UByteArrayAdapter::SizeType totalSize = 0;
 	if (m_size) {
@@ -265,6 +264,8 @@ m_it(cbegin())
 		auto ubBegin = m_lowerBitsBegin + CompactUintArray::minStorageBytes(numLowerBits(), size()) + m_upperBitsBegin;
 		m_upperBits = UnaryCodeIterator(m_d+ubBegin);
 	}
+	
+	m_it = cbegin();
 }
 
 ItemIndexPrivateEliasFano::~ItemIndexPrivateEliasFano() {}
