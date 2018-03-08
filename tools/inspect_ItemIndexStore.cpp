@@ -191,7 +191,7 @@ bool checkCompressedIndex(sserialize::Static::ItemIndexStore & real, sserialize:
 	}
 	ProgressInfo info;
 	info.begin(real.size(), "Testing compressed index");
-	for(uint32_t i = 0; i < real.size(); ++i) {
+	for(uint32_t i(0), s(real.size()); i < s; ++i) {
 		if (real.at(i) != compressed.at(i)) {
 			std::cout << "ItemIndex at postion " << i << " are unequal" << std::endl;
 			return false;
