@@ -563,7 +563,7 @@ std::string to_string(ItemIndex::Types t) {
 bool from_string(const std::string& str, ItemIndex::Types& type) {
 	if (str == "simple")
 		type = sserialize::ItemIndex::T_SIMPLE;
-	else if (str == "rline")
+	else if (str == "regline")
 		type = sserialize::ItemIndex::T_REGLINE;
 	else if (str == "wah")
 		type = sserialize::ItemIndex::T_WAH;
