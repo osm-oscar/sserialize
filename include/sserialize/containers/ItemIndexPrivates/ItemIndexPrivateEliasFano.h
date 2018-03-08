@@ -252,6 +252,7 @@ bool ItemIndexPrivateEliasFano::create(T_ITERATOR begin, const T_ITERATOR & end,
 			ucc.put(gap);
 		}
 		ucc.flush();
+		upperBitsData.resize(upperBitsData.tellPutPtr());
 		
 		dest.putVlPackedUint32( narrow_check<uint32_t>(upperBitsData.tellPutPtr()) );
 		dest.put(upperBitsData);
