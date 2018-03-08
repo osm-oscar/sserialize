@@ -185,7 +185,8 @@ template<>
 struct hash< sserialize::ShaHasherDigestData > {
 	inline std::size_t operator()(const sserialize::ShaHasherDigestData & v) const {
 		std::size_t h;
-		::memmove(&h, v.begin(), std::min<std::size_t>(sizeof(h), sserialize::ShaHasherDigestData::DigestSize));
+		constexpr std::size_t s = (sizeof(h) < sserialize::ShaHasherDigestData::DigestSize ? sizeof(h) : sserialize::ShaHasherDigestData::DigestSize);
+		::memmove(&h, v.begin(), s);
 		return h;
 	}
 };
