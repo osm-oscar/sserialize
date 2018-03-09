@@ -9,12 +9,10 @@ namespace sserialize {
 /** This implements a difference run-length encoded index
   *
   *--------------------------------------------------------------------------------------
-  * COUNT|SIZE|DATA
+  * SIZE|DATA SIZE|DATA
   *--------------------------------------------------------------------------------------
   * vu32|vu32 |*
   *--------------------------------------------------------------------------------------
-  * SIZE is the size of the DATA section
-  * COUNT is the number of elements
   * Data is delta encoded with rle. Type of word is selected by the least significant bit.
   * If data[i] & 0x1 then data is a rle and the next varuint32 tells the difference between the (data[i] >> 1) elements
   *
@@ -140,7 +138,7 @@ public:
 
 	///The result of this operations uses a memory-based backend
 	///none of the indices has to be empty!
-	static ItemIndex constrainedIntersect(const std::vector< ItemIndexPrivateRleDE* > & intersect, uint32_t count);
+	static ItemIndex constrainedIntersect(const std::vector<ItemIndexPrivateRleDE*> & intersect, uint32_t count);
 
 
 public:

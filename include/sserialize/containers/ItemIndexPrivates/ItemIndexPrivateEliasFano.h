@@ -77,9 +77,9 @@ private:
 /** Default format is:
   *
   * ----------------------------------------------------------------------
-  * SIZE|UPPER BOUND|LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
+  * SIZE |UPPER BOUND|LOWER BITS      |UPPER BITS DATA SIZE     |UPPER BITS
   * ----------------------------------------------------------------------
-  * vu32 |vu32|CompactUintArray|vu32                     |UnaryCodeStream
+  * vu32 |vu32       |CompactUintArray|vu32                     |UnaryCodeStream
   * ----------------------------------------------------------------------
   * 
   * where
