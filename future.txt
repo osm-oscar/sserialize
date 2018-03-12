@@ -10,6 +10,13 @@ LoadPolicy {
 	Full_on_construction, Full_on_first_access, Stream;
 }
 
+struct Algign {
+	set AlignmentPolicy bit_level;
+	Bits<5> bits5;
+	Bits<7> bits5;
+	Bits<5> bits5;
+};
+
 //should CRC be passed on to member structs?
 struct: Version, CRC {
 	Bits<5> bits5;
