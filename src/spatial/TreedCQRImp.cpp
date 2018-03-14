@@ -477,7 +477,6 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-						r.m_trees.back().pmNode.cellId = myCellId;
 						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
 						r.m_trees[treeBegin].opNode.childB = 2;
 					}
@@ -487,7 +486,6 @@ TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-						r.m_trees.back().pmNode.cellId = oCellId;
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 					}
 					r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0, treeBegin, r.m_trees.size());
@@ -548,7 +546,6 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				}
 				else {
 					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = myCellId;
 					r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
 					r.m_trees[treeBegin].opNode.childB = 2;
 				}
@@ -558,7 +555,6 @@ TreedCQRImp * TreedCQRImp::unite(const TreedCQRImp * other) const {
 				}
 				else {
 					r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-					r.m_trees.back().pmNode.cellId = oCellId;
 					r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 				}
 				r.m_desc.emplace_back(0, hasFetchedNode, myCellId, 0, treeBegin, r.m_trees.size());
@@ -659,11 +655,9 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 				else {
 					if (myCD.fullMatch) {
 						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-						r.m_trees.back().fmNode.cellId = myCellId;
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-						r.m_trees.back().pmNode.cellId = myCellId;
 						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
 					}
 					r.m_trees[treeBegin].opNode.childB = 2;
@@ -675,11 +669,9 @@ TreedCQRImp * TreedCQRImp::diff(const TreedCQRImp * other) const {
 				else {
 					if (oCD.fullMatch) {
 						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-						r.m_trees.back().fmNode.cellId = oCellId;
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-						r.m_trees.back().pmNode.cellId = oCellId;
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 					}
 				}
@@ -763,11 +755,9 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 				else {
 					if (myCD.fullMatch) {
 						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-						r.m_trees.back().fmNode.cellId = myCellId;
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-						r.m_trees.back().pmNode.cellId = myCellId;
 						r.m_trees.back().pmNode.pmIdxId = myCD.pmIdxId;
 					}
 					r.m_trees[treeBegin].opNode.childB = 2;
@@ -779,11 +769,9 @@ TreedCQRImp * TreedCQRImp::symDiff(const TreedCQRImp * other) const {
 				else {
 					if (oCD.fullMatch) {
 						r.m_trees.emplace_back(FlatNode::T_FM_LEAF);
-						r.m_trees.back().fmNode.cellId = oCellId;
 					}
 					else {
 						r.m_trees.emplace_back(FlatNode::T_PM_LEAF);
-						r.m_trees.back().pmNode.cellId = oCellId;
 						r.m_trees.back().pmNode.pmIdxId = oCD.pmIdxId;
 					}
 				}

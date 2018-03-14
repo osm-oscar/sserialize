@@ -27,13 +27,12 @@ namespace TreedCellQueryResult  {
 		} opNode;
 		struct {
 			uint64_t type:4;
-			uint64_t cellId:28; //around 250M Cells which is more than enough
+			uint64_t padding:28;
 			uint64_t pmIdxId:32;//29 bits is not enough if ItemIndexStore has no deduplication
 		} pmNode;
 		struct {
 			uint64_t type:4;
-			uint64_t cellId:28;
-			uint64_t padding:32;
+			uint64_t padding:60;
 		} fmNode;
 		struct {
 			uint64_t type:4;
