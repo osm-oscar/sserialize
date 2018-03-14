@@ -98,6 +98,7 @@ public:
 	int flags() const;
 	
 	uint32_t cellCount() const;
+	bool hasHits() const;
 	///complexity: O(cellCount())
 	uint32_t maxItems() const;
 	int defaultIndexTypes() const;

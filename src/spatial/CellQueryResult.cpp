@@ -161,6 +161,10 @@ uint32_t CellQueryResult::cellCount() const {
 	return m_priv->cellCount();
 }
 
+bool CellQueryResult::hasHits() const {
+	return cellCount() > 0;
+}
+
 uint32_t CellQueryResult::maxItems() const {
 	return m_priv->maxItems();
 }
