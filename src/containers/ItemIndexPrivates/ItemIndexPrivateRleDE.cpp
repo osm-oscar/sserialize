@@ -553,6 +553,8 @@ ItemIndexPrivate* ItemIndexPrivateRleDE::symmetricDifference(const ItemIndexPriv
 	return genericOp<sserialize::detail::ItemIndexImpl::SymmetricDifferenceOp>(cother);
 }
 
+namespace { //protecting namespace
+
 struct IndexStates {
 	struct SingleState {
 		SingleState(const UByteArrayAdapter & data) : data(data), rle(0), diff(0), id(0), valid(true) {
@@ -678,6 +680,8 @@ struct IndexStates {
 	uint32_t stateCount;
 	uint32_t validCounter;
 };
+
+} //end protecting namespace
 
 ItemIndex ItemIndexPrivateRleDE::fusedIntersectDifference(const std::vector< ItemIndexPrivateRleDE* > & intersect, const std::vector< ItemIndexPrivateRleDE* >& subtract, uint32_t count) {
 	IndexStates intersectStates((uint32_t) intersect.size());
