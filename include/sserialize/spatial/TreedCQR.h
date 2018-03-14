@@ -68,6 +68,7 @@ public:
 	int flags() const;
 	
 	uint32_t cellCount() const;
+	bool hasHits() const;
 	uint32_t cellId(uint32_t position) const;
 	int defaultIndexTypes() const;
 	bool fullMatch(uint32_t pos) const;

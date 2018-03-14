@@ -83,6 +83,8 @@ private:
 	sserialize::ItemIndex fmIdx(uint32_t cellId) const;
 	///flattens a cell tree, @pmIdxId set iff frt == FT_PM, @idx set iff frt == FT_FETCHED
 	void flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const;
+	///checks whether a cell has any hits at all, only used by hasHits() since pm/fm cells are not supported, only cells with trees
+	bool hasHits(const CellDesc & cd) const;
 	///copy the tree of the cell at cellPos while taking care of indexes
 	///also sets the appropriate m_hasFetchedNodes for dest
 	static void copyTree(const TreedCQRImp & src, const CellDesc & cd, TreedCQRImp & dest);
@@ -122,6 +124,7 @@ public:
 	inline bool hasTree(uint32_t pos) const { return m_desc[pos].hasTree();}
 	inline uint32_t cellId(uint32_t pos) const { return m_desc[pos].cellId;}
 	inline uint32_t cellCount() const { return (uint32_t)m_desc.size();}
+	bool hasHits() const;
 	TreedCQRImp * intersect(const TreedCQRImp * other) const;
 	TreedCQRImp * unite(const TreedCQRImp * other) const;
 	TreedCQRImp * diff(const TreedCQRImp * other) const;

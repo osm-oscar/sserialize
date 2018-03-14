@@ -159,6 +159,64 @@ void TreedCQRImp::flattenCell(const FlatNode * n, uint32_t cellId, sserialize::I
 	};
 }
 
+bool TreedCQRImp::hasHits(const CellDesc & cd) const {
+	SSERIALIZE_CHEAP_ASSERT(cd.hasTree());
+	//first check if tree has only intersect operations
+	{
+		auto tbegin = m_trees.begin() + cd.treeBegin;
+		auto tend = m_trees.begin() + cd.treeEnd;
+		bool nice = true;
+		uint32_t numLeafs = 0;
+		for(auto tit(tbegin); tit != tend && nice; ++tit) {
+			const FlatNode & n = *tit;
+			switch (n.common.type) {
+			case FlatNode::T_PM_LEAF:
+			case FlatNode::T_FETCHED_LEAF:
+				++numLeafs;
+			case FlatNode::T_FM_LEAF:
+			case FlatNode::T_INTERSECT:
+				break;
+			default:
+				nice = false;
+				break;
+			};
+		}
+		
+		//now get all the leaf nodes and intersect them with constrainedIntersect
+		if (nice) {
+			SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(0), numLeafs); //there should be no tree if there are only fm nodes
+			if (numLeafs == 1) { //a single fetched node with any amount of fm nodes, cannot be a pm node, otherwise there would be no tree
+				return true;
+			}
+			
+			std::vector<sserialize::ItemIndex> tmp;
+			tmp.reserve(numLeafs);
+			for(auto tit(tbegin); tit != tend; ++tit) {
+				const FlatNode & n = *tit;
+				switch (n.common.type) {
+				case FlatNode::T_PM_LEAF:
+					tmp.emplace_back( m_idxStore.at( n.pmNode.pmIdxId ) );
+					break;
+				case FlatNode::T_FETCHED_LEAF:
+					tmp.emplace_back( m_fetchedIdx.at( n.fetchedNode.internalIdxId ) );
+					break;
+				case FlatNode::T_FM_LEAF: //this is the neutral element for intersection
+				default:
+					break;
+				};
+			}
+			return sserialize::ItemIndex::constrainedIntersect(tmp, 1).size();
+		}
+	}
+	
+	//its a ugly one, use slow flattening
+	sserialize::ItemIndex idx;
+	uint32_t pmIdxId;
+	FlattenResultType frt;
+	flattenCell((&(m_trees[0]))+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+	return frt == FT_FETCHED || frt == FT_FM || frt == FT_PM;
+}
+
 
 TreedCQRImp::TreedCQRImp() :
 m_hasFetchedNodes(false)
@@ -395,6 +453,23 @@ void TreedCQRImp::copyFetchedIndices(const TreedCQRImp& src, TreedCQRImp & dest,
 
 bool TreedCQRImp::flagCheck(int first, int second) {
 	return (first | second) == first;
+}
+
+bool TreedCQRImp::hasHits() const {
+	//first check if there is any cell that has no tree, since then its either pm or fm and hence has a non-empty result
+	for(const CellDesc & cd : m_desc) {
+		if (!cd.hasTree()) {
+			return true;
+		}
+	}
+	
+	//only cells with trees, check the trees
+	for(const CellDesc & cd : m_desc) {
+		if (hasHits(cd)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 TreedCQRImp * TreedCQRImp::intersect(const TreedCQRImp * other) const {
