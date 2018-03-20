@@ -5,9 +5,15 @@
 
 namespace sserialize {
 
-MultiVarBitArrayPrivate::MultiVarBitArrayPrivate() : RefCountObject() {}
+MultiVarBitArrayPrivate::MultiVarBitArrayPrivate() :
+RefCountObject(),
+m_size(0)
+{}
 
-MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const std::vector< uint8_t >& bitConfig, const sserialize::UByteArrayAdapter& data) : RefCountObject(), m_data(data) {
+MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const std::vector< uint8_t >& bitConfig, const sserialize::UByteArrayAdapter& data) :
+RefCountObject(),
+m_data(data)
+{
 	uint32_t sum = 0;
 	m_bitSums.resize(bitConfig.size(), 0);
 	for(size_t i = 0; i < bitConfig.size(); i++) {
@@ -16,7 +22,10 @@ MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const std::vector< uint8_t >& b
 	}
 }
 
-MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const UByteArrayAdapter & data) : RefCountObject(), m_size(data.getUint32(1)) {
+MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const UByteArrayAdapter & data) :
+RefCountObject(),
+m_size(data.getUint32(1))
+{
 	m_size = data.getUint32(1);
 	uint16_t bitConfigCount = data.getUint8(5);
 	CompactUintArray carr(data+MultiVarBitArray::HEADER_SIZE, 5);
