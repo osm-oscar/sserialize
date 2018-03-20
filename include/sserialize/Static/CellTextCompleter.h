@@ -160,7 +160,7 @@ T_CQR_TYPE CellTextCompleter::complete(const std::string& qstr, const sserialize
 		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_gh, m_idxStore, flags());
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
-		return T_CQR_TYPE(flags());
+		return T_CQR_TYPE(m_gh, m_idxStore, flags());
 	}
 }
 
@@ -171,7 +171,7 @@ T_CQR_TYPE CellTextCompleter::regions(const std::string& qstr, const sserialize:
 		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_gh, m_idxStore, flags());
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
-		return T_CQR_TYPE(flags());
+		return T_CQR_TYPE(m_gh, m_idxStore, flags());
 	}
 }
 
@@ -182,7 +182,7 @@ T_CQR_TYPE CellTextCompleter::items(const std::string& qstr, const sserialize::S
 		return T_CQR_TYPE(sserialize::ItemIndex(), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_gh, m_idxStore, flags());
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
-		return T_CQR_TYPE(flags());
+		return T_CQR_TYPE(m_gh, m_idxStore, flags());
 	}
 }
 
@@ -192,7 +192,7 @@ T_CQR_TYPE CellTextCompleter::fromRegionStoreId(uint32_t storeId) const {
 		uint32_t regionCellPtr = m_gh.regionCellIdxPtr(m_gh.storeIdToGhId(storeId));
 		return T_CQR_TYPE(m_idxStore.at(regionCellPtr), m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE(flags());
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE>
@@ -201,7 +201,7 @@ T_CQR_TYPE CellTextCompleter::regionExclusiveCells(uint32_t storeId) const {
 		uint32_t cellPtr = m_gh.regionExclusiveCellIdxPtr(m_gh.storeIdToGhId(storeId));
 		return T_CQR_TYPE(m_idxStore.at(cellPtr), m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE(flags());
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE, typename T_ITERATOR>
@@ -211,7 +211,7 @@ T_CQR_TYPE CellTextCompleter::fromCellIds(const T_ITERATOR & begin, const T_ITER
 		return T_CQR_TYPE(sserialize::ItemIndex(std::vector<uint32_t>(begin, end)), m_gh, m_idxStore, flags());
 	}
 	else {
-		return T_CQR_TYPE(flags());
+		return T_CQR_TYPE(m_gh, m_idxStore, flags());
 	}
 }
 
@@ -220,7 +220,7 @@ T_CQR_TYPE CellTextCompleter::fromCellId(uint32_t cellId) const {
 	if (cellId < m_gh.cellSize()) {
 		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0, flags());
 	}
-	return T_CQR_TYPE(flags());
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE>
@@ -247,7 +247,7 @@ T_CQR_TYPE CellTextCompleter::cqrBetween(const sserialize::spatial::GeoPoint& st
 	if (idx.size()) {
 		return T_CQR_TYPE(idx, m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE(flags());
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE, typename T_GEOPOINT_ITERATOR>
@@ -256,7 +256,7 @@ T_CQR_TYPE CellTextCompleter::cqrAlongPath(double radius, const T_GEOPOINT_ITERA
 	if (idx.size()) {
 		return T_CQR_TYPE(idx, m_gh, m_idxStore, flags());
 	}
-	return T_CQR_TYPE(flags());
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
 }
 
 }//end namespace detail

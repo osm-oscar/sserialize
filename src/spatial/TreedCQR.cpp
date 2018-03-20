@@ -11,6 +11,10 @@ TreedCellQueryResult::TreedCellQueryResult() :
 m_priv(new detail::TreedCellQueryResult::TreedCQRImp())
 {}
 
+TreedCellQueryResult::TreedCellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags) :
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(gh, idxStore, flags))
+{}
+
 TreedCellQueryResult::TreedCellQueryResult(
 	const ItemIndex & fullMatches,
 	const GeoHierarchy & gh,

@@ -48,9 +48,9 @@ private:
 private:
 	void uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx);
 	static bool flagCheck(int first, int second);
-	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 public:
-	CellQueryResult(int flags);
+	CellQueryResult();
+	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
 	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }

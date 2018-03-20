@@ -219,7 +219,8 @@ bool TreedCQRImp::hasHits(const CellDesc & cd) const {
 
 
 TreedCQRImp::TreedCQRImp() :
-m_hasFetchedNodes(false)
+m_hasFetchedNodes(false),
+m_flags(sserialize::CellQueryResult::FF_EMPTY)
 {}
 
 TreedCQRImp::TreedCQRImp(
@@ -452,7 +453,9 @@ void TreedCQRImp::copyFetchedIndices(const TreedCQRImp& src, TreedCQRImp & dest,
 }
 
 bool TreedCQRImp::flagCheck(int first, int second) {
-	return (first | second) == first;
+	return ((first | second) == first) &&
+		((first & sserialize::CellQueryResult::FF_EMPTY) != sserialize::CellQueryResult::FF_EMPTY) &&
+		((second & sserialize::CellQueryResult::FF_EMPTY) != sserialize::CellQueryResult::FF_EMPTY);
 }
 
 bool TreedCQRImp::hasHits() const {

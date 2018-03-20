@@ -6,8 +6,8 @@
 namespace sserialize {
 namespace detail {
 
-CellQueryResult::CellQueryResult(int flags) :
-m_flags(flags),
+CellQueryResult::CellQueryResult() :
+m_flags(sserialize::CellQueryResult::FF_EMPTY),
 m_idx(0)
 {}
 
@@ -20,7 +20,8 @@ CellQueryResult::CellQueryResult(const sserialize::ItemIndex & fmIdx,
 :
 m_gh(gh),
 m_idxStore(idxStore),
-m_flags(flags)
+m_flags(flags),
+m_idx(0)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend()), pmIt(pmIdx.cbegin()), pmEnd(pmIdx.cend());
 
@@ -72,7 +73,8 @@ CellQueryResult::CellQueryResult(
 :
 m_gh(gh),
 m_idxStore(idxStore),
-m_flags(flags)
+m_flags(flags),
+m_idx(0)
 {
 	sserialize::ItemIndex::const_iterator fmIt(fmIdx.cbegin()), fmEnd(fmIdx.cend());
 
@@ -95,7 +97,8 @@ CellQueryResult::CellQueryResult(
 :
 m_gh(gh),
 m_idxStore(idxStore),
-m_flags(flags)
+m_flags(flags),
+m_idx(0)
 {
 
 	uint32_t totalSize = 1;
@@ -116,7 +119,8 @@ CellQueryResult::CellQueryResult(
 :
 m_gh(gh),
 m_idxStore(idxStore),
-m_flags(flags)
+m_flags(flags),
+m_idx(0)
 {}
 
 CellQueryResult::~CellQueryResult() {
@@ -137,7 +141,9 @@ void CellQueryResult::uncheckedSet(uint32_t pos, const sserialize::ItemIndex & i
 }
 
 bool CellQueryResult::flagCheck(int first, int second) { 
-	return (first | second) == first;
+	return ((first | second) == first) &&
+		((first & sserialize::CellQueryResult::FF_EMPTY) != sserialize::CellQueryResult::FF_EMPTY) &&
+		((second & sserialize::CellQueryResult::FF_EMPTY) != sserialize::CellQueryResult::FF_EMPTY);
 }
 
 uint32_t CellQueryResult::idxSize(uint32_t pos) const {
@@ -217,6 +223,7 @@ uint32_t CellQueryResult::maxItems() const {
 
 CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const {
 	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), oPtr->flags()));
+	
 	const CellQueryResult & o = *oPtr;
 	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;

@@ -59,13 +59,15 @@ public:
 	typedef detail::CellQueryResultIterator const_iterator;
 	enum {
 		FF_NONE=0x0,
+		FF_EMPTY=0x1,
 		FF_CELL_LOCAL_ITEM_IDS=0x2,
 		FF_CELL_GLOBAL_ITEM_IDS=0x4,
 		FF_MASK_CELL_ITEM_IDS=FF_CELL_LOCAL_ITEM_IDS|FF_CELL_GLOBAL_ITEM_IDS,
 		FF_DEFAULTS=FF_CELL_GLOBAL_ITEM_IDS
 	} FeatureFlags;
 public:
-	CellQueryResult(int flags = FF_DEFAULTS);
+	CellQueryResult();
+	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags = FF_DEFAULTS);
 	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	///cellIdxId is ignored if fullMatch is set
 	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);

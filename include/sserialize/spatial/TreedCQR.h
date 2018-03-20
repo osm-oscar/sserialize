@@ -30,6 +30,7 @@ private:
 	TreedCellQueryResult(detail::TreedCellQueryResult::TreedCQRImp * priv);
 public:
 	TreedCellQueryResult();
+	TreedCellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const GeoHierarchy & gh,
 					const ItemIndexStore & idxStore,

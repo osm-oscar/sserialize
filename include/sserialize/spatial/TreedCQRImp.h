@@ -79,7 +79,6 @@ private:
 	std::vector<ItemIndex> m_fetchedIdx;
 	bool m_hasFetchedNodes;
 private:
-	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	sserialize::ItemIndex fmIdx(uint32_t cellId) const;
 	///flattens a cell tree, @pmIdxId set iff frt == FT_PM, @idx set iff frt == FT_FETCHED
 	void flattenCell(const FlatNode * n, uint32_t cellId, sserialize::ItemIndex & idx, uint32_t & pmIdxId, FlattenResultType & frt) const;
@@ -95,6 +94,7 @@ private:
 	static bool flagCheck(int first, int second);
 public:
 	TreedCQRImp();
+	TreedCQRImp(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	TreedCQRImp(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
 	TreedCQRImp(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
 	
