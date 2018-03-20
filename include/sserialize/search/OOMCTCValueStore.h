@@ -637,10 +637,10 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	
 // 	sserialize::oom_unique<ValueEntry, Equal, TWithProgressInfo>(m_entries, otraits.maxMemoryUsage()/2, ep);
 	
-	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
+	#ifdef SSERIALIZE_VERY_EXPENSIVE_ASSERT_ENABLED
 	{
 		using std::is_sorted;
-		SSERIALIZE_EXPENSIVE_ASSERT(is_sorted(m_entries.begin(), m_entries.end(), ltp));
+		SSERIALIZE_VERY_EXPENSIVE_ASSERT(is_sorted(m_entries.begin(), m_entries.end(), ltp));
 	}
 	#endif
 	return true;

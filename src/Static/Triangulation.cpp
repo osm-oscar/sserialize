@@ -294,7 +294,7 @@ m_fi(d+(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_FIXED_HEADER_SIZE+m_p.getSizeInB
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_VERSION, d.at(0), "sserialize::Static::spatial::Triangulation::Triangulation");
 	SSERIALIZE_EQUAL_LENGTH_CHECK(m_p.size(), m_vi.size(), "sserialize::Static::spatial::Triangulation::Triangulation: m_vi != m_p");
-	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
+	SSERIALIZE_VERY_EXPENSIVE_ASSERT(selfCheck());
 }
 
 Triangulation::~Triangulation() {}
