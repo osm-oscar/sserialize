@@ -213,11 +213,22 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 
 template<typename TSortedContainer>
 ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, int type) {
-	UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
-	ItemIndex::Types rt = create(idx, tmp, type);
-	if (rt != ItemIndex::T_NULL) {
-		tmp.resetPtrs();
-		return ItemIndex(tmp, rt);
+	switch (type) {
+	case ItemIndex::T_EMPTY:
+		return ItemIndex();
+	case ItemIndex::T_STL_DEQUE:
+		return ItemIndex( std::deque<uint32_t>(idx.begin(), idx.end()) );
+	case ItemIndex::T_STL_VECTOR:
+		return ItemIndex( std::vector<uint32_t>(idx.begin(), idx.end()) );
+	default:
+	{
+		UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
+		ItemIndex::Types rt = create(idx, tmp, type);
+		if (rt != ItemIndex::T_NULL) {
+			tmp.resetPtrs();
+			return ItemIndex(tmp, rt);
+		}
+	}
 	}
 	throw sserialize::CreationException("Could not create index with type " + std::to_string(type));
 	return ItemIndex();
