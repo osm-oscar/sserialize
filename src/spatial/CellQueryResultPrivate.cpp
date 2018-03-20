@@ -639,7 +639,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 						state->that->m_idxStore.at( state->that->idxId(i) ).putInto(tmpidx);
 					}
 					//TODO: speed up mapping
-					sserialize::ItemIndex cellIdx = state->that->m_idxStore.at( state->that->m_gh.cellItemsPtr(cd.cellId) );
+					sserialize::ItemIndex cellIdx = state->that->idxStore().at( state->that->geoHierarchy().cellItemsPtr(cd.cellId) );
 					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpidx.size(), cellIdx.size());
 					for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
 						uint32_t localId = tmpidx[j];
