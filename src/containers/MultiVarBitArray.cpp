@@ -63,8 +63,10 @@ uint8_t MultiVarBitArrayPrivate::bitCount(uint32_t pos) const {
 }
 
 uint32_t MultiVarBitArrayPrivate::at(uint32_t pos, uint32_t subPos) const {
-	if (pos >= m_size)
+	if (pos >= m_size) {
+		throw sserialize::OutOfBoundsException("MultiVarBitArrayPrivate::at");
 		return 0;
+	}
 
 	uint32_t mask = createMask(bitCount(subPos));
 	uint8_t bitCount = this->bitCount(subPos);
@@ -87,8 +89,10 @@ uint32_t MultiVarBitArrayPrivate::at(uint32_t pos, uint32_t subPos) const {
 }
 
 uint32_t MultiVarBitArrayPrivate::set(uint32_t pos, uint32_t subPos, uint32_t value) {
-	if (pos >= m_size)
+	if (pos >= m_size) {
+		throw sserialize::OutOfBoundsException("MultiVarBitArrayPrivate::set");
 		return ~value;
+	}
 
 	uint8_t bitCount = this->bitCount(subPos);
 	uint32_t mymask = createMask(bitCount);
