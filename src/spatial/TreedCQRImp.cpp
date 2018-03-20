@@ -219,8 +219,8 @@ bool TreedCQRImp::hasHits(const CellDesc & cd) const {
 
 
 TreedCQRImp::TreedCQRImp() :
-m_hasFetchedNodes(false),
-m_flags(sserialize::CellQueryResult::FF_EMPTY)
+m_flags(sserialize::CellQueryResult::FF_EMPTY),
+m_hasFetchedNodes(false)
 {}
 
 TreedCQRImp::TreedCQRImp(
