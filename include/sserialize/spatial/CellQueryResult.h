@@ -137,6 +137,7 @@ private:
 	friend class sserialize::TreedCellQueryResult;
 private:
 	CellQueryResult(detail::CellQueryResult * priv);
+	bool selfCheck();
 private:
 	RCPtrWrapper<detail::CellQueryResult> m_priv;
 };

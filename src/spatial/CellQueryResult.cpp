@@ -339,6 +339,10 @@ ItemIndex CellQueryResult::cells() const {
 	return m_priv->cells();
 }
 
+bool CellQueryResult::selfCheck() {
+	return m_priv->selfCheck();
+}
+
 std::ostream& operator<<(std::ostream& out, const CellQueryResult& src) {
 	src.dump(out);
 	return out;

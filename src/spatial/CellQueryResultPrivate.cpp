@@ -61,7 +61,7 @@ m_flags(flags)
 	//return should stay the same since gthis is just a shrink
 	m_idx = (IndexDesc*) ::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
-	SSERIALIZE_NORMAL_ASSERT(selfCheck());
+	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(
@@ -82,7 +82,7 @@ m_flags(flags)
 	for(; fmIt != fmEnd; ++fmIt) {
 		m_desc.push_back( CellDesc(1, 0, *fmIt) );
 	}
-	SSERIALIZE_NORMAL_ASSERT(selfCheck());
+	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(
@@ -106,7 +106,7 @@ m_flags(flags)
 	if (!fullMatch) {
 		idxPtr[0].idxPtr = cellIdxId;
 	}
-	SSERIALIZE_NORMAL_ASSERT(selfCheck());
+	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
 
 CellQueryResult::CellQueryResult(
@@ -752,10 +752,27 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 }
 
 bool CellQueryResult::selfCheck() {
-	uint32_t cellCount = m_gh.cellSize();
-	for(const CellDesc & d : m_desc) {
-		if (d.cellId >= cellCount) {
+	uint32_t ghCellCount = m_gh.cellSize();
+	for(uint32_t i(0), s(this->cellCount()); i < s; ++i) {
+		const CellDesc & cd = m_desc[i];
+		if (cd.cellId >= ghCellCount) {
 			return false;
+		}
+		uint32_t cellItemsCount = m_gh.cellItemsCount(cd.cellId);
+		if (idxSize(i) > cellItemsCount) {
+			return false;
+		}
+		if ((flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) && !cd.fullMatch && this->idxSize(i)) {
+			sserialize::ItemIndex idx;
+			if (cd.fetched) {
+				idx = this->idx(i);
+			}
+			else {
+				idx = this->idxStore().at(this->idxId(i));
+			}
+			if (idx.front() >= cellItemsCount || idx.back() >= cellItemsCount) {
+				return false;
+			}
 		}
 	}
 	return true;
