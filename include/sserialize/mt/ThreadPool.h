@@ -11,6 +11,9 @@
 namespace sserialize {
 
 class ThreadPool final {
+public:
+	struct SingletonTaskTag {};
+	struct CopyTaskTag {};
 private:
 	typedef std::function< void(void) > QueuedTaskFunction;
 	typedef std::queue<QueuedTaskFunction> TaskQueue;
@@ -51,13 +54,25 @@ public:
 	
 	///execute task t with threadCount threads by spawning new threads
 	template<typename T_TASKFUNC>
-	static void execute(T_TASKFUNC t, uint32_t threadCount = 0) {
+	static void execute(T_TASKFUNC t, uint32_t threadCount, SingletonTaskTag const &) {
 		execute(QueuedTaskFunction(t), threadCount);
+	}
+	
+	template<typename T_TASKFUNC>
+	static void execute(T_TASKFUNC t, uint32_t threadCount, CopyTaskTag const &) {
+		std::vector<std::thread> threads;
+		threads.reserve(threadCount);
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads.emplace_back(t);
+		}
+		for(std::thread & x : threads) {
+			x.join();
+		}
 	}
 	
 	///execute task t with threadCount threads by spawning new threads
 	template<typename T_TASKFUNC, typename... Args>
-	static void execute(T_TASKFUNC t, uint32_t threadCount, Args&&...args) {
+	static void execute(T_TASKFUNC t, uint32_t threadCount, SingletonTaskTag const &, Args&&...args) {
 		auto tmp = std::bind(t, std::forward<Args>(args)...);
 		return execute(tmp, threadCount);
 	}
