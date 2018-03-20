@@ -196,7 +196,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 			State() : srcPos(0), src(0), dest(0), emptyCellCount(0) {}
 		};
 		
-		//we use the cqr data as follows: if a cell is empty, then it should be a partial-matched cell that is not fetched an whose indexId is 0
+		//we use the cqr data as follows: if a cell is empty, then it should be a partial-matched cell that is not fetched and whose indexId is 0
 		//since by definition the index with the id=0 is empty anyway
 		struct Proc {
 			State * state;
@@ -232,7 +232,8 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 1, cd.cellId);
 							state->dest->uncheckedSet(myPos, idx);
 						}
-						else if (frt == FT_EMPTY) {
+						else {
+							SSERIALIZE_CHEAP_ASSERT(frt == FT_EMPTY || (frt == FT_FETCHED && idx.size() == 0));
 							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
 							state->dest->m_idx[myPos].idxPtr = 0;
 							emptyCellCount += 1;
