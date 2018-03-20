@@ -662,14 +662,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 	}
 	
 	if (threadCount > 1) {
-		std::vector<std::thread> threads;
-		threads.reserve(threadCount);
-		for(uint32_t i(0); i < threadCount; ++i) {
-			threads.emplace_back(Worker(&state));
-		}
-		for(std::thread & x : threads) {
-			x.join();
-		}
+		sserialize::ThreadPool::execute(Worker(&state), threadCount, sserialize::ThreadPool::CopyTaskTag());
 	}
 	else {
 		Worker w(&state);
@@ -748,14 +741,7 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 	}
 	
 	if (threadCount > 1) {
-		std::vector<std::thread> threads;
-		threads.reserve(threadCount);
-		for(uint32_t i(0); i < threadCount; ++i) {
-			threads.emplace_back(Worker(&state));
-		}
-		for(std::thread & x : threads) {
-			x.join();
-		}
+		sserialize::ThreadPool::execute(Worker(&state), threadCount, sserialize::ThreadPool::CopyTaskTag());
 	}
 	else {
 		Worker w(&state);
