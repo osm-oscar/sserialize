@@ -753,11 +753,16 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 
 bool CellQueryResult::selfCheck() {
 	uint32_t ghCellCount = m_gh.cellSize();
+	int64_t lastCellId = -1;
 	for(uint32_t i(0), s(this->cellCount()); i < s; ++i) {
 		const CellDesc & cd = m_desc[i];
 		if (cd.cellId >= ghCellCount) {
 			return false;
 		}
+		if (int64_t(cd.cellId) < lastCellId) {
+			return 0;
+		}
+		lastCellId = cd.cellId;
 		uint32_t cellItemsCount = m_gh.cellItemsCount(cd.cellId);
 		if (idxSize(i) > cellItemsCount) {
 			return false;
