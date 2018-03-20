@@ -264,6 +264,7 @@ private:
 	sserialize::Static::Array<sserialize::spatial::GeoRect> m_cellBoundaries;
 public:
 	GeoHierarchy();
+	GeoHierarchy(const GeoHierarchy & other) = delete;
 	GeoHierarchy(const UByteArrayAdapter & data);
 	virtual ~GeoHierarchy();
 	OffsetType getSizeInBytes() const;
