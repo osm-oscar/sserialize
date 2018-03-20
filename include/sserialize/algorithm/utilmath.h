@@ -27,9 +27,9 @@ inline uint64_t multiplyDiv64(uint64_t a, uint64_t b, uint32_t c) {
 		return ab / c;
 	}
 	else {
-		#ifdef __SIZEOF_INT128__
+		#if defined(__SIZEOF_INT128__) && defined(__GNUC__) && ! defined(__clang__)
 		using int128 = __int128_t;
-		return ( int128(a)*int128(b) ) / c;
+		return ( int128(a)*int128(b) ) / uint64_t(c);
 		#else 
 		uint64_t a_c = a/c;
 		uint64_t r_a = a%c;
@@ -47,7 +47,7 @@ inline uint64_t multiplyMod64(uint64_t a, uint64_t b, uint32_t c) {
 		return ab%c;
 	}
 	else {
-		#ifdef __SIZEOF_INT128__
+		#if defined(__SIZEOF_INT128__) && defined(__GNUC__) && ! defined(__clang__)
 		using int128 = __int128_t;
 		return ( int128(a)*int128(b) ) % c;
 		#else 
