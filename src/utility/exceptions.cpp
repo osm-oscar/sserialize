@@ -132,4 +132,11 @@ Exception()
 	setMsg("MathException: " + what);
 }
 
+PreconditionViolationException::PreconditionViolationException(const std::string & what) :
+Exception()
+{
+	setMsg("MathException: " + what);
+}
+
+
 } //end namespace sserialize
