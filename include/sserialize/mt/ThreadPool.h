@@ -70,6 +70,18 @@ public:
 		}
 	}
 	
+	template<typename T_TASKFUNC, typename... Args>
+	static void execute(T_TASKFUNC t, uint32_t threadCount, CopyTaskTag const &, Args&&...args) {
+		std::vector<std::thread> threads;
+		threads.reserve(threadCount);
+		for(uint32_t i(0); i < threadCount; ++i) {
+			threads.emplace_back(t, std::forward<Args>(args)...);
+		}
+		for(std::thread & x : threads) {
+			x.join();
+		}
+	}
+	
 	///execute task t with threadCount threads by spawning new threads
 	template<typename T_TASKFUNC, typename... Args>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, SingletonTaskTag const &, Args&&...args) {
