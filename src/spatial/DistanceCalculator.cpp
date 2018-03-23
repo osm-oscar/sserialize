@@ -52,7 +52,7 @@ DistanceCalculator::DistanceCalculator(sserialize::spatial::DistanceCalculator::
 
 double DistanceCalculator::calc(const double lat0, const double lon0, const double lat1, const double lon1) const {
 	double result = m_priv->calc(lat0, lon0, lat1, lon1);
-	SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(0.0, result);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(0.0, result);
 	return result;
 }
 
