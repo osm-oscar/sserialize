@@ -377,7 +377,7 @@ set(SOURCES_CPP
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
-target_link_libraries(${PROJECT_NAME} ${MY_LINK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${MY_LINK_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${SSERIALIZE_COMPILE_DEFINITIONS})
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
 
