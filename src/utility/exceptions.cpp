@@ -135,7 +135,7 @@ Exception()
 PreconditionViolationException::PreconditionViolationException(const std::string & what) :
 Exception()
 {
-	setMsg("MathException: " + what);
+	setMsg("PreconditionViolationException: " + what);
 }
 
 
