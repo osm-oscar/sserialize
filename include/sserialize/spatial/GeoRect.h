@@ -8,7 +8,7 @@ namespace sserialize {
 namespace spatial {
 
 
-class GeoRect {
+class GeoRect final {
 	double m_lat[2];
 	double m_lon[2];
 public:
@@ -20,7 +20,7 @@ public:
 	///separated by whitespace, if fromLeafletBBox is set then southwest_lng,southwest_lat,northeast_lng,northeast_lat
 	GeoRect(const std::string & str, bool fromLeafletBBox = false);
 	GeoRect(const UByteArrayAdapter & data);
-	virtual ~GeoRect();
+	~GeoRect();
 	
 	bool valid() const;
 	
