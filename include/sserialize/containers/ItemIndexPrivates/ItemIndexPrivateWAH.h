@@ -29,7 +29,7 @@ private:
 	mutable uint32_t m_curId;
 	mutable UByteArrayAdapter m_cache;
 private:
-	///@return returns the dat iterator DO NOT call reset() on them!
+	///@return returns the data iterator DO NOT call reset() on them!
 	const UDWConstrainedIterator & dataIterator() const;
 	
 public:
