@@ -13,13 +13,18 @@ private:
 	static constexpr int digits = std::numeric_limits<BaseStorageType>::digits;
 public:
 	SimpleBitVector();
+	SimpleBitVector(const SimpleBitVector & other) = default;
+	SimpleBitVector(SimpleBitVector && other) = default;
 	SimpleBitVector(std::size_t size);
 	~SimpleBitVector();
+	SimpleBitVector & operator=(const SimpleBitVector & other) = default;
+	SimpleBitVector & operator=(SimpleBitVector && other) = default;
+	void swap(SimpleBitVector & other);
 	std::size_t storageSizeInBytes() const;
 	std::size_t capacity() const;
 	void resize(std::size_t count);
 	void set(std::size_t pos);
-	bool isSet(std::size_t pos);
+	bool isSet(std::size_t pos) const;
 	void reset();
 	template<typename TInputIterator>
 	void set(TInputIterator begin, const TInputIterator & end);

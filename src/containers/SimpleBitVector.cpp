@@ -9,6 +9,11 @@ SimpleBitVector::SimpleBitVector(std::size_t size) : m_d(size/digits+1, 0) {}
 
 SimpleBitVector::~SimpleBitVector() {}
 
+void SimpleBitVector::swap(SimpleBitVector & other) {
+	using std::swap;
+	swap(m_d, other.m_d);
+}
+
 std::size_t SimpleBitVector::storageSizeInBytes() const {
 	return m_d.size() * sizeof(BaseStorageType);
 }
@@ -28,7 +33,7 @@ void SimpleBitVector::set(std::size_t pos) {
 	m_d.at(pos/digits) |= (static_cast<BaseStorageType>(1) << (pos%digits));
 }
 
-bool SimpleBitVector::isSet(std::size_t pos) {
+bool SimpleBitVector::isSet(std::size_t pos) const {
 	if (UNLIKELY_BRANCH(pos/digits >= m_d.size())) {
 		return false;
 	}
