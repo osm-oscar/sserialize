@@ -16,18 +16,18 @@ public:
 	virtual UByteArrayAdapter::OffsetType dataSize() const = 0;
 };
 
-class UDWIteratorPrivateEmpty: public UDWIteratorPrivate {
+class UDWIteratorPrivateEmpty final: public UDWIteratorPrivate {
 public:
 	UDWIteratorPrivateEmpty() {}
 	virtual ~UDWIteratorPrivateEmpty() {}
-	virtual uint32_t next() { return 0; }
-	virtual bool hasNext() { return false; }
-	virtual void reset() {}
-	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateEmpty(); }
-	virtual UByteArrayAdapter::OffsetType dataSize() const { return 0; }
+	virtual uint32_t next() override { return 0; }
+	virtual bool hasNext() override { return false; }
+	virtual void reset() override {}
+	virtual UDWIteratorPrivate * copy() const override { return new UDWIteratorPrivateEmpty(); }
+	virtual UByteArrayAdapter::OffsetType dataSize() const override { return 0; }
 };
 
-class UDWIteratorPrivateDirect: public UDWIteratorPrivate {
+class UDWIteratorPrivateDirect final: public UDWIteratorPrivate {
 	UByteArrayAdapter m_data;
 protected:
 	UByteArrayAdapter & data() { return m_data; }
@@ -35,22 +35,29 @@ protected:
 public:
 	UDWIteratorPrivateDirect() {}
 	UDWIteratorPrivateDirect(const UByteArrayAdapter & data) : m_data(data) {}
-	virtual ~UDWIteratorPrivateDirect() {}
-	virtual uint32_t next() { return m_data.getUint32(); }
-	virtual bool hasNext() { return m_data.getPtrHasNext(); }
-	virtual void reset() { m_data.resetGetPtr();}
-	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateDirect(m_data); }
-	virtual UByteArrayAdapter::OffsetType dataSize() const { return m_data.size(); }
+	virtual ~UDWIteratorPrivateDirect() override {}
+	virtual uint32_t next() override { return m_data.getUint32(); }
+	virtual bool hasNext() override { return m_data.getPtrHasNext(); }
+	virtual void reset() override { m_data.resetGetPtr();}
+	virtual UDWIteratorPrivate * copy() const override { return new UDWIteratorPrivateDirect(m_data); }
+	virtual UByteArrayAdapter::OffsetType dataSize() const override { return m_data.size(); }
 };
 
 
-class UDWIteratorPrivateVarDirect: public UDWIteratorPrivateDirect {
+class UDWIteratorPrivateVarDirect final: public UDWIteratorPrivate {
+	UByteArrayAdapter m_data;
+protected:
+	UByteArrayAdapter & data() { return m_data; }
+	const UByteArrayAdapter & data() const { return m_data; }
 public:
 	UDWIteratorPrivateVarDirect() {}
-	UDWIteratorPrivateVarDirect(const UByteArrayAdapter & data) : UDWIteratorPrivateDirect(data) {}
-	virtual ~UDWIteratorPrivateVarDirect() {}
-	virtual uint32_t next() { return data().getVlPackedUint32(); }
-	virtual UDWIteratorPrivate * copy() const { return new UDWIteratorPrivateVarDirect(data()); }
+	UDWIteratorPrivateVarDirect(const UByteArrayAdapter & data) : m_data(data) {}
+	virtual ~UDWIteratorPrivateVarDirect() override {}
+	virtual uint32_t next() override { return data().getVlPackedUint32(); }
+	virtual bool hasNext() override { return m_data.getPtrHasNext(); }
+	virtual void reset() override { m_data.resetGetPtr();}
+	virtual UDWIteratorPrivate * copy() const override { return new UDWIteratorPrivateVarDirect(data()); }
+	virtual UByteArrayAdapter::OffsetType dataSize() const override { return m_data.size(); }
 };
 
 class UDWIterator: protected DelegateWrapper<UDWIteratorPrivate> {
