@@ -11,7 +11,7 @@ m_priv(new detail::CQRDilator(d, tg))
 CQRDilator::~CQRDilator() {}
 
 //dilating TreedCQR doesn't make any sense, since we need the real result with it
-sserialize::ItemIndex CQRDilator::dilate(const sserialize::CellQueryResult& src, double diameter) const {
+sserialize::ItemIndex CQRDilator::dilate(const sserialize::CellQueryResult& src, double diameter, uint32_t threadCount) const {
 	struct MyIterator {
 		sserialize::CellQueryResult::const_iterator m_it;
 		inline bool operator!=(const MyIterator & other) { return m_it != other.m_it; }
@@ -20,11 +20,11 @@ sserialize::ItemIndex CQRDilator::dilate(const sserialize::CellQueryResult& src,
 		inline uint32_t operator*() { return m_it.cellId(); }
 		MyIterator(const sserialize::CellQueryResult::const_iterator & it) : m_it(it) {}
 	};
-	return m_priv->dilate<MyIterator>(MyIterator(src.begin()), MyIterator(src.end()), diameter);
+	return m_priv->dilate<MyIterator>(MyIterator(src.begin()), MyIterator(src.end()), diameter, threadCount);
 }
 
-sserialize::ItemIndex CQRDilator::dilate(const sserialize::ItemIndex& src, double diameter) const {
-	return m_priv->dilate<sserialize::ItemIndex::const_iterator>(src.cbegin(), src.cend(), diameter);
+sserialize::ItemIndex CQRDilator::dilate(const sserialize::ItemIndex& src, double diameter, uint32_t threadCount) const {
+	return m_priv->dilate<sserialize::ItemIndex::const_iterator>(src.cbegin(), src.cend(), diameter, threadCount);
 }
 
 namespace detail {
