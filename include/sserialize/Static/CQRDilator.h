@@ -112,7 +112,7 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 		std::unordered_set<uint32_t> relaxed;
 		std::vector<uint32_t> queue;
 		Worker(State * state) : state(state) {}
-		Worker(const Worker & other) : state(state) {}
+		Worker(const Worker & other) : state(other.state) {}
 		void operator()() {
 			std::unique_lock<std::mutex> lck(state->itlock, std::defer_lock_t());
 			while (true) {
@@ -185,7 +185,7 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 	};
 	
 	if (!threadCount) {
-		threadCount == std::thread::hardware_concurrency();
+		threadCount = std::thread::hardware_concurrency();
 	}
 	
 	if (threadCount == 1) {
