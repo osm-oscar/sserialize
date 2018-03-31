@@ -6,6 +6,7 @@
 #include <sserialize/containers/SimpleBitVector.h>
 #include <sserialize/spatial/LatLonCalculations.h>
 #include <sserialize/spatial/CellQueryResult.h>
+#include <sserialize/mt/ThreadPool.h>
 
 namespace sserialize {
 namespace Static {
@@ -110,12 +111,18 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 		std::vector<uint32_t> dilated;	
 		std::unordered_set<uint32_t> relaxed;
 		std::vector<uint32_t> queue;
+		Worker(State * state) : state(state) {}
+		Worker(const Worker & other) : state(state) {}
 		void operator()() {
 			std::unique_lock<std::mutex> lck(state->itlock, std::defer_lock_t());
 			while (true) {
-				lck.lock();
+				if (state->threadCount > 1) {
+					lck.lock();
+				}
 				if (! (state->it != state->end) ) {
-					lck.unlock();
+					if (state->threadCount > 1) {
+						lck.unlock();
+					}
 					this->flush_or_swap();
 					break;
 				}
@@ -176,6 +183,19 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 			}
 		}
 	};
+	
+	if (!threadCount) {
+		threadCount == std::thread::hardware_concurrency();
+	}
+	
+	if (threadCount == 1) {
+		Worker w(&state);
+		w();
+	}
+	else {
+		sserialize::ThreadPool::execute(Worker(&state), threadCount, sserialize::ThreadPool::CopyTaskTag());
+	}
+	
 	//depending on the size of dilated it should be faster to just get them from dilatedMarks since these are ordered
 	uint32_t dilatedSize = (uint32_t) state.dilated.size()*sizeof(uint32_t);
 	if (dilatedSize > 1024 && dilatedSize*(sserialize::fastLog2(dilatedSize)-1) > state.dilatedMarks.storageSizeInBytes()) {
