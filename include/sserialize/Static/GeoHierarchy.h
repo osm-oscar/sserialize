@@ -466,7 +466,7 @@ public:
 	std::ostream & printStats(std::ostream & out, const sserialize::Static::ItemIndexStore & store) const;
 	
 	///@return cells whose bbox intersects @param rect
-	sserialize::ItemIndex intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect) const;
+	sserialize::ItemIndex intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t threadCount = 1) const;
 
 	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const { return m_priv->subSet(cqr, sparse, threadCount); }
 	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }

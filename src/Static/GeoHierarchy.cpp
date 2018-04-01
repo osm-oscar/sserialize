@@ -694,7 +694,7 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 	return allOk;
 }
 
-sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect) const {
+sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t hreadCount) const {
 	std::deque<uint32_t> queue;
 	std::vector<uint32_t> intersectingCells;
 	std::unordered_set<uint32_t> visitedRegions;
@@ -711,7 +711,7 @@ sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::
 		queue.pop_front();
 		if (rect.contains(r.boundary())) {
 			//checking the itemsCount of the region does only work if the hierarchy was created with a full region item index
-			//so instead we have check the cellcount
+			//so instead we have to check the cellcount
 			uint32_t cIdxPtr = r.cellIndexPtr();
 			if (idxStore.idxSize(cIdxPtr)) {
 				sserialize::ItemIndex idx(idxStore.at(cIdxPtr));
