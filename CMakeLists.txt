@@ -397,7 +397,6 @@ include/sserialize/Static/StringTable.h
 include/sserialize/Static/DenseGeoPointVector.h
 include/sserialize/Static/Array.h
 include/sserialize/Static/Map.h
-include/sserialize/Static/TriangulationS2.h
 include/sserialize/Static/Fraction.h
 include/sserialize/Static/detail/Triangulation.h
 include/sserialize/Static/PointOnS2.h
@@ -470,7 +469,6 @@ include/sserialize/containers/StringTable.h
 include/sserialize/containers/HashBasedFlatTrie.h
 include/sserialize/containers/AbstractArray.h
 include/sserialize/containers/OOMArray.h
-include/sserialize/containers/ShaMap.h
 include/sserialize/containers/DynamicBitSet.h
 include/sserialize/containers/ItemIndex.h
 include/sserialize/containers/CompactUintArray.h
