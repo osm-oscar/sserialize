@@ -117,6 +117,8 @@ public:
 			}
 		}, threadCount);
 	}
+public:
+	static inline uint32_t hardware_concurrency() { return std::thread::hardware_concurrency(); }
 };
 
 }
