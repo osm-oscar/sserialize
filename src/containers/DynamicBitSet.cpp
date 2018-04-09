@@ -259,6 +259,42 @@ DynamicBitSet DynamicBitSet::operator~() const {
 	return DynamicBitSet(d);
 }
 
+
+DynamicBitSet & DynamicBitSet::operator&=(const DynamicBitSet & other) {
+	m_data.resize( std::min(m_data.size(), other.m_data.size()) );
+	for(UByteArrayAdapter::OffsetType i(0), s(m_data.size()); i < s; ++i) {
+		m_data[i] = m_data[i] & other.m_data[i];
+	}
+	return *this;
+}
+
+DynamicBitSet & DynamicBitSet::operator|=(const DynamicBitSet & other) {
+	for(UByteArrayAdapter::OffsetType i(0), s(std::min(m_data.size(), other.m_data.size())); i < s; ++i) {
+		m_data[i] = m_data[i] | other.m_data[i];
+	}
+	if (m_data.size() < other.m_data.size()) {
+		m_data.putData(m_data.size(), UByteArrayAdapter(other.m_data, m_data.size()));
+	}
+	return *this;
+}
+
+DynamicBitSet & DynamicBitSet::operator-=(const DynamicBitSet & other) {
+	for(UByteArrayAdapter::OffsetType i(0), s(std::min(m_data.size(), other.m_data.size())); i < s; ++i) {
+		m_data[i] = m_data[i] & (~other.m_data[i]);
+	}
+	return *this;
+}
+
+DynamicBitSet & DynamicBitSet::operator^=(const DynamicBitSet & other) {
+	for(UByteArrayAdapter::OffsetType i(0), s(std::min(m_data.size(), other.m_data.size())); i < s; ++i) {
+		m_data[i] = m_data[i] ^ other.m_data[i];
+	}
+	if (m_data.size() < other.m_data.size()) {
+		m_data.putData(m_data.size(), UByteArrayAdapter(other.m_data, m_data.size()));
+	}
+	return *this;
+}
+
 DynamicBitSet::const_iterator DynamicBitSet::cbegin() const {
 	return const_iterator( new detail::DynamicBitSet::DynamicBitSetIdIterator(this, 0) );
 }

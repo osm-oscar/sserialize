@@ -63,6 +63,11 @@ public:
 	DynamicBitSet operator^(const DynamicBitSet & other) const;
 	DynamicBitSet operator~() const;
 	
+	DynamicBitSet & operator&=(const DynamicBitSet & other);
+	DynamicBitSet & operator|=(const DynamicBitSet & other);
+	DynamicBitSet & operator-=(const DynamicBitSet & other);
+	DynamicBitSet & operator^=(const DynamicBitSet & other);
+	
 	UByteArrayAdapter & data() { return m_data;}
 	const UByteArrayAdapter & data() const { return m_data;}
 
