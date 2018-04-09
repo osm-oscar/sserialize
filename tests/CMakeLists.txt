@@ -59,6 +59,7 @@ ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie)
 ADD_TEST_TARGET_SINGLE(containers_VariantStore)
 ADD_TEST_TARGET_SINGLE(containers_CFLArray)
 ADD_TEST_TARGET_SINGLE(containers_OOMArray)
+ADD_TEST_TARGET_SINGLE(containers_OOMFlatTrie)
 
 #util
 ADD_TEST_TARGET_SINGLE(util_compactuintarray)
