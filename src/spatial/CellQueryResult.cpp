@@ -1,5 +1,7 @@
 #include <sserialize/spatial/CellQueryResult.h>
 #include <sserialize/spatial/CellQueryResultPrivate.h>
+#include <sserialize/mt/ThreadPool.h>
+#include <sserialize/containers/DynamicBitSet.h>
 
 namespace sserialize {
 namespace detail {
@@ -281,8 +283,51 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 	if ((flags() & FF_CELL_LOCAL_ITEM_IDS) != 0) {
 		throw sserialize::UnimplementedFunctionException("CellQueryResult::flaten: cell local ids are not supported yet");	
 	}
-	auto func = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; } ;
-	return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func, threadCount);
+	
+	if (uint64_t(5) * cellCount() > geoHierarchy().cellSize()) {
+		if (threadCount == 1) {
+			DynamicBitSet bitset;
+			for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+				idx(i).putInto(bitset);
+			}
+			return bitset.toIndex(idxStore().indexTypes());
+		}
+		else {
+			struct State {
+				DynamicBitSet bitset;
+				std::mutex lock;
+				std::atomic<uint32_t> i{0};
+				uint32_t cellCount;
+				const CellQueryResult * that;
+			} state;
+			state.cellCount = cellCount();
+			state.that = this;
+			
+			struct Worker {
+				DynamicBitSet bitset;
+				State * state;
+				Worker(State * state) : state(state) {}
+				Worker(const Worker & other) : state(other.state) {}
+				void operator()() {
+					while(true) {
+						uint32_t i = state->i.fetch_add(1, std::memory_order_relaxed);
+						if (i >= state->cellCount) {
+							break;
+						}
+						state->that->idx(i).putInto(bitset);
+					}
+					std::lock_guard<std::mutex> lck(state->lock);
+					state->bitset |= bitset;
+				};
+			};
+			sserialize::ThreadPool::execute(Worker(&state), threadCount, ThreadPool::CopyTaskTag());
+			return state.bitset.toIndex(idxStore().indexTypes());
+		}
+	}
+	else {
+		auto func = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; } ;
+		return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func, threadCount);
+	}
 }
 
 ItemIndex CellQueryResult::topK(uint32_t numItems) const {
