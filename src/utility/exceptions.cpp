@@ -52,6 +52,12 @@ uint32_t VersionMissMatchException::haveVersion() const throw() {
 	return m_haveVersion;
 }
 
+OutOfBoundsException::OutOfBoundsException() :
+Exception()
+{
+	setMsg("OutOfBoundsException");
+}
+
 OutOfBoundsException::OutOfBoundsException(const std::string & what) :
 Exception()
 {

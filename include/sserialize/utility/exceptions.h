@@ -39,6 +39,7 @@ public:
 
 class OutOfBoundsException: public Exception {
 public:
+	OutOfBoundsException();
 	OutOfBoundsException(const std::string & what);
 };
 
