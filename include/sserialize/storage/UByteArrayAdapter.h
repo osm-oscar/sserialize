@@ -412,18 +412,18 @@ public://get functions with offset
 	
 public://put functions with offset
 
-	bool putUint64(const OffsetType pos, const uint64_t value);
-	bool putInt64(const OffsetType pos, const int64_t value);
-	bool putInt32(const OffsetType pos, const int32_t value);
-	bool putUint32(const OffsetType pos, const uint32_t value);
-	bool putUint24(const OffsetType pos, const uint32_t value);
-	bool putUint16(const OffsetType pos, const uint16_t value);
-	bool putUint8(const OffsetType pos, const uint8_t value);
-	bool putDouble(const OffsetType pos, const double value);
-	bool putFloat(const OffsetType pos, const float value);
+	void putUint64(const OffsetType pos, const uint64_t value);
+	void putInt64(const OffsetType pos, const int64_t value);
+	void putInt32(const OffsetType pos, const int32_t value);
+	void putUint32(const OffsetType pos, const uint32_t value);
+	void putUint24(const OffsetType pos, const uint32_t value);
+	void putUint16(const OffsetType pos, const uint16_t value);
+	void putUint8(const OffsetType pos, const uint8_t value);
+	void putDouble(const OffsetType pos, const double value);
+	void putFloat(const OffsetType pos, const float value);
 	
-	bool putOffset(const OffsetType pos, const OffsetType value);
-	bool putNegativeOffset(const OffsetType pos, const NegativeOffsetType value);
+	void putOffset(const OffsetType pos, const OffsetType value);
+	void putNegativeOffset(const OffsetType pos, const NegativeOffsetType value);
 
 	/** @return: Length of the number, -1 on failure **/
 	int putVlPackedUint64(const OffsetType pos, const uint64_t value);
@@ -436,11 +436,11 @@ public://put functions with offset
 
 	/** @return number of bytes added, -1 if failed */
 	int putString(const OffsetType pos, const std::string & str);
-	bool putData(const OffsetType pos, const uint8_t* data, OffsetType len);
-	bool putData(const OffsetType pos, const std::deque<uint8_t> & data);
-	bool putData(const OffsetType pos, const std::vector<uint8_t> & data);
-	bool putData(const OffsetType pos, const UByteArrayAdapter & data);
-	bool putData(const OffsetType pos, const MemoryView & data);
+	void putData(const OffsetType pos, const uint8_t* data, OffsetType len);
+	void putData(const OffsetType pos, const std::deque<uint8_t> & data);
+	void putData(const OffsetType pos, const std::vector<uint8_t> & data);
+	void putData(const OffsetType pos, const UByteArrayAdapter & data);
+	void putData(const OffsetType pos, const MemoryView & data);
 
 public://streaming get functions
 
@@ -471,19 +471,19 @@ public://streaming get functions
 
 public://streaming put functions
 	
-	bool putOffset(const OffsetType value);
-	bool putNegativeOffset(const NegativeOffsetType value);
+	void putOffset(const OffsetType value);
+	void putNegativeOffset(const NegativeOffsetType value);
 	
-	bool putInt64(const int64_t value);
-	bool putUint64(const uint64_t value);
+	void putInt64(const int64_t value);
+	void putUint64(const uint64_t value);
 	
-	bool putInt32(const int32_t value);
-	bool putUint32(const uint32_t value);
-	bool putUint24(const uint32_t value);
-	bool putUint16(const uint16_t value);
-	bool putUint8(const uint8_t value);
-	bool putDouble(const double value);
-	bool putFloat(const float value);
+	void putInt32(const int32_t value);
+	void putUint32(const uint32_t value);
+	void putUint24(const uint32_t value);
+	void putUint16(const uint16_t value);
+	void putUint8(const uint8_t value);
+	void putDouble(const double value);
+	void putFloat(const float value);
 
 	int putVlPackedUint64(const uint64_t value);
 	int putVlPackedInt64(const int64_t value);
@@ -493,11 +493,11 @@ public://streaming put functions
 	int putVlPackedInt32(const int32_t value);
 	int putVlPackedPad4Int32(const int32_t value);
 
-	bool putString(const std::string & str);
-	bool putData(const uint8_t * data, OffsetType len);
-	bool putData(const std::deque<uint8_t> & data);
-	bool putData(const std::vector<uint8_t> & data);
-	bool putData(const UByteArrayAdapter & data);
+	void putString(const std::string & str);
+	void putData(const uint8_t * data, OffsetType len);
+	void putData(const std::deque<uint8_t> & data);
+	void putData(const std::vector<uint8_t> & data);
+	void putData(const UByteArrayAdapter & data);
 public://debugging functions
 	void dump(OffsetType byteCount) const;
 	void dumpAsString(OffsetType byteCount) const;

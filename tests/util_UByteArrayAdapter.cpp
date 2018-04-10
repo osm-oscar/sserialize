@@ -102,32 +102,32 @@ void createIntegers(int32_t count, TOutputIterator out) {
 	}
 }
 
-bool put(sserialize::UByteArrayAdapter & d, const IntegerType & t) {
+void put(sserialize::UByteArrayAdapter & d, const IntegerType & t) {
 	switch (t.type) {
 	case IntegerType::U8:
-		return d.putUint8((uint8_t)t.value);
+		d.putUint8((uint8_t)t.value);
 	case IntegerType::U16:
-		return d.putUint16((uint16_t)t.value);
+		d.putUint16((uint16_t)t.value);
 	case IntegerType::U24:
-		return d.putUint24((uint32_t)t.value);
+		d.putUint24((uint32_t)t.value);
 	case IntegerType::U32:
-		return d.putUint32((uint32_t)t.value);
+		d.putUint32((uint32_t)t.value);
 	case IntegerType::U64:
-		return d.putUint64((uint64_t)t.value);
+		d.putUint64((uint64_t)t.value);
 	case IntegerType::S32:
-		return d.putInt32((int32_t)t.value);
+		d.putInt32((int32_t)t.value);
 	case IntegerType::S64:
-		return d.putInt64((int64_t)t.value);
+		d.putInt64((int64_t)t.value);
 	case IntegerType::VU32:
-		return d.putVlPackedUint32((uint32_t)t.value);
+		d.putVlPackedUint32((uint32_t)t.value);
 	case IntegerType::VS32:
-		return d.putVlPackedInt32((int32_t)t.value);
+		d.putVlPackedInt32((int32_t)t.value);
 	case IntegerType::VU64:
-		return d.putVlPackedUint64((uint64_t)t.value);
+		d.putVlPackedUint64((uint64_t)t.value);
 	case IntegerType::VS64:
-		return d.putVlPackedInt64((int64_t)t.value);
+		d.putVlPackedInt64((int64_t)t.value);
 	default:
-		return false;
+		break;
 	}
 }
 
@@ -185,7 +185,7 @@ public:
 		std::vector<std::string> strs(sserialize::createStringsVec(128, TStringsCount));
 		sserialize::UByteArrayAdapter d(createUBA());
 		for(const std::string & str : strs) {
-			CPPUNIT_ASSERT(d.putString(str));
+			CPPUNIT_ASSERT_NO_THROW(d.putString(str));
 		}
 		
 		for(uint32_t i(0); i < strs.size() && d.tellGetPtr() < d.size(); ++i) {
@@ -210,7 +210,7 @@ public:
 		
 		for(uint32_t i(0); i < src.size(); ++i) {
 			const IntegerType & t = src.at(i);
-			CPPUNIT_ASSERT(put(d, t));
+			CPPUNIT_ASSERT_NO_THROW(put(d, t));
 		}
 		
 		d.resetGetPtr();

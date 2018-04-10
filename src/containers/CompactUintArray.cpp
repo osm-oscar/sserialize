@@ -232,12 +232,8 @@ uint32_t CompactUintArrayPrivateU8::at(uint32_t pos) const {
 }
 
 uint32_t CompactUintArrayPrivateU8::set(const uint32_t pos, uint32_t value) {
-	if (m_data.putUint8(pos, (uint8_t)value)) {
-		return value;
-	}
-	else {
-		return ~value;
-	}
+	m_data.putUint8(pos, (uint8_t)value);
+	return value;
 }
 
 CompactUintArrayPrivateU16::CompactUintArrayPrivateU16(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
@@ -254,12 +250,8 @@ uint32_t CompactUintArrayPrivateU16::at(uint32_t pos) const {
 }
 
 uint32_t CompactUintArrayPrivateU16::set(const uint32_t pos, uint32_t value) {
-	if (m_data.putUint16(SerializationInfo<uint16_t>::length*pos, (uint16_t)value)) {
-		return value;
-	}
-	else {
-		return ~value;
-	}
+	m_data.putUint16(SerializationInfo<uint16_t>::length*pos, uint16_t(value));
+	return uint16_t(value);
 }
 
 CompactUintArrayPrivateU24::CompactUintArrayPrivateU24(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
