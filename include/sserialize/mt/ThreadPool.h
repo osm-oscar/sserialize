@@ -33,7 +33,7 @@ private:
 public:
 	void taskWorkerFunc(uint32_t /*myThreadNumber*/);
 public:
-	ThreadPool(uint32_t numThreads = 1);
+	ThreadPool(uint32_t numThreads = 0);
 	///Destroys the thread pool without doing any more work
 	///Call flushQueue() to flush the queue
 	~ThreadPool();
@@ -49,10 +49,10 @@ public:
 		return sheduleTask(tmp);
 	}
 	
-	///execute task t with threadCount threads by spawning new threads
+	///execute task t with threadCount threads on global ThreadPool
 	static void execute(QueuedTaskFunction t, uint32_t threadCount = 0);
 	
-	///execute task t with threadCount threads by spawning new threads
+	///execute task t with threadCount threads on global ThreadPool
 	template<typename T_TASKFUNC>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, SingletonTaskTag const &) {
 		execute(QueuedTaskFunction(t), threadCount);
@@ -60,36 +60,27 @@ public:
 	
 	template<typename T_TASKFUNC>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, CopyTaskTag const &) {
-		std::vector<std::thread> threads;
-		threads.reserve(threadCount);
 		for(uint32_t i(0); i < threadCount; ++i) {
-			threads.emplace_back(t);
-		}
-		for(std::thread & x : threads) {
-			x.join();
+			execute(QueuedTaskFunction( T_TASKFUNC(t) ), 1);
 		}
 	}
 	
 	template<typename T_TASKFUNC, typename... Args>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, CopyTaskTag const &, Args&&...args) {
-		std::vector<std::thread> threads;
-		threads.reserve(threadCount);
 		for(uint32_t i(0); i < threadCount; ++i) {
-			threads.emplace_back(t, std::forward<Args>(args)...);
-		}
-		for(std::thread & x : threads) {
-			x.join();
+			auto tmp = std::bind(T_TASKFUNC(t), std::forward<Args>(args)...);
+			execute(tmp, 1);
 		}
 	}
 	
-	///execute task t with threadCount threads by spawning new threads
+	///execute task t with threadCount threads on global ThreadPool
 	template<typename T_TASKFUNC, typename... Args>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, SingletonTaskTag const &, Args&&...args) {
 		auto tmp = std::bind(t, std::forward<Args>(args)...);
-		return execute(tmp, threadCount);
+		execute(tmp, threadCount);
 	}
 	
-	///execute task t with threadCount threads by spawning new threads
+	///execute task t with threadCount threads on global ThreadPool
 	///Calls t for each element in the range exactly once
 	template<typename T_TASKFUNC, typename T_ITERATOR>
 	static void map(T_TASKFUNC t, T_ITERATOR begin, T_ITERATOR end, uint32_t threadCount = 0) {
@@ -120,6 +111,10 @@ public:
 public:
 	static inline uint32_t hardware_concurrency() { return std::thread::hardware_concurrency(); }
 };
+
+namespace globals {
+	extern sserialize::ThreadPool threadPool;
+}//end namespace globals
 
 }
 

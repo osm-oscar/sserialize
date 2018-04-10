@@ -56,7 +56,13 @@ void ThreadPool::stop() {
 	}
 }
 
-ThreadPool::ThreadPool(uint32_t numThreads) : m_online(false), m_runningThreads(0) {
+ThreadPool::ThreadPool(uint32_t numThreads) :
+m_online(false),
+m_runningThreads(0)
+{
+	if (!numThreads) {
+		numThreads = std::thread::hardware_concurrency();
+	}
 	start(numThreads);
 }
 
@@ -95,23 +101,19 @@ bool ThreadPool::sheduleTask(QueuedTaskFunction t) {
 
 void ThreadPool::execute(QueuedTaskFunction t, uint32_t threadCount) {
 	if (!threadCount) {
-		threadCount = std::max<uint32_t>(1, std::thread::hardware_concurrency());
+		threadCount = globals::threadPool.numThreads();
 	}
 	
-	if (threadCount == 1) {
-		t();
-		return;
-	}
-	
-	std::vector<std::thread> threads;
-	threads.reserve(threadCount);
 	for(uint32_t i(0); i < threadCount; ++i) {
-		threads.emplace_back(std::thread(t));
-	}
-	for(std::thread & th : threads) {
-		th.join();
+		globals::threadPool.sheduleTask(t);
 	}
 }
+
+namespace globals {
+	
+sserialize::ThreadPool threadPool;
+	
+} //end namespace globals
 
 
 }//end namespace
