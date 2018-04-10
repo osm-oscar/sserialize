@@ -102,7 +102,7 @@ void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 	if (!size())
 		return;
 	UByteArrayAdapter & destData = bitSet.data();
-	uint32_t destDataSize = (uint32_t) destData.size();
+	uint32_t destDataSize = narrow_check<uint32_t>(destData.size());
 	uint32_t bitCount = 0;
 	
 	UDWConstrainedIterator dataIt = dataIterator();
