@@ -74,8 +74,9 @@ protected:
 			hasIdxData = false;
 		}
 		if (hasIdxData) {
-			CPPUNIT_ASSERT_MESSAGE("index from index data unequal", sserialize::ItemIndex(idx.data(), T_TYPE) == idx);
+			CPPUNIT_ASSERT_MESSAGE("index data from index unequal to data", dest.equalContent(idxData));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("Index data size incorrect", dest.size(), idx.getSizeInBytes());
+			CPPUNIT_ASSERT_MESSAGE("index from index data unequal", sserialize::ItemIndex(idx.data(), T_TYPE) == idx);
 		}
 		return ok;
 	}
