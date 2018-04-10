@@ -38,24 +38,31 @@ private:
 
 class ItemIndex;
 
-class DynamicBitSet {
+class DynamicBitSet final {
 public:
-	///An iterator the iterates over the set ids
+	///An iterator that iterates over the set ids
 	typedef AbstractArrayIterator<SizeType> const_iterator;
 private:
 	UByteArrayAdapter m_data;
 public:
 	///creates a DynamicBitSet with a in-memory cache as backend
 	DynamicBitSet();
+	DynamicBitSet(const DynamicBitSet & other) = delete;
+	DynamicBitSet(DynamicBitSet && other) = default;
 	///Create DynamicBitSet at the beginning of data
 	DynamicBitSet(const sserialize::UByteArrayAdapter & data);
-	virtual ~DynamicBitSet();
+	~DynamicBitSet();
+	DynamicBitSet & operator=(const DynamicBitSet & other) = delete;
+	DynamicBitSet & operator=(DynamicBitSet && other) = default;
 	void resize(UByteArrayAdapter::OffsetType size);
 	///@param shift: number of bytes to align to expressed as a power of two. i.e. 0 => 1 byte, 1 => 2 bytes, 2 => 4 bytes, 3 => 8 bytes
 	bool align(uint8_t shift);
 	
 	IdType smallestEntry() const;
 	IdType largestEntry() const;
+	
+	bool operator==(const DynamicBitSet & other) const;
+	bool operator!=(const DynamicBitSet & other) const;
 	
 	DynamicBitSet operator&(const DynamicBitSet & other) const;
 	DynamicBitSet operator|(const DynamicBitSet & other) const;

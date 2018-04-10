@@ -144,6 +144,32 @@ IdType DynamicBitSet::smallestEntry() const {
 	return id;
 }
 
+
+bool DynamicBitSet::operator==(const DynamicBitSet & other) const {
+	UByteArrayAdapter::SizeType i = 0;
+	UByteArrayAdapter::SizeType s = std::min(m_data.size(), other.m_data.size());
+	for(; i < s; ++i) {
+		if (m_data[i] != other.m_data[i]) {
+			return false;
+		}
+	}
+	for(s = m_data.size(); i < s; ++i) {
+		if (m_data[i]) {
+			return false;
+		}
+	}
+	for(s = other.m_data.size(); i < s; ++i) {
+		if (other.m_data[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool DynamicBitSet::operator!=(const DynamicBitSet & other) const {
+	return !(*this == other);
+}
+
 IdType DynamicBitSet::largestEntry() const {
 	if (m_data.size() == 0)
 		return 0;
@@ -263,14 +289,14 @@ DynamicBitSet DynamicBitSet::operator~() const {
 DynamicBitSet & DynamicBitSet::operator&=(const DynamicBitSet & other) {
 	m_data.resize( std::min(m_data.size(), other.m_data.size()) );
 	for(UByteArrayAdapter::OffsetType i(0), s(m_data.size()); i < s; ++i) {
-		m_data[i] = m_data[i] & other.m_data[i];
+		m_data[i] &= other.m_data[i];
 	}
 	return *this;
 }
 
 DynamicBitSet & DynamicBitSet::operator|=(const DynamicBitSet & other) {
 	for(UByteArrayAdapter::OffsetType i(0), s(std::min(m_data.size(), other.m_data.size())); i < s; ++i) {
-		m_data[i] = m_data[i] | other.m_data[i];
+		m_data[i] |= other.m_data[i];
 	}
 	if (m_data.size() < other.m_data.size()) {
 		m_data.putData(m_data.size(), UByteArrayAdapter(other.m_data, m_data.size()));
@@ -280,14 +306,14 @@ DynamicBitSet & DynamicBitSet::operator|=(const DynamicBitSet & other) {
 
 DynamicBitSet & DynamicBitSet::operator-=(const DynamicBitSet & other) {
 	for(UByteArrayAdapter::OffsetType i(0), s(std::min(m_data.size(), other.m_data.size())); i < s; ++i) {
-		m_data[i] = m_data[i] & (~other.m_data[i]);
+		m_data[i] &= (~other.m_data[i]);
 	}
 	return *this;
 }
 
 DynamicBitSet & DynamicBitSet::operator^=(const DynamicBitSet & other) {
 	for(UByteArrayAdapter::OffsetType i(0), s(std::min(m_data.size(), other.m_data.size())); i < s; ++i) {
-		m_data[i] = m_data[i] ^ other.m_data[i];
+		m_data[i] ^= other.m_data[i];
 	}
 	if (m_data.size() < other.m_data.size()) {
 		m_data.putData(m_data.size(), UByteArrayAdapter(other.m_data, m_data.size()));

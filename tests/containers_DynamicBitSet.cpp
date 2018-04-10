@@ -134,17 +134,20 @@ public:
 		for(int i = 0; i < testCount; ++i) {
 			std::set<uint32_t> a, b, c;
 			createOverLappingSets(a, b, 0xFFFF, 1024, 1024, 512);
+			std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
+			
 			DynamicBitSet bitSetA(createBitSet(a));
 			DynamicBitSet bitSetB(createBitSet(b));
 			
 			DynamicBitSet bitSetOp = bitSetA & bitSetB;
-			std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
-			
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
-			
+			bitSetA &= bitSetB;
+			bitSetB &= bitSetA;
 			ItemIndex idx = bitSetOp.toIndex(ItemIndex::T_STL_VECTOR);
-			
+
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
 			CPPUNIT_ASSERT_MESSAGE("idx equality", (c == idx));
+			CPPUNIT_ASSERT_MESSAGE("&= broken", bitSetA == bitSetOp);
+			CPPUNIT_ASSERT_MESSAGE("&= broken", bitSetB == bitSetOp);
 		}
 	}
 	
@@ -152,17 +155,20 @@ public:
 		for(int i = 0; i < testCount; ++i) {
 			std::set<uint32_t> a, b, c;
 			createOverLappingSets(a, b, 0xFFFF, 1024, 1024, 512);
+			std::set_union(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
+			
 			DynamicBitSet bitSetA(createBitSet(a));
 			DynamicBitSet bitSetB(createBitSet(b));
 			
 			DynamicBitSet bitSetOp = bitSetA | bitSetB;
-			std::set_union(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
-			
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
-			
+			bitSetA |= bitSetB;
+			bitSetB |= bitSetA;
 			ItemIndex idx = bitSetOp.toIndex(ItemIndex::T_STL_VECTOR);
-			
+
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
 			CPPUNIT_ASSERT_MESSAGE("idx equality", (c == idx));
+			CPPUNIT_ASSERT_MESSAGE("|= broken", bitSetA == bitSetOp);
+			CPPUNIT_ASSERT_MESSAGE("|= broken", bitSetB == bitSetOp);
 		}
 	}
 	
@@ -170,17 +176,20 @@ public:
 		for(int i = 0; i < testCount; ++i) {
 			std::set<uint32_t> a, b, c;
 			createOverLappingSets(a, b, 0xFFFF, 1024, 1024, 512);
+			std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
+			
 			DynamicBitSet bitSetA(createBitSet(a));
 			DynamicBitSet bitSetB(createBitSet(b));
 			
 			DynamicBitSet bitSetOp = bitSetA - bitSetB;
-			std::set_difference(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
-			
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
-			
+			bitSetA -= bitSetB;
+			bitSetB -= bitSetA;
 			ItemIndex idx = bitSetOp.toIndex(ItemIndex::T_STL_VECTOR);
-			
+
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
 			CPPUNIT_ASSERT_MESSAGE("idx equality", (c == idx));
+			CPPUNIT_ASSERT_MESSAGE("-= broken", bitSetA == bitSetOp);
+			CPPUNIT_ASSERT_MESSAGE("-= broken", bitSetB == bitSetOp);
 		}
 	}
 	
@@ -188,17 +197,20 @@ public:
 		for(int i = 0; i < testCount; ++i) {
 			std::set<uint32_t> a, b, c;
 			createOverLappingSets(a, b, 0xFFFF, 1024, 1024, 512);
+			std::set_symmetric_difference(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
+			
 			DynamicBitSet bitSetA(createBitSet(a));
 			DynamicBitSet bitSetB(createBitSet(b));
 			
 			DynamicBitSet bitSetOp = bitSetA ^ bitSetB;
-			std::set_symmetric_difference(a.begin(), a.end(), b.begin(), b.end(), std::inserter(c, c.end()));
-			
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
-			
+			bitSetA ^= bitSetB;
+			bitSetB ^= bitSetA;
 			ItemIndex idx = bitSetOp.toIndex(ItemIndex::T_STL_VECTOR);
-			
+
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
 			CPPUNIT_ASSERT_MESSAGE("idx equality", (c == idx));
+			CPPUNIT_ASSERT_MESSAGE("^= broken", bitSetA == bitSetOp);
+			CPPUNIT_ASSERT_MESSAGE("^= broken", bitSetB == bitSetOp);
 		}
 	}
 	
