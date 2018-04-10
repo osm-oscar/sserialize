@@ -294,12 +294,13 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 		}
 		else {
 			struct State {
-				DynamicBitSet bitset;
+				std::vector<DynamicBitSet> intermediates;
 				std::mutex lock;
 				std::atomic<uint32_t> i{0};
 				uint32_t cellCount;
 				const CellQueryResult * that;
 			} state;
+			state.intermediates.reserve(threadCount);
 			state.cellCount = cellCount();
 			state.that = this;
 			
@@ -316,12 +317,23 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 						}
 						state->that->idx(i).putInto(bitset);
 					}
-					std::lock_guard<std::mutex> lck(state->lock);
-					state->bitset |= bitset;
+					std::unique_lock<std::mutex> lck(state->lock, std::defer_lock);
+					while(true) {
+						lck.lock();
+						if (!state->intermediates.size()) {
+							state->intermediates.emplace_back(std::move(bitset));
+							break;
+						}
+						DynamicBitSet other( std::move(state->intermediates.back()) );
+						state->intermediates.pop_back();
+						lck.unlock();
+						bitset |= other;
+					}
 				};
 			};
 			sserialize::ThreadPool::execute(Worker(&state), threadCount, ThreadPool::CopyTaskTag());
-			return state.bitset.toIndex(idxStore().indexTypes());
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(std::size_t(1), state.intermediates.size());
+			return state.intermediates.front().toIndex(idxStore().indexTypes());
 		}
 	}
 	else {
