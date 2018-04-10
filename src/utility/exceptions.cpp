@@ -64,6 +64,12 @@ Exception()
 	setMsg("OutOfBoundsException: " + what);
 }
 
+IOException::IOException() :
+Exception()
+{
+	setMsg("IOException");
+}
+
 IOException::IOException(const std::string & what) :
 Exception()
 {

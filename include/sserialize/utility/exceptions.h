@@ -45,6 +45,7 @@ public:
 
 class IOException: public Exception {
 public:
+	IOException();
 	IOException(const std::string & what);
 };
 
