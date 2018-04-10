@@ -213,8 +213,8 @@ void ItemIndexPrivateRleDE::loadIntoMemory() {
 
 UByteArrayAdapter ItemIndexPrivateRleDE::data() const {
 	UByteArrayAdapter ret(m_data);
+	ret -= sserialize::psize_v<uint32_t>(m_size) + sserialize::psize_v<uint32_t>(m_data.size());
 	ret.resetPtrs();
-	ret -= sserialize::SerializationInfo<uint32_t>::length*2;
 	return ret;
 }
 
