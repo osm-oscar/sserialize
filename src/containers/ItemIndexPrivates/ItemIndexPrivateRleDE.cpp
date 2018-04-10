@@ -180,7 +180,7 @@ ItemIndexPrivate::const_iterator_base_type * ItemIndexPrivateRleDE::MyIterator::
 
 ItemIndexPrivateRleDE::ItemIndexPrivateRleDE(const UByteArrayAdapter & data) :
 m_data(data),
-m_size(m_data.getVlPackedUint32()),
+m_size(m_data.resetGetPtr().getVlPackedUint32()),
 m_dataOffset(0),
 m_curId(0)
 {
