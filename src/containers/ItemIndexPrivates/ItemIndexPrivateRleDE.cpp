@@ -280,7 +280,7 @@ uint8_t ItemIndexPrivateRleDE::bpn() const {
 
 
 sserialize::UByteArrayAdapter::SizeType ItemIndexPrivateRleDE::getSizeInBytes() const {
-	return m_data.size() + sserialize::psize_v<uint32_t>((uint32_t) m_size) + sserialize::psize_v<uint32_t>((uint32_t) m_data.size());
+	return m_data.size() + sserialize::psize_v<uint32_t>(m_size) + sserialize::psize_v<uint32_t>(m_data.size());
 }
 
 void ItemIndexPrivateRleDE::putInto(DynamicBitSet & bitSet) const {
