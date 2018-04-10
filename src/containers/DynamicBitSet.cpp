@@ -299,7 +299,9 @@ DynamicBitSet & DynamicBitSet::operator|=(const DynamicBitSet & other) {
 		m_data[i] |= other.m_data[i];
 	}
 	if (m_data.size() < other.m_data.size()) {
-		m_data.putData(m_data.size(), UByteArrayAdapter(other.m_data, m_data.size()));
+		auto s = m_data.size();
+		m_data.resize(other.m_data.size());
+		m_data.putData(s, UByteArrayAdapter(other.m_data, s));
 	}
 	return *this;
 }
@@ -316,7 +318,9 @@ DynamicBitSet & DynamicBitSet::operator^=(const DynamicBitSet & other) {
 		m_data[i] ^= other.m_data[i];
 	}
 	if (m_data.size() < other.m_data.size()) {
-		m_data.putData(m_data.size(), UByteArrayAdapter(other.m_data, m_data.size()));
+		auto s = m_data.size();
+		m_data.resize(other.m_data.size());
+		m_data.putData(s, UByteArrayAdapter(other.m_data, s));
 	}
 	return *this;
 }
