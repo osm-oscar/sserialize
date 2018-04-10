@@ -183,13 +183,11 @@ public:
 			
 			DynamicBitSet bitSetOp = bitSetA - bitSetB;
 			bitSetA -= bitSetB;
-			bitSetB -= bitSetA;
 			ItemIndex idx = bitSetOp.toIndex(ItemIndex::T_STL_VECTOR);
 
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
 			CPPUNIT_ASSERT_MESSAGE("idx equality", (c == idx));
 			CPPUNIT_ASSERT_MESSAGE("-= broken", bitSetA == bitSetOp);
-			CPPUNIT_ASSERT_MESSAGE("-= broken", bitSetB == bitSetOp);
 		}
 	}
 	
@@ -204,13 +202,11 @@ public:
 			
 			DynamicBitSet bitSetOp = bitSetA ^ bitSetB;
 			bitSetA ^= bitSetB;
-			bitSetB ^= bitSetA;
 			ItemIndex idx = bitSetOp.toIndex(ItemIndex::T_STL_VECTOR);
 
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("bit set size", (uint32_t)c.size(), (uint32_t)bitSetOp.size());
 			CPPUNIT_ASSERT_MESSAGE("idx equality", (c == idx));
 			CPPUNIT_ASSERT_MESSAGE("^= broken", bitSetA == bitSetOp);
-			CPPUNIT_ASSERT_MESSAGE("^= broken", bitSetB == bitSetOp);
 		}
 	}
 	
