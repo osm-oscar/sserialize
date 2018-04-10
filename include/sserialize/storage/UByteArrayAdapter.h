@@ -523,6 +523,7 @@ private:
 	explicit UByteArrayAdapter(MyPrivate * priv, OffsetType offSet = 0, OffsetType len = 0, OffsetType getPtr = 0, OffsetType putPtr = 0);
 	bool resizeForPush(OffsetType pos, OffsetType length);
 // 	void moveAndResize(uint32_t offset, unsigned int smallerLen);
+	void range_check_push(OffsetType pos, OffsetType pushLength) const;
 };
 
 //Streaming operators

@@ -4,6 +4,7 @@
 #include "UByteArrayAdapterPrivates/UByteArrayAdapterPrivates.h"
 #include <iostream>
 #include <sserialize/utility/types.h>
+#include <sserialize/storage/SerializationInfo.h>
 
 
 namespace sserialize {
@@ -777,70 +778,78 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter
 /** If the supplied memory is not writable then you're on your own! **/
 
 bool UByteArrayAdapter::putOffset(const OffsetType pos, const OffsetType value) {
-	if (m_len < pos+SSERIALIZED_OFFSET_BYTE_COUNT)
-		return false;
+	range_check_push(pos, SSERIALIZED_OFFSET_BYTE_COUNT);
+	
 	m_priv->putOffset(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putNegativeOffset(const OffsetType pos, const NegativeOffsetType value) {
-	if (m_len < pos+SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT) return false;
+	range_check_push(pos, SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT);
+	
 	m_priv->putNegativeOffset(m_offSet+pos, value);
 	return true;
 }
 
-
 bool UByteArrayAdapter::putUint64(const OffsetType pos, const uint64_t value) {
-	if (m_len < pos+8) return false;
+	range_check_push(pos, 8);
+	
 	m_priv->putUint64(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putInt64(const OffsetType pos, const int64_t value) {
-	if (m_len < pos+8) return false;
+	range_check_push(pos, 8);
+	
 	m_priv->putInt64(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putInt32(const OffsetType pos, const int32_t value) {
-	if (m_len < pos+4) return false;
+	range_check_push(pos, 4);
+	
 	m_priv->putInt32(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putUint32(const OffsetType pos, const uint32_t value) {
-	if (m_len < pos+4)
-		return false;
+	range_check_push(pos, 4);
+	
 	m_priv->putUint32(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putUint24(const OffsetType pos, const uint32_t value) {
-	if (m_len < pos+3) return false;
+	range_check_push(pos, 3);
+	
 	m_priv->putUint24(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putUint16(const OffsetType pos, const uint16_t value) {
-	if (m_len < pos+2) return false;
+	range_check_push(pos, 2);
+
 	m_priv->putUint16(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putUint8(const OffsetType pos, const uint8_t value) {
-	if (m_len < pos+1) return false;
+	range_check_push(pos, 1);
+	
 	m_priv->putUint8(m_offSet+pos, value);
 	return true;
 }
 
 bool UByteArrayAdapter::putDouble(const OffsetType pos, const double value) {
-	if (m_len < pos+8) return false;
+	range_check_push(pos, 8);
+	
 	m_priv->putUint64(m_offSet+pos, pack_double_to_uint64_t(value));
 	return true;
 }
 
 bool UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
-	if (m_len < pos+4) return false;
+	range_check_push(pos, 4);
+	
 	m_priv->putUint32(m_offSet+pos, pack_float_to_uint32_t(value));
 	return true;
 }
@@ -880,9 +889,9 @@ int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t 
 int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(str.size(), (std::size_t) std::numeric_limits<int>::max());
 	UByteArrayAdapter::OffsetType needSize = psize_vu32((uint32_t) str.size()) + str.size();
-	if (m_len < pos+needSize) {
-		return -1;
-	}
+	
+	range_check_push(pos, needSize);
+	
 	int len = putVlPackedUint32(pos, (uint32_t) str.size());
 	for(size_t i = 0; i < str.size(); i++) {
 		putUint8(pos+len+i, str[i]);
@@ -891,19 +900,23 @@ int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) 
 }
 
 bool UByteArrayAdapter::putData(OffsetType pos, const uint8_t * data, OffsetType len) {
-	if (m_len < pos+len)
-		return false;
-	if (!len)
+	if (!len) {
 		return true;
+	}
+	
+	range_check_push(pos, len);
+
 	m_priv->put(m_offSet+pos, data, len);
 	return true;
 }
 
 bool UByteArrayAdapter::putData(const OffsetType pos, const std::deque<uint8_t>& data) {
-	if (m_len < pos+data.size())
-		return false;
-	if (!data.size())
+	if (!data.size()) {
 		return true;
+	}
+	
+	range_check_push(pos, data.size());
+
 	for(size_t i = 0; i < data.size(); i++) {
 		putUint8(pos+i, data[i]);
 	}
@@ -911,24 +924,24 @@ bool UByteArrayAdapter::putData(const OffsetType pos, const std::deque<uint8_t>&
 }
 
 bool UByteArrayAdapter::putData(const OffsetType pos, const std::vector< uint8_t >& data) {
-	if (data.size())
+	if (data.size()) {
 		return putData(pos, &data[0], data.size());
+	}
 	return true;
 }
 
 bool UByteArrayAdapter::putData(const OffsetType pos, const UByteArrayAdapter & data) {
-	if (m_len < pos+data.size())
-		return false;
-		
 	if (!data.size()) {
 		return true;
 	}
 
+	range_check_push(pos, data.size());
+	
 	if (m_priv->isContiguous()) {
 		return putData(pos, &data[0], data.size());
 	}
 
-	SizeType bufLen = std::min<OffsetType>(data.size(), 1024*1024);
+	SizeType bufLen = std::min<OffsetType>(data.size(), 4*1024*1024);
 	uint8_t * buf = new uint8_t[bufLen];
 	for(SizeType i = 0, s = data.size(); i < s;) {
 		OffsetType len = std::min<OffsetType>(s-i, bufLen);
@@ -1218,6 +1231,12 @@ bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
 		return growStorage(pos+length-m_len);
 	}
 	return true;
+}
+
+void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetType pushLength) const {
+	if (m_len < pos+pushLength) {
+		throw OutOfBoundsException();
+	}
 }
 
 #define UBA_PUT_STREAMING_FUNC(__NAME, __TYPE, __LENGTH) \
