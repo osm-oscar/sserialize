@@ -3,6 +3,7 @@
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/Static/GeoHierarchy.h>
 #include <sserialize/spatial/CellQueryResultPrivate.h>
+#include <sserialize/mt/ThreadPool.h>
 #include <memory>
 #include <string.h>
 #include <mutex>
@@ -205,6 +206,7 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 			FlattenResultType frt;
 			uint32_t emptyCellCount;
 			Proc(State * s) : state(s), pmIdxId(0xFFFFFFFF), frt(FT_NONE), emptyCellCount(0) {}
+			Proc(const Proc & other) : Proc(other.state) {}
 			~Proc() {
 				state->emptyCellCount += emptyCellCount;
 			}
@@ -255,14 +257,8 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 		state.dest->m_desc.resize(cellCount(), detail::CellQueryResult::CellDesc(0, 0, 0));
 		state.dest->m_idx = (detail::CellQueryResult::IndexDesc*) ::malloc(sizeof(sserialize::detail::CellQueryResult::IndexDesc) * m_desc.size());
 
-		std::vector<std::thread> threads;
+		sserialize::ThreadPool::execute(Proc(&state), threadCount, sserialize::ThreadPool::CopyTaskTag());
 		
-		for(uint32_t i(0); i < threadCount; ++i) {
-			threads.emplace_back(Proc(&state));
-		}
-		for(uint32_t i(0); i < threadCount; ++i) {
-			threads[i].join();
-		}
 		//check if we have to copy the stuff
 		if (keepEmpty || state.emptyCellCount.load() == 0) {
 			return state.dest;
