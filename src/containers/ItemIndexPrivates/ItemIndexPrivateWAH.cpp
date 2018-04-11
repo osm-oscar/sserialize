@@ -99,55 +99,69 @@ uint8_t ItemIndexPrivateWAH::bpn() const { return 0; }
 UByteArrayAdapter::SizeType ItemIndexPrivateWAH::getSizeInBytes() const { return 0; }
 
 void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
-	if (!size())
+	if (!size()) {
 		return;
+	}
 	UByteArrayAdapter & destData = bitSet.data();
-	uint32_t destDataSize = narrow_check<uint32_t>(destData.size());
-	uint32_t bitCount = 0;
+	uint32_t destBitPos = 0;
 	
 	UDWConstrainedIterator dataIt = dataIterator();
 	while(dataIt.hasNext()) {
+		uint32_t destBytePos = destBitPos/8;
+		uint32_t destInBytePos = destBitPos%8;
 		uint32_t val = dataIt.next();
+		
 		if (val & 0x1) { //rle encoded
 			val >>= 1;//move out indicator bit
 			if (val & 0x1) {//all ones, push corresponding ids
-				uint32_t count = (val >> 1)*31;
-				uint32_t destDataOffset = (bitCount+31*count) / 8;
-				if (destDataSize < destDataOffset+5) {
-					destData.growStorage(destDataOffset+5 - destDataSize);
-					destDataSize += destDataOffset+5 - destDataSize;
-				}
-				for(std::size_t i = 0; i < count; ++i) {
-					destDataOffset = bitCount / 8;
-					uint8_t shift = bitCount % 8;
-					
-					uint64_t myVal = 0x7FFFFFFF; //move out the indicator bit
-					myVal <<= shift;
-					for(uint32_t myDestDataOffset = 0; myVal; ++myDestDataOffset) {
-						destData[destDataOffset+myDestDataOffset] |= myVal;
-						myVal >>= 8;
+				uint32_t bitCount = (val >> 1)*31;
+				{
+					uint32_t fdestBitPos = destBitPos + bitCount;
+					uint32_t fdestSize = fdestBitPos/8 + (fdestBitPos%8 > 0);
+					if (destData.size() < fdestSize) {
+						destData.resize(fdestSize);
 					}
-					bitCount += 31;
+				}
+				destData[destBytePos] |= ~createMask(destInBytePos);
+				destBytePos += 1;
+				bitCount -= 8-destInBytePos;
+				uint32_t remainingFullBytes = bitCount/8;
+				uint32_t remainingBits = bitCount%8;
+				
+				destData.fill(uint8_t(0xFFFF), destBytePos, remainingFullBytes);
+				if (remainingBits) {
+					destBytePos += remainingFullBytes;
+					destData[destBytePos] |= createMask(remainingBits);
 				}
 			}
 			val >>= 1; //move out sign bit
-			bitCount += 31*val;
+			destBitPos += 31*val;
 		}
-		else {//no rle encoding, full 31 bits are use to encode values
-			uint32_t destDataOffset = bitCount / 8;
-			uint8_t shift = bitCount % 8;
+		else {//no rle encoding, full 31 bits are used to encode values
+			uint32_t bitCount = 31;
+			{
+				uint32_t fdestBitPos = destBitPos + bitCount;
+				uint32_t fdestSize = fdestBitPos/8 + (fdestBitPos%8 > 0);
+				if (destData.size() < fdestSize) {
+					destData.resize(fdestSize);
+				}
+			}
 			
-			if (destDataSize < destDataOffset+5) {
-				destData.growStorage(destDataOffset+5 - destDataSize);
-				destDataSize += destDataOffset+5 - destDataSize;
+			uint32_t myVal = val >> 1; //move out the indicator bit
+			destData[destBytePos] |= uint8_t(myVal << destInBytePos);
+			
+			destBytePos += 1;
+			bitCount -= 8-destInBytePos;
+			myVal >>= 8-destInBytePos;
+			
+			uint32_t remainingFullBytes = bitCount/8;
+			uint32_t remainingBits = bitCount%8;
+			uint32_t remainingBytes = remainingFullBytes + (remainingBits > 0);
+
+			for(uint32_t i(0); i < remainingBytes; myVal >>= 8, destBytePos += 1, ++i) {
+				destData[destBytePos] |= myVal;
 			}
-			uint64_t myVal = val >> 1; //move out the indicator bit
-			myVal <<= shift;
-			for(uint32_t myDestDataOffset = 0; myVal; ++myDestDataOffset) {
-				destData[destDataOffset+myDestDataOffset] |= myVal;
-				myVal >>= 8;
-			}
-			bitCount += 31;
+			destBitPos += 31;
 		}
 	}
 }
