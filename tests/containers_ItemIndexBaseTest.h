@@ -375,17 +375,54 @@ public:
 	void testDynamicBitSet() {
 // 		srand(0);
 		for(size_t i = 0; i < TEST_RUNS; i++) {
-			DynamicBitSet bitSet;
+			DynamicBitSet bitSet, realBitSet;
 			std::set<uint32_t> realValues( myCreateNumbers(rand() % 2048, 0xFFFFF) );
 			ItemIndex idx;
 			create(realValues, idx);
+			
+			realBitSet.set(realValues.cbegin(), realValues.cend());
 		
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
 			CPPUNIT_ASSERT_MESSAGE("test index unequal", realValues == idx);
 			
 			idx.putInto(bitSet);
-			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("index from DynamicBitSet unequal in testrun=", i), realValues == bitSet.toIndex(m_idxType));
 			
+			sserialize::ItemIndex idxFromBitSet = bitSet.toIndex(sserialize::ItemIndex::T_NATIVE);
+			{
+				auto rit = realValues.cbegin();
+				auto it = idxFromBitSet.cbegin();
+				for(uint32_t i(0), s(std::min<std::size_t>(idxFromBitSet.size(), realValues.size())); i < s; ++i, ++rit, ++it) {
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("pos=" + std::to_string(i), *rit, *it);
+				}
+			}
+			CPPUNIT_ASSERT_MESSAGE("Index to bitset", realBitSet == bitSet);
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("index from DynamicBitSet unequal in testrun=", i), realValues == idxFromBitSet);
+		}
+		for(uint32_t i = 0; i < 32; ++i) {
+			DynamicBitSet bitSet;
+			std::set<uint32_t> realValues;
+			addRange(0, 31+i, realValues);
+			ItemIndex idx;
+			create(realValues, idx);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_MESSAGE("test index unequal", realValues == idx);
+			
+			idx.putInto(bitSet);
+			sserialize::ItemIndex idxFromBitSet = bitSet.toIndex(m_idxType);
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("index from DynamicBitSet unequal in testrun=", i), realValues == idxFromBitSet);
+		}
+		for(uint32_t i = 0; i < 32; ++i) {
+			DynamicBitSet bitSet;
+			std::set<uint32_t> realValues;
+			addRange(4096+i, 8192+i, realValues);
+			ItemIndex idx;
+			create(realValues, idx);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_MESSAGE("test index unequal", realValues == idx);
+			
+			idx.putInto(bitSet);
+			sserialize::ItemIndex idxFromBitSet = bitSet.toIndex(m_idxType);
+			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("index from DynamicBitSet unequal in testrun=", i), realValues == idxFromBitSet);
 		}
 	}
 	
