@@ -387,7 +387,7 @@ public:
 			
 			idx.putInto(bitSet);
 			
-			sserialize::ItemIndex idxFromBitSet = bitSet.toIndex(sserialize::ItemIndex::T_NATIVE);
+			sserialize::ItemIndex idxFromBitSet = bitSet.toIndex(m_idxType);
 			{
 				auto rit = realValues.cbegin();
 				auto it = idxFromBitSet.cbegin();
