@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sserialize/utility/types.h>
 #include <sserialize/storage/SerializationInfo.h>
+#include <sserialize/utility/assert.h>
 
 
 namespace sserialize {
@@ -505,6 +506,7 @@ void UByteArrayAdapter::setDeleteOnClose(bool del) {
 }
 
 uint8_t & UByteArrayAdapter::operator[](const OffsetType pos) {
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(pos, m_len);
 	return (*m_priv)[m_offSet+pos];
 }
 
