@@ -7,6 +7,7 @@
 #include <sserialize/stats/ProgressInfo.h>
 #include <minilzo/minilzo.h>
 #include <mutex>
+#include <sserialize/mt/ThreadPool.h>
 
 namespace sserialize {
 namespace Static {
@@ -251,7 +252,6 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out) const {
 }
 
 std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(uint32_t)> filter) const {
-	uint32_t threadCount = std::max<uint32_t>(1, std::thread::hardware_concurrency()/2);
 	out << "Static::ItemIndexStore::Stats->BEGIN (info depends on selected indices)" << std::endl;
 	out << "Storage size  of ItemIndexStore: " << getSizeInBytes() << std::endl;
 	
@@ -409,6 +409,12 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 		store(store),
 		filter(filter)
 		{}
+		Worker(const Worker & other) :
+		state(other.state),
+		globalStats(other.globalStats),
+		store(other.store),
+		filter(other.filter)
+		{}
 		void operator()() {
 			while(true) {
 				uint32_t idxId = state->i.fetch_add(1, std::memory_order_relaxed);
@@ -432,15 +438,10 @@ std::ostream& ItemIndexStore::printStats(std::ostream& out, std::function<bool(u
 	};
 	
 	state.pinfo.begin(size(), "ItemIndexStore::calcStats");
-	std::vector<std::thread> threads;
-	for(uint32_t i(0); i < threadCount; ++i) {
-		threads.emplace_back( Worker(&state, &stats, this, filter) );
-	}
-	
-	for(std::thread & x : threads) {
-		x.join();
-	}
+	uint32_t threadCount = std::max<uint32_t>(1, std::thread::hardware_concurrency()/2);
+	sserialize::ThreadPool::execute(Worker(&state, &stats, this, filter), threadCount, sserialize::ThreadPool::CopyTaskTag());
 	state.pinfo.end();
+	
 	stats.print(out);
 	out << "Static::ItemIndexStore::Stats->END" << std::endl;
 	return out;
