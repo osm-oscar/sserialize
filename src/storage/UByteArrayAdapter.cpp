@@ -316,13 +316,36 @@ void UByteArrayAdapter::advice(UByteArrayAdapter::AdviseType type, UByteArrayAda
 }
 
 void UByteArrayAdapter::zero() {
-	uint32_t bufLen = 1024*1024;
-	uint8_t * zeros = new uint8_t[bufLen];
-	memset(zeros, 0, bufLen);
-	for(OffsetType i = 0; i < m_len; i += bufLen) {
-		putData(i, zeros, std::min<OffsetType>(m_len-i, bufLen));
+	if (isContiguous()) {
+		::memset(&operator[](0), 0, sizeof(uint8_t)*m_len);
 	}
-	delete[] zeros;
+	else {
+		uint32_t bufLen = 1024*1024;
+		uint8_t * zeros = new uint8_t[bufLen];
+		memset(zeros, 0, bufLen);
+		for(OffsetType i = 0; i < m_len; i += bufLen) {
+			putData(i, zeros, std::min<OffsetType>(m_len-i, bufLen));
+		}
+		delete[] zeros;
+	}
+}
+
+void UByteArrayAdapter::fill(uint8_t value, SizeType begin, SizeType length) {
+	if (begin > m_len) {
+		return;
+	}
+	if (isContiguous()) {
+		::memset(&operator[](begin), value, std::min<SizeType>(length, m_len-begin));
+	}
+	else {
+		uint32_t bufLen = std::min<SizeType>(length, 4*1024*1024);
+		uint8_t * values = new uint8_t[bufLen];
+		::memset(values, value, bufLen);
+		for(OffsetType i = begin; i < m_len; i += bufLen) {
+			putData(i, values, std::min<OffsetType>(m_len-i, bufLen));
+		}
+		delete[] values;
+	}
 }
 
 bool UByteArrayAdapter::equal(const UByteArrayAdapter& b) const {

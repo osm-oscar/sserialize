@@ -347,6 +347,7 @@ public: //state manipulation
 	
 public: //storage manipulation
 	void zero();
+	void fill(uint8_t value, SizeType begin, SizeType length);
 
 public://storage manipulationm
 	/** tries to shrink the underlying data source, use with caution, others Adapter are not notified of this change */
