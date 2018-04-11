@@ -147,19 +147,16 @@ void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 				}
 			}
 			
-			uint32_t myVal = val >> 1; //move out the indicator bit
-			destData[destBytePos] |= uint8_t(myVal << destInBytePos);
+			val >>= 1; //move out the indicator bit
+			destData[destBytePos] |= uint8_t(val << destInBytePos);
 			
 			destBytePos += 1;
 			bitCount -= 8-destInBytePos;
-			myVal >>= 8-destInBytePos;
+			val >>= 8-destInBytePos;
 			
-			uint32_t remainingFullBytes = bitCount/8;
-			uint32_t remainingBits = bitCount%8;
-			uint32_t remainingBytes = remainingFullBytes + (remainingBits > 0);
-
-			for(uint32_t i(0); i < remainingBytes; myVal >>= 8, destBytePos += 1, ++i) {
-				destData[destBytePos] |= myVal;
+			uint32_t remainingBytes = bitCount/8 + (bitCount%8 > 0);
+			for(uint32_t i(0); i < remainingBytes; val >>= 8, destBytePos += 1, ++i) {
+				destData[destBytePos] |= val;
 			}
 			destBitPos += 31;
 		}
