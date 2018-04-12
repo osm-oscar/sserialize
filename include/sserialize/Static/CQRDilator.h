@@ -71,28 +71,29 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 		return sserialize::ItemIndex();
 	}
 	
+	if (!threadCount) {
+		threadCount = sserialize::ThreadPool::hardware_concurrency();
+	}
+	
 	struct State {
 		const CQRDilator * that;
 		double diameter;
-		uint32_t threadCount;
 		uint32_t lowestCellId;
 		sserialize::SimpleBitVector baseCells;
 		
+		std::mutex itlock;
 		MyIterator it;
 		MyIterator end;
-		std::mutex itlock;
 		
 		std::mutex datalock;
-		sserialize::SimpleBitVector dilatedMarks;
-		std::vector<uint32_t> dilated;
+		std::vector<sserialize::ItemIndex> intermediates;
 		
 		bool isNotBaseCell(uint32_t cid) const {
 			return (cid < lowestCellId || !baseCells.isSet(cid-lowestCellId));
 		}
-		State(const CQRDilator * that, MyIterator it, MyIterator end, double diameter, uint32_t threadCount) :
+		State(const CQRDilator * that, MyIterator it, MyIterator end, double diameter) :
 		that(that),
 		diameter(diameter),
-		threadCount(threadCount),
 		lowestCellId(*it),
 		it(it),
 		end(end)
@@ -103,108 +104,104 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 		}
 	};
 	
-	State state(this, begin, end, diameter, threadCount);
+	State state(this, begin, end, diameter);
 	
 	struct Worker {
 		State * state;
 		sserialize::SimpleBitVector dilatedMarks;
-		std::vector<uint32_t> dilated;	
+		std::vector<uint32_t> dilated;
 		std::unordered_set<uint32_t> relaxed;
 		std::vector<uint32_t> queue;
 		Worker(State * state) : state(state) {}
 		Worker(const Worker & other) : state(other.state) {}
-		void operator()() {
-			std::unique_lock<std::mutex> lck(state->itlock, std::defer_lock_t());
-			while (true) {
-				if (state->threadCount > 1) {
-					lck.lock();
+		void handle(MyIterator it) {
+			uint32_t cellId = *it;
+			sserialize::Static::spatial::GeoPoint cellGp( state->that->m_ci.at(cellId) );
+			auto node(state->that->m_tg.node(cellId));
+			//put neighbors into workqueue
+			for(uint32_t i(0), s(node.neighborCount()); i < s; ++i) {
+				uint32_t nId = node.neighborId(i);
+				if (state->isNotBaseCell(nId) && state->that->distance(cellGp, nId) < state->diameter) {
+					queue.push_back(nId);
+					relaxed.insert(nId);
 				}
-				if (! (state->it != state->end) ) {
-					if (state->threadCount > 1) {
-						lck.unlock();
-					}
-					this->flush_or_swap();
-					break;
-				}
-				MyIterator it = state->it;
-				++(state->it);
-				lck.unlock();
-			
-				uint32_t cellId = *it;
-				sserialize::Static::spatial::GeoPoint cellGp( state->that->m_ci.at(cellId) );
-				auto node(state->that->m_tg.node(cellId));
-				//put neighbors into workqueue
-				for(uint32_t i(0), s(node.neighborCount()); i < s; ++i) {
-					uint32_t nId = node.neighborId(i);
-					if (state->isNotBaseCell(nId) && state->that->distance(cellGp, nId) < state->diameter) {
+			}
+			//now explore the neighborhood
+			while(queue.size()) {
+				uint32_t oCellId = queue.back();
+				queue.pop_back();
+				//iterator over all neighbors
+				auto tmpNode(state->that->m_tg.node(oCellId));
+				for(uint32_t i(0), s(tmpNode.neighborCount()); i < s; ++i) {
+					uint32_t nId = tmpNode.neighborId(i);
+					if (state->isNotBaseCell(nId) && !relaxed.count(nId) && state->that->distance(cellGp, nId) < state->diameter) {
 						queue.push_back(nId);
 						relaxed.insert(nId);
 					}
 				}
-				//now explore the neighborhood
-				while(queue.size()) {
-					uint32_t oCellId = queue.back();
-					queue.pop_back();
-					//iterator over all neighbors
-					auto tmpNode(state->that->m_tg.node(oCellId));
-					for(uint32_t i(0), s(tmpNode.neighborCount()); i < s; ++i) {
-						uint32_t nId = tmpNode.neighborId(i);
-						if (state->isNotBaseCell(nId) && !relaxed.count(nId) && state->that->distance(cellGp, nId) < state->diameter) {
-							queue.push_back(nId);
-							relaxed.insert(nId);
-						}
-					}
-				}
-				//push them to the ouput
-				for(auto x : relaxed) {
-					if (!dilatedMarks.isSet(x)) {
-						dilated.push_back(x);
-						dilatedMarks.set(x);
-					}
-				}
-				relaxed.clear();
-				queue.clear();
 			}
-		}
-		void flush_or_swap() {
-			if (state->threadCount > 1) {
-				std::lock_guard<std::mutex> lck(state->datalock);
-				for(uint32_t x : dilated) {
-					if (! state->dilatedMarks.isSet(x)) {
-						state->dilatedMarks.set(x);
-						state->dilated.push_back(x);
-					}
+			//push them to the output
+			for(auto x : relaxed) {
+				if (!dilatedMarks.isSet(x)) {
+					dilated.push_back(x);
+					dilatedMarks.set(x);
 				}
+			}
+			relaxed.clear();
+			queue.clear();
+		}
+		void flush() {
+			//convert to ItemIndex
+			//depending on the size of dilated it should be faster to just get them from dilatedMarks since these are ordered
+			uint32_t dilatedSize = dilated.size()*sizeof(uint32_t);
+			if (dilatedSize > 1024 && dilatedSize*(sserialize::fastLog2(dilatedSize)-1) > dilatedMarks.storageSizeInBytes()) {
+				dilatedMarks.getSet(dilated.begin());
 			}
 			else {
-				using std::swap;
-				swap(state->dilated, dilated);
-				swap(state->dilatedMarks, dilatedMarks);
+				std::sort(dilated.begin(), dilated.end());
 			}
+			sserialize::ItemIndex result(std::move(dilated));
+			std::unique_lock<std::mutex> dlck(state->datalock, std::defer_lock);
+			while(true) {
+				dlck.lock();
+				if (!state->intermediates.size()) {
+					state->intermediates.emplace_back(result);
+					break;
+				}
+				auto other = state->intermediates.back();
+				state->intermediates.pop_back();
+				dlck.unlock();
+				result = result + other;
+			}
+		}
+		void operator()() {
+			std::unique_lock<std::mutex> itlck(state->itlock, std::defer_lock);
+			while (true) {
+				itlck.lock();
+				if (! (state->it != state->end) ) {
+					break;
+				}
+				MyIterator it = state->it;
+				++(state->it);
+				handle(it);
+			}
+			flush();
 		}
 	};
 	
-	if (!threadCount) {
-		threadCount = std::thread::hardware_concurrency();
-	}
-	
 	if (threadCount == 1) {
 		Worker w(&state);
-		w();
+		for(; state.it != state.end; ++(state.it)) {
+			w.handle(state.it);
+		}
+		w.flush();
 	}
 	else {
 		sserialize::ThreadPool::execute(Worker(&state), threadCount, sserialize::ThreadPool::CopyTaskTag());
 	}
 	
-	//depending on the size of dilated it should be faster to just get them from dilatedMarks since these are ordered
-	uint32_t dilatedSize = (uint32_t) state.dilated.size()*sizeof(uint32_t);
-	if (dilatedSize > 1024 && dilatedSize*(sserialize::fastLog2(dilatedSize)-1) > state.dilatedMarks.storageSizeInBytes()) {
-		state.dilatedMarks.getSet(state.dilated.begin());
-	}
-	else {
-		std::sort(state.dilated.begin(), state.dilated.end());
-	}
-	return sserialize::ItemIndex(std::move(state.dilated));
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(std::size_t(0), state.intermediates.size());
+	return state.intermediates.front();
 }
 
 }}}//end namespace sserialize::Static::detail
