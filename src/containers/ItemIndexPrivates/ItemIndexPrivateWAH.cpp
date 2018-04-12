@@ -117,9 +117,9 @@ void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 				uint32_t bitCount = (val >> 1)*31;
 				{
 					uint32_t fdestBitPos = destBitPos + bitCount;
-					uint32_t fdestSize = fdestBitPos/8 + (fdestBitPos%8 > 0);
-					if (destData.size() < fdestSize) {
-						destData.resize(fdestSize);
+					uint32_t fdestMaxBytePos = fdestBitPos/8 + (fdestBitPos%8 > 0);
+					if (destData.size() <= fdestMaxBytePos) {
+						destData.resize(fdestMaxBytePos+1);
 					}
 				}
 				destData[destBytePos] |= ~createMask(destInBytePos);
@@ -141,9 +141,9 @@ void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 			uint32_t bitCount = 31;
 			{
 				uint32_t fdestBitPos = destBitPos + bitCount;
-				uint32_t fdestSize = fdestBitPos/8 + (fdestBitPos%8 > 0);
-				if (destData.size() < fdestSize) {
-					destData.resize(fdestSize);
+				uint32_t fdestMaxBytePos = fdestBitPos/8 + (fdestBitPos%8 > 0);
+				if (destData.size() <= fdestMaxBytePos) {
+					destData.resize(fdestMaxBytePos+1);
 				}
 			}
 			
