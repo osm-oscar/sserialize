@@ -39,6 +39,40 @@ uint32_t ItemIndexPrivateNative::at(uint32_t pos) const {
 	return 0;
 }
 
+void ItemIndexPrivateNative::putInto(sserialize::DynamicBitSet & bitSet) const {
+	if (!size()) {
+		return;
+	}
+	UByteArrayAdapter & dest = bitSet.data();
+	const uint8_t * data = m_dataMem.get();
+	{
+		uint32_t fdestMaxBytePos = last()/8 + (last()%8 > 0);
+		if (dest.size() <= fdestMaxBytePos) {
+			dest.resize(fdestMaxBytePos+1);
+		}
+	}
+	if (dest.isContiguous()) {
+		UByteArrayAdapter::MemoryView destMv(dest.asMemView());
+		uint8_t * destMvd = destMv.data();
+		for(uint32_t i(0), s(size()); i < s; ++i, data += sizeof(uint32_t)) {
+			uint32_t value;
+			::memmove(&value, data, sizeof(uint32_t));
+			uint32_t bytePos = value/8;
+			uint32_t inBytePos = value%8;
+			destMvd[bytePos] |= uint8_t(1) << inBytePos;
+		}
+	}
+	else {
+		for(uint32_t i(0), s(size()); i < s; ++i, data += sizeof(uint32_t)) {
+			uint32_t value;
+			::memmove(&value, data, sizeof(uint32_t));
+			uint32_t bytePos = value/8;
+			uint32_t inBytePos = value%8;
+			dest[bytePos] |= uint8_t(1) << inBytePos;
+		}
+	}
+}
+
 void ItemIndexPrivateNative::putInto(uint32_t* dest) const {
 	::memmove(dest, m_dataMem.get(), sizeof(uint32_t)*m_size);
 }
@@ -53,8 +87,8 @@ UByteArrayAdapter::SizeType ItemIndexPrivateNative::getSizeInBytes() const {
 
 UByteArrayAdapter ItemIndexPrivateNative::data() const {
 	UByteArrayAdapter ret(m_dataMem.dataBase());
-	ret.resetPtrs();
 	ret -= sserialize::SerializationInfo<uint32_t>::length;
+	ret.resetPtrs();
 	return ret;
 }
 
