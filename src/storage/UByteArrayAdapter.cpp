@@ -642,17 +642,19 @@ UByteArrayAdapter UByteArrayAdapter::makeContigous(const UByteArrayAdapter & d) 
 }
 
 UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos, OffsetType size) {
-	if (pos+size > m_len) {
-		return MemoryView(0, 0, 0, false, 0);
+	if (m_len < pos+size) {
+		throw sserialize::OutOfBoundsException();
 	}
 	uint8_t * data = 0;
 	bool isCopy = !m_priv->isContiguous();
-	if (isCopy) {
-		data = new uint8_t[size];
-		getData(pos, data, size);
-	}
-	else {
-		data = &operator[](pos);
+	if (size) {
+		if (isCopy) {
+			data = new uint8_t[size];
+			getData(pos, data, size);
+		}
+		else {
+			data = &operator[](pos);
+		}
 	}
 	return MemoryView(data, m_offSet+pos, size, isCopy, m_priv.get());
 }
