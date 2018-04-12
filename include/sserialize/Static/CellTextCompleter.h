@@ -144,7 +144,7 @@ public:
 	T_CQR_TYPE cqrFromRect(const sserialize::spatial::GeoRect & rect) const;
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
-	T_CQR_TYPE cqrFromPoint(const sserialize::spatial::GeoPoint & rect, double radius) const;
+	T_CQR_TYPE cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) const;
 
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	T_CQR_TYPE cqrBetween(const sserialize::spatial::GeoPoint & start, const sserialize::spatial::GeoPoint & end, double radius) const;
@@ -360,8 +360,8 @@ public:
 	}
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
-	inline T_CQR_TYPE cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) {
-		return priv()->cqrFromPoint(point, radius);
+	inline T_CQR_TYPE cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) const {
+		return priv()->cqrFromPoint<T_CQR_TYPE>(point, radius);
 	}
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
