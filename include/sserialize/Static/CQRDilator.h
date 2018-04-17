@@ -183,6 +183,7 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 				}
 				MyIterator it = state->it;
 				++(state->it);
+				itlck.unlock();
 				handle(it);
 			}
 			flush();
