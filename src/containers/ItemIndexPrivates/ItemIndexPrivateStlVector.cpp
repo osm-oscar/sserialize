@@ -49,6 +49,14 @@ uint32_t ItemIndexPrivateStlVector::size() const {
 	return (uint32_t) m_data.size();
 }
 
+sserialize::UByteArrayAdapter::SizeType ItemIndexPrivateStlVector::getSizeInBytes() const {
+	return size()*4;
+}
+
+uint8_t ItemIndexPrivateStlVector::bpn() const {
+	return 32;
+}
+
 ItemIndexPrivate * ItemIndexPrivateStlVector::fromBitSet(const DynamicBitSet & bitSet) {
 	ItemIndexPrivateStlVector * ret = new ItemIndexPrivateStlVector();
 	std::vector<uint32_t> & vec = ret->m_data;
