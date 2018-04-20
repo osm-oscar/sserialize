@@ -39,7 +39,6 @@ private:
 	TriangulationGridLocator m_grid;
 	BoundedCompactUintArray m_faceIdToRefinedCellId;
 	BoundedCompactUintArray m_refinedCellIdToFaceId;
-private:
 public:
 	TriangulationGeoHierarchyArrangement();
 	TriangulationGeoHierarchyArrangement(const sserialize::UByteArrayAdapter & d);
