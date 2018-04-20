@@ -4,6 +4,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/containers/AbstractArray.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/containers/CompactUintArray.h>
 #include <vector>
 #include <set>
 #include <deque>
@@ -34,8 +35,10 @@ public:
 		T_NATIVE=32,
 		T_ELIAS_FANO=64,
 		T_PFOR=128,
+		//more or less a wrapper
+		T_BOUNDED_COMPACT_UINT_ARRAY=256,
 		//the following are all in-memory
-		T_EMPTY=256,
+		T_EMPTY=512,
 		T_INDIRECT=2*T_EMPTY,
 		T_STL_DEQUE=4*T_EMPTY,
 		T_STL_VECTOR=8*T_EMPTY,
@@ -76,6 +79,7 @@ public:
 	explicit ItemIndex(const std::deque<uint32_t> & index);
 	explicit ItemIndex(const std::vector<uint32_t> & index);
 	explicit ItemIndex(std::vector<uint32_t> && index);
+	explicit ItemIndex(const sserialize::BoundedCompactUintArray & index);
 	template<typename T_ITERATOR>
 	explicit ItemIndex(const T_ITERATOR & begin, const T_ITERATOR & end) : ItemIndex(std::vector<uint32_t>(begin, end)) {}
 	~ItemIndex();

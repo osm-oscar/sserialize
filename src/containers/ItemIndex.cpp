@@ -79,6 +79,11 @@ ItemIndex::ItemIndex(std::vector<uint32_t> && index) {
 	MyBaseClass::setPrivate(myPriv);
 }
 
+ItemIndex::ItemIndex(const sserialize::BoundedCompactUintArray & index) {
+	sserialize::ItemIndexPrivate * myPriv = new sserialize::ItemIndexPrivateBoundedCompactUintArray(std::move(index));
+	MyBaseClass::setPrivate(myPriv);
+}
+
 ItemIndex::~ItemIndex() {}
 
 ItemIndex & ItemIndex::operator=(const ItemIndex & idx) {
