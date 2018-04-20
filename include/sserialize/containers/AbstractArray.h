@@ -45,7 +45,7 @@ public:
 	virtual const_iterator cend() const = 0;
 };
 
-template<typename TMyIteratorType, typename TReturnType>
+template<typename TMyIteratorType, typename TReturnType = typename std::iterator_traits<TMyIteratorType>::value_type>
 class AbstractArrayIteratorDefaultImp: public AbstractArrayIterator<TReturnType> {
 	TMyIteratorType m_it;
 public:
@@ -91,7 +91,7 @@ public:
 }//end namespace detail
 
 template<typename TReturnType>
-class AbstractArrayIterator: public std::iterator<std::input_iterator_tag, TReturnType, typename detail::AbstractArrayIterator<TReturnType>::size_type > {
+class AbstractArrayIterator: public std::iterator<std::input_iterator_tag, typename std::remove_reference<TReturnType>::type, typename detail::AbstractArrayIterator<TReturnType>::size_type > {
 public:
 	typedef typename detail::AbstractArrayIterator<TReturnType>::size_type size_type;
 private:
@@ -139,6 +139,11 @@ public:
 	
 	bool operator==(const AbstractArrayIterator & other) const {
 		return m_priv->eq(other.m_priv.get());
+	}
+	
+	template<typename T_ITERATOR>
+	static AbstractArrayIterator fromIterator(T_ITERATOR it) {
+		return AbstractArrayIterator( new detail::AbstractArrayIteratorDefaultImp<T_ITERATOR, TReturnType>(it) );
 	}
 };
 
