@@ -8,7 +8,7 @@ namespace sserialize {
 //very simple version of boost's transform_iterator
 
 template<typename T_UNARY_FUNC, typename T_RETURN_TYPE, typename T_IT>
-class TransformIterator: public std::iterator<std::input_iterator_tag, T_RETURN_TYPE, typename std::iterator_traits<T_IT>::difference_type> {
+class TransformIterator: public std::iterator<std::input_iterator_tag, typename std::remove_reference<T_RETURN_TYPE>::type, typename std::iterator_traits<T_IT>::difference_type> {
 private:
 	T_UNARY_FUNC m_func;
 	T_IT m_it;
@@ -23,6 +23,7 @@ public:
 	virtual ~TransformIterator() {}
 	inline TransformIterator & operator++() { ++m_it; return *this;}
 	inline T_RETURN_TYPE operator*() { return m_func(*m_it);}
+	inline T_RETURN_TYPE operator*() const { return m_func(*m_it);}
 	inline bool operator!=(const TransformIterator & other) const { return m_it != other.m_it;}
 	inline bool operator==(const TransformIterator & other) const { return !(m_it != other.m_it); }
 	const T_IT & base() const { return m_it; }
