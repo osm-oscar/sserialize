@@ -798,4 +798,13 @@ ItemIndex CellQueryResult::cells() const {
 	return sserialize::ItemIndex(tmp);
 }
 
+
+sserialize::spatial::GeoRect CellQueryResult::boundary() const {
+	sserialize::spatial::GeoRect result;
+	for(const CellDesc & cd : m_desc) {
+		result.enlarge( m_gh.cellBoundary(cd.cellId) );
+	}
+	return result;
+}
+
 }}//end namespace

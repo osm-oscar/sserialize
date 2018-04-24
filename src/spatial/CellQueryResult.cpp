@@ -400,6 +400,11 @@ ItemIndex CellQueryResult::cells() const {
 	return m_priv->cells();
 }
 
+
+sserialize::spatial::GeoRect CellQueryResult::boundary() const {
+	return m_priv->boundary();
+}
+
 bool CellQueryResult::selfCheck() {
 	return m_priv->selfCheck();
 }

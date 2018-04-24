@@ -88,6 +88,7 @@ public:
 	CellQueryResult * toCellLocalItemIds(uint32_t threadCount) const;
 	bool selfCheck();
 	sserialize::ItemIndex cells() const;
+	sserialize::spatial::GeoRect boundary() const;
 };
 
 template<typename T_PMITEMSPTR_IT>

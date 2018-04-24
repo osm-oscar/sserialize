@@ -3,6 +3,7 @@
 #include <sserialize/containers/ItemIndex.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/containers/RLEStream.h>
+#include <sserialize/spatial/GeoRect.h>
 
 namespace sserialize {
 
@@ -135,6 +136,7 @@ public:
 	void dump(std::ostream & out) const;
 	void dump() const;
 	sserialize::ItemIndex cells() const;
+	sserialize::spatial::GeoRect boundary() const;
 private:
 	friend class sserialize::TreedCellQueryResult;
 private:
