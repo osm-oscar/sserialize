@@ -140,6 +140,12 @@ public:
 	template<typename T_CQR_TYPE>
 	T_CQR_TYPE fromCellId(uint32_t id) const;
 	
+	template<typename T_CQR_TYPE, typename T_ITERATOR>
+	T_CQR_TYPE fromTriangleIds(const T_ITERATOR & begin, const T_ITERATOR & end) const;
+	
+	template<typename T_CQR_TYPE>
+	T_CQR_TYPE fromTriangleId(uint32_t id) const;
+	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	T_CQR_TYPE cqrFromRect(const sserialize::spatial::GeoRect & rect) const;
 	
@@ -218,6 +224,29 @@ T_CQR_TYPE CellTextCompleter::fromCellIds(const T_ITERATOR & begin, const T_ITER
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::fromCellId(uint32_t cellId) const {
 	if (cellId < m_gh.cellSize()) {
+		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0, flags());
+	}
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
+}
+
+template<typename T_CQR_TYPE, typename T_ITERATOR>
+T_CQR_TYPE CellTextCompleter::fromTriangleIds(const T_ITERATOR & begin, const T_ITERATOR & end) const {
+	SSERIALIZE_NORMAL_ASSERT(sserialize::is_strong_monotone_ascending(begin, end));
+	if (begin != end) {
+		std::set<uint32_t> tmp;
+		for(; begin != end; ++begin) {
+			tmp.insert(m_ra.cellIdFromFaceId(*begin));
+		}
+		return T_CQR_TYPE(sserialize::ItemIndex(std::vector<uint32_t>(tmp.begin(), tmp.end())), m_gh, m_idxStore, flags());
+		
+	}
+	return T_CQR_TYPE(m_gh, m_idxStore, flags());
+}
+
+template<typename T_CQR_TYPE>
+T_CQR_TYPE CellTextCompleter::fromTriangleId(uint32_t triangleId) const {
+	if (triangleId < 1) {
+		uint32_t cellId = m_ra.cellIdFromFaceId(triangleId);
 		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0, flags());
 	}
 	return T_CQR_TYPE(m_gh, m_idxStore, flags());
@@ -352,6 +381,11 @@ public:
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
 	inline T_CQR_TYPE cqrFromCellId(uint32_t id) const {
 		return priv()->fromCellId<T_CQR_TYPE>(id);
+	}
+	
+	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
+	inline T_CQR_TYPE cqrFromTriangleId(uint32_t id) const {
+		return priv()->fromTriangleId<T_CQR_TYPE>(id);
 	}
 	
 	template<typename T_CQR_TYPE = sserialize::CellQueryResult>
