@@ -694,7 +694,7 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 	return allOk;
 }
 
-sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t hreadCount) const {
+sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t threadCount) const {
 	std::deque<uint32_t> queue;
 	std::vector<uint32_t> intersectingCells;
 	std::unordered_set<uint32_t> visitedRegions;
