@@ -362,6 +362,16 @@ CellQueryResult CellQueryResult::toCellLocalItemIds(uint32_t threadCount) const 
 	return CellQueryResult( m_priv->toCellLocalItemIds(threadCount) );
 }
 
+CellQueryResult CellQueryResult::convert(int flags, uint32_t threadCount) const {
+	if ((flags & FF_CELL_GLOBAL_ITEM_IDS) && (this->flags() & FF_CELL_LOCAL_ITEM_IDS)) {
+		return toGlobalItemIds(threadCount);
+	}
+	else if ((flags & FF_CELL_LOCAL_ITEM_IDS) && (this->flags() & FF_CELL_GLOBAL_ITEM_IDS)) {
+		return toCellLocalItemIds(threadCount);
+	}
+	return *this;
+}
+
 void CellQueryResult::dump(std::ostream & out) const {
 	out << "CQR<" << cellCount();
 	if (flags() & FF_CELL_LOCAL_ITEM_IDS) {
