@@ -262,8 +262,7 @@ T_CQR_TYPE CellTextCompleter::cqrFromRect(const sserialize::spatial::GeoRect & r
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::cqrFromPoint(const sserialize::spatial::GeoPoint & point, double radius) const {
 	if (radius <= 0) {
-		uint32_t cellId = m_ra.cellId(point);
-		return T_CQR_TYPE(true, cellId, m_gh, m_idxStore, 0, flags());
+		return fromCellId<T_CQR_TYPE>( m_ra.cellId(point) );
 	}
 	else {
 		return cqrFromRect<T_CQR_TYPE>( sserialize::spatial::GeoRect(point.lat(), point.lon(), radius) );
