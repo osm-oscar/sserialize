@@ -15,9 +15,8 @@ public:
 	virtual ~GeoShape() {}
 	inline bool valid() const { return m_priv.get() && type() != sserialize::spatial::GS_INVALID;}
 	inline uint32_t size() const { return m_priv->size(); }
-	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
 	
-	template<typename TGeoShapeType>
+	template<typename TGeoShapeType = sserialize::spatial::GeoShape>
 	const TGeoShapeType * get() const { return dynamic_cast<const TGeoShapeType*>(priv().get());}
 	
 	sserialize::spatial::GeoPoint first() const;
@@ -30,6 +29,8 @@ public:
 	inline sserialize::spatial::GeoShapeType type() const { return m_priv->type(); }
 	
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const { return m_priv->intersects(boundary); }
+protected:
+	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
 
 };
 

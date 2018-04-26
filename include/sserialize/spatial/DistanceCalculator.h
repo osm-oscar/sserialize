@@ -53,7 +53,7 @@ private:
 	std::shared_ptr<detail::DistanceCalculator> m_priv;
 public:
 	DistanceCalculator(DistanceCalculatorTypes type);
-	DistanceCalculator(const std::shared_ptr<detail::DistanceCalculator> & d) : m_priv(d) {}
+	DistanceCalculator(std::shared_ptr<detail::DistanceCalculator> d) : m_priv(d) {}
 	virtual ~DistanceCalculator() {}
 	double calc(const double lat0, const double lon0, const double lat1, const double lon1) const;
 };
