@@ -47,8 +47,8 @@ private:
 			return m_rects[pos];
 		}
 		
-		inline std::shared_ptr<Node> childAt(uint32_t pos) const {
-			return std::shared_ptr<Node>(new Node(childDataAt(pos)));
+		inline Node childAt(uint32_t pos) const {
+			return Node(childDataAt(pos));
 		}
 		inline uint32_t indexPtr() const { return m_indexPtr; }
 		inline uint32_t childIndexPtr(uint32_t pos) const {
@@ -71,9 +71,9 @@ private:
 	sserialize::Static::ItemIndexStore m_indexStore;
 private:
 	inline void handleIndex(const sserialize::spatial::GeoRect & rect, uint32_t id, DynamicBitSet & dest, const ElementIntersecter * intersecter);
-	void intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, const ElementIntersecter * intersecter);
+	void intersectRecurse(const Node & node, const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, const ElementIntersecter * intersecter);
 	
-	void intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, ItemIndex & fullyContained, ItemIndex & intersected);
+	void intersectRecurse(const Node & node, const sserialize::spatial::GeoRect & rect, ItemIndex & fullyContained, ItemIndex & intersected);
 	
 public:
 	RTree();

@@ -51,22 +51,22 @@ void RTree::handleIndex(const sserialize::spatial::GeoRect & rect, uint32_t id, 
 	}
 }
 
-void RTree::intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, const ElementIntersecter * intersecter) {
-	if (node->size()) { // no leaf
-		uint32_t size = node->size();
+void RTree::intersectRecurse(const Node & node, const sserialize::spatial::GeoRect & rect, DynamicBitSet & dest, const ElementIntersecter * intersecter) {
+	if (node.size()) { // no leaf
+		uint32_t size = node.size();
 		for(uint32_t i = 0; i < size; ++i) {
-			if (rect.overlap(node->rectAt(i))) {
-				if (rect.contains(node->rectAt(i))) { //full overlap
-					handleIndex(rect, node->childIndexPtr(i), dest, 0);
+			if (rect.overlap(node.rectAt(i))) {
+				if (rect.contains(node.rectAt(i))) { //full overlap
+					handleIndex(rect, node.childIndexPtr(i), dest, 0);
 				}
 				else {
-					intersectRecurse(node->childAt(i), rect, dest, intersecter);
+					intersectRecurse(node.childAt(i), rect, dest, intersecter);
 				}
 			}
 		}
 	}
 	else { //leaf node, this means our boundary intersects with the search rect but does not contain it
-		handleIndex(rect, node->indexPtr(), dest, intersecter);
+		handleIndex(rect, node.indexPtr(), dest, intersecter);
 	}
 }
 
@@ -79,21 +79,21 @@ void RTree::intersect(const sserialize::spatial::GeoRect & rect, DynamicBitSet &
 		return;
 	}
 	else {
-		intersectRecurse(m_root, rect, dest, intersecter);
+		intersectRecurse(*m_root, rect, dest, intersecter);
 	}
 }
 
-void RTree::intersectRecurse(const std::shared_ptr<Node> & node, const sserialize::spatial::GeoRect & rect, ItemIndex & fullyContained, ItemIndex & intersected) {
-	if (node->size()) { // no leaf
-		uint32_t size = node->size();
+void RTree::intersectRecurse(const Node & node, const sserialize::spatial::GeoRect & rect, ItemIndex & fullyContained, ItemIndex & intersected) {
+	if (node.size()) { // no leaf
+		uint32_t size = node.size();
 		for(uint32_t i = 0; i < size; ++i) {
-			if (rect.overlap(node->rectAt(i))) {
-				if (rect.contains(node->rectAt(i))) { //full overlap
-					fullyContained = fullyContained + m_indexStore.at(node->childIndexPtr(i));
+			if (rect.overlap(node.rectAt(i))) {
+				if (rect.contains(node.rectAt(i))) { //full overlap
+					fullyContained = fullyContained + m_indexStore.at(node.childIndexPtr(i));
 				}
 				else {
 					ItemIndex tmpFullyContained, tmpIntersected;
-					intersectRecurse(node->childAt(i), rect, tmpFullyContained, tmpIntersected);
+					intersectRecurse(node.childAt(i), rect, tmpFullyContained, tmpIntersected);
 					fullyContained = fullyContained + tmpFullyContained;
 					intersected = intersected + tmpIntersected;
 				}
@@ -101,13 +101,13 @@ void RTree::intersectRecurse(const std::shared_ptr<Node> & node, const sserializ
 		}
 	}
 	else { //leaf node, this means our boundary intersects with the search rect but does not contain it
-		intersected = m_indexStore.at(node->indexPtr());
+		intersected = m_indexStore.at(node.indexPtr());
 	}
 }
 
 ItemIndex RTree::intersect(const sserialize::spatial::GeoRect & rect, ElementIntersecter * intersecter) {
 	ItemIndex fullyContained, intersected;
-	intersectRecurse(m_root, rect, fullyContained, intersected);
+	intersectRecurse(*m_root, rect, fullyContained, intersected);
 	if (intersecter) {
 		std::vector<uint32_t> intersectedIds;
 		for(uint32_t i = 0, s = intersected.size(); i < s; ++i) {
