@@ -1,10 +1,11 @@
 #ifndef SSERIALIZE_HASH_SPECIALIZATIONS_H
 #define SSERIALIZE_HASH_SPECIALIZATIONS_H
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/spatial/GeoPoint.h>
 #include <string>
 #include <vector>
 #include <functional>
 #include <cryptopp/sha3.h>
-#include <sserialize/storage/UByteArrayAdapter.h>
 
 namespace CryptoPP {
 
@@ -191,11 +192,22 @@ struct hash< sserialize::ShaHasherDigestData > {
 	}
 };
 
+template<>
+struct hash<sserialize::spatial::GeoPoint> {
+	std::hash<double> hash;
+	inline std::size_t operator()(const sserialize::spatial::GeoPoint & v) const {
+		std::size_t seed = 0;
+		::hash_combine(seed, v.lat(), hash);
+		::hash_combine(seed, v.lon(), hash);
+		return seed;
+	}
+};
+
 }//end namespace std
 
 namespace sserialize {
 
-template<typename TPtr, typename T>
+template<typename TPtr, typename T = typename std::remove_cv<typename std::remove_pointer<TPtr>::type>::type >
 struct DerefHasher {
 	std::hash<T> hasher;
 	inline size_t operator()(const TPtr & t) const {
