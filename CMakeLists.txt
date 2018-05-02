@@ -301,6 +301,8 @@ set(SPATIAL_SOURCES_CPP
 	src/spatial/CellQueryResultPrivate.cpp
 	src/spatial/TreedCQRImp.cpp
 	src/spatial/TreedCQR.cpp
+	src/spatial/HCQR.cpp
+	src/spatial/HCQRImp.cpp
 )
 
 set(ITERATOR_SOURCES_CPP

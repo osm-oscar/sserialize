@@ -25,7 +25,7 @@ namespace spatial {
   * All children of a node represent disjunct sets of cells (likey want that)
   *
   * What might be good:
-  * cqr trees have the same root-node, based on same gierarchy-graph
+  * cqr trees have the same root-node, based on same hierarchy-graph
   * hence they can be any subree of a given graph.
   * 
   *
@@ -95,6 +95,9 @@ public:
 	HCQRImp(const CellQueryResult & cqr);
 	virtual ~HCQRImp();
 public:
+	const GeoHierarchy & gh() const;
+	const ItemIndexStore & store() const;
+public:
 	bool operator!=(const HCQRImp * other) const;
 	bool operator==(const HCQRImp * other) const;
 public:
@@ -111,13 +114,10 @@ public:
 public:
 	void dump(std::ostream & out) const;
 	void dump() const;
-public:
-	const GeoHierarchy & gh() const;
-	const ItemIndexStore & store() const;
 private:
 	ItemIndexStore m_store;
 	GeoHierarchy m_gh;
-	std::vector<RegionInfo> m_regionInfo;
+	std::vector<detail::HCQR::RegionInfo> m_regionInfo;
 	std::vector<uint32_t> m_cellInfo; //points to m_cqr
 	CellQueryResult m_cqr;
 };

@@ -13,7 +13,17 @@ public:
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 public:
 	HCQR();
+	HCQR(const HCQR & hcqr);
 	HCQR(const CellQueryResult & cqr);
+public:
+	const GeoHierarchy & gh() const;
+	const ItemIndexStore & store() const;
+public:
+	uint32_t maxItems() const;
+	sserialize::ItemIndex::Types defaultIndexType() const;
+public:
+	bool operator!=(const HCQR & other) const;
+	bool operator==(const HCQR & other) const;
 public:
 	///unification
 	HCQR operator+(const HCQR & other) const;
@@ -22,22 +32,13 @@ public:
 	///intersection
 	HCQR operator/(const HCQR & other) const;
 public:
-	uint32_t maxItems() const;
-	sserialize::ItemIndex::Types defaultIndexType() const;
-public:
 	HCQR allToFull() const;
-public:
-	bool operator!=(const HCQR & other) const;
-	bool operator==(const HCQR & other) const;
 public:
 	ItemIndex flaten() const;
 	ItemIndex topK(uint32_t numItems) const;
 public:
 	void dump(std::ostream & out) const;
 	void dump() const;
-public:
-	const GeoHierarchy & gh() const;
-	const ItemIndexStore & store() const;
 protected:
 	const RCPtrWrapper<HCQRImp> & priv() const;
 	RCPtrWrapper<HCQRImp> & priv();
