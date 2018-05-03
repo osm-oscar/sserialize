@@ -174,6 +174,7 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 			break;
 		case ItemIndex::T_PFOR:
 			ok = ItemIndexPrivatePFoR::create(idx, dest);
+			break;
 		case ItemIndex::T_FOR:
 			ok = ItemIndexPrivateFoR::create(idx, dest);
 			break;
