@@ -366,7 +366,6 @@ const UByteArrayAdapter& PFoRCreator::data() const {
 	return *m_dest;
 }
 
-
 const std::array<uint32_t, 32> PFoRCreator::BlockSizeTestOrder{{
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 	10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
@@ -496,26 +495,27 @@ struct GenericSetOpExecuterInit<PFoRCreator, sserialize::detail::ItemIndexImpl::
 
 //BEGIN GenericSetOpExecuterAccessors
 
-template<>
-struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::PFoRIterator> > {
-	typedef detail::ItemIndexImpl::PFoRIterator PositionIteratorBase;
-	typedef std::unique_ptr<PositionIteratorBase> PositionIterator;
-	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx) {
-		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cbegin()) );
-	}
-	static PositionIterator end(const sserialize::ItemIndexPrivate * idx) {
-		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cend()) );
-	}
-	static void next(PositionIterator & it) {
-		it->PositionIteratorBase::next();
-	}
-	static bool unequal(const PositionIterator & first, const PositionIterator & second) {
-		return first->PositionIteratorBase::notEq(second.get());
-	}
-	static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
-		return it->PositionIteratorBase::get();
-	}
-};
+#define GSOEA GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::PFoRIterator> >
+
+GSOEA::PositionIterator GSOEA::begin(const sserialize::ItemIndexPrivate * idx) {
+	return PositionIterator( static_cast<PositionIteratorBase*>(idx->cbegin()) );
+}
+
+GSOEA::PositionIterator GSOEA::end(const sserialize::ItemIndexPrivate * idx) {
+	return PositionIterator( static_cast<PositionIteratorBase*>(idx->cend()) );
+}
+
+void GSOEA::next(PositionIterator & it) {
+	it->PositionIteratorBase::next();
+}
+bool GSOEA::unequal(const PositionIterator & first, const PositionIterator & second) {
+	return first->PositionIteratorBase::notEq(second.get());
+}
+uint32_t GSOEA::get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
+	return it->PositionIteratorBase::get();
+}
+
+#undef GSOEA
 
 //END GenericSetOpExecuterAccessors
 
