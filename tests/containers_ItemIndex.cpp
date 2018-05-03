@@ -146,7 +146,7 @@ int main(int argc, char ** argv) {
 		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_PFOR>::suite() );
 	}
 	if (selectedTests & sserialize::ItemIndex::T_FOR) {
-		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_PFOR>::suite() );
+		runner.addTest(  ItemIndexPrivateSerializedTest<sserialize::ItemIndex::T_FOR>::suite() );
 	}
 	
 	if (sserialize::tests::TestBase::popProtector()) {

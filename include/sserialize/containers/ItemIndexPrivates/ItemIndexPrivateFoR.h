@@ -67,7 +67,7 @@ private:
 //A simple "wrapper" which disables the p in PFoR i.e. no outlier encoding
 class ItemIndexPrivateFoR: public ItemIndexPrivatePFoR {
 public:
-	ItemIndexPrivateFoR(sserialize::UByteArrayAdapter d);
+	ItemIndexPrivateFoR(const sserialize::UByteArrayAdapter & d);
 	virtual ~ItemIndexPrivateFoR();
 	virtual ItemIndex::Types type() const override;
 public:
