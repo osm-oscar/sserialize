@@ -4,9 +4,9 @@
 #include <sserialize/containers/ItemIndex.h>
 #include "HuffmanDecoder.h"
 #include <unordered_set>
-#define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 4
+#define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 5
 
-/*Version 4.1
+/*Version 5
  *
  *
  *------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -16,7 +16,7 @@
  *
  * struct ItemIndexStore {
  *   uint<8> version;
- *   uint<8> indexTypes;
+ *   uint<16> indexTypes;
  *   uint<8> indexCompressionType;
  *   OffsetType dataLength;
  *   Array<Data, dataLength> data;

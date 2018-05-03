@@ -103,13 +103,23 @@ m_compression(sserialize::Static::ItemIndexStore::IC_NONE)
 {}
 
 ItemIndexStore::ItemIndexStore(UByteArrayAdapter data) :
-m_version(data.getUint8(0)),
-m_type(data.getUint8(1)),
-m_compression((IndexCompressionType) data.getUint8(2))
+m_version(data.getUint8(0))
 {
-	data.resetGetPtr();
-	data += 3;
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, m_version, "Static::ItemIndexStore");
+	if (m_version == 5) {
+		m_type = data.getUint16(1);
+		m_compression = IndexCompressionType(data.getUint8(3));
+		data.resetGetPtr();
+		data += 4;
+	}
+	else if (m_version == 4) {
+		m_type = data.getUint8(2);
+		m_compression = IndexCompressionType(data.getUint8(2));
+		data.resetGetPtr();
+		data += 3;
+	}
+	else {
+		SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION, m_version, "Static::ItemIndexStore");
+	}
 	OffsetType dataLength = data.getOffset();
 	data.shrinkToGetPtr();
 	

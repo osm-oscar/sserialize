@@ -239,8 +239,8 @@ OffsetType ItemIndexFactory::flush() {
 	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
 	std::cout << "Size=" << m_idToOffsets.size() << std::endl;
 	m_header.resetPtrs();
-	m_header << static_cast<uint8_t>(4); //Version
-	m_header << static_cast<uint8_t>(m_type);//type
+	m_header << static_cast<uint8_t>(5); //Version
+	m_header << static_cast<uint16_t>(m_type);//type
 	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IndexCompressionType::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
 	
@@ -419,8 +419,8 @@ UByteArrayAdapter::OffsetType compressWithHuffmanWAH(sserialize::Static::ItemInd
 	
 	//now recompress
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(4); //version
-	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(5); //version
+	dest.putUint16(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_HUFFMAN);
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
@@ -502,8 +502,8 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	}
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(4);
-	dest.putUint8(ItemIndex::T_WAH);
+	dest.putUint8(5);
+	dest.putUint16(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_VARUINT32);
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
@@ -558,8 +558,8 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(4);//version
-	dest.putUint8(store.indexTypes());
+	dest.putUint8(5);//version
+	dest.putUint16(store.indexTypes());
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_LZO | store.compressionType());
 	dest.putOffset(0);
 	UByteArrayAdapter::OffsetType destDataBeginOffset = dest.tellPutPtr();
