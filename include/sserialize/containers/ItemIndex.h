@@ -24,32 +24,32 @@ class ItemIndexPrivate;
 class ItemIndex: public RCWrapper<ItemIndexPrivate>  {
 	typedef RCWrapper<ItemIndexPrivate> MyBaseClass;
 public:
-	///Types have to be flags (so it's easier to check a list indices if they all have the same type
 	enum Types {
 		T_NULL=0,
-		T_SIMPLE=1,
-		T_REGLINE=2,
-		T_WAH=4,
-		T_DE=8,
-		T_RLE_DE=16,
-		T_NATIVE=32,
-		T_ELIAS_FANO=64,
-		T_PFOR=128,
+		T_SIMPLE=0x1,
+		T_REGLINE=0x2,
+		T_WAH=0x4,
+		T_DE=0x8,
+		T_RLE_DE=0x10,
+		T_NATIVE=0x20,
+		T_ELIAS_FANO=0x40,
+		T_PFOR=0x80,
+		T_FOR=0x100,
 		//more or less a wrapper
-		T_BOUNDED_COMPACT_UINT_ARRAY=256,
+		T_BOUNDED_COMPACT_UINT_ARRAY=0x200,
 		//the following are all in-memory
-		T_EMPTY=512,
+		T_EMPTY=0x400,
 		T_INDIRECT=2*T_EMPTY,
 		T_STL_DEQUE=4*T_EMPTY,
 		T_STL_VECTOR=8*T_EMPTY,
 		__T_LAST_ENTRY=T_STL_VECTOR,
 		//The following indicates that the type has to be encoded in the data or somewhere else
-		T_MULTIPLE=0x8000 
+		T_MULTIPLE=0x800000 
 	};
 	
 	///You can check if an index supports fast random access using these masks
 	enum RandomAccess {
-		RANDOM_ACCESS_NO=T_WAH|T_DE|T_RLE_DE|T_ELIAS_FANO|T_PFOR|T_INDIRECT,
+		RANDOM_ACCESS_NO=T_WAH|T_DE|T_RLE_DE|T_ELIAS_FANO|T_PFOR|T_FOR|T_INDIRECT,
 		RANDOM_ACCESS_YES=T_SIMPLE|T_REGLINE|T_NATIVE|T_EMPTY|T_STL_DEQUE|T_STL_VECTOR
 	};
 	

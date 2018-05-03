@@ -278,6 +278,7 @@ set(CONTAINTERS_SOURCES_CPP
 	src/containers/ItemIndexPrivates/ItemIndexPrivateNative.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateEliasFano.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.cpp
+	src/containers/ItemIndexPrivates/ItemIndexPrivateFoR.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateBoundedCompactUintArray.cpp
 )
 
@@ -446,6 +447,7 @@ include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateStlDeque.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateStlVector.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateWAH.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.h
+include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateFoR.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateNative.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateEliasFano.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h

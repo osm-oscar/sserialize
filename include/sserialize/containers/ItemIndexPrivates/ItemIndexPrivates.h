@@ -10,5 +10,6 @@
 #include "ItemIndexPrivateNative.h"
 #include "ItemIndexPrivateEliasFano.h"
 #include "ItemIndexPrivatePFoR.h"
+#include "ItemIndexPrivateFoR.h"
 #include "ItemIndexPrivateBoundedCompactUintArray.h"
 #endif

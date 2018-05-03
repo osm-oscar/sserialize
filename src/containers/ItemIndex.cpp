@@ -554,6 +554,8 @@ std::string to_string(ItemIndex::Types t) {
 		return "eliasfano";
 	case ItemIndex::T_PFOR:
 		return "pfor";
+	case ItemIndex::T_FOR:
+		return "for";
 	case ItemIndex::T_EMPTY:
 		return "empty";
 	case ItemIndex::T_STL_DEQUE:
@@ -582,8 +584,8 @@ bool from_string(const std::string& str, ItemIndex::Types& type) {
 		type = sserialize::ItemIndex::T_ELIAS_FANO;
 	else if (str == "pfor")
 		type = sserialize::ItemIndex::T_PFOR;
-	else if (str == "pfor")
-		type = sserialize::ItemIndex::T_PFOR;
+	else if (str == "for")
+		type = sserialize::ItemIndex::T_FOR;
 	else if (str == "empty")
 		type = sserialize::ItemIndex::T_EMPTY;
 	else if (str == "deque")
