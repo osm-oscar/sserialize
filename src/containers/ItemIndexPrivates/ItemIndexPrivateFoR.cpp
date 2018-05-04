@@ -370,19 +370,19 @@ template<>
 struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::FoRIterator> > {
 	typedef detail::ItemIndexImpl::FoRIterator PositionIteratorBase;
 	typedef std::unique_ptr<PositionIteratorBase> PositionIterator;
-	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx) {
+	inline static PositionIterator begin(const sserialize::ItemIndexPrivate * idx) {
 		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cbegin()) );
 	}
-	static PositionIterator end(const sserialize::ItemIndexPrivate * idx) {
+	inline static PositionIterator end(const sserialize::ItemIndexPrivate * idx) {
 		return PositionIterator( static_cast<PositionIteratorBase*>(idx->cend()) );
 	}
-	static void next(PositionIterator & it) {
+	inline static void next(PositionIterator & it) {
 		it->PositionIteratorBase::next();
 	}
-	static bool unequal(const PositionIterator & first, const PositionIterator & second) {
+	inline static bool unequal(const PositionIterator & first, const PositionIterator & second) {
 		return first->PositionIteratorBase::notEq(second.get());
 	}
-	static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
+	inline static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it) {
 		return it->PositionIteratorBase::get();
 	}
 };
@@ -555,6 +555,7 @@ ItemIndexPrivateFoR::unite(const sserialize::ItemIndexPrivate * other) const {
 		std::unique_ptr<detail::ItemIndexImpl::FoRIterator>
 		> SetOpExecuter;
 	return SetOpExecuter::execute(this, other);
+// 	return genericSetOp<detail::ItemIndexImpl::UniteOp>(cother);
 }
 
 ItemIndexPrivate *
