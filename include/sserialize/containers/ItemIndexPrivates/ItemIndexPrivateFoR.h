@@ -65,12 +65,10 @@ private:
 private:
 	sserialize::UByteArrayAdapter m_data;
 	sserialize::CompactUintArray m_bits;
-	uint32_t m_prev;
 	uint32_t m_indexPos;
 	uint32_t m_indexSize;
-	uint32_t m_blockEnd;
-	uint32_t m_blockBits;
-	MultiBitIterator m_blockIt;
+	uint32_t m_blockPos;
+	FoRBlock m_block;
 };
 
 class FoRCreator {
