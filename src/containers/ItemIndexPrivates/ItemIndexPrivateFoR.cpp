@@ -197,7 +197,10 @@ m_data(0, MM_PROGRAM_MEMORY),
 m_dest( new UByteArrayAdapter(0, MM_PROGRAM_MEMORY) ),
 m_putPtr(0),
 m_delete(true)
-{}
+{
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
+	m_values.reserve(ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset]);
+}
 
 FoRCreator::FoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset) :
 m_size(0),
@@ -211,6 +214,7 @@ m_putPtr(m_dest->tellPutPtr()),
 m_delete(false)
 {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
+	m_values.reserve(ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset]);
 }
 
 FoRCreator::FoRCreator(FoRCreator&& other) :
