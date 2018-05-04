@@ -110,36 +110,39 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 FoRIterator::FoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
 m_data(data),
 m_bits(bits),
+m_prev(0),
 m_indexPos(0),
 m_indexSize(idxSize),
-m_blockPos(0)
+m_blockEnd(0),
+m_blockBits(0),
+m_blockIt(data)
 {
-	if (m_indexPos < m_indexSize) {
-		fetchBlock(m_data, 0);
-	}
+	fetchBlock(m_data, 0);
 }
 
 FoRIterator::FoRIterator(uint32_t idxSize) :
+m_prev(0),
 m_indexPos(idxSize),
 m_indexSize(idxSize),
-m_blockPos(0)
+m_blockEnd(0)
 {}
 
 FoRIterator::~FoRIterator() {}
 
 FoRIterator::value_type
 FoRIterator::get() const {
-	return m_block.at(m_blockPos);
+	return m_prev + m_blockIt.get32(m_blockBits);
 }
 
 void
 FoRIterator::next() {
 	if (m_indexPos < m_indexSize) {
 		++m_indexPos;
-		++m_blockPos;
-		if (m_blockPos >= m_block.size()) {
-			fetchBlock(m_data, m_block.back());
-			m_blockPos = 0;
+		if (m_indexPos >= m_blockEnd) {
+			fetchBlock(m_data, get());
+		}
+		else {
+			m_blockIt += m_blockBits;
 		}
 	}
 }
@@ -168,9 +171,8 @@ bool FoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 		uint32_t defaultBlockSize = ItemIndexPrivatePFoR::BlockSizes.at(m_bits.at(0));
 		uint32_t blockNum = m_indexPos/defaultBlockSize;
 		uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_indexSize - blockNum*defaultBlockSize);
-		uint32_t blockBits = m_bits.at(blockNum+1);
-		m_block.update(d, prev, blockSize, blockBits);
-		m_data += m_block.getSizeInBytes();
+		m_blockEnd = blockNum*defaultBlockSize+blockSize;
+		m_blockBits = m_bits.at(blockNum+1);
 		return true;
 	}
 	return false;
