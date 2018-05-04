@@ -111,7 +111,7 @@ public:
 				for(uint32_t j(0); j < i; ++j) {
 					uint32_t v = mbit.get64();
 					CPPUNIT_ASSERT_EQUAL(j & mask, v);
-					mvit += bits;
+					mbit += bits;
 				}
 			}
 		}
