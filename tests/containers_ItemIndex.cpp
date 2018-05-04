@@ -77,6 +77,9 @@ protected:
 			CPPUNIT_ASSERT_MESSAGE("index data from index unequal to data", dest.equalContent(idxData));
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("Index data size incorrect", dest.size(), idx.getSizeInBytes());
 			sserialize::ItemIndex idx2(idx.data(), T_TYPE);
+			if (idx2 != srcSet) {
+				sserialize::ItemIndex idx3 = sserialize::ItemIndexFactory::create(srcSet, T_TYPE);
+			}
 			CPPUNIT_ASSERT_MESSAGE("index from index data unequal",  idx2 == srcSet);
 		}
 		return ok;
