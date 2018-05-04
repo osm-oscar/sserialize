@@ -66,26 +66,16 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 	m_values.resize(size);
 	sserialize::SizeType getPtr = d.tellGetPtr();
 	sserialize::SizeType arrStorageSize = CompactUintArray::minStorageBytes(bpn, size);
-	bool haveOutliers = arrStorageSize < d.size();
 #if 0
 	MultiBitIterator ait(UByteArrayAdapter(d, 0, arrStorageSize));
 	d.incGetPtr(arrStorageSize);
-	if (haveOutliers) {
-		for(uint32_t i(0); i < size; ++i, ait += bpn) {
-			uint32_t v = ait.get32(bpn);
-			if (v == 0) {
-				v = d.getVlPackedUint32();
-			}
-			prev += v;
-			m_values[i] = prev;
+	for(uint32_t i(0); i < size; ++i, ait += bpn) {
+		uint32_t v = ait.get32(bpn);
+		if (v == 0) {
+			v = d.getVlPackedUint32();
 		}
-	}
-	else {
-		for(uint32_t i(0); i < size; ++i, ait += bpn) {
-			uint32_t v = ait.get32(bpn);
-			prev += v;
-			m_values[i] = prev;
-		}
+		prev += v;
+		m_values[i] = prev;
 	}
 #else
 	sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
@@ -119,22 +109,14 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 		buffer >>= ie;
 		*vit = uint32_t(buffer) & mask;
 	}
-	if (haveOutliers) {
-		for(uint32_t i(0); i < size; ++i) {
-			uint32_t v = m_values[i];
-			if (v == 0) {
-				v = d.getVlPackedUint32();
-			}
-			prev += v;
-			m_values[i] = prev;
+	
+	for(uint32_t i(0); i < size; ++i) {
+		uint32_t v = m_values[i];
+		if (v == 0) {
+			v = d.getVlPackedUint32();
 		}
-	}
-	else {
-		for(uint32_t i(0); i < size; ++i) {
-			uint32_t v = m_values[i];
-			prev += v;
-			m_values[i] = prev;
-		}
+		prev += v;
+		m_values[i] = prev;
 	}
 #endif
 	return d.tellGetPtr() - getPtr;
