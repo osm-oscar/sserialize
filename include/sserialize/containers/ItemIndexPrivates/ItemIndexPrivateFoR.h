@@ -1,12 +1,75 @@
 #ifndef SSERIALIZE_ITEM_INDEX_PRIVATE_FOR_H
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_FOR_H
+#include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.h>
 #include <numeric>
 
 namespace sserialize {
+	
+class ItemIndexPrivateFoR;
 
 namespace detail {
 namespace ItemIndexImpl {
+
+class FoRBlock final {
+public:
+	typedef std::vector<uint32_t>::const_iterator const_iterator;
+public:
+	FoRBlock();
+	FoRBlock(const FoRBlock&) = default;
+	FoRBlock(FoRBlock&&) = default;
+	explicit FoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn);
+	~FoRBlock() = default;
+	FoRBlock & operator=(const FoRBlock &) = default;
+	FoRBlock & operator=(FoRBlock &&) = default;
+	uint32_t size() const;
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
+	void update(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn);
+	uint32_t front() const;
+	uint32_t back() const;
+	uint32_t at(uint32_t pos) const;
+	const_iterator begin() const;
+	const_iterator cbegin() const;
+	const_iterator end() const;
+	const_iterator cend() const;
+private:
+	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn);
+private:
+	std::vector<uint32_t> m_values;
+	sserialize::UByteArrayAdapter::SizeType m_dataSize;
+};
+
+class FoRIterator final: public detail::AbstractArrayIterator<uint32_t>{
+public:
+	using MyBaseClass = detail::AbstractArrayIterator<uint32_t>;
+public:
+	FoRIterator (const FoRIterator  &) = default;
+	FoRIterator (FoRIterator  &&) = default;
+	virtual ~FoRIterator () override;
+public:
+	virtual value_type get() const override;
+	virtual void next() override;
+	virtual bool notEq(const MyBaseClass * other) const override;
+	virtual bool eq(const MyBaseClass * other) const override;
+	virtual MyBaseClass * copy() const override;
+private:
+	friend class sserialize::ItemIndexPrivateFoR;
+private:
+	///begin iterator
+	explicit FoRIterator (uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data);
+	///end iterator
+	explicit FoRIterator (uint32_t idxSize);
+	
+	bool fetchBlock(const sserialize::UByteArrayAdapter& d, uint32_t prev);
+	uint32_t blockCount() const;
+private:
+	sserialize::UByteArrayAdapter m_data;
+	sserialize::CompactUintArray m_bits;
+	uint32_t m_indexPos;
+	uint32_t m_indexSize;
+	uint32_t m_blockPos;
+	FoRBlock m_block;
+};
 
 class FoRCreator {
 public:
@@ -64,15 +127,36 @@ private:
 
 }} //end namespace detail::ItemIndexImpl
 
-//A simple "wrapper" which disables the p in PFoR i.e. no outlier encoding
-class ItemIndexPrivateFoR: public ItemIndexPrivatePFoR {
+//A Frame of Reference coding, uses the same Storage layout as ItemIndexPrivateFoR, with the exception that outlieres are not present
+class ItemIndexPrivateFoR: public ItemIndexPrivate {
 public:
-	ItemIndexPrivateFoR(const sserialize::UByteArrayAdapter & d);
+	ItemIndexPrivateFoR(sserialize::UByteArrayAdapter d);
 	virtual ~ItemIndexPrivateFoR();
+	
 	virtual ItemIndex::Types type() const override;
+	
+	virtual UByteArrayAdapter data() const override;
 public:
+	///load all data into memory (only usefull if the underlying storage is not contigous)
+	virtual void loadIntoMemory() override;
+
+	virtual uint32_t at(uint32_t pos) const override;
+	virtual uint32_t first() const override;
+	virtual uint32_t last() const override;
+	
 	virtual const_iterator cbegin() const override;
-public:
+	virtual const_iterator cend() const override;
+
+	virtual uint32_t size() const override;
+	
+	virtual uint8_t bpn() const override;
+	virtual sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const override;
+
+	virtual bool is_random_access() const override;
+
+	virtual void putInto(DynamicBitSet & bitSet) const override;
+	virtual void putInto(uint32_t* dest) const override;
+
 	///Default uniteK uses unite
 	virtual ItemIndexPrivate * uniteK(const sserialize::ItemIndexPrivate * other, uint32_t numItems) const override;
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const override;
@@ -87,6 +171,17 @@ public:
 	///create new index beginning at dest.tellPutPtr()
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
+public:
+	uint32_t blockSizeOffset() const;
+	uint32_t blockSize() const;
+	uint32_t blockCount() const;
+private:
+	UByteArrayAdapter m_d;
+	uint32_t m_size;
+	UByteArrayAdapter m_blocks;
+	CompactUintArray m_bits;
+	mutable AbstractArrayIterator<uint32_t> m_it;
+	mutable std::vector<uint32_t> m_cache;
 };
 
 }//end namespace
@@ -110,6 +205,8 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 	if (begin == end) {
 		dest.putVlPackedUint32(0);
 		dest.putVlPackedUint32(0);
+		uint32_t blockSizeOffset = 0;
+		CompactUintArray::create(&blockSizeOffset, (&blockSizeOffset)+1, dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
 		return true;
 	}
 
@@ -117,14 +214,14 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 	uint32_t blockSizeOffset = 0;
 	uint32_t blockDataStorageSize = std::numeric_limits<uint32_t>::max();
 	if (dv.size() > 1) {
-		for(std::size_t i(dv.size()-1); i > 1; --i) {
+		for(std::size_t i(dv.size()-1); i > 0; --i) {
 			dv[i] = dv[i] - dv[i-1];
-			SSERIALIZE_ASSERT_SMALLER(0, dv[i]);
+			SSERIALIZE_ASSERT_SMALLER(uint32_t(0), dv[i]);
 		}
 	}
 	for(std::size_t i(0); i < PFoRCreator::BlockSizeTestOrder.size(); ++i) {
 		uint32_t mbso = PFoRCreator::BlockSizeTestOrder[i];
-		uint32_t mbs = ItemIndexPrivateFoR::BlockSizes[mbso];
+		uint32_t mbs = ItemIndexPrivatePFoR::BlockSizes[mbso];
 		uint32_t mbdss = 0;
 		for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend && mbdss < blockDataStorageSize; dvit += mbs) {
 			uint32_t cbs = std::min<uint32_t>(mbs, dvend-dvit);
@@ -138,7 +235,7 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 		}
 	}
 
-	uint32_t blockSize = ItemIndexPrivateFoR::BlockSizes[blockSizeOffset];
+	uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset];
 	std::vector<uint8_t> metadata(dv.size()/blockSize + uint32_t(dv.size()%blockSize>0) + 1);
 	metadata.front() = blockSizeOffset;
 	dest.putVlPackedUint32(dv.size());
