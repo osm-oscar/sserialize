@@ -99,7 +99,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 
 	m_header = data;
 	m_header.putUint8(0); // dummy version
-	m_header.putUint8(0); //dumy index type
+	m_header.putUint16(0); //dumy index type
 	m_header.putUint8(0); //dummy compression type
 	m_header.putOffset(0); //dummy offset
 	m_indexStore = m_header;
@@ -239,9 +239,9 @@ OffsetType ItemIndexFactory::flush() {
 	std::cout << "Hit count was " << m_hitCount.load() << std::endl;
 	std::cout << "Size=" << m_idToOffsets.size() << std::endl;
 	m_header.resetPtrs();
-	m_header << static_cast<uint8_t>(5); //Version
-	m_header << static_cast<uint16_t>(m_type);//type
-	m_header << static_cast<uint8_t>(Static::ItemIndexStore::IndexCompressionType::IC_NONE);
+	m_header.putUint8(5); //Version
+	m_header.putUint16(m_type);//type
+	m_header.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_NONE);
 	m_header.putOffset(m_indexStore.tellPutPtr());
 	
 
