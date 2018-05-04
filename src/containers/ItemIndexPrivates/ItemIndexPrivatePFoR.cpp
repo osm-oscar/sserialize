@@ -9,10 +9,10 @@ PFoRBlock::PFoRBlock() :
 m_dataSize(0)
 {}
 
-PFoRBlock::PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn, bool haveOutliers) :
+PFoRBlock::PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) :
 m_values(size)
 {
-	m_dataSize = decodeBlock(d, prev, size, bpn, haveOutliers);
+	m_dataSize = decodeBlock(d, prev, size, bpn);
 }
 
 uint32_t PFoRBlock::size() const {
@@ -23,8 +23,8 @@ sserialize::UByteArrayAdapter::SizeType PFoRBlock::getSizeInBytes() const {
 	return m_dataSize;
 }
 
-void PFoRBlock::update(const UByteArrayAdapter& d, uint32_t prev, uint32_t size, uint32_t bpn, bool haveOutliers) {
-	m_dataSize = decodeBlock(d, prev, size, bpn, haveOutliers);
+void PFoRBlock::update(const UByteArrayAdapter& d, uint32_t prev, uint32_t size, uint32_t bpn) {
+	m_dataSize = decodeBlock(d, prev, size, bpn);
 }
 
 uint32_t PFoRBlock::front() const {
@@ -61,12 +61,13 @@ PFoRBlock::const_iterator PFoRBlock::cend() const {
 //The problem is as follows: input are n bit numbers arranged in an array of uint8_t in big endian (most significant byte first)
 //pad n bit to 32 and do ntoh on padded bytes
 
-sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, bool haveOutliers) {
+sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	m_values.resize(size);
 	sserialize::SizeType getPtr = d.tellGetPtr();
 	sserialize::SizeType arrStorageSize = CompactUintArray::minStorageBytes(bpn, size);
-#if 1
+	bool haveOutliers = arrStorageSize < d.size();
+#if 0
 	MultiBitIterator ait(UByteArrayAdapter(d, 0, arrStorageSize));
 	d.incGetPtr(arrStorageSize);
 	if (haveOutliers) {
@@ -140,13 +141,12 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 }
 
 
-PFoRIterator::PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data, bool haveOutliers) :
+PFoRIterator::PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data) :
 m_data(data),
 m_bits(bits),
 m_indexPos(0),
 m_indexSize(idxSize),
-m_blockPos(0),
-m_haveOutliers(haveOutliers)
+m_blockPos(0)
 {
 	if (m_indexPos < m_indexSize) {
 		fetchBlock(m_data, 0);
@@ -204,7 +204,7 @@ bool PFoRIterator::fetchBlock(const UByteArrayAdapter& d, uint32_t prev) {
 		uint32_t blockNum = m_indexPos/defaultBlockSize;
 		uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_indexSize - blockNum*defaultBlockSize);
 		uint32_t blockBits = m_bits.at(blockNum+1);
-		m_block.update(d, prev, blockSize, blockBits, m_haveOutliers);
+		m_block.update(d, prev, blockSize, blockBits);
 		m_data += m_block.getSizeInBytes();
 		return true;
 	}
@@ -534,11 +534,7 @@ const uint32_t ItemIndexPrivatePFoR::DefaultBlockSizeOffset = 14;
 
 constexpr uint32_t ItemIndexPrivatePFoR::BlockDescBitWidth;
 
-ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(const UByteArrayAdapter & d) :
-ItemIndexPrivatePFoR(d, true)
-{}
-
-ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(sserialize::UByteArrayAdapter d, bool haveOutliers) :
+ItemIndexPrivatePFoR::ItemIndexPrivatePFoR(UByteArrayAdapter d) :
 m_d(d)
 {
 	sserialize::SizeType totalSize = 0;
@@ -567,7 +563,7 @@ m_d(d)
 		m_d = UByteArrayAdapter(m_d, 0, totalSize);
 	}
 	
-	m_it = const_iterator( new detail::ItemIndexImpl::PFoRIterator(size(), bits(), blocks(), haveOutliers) );
+	m_it = cbegin();
 }
 
 ItemIndexPrivatePFoR::~ItemIndexPrivatePFoR() {}
@@ -618,7 +614,7 @@ ItemIndexPrivatePFoR::last() const {
 
 ItemIndexPrivatePFoR::const_iterator
 ItemIndexPrivatePFoR::cbegin() const {
-	return new detail::ItemIndexImpl::PFoRIterator(size(), bits(), blocks(), true);
+	return new detail::ItemIndexImpl::PFoRIterator(size(), m_bits, m_blocks);
 }
 
 ItemIndexPrivatePFoR::const_iterator
@@ -735,7 +731,7 @@ ItemIndexPrivatePFoR::fromBitSet(const DynamicBitSet & bitSet) {
 }
 
 uint32_t ItemIndexPrivatePFoR::blockSizeOffset() const {
-	return bits().at(0);
+	return m_bits.at(0);
 }
 
 uint32_t ItemIndexPrivatePFoR::blockSize() const {
@@ -744,14 +740,6 @@ uint32_t ItemIndexPrivatePFoR::blockSize() const {
 
 uint32_t ItemIndexPrivatePFoR::blockCount() const {
 	return m_size/blockSize();
-}
-
-const CompactUintArray & ItemIndexPrivatePFoR::bits() const {
-	return m_bits;
-}
-
-const UByteArrayAdapter & ItemIndexPrivatePFoR::blocks() const {
-	return m_blocks;
 }
 
 //END INDEX

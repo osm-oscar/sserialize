@@ -12,7 +12,6 @@
 namespace sserialize {
 
 class ItemIndexPrivatePFoR;
-class ItemIndexPrivateFoR;
 
 namespace detail {
 namespace ItemIndexImpl {
@@ -39,13 +38,13 @@ public:
 	PFoRBlock();
 	PFoRBlock(const PFoRBlock&) = default;
 	PFoRBlock(PFoRBlock&&) = default;
-	explicit PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn, bool haveOutliers);
+	explicit PFoRBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn);
 	~PFoRBlock() = default;
 	PFoRBlock & operator=(const PFoRBlock &) = default;
 	PFoRBlock & operator=(PFoRBlock &&) = default;
 	uint32_t size() const;
 	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
-	void update(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn, bool haveOutliers);
+	void update(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn);
 	uint32_t front() const;
 	uint32_t back() const;
 	uint32_t at(uint32_t pos) const;
@@ -54,7 +53,7 @@ public:
 	const_iterator end() const;
 	const_iterator cend() const;
 private:
-	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn, bool haveOutliers);
+	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn);
 private:
 	std::vector<uint32_t> m_values;
 	sserialize::UByteArrayAdapter::SizeType m_dataSize;
@@ -75,10 +74,9 @@ public:
 	virtual MyBaseClass * copy() const override;
 private:
 	friend class sserialize::ItemIndexPrivatePFoR;
-	friend class sserialize::ItemIndexPrivateFoR;
 private:
 	///begin iterator
-	explicit PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data, bool haveOutliers);
+	explicit PFoRIterator(uint32_t idxSize, const sserialize::CompactUintArray & bits, const sserialize::UByteArrayAdapter & data);
 	///end iterator
 	explicit PFoRIterator(uint32_t idxSize);
 	
@@ -91,7 +89,6 @@ private:
 	uint32_t m_indexSize;
 	uint32_t m_blockPos;
 	PFoRBlock m_block;
-	bool m_haveOutliers;
 };
 
 template<>
@@ -228,7 +225,7 @@ public:
 	static const std::array<const uint32_t, 32> BlockSizes;
 	static constexpr uint32_t BlockDescBitWidth = 5;
 public:
-	ItemIndexPrivatePFoR(const sserialize::UByteArrayAdapter & d);
+	ItemIndexPrivatePFoR(sserialize::UByteArrayAdapter d);
 	virtual ~ItemIndexPrivatePFoR();
 	
 	virtual ItemIndex::Types type() const override;
@@ -273,10 +270,6 @@ public:
 	uint32_t blockSizeOffset() const;
 	uint32_t blockSize() const;
 	uint32_t blockCount() const;
-protected:
-	const CompactUintArray & bits() const;
-	const UByteArrayAdapter & blocks() const;
-	ItemIndexPrivatePFoR(sserialize::UByteArrayAdapter d, bool haveOutliers);
 private:
 	UByteArrayAdapter m_d;
 	uint32_t m_size;
@@ -333,7 +326,7 @@ uint32_t PFoRCreator::encodeBlock(UByteArrayAdapter& dest, T_IT begin, T_OD_IT o
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	{
 		UByteArrayAdapter blockData(dest, blockDataBegin);
-		PFoRBlock block(blockData, 0, blockSize, optBits, true);
+		PFoRBlock block(blockData, 0, blockSize, optBits);
 		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(blockSize, block.size());
 		uint32_t realId = 0;
 		auto it(begin);
