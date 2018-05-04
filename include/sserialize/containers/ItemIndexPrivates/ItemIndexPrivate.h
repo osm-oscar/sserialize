@@ -71,6 +71,8 @@ public:
 	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const;
 	///Default symmetricDifference which uses a ItemIndexPrivateSimple as storage backend
 	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const;
+public:
+	virtual void dump(std::ostream & out) const;
 };
 
 class ItemIndexPrivateEmpty: public ItemIndexPrivate {

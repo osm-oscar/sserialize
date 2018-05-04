@@ -147,6 +147,20 @@ ItemIndexPrivate * ItemIndexPrivate::symmetricDifference(const ItemIndexPrivate 
 }
 
 
+void ItemIndexPrivate::dump(std::ostream & out) const {
+	out << "ItemIndex<type=" << std::to_string(type()) << ", size=" << size() << ", bpn=" << static_cast<uint32_t>(bpn());
+	out << ">[";
+	if (size()) {
+		ItemIndex::const_iterator it(cbegin());
+		out << *it;
+		++it;
+		for(uint32_t i(1), s(size()); i < s; ++i, ++it) {
+			out << ", " << *it;
+		}
+	}
+	out << "]" << std::endl;
+}
+
 ItemIndexPrivateEmpty::ItemIndexPrivateEmpty() {}
 ItemIndexPrivateEmpty::~ItemIndexPrivateEmpty() {}
 
