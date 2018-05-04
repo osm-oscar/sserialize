@@ -431,7 +431,6 @@ void PFoRCreator::optBitsDist(std::array< uint32_t, int(33) >& storageSizes, std
 
 
 //END CREATOR
-
 //BEGIN GenericSetOpExecuterInit
 
 template<>
@@ -500,6 +499,7 @@ struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::PFo
 };
 
 //END GenericSetOpExecuterAccessors
+
 
 }} //end namespace detail::ItemIndexImpl
 

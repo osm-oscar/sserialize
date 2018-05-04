@@ -170,7 +170,7 @@ public:
 	
 	static void optBlockCfg(const OptimizerData & od, uint32_t & optBlockSizeOffset, uint32_t & optBlockStorageSize);
 	
-private:
+public:
 	static const std::array<uint32_t, 32> BlockSizeTestOrder;
 private:
 	UByteArrayAdapter & data();
