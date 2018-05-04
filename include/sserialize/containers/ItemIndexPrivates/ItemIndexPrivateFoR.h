@@ -33,7 +33,7 @@ public:
 	const_iterator end() const;
 	const_iterator cend() const;
 private:
-	SizeType decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn);
+	SizeType decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn);
 private:
 	std::vector<uint32_t> m_values;
 	sserialize::UByteArrayAdapter::SizeType m_dataSize;

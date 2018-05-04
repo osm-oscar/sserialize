@@ -57,19 +57,15 @@ FoRBlock::const_iterator FoRBlock::cend() const {
 	return m_values.cend();
 }
 
-sserialize::SizeType FoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uint32_t prev, uint32_t size, uint32_t bpn) {
+sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	m_values.resize(size);
-	sserialize::SizeType getPtr = d.tellGetPtr();
-	sserialize::SizeType arrStorageSize = CompactUintArray::minStorageBytes(bpn, size);
-	MultiBitIterator ait(UByteArrayAdapter(d, 0, arrStorageSize));
-	d.incGetPtr(arrStorageSize);
+	MultiBitIterator ait(d);
 	for(uint32_t i(0); i < size; ++i, ait += bpn) {
 		prev += ait.get32(bpn);
 		m_values[i] = prev;
 	}
-
-	return d.tellGetPtr() - getPtr;
+	return CompactUintArray::minStorageBytes(bpn, size);
 }
 
 
@@ -111,7 +107,6 @@ FoRIterator::next() {
 			m_blockPos = 0;
 		}
 	}
-	
 }
 
 bool
