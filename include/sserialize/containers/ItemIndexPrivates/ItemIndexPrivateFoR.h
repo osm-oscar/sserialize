@@ -71,6 +71,8 @@ public:
 	virtual ~ItemIndexPrivateFoR();
 	virtual ItemIndex::Types type() const override;
 public:
+	virtual const_iterator cbegin() const override;
+public:
 	///Default uniteK uses unite
 	virtual ItemIndexPrivate * uniteK(const sserialize::ItemIndexPrivate * other, uint32_t numItems) const override;
 	virtual ItemIndexPrivate * intersect(const sserialize::ItemIndexPrivate * other) const override;
@@ -96,7 +98,11 @@ namespace ItemIndexImpl {
 	
 template<typename T_ITERATOR>
 void FoRCreator::encodeBlock(UByteArrayAdapter& dest, T_ITERATOR it, T_ITERATOR end, uint32_t bits) {
-	CompactUintArray::create(it, end, dest, bits);
+	MultiBitBackInserter dvit(dest);
+	for(; it != end; ++it) {
+		dvit.push_back(*it, bits);
+	}
+	dvit.flush();
 }
 
 template<typename T_ITERATOR>
@@ -113,6 +119,7 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 	if (dv.size() > 1) {
 		for(std::size_t i(dv.size()-1); i > 1; --i) {
 			dv[i] = dv[i] - dv[i-1];
+			SSERIALIZE_ASSERT_SMALLER(0, dv[i]);
 		}
 	}
 	for(std::size_t i(0); i < PFoRCreator::BlockSizeTestOrder.size(); ++i) {
@@ -132,19 +139,21 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 	}
 
 	uint32_t blockSize = ItemIndexPrivateFoR::BlockSizes[blockSizeOffset];
-	std::vector<uint8_t> metadata(dv.size()/blockSize +  uint32_t(dv.size()%blockSize>0) + 1);
+	std::vector<uint8_t> metadata(dv.size()/blockSize + uint32_t(dv.size()%blockSize>0) + 1);
 	metadata.front() = blockSizeOffset;
 	dest.putVlPackedUint32(dv.size());
 	dest.putVlPackedUint32(blockDataStorageSize);
 	{
+		SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
 		auto mdit = metadata.begin()+1;
 		for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, ++mdit) {
-			uint32_t myBlockSize = std::min<uint32_t>(blockSize, dvend-dvit);
-			auto blockEnd = dvit+myBlockSize;
+			uint32_t cbs = std::min<uint32_t>(blockSize, dvend-dvit);
+			auto blockEnd = dvit+cbs;
 			uint32_t blockBits = CompactUintArray::minStorageBits(std::accumulate(dvit, blockEnd, uint32_t(0), std::bit_or<uint32_t>()));
-			CompactUintArray::create(dvit, dvit+myBlockSize, dest, blockBits);
+			encodeBlock(dest, dvit, blockEnd, blockBits);
 			*mdit = blockBits;
 		}
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(dest.tellPutPtr()-blockDataBegin, blockDataStorageSize);
 	}
 	//and the block bits
 	sserialize::CompactUintArray::create(metadata, dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
