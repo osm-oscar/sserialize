@@ -176,6 +176,9 @@ public:
 	uint32_t blockSize() const;
 	uint32_t blockCount() const;
 private:
+	template<typename TFunc>
+	sserialize::ItemIndexPrivate * genericSetOp(const ItemIndexPrivateFoR * cother) const;
+private:
 	UByteArrayAdapter m_d;
 	uint32_t m_size;
 	UByteArrayAdapter m_blocks;
@@ -268,6 +271,60 @@ template<typename TSortedContainer>
 bool
 ItemIndexPrivateFoR::create(const TSortedContainer & src, UByteArrayAdapter & dest) {
 	return create(src.begin(), src.end(), dest);
+}
+
+template<typename TFunc>
+sserialize::ItemIndexPrivate * ItemIndexPrivateFoR::genericSetOp(const ItemIndexPrivateFoR * cother) const {
+	detail::ItemIndexImpl::PFoRCreator creator;
+	
+	uint32_t myI = 0;
+	uint32_t oI = 0;
+	uint32_t myS = size();
+	uint32_t oS = cother->size();
+	std::unique_ptr<detail::ItemIndexImpl::FoRIterator>myIt{static_cast<detail::ItemIndexImpl::FoRIterator*>(cbegin())};
+	std::unique_ptr<detail::ItemIndexImpl::FoRIterator> oIt{static_cast<detail::ItemIndexImpl::FoRIterator*>(cother->cbegin())};
+	
+	for( ;myI < myS && oI < oS; ) {
+		uint32_t myId = myIt->get();
+		uint32_t oId = oIt->get();
+		if (myId < oId) {
+			if (TFunc::pushFirstSmaller) {
+				creator.push_back(myId);
+			}
+			++myI;
+			myIt->next();
+		}
+		else if (oId < myId) {
+			if (TFunc::pushSecondSmaller) {
+				creator.push_back(oId);
+			}
+			++oI;
+			oIt->next();
+		}
+		else {
+			if (TFunc::pushEqual) {
+				creator.push_back(myId);
+			}
+			++myI;
+			myIt->next();
+			++oI;
+			oIt->next();
+		}
+	}
+	if (TFunc::pushFirstRemainder) {
+		for(; myI < myS; ++myI, myIt->next()) {
+			creator.push_back(myIt->get());
+		}
+	}
+	
+	if (TFunc::pushSecondRemainder) {
+		for(; oI < oS; ++oI, oIt->next()) {
+			creator.push_back(oIt->get());
+		}
+	}
+	
+	creator.flush();
+	return creator.getPrivateIndex();
 }
 
 }
