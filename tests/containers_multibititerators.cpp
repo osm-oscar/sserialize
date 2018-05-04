@@ -27,6 +27,7 @@ class MultiBitIteratorTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( MultiBitIteratorTest );
 CPPUNIT_TEST( testSpecialEquality );
 CPPUNIT_TEST( testEquality );
+CPPUNIT_TEST( testRunofSameBits );
 CPPUNIT_TEST_SUITE_END();
 private:
 	std::vector< std::pair<uint64_t, uint8_t> > createTestData() {
@@ -91,6 +92,27 @@ public:
 				uint64_t v = it.get64(testData[j].second);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(str.c_str(), rv, v);
 				it += testData[j].second;
+			}
+		}
+	}
+	
+	void testRunofSameBits() {
+		UByteArrayAdapter data(0, MM_PROGRAM_MEMORY);
+		for(uint32_t bits(0); bits < 64; ++bits) {
+			uint32_t mask = createMask(bits);
+			for(uint32_t i(0); i < 1024; ++i) {
+				data.resetPtrs();
+				MultiBitBackInserter backInserter(data);
+				for(uint32_t j(0); j < i; ++j) {
+					backInserter.push_back(j & mask, bits);
+				}
+				backInserter.flush();
+				MultiBitIterator mbit(data);
+				for(uint32_t j(0); j < i; ++j) {
+					uint32_t v = mbit.get64();
+					CPPUNIT_ASSERT_EQUAL(j & mask, v);
+					mvit += bits;
+				}
 			}
 		}
 	}
