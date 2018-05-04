@@ -112,7 +112,7 @@ m_version(data.getUint8(0))
 		data += 4;
 	}
 	else if (m_version == 4) {
-		m_type = data.getUint8(2);
+		m_type = data.getUint8(1);
 		m_compression = IndexCompressionType(data.getUint8(2));
 		data.resetGetPtr();
 		data += 3;
