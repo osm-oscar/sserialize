@@ -91,18 +91,7 @@ private:
 	PFoRBlock m_block;
 };
 
-template<>
-struct GenericSetOpExecuterAccessors< std::unique_ptr<detail::ItemIndexImpl::PFoRIterator> > {
-	typedef detail::ItemIndexImpl::PFoRIterator PositionIteratorBase;
-	typedef std::unique_ptr<PositionIteratorBase> PositionIterator;
-	static PositionIterator begin(const sserialize::ItemIndexPrivate * idx);
-	static PositionIterator end(const sserialize::ItemIndexPrivate * idx);
-	static void next(PositionIterator & it);
-	static bool unequal(const PositionIterator & first, const PositionIterator & second);
-	static uint32_t get(const sserialize::ItemIndexPrivate * /*idx*/, const PositionIterator & it);
-};
-
-class PFoRCreator {
+class PFoRCreator final {
 public:
 	using BlockCache = std::vector<uint32_t>;
 	struct OptimizerData {
@@ -142,7 +131,7 @@ public:
 	PFoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset);
 	PFoRCreator(UByteArrayAdapter & data, uint32_t finalSize, uint32_t blockSizeOffset);
 	PFoRCreator(PFoRCreator && other);
-	virtual ~PFoRCreator();
+	~PFoRCreator();
 	uint32_t size() const;
 	void push_back(uint32_t id);
 	void flush();
@@ -180,7 +169,8 @@ public:
 	static bool create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter& dest);
 	
 	static void optBlockCfg(const OptimizerData & od, uint32_t & optBlockSizeOffset, uint32_t & optBlockStorageSize);
-public:
+	
+private:
 	static const std::array<uint32_t, 32> BlockSizeTestOrder;
 private:
 	UByteArrayAdapter & data();
