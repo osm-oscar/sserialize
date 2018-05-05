@@ -16,7 +16,7 @@ m_values(size)
 	m_dataSize = decodeBlock(d, prev, size, bpn);
 }
 
-uint32_t FoRBlock::size() const {
+INLINE_WITH_LTO uint32_t FoRBlock::size() const {
 	return m_values.size();
 }
 
@@ -40,6 +40,10 @@ uint32_t FoRBlock::at(uint32_t pos) const {
 	return m_values.at(pos);
 }
 
+INLINE_WITH_LTO uint32_t FoRBlock::operator[](uint32_t pos) const {
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(pos, size());
+	return m_values[pos];
+}
 
 FoRBlock::const_iterator FoRBlock::begin() const {
 	return m_values.begin();
@@ -57,49 +61,68 @@ FoRBlock::const_iterator FoRBlock::cend() const {
 	return m_values.cend();
 }
 
+__attribute__((optimize("unroll-loops")))
 sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	m_values.resize(size);
 	auto blockStorageSize = CompactUintArray::minStorageBytes(bpn, size);
-#if 0
-	MultiBitIterator ait(d);
-	for(uint32_t i(0); i < size; ++i, ait += bpn) {
-		prev += ait.get32(bpn);
-		m_values[i] = prev;
+	if (size < 8) {
+		MultiBitIterator ait(d);
+		for(uint32_t i(0); i < size; ++i, ait += bpn) {
+			prev += ait.get32(bpn);
+			m_values[i] = prev;
+		}
 	}
-#else
-	sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, blockStorageSize));
-	uint32_t mask = sserialize::createMask(bpn);
-	const uint8_t * dit = mv.data();
-	uint32_t * vit = m_values.data();
-	//in theory this loop can be computed in parallel (and hopefully is executed in parallel by the processor)
-	for(uint32_t i(0); i < size; ++i, ++vit) {
-		uint64_t buffer = 0;
-		//calculate source byte begin and end and intra byte offset
-		sserialize::SizeType eb = sserialize::SizeType(i)*bpn/8;
-		sserialize::SizeType ee = sserialize::SizeType(i+1)*bpn/8;
-		sserialize::SizeType ie = 8-(sserialize::SizeType(i+1)*bpn%8);
-		//copy these into our buffer
-		int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
-		if (eb+8 <= blockStorageSize) {
+	else {
+		sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, blockStorageSize));
+		const uint32_t mask = sserialize::createMask(bpn);
+		const uint8_t * dit = mv.data();
+		uint32_t * vit = m_values.data();
+		uint32_t i = 0;
+		const uint32_t numFullWords = sserialize::multiplyDiv32(size, bpn, 64);
+		for(; i < numFullWords; ++i) {
+			uint64_t buffer;
+			//calculate source byte begin and end and intra byte offset
+			sserialize::SizeType eb = (sserialize::SizeType(i)*bpn)/8;
+			sserialize::SizeType ee = (sserialize::SizeType(i+1)*bpn)/8;
+			sserialize::SizeType ie = 8-((sserialize::SizeType(i+1)*bpn)%8);
+			//copy these into our buffer
+			int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
 			::memmove(&buffer, dit+eb, 8);
 			buffer = be64toh(buffer);
 			buffer >>= (8-len)*8;
+			buffer >>= ie;
+			prev += uint32_t(buffer) & mask;
+			vit[i] = prev;
+// 			*vit = uint32_t(buffer) & mask;
 		}
-		else {
+		for(; i < size; ++i) {
+			uint64_t buffer = 0;
+			sserialize::SizeType eb = (sserialize::SizeType(i)*bpn)/8;
+			sserialize::SizeType ee = (sserialize::SizeType(i+1)*bpn)/8;
+			sserialize::SizeType ie = 8-((sserialize::SizeType(i+1)*bpn)%8);
+			//copy these into our buffer
+			int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
+			SSERIALIZE_CHEAP_ASSERT_LARGER(eb+8, blockStorageSize);
+			
 			char * bit = ((char*)&buffer);
 			const uint8_t * mydit = dit+eb+(len-1);
 			for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
 				*bit = *mydit;
 			}
-	// 		::memmove(((char*)&buffer)+(8-len), dit+eb, len);
 			buffer = le64toh(buffer);
+			
+			buffer >>= ie;
+			prev += uint32_t(buffer) & mask;
+			vit[i] = prev;
+// 			*vit = uint32_t(buffer) & mask;
 		}
-		buffer >>= ie;
-		prev += uint32_t(buffer) & mask;
-		*vit = prev;
+// 		for(uint32_t i(0); i < size; ++i) {
+// 			uint32_t v = m_values[i];
+// 			prev += v;
+// 			m_values[i] = prev;
+// 		}
 	}
-#endif
 	return blockStorageSize;
 }
 
@@ -129,7 +152,7 @@ FoRIterator::~FoRIterator() {}
 
 FoRIterator::value_type
 FoRIterator::get() const {
-	return m_block.at(m_blockPos);
+	return m_block[m_blockPos];
 }
 
 void
@@ -190,6 +213,7 @@ FoRCreator(ItemIndexPrivatePFoR::DefaultBlockSizeOffset)
 FoRCreator::FoRCreator(uint32_t blockSizeOffset) :
 m_size(0),
 m_blockSizeOffset(blockSizeOffset),
+m_vpos(0),
 m_prev(0),
 m_vor(0),
 m_blockBits(1, m_blockSizeOffset),
@@ -199,12 +223,13 @@ m_putPtr(0),
 m_delete(true)
 {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
-	m_values.reserve(ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset]);
+	m_values.resize(ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset]);
 }
 
 FoRCreator::FoRCreator(UByteArrayAdapter & data, uint32_t blockSizeOffset) :
 m_size(0),
 m_blockSizeOffset(blockSizeOffset),
+m_vpos(0),
 m_prev(0),
 m_vor(0),
 m_blockBits(1, m_blockSizeOffset),
@@ -214,13 +239,14 @@ m_putPtr(m_dest->tellPutPtr()),
 m_delete(false)
 {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(blockSizeOffset, ItemIndexPrivatePFoR::BlockSizes.size());
-	m_values.reserve(ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset]);
+	m_values.resize(ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset]);
 }
 
 FoRCreator::FoRCreator(FoRCreator&& other) :
 m_size(other.m_size),
 m_blockSizeOffset(other.m_blockSizeOffset),
 m_values(std::move(other.m_values)),
+m_vpos(other.m_vpos),
 m_prev(other.m_prev),
 m_vor(other.m_vor),
 m_blockBits(std::move(other.m_blockBits)),
@@ -245,17 +271,19 @@ uint32_t FoRCreator::size() const {
 
 void FoRCreator::push_back(uint32_t id) {
 	SSERIALIZE_CHEAP_ASSERT(m_prev == 0 || m_prev < id);
-	m_values.push_back(id - m_prev);
+	uint32_t delta = id - m_prev;
+	m_values[m_vpos] = delta;
 	m_prev = id;
-	m_vor |= m_values.back();
-	if (m_values.size() == ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]) {
+	m_vor |= delta;
+	++m_vpos;
+	if (m_vpos == ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]) {
 		flushBlock();
 	}
-	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_values.size(), ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_vpos, ItemIndexPrivatePFoR::BlockSizes[m_blockSizeOffset]);
 }
 
 void FoRCreator::flush() {
-	if (m_values.size()) {
+	if (m_vpos) {
 		flushBlock();
 	}
 	m_dest->putVlPackedUint32(m_size);
@@ -292,12 +320,12 @@ const UByteArrayAdapter& FoRCreator::data() const {
 
 void FoRCreator::flushBlock() {
 	SSERIALIZE_EXPENSIVE_ASSERT_ASSIGN(auto blockBegin, m_data.tellPutPtr());
-	if (!m_values.size()) {
+	if (!m_vpos) {
 		return;
 	}
-	m_size += m_values.size();
+	m_size += m_vpos;
 	uint32_t blockBits = CompactUintArray::minStorageBits(m_vor);
-	encodeBlock(m_data, m_values.begin(), m_values.end(), blockBits);
+	encodeBlock(m_data, m_values.begin(), m_values.begin()+m_vpos, blockBits);
 	m_blockBits.push_back(blockBits);
 	
 	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
@@ -314,7 +342,7 @@ void FoRCreator::flushBlock() {
 	}
 	#endif
 	
-	m_values.clear();
+	m_vpos= 0;
 	m_vor = 0;
 }
 

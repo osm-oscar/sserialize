@@ -28,6 +28,7 @@ public:
 	uint32_t front() const;
 	uint32_t back() const;
 	uint32_t at(uint32_t pos) const;
+	uint32_t operator[](uint32_t pos) const;
 	const_iterator begin() const;
 	const_iterator cbegin() const;
 	const_iterator end() const;
@@ -114,6 +115,7 @@ private:
 	uint32_t m_blockSizeOffset;
 	//holds delta values!
 	BlockCache m_values;
+	uint32_t m_vpos;
 	uint32_t m_prev;
 	uint32_t m_vor; //all values of m_values "ored"
 	//stuff for flush
