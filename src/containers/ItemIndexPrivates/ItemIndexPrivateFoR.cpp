@@ -62,6 +62,7 @@ FoRBlock::const_iterator FoRBlock::cend() const {
 }
 
 
+#if defined(PFOR_DECODE)
 sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	m_values.resize(size);
@@ -118,8 +119,8 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 #endif
 	return arrStorageSize;
 }
+#else
 
-/*
 __attribute__((optimize("unroll-loops")))
 sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
@@ -138,8 +139,9 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 		const uint8_t * dit = mv.data();
 		uint32_t * vit = m_values.data();
 		uint32_t i = 0;
-		const uint32_t numFullWords = sserialize::multiplyDiv32(size, bpn, 64);
-		for(; i < numFullWords; ++i) {
+		const uint32_t bitsInLastWord = (uint64_t(size)*bpn)%64;
+		const uint32_t fullWordSize = size - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
+		for(; i < fullWordSize; ++i) {
 			uint64_t buffer;
 			//calculate source byte begin and end and intra byte offset
 			sserialize::SizeType eb = (sserialize::SizeType(i)*bpn)/8;
@@ -151,9 +153,9 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 			buffer = be64toh(buffer);
 			buffer >>= (8-len)*8;
 			buffer >>= ie;
-// 			prev += uint32_t(buffer) & mask;
-// 			vit[i] = prev;
-			vit[i] = uint32_t(buffer) & mask;
+			prev += uint32_t(buffer) & mask;
+			vit[i] = prev;
+// 			vit[i] = uint32_t(buffer) & mask;
 		}
 		for(; i < size; ++i) {
 			uint64_t buffer = 0;
@@ -172,19 +174,19 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 			buffer = le64toh(buffer);
 			
 			buffer >>= ie;
-// 			prev += uint32_t(buffer) & mask;
-// 			vit[i] = prev;
-			vit[i] = uint32_t(buffer) & mask;
+			prev += uint32_t(buffer) & mask;
+			vit[i] = prev;
+// 			vit[i] = uint32_t(buffer) & mask;
 		}
-		for(uint32_t i(0); i < size; ++i) {
-			uint32_t v = m_values[i];
-			prev += v;
-			m_values[i] = prev;
-		}
+// 		for(uint32_t i(0); i < size; ++i) {
+// 			uint32_t v = m_values[i];
+// 			prev += v;
+// 			m_values[i] = prev;
+// 		}
 	}
 	return blockStorageSize;
 }
-*/
+#endif
 
 
 //END FoRBlock
