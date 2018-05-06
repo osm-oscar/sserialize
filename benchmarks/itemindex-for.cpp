@@ -15,37 +15,38 @@ using namespace sserialize;
 This with gcc:
 g++-6 -std=c++17 -g -O3 -march=native -flto -fno-fat-lto-objects -frounding-math
 bits    packtime        unpacktime
-1       323     181
-2       363     183
-3       506     188
-4       456     184
-5       637     178
-6       675     178
-7       792     180
-8       664     185
-9       990     180
-10      952     191
-11      995     184
-12      904     181
-13      918     179
-14      925     185
-15      994     211
-16      969     193
-17      1100    195
-18      990     188
-19      1030    186
-20      941     183
-21      945     181
-22      952     180
-23      1022    181
-24      944     186
-25      1012    185
-26      956     188
-27      1085    182
-28      988     181
-29      968     180
-30      985     180
-31      1031    181
+1       342     118
+2       383     119
+3       478     118
+4       472     120
+5       628     121
+6       679     119
+7       770     119
+8       684     118
+9       971     120
+10      876     118
+11      972     120
+12      914     124
+13      898     118
+14      907     119
+15      971     119
+16      898     118
+17      1035    119
+18      924     118
+19      1003    120
+20      934     118
+21      933     119
+22      943     118
+23      1019    119
+24      949     118
+25      1139    120
+26      962     119
+27      1065    121
+28      989     119
+29      986     122
+30      990     119
+31      1054    121
+
 
 The one from Lemire:
 g++ -O3 -march=native -o bitpacking bitpacking.cpp
@@ -131,13 +132,13 @@ int main() {
 	std::vector<uint32_t> src(blockSize);
 	detail::ItemIndexImpl::FoRBlock block(dest, 0, 0, 1);
 	
-	std::cout << "Bits\tpacktime\tunpacktime" << std::endl;
+	std::cout << "bits\tpacktime\tunpacktime" << std::endl;
 	for(uint32_t bits(1); bits < 32; ++bits) {
 		dest.resetPtrs();
 		
 		uint32_t mask = sserialize::createMask(bits);
 		for(uint32_t i(0); i < blockSize; ++i) {
-			src[i] = 1; //i & mask;
+			src[i] = i & mask;
 		}
 		
 		tmEncode.begin();
@@ -151,9 +152,10 @@ int main() {
 		
 		block.update(dest, 0, blockSize, bits);
 		
-		for(uint32_t i(0); i < blockSize; ++i) {
-			if (block.at(i) != i+1) {
-				std::cerr << "ERROR: block.at(" << i << ")=" << block.at(i) << std::endl;
+		for(uint32_t i(0), prev(0); i < blockSize; ++i) {
+			prev += src[i];
+			if (block.at(i) != prev) {
+				std::cerr << "ERROR: block.at(" << i << ")=" << block.at(i) << "!=" << prev << std::endl;
 				return -1;
 			}
 		}
