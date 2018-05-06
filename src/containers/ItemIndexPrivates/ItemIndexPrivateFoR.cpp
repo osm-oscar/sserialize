@@ -121,6 +121,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 }
 #else
 
+//loop unrolling: 133ms -> 118ms
 __attribute__((optimize("unroll-loops")))
 sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
@@ -178,6 +179,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 			vit[i] = prev;
 // 			vit[i] = uint32_t(buffer) & mask;
 		}
+		//computing delta afterwards: 149 ms vs. 119 if we do it before (with loops unrolled)
 // 		for(uint32_t i(0); i < size; ++i) {
 // 			uint32_t v = m_values[i];
 // 			prev += v;
