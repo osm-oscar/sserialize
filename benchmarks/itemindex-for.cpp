@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateFoR.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 
@@ -122,8 +123,8 @@ bits    packtime        unpacktime
 */
 
 int main() {
-	uint64_t blockSize = 1 << 26;
-	uint32_t runs = 5;
+	uint64_t blockSize = 1 << 25;
+	uint32_t runs = 16;
 	
 	
 	sserialize::TimeMeasurer tmEncode;
@@ -132,7 +133,7 @@ int main() {
 	std::vector<uint32_t> src(blockSize);
 	detail::ItemIndexImpl::FoRBlock block(dest, 0, 0, 1);
 	
-	std::cout << "bits\tpacktime\tunpacktime" << std::endl;
+	std::cout << "bits\tpacktime[ms]\tunpacktime[ms]\tunpack [M/s]" << std::endl;
 	for(uint32_t bits(1); bits < 32; ++bits) {
 		dest.resetPtrs();
 		
@@ -165,6 +166,8 @@ int main() {
 			block.update(dest, 0, blockSize, bits);
 		}
 		tmDecode.end();
-		std::cout << bits << '\t' << tmEncode.elapsedMilliSeconds() << '\t' << tmDecode.elapsedMilliSeconds()/runs << std::endl;
+		std::cout << std::setprecision(4);
+		std::cout << bits << '\t' << tmEncode.elapsedMilliSeconds() << '\t' << tmDecode.elapsedMilliSeconds()/runs << '\t';
+		std::cout << ((blockSize*runs)/(double(tmDecode.elapsedUseconds())/1000000))/1000000 << std::endl;
 	}
 }
