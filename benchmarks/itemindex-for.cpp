@@ -129,6 +129,7 @@ int main() {
 	sserialize::TimeMeasurer tmDecode;
 	UByteArrayAdapter dest(0, MM_PROGRAM_MEMORY);
 	std::vector<uint32_t> src(blockSize);
+	detail::ItemIndexImpl::FoRBlock block(dest, 0, 0, 1);
 	
 	std::cout << "Bits\tpacktime\tunpacktime" << std::endl;
 	for(uint32_t bits(1); bits < 32; ++bits) {
@@ -148,7 +149,7 @@ int main() {
 			return -1;
 		}
 		
-		detail::ItemIndexImpl::FoRBlock block(dest, 0, blockSize, bits);
+		block.update(dest, 0, blockSize, bits);
 		
 		for(uint32_t i(0); i < blockSize; ++i) {
 			if (block.at(i) != i+1) {
