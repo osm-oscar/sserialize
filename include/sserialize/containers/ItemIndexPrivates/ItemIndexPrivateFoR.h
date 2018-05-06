@@ -199,9 +199,7 @@ namespace ItemIndexImpl {
 template<typename T_ITERATOR>
 void FoRCreator::encodeBlock(UByteArrayAdapter& dest, T_ITERATOR it, T_ITERATOR end, uint32_t bits) {
 	MultiBitBackInserter dvit(dest);
-	for(; it != end; ++it) {
-		dvit.push_back(*it, bits);
-	}
+	dvit.push_back(it, end, bits);
 	dvit.flush();
 }
 
