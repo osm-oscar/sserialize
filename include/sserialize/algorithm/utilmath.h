@@ -101,11 +101,11 @@ double inline logTo2(double num) {
 #endif
 }
 
-inline uint32_t createMask(uint32_t bpn) {
+inline constexpr uint32_t createMask(uint32_t bpn) {
 	return ((bpn == 32) ? std::numeric_limits<uint32_t>::max() : ((static_cast<uint32_t>(1) << bpn) - 1));
 }
 
-inline uint64_t createMask64(uint64_t bpn) {
+inline constexpr uint64_t createMask64(uint64_t bpn) {
 	return ((bpn == 64) ? std::numeric_limits<uint64_t>::max() : ((static_cast<uint64_t>(1) << bpn) - 1));
 }
 
