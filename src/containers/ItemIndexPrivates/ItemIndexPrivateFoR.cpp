@@ -1,5 +1,7 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateFoR.h>
 #include <sserialize/utility/assert.h>
+#include <numeric>
+#include <utility>
 
 namespace sserialize {
 namespace detail {
@@ -121,6 +123,96 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 }
 #else
 
+class UnpackerInterface {
+public:
+	UnpackerInterface() {}
+	virtual ~UnpackerInterface() {}
+	void unpack(uint8_t * src, uint32_t * dest);
+	
+	static std::unique_ptr<UnpackerInterface> unpacker(uint32_t bpn);
+};
+
+template<uint32_t bpn>
+class Unpacker: public UnpackerInterface {
+private:
+	static constexpr uint32_t mask = sserialize::createMask(bpn);
+	static constexpr uint32_t lcm = bpn * 64; //= std::lcm(bpn, 64);
+	static constexpr uint32_t blocksize = lcm / bpn;
+	static constexpr uint16_t calc_begin(uint32_t i) {
+		return i*bpn/8;
+	}
+	static constexpr uint16_t calc_end(uint32_t i) {
+		return (i+1)*bpn/8;
+	}
+	static constexpr uint8_t calc_ie(uint32_t i) {
+		return 8-((i+1)*bpn%8);
+	}
+	static constexpr uint16_t calc_len(uint32_t i) {
+		return calc_end(i) - calc_begin(i)+uint16_t(calc_ie(i)>0);
+	}
+	static constexpr uint8_t calc_rs(uint32_t i) {
+		return (8-calc_len(i))*8 + calc_ie(i);
+	}
+	static constexpr std::array<uint16_t, blocksize> calc_eb() {
+		using seq = std::make_integer_sequence<uint32_t, blocksize>;
+		return calc_eb_real(seq{});
+	}
+	template<uint32_t... I>
+	static constexpr std::array<uint16_t, blocksize> calc_eb_real(std::index_sequence<I...>) {
+		return std::array<uint16_t, blocksize>{{ calc_begin(I)... }};
+	}
+	static constexpr std::array<uint8_t, blocksize> calc_rs() {
+		using seq = std::make_integer_sequence<uint32_t, blocksize>;
+		return calc_rs_real(seq{});
+	}
+	template<uint32_t... I>
+	static constexpr std::array<uint8_t, blocksize> calc_eb_real(std::index_sequence<I...>) {
+		return std::array<uint8_t, blocksize>{{ calc_rs(I)... }};
+	}
+public:
+	Unpacker() {
+// 		for(uint32_t i(0); i < blocksize; ++i) {
+// 			m_eb[i] = i*bpn/8;
+// 			uint16_t ee = (i+1)*bpn/8;
+// 			uint16_t ie = 8-((i+1)*bpn%8);
+// 			uint16_t len = ee-m_eb[i]+uint16_t(ie>0);
+// 			m_rs[i] = (8-len)*8 + ie;
+// 		}
+	}
+	void unpack(uint8_t * src, uint32_t * dest) const {
+		for(uint32_t i(0); i < blocksize; ++i) {
+			uint64_t buffer;
+			::memmove(&buffer, src+m_eb[i], 8);
+			buffer = be64toh(buffer);
+			buffer >>= m_rs[i];
+			dest[i] = uint32_t(buffer) & mask;
+		}
+	}
+	uint8_t * unpack(uint8_t * src, uint32_t * dest, uint32_t count) const {
+		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
+		for(uint32_t i(0); i < count; i += blocksize, src += lcm/bpn, dest += blocksize) {
+			unpack(src, dest);
+		}
+		return src;
+	}
+private:
+	static constexpr std::array<uint16_t, blocksize> m_eb = calc_eb();
+	static constexpr std::array<uint8_t, blocksize> m_rs = calc_rs(); //(8-len)*8 + ie with len = ee-eb+uint32_t(ie>0) and ie = 8-(bitsEnd%8);
+};
+
+std::unique_ptr<UnpackerInterface> UnpackerInterface::unpacker(uint32_t bpn) {
+#define C(__BPN) case __BPN: return std::unique_ptr<UnpackerInterface>( new Unpacker<__BPN>() );
+	switch (bpn) {
+	C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31); C(32);
+	default:
+		throw sserialize::UnsupportedFeatureException("ItemIndexFoR: unsupported block bits");
+	};
+#undef C
+}
+
 //loop unrolling: 133ms -> 118ms
 __attribute__((optimize("unroll-loops")))
 sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
@@ -144,6 +236,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 		const uint32_t fullWordSize = size - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
 		uint64_t bitsBegin = 0;
 		uint64_t bitsEnd = bpn;
+		auto unpacker = UnpackerInterface::unpacker(bpn);
 		std::array<uint64_t, 32> buffer;
 		for(; i+buffer.size() < fullWordSize; i += buffer.size()) {
 			for(uint32_t j = 0; j < buffer.size(); ++j) {
