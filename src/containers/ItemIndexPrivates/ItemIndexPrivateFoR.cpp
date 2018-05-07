@@ -127,58 +127,50 @@ class UnpackerInterface {
 public:
 	UnpackerInterface() {}
 	virtual ~UnpackerInterface() {}
-	void unpack(uint8_t * src, uint32_t * dest);
-	
+	virtual uint8_t * unpack(uint8_t * src, uint32_t * dest, uint32_t count) const = 0;
+public:
 	static std::unique_ptr<UnpackerInterface> unpacker(uint32_t bpn);
 };
 
 template<uint32_t bpn>
-class Unpacker: public UnpackerInterface {
+class UnpackerImp {
 private:
 	static constexpr uint32_t mask = sserialize::createMask(bpn);
 	static constexpr uint32_t lcm = bpn * 64; //= std::lcm(bpn, 64);
 	static constexpr uint32_t blocksize = lcm / bpn;
-	static constexpr uint16_t calc_begin(uint32_t i) {
+	static constexpr uint16_t calc_begin(std::size_t i) {
 		return i*bpn/8;
 	}
-	static constexpr uint16_t calc_end(uint32_t i) {
+	static constexpr uint16_t calc_end(std::size_t i) {
 		return (i+1)*bpn/8;
 	}
-	static constexpr uint8_t calc_ie(uint32_t i) {
+	static constexpr uint8_t calc_ie(std::size_t i) {
 		return 8-((i+1)*bpn%8);
 	}
-	static constexpr uint16_t calc_len(uint32_t i) {
+	static constexpr uint16_t calc_len(std::size_t i) {
 		return calc_end(i) - calc_begin(i)+uint16_t(calc_ie(i)>0);
 	}
-	static constexpr uint8_t calc_rs(uint32_t i) {
+	static constexpr uint8_t calc_rs(std::size_t i) {
 		return (8-calc_len(i))*8 + calc_ie(i);
 	}
 	static constexpr std::array<uint16_t, blocksize> calc_eb() {
-		using seq = std::make_integer_sequence<uint32_t, blocksize>;
+		using seq = std::make_integer_sequence<std::size_t, blocksize>;
 		return calc_eb_real(seq{});
 	}
-	template<uint32_t... I>
+	template<std::size_t... I>
 	static constexpr std::array<uint16_t, blocksize> calc_eb_real(std::index_sequence<I...>) {
 		return std::array<uint16_t, blocksize>{{ calc_begin(I)... }};
 	}
 	static constexpr std::array<uint8_t, blocksize> calc_rs() {
-		using seq = std::make_integer_sequence<uint32_t, blocksize>;
+		using seq = std::make_integer_sequence<std::size_t, blocksize>;
 		return calc_rs_real(seq{});
 	}
-	template<uint32_t... I>
-	static constexpr std::array<uint8_t, blocksize> calc_eb_real(std::index_sequence<I...>) {
+	template<std::size_t... I>
+	static constexpr std::array<uint8_t, blocksize> calc_rs_real(std::index_sequence<I...>) {
 		return std::array<uint8_t, blocksize>{{ calc_rs(I)... }};
 	}
 public:
-	Unpacker() {
-// 		for(uint32_t i(0); i < blocksize; ++i) {
-// 			m_eb[i] = i*bpn/8;
-// 			uint16_t ee = (i+1)*bpn/8;
-// 			uint16_t ie = 8-((i+1)*bpn%8);
-// 			uint16_t len = ee-m_eb[i]+uint16_t(ie>0);
-// 			m_rs[i] = (8-len)*8 + ie;
-// 		}
-	}
+	UnpackerImp() {}
 	void unpack(uint8_t * src, uint32_t * dest) const {
 		for(uint32_t i(0); i < blocksize; ++i) {
 			uint64_t buffer;
@@ -199,6 +191,28 @@ private:
 	static constexpr std::array<uint16_t, blocksize> m_eb = calc_eb();
 	static constexpr std::array<uint8_t, blocksize> m_rs = calc_rs(); //(8-len)*8 + ie with len = ee-eb+uint32_t(ie>0) and ie = 8-(bitsEnd%8);
 };
+
+
+template<uint32_t bpn>
+constexpr std::array<uint16_t, UnpackerImp<bpn>::blocksize> UnpackerImp<bpn>::m_eb;
+
+template<uint32_t bpn>
+constexpr std::array<uint8_t, UnpackerImp<bpn>::blocksize> UnpackerImp<bpn>::m_rs;
+
+
+template<uint32_t bpn>
+class Unpacker: public UnpackerInterface {
+public:
+	Unpacker() {}
+	virtual ~Unpacker() {}
+	virtual uint8_t * unpack(uint8_t * src, uint32_t * dest, uint32_t count) const override {
+		return m_unpacker.unpack(src, dest, count);
+	}
+private:
+	UnpackerImp<bpn> m_unpacker;
+};
+
+typedef Unpacker<31> Unpacker31;
 
 std::unique_ptr<UnpackerInterface> UnpackerInterface::unpacker(uint32_t bpn) {
 #define C(__BPN) case __BPN: return std::unique_ptr<UnpackerInterface>( new Unpacker<__BPN>() );
