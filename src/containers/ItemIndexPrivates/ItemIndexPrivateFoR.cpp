@@ -142,23 +142,30 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 		uint32_t i = 0;
 		const uint32_t bitsInLastWord = (uint64_t(size)*bpn)%64;
 		const uint32_t fullWordSize = size - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
-		for(; i < fullWordSize; ++i) {
-			uint64_t buffer;
-			//calculate source byte begin and end and intra byte offset
-			sserialize::SizeType eb = (sserialize::SizeType(i)*bpn)/8;
-			sserialize::SizeType ee = (sserialize::SizeType(i+1)*bpn)/8;
-			sserialize::SizeType ie = 8-((sserialize::SizeType(i+1)*bpn)%8);
-			//copy these into our buffer
-			int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
-			::memmove(&buffer, dit+eb, 8);
-			buffer = be64toh(buffer);
-			buffer >>= (8-len)*8;
-			buffer >>= ie;
-			prev += uint32_t(buffer) & mask;
-			vit[i] = prev;
-// 			vit[i] = uint32_t(buffer) & mask;
+		uint64_t bitsBegin = 0;
+		uint64_t bitsEnd = bpn;
+		std::array<uint64_t, 32> buffer;
+		for(; i+buffer.size() < fullWordSize; i += buffer.size()) {
+			for(uint32_t j = 0; j < buffer.size(); ++j) {
+				//calculate source byte begin and end and intra byte offset
+				uint32_t eb = bitsBegin/8;
+				uint32_t ee = bitsEnd/8;
+				uint32_t ie = 8-(bitsEnd%8);
+				//copy these into our buffer
+				uint32_t len = ee-eb+uint32_t(ie>0); // 0 < len <= 5
+				::memmove(&(buffer[j]), dit+eb, 8);
+				buffer[j] = be64toh(buffer[j]);
+				buffer[j] >>= (8-len)*8;
+				buffer[j] >>= ie;
+				prev += uint32_t(buffer[j]) & mask;
+				vit[j] = prev;
+	// 			vit[i] = uint32_t(buffer) & mask;
+				bitsBegin = bitsEnd;
+				bitsEnd += bpn;
+			}
+			vit += buffer.size();
 		}
-		for(; i < size; ++i) {
+		for(; i < size; ++i, ++vit) {
 			uint64_t buffer = 0;
 			sserialize::SizeType eb = (sserialize::SizeType(i)*bpn)/8;
 			sserialize::SizeType ee = (sserialize::SizeType(i+1)*bpn)/8;
@@ -176,7 +183,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 			
 			buffer >>= ie;
 			prev += uint32_t(buffer) & mask;
-			vit[i] = prev;
+			*vit = prev;
 // 			vit[i] = uint32_t(buffer) & mask;
 		}
 		//computing delta afterwards: 149 ms vs. 119 if we do it before (with loops unrolled)
