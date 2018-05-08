@@ -50,10 +50,10 @@ private:
 	static constexpr std::size_t BufferSize = sizeof(BufferType);
 	static constexpr std::size_t BufferBits = std::numeric_limits<BufferType>::digits;
 	static constexpr BufferType mask = sserialize::createMask64(bpn);
-	static constexpr uint32_t lcm = bpn * BufferBits; //= std::lcm(bpn, BufferBits);
+	static constexpr uint32_t BlockBits = bpn * BufferBits; //= std::lcm(bpn, BufferBits);
 public:
-	static constexpr uint32_t blocksize = lcm / bpn;
-	static constexpr uint32_t bytesPerBlock = lcm/8;
+	static constexpr uint32_t BlockSize = BlockBits / bpn;
+	static constexpr uint32_t BlockBytes = BlockBits/8;
 private:
 	//first byte to read
 	static constexpr uint16_t calc_begin(std::size_t i) {
@@ -75,28 +75,31 @@ private:
 	static constexpr uint8_t calc_rs(std::size_t i) {
 		return (BufferSize-calc_len(i))*8 + calc_ie(i);
 	}
-	static constexpr std::array<uint16_t, blocksize> calc_eb() {
-		using seq = std::make_integer_sequence<std::size_t, blocksize>;
+	static constexpr std::array<uint16_t, BlockSize> calc_eb() {
+		using seq = std::make_integer_sequence<std::size_t, BlockSize>;
 		return calc_eb_real(seq{});
 	}
 	template<std::size_t... I>
-	static constexpr std::array<uint16_t, blocksize> calc_eb_real(std::index_sequence<I...>) {
-		return std::array<uint16_t, blocksize>{{ calc_begin(I)... }};
+	static constexpr std::array<uint16_t, BlockSize> calc_eb_real(std::index_sequence<I...>) {
+		return std::array<uint16_t, BlockSize>{{ calc_begin(I)... }};
 	}
-	static constexpr std::array<uint8_t, blocksize> calc_rs() {
-		using seq = std::make_integer_sequence<std::size_t, blocksize>;
+	static constexpr std::array<uint8_t, BlockSize> calc_rs() {
+		using seq = std::make_integer_sequence<std::size_t, BlockSize>;
 		return calc_rs_real(seq{});
 	}
 	template<std::size_t... I>
-	static constexpr std::array<uint8_t, blocksize> calc_rs_real(std::index_sequence<I...>) {
-		return std::array<uint8_t, blocksize>{{ calc_rs(I)... }};
+	static constexpr std::array<uint8_t, BlockSize> calc_rs_real(std::index_sequence<I...>) {
+		return std::array<uint8_t, BlockSize>{{ calc_rs(I)... }};
 	}
 public:
 	BitunpackerImp() {}
 public:
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
-	inline void unpack(const uint8_t * src, uint32_t * dest) const {
-		for(uint32_t i(0); i < blocksize; ++i) {
+	///src and dest should be random access iterators
+	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
+	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
+	__attribute__((optimize("unroll-loops")))
+	inline void unpack(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) const {
+		for(uint32_t i(0); i < BlockSize; ++i) {
 			BufferType buffer;
 			::memmove(&buffer, src+m_eb[i], BufferSize);
 			buffer = betoh(buffer);
@@ -104,43 +107,29 @@ public:
 			dest[i] = buffer & mask;
 		}
 	}
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
-	const uint8_t * unpack(const uint8_t * src, uint32_t * dest, uint32_t count) const {
+	
+	///src and dest should be random access iterators
+	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
+	///There are no restrictions for the ouput iterator
+	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
+	__attribute__((optimize("unroll-loops")))
+	T_SOURCE_ITERATOR unpack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output, std::size_t count) const {
 		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
-		for(uint32_t i(0); i < count; i += blocksize, src += bytesPerBlock, dest += blocksize) {
-			unpack(src, dest);
+		for(uint32_t i(0); i < count; i += BlockSize, input += BlockBytes, output += BlockSize) {
+			unpack(input, output);
 		}
-		return src;
-	}
-public:
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
-	inline void unpack(const uint8_t * src, uint64_t * dest) const {
-		for(uint32_t i(0); i < blocksize; ++i) {
-			BufferType buffer;
-			::memmove(&buffer, src+m_eb[i], BufferSize);
-			buffer = betoh(buffer);
-			buffer >>= m_rs[i];
-			dest[i] = buffer & mask;
-		}
-	}
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
-	const uint8_t * unpack(const uint8_t * src, uint64_t * dest, uint32_t count) const {
-		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
-		for(uint32_t i(0); i < count; i += blocksize, src += bytesPerBlock, dest += blocksize) {
-			unpack(src, dest);
-		}
-		return src;
+		return input;
 	}
 private:
-	static constexpr std::array<uint16_t, blocksize> m_eb = calc_eb();
-	static constexpr std::array<uint8_t, blocksize> m_rs = calc_rs(); //(8-len)*8 + ie with len = ee-eb+uint32_t(ie>0) and ie = 8-(bitsEnd%8);
+	static constexpr std::array<uint16_t, BlockSize> m_eb = calc_eb();
+	static constexpr std::array<uint8_t, BlockSize> m_rs = calc_rs(); //(8-len)*8 + ie with len = ee-eb+uint32_t(ie>0) and ie = 8-(bitsEnd%8);
 };
 
 template<uint32_t bpn>
-constexpr std::array<uint16_t, BitunpackerImp<bpn>::blocksize> BitunpackerImp<bpn>::m_eb;
+constexpr std::array<uint16_t, BitunpackerImp<bpn>::BlockSize> BitunpackerImp<bpn>::m_eb;
 
 template<uint32_t bpn>
-constexpr std::array<uint8_t, BitunpackerImp<bpn>::blocksize> BitunpackerImp<bpn>::m_rs;
+constexpr std::array<uint8_t, BitunpackerImp<bpn>::BlockSize> BitunpackerImp<bpn>::m_rs;
 
 	
 }} //end namespace detail::bitpacking
@@ -164,13 +153,13 @@ public:
 	Bitunpacker() {}
 	virtual ~Bitunpacker() {}
 	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const override {
-		uint32_t myCount = (count/UnpackerImp::blocksize)*UnpackerImp::blocksize;
+		uint32_t myCount = (count/UnpackerImp::BlockSize)*UnpackerImp::BlockSize;
 		src = m_unpacker.unpack(src, dest, myCount);
 		dest += myCount;
 		count -= myCount;
 	}
 	virtual void unpack(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const override {
-		uint32_t myCount = (count/UnpackerImp::blocksize)*UnpackerImp::blocksize;
+		uint32_t myCount = (count/UnpackerImp::BlockSize)*UnpackerImp::BlockSize;
 		src = m_unpacker.unpack(src, dest, myCount);
 		dest += myCount;
 		count -= myCount;
