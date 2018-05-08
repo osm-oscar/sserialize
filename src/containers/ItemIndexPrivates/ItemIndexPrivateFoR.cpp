@@ -168,7 +168,7 @@ private:
 	static constexpr std::size_t BufferSize = sizeof(BufferType);
 	static constexpr std::size_t BufferBits = std::numeric_limits<BufferType>::digits;
 	static constexpr uint32_t mask = sserialize::createMask(bpn);
-	static constexpr uint32_t lcm = bpn * BufferBits; //= std::lcm(bpn, 64);
+	static constexpr uint32_t lcm = bpn * BufferBits; //= std::lcm(bpn, BufferBits);
 public:
 	static constexpr uint32_t blocksize = lcm / bpn;
 	static constexpr uint32_t bytesPerBlock = lcm/8;
