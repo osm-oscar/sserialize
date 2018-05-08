@@ -343,6 +343,7 @@ set(UTILITY_SOURCES_CPP
 	src/utility/exceptions.cpp
 	src/utility/refcounting.cpp
 	src/utility/debuggerfunctions.cpp
+	src/utility/Bitpacking.cpp
 )
 
 set(STAGING_SOURCES_CPP
