@@ -127,7 +127,7 @@ class UnpackerInterface {
 public:
 	UnpackerInterface() {}
 	virtual ~UnpackerInterface() {}
-	virtual uint8_t * unpack(uint8_t * src, uint32_t * dest, uint32_t count) const = 0;
+	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const = 0;
 public:
 	static std::unique_ptr<UnpackerInterface> unpacker(uint32_t bpn);
 };
@@ -137,7 +137,10 @@ class UnpackerImp {
 private:
 	static constexpr uint32_t mask = sserialize::createMask(bpn);
 	static constexpr uint32_t lcm = bpn * 64; //= std::lcm(bpn, 64);
+public:
 	static constexpr uint32_t blocksize = lcm / bpn;
+	static constexpr uint32_t bytesPerBlock = lcm/8;
+private:
 	static constexpr uint16_t calc_begin(std::size_t i) {
 		return i*bpn/8;
 	}
@@ -171,7 +174,8 @@ private:
 	}
 public:
 	UnpackerImp() {}
-	void unpack(uint8_t * src, uint32_t * dest) const {
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	inline void unpack(const uint8_t * src, uint32_t * dest) const {
 		for(uint32_t i(0); i < blocksize; ++i) {
 			uint64_t buffer;
 			::memmove(&buffer, src+m_eb[i], 8);
@@ -180,9 +184,10 @@ public:
 			dest[i] = uint32_t(buffer) & mask;
 		}
 	}
-	uint8_t * unpack(uint8_t * src, uint32_t * dest, uint32_t count) const {
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	const uint8_t * unpack(const uint8_t * src, uint32_t * dest, uint32_t count) const {
 		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
-		for(uint32_t i(0); i < count; i += blocksize, src += lcm/bpn, dest += blocksize) {
+		for(uint32_t i(0); i < count; i += blocksize, src += bytesPerBlock, dest += blocksize) {
 			unpack(src, dest);
 		}
 		return src;
@@ -205,8 +210,11 @@ class Unpacker: public UnpackerInterface {
 public:
 	Unpacker() {}
 	virtual ~Unpacker() {}
-	virtual uint8_t * unpack(uint8_t * src, uint32_t * dest, uint32_t count) const override {
-		return m_unpacker.unpack(src, dest, count);
+	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const override {
+		uint32_t myCount = (count/UnpackerImp<bpn>::blocksize)*UnpackerImp<bpn>::blocksize;
+		src = m_unpacker.unpack(src, dest, myCount);
+		dest += myCount;
+		count -= myCount;
 	}
 private:
 	UnpackerImp<bpn> m_unpacker;
@@ -245,60 +253,65 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 		const uint32_t mask = sserialize::createMask(bpn);
 		const uint8_t * dit = mv.data();
 		uint32_t * vit = m_values.data();
-		uint32_t i = 0;
-		const uint32_t bitsInLastWord = (uint64_t(size)*bpn)%64;
-		const uint32_t fullWordSize = size - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
-		uint64_t bitsBegin = 0;
-		uint64_t bitsEnd = bpn;
+		uint32_t mySize = size;
+		
 		auto unpacker = UnpackerInterface::unpacker(bpn);
-		std::array<uint64_t, 32> buffer;
-		for(; i+buffer.size() < fullWordSize; i += buffer.size()) {
-			for(uint32_t j = 0; j < buffer.size(); ++j) {
+		unpacker->unpack(dit, vit, mySize);
+		
+		//do the delta encoding
+		for(uint32_t * it(m_values.data()); it != vit; ++it) {
+			prev += *it;
+			*it = prev;
+		}
+		
+		//parse the remainder
+		if (mySize) {
+			uint32_t i = 0;
+			const uint32_t bitsInLastWord = (uint64_t(mySize)*bpn)%64;
+			const uint32_t fullWordSize = mySize - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
+			uint64_t bitsBegin = 0;
+			uint64_t bitsEnd = bpn;
+			for(; i < fullWordSize; ++i) {
+				uint64_t buffer;
 				//calculate source byte begin and end and intra byte offset
 				uint32_t eb = bitsBegin/8;
 				uint32_t ee = bitsEnd/8;
 				uint32_t ie = 8-(bitsEnd%8);
 				//copy these into our buffer
 				uint32_t len = ee-eb+uint32_t(ie>0); // 0 < len <= 5
-				::memmove(&(buffer[j]), dit+eb, 8);
-				buffer[j] = be64toh(buffer[j]);
-				buffer[j] >>= (8-len)*8;
-				buffer[j] >>= ie;
-				prev += uint32_t(buffer[j]) & mask;
-				vit[j] = prev;
-	// 			vit[i] = uint32_t(buffer) & mask;
+				::memmove(&buffer, dit+eb, 8);
+				buffer = be64toh(buffer);
+				buffer >>= (8-len)*8;
+				buffer >>= ie;
+				prev += uint32_t(buffer) & mask;
+				*vit = prev;
+	// 			*vit = uint32_t(buffer) & mask;
 				bitsBegin = bitsEnd;
 				bitsEnd += bpn;
+				++vit;
 			}
-			vit += buffer.size();
-		}
-		for(; i < size; ++i, ++vit) {
-			uint64_t buffer = 0;
-			sserialize::SizeType eb = (sserialize::SizeType(i)*bpn)/8;
-			sserialize::SizeType ee = (sserialize::SizeType(i+1)*bpn)/8;
-			sserialize::SizeType ie = 8-((sserialize::SizeType(i+1)*bpn)%8);
-			//copy these into our buffer
-			int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
-			SSERIALIZE_CHEAP_ASSERT_LARGER(eb+8, blockStorageSize);
-			
-			char * bit = ((char*)&buffer);
-			const uint8_t * mydit = dit+eb+(len-1);
-			for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
-				*bit = *mydit;
+			for(; i < mySize; ++i, ++vit) {
+				uint64_t buffer = 0;
+				sserialize::SizeType eb = (uint64_t(i)*bpn)/8;
+				sserialize::SizeType ee = (uint64_t(i+1)*bpn)/8;
+				sserialize::SizeType ie = 8-((uint64_t(i+1)*bpn)%8);
+				//copy these into our buffer
+				int len = ee-eb+uint64_t(ie>0); // 0 < len <= 5
+				SSERIALIZE_CHEAP_ASSERT_LARGER(eb+8, blockStorageSize);
+				
+				char * bit = ((char*)&buffer);
+				const uint8_t * mydit = dit+eb+(len-1);
+				for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
+					*bit = *mydit;
+				}
+				buffer = le64toh(buffer);
+				
+				buffer >>= ie;
+				prev += uint32_t(buffer) & mask;
+				*vit = prev;
+	// 			*vit = uint32_t(buffer) & mask;
 			}
-			buffer = le64toh(buffer);
-			
-			buffer >>= ie;
-			prev += uint32_t(buffer) & mask;
-			*vit = prev;
-// 			vit[i] = uint32_t(buffer) & mask;
 		}
-		//computing delta afterwards: 149 ms vs. 119 if we do it before (with loops unrolled)
-// 		for(uint32_t i(0); i < size; ++i) {
-// 			uint32_t v = m_values[i];
-// 			prev += v;
-// 			m_values[i] = prev;
-// 		}
 	}
 	return blockStorageSize;
 }
