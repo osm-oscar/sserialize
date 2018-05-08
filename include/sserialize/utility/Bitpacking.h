@@ -49,7 +49,7 @@ private:
 	using BufferType = typename UnpackerBufferTypeSelector<bpn>::type;
 	static constexpr std::size_t BufferSize = sizeof(BufferType);
 	static constexpr std::size_t BufferBits = std::numeric_limits<BufferType>::digits;
-	static constexpr uint32_t mask = sserialize::createMask(bpn);
+	static constexpr BufferType mask = sserialize::createMask64(bpn);
 	static constexpr uint32_t lcm = bpn * BufferBits; //= std::lcm(bpn, BufferBits);
 public:
 	static constexpr uint32_t blocksize = lcm / bpn;
@@ -93,6 +93,7 @@ private:
 	}
 public:
 	BitunpackerImp() {}
+public:
 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	inline void unpack(const uint8_t * src, uint32_t * dest) const {
 		for(uint32_t i(0); i < blocksize; ++i) {
@@ -100,11 +101,30 @@ public:
 			::memmove(&buffer, src+m_eb[i], BufferSize);
 			buffer = betoh(buffer);
 			buffer >>= m_rs[i];
-			dest[i] = uint32_t(buffer) & mask;
+			dest[i] = buffer & mask;
 		}
 	}
 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	const uint8_t * unpack(const uint8_t * src, uint32_t * dest, uint32_t count) const {
+		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
+		for(uint32_t i(0); i < count; i += blocksize, src += bytesPerBlock, dest += blocksize) {
+			unpack(src, dest);
+		}
+		return src;
+	}
+public:
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	inline void unpack(const uint8_t * src, uint64_t * dest) const {
+		for(uint32_t i(0); i < blocksize; ++i) {
+			BufferType buffer;
+			::memmove(&buffer, src+m_eb[i], BufferSize);
+			buffer = betoh(buffer);
+			buffer >>= m_rs[i];
+			dest[i] = buffer & mask;
+		}
+	}
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	const uint8_t * unpack(const uint8_t * src, uint64_t * dest, uint32_t count) const {
 		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
 		for(uint32_t i(0); i < count; i += blocksize, src += bytesPerBlock, dest += blocksize) {
 			unpack(src, dest);
@@ -131,6 +151,7 @@ public:
 	BitunpackerInterface() {}
 	virtual ~BitunpackerInterface() {}
 	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const = 0;
+	virtual void unpack(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const = 0;
 public:
 	static std::unique_ptr<BitunpackerInterface> unpacker(uint32_t bpn);
 };
@@ -143,6 +164,12 @@ public:
 	Bitunpacker() {}
 	virtual ~Bitunpacker() {}
 	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const override {
+		uint32_t myCount = (count/UnpackerImp::blocksize)*UnpackerImp::blocksize;
+		src = m_unpacker.unpack(src, dest, myCount);
+		dest += myCount;
+		count -= myCount;
+	}
+	virtual void unpack(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const override {
 		uint32_t myCount = (count/UnpackerImp::blocksize)*UnpackerImp::blocksize;
 		src = m_unpacker.unpack(src, dest, myCount);
 		dest += myCount;
