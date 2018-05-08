@@ -11,7 +11,7 @@ std::unique_ptr<BitunpackerInterface> BitunpackerInterface::unpacker(uint32_t bp
 	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
 	C(31); C(32);
 	default:
-		throw sserialize::UnsupportedFeatureException("ItemIndexFoR: unsupported block bits");
+		throw sserialize::UnsupportedFeatureException("BitunpackerInterface: unsupported block bits: " + std::to_string(bpn));
 	};
 #undef C
 }
