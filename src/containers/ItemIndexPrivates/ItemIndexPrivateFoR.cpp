@@ -132,29 +132,66 @@ public:
 	static std::unique_ptr<UnpackerInterface> unpacker(uint32_t bpn);
 };
 
+static inline uint64_t betoh(uint64_t v) { return be64toh(v); }
+static inline uint32_t betoh(uint32_t v) { return be32toh(v); }
+static inline uint16_t betoh(uint16_t v) { return be16toh(v); }
+static inline uint8_t betoh(uint8_t v) { return v; }
+
+template<uint32_t bpn>
+struct UnpackerBufferTypeSelector {
+	using type = uint64_t;
+};
+
+template<> struct UnpackerBufferTypeSelector<1> { using type = uint8_t; };
+template<> struct UnpackerBufferTypeSelector<2> { using type = uint8_t; };
+template<> struct UnpackerBufferTypeSelector<4> { using type = uint8_t; };
+template<> struct UnpackerBufferTypeSelector<8> { using type = uint8_t; };
+template<> struct UnpackerBufferTypeSelector<16> { using type = uint16_t; };
+template<> struct UnpackerBufferTypeSelector<32> { using type = uint32_t; };
+
+template<> struct UnpackerBufferTypeSelector<3> { using type = uint16_t; };
+template<> struct UnpackerBufferTypeSelector<5> { using type = uint16_t; };
+template<> struct UnpackerBufferTypeSelector<6> { using type = uint16_t; };
+template<> struct UnpackerBufferTypeSelector<7> { using type = uint16_t; };
+template<> struct UnpackerBufferTypeSelector<9> { using type = uint32_t; };
+template<> struct UnpackerBufferTypeSelector<10> { using type = uint32_t; };
+template<> struct UnpackerBufferTypeSelector<11> { using type = uint32_t; };
+template<> struct UnpackerBufferTypeSelector<12> { using type = uint32_t; };
+template<> struct UnpackerBufferTypeSelector<13> { using type = uint32_t; };
+template<> struct UnpackerBufferTypeSelector<14> { using type = uint32_t; };
+template<> struct UnpackerBufferTypeSelector<15> { using type = uint32_t; };
+
 template<uint32_t bpn>
 class UnpackerImp {
 private:
+	using BufferType = typename UnpackerBufferTypeSelector<bpn>::type;
+	static constexpr std::size_t BufferSize = sizeof(BufferType);
+	static constexpr std::size_t BufferBits = std::numeric_limits<BufferType>::digits;
 	static constexpr uint32_t mask = sserialize::createMask(bpn);
 	static constexpr uint32_t lcm = bpn * 64; //= std::lcm(bpn, 64);
 public:
 	static constexpr uint32_t blocksize = lcm / bpn;
 	static constexpr uint32_t bytesPerBlock = lcm/8;
 private:
+	//first byte to read
 	static constexpr uint16_t calc_begin(std::size_t i) {
 		return i*bpn/8;
 	}
+	//one past the end
 	static constexpr uint16_t calc_end(std::size_t i) {
 		return (i+1)*bpn/8;
 	}
+	//intra byte offset
 	static constexpr uint8_t calc_ie(std::size_t i) {
 		return 8-((i+1)*bpn%8);
 	}
+	//returns the number of bytes to read
 	static constexpr uint16_t calc_len(std::size_t i) {
 		return calc_end(i) - calc_begin(i)+uint16_t(calc_ie(i)>0);
 	}
+	//rshift of our buffer
 	static constexpr uint8_t calc_rs(std::size_t i) {
-		return (8-calc_len(i))*8 + calc_ie(i);
+		return (BufferSize-calc_len(i))*8 + calc_ie(i);
 	}
 	static constexpr std::array<uint16_t, blocksize> calc_eb() {
 		using seq = std::make_integer_sequence<std::size_t, blocksize>;
@@ -177,9 +214,9 @@ public:
 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	inline void unpack(const uint8_t * src, uint32_t * dest) const {
 		for(uint32_t i(0); i < blocksize; ++i) {
-			uint64_t buffer;
-			::memmove(&buffer, src+m_eb[i], 8);
-			buffer = be64toh(buffer);
+			BufferType buffer;
+			::memmove(&buffer, src+m_eb[i], BufferSize);
+			buffer = betoh(buffer);
 			buffer >>= m_rs[i];
 			dest[i] = uint32_t(buffer) & mask;
 		}
