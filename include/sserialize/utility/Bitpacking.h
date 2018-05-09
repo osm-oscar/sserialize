@@ -9,6 +9,7 @@
 #include <numeric>
 #include <utility>
 #include <string.h>
+#include <x86intrin.h>
 
 namespace sserialize {
 namespace detail {
@@ -43,6 +44,16 @@ template<> struct UnpackerBufferTypeSelector<13> { using type = uint32_t; };
 template<> struct UnpackerBufferTypeSelector<14> { using type = uint32_t; };
 template<> struct UnpackerBufferTypeSelector<15> { using type = uint32_t; };
 
+template<typename BufferType, std::size_t BlockSize>
+struct UnpackerIntrinsics {
+	
+	inline void bswap_(std::array<BufferType, BlockSize> & buffers) {
+		for(uint32_t i(0); i < BlockSize; ++i) {
+			buffers[i] = betoh(buffers[i]);
+		}
+	}
+};
+
 template<uint32_t bpn>
 class BitunpackerImp {
 private:
@@ -50,7 +61,8 @@ private:
 	static constexpr std::size_t BufferSize = sizeof(BufferType);
 	static constexpr std::size_t BufferBits = std::numeric_limits<BufferType>::digits;
 	static constexpr BufferType mask = sserialize::createMask64(bpn);
-	static constexpr uint32_t BlockBits = bpn * BufferBits; //= std::lcm(bpn, BufferBits);
+	static constexpr bool UseSimd = false;
+	static constexpr uint32_t BlockBits = bpn * (UseSimd ? 256 : BufferBits); //= std::lcm(bpn, BufferBits);
 public:
 	static constexpr uint32_t BlockSize = BlockBits / bpn;
 	static constexpr uint32_t BlockBytes = BlockBits/8;
@@ -97,7 +109,7 @@ public:
 	///src and dest should be random access iterators
 	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops")))
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	inline void unpack(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) const {
 		for(uint32_t i(0); i < BlockSize; ++i) {
 			BufferType buffer;
@@ -107,16 +119,37 @@ public:
 			dest[i] = buffer & mask;
 		}
 	}
+	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	inline void unpack_simd(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) const {
+		std::array<BufferType, BlockSize> buffers;
+		for(uint32_t i(0); i < BlockSize; ++i) {
+			::memmove(&(buffers[i]), src+m_eb[i], sizeof(BufferType));
+			buffers[i] = betoh(buffers[i]);
+		}
+		for(uint32_t i(0); i < BlockSize; ++i) {
+			buffers[i] >>= m_rs[i];
+			buffers[i] &= mask; 
+			dest[i] = buffers[i];
+		}
+	}
 	
 	///src and dest should be random access iterators
 	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
 	///There are no restrictions for the ouput iterator
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops")))
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	T_SOURCE_ITERATOR unpack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output, std::size_t count) const {
 		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
-		for(uint32_t i(0); i < count; i += BlockSize, input += BlockBytes, output += BlockSize) {
-			unpack(input, output);
+		if (UseSimd) {
+			for(uint32_t i(0); i < count; i += BlockSize, input += BlockBytes, output += BlockSize) {
+				unpack_simd(input, output);
+			}
+		}
+		else {
+			for(uint32_t i(0); i < count; i += BlockSize, input += BlockBytes, output += BlockSize) {
+				unpack(input, output);
+			}
 		}
 		return input;
 	}
