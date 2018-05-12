@@ -140,7 +140,7 @@ public:
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	T_SOURCE_ITERATOR unpack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output, std::size_t count) const {
-		SSERIALIZE_CHEAP_ASSERT(count%blocksize == 0);
+		SSERIALIZE_CHEAP_ASSERT(count%BlockSize == 0);
 		if (UseSimd) {
 			for(uint32_t i(0); i < count; i += BlockSize, input += BlockBytes, output += BlockSize) {
 				unpack_simd(input, output);
