@@ -278,7 +278,7 @@ OffsetType ItemIndexFactory::flush() {
 	std::cout << std::endl;
 	std::cout << "done." << std::endl;
 
-	return 3+UByteArrayAdapter::OffsetTypeSerializedLength()+m_indexStore.tellPutPtr();
+	return 4+UByteArrayAdapter::OffsetTypeSerializedLength()+m_indexStore.tellPutPtr();
 }
 
 void putWrapper(UByteArrayAdapter & dest, const uint32_t & src) {

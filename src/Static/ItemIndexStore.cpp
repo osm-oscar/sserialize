@@ -123,6 +123,8 @@ m_version(data.getUint8(0))
 	OffsetType dataLength = data.getOffset();
 	data.shrinkToGetPtr();
 	
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(dataLength, data.size());
+	
 	if ( sserialize::popCount(m_type) > 1) {
 		m_type |= ItemIndex::T_MULTIPLE;
 	}
