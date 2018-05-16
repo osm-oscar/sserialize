@@ -12,6 +12,46 @@
 using namespace std;
 using namespace sserialize;
 
+void fsck_rewrite_indexSizes(UByteArrayAdapter src, UByteArrayAdapter & dest) {
+	uint8_t version = src.getUint8();
+	if (version != 5) {
+		throw sserialize::VersionMissMatchException("Rewrite index sizes", 5, version);
+	}
+	int indexTypes = src.getUint16();
+	
+	if (sserialize::popCount(indexTypes) > 1) {
+		throw sserialize::UnsupportedFeatureException("Rewriting ItemIndexStore index sizes with multiple index types");
+	}
+	
+	uint8_t indexCompressionType = src.getUint8();
+	if (indexCompressionType != sserialize::Static::ItemIndexStore::IC_NONE) {
+		throw sserialize::UnsupportedFeatureException("Rewriting ItemIndexStore index sizes with compression");
+	}
+	
+	auto dataLength = src.getOffset();
+	
+	src.shrinkToGetPtr();
+	auto indexdata = UByteArrayAdapter(src, 0, dataLength);
+	
+	src += dataLength;
+	auto offsets = sserialize::Static::SortedOffsetIndex(src);
+	auto offsetsData = UByteArrayAdapter(src, 0, offsets.getSizeInBytes());
+	
+	std::vector<uint32_t> indexSizes(offsets.size(), 0);
+	for(uint32_t i(0), s(offsets.size()); i < s; ++i) {
+		auto off = offsets.at(i);
+		sserialize::ItemIndex idx(sserialize::UByteArrayAdapter(indexdata, off), sserialize::ItemIndex::Types(indexTypes) );
+		indexSizes.at(i) = idx.size();
+	}
+	
+	dest.put(version);
+	dest.putUint16(indexTypes);
+	dest.putUint8(indexCompressionType); //indexCompressionType
+	dest.putOffset(dataLength);
+	dest.putData(indexdata);
+	dest.putData(offsetsData);
+	dest << indexSizes;
+}
 
 void putWrapper(UByteArrayAdapter & dest, const uint32_t & src) {
 	dest.putUint32(src);
@@ -217,7 +257,8 @@ void printHelp() {
 	-ds\tdump stats \n \
 	-t type\ttransform to (rline|wah|de|rlede|simple|native|eliasfano|pfor) \n \
 	-nd\tdisable deduplication of item index store \n \
-	-c\tcheck item index store \
+	-c\tcheck item index store \n \
+	--fsck (indexsizes) \
 	" << std::endl;
 }
 
@@ -241,6 +282,7 @@ int main(int argc, char ** argv) {
 	bool checkCompressed = false;
 	bool checkIndex = false;
 	bool deduplication = true;
+	std::string fsck;
 	std::string equalityTest;
 	int transform = ItemIndex::T_NULL;
 	
@@ -296,6 +338,10 @@ int main(int argc, char ** argv) {
 		else if (curArg == "-nd") {
 			deduplication = false;
 		}
+		else if (curArg == "--fsck" && i+1 < argc) {
+			fsck = std::string(argv[i+1]);
+			++i;
+		}
 		else {
 			inFileName = curArg;
 		}
@@ -324,10 +370,24 @@ int main(int argc, char ** argv) {
 		adap.disableRefCounting();
 	#endif
 	
-	sserialize::Static::ItemIndexStore store(adap);
+	sserialize::Static::ItemIndexStore store;
+	try {
+		store = sserialize::Static::ItemIndexStore(adap);
+	}
+	catch (std::exception & e) {
+		std::cout << "Failed to initialize store: " << e.what() << std::endl;
+	}
 	std::cout << "ItemIndexStore Information:" << std::endl;
 	std::cout << "size=" << store.size() << std::endl;
 	
+
+	if (fsck.size()) {
+		if (fsck == "indexsizes") {
+			UByteArrayAdapter outData(UByteArrayAdapter::createFile(adap.size(), outFileName));
+			fsck_rewrite_indexSizes(adap, outData);
+		}
+	}
+
 	if ((dumpIndexId.size()) || dumpIndexStoreIndex) {
 		std::ostream * out;
 		std::ofstream fout;
