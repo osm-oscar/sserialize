@@ -144,7 +144,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 		uint32_t mySize = size;
 		
 		auto unpacker = BitunpackerInterface::unpacker(bpn);
-		unpacker->unpack(dit, vit, mySize);
+		unpacker->unpack_blocks(dit, vit, mySize);
 		
 		//do the delta encoding
 		for(uint32_t * it(m_values.data()); it != vit; ++it) {

@@ -172,8 +172,8 @@ class BitunpackerInterface {
 public:
 	BitunpackerInterface() {}
 	virtual ~BitunpackerInterface() {}
-	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const = 0;
-	virtual void unpack(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const = 0;
+	virtual void unpack_blocks(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const = 0;
+	virtual void unpack_blocks(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const = 0;
 public:
 	static std::unique_ptr<BitunpackerInterface> unpacker(uint32_t bpn);
 };
@@ -185,13 +185,13 @@ public:
 public:
 	Bitunpacker() {}
 	virtual ~Bitunpacker() {}
-	virtual void unpack(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const override {
+	virtual void unpack_blocks(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const override {
 		uint32_t myCount = (count/UnpackerImp::BlockSize)*UnpackerImp::BlockSize;
 		src = m_unpacker.unpack(src, dest, myCount);
 		dest += myCount;
 		count -= myCount;
 	}
-	virtual void unpack(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const override {
+	virtual void unpack_blocks(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const override {
 		uint32_t myCount = (count/UnpackerImp::BlockSize)*UnpackerImp::BlockSize;
 		src = m_unpacker.unpack(src, dest, myCount);
 		dest += myCount;
