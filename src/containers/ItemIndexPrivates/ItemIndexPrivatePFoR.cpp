@@ -1,5 +1,6 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.h>
 #include <sserialize/storage/pack_unpack_functions.h>
+#include <sserialize/utility/Bitpacking.h>
 
 namespace sserialize {
 namespace detail {
@@ -66,59 +67,120 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 	m_values.resize(size);
 	sserialize::SizeType getPtr = d.tellGetPtr();
 	sserialize::SizeType arrStorageSize = CompactUintArray::minStorageBytes(bpn, size);
-#if 0
-	MultiBitIterator ait(UByteArrayAdapter(d, 0, arrStorageSize));
-	d.incGetPtr(arrStorageSize);
-	for(uint32_t i(0); i < size; ++i, ait += bpn) {
-		uint32_t v = ait.get32(bpn);
-		if (v == 0) {
-			v = d.getVlPackedUint32();
-		}
-		prev += v;
-		m_values[i] = prev;
-	}
-#else
-	sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
-	d.incGetPtr(arrStorageSize);
-	uint32_t mask = sserialize::createMask(bpn);
-	const uint8_t * dit = mv.data();
-	uint32_t * vit = m_values.data();
-	//in theory this loop can be computed in parallel (and hopefully is executed in parallel by the processor)
-	for(uint32_t i(0); i < size; ++i, ++vit) {
-		uint64_t buffer = 0;
-		//calculate source byte begin and end and end intra byte offset
-		sserialize::SizeType eb = sserialize::SizeType(i)*bpn/8;
-		sserialize::SizeType ee = sserialize::SizeType(i+1)*bpn/8;
-		sserialize::SizeType ie = 8-(sserialize::SizeType(i+1)*bpn%8);
-		//copy these into our buffer
-		int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
-		if (eb+8 <= arrStorageSize) {
-			::memmove(&buffer, dit+eb, 8);
-			buffer = be64toh(buffer);
-			buffer >>= (8-len)*8;
-		}
-		else {
-			char * bit = ((char*)&buffer);
-			const uint8_t * mydit = dit+eb+(len-1);
-			for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
-				*bit = *mydit;
+	if (size < 8) {
+		MultiBitIterator ait(UByteArrayAdapter(d, 0, arrStorageSize));
+		d.incGetPtr(arrStorageSize);
+		for(uint32_t i(0); i < size; ++i, ait += bpn) {
+			uint32_t v = ait.get32(bpn);
+			if (v == 0) {
+				v = d.getVlPackedUint32();
 			}
-	// 		::memmove(((char*)&buffer)+(8-len), dit+eb, len);
-			buffer = le64toh(buffer);
+			prev += v;
+			m_values[i] = prev;
 		}
-		buffer >>= ie;
-		*vit = uint32_t(buffer) & mask;
 	}
-	
-	for(uint32_t i(0); i < size; ++i) {
-		uint32_t v = m_values[i];
-		if (v == 0) {
-			v = d.getVlPackedUint32();
+	else {
+#if 0
+		sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
+		d.incGetPtr(arrStorageSize);
+		uint32_t mask = sserialize::createMask(bpn);
+		const uint8_t * dit = mv.data();
+		uint32_t * vit = m_values.data();
+		//in theory this loop can be computed in parallel (and hopefully is executed in parallel by the processor)
+		for(uint32_t i(0); i < size; ++i, ++vit) {
+			uint64_t buffer = 0;
+			//calculate source byte begin and end and end intra byte offset
+			sserialize::SizeType eb = sserialize::SizeType(i)*bpn/8;
+			sserialize::SizeType ee = sserialize::SizeType(i+1)*bpn/8;
+			sserialize::SizeType ie = 8-(sserialize::SizeType(i+1)*bpn%8);
+			//copy these into our buffer
+			int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
+			if (eb+8 <= arrStorageSize) {
+				::memmove(&buffer, dit+eb, 8);
+				buffer = be64toh(buffer);
+				buffer >>= (8-len)*8;
+			}
+			else {
+				char * bit = ((char*)&buffer);
+				const uint8_t * mydit = dit+eb+(len-1);
+				for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
+					*bit = *mydit;
+				}
+		// 		::memmove(((char*)&buffer)+(8-len), dit+eb, len);
+				buffer = le64toh(buffer);
+			}
+			buffer >>= ie;
+			*vit = uint32_t(buffer) & mask;
 		}
-		prev += v;
-		m_values[i] = prev;
-	}
+#else
+		sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
+		d.incGetPtr(arrStorageSize);
+		const uint32_t mask = sserialize::createMask(bpn);
+		const uint8_t * dit = mv.data();
+		uint32_t * vit = m_values.data();
+		uint32_t mySize = size;
+		
+		auto unpacker = BitunpackerInterface::unpacker(bpn);
+		unpacker->unpack_blocks(dit, vit, mySize);
+		
+		//parse the remainder
+		if (mySize) {
+			uint32_t i = 0;
+			const uint32_t bitsInLastWord = (uint64_t(mySize)*bpn)%64;
+			const uint32_t fullWordSize = mySize - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
+			uint64_t bitsBegin = 0;
+			uint64_t bitsEnd = bpn;
+			for(; i < fullWordSize; ++i) {
+				uint64_t buffer;
+				//calculate source byte begin and end and intra byte offset
+				uint32_t eb = bitsBegin/8;
+				uint32_t ee = bitsEnd/8;
+				uint32_t ie = 8-(bitsEnd%8);
+				//copy these into our buffer
+				uint32_t len = ee-eb+uint32_t(ie>0); // 0 < len <= 5
+				::memmove(&buffer, dit+eb, 8);
+				buffer = be64toh(buffer);
+				buffer >>= (8-len)*8;
+				buffer >>= ie;
+// 				prev += uint32_t(buffer) & mask;
+// 				*vit = prev;
+				*vit = uint32_t(buffer) & mask;
+				bitsBegin = bitsEnd;
+				bitsEnd += bpn;
+				++vit;
+			}
+			for(; i < mySize; ++i, ++vit) {
+				uint64_t buffer = 0;
+				sserialize::SizeType eb = (uint64_t(i)*bpn)/8;
+				sserialize::SizeType ee = (uint64_t(i+1)*bpn)/8;
+				sserialize::SizeType ie = 8-((uint64_t(i+1)*bpn)%8);
+				//copy these into our buffer
+				int len = ee-eb+uint64_t(ie>0); // 0 < len <= 5
+				SSERIALIZE_CHEAP_ASSERT_LARGER(eb+8, arrStorageSize);
+				
+				char * bit = ((char*)&buffer);
+				const uint8_t * mydit = dit+eb+(len-1);
+				for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
+					*bit = *mydit;
+				}
+				buffer = le64toh(buffer);
+				
+				buffer >>= ie;
+// 				prev += uint32_t(buffer) & mask;
+// 				*vit = prev;
+				*vit = uint32_t(buffer) & mask;
+			}
+		}
 #endif
+		for(uint32_t i(0); i < size; ++i) {
+			uint32_t v = m_values[i];
+			if (v == 0) {
+				v = d.getVlPackedUint32();
+			}
+			prev += v;
+			m_values[i] = prev;
+		}
+	}
 	return d.tellGetPtr() - getPtr;
 }
 
