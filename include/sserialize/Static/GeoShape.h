@@ -29,6 +29,9 @@ public:
 	inline sserialize::spatial::GeoShapeType type() const { return m_priv->type(); }
 	
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const { return m_priv->intersects(boundary); }
+	
+	bool intersects(const GeoShape & other) const;
+	
 protected:
 	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
 

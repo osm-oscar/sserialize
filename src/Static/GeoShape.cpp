@@ -127,6 +127,26 @@ sserialize::spatial::GeoPoint GeoShape::at(uint32_t pos) const {
 			return sserialize::spatial::GeoPoint();
 	};
 }
+
+bool GeoShape::intersects(const GeoShape & other) const {
+	if (type() == sserialize::spatial::GS_POINT) {
+		if (other.type() == sserialize::spatial::GS_POINT) {
+			return this->first().equal(other.first(), 0);
+		}
+		else {
+			return this->get<sserialize::spatial::GeoRegion>()->contains(other.first());
+		}
+	}
+	else if (other.type() == sserialize::spatial::GS_POINT) {
+		//we know that this->type() != GS_POINT
+		return other.get<sserialize::spatial::GeoRegion>()->contains(other.first());
+	}
+	else { //both are regions
+		return this->get<sserialize::spatial::GeoRegion>()->intersects(* other.get<sserialize::spatial::GeoRegion>() );
+	}
+	return false;
+}
+
 }}}//end namespace
 
 namespace sserialize {
