@@ -91,7 +91,16 @@ public:
 }//end namespace detail
 
 template<typename TReturnType>
-class AbstractArrayIterator: public std::iterator<std::input_iterator_tag, typename std::remove_reference<TReturnType>::type, typename detail::AbstractArrayIterator<TReturnType>::size_type > {
+class AbstractArrayIterator:
+	public
+		std::iterator<
+			std::input_iterator_tag,
+			typename std::remove_reference<TReturnType>::type,
+			typename detail::AbstractArrayIterator<TReturnType>::size_type,
+			typename std::remove_reference<TReturnType>::type,
+			typename std::remove_reference<TReturnType>::type
+		> 
+{
 public:
 	typedef typename detail::AbstractArrayIterator<TReturnType>::size_type size_type;
 private:
