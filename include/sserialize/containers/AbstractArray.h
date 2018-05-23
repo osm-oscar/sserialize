@@ -127,11 +127,11 @@ public:
 	
 	AbstractArrayIterator operator++(int) {
 		AbstractArrayIterator t(*this);
-		++t;
+		m_priv->next();
 		return t;
 	}
 	
-	AbstractArrayIterator operator+=(size_type amount) {
+	AbstractArrayIterator & operator+=(size_type amount) {
 		m_priv->ffwd(amount);
 		return *this;
 	}
