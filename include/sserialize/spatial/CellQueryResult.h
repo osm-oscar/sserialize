@@ -58,6 +58,7 @@ public:
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 	typedef detail::CellQueryResultIterator const_iterator;
+	typedef const_iterator iterator;
 	enum {
 		FF_NONE=0x0,
 		FF_EMPTY=0x1,
