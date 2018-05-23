@@ -458,9 +458,11 @@ public:
 			std::set<uint32_t>::iterator it = realValues.begin();
 			ItemIndex::const_iterator sit = idx.cbegin();
 			for(uint32_t j = 0, s = (uint32_t) realValues.size(); j < s; ++j, ++it, ++sit) {
+				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("sit != idx.cend() at", j), sit != idx.cend());
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("direct access at ", j), *it, idx.at(j));
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("iterator access at ", j), *it, *sit);
 			}
+			CPPUNIT_ASSERT_MESSAGE("sit != idx.cend()", sit == idx.cend());
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("sit != idx.cend() in run ", i),! (sit != idx.cend()));
 		}
 	}
