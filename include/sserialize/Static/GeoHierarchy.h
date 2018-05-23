@@ -66,8 +66,6 @@ namespace spatial {
   */
 
 class GeoHierarchy;
-  
-  
 namespace detail {
 
 ///SubSet represents a SubSet of a GeoHierarchy. It's based on a CellQueryResult and has 2 incarnation
@@ -104,13 +102,16 @@ public:
 			}
 		}
 	public:
+		Node(const Node &) = delete;
+		const Node & operator=(const Node &) = delete;
+	public:
 		Node(uint32_t ghId, uint32_t itemSize) : m_ghId(ghId), m_itemSize(itemSize) {}
 		virtual ~Node() {}
 		inline uint32_t ghId() const { return m_ghId; }
 		//number of chilren
 		inline std::size_t size() const { return m_children.size(); }
 		inline NodePtr & operator[](uint32_t pos) { return m_children[pos]; }
-		inline const NodePtr & at(uint32_t pos) { return m_children.at(pos);}
+		inline NodePtr & at(uint32_t pos) { return m_children.at(pos);}
 		inline const NodePtr & operator[](uint32_t pos) const { return m_children[pos]; }
 		inline const NodePtr & at(uint32_t pos) const { return m_children.at(pos);}
 		inline void push_back(Node * child) { m_children.push_back( RCPtrWrapper<Node>(child) );}
@@ -135,7 +136,7 @@ public:
 	};
 	typedef Node::NodePtr NodePtr;
 private:
-	RCPtrWrapper<Node> m_root;
+	NodePtr m_root;
 	CellQueryResult m_cqr;
 	bool m_sparse;
 private:
