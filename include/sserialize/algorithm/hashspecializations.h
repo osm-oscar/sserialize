@@ -16,7 +16,11 @@ public:
 
 	//! \brief Construct a SHA3-128 message digest
 	SHA3_128() : SHA3(DIGESTSIZE) {}
+	#if CRYPTOPP_VERSION >= 564
 	CRYPTOPP_CONSTEXPR static const char *StaticAlgorithmName() {return "SHA3-128";}
+	#else
+	static const char *StaticAlgorithmName() {return "SHA3-128";}
+	#endif
 };
 
 } // end namespace CryptoPP
