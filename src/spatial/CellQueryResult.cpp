@@ -45,6 +45,10 @@ uint32_t CellQueryResultIterator::idxId() const {
 	return m_d->idxId(m_pos);
 }
 
+sserialize::ItemIndex CellQueryResultIterator::items() const {
+	return m_d->items(m_pos);
+}
+
 uint32_t CellQueryResultIterator::rawDesc() const {
 	return m_d->rawDesc(m_pos);
 }
