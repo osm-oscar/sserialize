@@ -648,7 +648,12 @@ GeoHierarchy::Cell GeoHierarchy::cell(uint32_t id) const {
 }
 
 GeoHierarchy::Region GeoHierarchy::region(uint32_t id) const {
-	return Region(id, m_priv);
+	if (id == npos) {
+		return rootRegion();
+	}
+	else {
+		return Region(id, m_priv);
+	}
 }
 
 GeoHierarchy::Region GeoHierarchy::rootRegion() const {
