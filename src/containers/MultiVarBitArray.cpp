@@ -64,7 +64,7 @@ uint8_t MultiVarBitArrayPrivate::bitCount(uint32_t pos) const {
 
 uint32_t MultiVarBitArrayPrivate::at(uint32_t pos, uint32_t subPos) const {
 	if (pos >= m_size) {
-		throw sserialize::OutOfBoundsException("MultiVarBitArrayPrivate::at");
+		throw sserialize::OutOfBoundsException("MultiVarBitArrayPrivate::at: pos >= size with pos=" + std::to_string(pos) + "and size=" + std::to_string(m_size) );
 		return 0;
 	}
 
