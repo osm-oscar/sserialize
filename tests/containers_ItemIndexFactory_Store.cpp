@@ -72,8 +72,9 @@ public:
 	}
 	
 	void testSerializedEquality() {
+		auto flushedDataSize = m_idxFactory.flush();
 		
-		CPPUNIT_ASSERT_MESSAGE("Serialization failed", m_idxFactory.flush());
+		CPPUNIT_ASSERT_MESSAGE("Serialization failed", flushedDataSize);
 
 		UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
 		Static::ItemIndexStore sdb(dataAdap);
