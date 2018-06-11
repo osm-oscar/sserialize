@@ -411,10 +411,10 @@ void FoRCreator::flushBlock() {
 	{
 		UByteArrayAdapter blockData(m_data, blockBegin);
 		blockData.shrinkToGetPtr();
-		FoRBlock block(blockData, 0, m_values.size(), blockBits);
-		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_values.size(), block.size());
+		FoRBlock block(blockData, 0, m_vpos, blockBits);
+		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_vpos, block.size());
 		uint32_t prev = 0;
-		for(uint32_t i(0), s(m_values.size()); i < s; ++i) {
+		for(uint32_t i(0), s(m_vpos); i < s; ++i) {
 			prev += m_values.at(i);
 			SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(prev, block.at(i));
 		}
