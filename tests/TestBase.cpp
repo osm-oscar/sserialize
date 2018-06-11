@@ -45,10 +45,10 @@ void TestBase::init(int argc, char ** argv) {
 	
 	if (printHelp()) {
 		std::cout << "Default options available: \n" \
-					"--tc-fast-temp-file\tpath to fast temp files\n" \
-					"--tc-slow-temp-file\tpath to slow temp files\n" \
-					"--tc-shm-file\tpath to shm temp files\n" \
-					"--pop-protector\tpop exeception protector" << std::endl;
+					"\t--tc-fast-temp-file\tpath to fast temp files\n" \
+					"\t--tc-slow-temp-file\tpath to slow temp files\n" \
+					"\t--tc-shm-file\tpath to shm temp files\n" \
+					"\t--pop-protector\tpop exeception protector" << std::endl;
 	}
 }
 
