@@ -111,6 +111,12 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
+	if (sserialize::tests::TestBase::printHelp()) {
+		std::cout << "Additional options are:\n"
+					"\t-t <index type>" << std::endl;
+		return 0;
+	}
+	
 	if (selectedTests == 0) {
 		selectedTests = 0xFFFFFFFF;
 	}
