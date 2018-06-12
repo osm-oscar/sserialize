@@ -123,55 +123,48 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 		auto unpacker = BitunpackerInterface::unpacker(bpn);
 		unpacker->unpack_blocks(dit, vit, mySize);
 		
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(std::size_t(vit-m_values.data()), size-mySize);
+		
 		//parse the remainder
 		if (mySize) {
 			uint32_t i = 0;
-			const uint32_t bitsInLastWord = (uint64_t(mySize)*bpn)%64;
-			const uint32_t fullWordSize = mySize - bitsInLastWord/bpn + uint32_t((bitsInLastWord%bpn)>0);
-			uint64_t bitsBegin = 0;
-			uint64_t bitsEnd = bpn;
-			for(; i < fullWordSize; ++i) {
+			uint64_t bitsBegin(0);
+			uint64_t bitsEnd(bpn);
+			for(const uint8_t * dend(mv.end()-8); dit+bitsBegin/8 <= dend; ++i) {
+				SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(vit-m_values.data()), size);
 				uint64_t buffer;
-				//calculate source byte begin and end and intra byte offset
-				uint32_t eb = bitsBegin/8;
-				uint32_t ee = bitsEnd/8;
-				uint32_t ie = 8-(bitsEnd%8);
-				//copy these into our buffer
-				uint32_t len = ee-eb+uint32_t(ie>0); // 0 < len <= 5
-				::memmove(&buffer, dit+eb, 8);
+				uint32_t bb = bitsBegin/8;
+				uint32_t rs = (bb+sizeof(buffer))*8 - bitsEnd;
+				::memmove(&buffer, dit+bb, 8);
 				buffer = be64toh(buffer);
-				buffer >>= (8-len)*8;
-				buffer >>= ie;
-// 				prev += uint32_t(buffer) & mask;
-// 				*vit = prev;
-				*vit = uint32_t(buffer) & mask;
+				buffer >>= rs;
+				buffer &= mask;
+				
+				*vit = buffer;
+				
 				bitsBegin = bitsEnd;
 				bitsEnd += bpn;
 				++vit;
 			}
-			for(; i < mySize; ++i, ++vit) {
-				uint64_t buffer = 0;
-				sserialize::SizeType eb = (uint64_t(i)*bpn)/8;
-				sserialize::SizeType ee = (uint64_t(i+1)*bpn)/8;
-				sserialize::SizeType ie = 8-((uint64_t(i+1)*bpn)%8);
-				//copy these into our buffer
-				int len = ee-eb+uint64_t(ie>0); // 0 < len <= 5
-				SSERIALIZE_CHEAP_ASSERT_LARGER(eb+8, arrStorageSize);
+			for(; i < mySize; ++i) {
+				uint64_t buffer;
 				
-				char * bit = ((char*)&buffer);
-				const uint8_t * mydit = dit+eb+(len-1);
-				for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
-					*bit = *mydit;
-				}
-				buffer = le64toh(buffer);
+				uint32_t bb = bitsBegin/8;
+				uint32_t rs = (bb+sizeof(buffer))*8 - bitsEnd;
+				::memmove(&buffer, dit+bb, mv.end() - (dit+bb));
+				buffer = be64toh(buffer);
+				buffer >>= rs;
+				buffer &= mask;
 				
-				buffer >>= ie;
-// 				prev += uint32_t(buffer) & mask;
-// 				*vit = prev;
 				*vit = uint32_t(buffer) & mask;
+				
+				bitsBegin = bitsEnd;
+				bitsEnd += bpn;
+				++vit;
 			}
 		}
 #endif
+		//fetching outliers afterwards is faster
 		for(uint32_t i(0); i < size; ++i) {
 			uint32_t v = m_values[i];
 			if (v == 0) {
