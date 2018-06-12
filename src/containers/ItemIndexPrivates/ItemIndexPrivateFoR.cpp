@@ -1,7 +1,6 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateFoR.h>
 #include <sserialize/utility/assert.h>
 #include <sserialize/utility/Bitpacking.h>
-#include <sserialize/utility/debug.h>
 
 namespace sserialize {
 namespace detail {
@@ -126,7 +125,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 
 //loop unrolling: 133ms -> 118ms
 __attribute__((optimize("unroll-loops")))
-NO_OPTIMIZE sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
+sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	m_values.resize(size);
 	auto blockStorageSize = CompactUintArray::minStorageBytes(bpn, size);
@@ -140,8 +139,7 @@ NO_OPTIMIZE sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteAr
 	else {
 		sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, blockStorageSize));
 		const uint32_t mask = sserialize::createMask(bpn);
-		const uint8_t * dit = mv.begin();
-		const uint8_t * dend = mv.end();
+		const uint8_t * dit = mv.data();
 		uint32_t * vit = m_values.data();
 		uint32_t mySize = size;
 		
@@ -156,30 +154,58 @@ NO_OPTIMIZE sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteAr
 			*it = prev;
 		}
 		
-		uint64_t bitsBegin(0);
-		uint64_t bitsEnd(bpn);
-		for(uint32_t i(0); i < mySize; ++vit, ++i) {
-			SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(vit-m_values.data()), size);
-			uint64_t buffer;
-			//calculate source byte begin and end and intra byte offset
-			uint32_t eb = bitsBegin/8;
-			uint32_t ee = bitsEnd/8;
-			uint32_t ie = 8-(bitsEnd%8);
-			//copy these into our buffer
-			uint32_t len = ee-eb+uint32_t(ie>0); // 0 < len <= 5
-			if (dit+eb+8 < dend) {
+		//parse the remainder
+		if (mySize) {
+			uint32_t fullWordSize = 0;
+			if (uint64_t(mySize)*bpn >= 64) {
+				const uint64_t remainingBits = uint64_t(mySize)*bpn;
+				//Number of entries decodable using word buffer: max n s.t. (n-1)*bpn+64 <= remainingBits
+				//n*bpn -bpn + 64 <= remainingBits
+				//n <= (remainingBits+bpn-64)/bpn
+				fullWordSize =(remainingBits+bpn-64)/bpn;
+			}
+			
+			uint32_t i = 0;
+			for(uint64_t bitsBegin(0), bitsEnd(bpn) ; i < fullWordSize; ++i) {
+				SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(vit-m_values.data()), size);
+				uint64_t buffer;
+				//calculate source byte begin and end and intra byte offset
+				uint32_t eb = bitsBegin/8;
+				uint32_t ee = bitsEnd/8;
+				uint32_t ie = 8-(bitsEnd%8);
+				//copy these into our buffer
+				uint32_t len = ee-eb+uint32_t(ie>0); // 0 < len <= 5
 				::memmove(&buffer, dit+eb, 8);
+				buffer = be64toh(buffer);
+				buffer >>= (8-len)*8;
+				buffer >>= ie;
+				prev += uint32_t(buffer) & mask;
+				*vit = prev;
+	// 			*vit = uint32_t(buffer) & mask;
+				bitsBegin = bitsEnd;
+				bitsEnd += bpn;
+				++vit;
 			}
-			else {
-				::memmove(&buffer, dit+eb, dend - (dit+eb));
+			for(; i < mySize; ++i, ++vit) {
+				uint64_t buffer = 0;
+				sserialize::SizeType eb = (uint64_t(i)*bpn)/8;
+				sserialize::SizeType ee = (uint64_t(i+1)*bpn)/8;
+				sserialize::SizeType ie = 8-((uint64_t(i+1)*bpn)%8);
+				//copy these into our buffer
+				int len = ee-eb+uint64_t(ie>0); // 0 < len <= 5
+				
+				char * bit = ((char*)&buffer);
+				const uint8_t * mydit = dit+eb+(len-1);
+				for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
+					*bit = *mydit;
+				}
+				buffer = le64toh(buffer);
+				
+				buffer >>= ie;
+				prev += uint32_t(buffer) & mask;
+				*vit = prev;
+	// 			*vit = uint32_t(buffer) & mask;
 			}
-			buffer = be64toh(buffer);
-			buffer >>= (8-len)*8;
-			buffer >>= ie;
-			prev += uint32_t(buffer) & mask;
-			*vit = prev;
-			bitsBegin = bitsEnd;
-			bitsEnd += bpn;
 		}
 	}
 	return blockStorageSize;
