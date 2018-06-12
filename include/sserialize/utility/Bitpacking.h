@@ -58,6 +58,8 @@ template<uint32_t bpn>
 class BitunpackerImp {
 private:
 	using BufferType = typename UnpackerBufferTypeSelector<bpn>::type;
+	static constexpr std::size_t BitsPerNumber = bpn;
+	static constexpr std::size_t BufferBytes = sizeof(BufferType);
 	static constexpr std::size_t BufferSize = sizeof(BufferType);
 	static constexpr std::size_t BufferBits = std::numeric_limits<BufferType>::digits;
 	static constexpr BufferType mask = sserialize::createMask64(bpn);
@@ -69,23 +71,17 @@ public:
 private:
 	//first byte to read
 	static constexpr uint16_t calc_begin(std::size_t i) {
-		return i*bpn/8;
+		//placing the start of a number at the start of the buffer ist not possible for numbers at the end of a block
+		//since these may very well start in the last byte whereas the buffer is larger than 1 Bytes
+		//in order to fix this we have to place these numbers as far to the right in the buffer as possible and change the shift amount accordingly
+		return (i*bpn+BufferBits > BlockBits ? BlockBytes-BufferBytes : i*bpn/8);
 	}
-	//one past the end
-	static constexpr uint16_t calc_end(std::size_t i) {
-		return (i+1)*bpn/8;
-	}
-	//intra byte offset
-	static constexpr uint8_t calc_ie(std::size_t i) {
-		return 8-((i+1)*bpn%8);
-	}
-	//returns the number of bytes to read
-	static constexpr uint16_t calc_len(std::size_t i) {
-		return calc_end(i) - calc_begin(i)+uint16_t(calc_ie(i)>0);
-	}
-	//rshift of our buffer
+	//We load more data into our buffer than necessary.
+	//We load some bits in front of the number, these are removed by the mask
+	//We also load some bits after the number, these are removed by a right-shift
+	//These bits are after our number up to the end of the buffer
 	static constexpr uint8_t calc_rs(std::size_t i) {
-		return (BufferSize-calc_len(i))*8 + calc_ie(i);
+		return (calc_begin(i)+BufferSize)*8 - (i+1)*bpn;
 	}
 	static constexpr std::array<uint16_t, BlockSize> calc_eb() {
 		using seq = std::make_integer_sequence<std::size_t, BlockSize>;
