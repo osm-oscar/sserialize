@@ -703,7 +703,7 @@ uint32_t ItemIndexPrivateFoR::blockSize() const {
 }
 
 uint32_t ItemIndexPrivateFoR::blockCount() const {
-	return m_size/blockSize();
+	return m_bits.maxCount() - 1;
 }
 	
 }//end namespace

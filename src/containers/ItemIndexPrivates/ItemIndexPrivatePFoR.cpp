@@ -776,7 +776,7 @@ uint32_t ItemIndexPrivatePFoR::blockSize() const {
 }
 
 uint32_t ItemIndexPrivatePFoR::blockCount() const {
-	return m_size/blockSize();
+	return m_bits.maxCount() - 1;
 }
 
 //END INDEX
