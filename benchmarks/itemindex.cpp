@@ -175,8 +175,10 @@ enum OperationType {
 struct TestDataBase {
 	using meas_res = std::chrono::milliseconds;
 	std::vector<meas_res> times;
+	static bool verbose;
 	
-	 virtual ~TestDataBase() {}
+	TestDataBase() {}
+	virtual ~TestDataBase() {}
 	
 	void run(OperationType ot) {
 		auto start = std::chrono::high_resolution_clock::now();
@@ -200,6 +202,8 @@ struct TestDataBase {
 	}
 };
 
+bool TestDataBase::verbose = false;
+
 struct ItemIndexTestData: TestDataBase {
 	std::vector<sserialize::ItemIndex> buckets;
 	sserialize::ItemIndex::Types t;
@@ -212,13 +216,17 @@ struct ItemIndexTestData: TestDataBase {
 	virtual ~ItemIndexTestData() override {}
 	virtual void run_merge() override {
 		sserialize::ItemIndex result = sserialize::ItemIndex::unite(buckets);
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 // 		result.dump(std::cout); //for debugging
 // 		std::cout << std::endl;
 	}
 	virtual void run_intersect() override {
 		sserialize::ItemIndex result = sserialize::ItemIndex::intersect(buckets);
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 // 		result.dump(std::cout); //for debugging
 // 		std::cout << std::endl;
 	}
@@ -249,7 +257,9 @@ struct ItemIndexMergeWithVectorTestData: ItemIndexTestData {
 				return a.toVector();
 			}
 		);
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual void run_intersect() override {
 		std::vector<uint32_t> result = sserialize::treeReduceMap<std::vector<sserialize::ItemIndex>::const_iterator, std::vector<uint32_t> >(
@@ -265,7 +275,9 @@ struct ItemIndexMergeWithVectorTestData: ItemIndexTestData {
 				return a.toVector();
 			}
 		);
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual std::string name() const override {
 		return "ItemIndex-with-vector::" + sserialize::to_string(t);
@@ -329,7 +341,9 @@ struct ItemIndexHeapMergeTestData: ItemIndexTestData {
 				queue.push(top);
 			}
 		}
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual void run_intersect() override {}
 	virtual std::string name() const override {
@@ -356,7 +370,9 @@ struct VectorTreeMergeTestData: TestDataBase {
 				return result;
 			}
 		);
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual void run_intersect() override {
 		auto result = sserialize::treeReduce(
@@ -369,7 +385,9 @@ struct VectorTreeMergeTestData: TestDataBase {
 				return result;
 			}
 		);
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual std::string name() const override {
 		return "std::vector::tree-merge";
@@ -403,13 +421,17 @@ struct VectorSliceMergeTestData: TestDataBase {
 	virtual void run_merge() override {
 		prepare_data();
 		op_data<OT_MERGE>();
-		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
+		}
 		clear_data();
 	}
 	virtual void run_intersect() override {
 		prepare_data();
 		op_data<OT_INTERSECT>();
-		std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << slices[0].front().size() << std::endl;
+		}
 		clear_data();
 	}
 	virtual std::string name() const override {
@@ -498,7 +520,9 @@ struct VectorSetMergeTestData: TestDataBase {
 		for(const auto & x : *buckets) {
 			result.insert(x.cbegin(), x.cend());
 		}
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual void run_intersect() override {}
 	virtual std::string name() const override {
@@ -559,7 +583,9 @@ struct VectorHeapMergeTestData: TestDataBase {
 				queue.push(top);
 			}
 		}
-		std::cout << name() << "::result-size: " << result.size() << std::endl;
+		if (TestDataBase::verbose) {
+			std::cout << name() << "::result-size: " << result.size() << std::endl;
+		}
 	}
 	virtual void run_intersect() override {}
 	virtual std::string name() const override {
@@ -705,7 +731,7 @@ struct TestData {
 };
 
 void printHelp() {
-	std::cout << "\nprg -t <bucketCount> <bucketSize> [ --no-baseline -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount> [-i <index type>]* ] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
+	std::cout << "\nprg [-v] -t <bucketCount> <bucketSize> [ --no-baseline -o <optype=m|i> -g <generator=r|rb|ms> -c <testCount> [-i <index type>]* ] [-t <bucketCount> <bucketSize> ... ]" << std::endl;
 }
 
 int main(int argc, char ** argv) {
@@ -740,7 +766,10 @@ int main(int argc, char ** argv) {
 
 	for(int i(1); i < argc; ++i) {
 		std::string token(argv[i]);
-		if (token == "-t") {
+		if (token == "-v") {
+			TestDataBase::verbose = true;
+		}
+		else if (token == "-t") {
 			if (i+2 >= argc) {
 				printHelp();
 				return -1;
