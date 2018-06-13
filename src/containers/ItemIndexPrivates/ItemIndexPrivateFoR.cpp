@@ -603,12 +603,29 @@ ItemIndexPrivateFoR::is_random_access() const {
 
 void
 ItemIndexPrivateFoR::putInto(DynamicBitSet & bitSet) const {
-	bitSet.set(m_cache.cbegin(), m_cache.cend());
-	
-	if (m_cache.size() < m_size) {
-		auto it(m_it);
-		for(uint32_t i = uint32_t(m_cache.size()); i < m_size; ++i, ++it) {
-			bitSet.set(*it);
+	if (m_cache.size()) {
+		bitSet.set(m_cache.cbegin(), m_cache.cend());
+		
+		if (m_cache.size() < m_size) {
+			auto it(m_it);
+			for(uint32_t i = uint32_t(m_cache.size()); i < m_size; ++i, ++it) {
+				bitSet.set(*it);
+			}
+		}
+	}
+	else {
+		detail::ItemIndexImpl::FoRBlock block;
+		UByteArrayAdapter bd = m_blocks;
+		uint32_t defaultBlockSize = ItemIndexPrivatePFoR::BlockSizes.at(m_bits.at(0));
+		uint32_t prev = 0;
+		for(uint32_t blockNum(0), s(blockCount()); blockNum < s; ++blockNum) {
+			uint32_t blockSize = std::min<uint32_t>(defaultBlockSize, m_size - blockNum*defaultBlockSize);
+			uint32_t blockBits = m_bits.at(blockNum+1);
+			block.update(bd, prev, blockSize, blockBits);
+			bd += block.getSizeInBytes();
+			prev = block.back();
+			
+			bitSet.set(block.begin(), block.end());
 		}
 	}
 }
