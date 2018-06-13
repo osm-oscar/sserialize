@@ -60,6 +60,7 @@ struct NumberGenerator {
 		NG_RANDOM_BOUNDED_KERNEL_50,
 		NG_RANDOM_BOUNDED_KERNEL_70,
 	};
+	virtual ~NumberGenerator() {}
 	virtual void generate(std::vector< std::vector<uint32_t> > & src, uint32_t bucketSize, uint32_t bucketCount) = 0;
 };
 
@@ -68,6 +69,7 @@ struct RandomNumberGenerator: NumberGenerator {
 	re(seed),
 	dist(0, std::numeric_limits<int32_t>::max())
 	{}
+	virtual ~RandomNumberGenerator() {}
 	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
 	{
 		src.resize(bucketCount);
@@ -89,6 +91,8 @@ struct RandomNumberGenerator: NumberGenerator {
 struct MonotoneIncreasingNumberGenerator: NumberGenerator {
 	MonotoneIncreasingNumberGenerator()
 	{}
+	virtual ~MonotoneIncreasingNumberGenerator()
+	{}
 	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
 	{
 		src.resize(bucketCount);
@@ -109,6 +113,7 @@ struct BoundedRandomNumberGenerator: NumberGenerator {
 	BoundedRandomNumberGenerator(uint32_t seed) :
 	re(seed)
 	{}
+	virtual ~BoundedRandomNumberGenerator() {}
 	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
 	{
 		std::uniform_int_distribution<int> dist(0, bucketSize*bucketCount);
@@ -132,6 +137,7 @@ struct BoundedRandomWithKernelNumberGenerator: NumberGenerator {
 	re(seed),
 	kernel(kernel)
 	{}
+	virtual ~BoundedRandomWithKernelNumberGenerator() {}
 	virtual void generate(std::vector< std::vector< uint32_t > >& src, uint32_t bucketSize, uint32_t bucketCount) override
 	{
 		std::uniform_int_distribution<int> dist(0, bucketSize*bucketCount);
