@@ -395,6 +395,13 @@ public:
 					CPPUNIT_ASSERT_EQUAL_MESSAGE("pos=" + std::to_string(i), *rit, *it);
 				}
 			}
+			{
+				CPPUNIT_ASSERT_EQUAL(realBitSet.size(), bitSet.size());
+				for(uint32_t x : realValues) {
+					CPPUNIT_ASSERT_MESSAGE("Value " + std::to_string(x), bitSet.isSet(x));
+				}
+			}
+			
 			CPPUNIT_ASSERT_MESSAGE("Index to bitset", realBitSet == bitSet);
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("index from DynamicBitSet unequal in testrun=", i), realValues == idxFromBitSet);
 		}
