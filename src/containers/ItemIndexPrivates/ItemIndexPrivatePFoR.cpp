@@ -373,10 +373,7 @@ void PFoRCreator::flush() {
 	m_dest->putVlPackedUint32(m_size);
 	m_dest->putVlPackedUint32(m_data.size());
 	m_dest->putData(m_data);
-	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
-	uint32_t bits =
-	#endif
-		CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
+	SSERIALIZE_CHEAP_ASSERT_ASSIGN(uint32_t bits, CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth));
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(bits, ItemIndexPrivatePFoR::BlockDescBitWidth);
 }
 
@@ -778,7 +775,12 @@ ItemIndexPrivatePFoR::symmetricDifference(const sserialize::ItemIndexPrivate * o
 ItemIndexPrivate *
 ItemIndexPrivatePFoR::fromBitSet(const DynamicBitSet & bitSet) {
 	sserialize::UByteArrayAdapter tmp(UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY));
-	create(bitSet.cbegin(), bitSet.cend(), tmp);
+#ifdef SSERIALIZE_ITEMINDEX_PFOR_OPT_FROM_BIT_SET
+	constexpr int optimizationOptions = detail::ItemIndexImpl::PFoRCreator::OO_BLOCK_SIZE;
+#else
+	constexpr int optimizationOptions = detail::ItemIndexImpl::PFoRCreator::OO_NONE;
+#endif
+	detail::ItemIndexImpl::PFoRCreator::create<DynamicBitSet::const_iterator, optimizationOptions>(bitSet.cbegin(), bitSet.cend(), tmp);
 	tmp.resetPtrs();
 	return new ItemIndexPrivatePFoR(tmp);
 }

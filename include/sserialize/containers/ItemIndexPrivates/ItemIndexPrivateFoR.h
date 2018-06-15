@@ -75,6 +75,10 @@ private:
 class FoRCreator {
 public:
 	using BlockCache = std::vector<uint32_t>;
+	///BLOCK_BITS selects matching block bits
+	///BLOCK_SIZE optimizes the number of blocks
+	///NONE does neither, uses 32 Bits for blocks
+	typedef enum {OO_NONE, OO_BLOCK_BITS, OO_BLOCK_SIZE} OptimizationOptions;
 public:
 	FoRCreator(const FoRCreator& other) = delete;
 	FoRCreator & operator=(const FoRCreator & other) = delete;
@@ -104,7 +108,7 @@ public:
 	static uint32_t optBlockSize(T_ITERATOR begin, T_ITERATOR end);	
 
 	///begin->end are absolute values
-	template<typename T_ITERATOR>
+	template<typename T_ITERATOR, int T_OPTIMIZATION_OPTIONS = OO_BLOCK_SIZE>
 	static bool create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter& dest);
 private:
 	UByteArrayAdapter & data();
@@ -203,7 +207,7 @@ void FoRCreator::encodeBlock(UByteArrayAdapter& dest, T_ITERATOR it, T_ITERATOR 
 	dvit.flush();
 }
 
-template<typename T_ITERATOR>
+template<typename T_ITERATOR, int T_OPTIMIZATION_OPTIONS>
 bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter & dest) {
 	if (begin == end) {
 		dest.putVlPackedUint32(0);
@@ -222,38 +226,69 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 			SSERIALIZE_ASSERT_SMALLER(uint32_t(0), dv[i]);
 		}
 	}
-	for(std::size_t i(0); i < PFoRCreator::BlockSizeTestOrder.size(); ++i) {
-		uint32_t mbso = PFoRCreator::BlockSizeTestOrder[i];
-		uint32_t mbs = ItemIndexPrivatePFoR::BlockSizes[mbso];
-		uint32_t mbdss = 0;
-		for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend && mbdss < blockDataStorageSize; dvit += mbs) {
-			uint32_t cbs = std::min<uint32_t>(mbs, dvend-dvit);
-			uint32_t dvor = std::accumulate(dvit, dvit+cbs, uint32_t(0), std::bit_or<uint32_t>());
-			uint32_t mbb = CompactUintArray::minStorageBits(dvor);
-			mbdss += CompactUintArray::minStorageBytes(mbb, cbs);
+	if (T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_SIZE)) {
+		for(std::size_t i(0); i < PFoRCreator::BlockSizeTestOrder.size(); ++i) {
+			uint32_t mbso = PFoRCreator::BlockSizeTestOrder[i];
+			uint32_t mbs = ItemIndexPrivatePFoR::BlockSizes[mbso];
+			uint32_t mbdss = 0;
+			for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend && mbdss < blockDataStorageSize; dvit += mbs) {
+				uint32_t cbs = std::min<uint32_t>(mbs, dvend-dvit);
+				uint32_t dvor = std::accumulate(dvit, dvit+cbs, uint32_t(0), std::bit_or<uint32_t>());
+				uint32_t mbb = CompactUintArray::minStorageBits(dvor);
+				mbdss += CompactUintArray::minStorageBytes(mbb, cbs);
+			}
+			if (mbdss < blockDataStorageSize) {
+				blockDataStorageSize = mbdss;
+				blockSizeOffset = mbso;
+			}
 		}
-		if (mbdss < blockDataStorageSize) {
-			blockDataStorageSize = mbdss;
-			blockSizeOffset = mbso;
-		}
+	}
+	else {
+		blockSizeOffset = sserialize::ItemIndexPrivatePFoR::DefaultBlockSizeOffset;
 	}
 
 	uint32_t blockSize = ItemIndexPrivatePFoR::BlockSizes[blockSizeOffset];
 	std::vector<uint8_t> metadata(dv.size()/blockSize + uint32_t(dv.size()%blockSize>0) + 1);
 	metadata.front() = blockSizeOffset;
 	dest.putVlPackedUint32(dv.size());
-	dest.putVlPackedUint32(blockDataStorageSize);
-	{
-		SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
-		auto mdit = metadata.begin()+1;
-		for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, ++mdit) {
-			uint32_t cbs = std::min<uint32_t>(blockSize, dvend-dvit);
-			auto blockEnd = dvit+cbs;
-			uint32_t blockBits = CompactUintArray::minStorageBits(std::accumulate(dvit, blockEnd, uint32_t(0), std::bit_or<uint32_t>()));
-			encodeBlock(dest, dvit, blockEnd, blockBits);
-			*mdit = blockBits;
+	
+	if (T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_SIZE)) {
+		dest.putVlPackedUint32(blockDataStorageSize);
+		{
+			SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+			auto mdit = metadata.begin()+1;
+			for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, ++mdit) {
+				uint32_t cbs = std::min<uint32_t>(blockSize, dvend-dvit);
+				auto blockEnd = dvit+cbs;
+				uint32_t blockBits = CompactUintArray::minStorageBits(std::accumulate(dvit, blockEnd, uint32_t(0), std::bit_or<uint32_t>()));
+				encodeBlock(dest, dvit, blockEnd, blockBits);
+				*mdit = blockBits;
+			}
+			SSERIALIZE_CHEAP_ASSERT_EQUAL(dest.tellPutPtr()-blockDataBegin, blockDataStorageSize);
 		}
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(dest.tellPutPtr()-blockDataBegin, blockDataStorageSize);
+	}
+	else {
+		sserialize::UByteArrayAdapter tmp(0, sserialize::MM_PROGRAM_MEMORY);
+		{
+			auto mdit = metadata.begin()+1;
+			for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, ++mdit) {
+				uint32_t cbs = std::min<uint32_t>(blockSize, dvend-dvit);
+				auto blockEnd = dvit+cbs;
+				uint32_t blockBits;
+				if (T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_BITS)) {
+					blockBits = CompactUintArray::minStorageBits(std::accumulate(dvit, blockEnd, uint32_t(0), std::bit_or<uint32_t>()));
+				}
+				else {
+					blockBits = 32;
+				}
+				encodeBlock(dest, dvit, blockEnd, blockBits);
+				*mdit = blockBits;
+			}
+		}
+		
+		dest.putVlPackedUint32(tmp.size());
+		tmp.resetPtrs();
+		dest.putData(tmp);
 	}
 	//and the block bits
 	sserialize::CompactUintArray::create(metadata, dest, ItemIndexPrivatePFoR::BlockDescBitWidth);

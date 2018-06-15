@@ -706,7 +706,7 @@ ItemIndexPrivateFoR::symmetricDifference(const sserialize::ItemIndexPrivate * ot
 ItemIndexPrivate *
 ItemIndexPrivateFoR::fromBitSet(const DynamicBitSet & bitSet) {
 	sserialize::UByteArrayAdapter tmp(UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY));
-	create(bitSet.cbegin(), bitSet.cend(), tmp);
+	detail::ItemIndexImpl::FoRCreator::create<DynamicBitSet::const_iterator, detail::ItemIndexImpl::FoRCreator::OO_BLOCK_BITS>(bitSet.cbegin(), bitSet.cend(), tmp);
 	tmp.resetPtrs();
 	return new ItemIndexPrivateFoR(tmp);
 }
