@@ -255,7 +255,7 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 	if (T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_SIZE)) {
 		dest.putVlPackedUint32(blockDataStorageSize);
 		{
-			SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+			SSERIALIZE_CHEAP_ASSERT_EXEC(auto blockDataBegin = dest.tellPutPtr());
 			auto mdit = metadata.begin()+1;
 			for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, ++mdit) {
 				uint32_t cbs = std::min<uint32_t>(blockSize, dvend-dvit);

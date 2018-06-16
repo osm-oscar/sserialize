@@ -392,7 +392,7 @@ const UByteArrayAdapter& FoRCreator::data() const {
 }
 
 void FoRCreator::flushBlock() {
-	SSERIALIZE_EXPENSIVE_ASSERT_ASSIGN(auto blockBegin, m_data.tellPutPtr());
+	SSERIALIZE_EXPENSIVE_ASSERT_EXEC(auto blockBegin = m_data.tellPutPtr());
 	if (!m_vpos) {
 		return;
 	}

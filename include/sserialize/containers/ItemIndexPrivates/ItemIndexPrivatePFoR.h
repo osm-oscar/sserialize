@@ -303,7 +303,7 @@ uint32_t PFoRCreator::encodeBlock(sserialize::UByteArrayAdapter& dest, T_ITERATO
 
 template<typename T_IT, typename T_OD_IT>
 uint32_t PFoRCreator::encodeBlock(UByteArrayAdapter& dest, T_IT begin, T_OD_IT odbegin, T_OD_IT odend, uint32_t optBits, uint32_t optStorageSize) {
-	SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+	SSERIALIZE_CHEAP_ASSERT_EXEC(auto blockDataBegin = dest.tellPutPtr());
 
 	auto blockSize = std::distance(odbegin, odend);
 	auto arrStorageSize = CompactUintArray::minStorageBytes(optBits, blockSize);
@@ -458,7 +458,7 @@ bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArra
 	if (T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_SIZE) ) {
 		dest.putVlPackedUint32(blockStorageSize); // block data size
 		
-		SSERIALIZE_CHEAP_ASSERT_ASSIGN(auto blockDataBegin, dest.tellPutPtr());
+		SSERIALIZE_CHEAP_ASSERT_EXEC(auto blockDataBegin = dest.tellPutPtr());
 		
 		if (dv.size()) { //now comes the block data
 			auto odit = od.begin();
