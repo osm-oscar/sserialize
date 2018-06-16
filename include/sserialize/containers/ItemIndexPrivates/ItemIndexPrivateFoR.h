@@ -281,7 +281,7 @@ bool FoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArray
 				else {
 					blockBits = 32;
 				}
-				encodeBlock(dest, dvit, blockEnd, blockBits);
+				encodeBlock(tmp, dvit, blockEnd, blockBits);
 				*mdit = blockBits;
 			}
 		}
