@@ -100,11 +100,13 @@ bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 					state.error = true;
 					break;
 				}
+				prev = x;
 			}
 			state.pinfo(i);
 		}
 	}, 0, sserialize::ThreadPool::SingletonTaskTag());
 	
+	std::cout << std::flush;
 	return state.error;
 }
 
