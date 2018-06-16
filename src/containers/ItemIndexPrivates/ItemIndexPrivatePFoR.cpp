@@ -373,7 +373,12 @@ void PFoRCreator::flush() {
 	m_dest->putVlPackedUint32(m_size);
 	m_dest->putVlPackedUint32(m_data.size());
 	m_dest->putData(m_data);
-	SSERIALIZE_CHEAP_ASSERT_ASSIGN(uint32_t bits, CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth));
+	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+	uint32_t bits =
+	#endif
+	
+	CompactUintArray::create(m_blockBits, *m_dest, ItemIndexPrivatePFoR::BlockDescBitWidth);
+	
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(bits, ItemIndexPrivatePFoR::BlockDescBitWidth);
 }
 
