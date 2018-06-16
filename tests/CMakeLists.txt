@@ -24,6 +24,7 @@ set(TEST_LIB_SOURCES_CPP
 
 add_library(${PROJECT_NAME} STATIC ${TEST_LIB_SOURCES_CPP})
 add_dependencies(${PROJECT_NAME} sserialize)
+target_compile_definitions(${PROJECT_NAME} PUBLIC ${SSERIALIZE_COMPILE_DEFINITIONS})
 
 MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
