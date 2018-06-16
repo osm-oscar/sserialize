@@ -8,6 +8,7 @@
 #include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/containers/SortedOffsetIndexPrivate.h>
 #include <sserialize/containers/ItemIndexFactory.h>
+#include <sserialize/mt/ThreadPool.h>
 
 using namespace std;
 using namespace sserialize;
@@ -70,18 +71,41 @@ void dumpIndex(std::ostream & out, const Static::SortedOffsetIndex & idx) {
 }
 
 bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
-	sserialize::ProgressInfo pinfo;
-	pinfo.begin(indexStore.size(), "Checking index store");
-	for(uint32_t i(0), s(indexStore.size()); i < s; ++i) {
-		sserialize::ItemIndex idx(indexStore.at(i));
-		if (idx.size() != indexStore.idxSize(i)) {
-			std::cout << "Idx size does not match real index size\n";
-			return false;
+	struct State {
+		std::atomic<uint32_t> i{0};
+		std::atomic<bool> error{false};
+		sserialize::ProgressInfo pinfo;
+		sserialize::Static::ItemIndexStore store;
+	} state;
+	state.pinfo.begin(indexStore.size(), "Checking index store");
+	state.store = indexStore;
+	
+	sserialize::ThreadPool::execute([&state]() {
+		while (state.error.load(std::memory_order_relaxed)) {
+			uint32_t i = state.i.fetch_add(1, std::memory_order_relaxed);
+			if (i >= state.store.size()) {
+				break;
+			}
+			sserialize::ItemIndex idx(state.store.at(i));
+			if (idx.size() != state.store.idxSize(i)) {
+				std::string errormsg = "Idx size of index " + std::to_string(i) + " does not match real index size\n";
+				std::cout << errormsg;
+				state.error = true;
+			}
+			uint32_t prev = 0;
+			for(uint32_t x : idx) {
+				if (x < prev && prev != 0) {
+					std::string errormsg = "Idx index " + std::to_string(i) + " is not monotone ascending\n";
+					std::cout << errormsg;
+					state.error = true;
+					break;
+				}
+			}
+			state.pinfo(i);
 		}
-		pinfo(i);
-	}
-	pinfo.end();
-	return true;
+	}, 0, sserialize::ThreadPool::SingletonTaskTag());
+	
+	return state.error;
 }
 
 inline void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
