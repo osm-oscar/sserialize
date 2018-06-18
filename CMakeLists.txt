@@ -344,6 +344,7 @@ set(UTILITY_SOURCES_CPP
 	src/utility/refcounting.cpp
 	src/utility/debuggerfunctions.cpp
 	src/utility/Bitpacking.cpp
+	src/algorithm/utilmath.cpp
 )
 
 set(STAGING_SOURCES_CPP

@@ -125,6 +125,9 @@ msb(TValue num) {
 	return r;
 }
 
+uint32_t msb(uint32_t v);
+uint32_t msb(uint64_t v);
+
 //from http://stereopsis.com/log2.html
 inline int32_t fastLog2(uint32_t x)  {
 #if defined(__amd64__)
