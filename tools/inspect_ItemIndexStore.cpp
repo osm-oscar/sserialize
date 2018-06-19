@@ -368,6 +368,10 @@ int main(int argc, char ** argv) {
 			fsck = std::string(argv[i+1]);
 			++i;
 		}
+		else if (curArg == "-h" || curArg == "--help") {
+			printHelp();
+			return 0;
+		}
 		else {
 			inFileName = curArg;
 		}
