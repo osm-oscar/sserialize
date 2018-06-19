@@ -80,90 +80,91 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 		}
 	}
 	else {
-#if 0
-		sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
-		d.incGetPtr(arrStorageSize);
-		uint32_t mask = sserialize::createMask(bpn);
-		const uint8_t * dit = mv.data();
-		uint32_t * vit = m_values.data();
-		//in theory this loop can be computed in parallel (and hopefully is executed in parallel by the processor)
-		for(uint32_t i(0); i < size; ++i, ++vit) {
-			uint64_t buffer = 0;
-			//calculate source byte begin and end and end intra byte offset
-			sserialize::SizeType eb = sserialize::SizeType(i)*bpn/8;
-			sserialize::SizeType ee = sserialize::SizeType(i+1)*bpn/8;
-			sserialize::SizeType ie = 8-(sserialize::SizeType(i+1)*bpn%8);
-			//copy these into our buffer
-			int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
-			if (eb+8 <= arrStorageSize) {
-				::memmove(&buffer, dit+eb, 8);
-				buffer = be64toh(buffer);
-				buffer >>= (8-len)*8;
-			}
-			else {
-				char * bit = ((char*)&buffer);
-				const uint8_t * mydit = dit+eb+(len-1);
-				for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
-					*bit = *mydit;
+		if (size < 128) {//MARK-PARAMETER-SEARCH
+			sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
+			d.incGetPtr(arrStorageSize);
+			uint32_t mask = sserialize::createMask(bpn);
+			const uint8_t * dit = mv.data();
+			uint32_t * vit = m_values.data();
+			//in theory this loop can be computed in parallel (and hopefully is executed in parallel by the processor)
+			for(uint32_t i(0); i < size; ++i, ++vit) {
+				uint64_t buffer = 0;
+				//calculate source byte begin and end and end intra byte offset
+				sserialize::SizeType eb = sserialize::SizeType(i)*bpn/8;
+				sserialize::SizeType ee = sserialize::SizeType(i+1)*bpn/8;
+				sserialize::SizeType ie = 8-(sserialize::SizeType(i+1)*bpn%8);
+				//copy these into our buffer
+				int len = ee-eb+sserialize::SizeType(ie>0); // 0 < len <= 5
+				if (eb+8 <= arrStorageSize) {
+					::memmove(&buffer, dit+eb, 8);
+					buffer = be64toh(buffer);
+					buffer >>= (8-len)*8;
 				}
-		// 		::memmove(((char*)&buffer)+(8-len), dit+eb, len);
-				buffer = le64toh(buffer);
-			}
-			buffer >>= ie;
-			*vit = uint32_t(buffer) & mask;
-		}
-#else
-		sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
-		d.incGetPtr(arrStorageSize);
-		const uint32_t mask = sserialize::createMask(bpn);
-		const uint8_t * dit = mv.data();
-		uint32_t * vit = m_values.data();
-		uint32_t mySize = size;
-		
-		auto unpacker = BitunpackerInterface::unpacker(bpn);
-		unpacker->unpack_blocks(dit, vit, mySize);
-		
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(std::size_t(vit-m_values.data()), size-mySize);
-		
-		//parse the remainder
-		if (mySize) {
-			uint32_t i = 0;
-			uint64_t bitsBegin(0);
-			uint64_t bitsEnd(bpn);
-			for(const uint8_t * dend(mv.end()-8); dit+bitsBegin/8 <= dend; ++i) {
-				SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(vit-m_values.data()), size);
-				uint64_t buffer;
-				uint32_t bb = bitsBegin/8;
-				uint32_t rs = (bb+sizeof(buffer))*8 - bitsEnd;
-				::memmove(&buffer, dit+bb, 8);
-				buffer = be64toh(buffer);
-				buffer >>= rs;
-				buffer &= mask;
-				
-				*vit = buffer;
-				
-				bitsBegin = bitsEnd;
-				bitsEnd += bpn;
-				++vit;
-			}
-			for(; i < mySize; ++i) {
-				uint64_t buffer;
-				
-				uint32_t bb = bitsBegin/8;
-				uint32_t rs = (bb+sizeof(buffer))*8 - bitsEnd;
-				::memmove(&buffer, dit+bb, mv.end() - (dit+bb));
-				buffer = be64toh(buffer);
-				buffer >>= rs;
-				buffer &= mask;
-				
+				else {
+					char * bit = ((char*)&buffer);
+					const uint8_t * mydit = dit+eb+(len-1);
+					for(char * bend(bit+len); bit < bend; ++bit, --mydit) {
+						*bit = *mydit;
+					}
+			// 		::memmove(((char*)&buffer)+(8-len), dit+eb, len);
+					buffer = le64toh(buffer);
+				}
+				buffer >>= ie;
 				*vit = uint32_t(buffer) & mask;
-				
-				bitsBegin = bitsEnd;
-				bitsEnd += bpn;
-				++vit;
 			}
 		}
-#endif
+		else {
+			sserialize::UByteArrayAdapter::MemoryView mv(d.getMemView(0, arrStorageSize));
+			d.incGetPtr(arrStorageSize);
+			const uint32_t mask = sserialize::createMask(bpn);
+			const uint8_t * dit = mv.data();
+			uint32_t * vit = m_values.data();
+			uint32_t mySize = size;
+			
+			auto unpacker = BitunpackerInterface::unpacker(bpn);
+			unpacker->unpack_blocks(dit, vit, mySize);
+			
+			SSERIALIZE_NORMAL_ASSERT_EQUAL(std::size_t(vit-m_values.data()), size-mySize);
+			
+			//parse the remainder
+			if (mySize) {
+				uint32_t i = 0;
+				uint64_t bitsBegin(0);
+				uint64_t bitsEnd(bpn);
+				for(const uint8_t * dend(mv.end()-8); dit+bitsBegin/8 <= dend; ++i) {
+					SSERIALIZE_CHEAP_ASSERT_SMALLER(uint32_t(vit-m_values.data()), size);
+					uint64_t buffer;
+					uint32_t bb = bitsBegin/8;
+					uint32_t rs = (bb+sizeof(buffer))*8 - bitsEnd;
+					::memmove(&buffer, dit+bb, 8);
+					buffer = be64toh(buffer);
+					buffer >>= rs;
+					buffer &= mask;
+					
+					*vit = buffer;
+					
+					bitsBegin = bitsEnd;
+					bitsEnd += bpn;
+					++vit;
+				}
+				for(; i < mySize; ++i) {
+					uint64_t buffer;
+					
+					uint32_t bb = bitsBegin/8;
+					uint32_t rs = (bb+sizeof(buffer))*8 - bitsEnd;
+					::memmove(&buffer, dit+bb, mv.end() - (dit+bb));
+					buffer = be64toh(buffer);
+					buffer >>= rs;
+					buffer &= mask;
+					
+					*vit = uint32_t(buffer) & mask;
+					
+					bitsBegin = bitsEnd;
+					bitsEnd += bpn;
+					++vit;
+				}
+			}
+		}
 		//fetching outliers afterwards is faster
 		for(uint32_t i(0); i < size; ++i) {
 			uint32_t v = m_values[i];
