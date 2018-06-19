@@ -520,7 +520,7 @@ uint32_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
 
 UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint32_t bpn, UByteArrayAdapter::OffsetType count) {
 	uint64_t bits = static_cast<uint64_t>(count)*bpn;
-	return bits/8 + (bits % 8 ? 1 : 0);
+	return bits/8 + UByteArrayAdapter::OffsetType((bits%8)>0);
 }
 
 BoundedCompactUintArray::BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d) :
