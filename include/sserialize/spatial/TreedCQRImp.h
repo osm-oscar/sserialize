@@ -190,11 +190,12 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 
 	if (threadCount > 1 && cellCount() > 1000) {//is 1000 good? probably not
 		struct State {
-			std::atomic<uint32_t> srcPos;
-			const TreedCQRImp * src;
-			CellQueryResult * dest;
-			std::atomic<uint32_t> emptyCellCount;
-			State() : srcPos(0), src(0), dest(0), emptyCellCount(0) {}
+			uint32_t threadCount{0};
+			uint32_t cellCount{0};
+			const TreedCQRImp * src{0};
+			CellQueryResult * dest{0};
+			std::atomic<uint32_t> srcPos{0};
+			std::atomic<uint32_t> emptyCellCount{0};
 		};
 		
 		//we use the cqr data as follows: if a cell is empty, then it should be a partial-matched cell that is not fetched and whose indexId is 0
@@ -212,46 +213,60 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 			}
 			void operator()() {
 				while (true) {
-					uint32_t myPos = state->srcPos.fetch_add(1, std::memory_order_relaxed);
-					if (myPos >= state->src->cellCount()) {
+					uint32_t blockSize = state->srcPos.load(std::memory_order_relaxed);
+					if (blockSize > state->cellCount) {
 						return;
 					}
-					idx = sserialize::ItemIndex();
-					pmIdxId = 0;
-					frt = FT_NONE;
-					const CellDesc & cd = state->src->m_desc[myPos];
-					if (cd.hasTree()) {
-						state->src->flattenCell((&(state->src->m_trees[0]))+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
-						SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(frt, FT_NONE);
-						if (frt == FT_FM) {
-							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(1, 0, cd.cellId);
-						}
-						else if (frt == FT_PM) {
-							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
-							state->dest->m_idx[myPos].idxPtr = pmIdxId;
-						}
-						else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
-							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 1, cd.cellId);
-							state->dest->uncheckedSet(myPos, idx);
-						}
-						else {
-							SSERIALIZE_CHEAP_ASSERT(frt == FT_EMPTY || (frt == FT_FETCHED && idx.size() == 0));
-							state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
-							state->dest->m_idx[myPos].idxPtr = 0;
-							emptyCellCount += 1;
-						}
+					blockSize = state->cellCount - blockSize;
+					blockSize = std::max<uint32_t>(blockSize/(state->threadCount*10), 1);
+					
+					uint32_t myPos = state->srcPos.fetch_add(blockSize, std::memory_order_relaxed);
+					if (myPos >= state->cellCount) {
+						return;
+					}
+					for(uint32_t s(std::min(myPos+blockSize, state->cellCount)); myPos < s; ++myPos) {
+						process(myPos);
+					}
+				}
+			}
+			void process(uint32_t myPos) {
+				idx = sserialize::ItemIndex();
+				pmIdxId = 0;
+				frt = FT_NONE;
+				const CellDesc & cd = state->src->m_desc[myPos];
+				if (cd.hasTree()) {
+					state->src->flattenCell((&(state->src->m_trees[0]))+cd.treeBegin, cd.cellId, idx, pmIdxId, frt);
+					SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(frt, FT_NONE);
+					if (frt == FT_FM) {
+						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(1, 0, cd.cellId);
+					}
+					else if (frt == FT_PM) {
+						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
+						state->dest->m_idx[myPos].idxPtr = pmIdxId;
+					}
+					else if (frt == FT_FETCHED && idx.size()) { //frt == FT_FETCHED
+						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 1, cd.cellId);
+						state->dest->uncheckedSet(myPos, idx);
 					}
 					else {
-						if (!cd.fullMatch) {
-							state->dest->m_idx[myPos].idxPtr = (uint32_t) cd.pmIdxId;
-						}
-						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId);
+						SSERIALIZE_CHEAP_ASSERT(frt == FT_EMPTY || (frt == FT_FETCHED && idx.size() == 0));
+						state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(0, 0, cd.cellId);
+						state->dest->m_idx[myPos].idxPtr = 0;
+						emptyCellCount += 1;
 					}
+				}
+				else {
+					if (!cd.fullMatch) {
+						state->dest->m_idx[myPos].idxPtr = (uint32_t) cd.pmIdxId;
+					}
+					state->dest->m_desc.at(myPos) = detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId);
 				}
 			}
 		};
 		
 		State state;
+		state.threadCount = threadCount;
+		state.cellCount = this->cellCount();
 		state.src = this;
 		state.dest = new detail::CellQueryResult(m_gh, m_idxStore, flags());
 		state.dest->m_desc.resize(cellCount(), detail::CellQueryResult::CellDesc(0, 0, 0));
