@@ -218,13 +218,14 @@ void MmappedFilePrivate::cache(OffsetType begin, SizeType size) {
 	if (begin+size > m_exposedSize || begin+size < begin) {
 		size = m_exposedSize - begin;
 	}
+	::madvise(m_data+begin, size, MADV_SEQUENTIAL);
 	::madvise(m_data+begin, size, MADV_WILLNEED);
 	long int pageSize =  std::max<long int>(512, sysconf(_SC_PAGE_SIZE) );
 	volatile uint8_t v = 0;
 	for(const uint8_t * d(m_data+begin), * s(m_data+begin+size); d < s; d += pageSize) {
 		v += *d;
 	}
-	
+	::madvise(m_data+begin, size, MADV_NORMAL);
 }
 
 void MmappedFilePrivate::drop(OffsetType begin, SizeType size) {
