@@ -95,7 +95,7 @@ bool ThreadPool::sheduleTask(QueuedTaskFunction t) {
 
 void ThreadPool::execute(QueuedTaskFunction t, uint32_t threadCount) {
 	if (!threadCount) {
-		threadCount = std::max<uint32_t>(1, std::thread::hardware_concurrency());
+		threadCount = hardware_concurrency();
 	}
 	
 	if (threadCount == 1) {

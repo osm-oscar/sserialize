@@ -60,6 +60,9 @@ public:
 	
 	template<typename T_TASKFUNC>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, CopyTaskTag const &) {
+		if (!threadCount) {
+			threadCount = hardware_concurrency();
+		}
 		std::vector<std::thread> threads;
 		threads.reserve(threadCount);
 		for(uint32_t i(0); i < threadCount; ++i) {
@@ -72,6 +75,9 @@ public:
 	
 	template<typename T_TASKFUNC, typename... Args>
 	static void execute(T_TASKFUNC t, uint32_t threadCount, CopyTaskTag const &, Args&&...args) {
+		if (!threadCount) {
+			threadCount = hardware_concurrency();
+		}
 		std::vector<std::thread> threads;
 		threads.reserve(threadCount);
 		for(uint32_t i(0); i < threadCount; ++i) {
