@@ -212,24 +212,24 @@ void MmappedFilePrivate::setSyncOnClose(bool syncOnClose) {
 
 
 void MmappedFilePrivate::cache(OffsetType begin, SizeType size) {
-	if (begin > m_exposedSize || begin+size < begin) {
+	if (begin > m_exposedSize) {
 		return;
 	}
-	if (begin+size > m_exposedSize ) {
+	if (begin+size > m_exposedSize || begin+size < begin) {
 		size = m_exposedSize - begin;
 	}
 	long int pageSize =  std::max<long int>(512, sysconf(_SC_PAGE_SIZE) );
-	uint8_t v = 0;
-	for(uint8_t * d(m_data+begin), * s(m_data+m_exposedSize); d < s; d += pageSize) {
+	volatile uint8_t v = 0;
+	for(const uint8_t * d(m_data+begin), * s(m_data+begin+size); d < s; d += pageSize) {
 		v += *d;
 	}
 }
 
 void MmappedFilePrivate::drop(OffsetType begin, SizeType size) {
-	if (begin > m_exposedSize || begin+size < begin) {
+	if (begin > m_exposedSize) {
 		return;
 	}
-	if (begin+size > m_exposedSize ) {
+	if (begin+size > m_exposedSize || begin+size < begin) {
 		size = m_exposedSize - begin;
 	}
 	if (::madvise(m_data+begin, size, MADV_DONTNEED) < 0) {
