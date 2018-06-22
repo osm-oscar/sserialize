@@ -108,10 +108,10 @@ public:
 	
 	///@return the type created if type & ItemIndex::T_MULTIPLE, ItemIndex::T_NULL if creation failed
 	template<typename TSortedContainer>
-	static ItemIndex::Types create(const TSortedContainer& idx, sserialize::UByteArrayAdapter& dest, int type);
+	static ItemIndex::Types create(const TSortedContainer& idx, sserialize::UByteArrayAdapter& dest, int type, ItemIndex::CompressionLevel cl = ItemIndex::CL_DEFAULT);
 	
 	template<typename TSortedContainer>
-	static ItemIndex create(const TSortedContainer& idx, int type);
+	static ItemIndex create(const TSortedContainer& idx, int type, ItemIndex::CompressionLevel cl = ItemIndex::CL_DEFAULT);
 	
 	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, int type);
 
@@ -137,7 +137,7 @@ uint32_t ItemIndexFactory::addIndex(const TSortedContainer & idx) {
 }
 
 template<typename TSortedContainer>
-ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, int type) {
+ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArrayAdapter & dest, int type, ItemIndex::CompressionLevel cl) {
 	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	if (!std::is_sorted(idx.cbegin(), idx.cend())) {
 		throw sserialize::CreationException("ItemIndexFactory: trying to add unsorted index");	
@@ -148,7 +148,7 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 	UByteArrayAdapter::OffsetType destBegin = dest.tellPutPtr();
 	#endif
 
-	auto c = [&idx](UByteArrayAdapter & dest, int type) -> bool {
+	auto c = [&idx, cl](UByteArrayAdapter & dest, int type) -> bool {
 		bool ok = false;
 		switch(type) {
 		case ItemIndex::T_NATIVE:
@@ -173,10 +173,10 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 			ok = ItemIndexPrivateEliasFano::create(idx, dest);
 			break;
 		case ItemIndex::T_PFOR:
-			ok = ItemIndexPrivatePFoR::create(idx, dest);
+			ok = ItemIndexPrivatePFoR::create(idx, dest, cl);
 			break;
 		case ItemIndex::T_FOR:
-			ok = ItemIndexPrivateFoR::create(idx, dest);
+			ok = ItemIndexPrivateFoR::create(idx, dest, cl);
 			break;
 		default:
 			break;
@@ -215,7 +215,7 @@ ItemIndex::Types ItemIndexFactory::create(const TSortedContainer & idx, UByteArr
 }
 
 template<typename TSortedContainer>
-ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, int type) {
+ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, int type, ItemIndex::CompressionLevel cl) {
 	switch (type) {
 	case ItemIndex::T_EMPTY:
 		return ItemIndex();
@@ -226,7 +226,7 @@ ItemIndex ItemIndexFactory::create(const TSortedContainer & idx, int type) {
 	default:
 	{
 		UByteArrayAdapter tmp(UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
-		ItemIndex::Types rt = create(idx, tmp, type);
+		ItemIndex::Types rt = create(idx, tmp, type, cl);
 		if (rt != ItemIndex::T_NULL) {
 			tmp.resetPtrs();
 			return ItemIndex(tmp, rt);

@@ -10,8 +10,6 @@
 #include <limits>
 #include <array>
 
-// #define SSERIALIZE_ITEMINDEX_PFOR_OPT_FROM_BIT_SET
-
 namespace sserialize {
 
 class ItemIndexPrivatePFoR;
@@ -100,7 +98,12 @@ public:
 	//OO_BLOCK_SIZE includes OO_BLOCK_BITS
 	//If only OO_BLOCK_BITS are set, then a default block size is chosen
 	//If none is set, then this boils down to a for index with default block size
-	typedef enum {OO_NONE, OO_BLOCK_BITS, OO_BLOCK_SIZE} OptimizationOptions;
+	typedef enum {
+		OO_NONE, //use 32 Bits for each block 
+		OO_FOR, //use for encoding
+		OO_BLOCK_BITS, //compute optimum block bits
+		OO_BLOCK_SIZE //compute optimum block size and optimum block bits
+	} OptimizationOptions;
 public:
 	using BlockCache = std::vector<uint32_t>;
 	struct OptimizerData {
@@ -261,13 +264,13 @@ public:
 	virtual ItemIndexPrivate * difference(const sserialize::ItemIndexPrivate * other) const override;
 	virtual ItemIndexPrivate * symmetricDifference(const sserialize::ItemIndexPrivate * other) const override;
 public:
-	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet);
+	static ItemIndexPrivate * fromBitSet(const DynamicBitSet & bitSet, sserialize::ItemIndex::CompressionLevel cl);
 	///create new index beginning at dest.tellPutPtr()
 	template<typename T_ITERATOR>
-	static bool create(T_ITERATOR begin, const T_ITERATOR&  end, sserialize::UByteArrayAdapter& dest);
+	static bool create(T_ITERATOR begin, const T_ITERATOR&  end, sserialize::UByteArrayAdapter& dest, sserialize::ItemIndex::CompressionLevel cl);
 	///create new index beginning at dest.tellPutPtr()
 	template<typename TSortedContainer>
-	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest);
+	static bool create(const TSortedContainer & src, UByteArrayAdapter & dest, sserialize::ItemIndex::CompressionLevel cl);
 public:
 	uint32_t blockSizeOffset() const;
 	uint32_t blockSize() const;
@@ -435,7 +438,7 @@ bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArra
 			prev = *it;
 		}
 	}
-	if (T_OPTIMIZATION_OPTIONS != int(OO_NONE)) {
+	if (T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_BITS) || T_OPTIMIZATION_OPTIONS == int(OO_BLOCK_SIZE)) {
 		od.init<false>(dv.begin(), dv.end());
 	}
 	
@@ -488,7 +491,10 @@ bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArra
 			else {
 				for(auto dvit(dv.begin()), dvend(dv.end()); dvit < dvend; dvit += blockSize, ++mdit) {
 					uint32_t myBlockSize = std::min<uint32_t>(blockSize, dvend-dvit);
-					uint32_t blockBits = CompactUintArray::minStorageBits( std::accumulate(dvit, dvit+myBlockSize, uint32_t(0), std::bit_or<uint32_t>()) );
+					uint32_t blockBits = 32;
+					if (T_OPTIMIZATION_OPTIONS == int(OO_FOR)) {
+						blockBits = CompactUintArray::minStorageBits( std::accumulate(dvit, dvit+myBlockSize, uint32_t(0), std::bit_or<uint32_t>()) );
+					}
 					encodeBlock(tmp, dvit, dvit+myBlockSize, blockBits);
 					SSERIALIZE_CHEAP_ASSERT_LARGER(blockBits, uint32_t(0));
 					*mdit = blockBits;
@@ -507,14 +513,25 @@ bool PFoRCreator::create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArra
 }} //end namespace detail::ItemIndexImpl
 
 template<typename T_ITERATOR>
-bool ItemIndexPrivatePFoR::create(T_ITERATOR begin, const T_ITERATOR & end, UByteArrayAdapter & dest) {
-	return detail::ItemIndexImpl::PFoRCreator::create(begin, end, dest);
+bool ItemIndexPrivatePFoR::create(T_ITERATOR begin, const T_ITERATOR & end, UByteArrayAdapter & dest, sserialize::ItemIndex::CompressionLevel cl) {
+	using Creator = detail::ItemIndexImpl::PFoRCreator;
+	switch(cl) {
+	case sserialize::ItemIndex::CL_NONE:
+		return Creator::create<T_ITERATOR, Creator::OO_NONE>(begin, end, dest);
+	case sserialize::ItemIndex::CL_LOW:
+		return Creator::create<T_ITERATOR, Creator::OO_FOR>(begin, end, dest);
+	case sserialize::ItemIndex::CL_MID:
+		return Creator::create<T_ITERATOR, Creator::OO_BLOCK_BITS>(begin, end, dest);
+	case sserialize::ItemIndex::CL_HIGH:
+	default:
+		return Creator::create<T_ITERATOR, Creator::OO_BLOCK_SIZE>(begin, end, dest);
+	}
 }
 
 template<typename TSortedContainer>
 bool
-ItemIndexPrivatePFoR::create(const TSortedContainer & src, UByteArrayAdapter & dest) {
-	return create(src.begin(), src.end(), dest);
+ItemIndexPrivatePFoR::create(const TSortedContainer & src, UByteArrayAdapter & dest, sserialize::ItemIndex::CompressionLevel cl) {
+	return create(src.begin(), src.end(), dest, cl);
 }
 
 }

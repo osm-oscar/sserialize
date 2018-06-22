@@ -206,8 +206,8 @@ void DynamicBitSet::unset(sserialize::SizeType pos) {
 	}
 }
 
-ItemIndex DynamicBitSet::toIndex(int type) const {
-	return ItemIndex::fromBitSet(*this, (ItemIndex::Types) type);
+ItemIndex DynamicBitSet::toIndex(int type, ItemIndex::CompressionLevel cl) const {
+	return ItemIndex::fromBitSet(*this, ItemIndex::Types(type), cl);
 }
 
 SizeType DynamicBitSet::size() const {

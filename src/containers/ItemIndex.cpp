@@ -345,7 +345,7 @@ ItemIndex ItemIndex::fromFile(const std::string & fileName, bool deleteOnClose){
 	return ItemIndex(UByteArrayAdapter(tempIndexFile));
 }
 
-ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, int type) {
+ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, int type, CompressionLevel cl) {
 	if (!bitSet.data().size()) {
 		return ItemIndex();
 	}
@@ -353,7 +353,7 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, int type) {
 	if (type & T_MULTIPLE) {
 		std::vector<uint32_t> tmp;
 		bitSet.putInto(std::back_inserter(tmp));
-		return ItemIndexFactory::create(tmp, type);
+		return ItemIndexFactory::create(tmp, type, cl);
 	}
 	
 	switch (type) {
@@ -369,9 +369,9 @@ ItemIndex ItemIndex::fromBitSet(const DynamicBitSet & bitSet, int type) {
 	case (ItemIndex::T_ELIAS_FANO):
 		return ItemIndex( ItemIndexPrivateEliasFano::fromBitSet(bitSet) );
 	case (ItemIndex::T_PFOR):
-		return ItemIndex( ItemIndexPrivatePFoR::fromBitSet(bitSet) );
+		return ItemIndex( ItemIndexPrivatePFoR::fromBitSet(bitSet, cl) );
 	case (ItemIndex::T_FOR):
-		return ItemIndex( ItemIndexPrivateFoR::fromBitSet(bitSet) );
+		return ItemIndex( ItemIndexPrivateFoR::fromBitSet(bitSet, cl) );
 	case (ItemIndex::T_NATIVE):
 	case (ItemIndex::T_STL_DEQUE):
 	case (ItemIndex::T_STL_VECTOR):

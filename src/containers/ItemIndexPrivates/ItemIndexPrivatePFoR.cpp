@@ -743,14 +743,9 @@ ItemIndexPrivatePFoR::symmetricDifference(const sserialize::ItemIndexPrivate * o
 }
 
 ItemIndexPrivate *
-ItemIndexPrivatePFoR::fromBitSet(const DynamicBitSet & bitSet) {
+ItemIndexPrivatePFoR::fromBitSet(const DynamicBitSet & bitSet, sserialize::ItemIndex::CompressionLevel cl) {
 	sserialize::UByteArrayAdapter tmp(UByteArrayAdapter::createCache(4, sserialize::MM_PROGRAM_MEMORY));
-#ifdef SSERIALIZE_ITEMINDEX_PFOR_OPT_FROM_BIT_SET
-	constexpr int optimizationOptions = detail::ItemIndexImpl::PFoRCreator::OO_BLOCK_SIZE;
-#else
-	constexpr int optimizationOptions = detail::ItemIndexImpl::PFoRCreator::OO_NONE;
-#endif
-	detail::ItemIndexImpl::PFoRCreator::create<DynamicBitSet::const_iterator, optimizationOptions>(bitSet.cbegin(), bitSet.cend(), tmp);
+	ItemIndexPrivatePFoR::create(bitSet.cbegin(), bitSet.cend(), tmp, cl);
 	tmp.resetPtrs();
 	return new ItemIndexPrivatePFoR(tmp);
 }

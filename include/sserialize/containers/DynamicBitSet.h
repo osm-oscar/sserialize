@@ -2,6 +2,7 @@
 #define SSERIALIZE_DYNAMIC_BIT_SET_H
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/AbstractArray.h>
+#include <sserialize/containers/ItemIndex.h>
 
 namespace sserialize {
 
@@ -35,8 +36,6 @@ private:
 
 
 }}
-
-class ItemIndex;
 
 class DynamicBitSet final {
 public:
@@ -87,7 +86,7 @@ public:
 		}
 	}
 	void unset(SizeType pos);
-	ItemIndex toIndex(int type) const;
+	ItemIndex toIndex(int type, ItemIndex::CompressionLevel = ItemIndex::CL_DEFAULT) const;
 	
 	template<typename T_OUTPUT_ITERATOR>
 	void putInto(T_OUTPUT_ITERATOR out) const {

@@ -53,6 +53,11 @@ public:
 		RANDOM_ACCESS_YES=T_SIMPLE|T_REGLINE|T_NATIVE|T_EMPTY|T_STL_DEQUE|T_STL_VECTOR
 	};
 	
+	enum CompressionLevel {
+		CL_NONE, CL_LOW, CL_MID, CL_HIGH, CL_DEFAULT=CL_HIGH
+	};
+
+	
 	struct ItemFilter {
 		virtual bool operator()(uint32_t id) const = 0;
 	};
@@ -165,7 +170,7 @@ public:
 		return ItemIndex( new T_INDEX_TYPE() );
 	}
 
-	static ItemIndex fromBitSet(const sserialize::DynamicBitSet & bitSet, int type);
+	static ItemIndex fromBitSet(const sserialize::DynamicBitSet & bitSet, int type, CompressionLevel ol = CL_DEFAULT);
 	
 	static ItemIndex fusedIntersectDifference(const std::vector<ItemIndex> & intersect, const std::vector<ItemIndex> & substract, uint32_t count, ItemFilter * filter = 0);
 	static ItemIndex constrainedIntersect(const std::vector< ItemIndex > & intersect, uint32_t count, ItemFilter * filter = 0);

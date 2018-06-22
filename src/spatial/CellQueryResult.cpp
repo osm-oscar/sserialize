@@ -337,7 +337,7 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 			};
 			sserialize::ThreadPool::execute(Worker(&state), threadCount, ThreadPool::CopyTaskTag());
 			SSERIALIZE_CHEAP_ASSERT_EQUAL(std::size_t(1), state.intermediates.size());
-			return state.intermediates.front().toIndex(idxStore().indexTypes());
+			return state.intermediates.front().toIndex(idxStore().indexTypes(), sserialize::ItemIndex::CL_LOW);
 		}
 	}
 	else {
