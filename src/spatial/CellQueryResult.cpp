@@ -294,7 +294,7 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 			for(uint32_t i(0), s(cellCount()); i < s; ++i) {
 				idx(i).putInto(bitset);
 			}
-			return bitset.toIndex(idxStore().indexTypes());
+			return bitset.toIndex(idxStore().indexTypes(), sserialize::ItemIndex::CL_LOW);
 		}
 		else {
 			struct State {
