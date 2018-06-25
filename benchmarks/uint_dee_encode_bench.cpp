@@ -333,11 +333,16 @@ int main(int argc, char ** argv) {
 	int testCount = atoi(argv[4]);
 	
 	std::cout << "#TestLengthBegin: " << testLengthBegin << std::endl;
-	std::cout << "#TestLengtEnd: " << testLengthEnd << std::endl;
+	std::cout << "#TestLengthEnd: " << testLengthEnd << std::endl;
 	std::cout << "#TestLengthMul: " << testLengthMul << std::endl; 
 	std::cout << "#Test Count: " << testCount << std::endl;
-	std::cout << "Timings are in useconds" << std::endl;
-	std::cout << "#pc32,pvl32,uba32;uba32vl;vec32;vec32c;pc64;pvl64;uba64;uba64vl;vec64;vec64c" << std::endl;
+	if (printVectors) {
+		std::cout << "#Timings are in useconds" << std::endl;
+	}
+	else {
+		std::cout << "#Entries are in M/s" << std::endl;
+	}
+	std::cout << "count;pc32;pvl32;uba32;uba32vl;vec32;vec32c;pc64;pvl64;uba64;uba64vl;vec64;vec64c" << std::endl;
 	sserialize::TimeMeasurer tm;
 	for(; testLengthBegin <= testLengthEnd; testLengthBegin *= testLengthMul) {
 		
@@ -411,19 +416,20 @@ int main(int argc, char ** argv) {
 		}
 		else {
 			std::cout << testLengthBegin << ";";
-			std::cout << sserialize::statistics::mean(pc32.begin(), pc32.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(pvl32.begin(), pvl32.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(uba32.begin(), uba32.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(uba32vl.begin(), uba32vl.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(vec32.begin(), vec32.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(vec32c.begin(), vec32c.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pc32.begin(), pc32.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pvl32.begin(), pvl32.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba32.begin(), uba32.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba32vl.begin(), uba32vl.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec32.begin(), vec32.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec32c.begin(), vec32c.end(), 0) << ";";
 			
-			std::cout << sserialize::statistics::mean(pc64.begin(), pc64.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(pvl64.begin(), pvl64.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(uba64.begin(), uba64.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(uba64vl.begin(), uba64vl.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(vec64.begin(), vec64.end(), 0) << ";";
-			std::cout << sserialize::statistics::mean(vec64c.begin(), vec64c.end(), 0) << std::endl;
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pc64.begin(), pc64.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pvl64.begin(), pvl64.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba64.begin(), uba64.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba64vl.begin(), uba64vl.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec64.begin(), vec64.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec64c.begin(), vec64c.end(), 0) << std::endl;
 		}
 	}
+	return 0;
 }
