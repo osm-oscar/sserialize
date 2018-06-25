@@ -7,6 +7,13 @@
 #include <mutex>
 
 namespace sserialize {
+	
+struct Identity {
+	template<class T>
+	constexpr T&& operator()( T&& t ) const noexcept {
+		return std::forward<T>(t);
+	}
+};
 
 //from https://stackoverflow.com/questions/18085331/recursive-lambda-functions-in-c14
 
@@ -62,25 +69,25 @@ T_CONTAINER sort(T_CONTAINER a) {
 	std::sort(a.begin(), a.end());
 	return a;
 }
-
 /** @param begin iterator pointing to the first element
   * @param end iterator pointing past the last element
-  * @param func function that maps two iterator::value_type to a new one
+  * @param redfunc function that maps two T_RETURN to a new one
+  * @param mapfunc function that maps one iterator to T_RETURN
   */
-template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
-T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc) {
+template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_REDFUNC, typename T_MAPFUNC>
+T_RETURN treeReduceMap(T_ITERATOR begin, T_ITERATOR end, T_REDFUNC redFunc, T_MAPFUNC mapFunc) {
 	if (end - begin == 0) {
 		return T_RETURN();
 	}
 	else if (end - begin == 1) {
-		return *begin;
+		return mapFunc(*begin);
 	}
 	else if (end - begin == 2) {
-		return redFunc(*begin, *(begin+1));
+		return redFunc(mapFunc(*begin), mapFunc(*(begin+1)));
 	}
 	else {
-		return redFunc( treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin, begin+(end-begin)/2, redFunc),
-						treeReduce<T_ITERATOR, T_RETURN, T_FUNC>(begin+(end-begin)/2, end, redFunc)
+		return redFunc( treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin, begin+(end-begin)/2, redFunc, mapFunc),
+						treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin+(end-begin)/2, end, redFunc, mapFunc)
 					);
 	}
 }
@@ -90,26 +97,37 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc) {
   * @param func function that maps two iterator::value_type to a new one
   */
 template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_FUNC>
-T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t threadCount) {
+T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc) {
+	return treeReduceMap<T_ITERATOR, T_RETURN, T_FUNC, Identity>(begin, end, redFunc, Identity());
+}
+
+/** @param begin iterator pointing to the first element
+  * @param end iterator pointing past the last element
+  * @param redFunc function that maps two iterator::value_type to a new one
+  * @param mapFunc mapping function
+  */
+template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_REDFUNC, typename T_MAPFUNC>
+T_RETURN treeReduceMap(T_ITERATOR begin, T_ITERATOR end, T_REDFUNC redFunc, T_MAPFUNC mapFunc, uint32_t threadCount) {
 	if (threadCount == 0) {
 		threadCount = 1;
 	}
 	if (threadCount == 1) {
-		return treeReduce(begin, end, redFunc);
+		return treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin, end, redFunc, mapFunc);
 	}
 	using std::distance;
 	
 	struct State {
 		T_ITERATOR & begin;
-		T_FUNC & redFunc;
+		T_REDFUNC & redFunc;
+		T_MAPFUNC & mapFunc;
 		
 		std::size_t inputSize;
 		std::size_t blockSize;
 		std::vector<T_RETURN> storage;
 		std::mutex lock;
-		State(T_ITERATOR & begin, T_FUNC & redFunc) : begin(begin), redFunc(redFunc) {}
+		State(T_ITERATOR & begin, T_REDFUNC & redFunc, T_MAPFUNC & mapFunc) : begin(begin), redFunc(redFunc), mapFunc(mapFunc) {}
 	};
-	State state(begin, redFunc);
+	State state(begin, redFunc, mapFunc);
 	state.inputSize = distance(begin, end);
 	
 	if (state.inputSize == 0) {
@@ -132,7 +150,7 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t t
 			using std::next;
 			T_ITERATOR blockBegin = next(state->begin, blockBeginOffset);
 			T_ITERATOR blockEnd = next(blockBegin, blockSize);
-			T_RETURN result = treeReduce(blockBegin, blockEnd, state->redFunc);
+			T_RETURN result = treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(blockBegin, blockEnd, state->redFunc, state->mapFunc);
 			std::unique_lock<std::mutex> lck(state->lock);
 			state->storage.emplace_back( std::move(result) );
 			while(true) {
@@ -162,27 +180,14 @@ T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t t
 	return treeReduce(state.storage.begin(), state.storage.end(), redFunc);
 }
 
+
 /** @param begin iterator pointing to the first element
   * @param end iterator pointing past the last element
-  * @param redfunc function that maps two T_RETURN to a new one
-  * @param mapfunc function that maps one iterator to T_RETURN
+  * @param func function that maps two iterator::value_type to a new one
   */
-template<typename T_ITERATOR, typename T_RETURN = typename std::iterator_traits<T_ITERATOR>::value_type, typename T_REDFUNC, typename T_MAPFUNC>
-T_RETURN treeReduceMap(T_ITERATOR begin, T_ITERATOR end, T_REDFUNC redFunc, T_MAPFUNC mapFunc) {
-	if (end - begin == 0) {
-		return T_RETURN();
-	}
-	else if (end - begin == 1) {
-		return mapFunc(*begin);
-	}
-	else if (end - begin == 2) {
-		return redFunc(mapFunc(*begin), mapFunc(*(begin+1)));
-	}
-	else {
-		return redFunc( treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin, begin+(end-begin)/2, redFunc, mapFunc),
-						treeReduceMap<T_ITERATOR, T_RETURN, T_REDFUNC, T_MAPFUNC>(begin+(end-begin)/2, end, redFunc, mapFunc)
-					);
-	}
+template<typename T_ITERATOR, typename T_RETURN, typename T_FUNC>
+T_RETURN treeReduce(T_ITERATOR begin, T_ITERATOR end, T_FUNC redFunc, uint32_t threadCount) {
+	return treeReduceMap<T_ITERATOR, T_RETURN, T_FUNC, Identity>(begin, end, redFunc, Identity(), threadCount);
 }
 
 namespace ReorderMappers {
