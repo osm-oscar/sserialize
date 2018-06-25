@@ -186,6 +186,17 @@ IdType DynamicBitSet::largestEntry() const {
 	return id;
 }
 
+IdType DynamicBitSet::upperBound() const {
+	if (m_data.size() == 0)
+		return 0;
+	for(UByteArrayAdapter::OffsetType i(m_data.size()); i > 0; --i) { //this i substracted by 1 before geting the byte
+		if (m_data.getUint8(i-1)) {
+			return 8*i;
+		}
+	}
+	return 0;
+}
+
 bool DynamicBitSet::isSet(sserialize::SizeType pos) const {
 	return m_data.at( pos/8 ) & (static_cast<uint8_t>(1) << (pos % 8));
 }

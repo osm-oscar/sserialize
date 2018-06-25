@@ -59,6 +59,8 @@ public:
 	
 	IdType smallestEntry() const;
 	IdType largestEntry() const;
+	//a good upper bound for the largest Entry
+	IdType upperBound() const;
 	
 	bool operator==(const DynamicBitSet & other) const;
 	bool operator!=(const DynamicBitSet & other) const;
