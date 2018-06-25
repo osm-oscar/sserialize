@@ -96,12 +96,12 @@ std::vector<long int> test32UBA(const std::vector<uint32_t> & nums, std::size_t 
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
 		uba.resize(testLength*4);
 		tm.begin();
-		for(std::size_t i = 0; i < testLength; ++i) {
-			uba.putUint32(4*i, nums[i]);
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += 4) {
+			uba.putUint32(p, nums[i]);
 		}
 		uint32_t num = 0;
-		for(std::size_t i = 0; i < testLength; ++i) {
-			num += uba.getUint32(4*i);
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += 4) {
+			num += uba.getUint32(p);
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
