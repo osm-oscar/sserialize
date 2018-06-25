@@ -2,6 +2,7 @@
 #include <sserialize/spatial/CellQueryResultPrivate.h>
 #include <sserialize/mt/ThreadPool.h>
 #include <sserialize/containers/DynamicBitSet.h>
+#include <sserialize/iterator/RangeGenerator.h>
 
 namespace sserialize {
 namespace detail {
@@ -284,15 +285,11 @@ CellQueryResult::const_iterator CellQueryResult::cend() const {
 }
 
 sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
-	if ((flags() & FF_CELL_LOCAL_ITEM_IDS) != 0) {
-		throw sserialize::UnimplementedFunctionException("CellQueryResult::flaten: cell local ids are not supported yet");	
-	}
-	
 	if (uint64_t(5) * cellCount() > geoHierarchy().cellSize()) {
 		if (threadCount == 1) {
 			DynamicBitSet bitset;
 			for(uint32_t i(0), s(cellCount()); i < s; ++i) {
-				idx(i).putInto(bitset);
+				items(i).putInto(bitset);
 			}
 			return bitset.toIndex(idxStore().indexTypes(), sserialize::ItemIndex::CL_LOW);
 		}
@@ -319,7 +316,7 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 						if (i >= state->cellCount) {
 							break;
 						}
-						state->that->idx(i).putInto(bitset);
+						state->that->items(i).putInto(bitset);
 					}
 					std::unique_lock<std::mutex> lck(state->lock, std::defer_lock);
 					while(true) {
@@ -341,8 +338,10 @@ sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
 		}
 	}
 	else {
-		auto func = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; } ;
-		return sserialize::treeReduce<const_iterator, sserialize::ItemIndex>(cbegin(), cend(), func, threadCount);
+		auto redfunc = [](const sserialize::ItemIndex & a, const sserialize::ItemIndex & b) -> sserialize::ItemIndex { return a + b; };
+		sserialize::RangeGenerator<uint32_t> rg(0, cellCount(), 1);
+		auto mapfunc = [this](uint32_t pos) { return this->items(pos); };
+		return sserialize::treeReduceMap<sserialize::RangeGenerator<uint32_t>::const_iterator, sserialize::ItemIndex>(rg.cbegin(), rg.cend(), redfunc, mapfunc, threadCount);
 	}
 }
 
