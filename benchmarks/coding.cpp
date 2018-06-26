@@ -6,37 +6,16 @@
 #include <iostream>
 #include <set>
 #include <limits>
+#include <random>
 
-std::vector<uint32_t> createNumbersSet(std::size_t count) {
-	//Fill the first
-	uint32_t rndNum;
-	uint32_t rndMask;
-	uint32_t mask;
-	std::vector<uint32_t> ret;
-	ret.reserve(count);
-	while(ret.size() < count) {
-		rndNum = rand();
-		rndMask = (double)rand()/RAND_MAX * 31; 
-		mask = ((rndMask+1 == 32) ? 0xFFFFFFFF : ((static_cast<uint32_t>(1) << (rndMask+1)) - 1));
-		uint32_t key = rndNum & mask;
-		ret.push_back(key);
-	}
-	return ret;
-}
-
-std::vector<uint64_t> createNumbersSet64(std::size_t count) {
-	//Fill the first
-	uint64_t rndNum;
-	uint64_t rndMask;
-	uint64_t mask;
-	std::vector<uint64_t> ret;
-	ret.reserve(count);
-	while(ret.size() < count) {
-		rndNum = rand();
-		rndMask = (double)rand()/RAND_MAX * 63; 
-		mask = ((rndMask+1 == 64) ? std::numeric_limits<uint64_t>::max() : ((static_cast<uint64_t>(1) << (rndMask+1)) - 1));
-		uint64_t key = rndNum & mask;
-		ret.push_back(key);
+template<typename T>
+std::vector<T> createNumbersSet(std::size_t count) {
+	std::mt19937 gen(0xFEFE); //Standard mersenne_twister_engine seeded with rd()
+	std::uniform_int_distribution<T> dis(1, std::numeric_limits<T>::max());
+	
+	std::vector<T> ret(0, count);
+	for(T & x : ret) {
+		x = dis(gen);
 	}
 	return ret;
 }
@@ -346,9 +325,8 @@ int main(int argc, char ** argv) {
 	sserialize::TimeMeasurer tm;
 	for(; testLengthBegin <= testLengthEnd; testLengthBegin *= testLengthMul) {
 		
-		std::vector<uint32_t> nums = createNumbersSet(testLengthBegin);
-		std::vector<uint64_t> nums64 = createNumbersSet64(testLengthBegin);
-		
+		std::vector<uint32_t> nums = createNumbersSet<uint32_t>(testLengthBegin);
+		std::vector<uint64_t> nums64 = createNumbersSet<uint64_t>(testLengthBegin);
 		
 		std::vector<long int> pc32 = test32Pack(nums, testCount);
 		std::vector<long int> pvl32 = test32VlPack(nums, testCount);
