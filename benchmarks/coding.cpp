@@ -13,7 +13,7 @@ std::vector<T> createNumbersSet(std::size_t count) {
 	std::mt19937 gen(0xFEFE); //Standard mersenne_twister_engine seeded with rd()
 	std::uniform_int_distribution<T> dis(1, std::numeric_limits<T>::max());
 	
-	std::vector<T> ret(0, count);
+	std::vector<T> ret(count, 0);
 	for(T & x : ret) {
 		x = dis(gen);
 	}
