@@ -1238,15 +1238,15 @@ UByteArrayAdapter UByteArrayAdapter::getStringData() {
 }
 
 
-bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
-	if (pos+length > m_len) {
+INLINE_WITH_LTO bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
+	if ( UNLIKELY_BRANCH( pos+length > m_len) ) {
 		return growStorage(pos+length-m_len);
 	}
 	return true;
 }
 
-void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetType pushLength) const {
-	if (m_len < pos+pushLength) {
+INLINE_WITH_LTO void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetType pushLength) const {
+	if ( UNLIKELY_BRANCH(m_len < pos+pushLength) ) {
 		throw OutOfBoundsException();
 	}
 }
