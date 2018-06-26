@@ -193,6 +193,12 @@ sserialize::ItemIndex CellQueryResult::items(uint32_t pos) const {
 			const CellDesc & cd = m_desc.at(pos);
 			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
 			std::vector<uint32_t> tmpidx;
+			if (cd.fetched) {
+				idx(pos).putInto(tmpidx);
+			}
+			else {
+				idxStore().at( idxId(pos) ).putInto(tmpidx);
+			}
 			for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
 				uint32_t localId = tmpidx[j];
 				uint32_t globalId = cellIdx.at(localId);
