@@ -232,12 +232,12 @@ std::vector<long int> test64UBA(const std::vector<uint64_t> & nums, std::size_t 
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
 		uba.resize(testLength*8);
 		tm.begin();
-		for(std::size_t i = 0; i < testLength; ++i) {
-			uba.putUint64(8*i, nums[i]);
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += 8) {
+			uba.putUint64(p, nums[i]);
 		}
 		uint64_t num = 0;
-		for(std::size_t i = 0; i < testLength; ++i) {
-			num += uba.getUint64(8*i);
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += 8) {
+			num += uba.getUint64(p);
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
