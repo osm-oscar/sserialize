@@ -407,19 +407,19 @@ int main(int argc, char ** argv) {
 		}
 		else {
 			std::cout << testLengthBegin << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pc32.begin(), pc32.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pvl32.begin(), pvl32.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba32.begin(), uba32.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba32vl.begin(), uba32vl.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec32.begin(), vec32.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec32c.begin(), vec32c.end(), 0) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pc32.begin(), pc32.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pvl32.begin(), pvl32.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba32.begin(), uba32.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba32vl.begin(), uba32vl.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec32.begin(), vec32.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec32c.begin(), vec32c.end(), int64_t(0)) << ";";
 			
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pc64.begin(), pc64.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pvl64.begin(), pvl64.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba64.begin(), uba64.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba64vl.begin(), uba64vl.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec64.begin(), vec64.end(), 0) << ";";
-			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec64c.begin(), vec64c.end(), 0) << std::endl;
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pc64.begin(), pc64.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(pvl64.begin(), pvl64.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba64.begin(), uba64.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(uba64vl.begin(), uba64vl.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec64.begin(), vec64.end(), int64_t(0)) << ";";
+			std::cout << double(testLengthBegin)/sserialize::statistics::mean(vec64c.begin(), vec64c.end(), int64_t(0)) << std::endl;
 		}
 	}
 	return 0;
