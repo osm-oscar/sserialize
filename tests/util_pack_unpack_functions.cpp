@@ -10,7 +10,7 @@ bool test_packFunctions2() {
 	uint64_t should;
 	uint64_t is;
 	int len;
-	uint8_t array[9];
+	uint8_t array[10];
 
 #define VL_PACK_32_TEST(__VALUE, __LEN) \
 	should = __VALUE; \
@@ -100,7 +100,7 @@ VL_PACK_64_TEST(0x00000000, 1);
 inline bool test_packFunctions() {
 	uint32_t should;
 	uint32_t is;
-	uint8_t array[5];
+	uint8_t array[10];
 	int len;
 
 	srand ( 0 );
