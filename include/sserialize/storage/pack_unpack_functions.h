@@ -284,8 +284,9 @@ uint32_t p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && st
 	do {
 		d[i] = s & 0x7F;
 		s = s >> 7;
-		if (s)
+		if (s) {
 			d[i] |= 0x80;
+		}
 		++i;
 	} while (s);
 	return i;
@@ -308,40 +309,11 @@ uint32_t p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::i
 	return p_v<UnsignedType>(tmp, d);
 }
 
-///slightly faster than template version. Core i7 4700MQ: 71 M/s vs. 74 M/s
 template<>
-inline uint32_t p_v<uint32_t>(uint32_t s, uint8_t * d) {
-	if (s <= createMask(1*7) ) {
-		d[0] = s;
-		return 1;
-	}
-	else if (s <= createMask(2*7)) {
-		d[0] = s | 0x80;
-		d[1] = s >> 7;
-		return 2;
-	}
-	else if (s <= createMask(3*7)) {
-		d[0] = s | 0x80;
-		d[1] = (s >> 7) | 0x80;
-		d[2] = s >> 14;
-		return 3;
-	}
-	else if (s <= createMask(4*7)) {
-		d[0] = s | 0x80;
-		d[1] = (s >> 7) | 0x80;
-		d[2] = (s >> 14) | 0x80;
-		d[3] = s >> 21;
-		return 4;
-	}
-	else {
-		d[0] = s | 0x80;
-		d[1] = (s >> 7) | 0x80;
-		d[2] = (s >> 14) | 0x80;
-		d[3] = (s >> 21) | 0x80;
-		d[4] = s >> 28;
-		return 5;
-	}
-}
+uint32_t p_v<uint32_t>(uint32_t s, uint8_t * d);
+
+template<>
+uint32_t p_v<uint64_t>(uint64_t s, uint8_t * d);
 
 inline uint32_t p_vu32(uint32_t s, uint8_t * d) { return p_v<uint32_t>(s, d);}
 

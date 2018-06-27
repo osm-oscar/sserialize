@@ -202,6 +202,7 @@ set(STORAGE_SOURCES_CPP
 	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterMM.cpp
 	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterMV.cpp
 	src/storage/FileHandler.cpp
+	src/storage/pack_unpack_functions.cpp
 )
 
 set(MT_SOURCES_CPP
