@@ -14,11 +14,13 @@ bool test_packFunctions2() {
 
 #define VL_PACK_32_TEST(__VALUE, __LEN) \
 	should = __VALUE; \
-	p_vu32((uint32_t) should, array); \
+	len = p_vu32((uint32_t) should, array); \
 	is = up_vu32(array, &len); \
 	if (is != should) std::cout << __LEN << " byte: vl_pack/unpack wrong" << std::endl;\
+	if (len != __LEN) std::cout << __LEN << " byte: p_vu32 returned length wrong: " << len << std::endl; \
 	if (psize_vu32((uint32_t) should) != __LEN) std::cout << __LEN << " byte: psize_vu32 wrong" << std::endl; \
-	
+
+VL_PACK_32_TEST(std::numeric_limits<uint32_t>::max(), 5);
 VL_PACK_32_TEST(0xFEFEFEFE, 5);
 VL_PACK_32_TEST(0x0FFFFFFF, 4);
 VL_PACK_32_TEST(0x000FFFFF, 3);
@@ -30,11 +32,14 @@ VL_PACK_32_TEST(0x00000000, 1);
 	
 #define VL_PACK_64_TEST(__VALUE, __LEN) \
 	should = __VALUE; \
-	p_vu64(should, array); \
+	len = p_vu64(should, array); \
 	is = up_vu64(array, &len); \
 	if (is != should) std::cout << __LEN << " byte: vl_pack/unpack64 wrong" << std::endl;\
+	if (len != __LEN) std::cout << __LEN << " byte: p_vu64 returned length wrong: " << len << std::endl; \
 	if (psize_vu64(should) != __LEN) std::cout << __LEN << " byte: psize_vu64 wrong: " << psize_vu64(should) << std::endl; \
-	
+
+		
+VL_PACK_64_TEST(std::numeric_limits<uint64_t>::max(), 10);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 62), 9);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 54), 8);
 VL_PACK_64_TEST((static_cast<uint64_t>(1) << 47), 7);

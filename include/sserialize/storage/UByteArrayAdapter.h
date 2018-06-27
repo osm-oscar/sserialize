@@ -49,7 +49,7 @@
   * (Negative)OffsetType: 5
   * vlpacked:
   * (u)int32: 1-5
-  * (u)int64: 1-9
+  * (u)int64: 1-10
   * 
   * All functions that change the size of the underlying storage are NOT thread-safe.
   * All functions that return references may NOT be thread-safe (depending on the backend)

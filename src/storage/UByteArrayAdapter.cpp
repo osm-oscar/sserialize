@@ -711,7 +711,7 @@ float UByteArrayAdapter::getFloat(const OffsetType pos) const {
 uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
-	int len = (int) std::min<SizeType>(9, m_len - pos);
+	int len = (int) std::min<SizeType>(10, m_len - pos);
 	uint64_t res = m_priv->getVlPackedUint64(m_offSet+pos, &len);
 	if (length)
 		*length = len;
@@ -723,7 +723,7 @@ uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length
 int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
-	int len = (int) std::min<SizeType>(9, m_len - pos);
+	int len = (int) std::min<SizeType>(10, m_len - pos);
 	int64_t res = m_priv->getVlPackedInt64(m_offSet+pos, &len);
 	if (length)
 		*length = len;
@@ -1284,8 +1284,8 @@ int UByteArrayAdapter::__NAME(const __TYPE value) { \
 	return len; \
 } \
 
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, 9, p_vu64, uint64_t);
-UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, 9, p_vs64, int64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint64, 10, p_vu64, uint64_t);
+UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt64, 10, p_vs64, int64_t);
 UBA_PUT_VL_STREAMING_FUNC(putVlPackedUint32, 5, p_vu32, uint32_t);
 UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, 5, p_vs32, int32_t);
 

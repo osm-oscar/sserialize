@@ -183,7 +183,7 @@ std::vector<long int> test64VlPack(const std::vector<uint64_t> & nums, std::size
 	sserialize::TimeMeasurer tm;
 	for(std::size_t testNum = 0; testNum < testCount; ++testNum) {
 		std::vector<uint8_t> data;
-		data.resize(testLength*9);
+		data.resize(testLength*10);
 		uint8_t * dptr = data.data();
 		tm.begin();
 		for(std::size_t i = 0; i < testLength; ++i) {
@@ -230,7 +230,7 @@ std::vector<long int> test64VLUBA(const std::vector<uint64_t> & nums, std::size_
 	sserialize::TimeMeasurer tm;
 	for(std::size_t testNum = 0; testNum < testCount; ++testNum) {
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
-		uba.resize(testLength*8);
+		uba.resize(testLength*10);
 		tm.begin();
 		for(std::size_t i = 0; i < testLength; ++i) {
 			uba.putVlPackedUint64(nums[i]);
@@ -298,8 +298,8 @@ void printTimeVector(const std::vector<long int> & v) {
 }
 
 int main(int argc, char ** argv) {
-	if (argc < 3) {
-		std::cout << "testLengthBegin testLengthEnd testLengthMul testCount" << std::endl;
+	if (argc < 6) {
+		std::cout << "testLengthBegin testLengthEnd testLengthMul testCount (random|range)" << std::endl;
 		return -1;
 		
 	}
@@ -310,11 +310,13 @@ int main(int argc, char ** argv) {
 	int testLengthEnd = atoi(argv[2]);
 	int testLengthMul = atoi(argv[3]);
 	int testCount = atoi(argv[4]);
+	std::string rangeType = std::string(argv[5]);
 	
 	std::cout << "#TestLengthBegin: " << testLengthBegin << std::endl;
 	std::cout << "#TestLengthEnd: " << testLengthEnd << std::endl;
 	std::cout << "#TestLengthMul: " << testLengthMul << std::endl; 
 	std::cout << "#Test Count: " << testCount << std::endl;
+	std::cout << "#type: " << rangeType << std::endl;
 	if (printVectors) {
 		std::cout << "#Timings are in useconds" << std::endl;
 	}
@@ -325,8 +327,19 @@ int main(int argc, char ** argv) {
 	sserialize::TimeMeasurer tm;
 	for(; testLengthBegin <= testLengthEnd; testLengthBegin *= testLengthMul) {
 		
-		std::vector<uint32_t> nums = createNumbersSet<uint32_t>(testLengthBegin);
-		std::vector<uint64_t> nums64 = createNumbersSet<uint64_t>(testLengthBegin);
+		std::vector<uint32_t> nums;
+		std::vector<uint64_t> nums64;
+		
+		if (rangeType == "range") {
+			for(uint64_t i(0); i < testLengthBegin; ++i) {
+				nums.push_back(i);
+				nums64.push_back(i);
+			}
+		}
+		else {
+			 nums = createNumbersSet<uint32_t>(testLengthBegin);
+			 nums64 = createNumbersSet<uint64_t>(testLengthBegin);
+		}
 		
 		std::vector<long int> pc32 = test32Pack(nums, testCount);
 		std::vector<long int> pvl32 = test32VlPack(nums, testCount);
