@@ -305,6 +305,7 @@ set(SPATIAL_SOURCES_CPP
 	src/spatial/TreedCQR.cpp
 	src/spatial/HCQR.cpp
 	src/spatial/HCQRImp.cpp
+	src/spatial/CellDistance.cpp
 )
 
 set(ITERATOR_SOURCES_CPP

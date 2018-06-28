@@ -7,6 +7,7 @@
 #include <sserialize/spatial/LatLonCalculations.h>
 #include <sserialize/spatial/CellQueryResult.h>
 #include <sserialize/mt/ThreadPool.h>
+#include <sserialize/spatial/CellDistance.h>
 
 namespace sserialize {
 namespace Static {
@@ -15,11 +16,11 @@ namespace detail {
 //Dilate a CQR
 class CQRDilator: public sserialize::RefCountObject {
 public:
-private:
-	typedef sserialize::Static::Array<sserialize::Static::spatial::GeoPoint> CellInfo;
+	typedef sserialize::Static::Array<sserialize::Static::spatial::GeoPoint> CellCenters;
 public:
 	///@param d the weight-center of cells
-	CQRDilator(const CellInfo & d, const sserialize::Static::spatial::TracGraph & tg);
+	CQRDilator(const CellCenters & d, const sserialize::Static::spatial::TracGraph & tg);
+	CQRDilator(std::shared_ptr<sserialize::spatial::interface::CellDistance> cd, const sserialize::Static::spatial::TracGraph & tg);
 	~CQRDilator();
 	///@param amount in meters, @return list of cells that are part of the dilated area (input cells are NOT part of this list)
 	template<typename TCELL_ID_ITERATOR>
@@ -29,7 +30,7 @@ private:
 	double distance(const sserialize::Static::spatial::GeoPoint & gp, uint32_t cellId) const;
 	double distance(uint32_t cellId1, uint32_t cellId2) const;
 private:
-	CellInfo m_ci;
+	std::shared_ptr<sserialize::spatial::interface::CellDistance> m_cd;
 	sserialize::Static::spatial::TracGraph m_tg;
 };
 
@@ -51,6 +52,7 @@ public:
 public:
 	///@param d the weight-center of cells
 	CQRDilator(const CellInfo & d, const sserialize::Static::spatial::TracGraph & tg);
+	CQRDilator(std::shared_ptr<sserialize::spatial::interface::CellDistance> cd, const sserialize::Static::spatial::TracGraph & tg);
 	~CQRDilator();
 	///@param amount in meters, @return list of cells that are part of the dilated area (input cells are NOT part of this list)
 	sserialize::ItemIndex dilate(const sserialize::CellQueryResult & src, double diameter, uint32_t threadCount) const;
@@ -116,12 +118,11 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 		Worker(const Worker & other) : state(other.state) {}
 		void handle(MyIterator it) {
 			uint32_t cellId = *it;
-			sserialize::Static::spatial::GeoPoint cellGp( state->that->m_ci.at(cellId) );
 			auto node(state->that->m_tg.node(cellId));
 			//put neighbors into workqueue
 			for(uint32_t i(0), s(node.neighborCount()); i < s; ++i) {
 				uint32_t nId = node.neighborId(i);
-				if (state->isNotBaseCell(nId) && state->that->distance(cellGp, nId) < state->diameter) {
+				if (state->isNotBaseCell(nId) && state->that->distance(cellId, nId) < state->diameter) {
 					queue.push_back(nId);
 					relaxed.insert(nId);
 				}
@@ -134,7 +135,7 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 				auto tmpNode(state->that->m_tg.node(oCellId));
 				for(uint32_t i(0), s(tmpNode.neighborCount()); i < s; ++i) {
 					uint32_t nId = tmpNode.neighborId(i);
-					if (state->isNotBaseCell(nId) && !relaxed.count(nId) && state->that->distance(cellGp, nId) < state->diameter) {
+					if (state->isNotBaseCell(nId) && !relaxed.count(nId) && state->that->distance(cellId, nId) < state->diameter) {
 						queue.push_back(nId);
 						relaxed.insert(nId);
 					}

@@ -8,6 +8,10 @@ CQRDilator::CQRDilator(const CellInfo & d, const sserialize::Static::spatial::Tr
 m_priv(new detail::CQRDilator(d, tg))
 {}
 
+CQRDilator::CQRDilator(std::shared_ptr<sserialize::spatial::interface::CellDistance> cd, const sserialize::Static::spatial::TracGraph & tg) :
+m_priv(new detail::CQRDilator(cd, tg))
+{}
+
 CQRDilator::~CQRDilator() {}
 
 //dilating TreedCQR doesn't make any sense, since we need the real result with it
@@ -29,8 +33,13 @@ sserialize::ItemIndex CQRDilator::dilate(const sserialize::ItemIndex& src, doubl
 
 namespace detail {
 
-CQRDilator::CQRDilator(const CellInfo & d, const sserialize::Static::spatial::TracGraph & tg) :
-m_ci(d),
+CQRDilator::CQRDilator(const CellCenters & d, const sserialize::Static::spatial::TracGraph & tg) :
+m_cd(new sserialize::Static::spatial::CellDistanceByCellCenter(d)),
+m_tg(tg)
+{}
+
+CQRDilator::CQRDilator(std::shared_ptr<sserialize::spatial::interface::CellDistance> cd, const sserialize::Static::spatial::TracGraph & tg) :
+m_cd(cd),
 m_tg(tg)
 {}
 
@@ -41,11 +50,11 @@ double CQRDilator::distance(const sserialize::Static::spatial::GeoPoint& gp1, co
 }
 
 double CQRDilator::distance(const sserialize::Static::spatial::GeoPoint& gp, uint32_t cellId) const {
-	return distance(gp, m_ci.at(cellId));
+	return m_cd->distance(gp, cellId);
 }
 
 double CQRDilator::distance(uint32_t cellId1, uint32_t cellId2) const {
-	return distance(m_ci.at(cellId1), m_ci.at(cellId2));
+	return m_cd->distance(cellId1, cellId2);
 }
 
 
