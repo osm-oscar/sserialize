@@ -15,7 +15,7 @@ public:
 	virtual double distance(uint32_t cellId1, uint32_t cellId2) const = 0;
 	virtual double distance(const sserialize::spatial::GeoPoint & gp, uint32_t cellId) const = 0;
 protected:
-	double distance(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const;
+	static double distance(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2);
 };
 	
 }} //end namespace spatial::interface

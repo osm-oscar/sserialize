@@ -7,7 +7,7 @@ namespace interface {
 	
 CellDistance::~CellDistance() {}
 	
-double CellDistance::distance(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) const {
+double CellDistance::distance(const sserialize::spatial::GeoPoint & gp1, const sserialize::spatial::GeoPoint & gp2) {
 	return std::abs<double>( sserialize::spatial::distanceTo(gp1.lat(), gp1.lon(), gp2.lat(), gp2.lon()) );
 }
 	
