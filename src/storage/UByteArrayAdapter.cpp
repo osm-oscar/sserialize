@@ -663,51 +663,61 @@ const UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetTy
 	return const_cast<UByteArrayAdapter*>(this)->getMemView(pos, size);
 }
 
+INLINE_WITH_LTO
 int64_t UByteArrayAdapter::getInt64(const OffsetType pos) const {
 	if (m_len < pos+8) return 0;
 	return m_priv->getInt64(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 uint64_t UByteArrayAdapter::getUint64(const OffsetType pos) const {
 	if (m_len < pos+8) return 0;
 	return m_priv->getUint64(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 int32_t UByteArrayAdapter::getInt32(const OffsetType pos) const {
 	if (m_len < pos+4) return 0;
 	return m_priv->getInt32(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getUint32(const OffsetType pos) const {
 	if (m_len < pos+4) return 0;
 	return m_priv->getUint32(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getUint24(const OffsetType pos) const {
 	if (m_len < pos+3) return 0;
 	return m_priv->getUint24(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 uint16_t UByteArrayAdapter::getUint16(const OffsetType pos) const {
 	if (m_len < pos+2) return 0;
 	return m_priv->getUint16(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 uint8_t UByteArrayAdapter::getUint8(const OffsetType pos) const {
 	if (m_len < pos+1) return 0;
 	return m_priv->getUint8(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 double UByteArrayAdapter::getDouble(const OffsetType pos) const {
 	if (m_len < pos+8) return std::numeric_limits<double>::signaling_NaN();
 	return unpack_double_from_uint64_t(m_priv->getUint64(m_offSet+pos));
 }
 
+INLINE_WITH_LTO
 float UByteArrayAdapter::getFloat(const OffsetType pos) const {
 	if (m_len < pos+4) return std::numeric_limits<float>::signaling_NaN();
 	return unpack_float_from_uint32_t(m_priv->getUint32(m_offSet+pos));
 }
 
+INLINE_WITH_LTO
 uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
@@ -720,6 +730,7 @@ uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length
 	return res;
 }
 
+INLINE_WITH_LTO
 int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
@@ -732,6 +743,7 @@ int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) 
 	return res;
 }
 
+INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
@@ -744,6 +756,7 @@ uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length
 	return res;
 }
 
+INLINE_WITH_LTO
 int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
 		return 0; //we need to read at least one byte
@@ -756,11 +769,13 @@ int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) 
 	return res;
 }
 
+INLINE_WITH_LTO
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset(const OffsetType pos) const {
 	if (m_len < pos+SSERIALIZED_OFFSET_BYTE_COUNT) return 0;
 	return m_priv->getOffset(m_offSet+pos);
 }
 
+INLINE_WITH_LTO
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset(const OffsetType pos) const {
 	if (m_len < pos+SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT) return 0;
 	return m_priv->getNegativeOffset(m_offSet+pos);
@@ -802,68 +817,77 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter
 	return len;
 }
 
-/** If the supplied memory is not writable then you're on your own! **/
-
+INLINE_WITH_LTO
 void UByteArrayAdapter::putOffset(const OffsetType pos, const OffsetType value) {
 	range_check_push(pos, SSERIALIZED_OFFSET_BYTE_COUNT);
 	
 	m_priv->putOffset(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putNegativeOffset(const OffsetType pos, const NegativeOffsetType value) {
 	range_check_push(pos, SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT);
 	
 	m_priv->putNegativeOffset(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putUint64(const OffsetType pos, const uint64_t value) {
 	range_check_push(pos, 8);
 	
 	m_priv->putUint64(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putInt64(const OffsetType pos, const int64_t value) {
 	range_check_push(pos, 8);
 	
 	m_priv->putInt64(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putInt32(const OffsetType pos, const int32_t value) {
 	range_check_push(pos, 4);
 	
 	m_priv->putInt32(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putUint32(const OffsetType pos, const uint32_t value) {
 	range_check_push(pos, 4);
 	
 	m_priv->putUint32(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putUint24(const OffsetType pos, const uint32_t value) {
 	range_check_push(pos, 3);
 	
 	m_priv->putUint24(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putUint16(const OffsetType pos, const uint16_t value) {
 	range_check_push(pos, 2);
 
 	m_priv->putUint16(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putUint8(const OffsetType pos, const uint8_t value) {
 	range_check_push(pos, 1);
 	
 	m_priv->putUint8(m_offSet+pos, value);
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putDouble(const OffsetType pos, const double value) {
 	range_check_push(pos, 8);
 	
 	m_priv->putUint64(m_offSet+pos, pack_double_to_uint64_t(value));
 }
 
+INLINE_WITH_LTO
 void UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
 	range_check_push(pos, 4);
 	
@@ -872,31 +896,37 @@ void UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
 
 /** @return: Length of the number, -1 on failure **/
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedUint64(const OffsetType pos, const uint64_t value) {
 	if (m_len < pos+1) return -1; //we need to write at least one byte
 	return m_priv->putVlPackedUint64(m_offSet+pos, value, m_len-pos);
 }
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedInt64(const OffsetType pos, const int64_t value) {
 	if (m_len < pos+1) return -1; //we need to write at least one byte
 	return m_priv->putVlPackedInt64(m_offSet+pos, value, m_len-pos);
 }
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedUint32(const OffsetType pos, const uint32_t value) {
 	if (m_len < pos+1) return -1; //we need to write at least one byte
 	return m_priv->putVlPackedUint32(m_offSet+pos, value, m_len-pos);
 }
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedPad4Uint32(const OffsetType pos, const uint32_t value) {
 	if (m_len < pos+1) return -1; //we need to write at least one byte
 	return m_priv->putVlPackedPad4Uint32(m_offSet+pos, value, m_len-pos);
 }
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedInt32(const OffsetType pos, const int32_t value) {
 	if (m_len < pos+1) return -1; //we need to write at least one byte
 	return m_priv->putVlPackedInt32(m_offSet+pos, value, m_len-pos);
 }
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t value) {
 	if (m_len < pos+1) return -1; //we need to write at least one byte
 	return m_priv->putVlPackedPad4Int32(m_offSet+pos, value, m_len-pos);
@@ -1156,7 +1186,7 @@ UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset() {
 	return res;
 }
 #define UBA_STREAMING_GET_FUNC(__NAME, __TYPE, __LENGTH) \
-__TYPE UByteArrayAdapter::__NAME() { \
+INLINE_WITH_LTO __TYPE UByteArrayAdapter::__NAME() { \
 	__TYPE res = __NAME(m_getPtr); \
 	m_getPtr += __LENGTH; \
 	return res; \
@@ -1173,6 +1203,7 @@ UBA_STREAMING_GET_FUNC(getDouble, double, 8);
 UBA_STREAMING_GET_FUNC(getFloat, float, 4);
 #undef UBA_STREAMING_GET_FUNC
 
+INLINE_WITH_LTO
 uint64_t UByteArrayAdapter::getVlPackedUint64() {
 	int len = -1;
 	uint64_t res = getVlPackedUint64(m_getPtr, &len);
@@ -1181,6 +1212,7 @@ uint64_t UByteArrayAdapter::getVlPackedUint64() {
 	return res;
 }
 
+INLINE_WITH_LTO
 int64_t UByteArrayAdapter::getVlPackedInt64() {
 	int len = -1;
 	int64_t res = getVlPackedInt64(m_getPtr, &len);
@@ -1189,6 +1221,7 @@ int64_t UByteArrayAdapter::getVlPackedInt64() {
 	return res;
 }
 
+INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getVlPackedUint32() {
 	if (m_len < m_getPtr+1) {
 		return 0; //we need to read at least one byte
@@ -1201,6 +1234,7 @@ uint32_t UByteArrayAdapter::getVlPackedUint32() {
 	return res;
 }
 
+INLINE_WITH_LTO
 int32_t UByteArrayAdapter::getVlPackedInt32() {
 	int len = -1;
 	int32_t res = getVlPackedInt32(m_getPtr, &len);
@@ -1237,7 +1271,6 @@ UByteArrayAdapter UByteArrayAdapter::getStringData() {
 	return s;
 }
 
-
 INLINE_WITH_LTO bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
 	if ( UNLIKELY_BRANCH( pos+length > m_len) ) {
 		return growStorage(pos+length-m_len);
@@ -1252,7 +1285,7 @@ INLINE_WITH_LTO void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetT
 }
 
 #define UBA_PUT_STREAMING_FUNC(__NAME, __TYPE, __LENGTH) \
-void UByteArrayAdapter::__NAME(const __TYPE value) { \
+INLINE_WITH_LTO void UByteArrayAdapter::__NAME(const __TYPE value) { \
 	if (!resizeForPush(m_putPtr, __LENGTH)) { \
 		throw IOException(); \
 	} \
@@ -1275,7 +1308,7 @@ UBA_PUT_STREAMING_FUNC(putFloat, float, 4);
 #undef UBA_PUT_STREAMING_FUNC
 
 #define UBA_PUT_VL_STREAMING_FUNC(__NAME, __BUFSIZE, __SERFUNC, __TYPE) \
-int UByteArrayAdapter::__NAME(const __TYPE value) { \
+INLINE_WITH_LTO int UByteArrayAdapter::__NAME(const __TYPE value) { \
 	uint8_t tmp[__BUFSIZE]; \
 	int len = __SERFUNC(value, tmp); \
 	if (len < 0) \
@@ -1291,6 +1324,7 @@ UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, 5, p_vs32, int32_t);
 
 #undef UBA_PUT_VL_STREAMING_FUNC
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 	if (!resizeForPush(m_putPtr, 4))
 		return false;
@@ -1303,6 +1337,7 @@ int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 	return len;
 }
 
+INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 	if (!resizeForPush(m_putPtr, 4)) {
 		throw IOException();
@@ -1392,7 +1427,8 @@ void UByteArrayAdapter::dumpAsString(OffsetType byteCount) const {
 	std::cout << std::endl;
 }
 
-#define STATIC_PUT_FUNCS_MAKRO(__NAME, __TYPE) void UByteArrayAdapter::__NAME(UByteArrayAdapter & dest, __TYPE src) { dest.__NAME(src); }
+#define STATIC_PUT_FUNCS_MAKRO(__NAME, __TYPE) \
+INLINE_WITH_LTO void UByteArrayAdapter::__NAME(UByteArrayAdapter & dest, __TYPE src) { dest.__NAME(src); }
 STATIC_PUT_FUNCS_MAKRO(putUint8, uint8_t);
 STATIC_PUT_FUNCS_MAKRO(putUint16, uint16_t);
 STATIC_PUT_FUNCS_MAKRO(putUint24, uint32_t);
@@ -1419,7 +1455,7 @@ bool operator!=(const sserialize::UByteArrayAdapter & a, const sserialize::UByte
 //Streaming operators
 
 #define UBA_OPERATOR_PUT_STREAMING_FUNC(__NAME, __TYPE) \
-UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const __TYPE value) { \
+INLINE_WITH_LTO UByteArrayAdapter& operator<<(UByteArrayAdapter & data, const __TYPE value) { \
 	data.__NAME(value); \
 	return data; \
 } \
@@ -1438,7 +1474,7 @@ UBA_OPERATOR_PUT_STREAMING_FUNC(put, std::string &);
 
 
 #define UBA_OPERATOR_GET_STREAMING_FUNC(__NAME, __TYPE) \
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, __TYPE & value) { \
+INLINE_WITH_LTO sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, __TYPE & value) { \
 	value = data.__NAME(); \
 	return data; \
 } \
