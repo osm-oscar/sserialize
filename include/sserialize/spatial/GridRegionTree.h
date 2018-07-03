@@ -86,8 +86,9 @@ public:
 ///A 2D grid based tree allowing for fast point-in-region queries
 ///Pointers to regions need to be valid while using an instance of this class
 class GridRegionTree {
-private:
+public:
 	typedef detail::GridRegionTree::Node Node;
+private:
 	template<typename T_OUTPUT_ITERATOR>
 	struct IteratorWrapper {
 		const sserialize::spatial::GeoPoint & p;
@@ -124,7 +125,7 @@ private:
 	mutable std::atomic<uint64_t> m_cumulatedResultSetSize;
 	mutable std::atomic<uint64_t> m_intersectTestCount;
 	mutable std::mutex m_lck;
-private:
+protected:
 	template<typename T_TYPES_CONTAINER, typename T_REGION_ID_ITERATOR, typename T_OUTPUT_ITERATOR>
 	void getEnclosing(const GeoRect & bounds, T_REGION_ID_ITERATOR begin, const T_REGION_ID_ITERATOR & end, T_OUTPUT_ITERATOR out);
 	
@@ -133,6 +134,17 @@ private:
 	
 	template<typename T_TYPES_CONTAINER>
 	uint32_t insert(const typename T_TYPES_CONTAINER::GridRefiner & refiner, const std::unordered_map<GeoRegion*, uint32_t> & rPtr2Id, std::vector<uint32_t> sortedRegions, const sserialize::spatial::GeoRect & maxBounds);
+protected:
+	inline const std::vector<Node>  & nodes() const { return m_nodes; }
+	inline std::vector<Node>  & nodes() { return m_nodes; }
+	inline const std::vector<GeoGrid> & nodeGrids() const { return m_nodeGrids; }
+	inline std::vector<GeoGrid> & nodeGrids() { return m_nodeGrids; }
+	inline const std::vector<uint32_t> & nodePtr() const { return m_nodePtr; }
+	inline std::vector<uint32_t> & nodePtr() { return m_nodePtr; }
+	inline const std::vector<uint32_t> & leafInfo() const { return m_leafInfo; }
+	inline std::vector<uint32_t> & leafInfo() { return m_leafInfo; }
+	inline const std::vector<GeoRegion*> & regions() const { return m_regions; }
+	inline std::vector<GeoRegion*> & regions() { return m_regions; }
 public:
 	GridRegionTree();
 	GridRegionTree(GridRegionTree && other);

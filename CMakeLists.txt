@@ -306,6 +306,8 @@ set(SPATIAL_SOURCES_CPP
 	src/spatial/HCQR.cpp
 	src/spatial/HCQRImp.cpp
 	src/spatial/CellDistance.cpp
+	src/spatial/GridTextCompleter.cpp
+	src/spatial/GridTreeArrangement.cpp
 )
 
 set(ITERATOR_SOURCES_CPP
