@@ -94,14 +94,16 @@ std::vector<long int> test32VLUBA(const std::vector<uint32_t> & nums, std::size_
 	sserialize::TimeMeasurer tm;
 	for(std::size_t testNum = 0; testNum < testCount; ++testNum) {
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
+		int len = 0;
 		uba.resize(testLength*4);
 		tm.begin();
-		for(std::size_t i = 0; i < testLength; ++i) {
-			uba.putVlPackedUint32(nums[i]);
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += len) {
+			len = uba.putVlPackedUint32(p, nums[i]);
 		}
 		uint32_t num = 0;
-		for(std::size_t i = 0; i < testLength; ++i) {
-			num += uba.getVlPackedUint32();
+		len = 0;
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += len) {
+			num += uba.getVlPackedUint32(p, &len);
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
@@ -230,14 +232,15 @@ std::vector<long int> test64VLUBA(const std::vector<uint64_t> & nums, std::size_
 	sserialize::TimeMeasurer tm;
 	for(std::size_t testNum = 0; testNum < testCount; ++testNum) {
 		sserialize::UByteArrayAdapter uba(new std::vector<uint8_t>(), true);
+		int len = 0;
 		uba.resize(testLength*10);
 		tm.begin();
-		for(std::size_t i = 0; i < testLength; ++i) {
-			uba.putVlPackedUint64(nums[i]);
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += len) {
+			len = uba.putVlPackedUint64(p, nums[i]);
 		}
 		uint64_t num = 0;
-		for(std::size_t i = 0; i < testLength; ++i) {
-			num += uba.getVlPackedUint64();
+		for(std::size_t i(0), p(0); i < testLength; ++i, p += len) {
+			num += uba.getVlPackedUint64(p);
 		}
 		tm.end();
 		res.push_back( tm.elapsedTime() );
@@ -331,7 +334,7 @@ int main(int argc, char ** argv) {
 		std::vector<uint64_t> nums64;
 		
 		if (rangeType == "range") {
-			for(uint64_t i(0); i < testLengthBegin; ++i) {
+			for(int i(0); i < testLengthBegin; ++i) {
 				nums.push_back(i);
 				nums64.push_back(i);
 			}
