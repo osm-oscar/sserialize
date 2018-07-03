@@ -221,7 +221,7 @@ UByteArrayAdapter ItemIndexPrivateRleDE::data() const {
 uint32_t ItemIndexPrivateRleDE::at(uint32_t pos) const {
 	if (!size() || size() <= pos)
 		return 0;
-	int len;
+	int len = 0;
 	for(; m_cache.size() <= pos;) {
 		uint32_t value = m_data.getVlPackedUint32(m_dataOffset, &len);
 		if (value & 0x1) { //rle
