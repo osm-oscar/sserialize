@@ -449,7 +449,6 @@ UByteArrayAdapter& UByteArrayAdapter::resetPtrs() {
 	return *this;
 }
 
-
 bool UByteArrayAdapter::shrinkStorage(OffsetType byte) {
 	if (byte > m_len)
 		byte = m_len;
@@ -1257,21 +1256,23 @@ UByteArrayAdapter UByteArrayAdapter::getStringData() {
 	return s;
 }
 
-INLINE_WITH_LTO bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
+INLINE_WITH_LTO
+bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
 	if ( UNLIKELY_BRANCH( pos+length > m_len) ) {
 		return growStorage(pos+length-m_len);
 	}
 	return true;
 }
 
-INLINE_WITH_LTO void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetType pushLength) const {
+INLINE_WITH_LTO
+void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetType pushLength) const {
 	if ( UNLIKELY_BRANCH(m_len < pos+pushLength) ) {
 		throw OutOfBoundsException();
 	}
 }
 
 #define UBA_PUT_STREAMING_FUNC(__NAME, __TYPE, __LENGTH) \
-INLINE_WITH_LTO void UByteArrayAdapter::__NAME(const __TYPE value) { \
+void UByteArrayAdapter::__NAME(const __TYPE value) { \
 	if (!resizeForPush(m_putPtr, __LENGTH)) { \
 		throw IOException(); \
 	} \
@@ -1294,7 +1295,7 @@ UBA_PUT_STREAMING_FUNC(putFloat, float, 4);
 #undef UBA_PUT_STREAMING_FUNC
 
 #define UBA_PUT_VL_STREAMING_FUNC(__NAME, __BUFSIZE, __SERFUNC, __TYPE) \
-INLINE_WITH_LTO int UByteArrayAdapter::__NAME(const __TYPE value) { \
+int UByteArrayAdapter::__NAME(const __TYPE value) { \
 	uint8_t tmp[__BUFSIZE]; \
 	int len = __SERFUNC(value, tmp); \
 	if (len < 0) \
@@ -1310,7 +1311,6 @@ UBA_PUT_VL_STREAMING_FUNC(putVlPackedInt32, 5, p_vs32, int32_t);
 
 #undef UBA_PUT_VL_STREAMING_FUNC
 
-INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 	if (!resizeForPush(m_putPtr, 4))
 		return false;
@@ -1323,7 +1323,6 @@ int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 	return len;
 }
 
-INLINE_WITH_LTO
 int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 	if (!resizeForPush(m_putPtr, 4)) {
 		throw IOException();
