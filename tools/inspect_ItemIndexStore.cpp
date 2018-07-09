@@ -103,7 +103,9 @@ bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 				}
 				prev = x;
 			}
-			state.pinfo(i);
+			if (i % 1000 == 0) {
+				state.pinfo(i);
+			}
 		}
 	}, 0, sserialize::ThreadPool::SingletonTaskTag());
 	
