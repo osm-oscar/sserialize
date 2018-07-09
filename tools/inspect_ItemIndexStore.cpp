@@ -70,6 +70,7 @@ void dumpIndex(std::ostream & out, const Static::SortedOffsetIndex & idx) {
 	}
 }
 
+//Returns true, if index is ok, otherwise false
 bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 	struct State {
 		std::atomic<uint32_t> i{0};
@@ -107,7 +108,7 @@ bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 	}, 0, sserialize::ThreadPool::SingletonTaskTag());
 	
 	std::cout << std::flush;
-	return state.error;
+	return ! state.error;
 }
 
 inline void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
