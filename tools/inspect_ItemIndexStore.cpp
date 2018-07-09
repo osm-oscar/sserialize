@@ -74,7 +74,7 @@ void dumpIndex(std::ostream & out, const Static::SortedOffsetIndex & idx) {
 bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 	struct State {
 		std::atomic<uint32_t> i{0};
-		std::atomic<bool> error{false};
+		std::atomic<bool> ok{true};
 		sserialize::ProgressInfo pinfo;
 		sserialize::Static::ItemIndexStore store;
 	} state;
@@ -82,7 +82,7 @@ bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 	state.store = indexStore;
 	
 	sserialize::ThreadPool::execute([&state]() {
-		while (state.error.load(std::memory_order_relaxed)) {
+		while (state.ok.load(std::memory_order_relaxed)) {
 			uint32_t i = state.i.fetch_add(1, std::memory_order_relaxed);
 			if (i >= state.store.size()) {
 				break;
@@ -91,14 +91,14 @@ bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 			if (idx.size() != state.store.idxSize(i)) {
 				std::string errormsg = "Idx size of index " + std::to_string(i) + " does not match real index size\n";
 				std::cout << errormsg;
-				state.error = true;
+				state.ok = false;
 			}
 			uint32_t prev = 0;
 			for(uint32_t x : idx) {
 				if (x < prev && prev != 0) {
 					std::string errormsg = "Idx index " + std::to_string(i) + " is not monotone ascending\n";
 					std::cout << errormsg;
-					state.error = true;
+					state.ok = false;
 					break;
 				}
 				prev = x;
@@ -108,7 +108,7 @@ bool doCheckIndex(const sserialize::Static::ItemIndexStore & indexStore) {
 	}, 0, sserialize::ThreadPool::SingletonTaskTag());
 	
 	std::cout << std::flush;
-	return ! state.error;
+	return state.ok;
 }
 
 inline void incAlphabet(std::unordered_map<uint32_t, uint32_t> & a, uint32_t v) {
