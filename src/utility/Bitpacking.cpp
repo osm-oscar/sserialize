@@ -3,8 +3,8 @@
 
 namespace sserialize {
 	
-std::unique_ptr<BitunpackerInterface> BitunpackerInterface::unpacker(uint32_t bpn) {
-#define C(__BPN) case __BPN: return std::unique_ptr<BitunpackerInterface>( new Bitunpacker<__BPN>() );
+std::unique_ptr<BitpackingInterface> BitpackingInterface::instance(uint32_t bpn) {
+#define C(__BPN) case __BPN: return std::unique_ptr<BitpackingInterface>( new Bitpacking<__BPN>() );
 	switch (bpn) {
 	C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
 	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
@@ -14,7 +14,7 @@ std::unique_ptr<BitunpackerInterface> BitunpackerInterface::unpacker(uint32_t bp
 	C(51); C(52); C(53); C(54); C(55); C(56);
 	C(64);
 	default:
-		throw sserialize::UnsupportedFeatureException("BitunpackerInterface: unsupported block bits: " + std::to_string(bpn));
+		throw sserialize::UnsupportedFeatureException("BitpackingInterface: unsupported block bits: " + std::to_string(bpn));
 	};
 #undef C
 }

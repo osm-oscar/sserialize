@@ -15,37 +15,42 @@ namespace sserialize {
 namespace detail {
 namespace bitpacking {
 
+inline uint64_t htobe(uint64_t v) { return htobe64(v); }
+inline uint32_t htobe(uint32_t v) { return htobe32(v); }
+inline uint16_t htobe(uint16_t v) { return htobe16(v); }
+inline uint8_t htobe(uint8_t v) { return v; }
+
 inline uint64_t betoh(uint64_t v) { return be64toh(v); }
 inline uint32_t betoh(uint32_t v) { return be32toh(v); }
 inline uint16_t betoh(uint16_t v) { return be16toh(v); }
 inline uint8_t betoh(uint8_t v) { return v; }
 
 template<uint32_t bpn>
-struct UnpackerBufferTypeSelector {
+struct BitpackingBufferTypeSelector {
 	using type = uint64_t;
 };
 
-template<> struct UnpackerBufferTypeSelector<1> { using type = uint8_t; };
-template<> struct UnpackerBufferTypeSelector<2> { using type = uint8_t; };
-template<> struct UnpackerBufferTypeSelector<4> { using type = uint8_t; };
-template<> struct UnpackerBufferTypeSelector<8> { using type = uint8_t; };
-template<> struct UnpackerBufferTypeSelector<16> { using type = uint16_t; };
-template<> struct UnpackerBufferTypeSelector<32> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<1> { using type = uint8_t; };
+template<> struct BitpackingBufferTypeSelector<2> { using type = uint8_t; };
+template<> struct BitpackingBufferTypeSelector<4> { using type = uint8_t; };
+template<> struct BitpackingBufferTypeSelector<8> { using type = uint8_t; };
+template<> struct BitpackingBufferTypeSelector<16> { using type = uint16_t; };
+template<> struct BitpackingBufferTypeSelector<32> { using type = uint32_t; };
 
-template<> struct UnpackerBufferTypeSelector<3> { using type = uint16_t; };
-template<> struct UnpackerBufferTypeSelector<5> { using type = uint16_t; };
-template<> struct UnpackerBufferTypeSelector<6> { using type = uint16_t; };
-template<> struct UnpackerBufferTypeSelector<7> { using type = uint16_t; };
-template<> struct UnpackerBufferTypeSelector<9> { using type = uint32_t; };
-template<> struct UnpackerBufferTypeSelector<10> { using type = uint32_t; };
-template<> struct UnpackerBufferTypeSelector<11> { using type = uint32_t; };
-template<> struct UnpackerBufferTypeSelector<12> { using type = uint32_t; };
-template<> struct UnpackerBufferTypeSelector<13> { using type = uint32_t; };
-template<> struct UnpackerBufferTypeSelector<14> { using type = uint32_t; };
-template<> struct UnpackerBufferTypeSelector<15> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<3> { using type = uint16_t; };
+template<> struct BitpackingBufferTypeSelector<5> { using type = uint16_t; };
+template<> struct BitpackingBufferTypeSelector<6> { using type = uint16_t; };
+template<> struct BitpackingBufferTypeSelector<7> { using type = uint16_t; };
+template<> struct BitpackingBufferTypeSelector<9> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<10> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<11> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<12> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<13> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<14> { using type = uint32_t; };
+template<> struct BitpackingBufferTypeSelector<15> { using type = uint32_t; };
 
 template<typename BufferType, std::size_t BlockSize>
-struct UnpackerIntrinsics {
+struct BitpackingIntrinsics {
 	
 	inline void bswap_(std::array<BufferType, BlockSize> & buffers) {
 		for(uint32_t i(0); i < BlockSize; ++i) {
@@ -55,9 +60,9 @@ struct UnpackerIntrinsics {
 };
 
 template<uint32_t bpn>
-class BitunpackerImp {
+class BitpackingImp {
 private:
-	using BufferType = typename UnpackerBufferTypeSelector<bpn>::type;
+	using BufferType = typename BitpackingBufferTypeSelector<bpn>::type;
 	static constexpr std::size_t BitsPerNumber = bpn;
 	static constexpr std::size_t BufferBytes = sizeof(BufferType);
 	static constexpr std::size_t BufferSize = sizeof(BufferType);
@@ -99,8 +104,45 @@ private:
 	static constexpr std::array<uint8_t, BlockSize> calc_rs_real(std::index_sequence<I...>) {
 		return std::array<uint8_t, BlockSize>{{ calc_rs(I)... }};
 	}
+private: //packing stuff
+	
+	static constexpr uint16_t calc_up_cpb(std::size_t i) {
+		return (i*bpn)/8;
+	}
+	static constexpr uint8_t calc_up_cps(std::size_t i) {
+		return calc_up_cpb(i+1) - calc_up_cpb(i);
+	}
+	static constexpr uint8_t calc_up_ls(std::size_t i) {
+		return BufferBits - bpn - ((i*bpn)%8);
+	}
+	
+	template<std::size_t... I>
+	static constexpr std::array<uint16_t, BlockSize> calc_up_cpb_real(std::index_sequence<I...>) {
+		return std::array<uint16_t, BlockSize>{{ calc_up_cpb(I)... }};
+	}
+	template<std::size_t... I>
+	static constexpr std::array<uint8_t, BlockSize> calc_up_cps_real(std::index_sequence<I...>) {
+		return std::array<uint8_t, BlockSize>{{ calc_up_cps(I)... }};
+	}
+	template<std::size_t... I>
+	static constexpr std::array<uint8_t, BlockSize> calc_up_ls_real(std::index_sequence<I...>) {
+		return std::array<uint8_t, BlockSize>{{ calc_up_ls(I)... }};
+	}
+	
+	static constexpr std::array<uint16_t, BlockSize> calc_up_cpb() {
+		using seq = std::make_integer_sequence<std::size_t, BlockSize>;
+		return calc_up_cpb_real(seq{});
+	}
+	static constexpr std::array<uint8_t, BlockSize> calc_up_cps() {
+		using seq = std::make_integer_sequence<std::size_t, BlockSize>;
+		return calc_up_cps_real(seq{});
+	}
+	static constexpr std::array<uint8_t, BlockSize> calc_up_ls() {
+		using seq = std::make_integer_sequence<std::size_t, BlockSize>;
+		return calc_up_ls_real(seq{});
+	}
 public:
-	BitunpackerImp() {}
+	BitpackingImp() {}
 public:
 	///src and dest should be random access iterators
 	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
@@ -149,52 +191,119 @@ public:
 		}
 		return input;
 	}
-private:
+	
+	//Pack BlockSize elements into BlockBits bits into output
+	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	void pack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output) const {
+		BufferType flushBuffer = 0;
+		for(uint32_t i(0); i < BlockSize; ++i) {
+			BufferType buffer = input[i] & mask;
+			buffer <<= m_up_ls[i];
+			buffer = htobe(buffer);
+			flushBuffer |= buffer;
+			
+			::memmove(output+m_up_cpb[i], &flushBuffer, m_up_cps[i]);
+			//move out the bits already copied
+			//do this in two steps to acoid undefined behaviour in case 2*shiftamount == BufferBits
+			int shiftamount = 4*m_up_cps[i];
+			#if __BYTE_ORDER == __LITTLE_ENDIAN
+			flushBuffer >>= shiftamount;
+			flushBuffer >>= shiftamount;
+			#else
+			flushBuffer <<= shiftamount;
+			flushBuffer <<= shiftamount;
+			#endif
+		}
+	}
+	
+	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
+	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	T_DESTINATION_ITERATOR pack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output, std::size_t count) const {
+		SSERIALIZE_CHEAP_ASSERT(count%BlockSize == 0);
+		for(uint32_t i(0); i < count; i += BlockSize, input += BlockSize, output += BlockBytes) {
+			pack(input, output);
+		}
+		return output;
+	}
+	
+private: //unpacking
 	static constexpr std::array<uint16_t, BlockSize> m_eb = calc_eb();
 	static constexpr std::array<uint8_t, BlockSize> m_rs = calc_rs(); //(8-len)*8 + ie with len = ee-eb+uint32_t(ie>0) and ie = 8-(bitsEnd%8);
+private: //packing
+	static constexpr std::array<uint16_t, BlockSize> m_up_cpb = calc_up_cpb(); //copy begin
+	static constexpr std::array<uint8_t, BlockSize> m_up_cps = calc_up_cps(); //number of bytes to copy from the flush buffer
+	static constexpr std::array<uint8_t, BlockSize> m_up_ls = calc_up_ls(); //left shift to align to destination
 };
 
 template<uint32_t bpn>
-constexpr std::array<uint16_t, BitunpackerImp<bpn>::BlockSize> BitunpackerImp<bpn>::m_eb;
+constexpr std::array<uint16_t, BitpackingImp<bpn>::BlockSize> BitpackingImp<bpn>::m_eb;
 
 template<uint32_t bpn>
-constexpr std::array<uint8_t, BitunpackerImp<bpn>::BlockSize> BitunpackerImp<bpn>::m_rs;
+constexpr std::array<uint8_t, BitpackingImp<bpn>::BlockSize> BitpackingImp<bpn>::m_rs;
+
+template<uint32_t bpn>
+constexpr std::array<uint16_t, BitpackingImp<bpn>::BlockSize> BitpackingImp<bpn>::m_up_cpb;
+
+template<uint32_t bpn>
+constexpr std::array<uint8_t, BitpackingImp<bpn>::BlockSize> BitpackingImp<bpn>::m_up_cps;
+
+template<uint32_t bpn>
+constexpr std::array<uint8_t, BitpackingImp<bpn>::BlockSize> BitpackingImp<bpn>::m_up_ls;
 
 	
 }} //end namespace detail::bitpacking
 
 
-class BitunpackerInterface {
+class BitpackingInterface {
 public:
-	BitunpackerInterface() {}
-	virtual ~BitunpackerInterface() {}
+	BitpackingInterface() {}
+	virtual ~BitpackingInterface() {}
+public:
 	virtual void unpack_blocks(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const = 0;
 	virtual void unpack_blocks(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const = 0;
 public:
-	static std::unique_ptr<BitunpackerInterface> unpacker(uint32_t bpn);
+	virtual void pack_blocks(const uint32_t* & src, uint8_t* & dest, uint32_t & count) const = 0;
+	virtual void pack_blocks(const uint64_t* & src, uint8_t* & dest, uint32_t & count) const = 0;
+public:
+	static std::unique_ptr<BitpackingInterface> instance(uint32_t bpn);
 };
 
 template<uint32_t bpn>
-class Bitunpacker: public BitunpackerInterface {
+class Bitpacking: public BitpackingInterface {
 public:
-	using UnpackerImp = detail::bitpacking:: BitunpackerImp<bpn>;
+	using BitpackingImp = detail::bitpacking:: BitpackingImp<bpn>;
 public:
-	Bitunpacker() {}
-	virtual ~Bitunpacker() {}
+	Bitpacking() {}
+	virtual ~Bitpacking() {}
+public:
 	virtual void unpack_blocks(const uint8_t* & src, uint32_t* & dest, uint32_t & count) const override {
-		uint32_t myCount = (count/UnpackerImp::BlockSize)*UnpackerImp::BlockSize;
-		src = m_unpacker.unpack(src, dest, myCount);
+		uint32_t myCount = (count/BitpackingImp::BlockSize)*BitpackingImp::BlockSize;
+		src = m_p.unpack(src, dest, myCount);
 		dest += myCount;
 		count -= myCount;
 	}
 	virtual void unpack_blocks(const uint8_t* & src, uint64_t* & dest, uint32_t & count) const override {
-		uint32_t myCount = (count/UnpackerImp::BlockSize)*UnpackerImp::BlockSize;
-		src = m_unpacker.unpack(src, dest, myCount);
+		uint32_t myCount = (count/BitpackingImp::BlockSize)*BitpackingImp::BlockSize;
+		src = m_p.unpack(src, dest, myCount);
 		dest += myCount;
 		count -= myCount;
 	}
+public:
+	virtual void pack_blocks(const uint32_t* & src, uint8_t* & dest, uint32_t & count) const override {
+		uint32_t myCount = (count/BitpackingImp::BlockSize)*BitpackingImp::BlockSize;
+		dest = m_p.pack(src, dest, myCount);
+		src += myCount;
+		count -= myCount;
+	}
+	virtual void pack_blocks(const uint64_t* & src, uint8_t* & dest, uint32_t & count) const override {
+		uint32_t myCount = (count/BitpackingImp::BlockSize)*BitpackingImp::BlockSize;
+		dest = m_p.pack(src, dest, myCount);
+		src += myCount;
+		count -= myCount;
+	}
 private:
-	UnpackerImp m_unpacker;
+	BitpackingImp m_p;
 };
 
 }//end namespace sserialize

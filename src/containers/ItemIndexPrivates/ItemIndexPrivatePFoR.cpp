@@ -87,7 +87,7 @@ sserialize::SizeType PFoRBlock::decodeBlock(sserialize::UByteArrayAdapter d, uin
 		uint32_t * vit = m_values.data();
 		uint32_t mySize = size;
 		
-		auto unpacker = BitunpackerInterface::unpacker(bpn);
+		auto unpacker = BitpackingInterface::instance(bpn);
 		unpacker->unpack_blocks(dit, vit, mySize);
 		SSERIALIZE_NORMAL_ASSERT_EQUAL(std::size_t(vit-m_values.data()), size-mySize);
 		
