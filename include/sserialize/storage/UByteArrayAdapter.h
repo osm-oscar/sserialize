@@ -126,6 +126,8 @@ namespace __UByteArrayAdapter {
 	public:
 		MemoryView() {}
 		~MemoryView() {}
+		inline const uint8_t & operator[](SizeType i) const { return *(data()+i); }
+		inline uint8_t & operator[](SizeType i) { return *(data()+i); }
 		inline uint8_t * data() { return m_priv->get();}
 		inline const uint8_t * data() const { return m_priv->get();}
 		inline uint8_t * get() { return m_priv->get();}
