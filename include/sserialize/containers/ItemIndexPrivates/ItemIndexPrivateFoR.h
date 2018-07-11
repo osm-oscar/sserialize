@@ -2,6 +2,7 @@
 #define SSERIALIZE_ITEM_INDEX_PRIVATE_FOR_H
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivate.h>
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.h>
+#include <sserialize/utility/Bitpacking.h>
 #include <numeric>
 
 namespace sserialize {
@@ -203,9 +204,31 @@ namespace ItemIndexImpl {
 	
 template<typename T_ITERATOR>
 void FoRCreator::encodeBlock(UByteArrayAdapter& dest, T_ITERATOR it, T_ITERATOR end, uint32_t bits) {
-	MultiBitBackInserter dvit(dest);
-	dvit.push_back(it, end, bits);
-	dvit.flush();
+	using std::distance;
+	uint32_t dist = distance(it, end);
+	
+	if (dist >= 64) {
+		auto blockSizeInBytes = CompactUintArray::minStorageBytes(bits, dist);
+		dest.reserveFromPutPtr(blockSizeInBytes);
+		auto memv = dest.getMemView(dest.tellPutPtr(), blockSizeInBytes);
+		auto dit = memv.data();
+		uint32_t count = dist;
+		const uint32_t * sit = &(*it);
+		sserialize::BitpackingInterface::instance(bits)->pack_blocks(sit, dit, count);
+		uint32_t consumed = dist-count;
+		memv.flush();
+		dest.incPutPtr(dit - memv.data());
+		if (count) {
+			MultiBitBackInserter dvit(dest);
+			dvit.push_back(it+consumed, end, bits);
+			dvit.flush();
+		}
+	}
+	else {
+		MultiBitBackInserter dvit(dest);
+		dvit.push_back(it, end, bits);
+		dvit.flush();
+	}
 }
 
 template<typename T_ITERATOR, int T_OPTIMIZATION_OPTIONS>

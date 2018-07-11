@@ -1,6 +1,5 @@
 #include <sserialize/containers/ItemIndexPrivates/ItemIndexPrivateFoR.h>
 #include <sserialize/utility/assert.h>
-#include <sserialize/utility/Bitpacking.h>
 
 namespace sserialize {
 namespace detail {
@@ -148,7 +147,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 		
 		SSERIALIZE_NORMAL_ASSERT_EQUAL(std::size_t(vit-m_values.data()), size-mySize);
 		
-		//do the delta encoding
+		//do the delta decoding
 		for(uint32_t * it(m_values.data()); it != vit; ++it) {
 			prev += *it;
 			*it = prev;
