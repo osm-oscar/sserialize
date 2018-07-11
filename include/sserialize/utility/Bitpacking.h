@@ -3,6 +3,7 @@
 #include <sserialize/utility/constants.h>
 #include <sserialize/utility/assert.h>
 #include <sserialize/algorithm/utilmath.h>
+#include <sserialize/algorithm/utilfunctional.h>
 
 #include <memory>
 #include <limits>
@@ -194,28 +195,38 @@ public:
 	
 	//Pack BlockSize elements into BlockBits bits into output
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
-	void pack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output) const {
-		BufferType flushBuffer = 0;
-		for(uint32_t i(0); i < BlockSize; ++i) {
-			BufferType buffer = input[i] & mask;
-			buffer <<= m_up_ls[i];
-			buffer = htobe(buffer);
-			flushBuffer |= buffer;
-			
-			::memmove(output+m_up_cpb[i], &flushBuffer, BufferBytes);
+// 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	inline void pack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output) const {
+		struct Executer {
+			BufferType flushBuffer{0};
+			T_SOURCE_ITERATOR input;
+			T_DESTINATION_ITERATOR output;
+			Executer(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output) : input(input), output(output) {}
+			Executer(const Executer & other) = delete;
+			inline void operator()(const uint32_t i) {
+				BufferType buffer = input[i] & mask;
+				buffer <<= m_up_ls[i];
+				buffer = htobe(buffer);
+				flushBuffer |= buffer;
+				
+				::memmove(output+m_up_cpb[i], &flushBuffer, BufferBytes);
 
-			//move out the bits already copied
-			//do this in two steps to avoid undefined behavior in case 2*shiftamount == BufferBits
-			int shiftamount = 4*m_up_cps[i];
-			#if __BYTE_ORDER == __LITTLE_ENDIAN
-			flushBuffer >>= shiftamount;
-			flushBuffer >>= shiftamount;
-			#else
-			flushBuffer <<= shiftamount;
-			flushBuffer <<= shiftamount;
-			#endif
-		}
+				//move out the bits already copied
+				//do this in two steps to avoid undefined behavior in case 2*shiftamount == BufferBits
+				int shiftamount = 4*m_up_cps[i];
+				#if __BYTE_ORDER == __LITTLE_ENDIAN
+				flushBuffer >>= shiftamount;
+				flushBuffer >>= shiftamount;
+				#else
+				flushBuffer <<= shiftamount;
+				flushBuffer <<= shiftamount;
+				#endif
+			}
+		} e(input, output);
+		sserialize::static_range_for<uint32_t, uint32_t(0), uint32_t(BlockSize)>(e);
+// 		for(uint32_t i(0); i < BlockSize; ++i) {
+// 			e(i);
+// 		}
 	}
 	
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
