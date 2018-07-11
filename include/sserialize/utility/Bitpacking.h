@@ -150,13 +150,23 @@ public:
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
 	inline void unpack(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) const {
-		for(uint32_t i(0); i < BlockSize; ++i) {
-			BufferType buffer;
-			::memmove(&buffer, src+m_eb[i], BufferSize);
-			buffer = betoh(buffer);
-			buffer >>= m_rs[i];
-			dest[i] = buffer & mask;
-		}
+		struct Executer {
+			T_SOURCE_ITERATOR src;
+			T_DESTINATION_ITERATOR dest;
+			Executer(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) : src(src), dest(dest) {}
+			Executer(const Executer & other) = delete;
+			inline void operator()(const uint32_t i) {
+				BufferType buffer;
+				::memmove(&buffer, src+m_eb[i], BufferSize);
+				buffer = betoh(buffer);
+				buffer >>= m_rs[i];
+				dest[i] = buffer & mask;
+			}
+		} e(src, dest);
+		sserialize::static_range_for<uint32_t, uint32_t(0), uint32_t(BlockSize)>(e);
+// 		for(uint32_t i(0); i < BlockSize; ++i) {
+// 			e(i);
+// 		}
 	}
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
