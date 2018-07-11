@@ -7,7 +7,36 @@
 #include <mutex>
 
 namespace sserialize {
-	
+namespace detail {
+///@source: https://stackoverflow.com/a/45819050
+template <typename T_INTEGRAL, T_INTEGRAL First, T_INTEGRAL Last>
+struct static_range_for
+{
+	template <typename T_LAMBDA>
+	static inline constexpr void apply(T_LAMBDA && f)
+	{
+		if (First < Last)
+		{
+			f(std::integral_constant<T_INTEGRAL, First>{});
+			static_range_for<T_INTEGRAL, First + 1, Last>::apply(std::forward<T_LAMBDA>(f));
+		}
+	}
+};
+
+template <typename T_INTEGRAL, T_INTEGRAL N>
+struct static_range_for<T_INTEGRAL, N, N>
+{
+	template <typename T_LAMBDA>
+	static inline constexpr void apply(T_LAMBDA && f) {}
+};
+
+}//end namespace detail
+
+template <typename T_INTEGRAL, T_INTEGRAL First, T_INTEGRAL Last, typename T_LAMBDA>
+inline void static_range_for(T_LAMBDA && f) {
+	detail::static_range_for<T_INTEGRAL, First, Last>::apply(std::forward<T_LAMBDA>(f));
+};
+
 struct Identity {
 	template<class T>
 	constexpr T&& operator()( T&& t ) const noexcept {
