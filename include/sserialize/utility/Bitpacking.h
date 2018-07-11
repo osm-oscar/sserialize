@@ -107,13 +107,13 @@ private:
 private: //packing stuff
 	
 	static constexpr uint16_t calc_up_cpb(std::size_t i) {
-		return (i*bpn)/8;
+		return (i*bpn+BufferBits > BlockBits ? BlockBytes-BufferBytes : i*bpn/8);
 	}
 	static constexpr uint8_t calc_up_cps(std::size_t i) {
 		return calc_up_cpb(i+1) - calc_up_cpb(i);
 	}
 	static constexpr uint8_t calc_up_ls(std::size_t i) {
-		return BufferBits - bpn - ((i*bpn)%8);
+		return std::min<uint32_t>(BlockBytes - (i*bpn)/8, BufferBytes)*8 - bpn - ((i*bpn)%8);
 	}
 	
 	template<std::size_t... I>
@@ -203,9 +203,10 @@ public:
 			buffer = htobe(buffer);
 			flushBuffer |= buffer;
 			
-			::memmove(output+m_up_cpb[i], &flushBuffer, m_up_cps[i]);
+			::memmove(output+m_up_cpb[i], &flushBuffer, BufferBytes);
+
 			//move out the bits already copied
-			//do this in two steps to acoid undefined behaviour in case 2*shiftamount == BufferBits
+			//do this in two steps to avoid undefined behavior in case 2*shiftamount == BufferBits
 			int shiftamount = 4*m_up_cps[i];
 			#if __BYTE_ORDER == __LITTLE_ENDIAN
 			flushBuffer >>= shiftamount;
