@@ -223,7 +223,7 @@ public:
 
 				//move out the bits already copied
 				//do this in two steps to avoid undefined behavior in case 2*shiftamount == BufferBits
-				int shiftamount = 4*m_up_cps[i];
+				uint8_t shiftamount = 4*m_up_cps[i];
 				#if __BYTE_ORDER == __LITTLE_ENDIAN
 				flushBuffer >>= shiftamount;
 				flushBuffer >>= shiftamount;
