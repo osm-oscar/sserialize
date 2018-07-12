@@ -8,7 +8,8 @@
 
 namespace sserialize {
 namespace detail {
-///@source: https://stackoverflow.com/a/45819050
+
+///@source https://stackoverflow.com/a/45819050
 template <typename T_INTEGRAL, T_INTEGRAL First, T_INTEGRAL Last>
 struct static_range_for
 {
@@ -35,7 +36,7 @@ struct static_range_for<T_INTEGRAL, N, N>
 template <typename T_INTEGRAL, T_INTEGRAL First, T_INTEGRAL Last, typename T_LAMBDA>
 inline void static_range_for(T_LAMBDA && f) {
 	detail::static_range_for<T_INTEGRAL, First, Last>::apply(std::forward<T_LAMBDA>(f));
-};
+}
 
 struct Identity {
 	template<class T>
