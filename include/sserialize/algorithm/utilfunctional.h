@@ -28,7 +28,7 @@ template <typename T_INTEGRAL, T_INTEGRAL N>
 struct static_range_for<T_INTEGRAL, N, N>
 {
 	template <typename T_LAMBDA>
-	static inline constexpr void apply(T_LAMBDA && f) {}
+	static inline constexpr void apply(T_LAMBDA && /*f*/) {}
 };
 
 }//end namespace detail
