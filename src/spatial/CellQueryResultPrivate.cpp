@@ -192,6 +192,9 @@ sserialize::ItemIndex CellQueryResult::items(uint32_t pos) const {
 			SSERIALIZE_CHEAP_ASSERT(flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS);
 			const CellDesc & cd = m_desc.at(pos);
 			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
+			if (cd.fullMatch) {
+				return cellIdx;
+			}
 			std::vector<uint32_t> tmpidx;
 			if (cd.fetched) {
 				idx(pos).putInto(tmpidx);
