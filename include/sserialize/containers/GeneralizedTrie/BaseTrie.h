@@ -66,7 +66,7 @@ public: //Initalization and Destruction
 	inline void setAddTransliteratedDiacritics(bool c) { m_addTransDiacs = c; }
 	
 	inline bool isCaseSensitive() { return m_caseSensitive; }
-	inline bool getSuffixDelimeters() { return m_suffixDelimeters; }
+	inline auto getSuffixDelimeters() { return m_suffixDelimeters; }
 
 public: //Fill functions
 	Node* at(const std::string::const_iterator & strBegin, const std::string::const_iterator & strEnd);
