@@ -1,24 +1,16 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.9)
 project(benchmarks)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR})
-
-include_directories(
-	${PROJECT_GLOBAL_SOURCE_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_SOURCE_DIR}
-)
 
 find_package(LIBRT REQUIRED)
 find_package(Threads)
 
 IF(ANDROID)
 	SET(BENCH_LIB_LINK_LIBS
-		${SSERIALIZE_LINK_LIBRARIES}
+		sserialize
 	)
 ELSE(ANDROID)
 	set(BENCH_LIB_LINK_LIBS
-		${SSERIALIZE_LINK_LIBRARIES}
+		sserialize
 		${LIBRT_LIBRARIES}
 		${CMAKE_THREAD_LIBS_INIT})
 ENDIF(ANDROID)

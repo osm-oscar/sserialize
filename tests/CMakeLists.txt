@@ -1,15 +1,8 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.9)
 project(sserializetests)
 find_package(CPPUNIT REQUIRED)
-find_package(ICU 4.9 REQUIRED)
-find_package(Threads)
-find_package(CGAL)
 
-include_directories(
-	${SSERIALIZE_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${ICU_INCLUDE_DIRS}
-)
+set(MY_INCLUDE_DIRS ${CPPUNIT_INCLUDE_DIRS})
 
 set(TEST_LIB_SOURCES_CPP
 	trietestfuncs.cpp
@@ -22,27 +15,23 @@ set(TEST_LIB_SOURCES_CPP
 	helpers.cpp
 )
 
+set(MY_LINK_LIBS
+	sserialize
+	${CPPUNIT_LIBRARY}
+)
+
 add_library(${PROJECT_NAME} STATIC ${TEST_LIB_SOURCES_CPP})
-add_dependencies(${PROJECT_NAME} sserialize)
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${SSERIALIZE_COMPILE_DEFINITIONS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${MY_LINK_LIBS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
 
 MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
-	target_link_libraries("${PROJECT_NAME}_${_name}" ${TEST_LIB_LINK_LIBS})
-	add_dependencies("${PROJECT_NAME}_${_name}" sserializetests)
+	target_link_libraries("${PROJECT_NAME}_${_name}" sserializetests)
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
 
 # IF (CPPUNIT_FOUND)
 
-set(TEST_LIB_LINK_LIBS
-	sserializetests
-	${SSERIALIZE_LINK_LIBRARIES}
-	${CPPUNIT_LIBRARY}
-	${ICU_LIBRARIES}
-	${ICU_I18N_LIBRARIES}
-	${LIBRT_LIBRARIES}
-	${CMAKE_THREAD_LIBS_INIT}
-)
+
 
 #containers
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexFactory_Store)

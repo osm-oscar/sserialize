@@ -3,7 +3,6 @@
 #include <libratss/ProjectS2.h>
 #include <gmp.h>
 
-
 namespace sserialize {
 namespace spatial {
 namespace ratss {
