@@ -38,6 +38,9 @@ namespace CFLArray {
 			return container+offset;
 		}
 	};
+	
+	struct DeferContainerAssignment {};
+	
 }} //end namespace detail::CFLArray
 
 ///Delegating container
@@ -63,6 +66,7 @@ public:
 	typedef value_type & reference;
 	typedef const value_type const_reference;
 	typedef uint64_t size_type;
+	typedef detail::CFLArray::DeferContainerAssignment DeferContainerAssignment;
 private:
 	typedef T_POINTER_GETTER MyPointerGetter;
 private:
@@ -80,6 +84,14 @@ public:
 		m_size = 0;
 		m_offset = 0;
 		m_delete = 1;
+	}
+	///defered container assignment
+	CFLArray(DeferContainerAssignment) {
+		m_d.backend = 0;
+		m_d.copy = 0;
+		m_size = 0;
+		m_offset = 0;
+		m_delete = 0;
 	}
 	explicit CFLArray(size_type size) {
 		m_d.backend = 0;
