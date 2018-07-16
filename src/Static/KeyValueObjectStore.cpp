@@ -191,6 +191,10 @@ KeyValueObjectStoreItem KeyValueObjectStore::at(uint32_t pos) const {
 	return KeyValueObjectStoreItem(priv(), priv()->dataAt(pos) );
 }
 
+KeyValueObjectStoreItemBase KeyValueObjectStore::baseItem(uint32_t pos) const {
+	return KeyValueObjectStoreItemBase(priv()->dataAt(pos));
+}
+
 KeyValueObjectStore::const_iterator KeyValueObjectStore::begin() const {
 	return const_iterator(0, *this);
 }

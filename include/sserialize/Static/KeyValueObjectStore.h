@@ -111,6 +111,7 @@ public:
 	std::string key(uint32_t id) const;
 	std::string value(uint32_t id) const;
 	KeyValueObjectStoreItem at(uint32_t pos) const;
+	KeyValueObjectStoreItemBase baseItem(uint32_t pos) const;
 	const_iterator begin() const;
 	const_iterator end() const;
 	
