@@ -201,6 +201,19 @@ public:
 		SSERIALIZE_CHEAP_ASSERT(!m_delete);
 		m_d.backend = container;
 	}
+	
+	///unchecked resize, breaks if isCopy() or container is too small
+	void resize(SizeType newSize) {
+		SSERIALIZE_CHEAP_ASSERT(!m_delete);
+		m_size = newSize;
+	}
+	
+	///unchecked reposition, breaks if isCopy() or container is too small
+	void reposition(SizeType newOffset) {
+		SSERIALIZE_CHEAP_ASSERT(!m_delete);
+		m_offset = newOffset;
+	}
+	
 	void swap(CFLArray & o) {
 		using std::swap;
 		swap(m_d, o.m_d);
