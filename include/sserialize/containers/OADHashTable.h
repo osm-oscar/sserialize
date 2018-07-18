@@ -212,7 +212,7 @@ public:
 	inline const THash2 & hash2() const { return m_hash2; }
 	
 	void reserve(SizeType count);
-	///Adding more elements to the hash does not invalidate iterators
+	///Adding more elements to the hash invalidates iterators iff storage container invalidates iterators on insertion
 	mapped_type & operator[](const key_type & key);
 	void insert(const key_type & key);
 	mapped_type & at(const key_type & key);
@@ -267,9 +267,11 @@ template<typename TKey, typename TValue, typename THash1, typename THash2, typen
 void
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::rehash(uint64_t count) {
 	count = count | 0x1;
+#ifndef NDEBUG
 	if (!size() || count/size() > 10) {
 		sserialize::info("sserialize::OADHashTable::rehash", sserialize::toString("load_factor=", (double)size()/count, "; count=", count));
 	}
+#endif
 	m_d.clear();
 	m_d.resize(count, 0);
 	for(SizeType i = 1, s = size(); i <= s; ++i) {
