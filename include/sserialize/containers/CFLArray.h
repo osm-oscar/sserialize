@@ -5,6 +5,7 @@
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/algorithm/hashspecializations.h>
+#include <sserialize/algorithm/utilmath.h>
 
 namespace sserialize {
 namespace detail {
@@ -67,6 +68,9 @@ public:
 	typedef const value_type const_reference;
 	typedef uint64_t size_type;
 	typedef detail::CFLArray::DeferContainerAssignment DeferContainerAssignment;
+public:
+	static constexpr SizeType MaxSize = createMask(29);
+	static constexpr OffsetType MaxOffset = createMask64(34);
 private:
 	typedef T_POINTER_GETTER MyPointerGetter;
 private:
@@ -297,6 +301,12 @@ public:
 		return ! (*this == other);
 	}
 };
+
+template<typename T_CONTAINER, typename T_POINTER_GETTER>
+constexpr SizeType CFLArray<T_CONTAINER, T_POINTER_GETTER>::MaxSize;
+	
+template<typename T_CONTAINER, typename T_POINTER_GETTER>
+constexpr OffsetType CFLArray<T_CONTAINER, T_POINTER_GETTER>::MaxOffset;
 
 template<typename T_CONTAINER, typename T_POINTER_GETTER>
 inline void swap(CFLArray<T_CONTAINER, T_POINTER_GETTER> & a, CFLArray<T_CONTAINER, T_POINTER_GETTER> & b) {
