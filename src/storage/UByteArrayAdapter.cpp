@@ -1023,10 +1023,20 @@ UByteArrayAdapter UByteArrayAdapter::createCache(UByteArrayAdapter::OffsetType s
 
 	MyPrivatePtr priv;
 	switch(mmt) {
-	case sserialize::MM_FILEBASED:
+	case sserialize::MM_SLOW_FILEBASED:
 		{
 			MmappedFile tempFile;
-			if (!MmappedFile::createTempFile(m_tempFilePrefix, size, tempFile)) {
+			if (!MmappedFile::createTempFile(getTempFilePrefix(), size, tempFile)) {
+				throw sserialize::CreationException("UByteArrayAdapter::createCache: could not open file");
+				return UByteArrayAdapter();
+			}
+			priv.reset( new UByteArrayAdapterPrivateMmappedFile(tempFile) );
+		}
+		break;
+	case sserialize::MM_FAST_FILEBASED:
+		{
+			MmappedFile tempFile;
+			if (!MmappedFile::createTempFile(getFastTempFilePrefix(), size, tempFile)) {
 				throw sserialize::CreationException("UByteArrayAdapter::createCache: could not open file");
 				return UByteArrayAdapter();
 			}
