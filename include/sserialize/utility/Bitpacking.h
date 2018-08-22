@@ -10,7 +10,6 @@
 #include <numeric>
 #include <utility>
 #include <string.h>
-#include <x86intrin.h>
 
 namespace sserialize {
 namespace detail {
