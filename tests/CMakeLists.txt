@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
 project(sserializetests)
-find_package(CPPUNIT REQUIRED)
+find_package(CPPUNIT)
+
+IF (CPPUNIT_FOUND)
 
 set(MY_INCLUDE_DIRS ${CPPUNIT_INCLUDE_DIRS})
 
@@ -28,10 +30,6 @@ MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
 	target_link_libraries("${PROJECT_NAME}_${_name}" sserializetests)
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
-
-# IF (CPPUNIT_FOUND)
-
-
 
 #containers
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexFactory_Store)
@@ -138,4 +136,6 @@ add_dependencies("${PROJECT_NAME}_static_Triangulation" sserializetests)
 
 ENDIF(CGAL_FOUND)
 
-# ENDIF (CPPUNIT_FOUND)
+ELSE()
+	message(WARNING "Could not find cppunit library need to compile the tests")
+ENDIF (CPPUNIT_FOUND)
