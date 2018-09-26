@@ -16,11 +16,11 @@ namespace detail {
 	
 class CQRDilator;
 
-class SingleCellDilator {
+class SingleCellDilatorInterface {
 public:
 	class State {
 	public:
-		virtual ~State();
+		virtual ~State() {}
 	public:
 		const CQRDilator * that;
 		double diameter;
@@ -28,13 +28,16 @@ public:
 		sserialize::SimpleBitVector baseCells;
 	};
 public:
-	virtual ~SingleCellDilator();
+	SingleCellDilatorInterface(State * state) : m_state(state) {}
+	virtual ~SingleCellDilatorInterface() = 0;
 public:
-	virtual void dilate(uint32_t cellId, sserialize::SimpleBitVector & dilatedMarks, std::vector<uint32_t> & dilated) const;
+	virtual void dilate(uint32_t cellId, sserialize::SimpleBitVector & dilatedMarks, std::vector<uint32_t> & dilated) = 0;
+protected:
+	State * state() { return m_state; }
+	const State * state() const { return m_state; }
+private:
+	State * m_state;
 };
-
-class SingleCellDilatorExploring;
-class SingleCellDilatorWithCache;
 
 //Dilate a CQR
 class CQRDilator: public sserialize::RefCountObject {
@@ -49,11 +52,24 @@ public:
 	template<typename TCELL_ID_ITERATOR>
 	sserialize::ItemIndex dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERATOR end, double diameter, uint32_t threadCount) const;
 protected:
-	virtual std::unique_ptr<SingleCellDilator> dilator() const;
+	virtual std::unique_ptr<SingleCellDilatorInterface> dilator() const;
 protected:
 	double distance(const sserialize::Static::spatial::GeoPoint & gp1, const sserialize::Static::spatial::GeoPoint & gp2) const;
 	double distance(const sserialize::Static::spatial::GeoPoint & gp, uint32_t cellId) const;
 	double distance(uint32_t cellId1, uint32_t cellId2) const;
+protected:
+	class SingleCellDilator: public SingleCellDilatorInterface {
+	public:
+		SingleCellDilator(State * state);
+		virtual ~SingleCellDilator();
+	public:
+		virtual void dilate(uint32_t cellId, sserialize::SimpleBitVector & dilatedMarks, std::vector<uint32_t> & dilated) override;
+	protected:
+		const CQRDilator * parent() const;
+	private:
+		std::unordered_set<uint32_t> relaxed;
+		std::vector<uint32_t> queue;
+	};
 private:
 	std::shared_ptr<sserialize::spatial::interface::CellDistance> m_cd;
 	sserialize::Static::spatial::TracGraph m_tg;
@@ -67,28 +83,25 @@ public:
 public:
 	///@param threshold in meter
 	void populateCache(uint32_t threshold);
-protected:
-	virtual void dilate(uint32_t cellId, uint32_t distance, sserialize::SimpleBitVector & dilatedMarks, std::vector<uint32_t> & dilated) const;
 private:
 	struct CacheEntry {
-		uint32_t cellId:31;
-		uint32_t isOnBorder:1;
+		uint32_t cellId;
 		uint32_t distance;
 	};
+	class SingleCellDilator: public CQRDilator::SingleCellDilator {
+	public:
+		SingleCellDilator(State * state);
+		virtual ~SingleCellDilator();
+	public:
+		virtual void dilate(uint32_t cellId, sserialize::SimpleBitVector & dilatedMarks, std::vector<uint32_t> & dilated) override;
+	protected:
+		const CQRDilatorWithCache * parent() const;
+	};
 private:
+	uint32_t m_threshold;
 	sserialize::Static::SortedOffsetIndex m_id2d;
 	///Each cell has a contigous range of cache entries that are sorted in ascending distance
 	std::vector<CacheEntry> m_cache;
-};
-
-class SingleCellDilatorExploring: public SingleCellDilator {
-public:
-	SingleCellDilatorExploring(CQRDilator * parent);
-	virtual ~SingleCellDilatorExploring();
-public:
-	virtual void dilate(uint32_t cellId, uint32_t distance, sserialize::SimpleBitVector & dilatedMarks, std::vector<uint32_t> & dilated) const;
-private:
-	CQRDilator* m_priv;
 };
 
 }//end namespace detail
@@ -172,7 +185,7 @@ sserialize::ItemIndex CQRDilator::dilate(TCELL_ID_ITERATOR begin, TCELL_ID_ITERA
 		std::unordered_set<uint32_t> relaxed;
 		std::vector<uint32_t> queue;
 		Worker(State * state) : state(state) {}
-		Worker(const Worker & other) : state(other.state) {}
+		Worker(const Worker & other) : state(other.state),  {}
 		void handle(MyIterator it) {
 			uint32_t cellId = *it;
 			auto node(state->that->m_tg.node(cellId));
