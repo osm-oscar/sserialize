@@ -56,6 +56,8 @@ namespace detail {
 template<typename RCObj>
 class RCBase<RCObj, true > {
 public:
+	RCBase(const RCBase & other) : RCBase(other.priv()) {}
+	RCBase(RCBase && other);
 	RCBase(RCObj* p) :
 	m_priv(0),
 	m_enabled(true)
@@ -118,11 +120,24 @@ private:
 template<typename RCObj>
 class RCBase<RCObj, false > {
 public:
+	RCBase(const RCBase & other) : RCBase(other.priv()) {}
+	RCBase(RCBase && other);
 	RCBase(RCObj* p) : m_priv(0) {
 		reset(p);
 	}
 	virtual ~RCBase() {
 		reset(0);
+	}
+	RCBase & operator=(const RCBase & other) {
+		reset(other.priv());
+		return *this;
+	}
+	RCBase & operator=(RCBase && other) {
+		if (other.priv() != m_priv) {
+			rcDec();
+		}
+		m_priv = other.priv();
+		other.m_priv = 0;
 	}
 	bool enabledRC() {
 		return true;
@@ -162,12 +177,19 @@ private:
 public:
 	RCWrapper() : MyBaseClass(0) {};
 	RCWrapper(RCObj * data) : MyBaseClass(data) {}
-	RCWrapper(const RCWrapper & other) : MyBaseClass(other.priv()) {}
+	RCWrapper(const RCWrapper & other) : MyBaseClass(other) {}
+	RCWrapper(RCWrapper && other) : MyBaseClass(std::move(other)) {}
 	RCWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other);
+	RCWrapper(RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> && other);
 	virtual ~RCWrapper() {}
 
 	RCWrapper & operator=(const RCWrapper & other) {
-		reset(other.priv());
+		MyBaseClass::operator=(other);
+		return *this;
+	}
+	
+	RCWrapper & operator=(RCWrapper && other) {
+		MyBaseClass::operator=(std::move(other));
 		return *this;
 	}
 	
@@ -197,7 +219,9 @@ public:
 	RCPtrWrapper() : MyBaseClass(0) {};
 	explicit RCPtrWrapper(RCObj * data) : MyBaseClass(data) {}
 	RCPtrWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
+	RCPtrWrapper(RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> && other) : MyBaseClass(std::move(other)) {}
 	RCPtrWrapper(const RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
+	RCPtrWrapper(RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> && other) : MyBaseClass(std::move(other)) {}
 	virtual ~RCPtrWrapper() {}
 
 	RCPtrWrapper & operator=(const RCPtrWrapper & other) {
@@ -228,7 +252,12 @@ public:
 
 template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
 RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>::RCWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) :
-MyBaseClass(other.priv())
+MyBaseClass(other)
+{}
+
+template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING>
+RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>::RCWrapper(RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> && other) :
+MyBaseClass(std::move(other))
 {}
 
 }//end namespace 
