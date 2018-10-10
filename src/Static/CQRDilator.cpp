@@ -4,6 +4,12 @@
 namespace sserialize {
 namespace Static {
 
+CQRDilator::CQRDilator() {}
+
+CQRDilator::CQRDilator(const sserialize::RCPtrWrapper<detail::CQRDilator> & other) :
+m_priv( other )
+{}
+
 CQRDilator::CQRDilator(const CellInfo & d, const sserialize::Static::spatial::TracGraph & tg) :
 m_priv(new detail::CQRDilator(d, tg))
 {}

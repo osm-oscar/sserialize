@@ -132,6 +132,9 @@ class CQRDilator {
 public:
 	typedef sserialize::Static::Array<sserialize::Static::spatial::GeoPoint> CellInfo;
 public:
+	///default initializer creates an unusable dilator which will segfault on usage
+	CQRDilator();
+	CQRDilator(const sserialize::RCPtrWrapper<detail::CQRDilator> & other);
 	///@param d the weight-center of cells
 	CQRDilator(const CellInfo & d, const sserialize::Static::spatial::TracGraph & tg);
 	CQRDilator(std::shared_ptr<sserialize::spatial::interface::CellDistance> cd, const sserialize::Static::spatial::TracGraph & tg);
