@@ -22,4 +22,10 @@
 	#define INLINE_WITH_LTO
 #endif
 
+#ifdef SSERIALIZE_WITH_NO_CAST_CHECKS
+	#define SSERIALIZE_NO_CAST_CHECKS
+#else
+	#undef SSERIALIZE_NO_CAST_CHECKS
+#endif
+
 #endif
