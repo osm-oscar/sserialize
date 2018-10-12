@@ -83,6 +83,7 @@ public:
 	SortedStringTable(const SortedStringTable & other);
 	virtual ~SortedStringTable();
 	SizeType find(const std::string & value) const;
+	std::pair<SizeType, SizeType> range(const std::string & prefix) const;
 	inline bool count(const std::string & value) const { return find(value) != npos; }
 };
 

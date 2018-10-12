@@ -3,6 +3,7 @@
 #include <sserialize/strings/unicode_case_functions.h>
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/algorithm/find_key_in_array_functions.h>
+#include <sserialize/strings/stringfunctions.h>
 
 namespace sserialize {
 namespace Static {
@@ -295,6 +296,15 @@ SortedStringTable::~SortedStringTable() {}
 sserialize::Static::StringTable::SizeType SortedStringTable::find(const std::string& value) const {
 	SizeType tmp = binarySearchKeyInArray(*priv(), value);
 	return (tmp < npos ? tmp : npos);
+}
+
+std::pair<sserialize::Static::SortedStringTable::SizeType, sserialize::Static::SortedStringTable::SizeType>
+sserialize::Static::SortedStringTable::range(const std::string & prefix) const {
+	auto cmp = [](const std::string & a, const std::string & b) { return sserialize::unicodeIsSmaller(a, b); };
+	auto lb = std::lower_bound(begin(), end(), prefix, cmp);
+	auto ub = std::upper_bound(begin(), end(), prefix, cmp);
+	
+	return std::pair<SizeType, SizeType>(lb.pos(), ub.pos());
 }
 
 }}//end namespace
