@@ -190,8 +190,14 @@ void CQRDilatorWithCache::populateCache(uint32_t threshold, uint32_t threadCount
 			});
 			{
 				std::lock_guard<std::mutex> lck(state->cacheLock);
-				state->that->m_id2d[cellId] = state->that->m_cache.size();
-				state->that->m_cache.insert(state->that->m_cache.end(), ce.begin(), ce.end());
+				state->that->m_id2d.at(cellId) = state->that->m_cache.size();
+				try {
+					state->that->m_cache.insert(state->that->m_cache.end(), ce.begin(), ce.end());
+				}
+				catch (const std::bad_alloc & e) {
+					std::cout << "Could not allocate enough space to flush current cell: " << cellId << " size=" << ce.size() << std::endl;
+					throw e;
+				}
 			}
 			ce.clear();
 			relaxed.clear();
