@@ -300,11 +300,32 @@ sserialize::Static::StringTable::SizeType SortedStringTable::find(const std::str
 
 std::pair<sserialize::Static::SortedStringTable::SizeType, sserialize::Static::SortedStringTable::SizeType>
 sserialize::Static::SortedStringTable::range(const std::string & prefix) const {
-	auto cmp = [](const std::string & a, const std::string & b) { return sserialize::unicodeIsSmaller(a, b); };
-	auto lb = std::lower_bound(begin(), end(), prefix, cmp);
-	auto ub = std::upper_bound(begin(), end(), prefix, cmp);
+	SizeType lb(0), count(size());
 	
-	return std::pair<SizeType, SizeType>(lb.pos(), ub.pos());
+	while(count) {
+		if ( sserialize::unicodeIsSmaller( at(lb+count/2), prefix ) ) {
+			lb = lb+count/2+1;
+			count -= count/2+1;
+		}
+		else {
+			count = count/2;
+		}
+	}
+	
+	SizeType ub(lb);
+	count = size() - ub;
+	while(count) {
+		std::string midstr = at(ub+count/2);
+		if ( sserialize::unicodeIsSmaller(midstr, prefix) || sserialize::isPrefix(prefix, midstr)) {
+			ub = ub+count/2+1;
+			count -= count/2+1;
+		}
+		else {
+			count = count/2;
+		}
+	}
+	
+	return std::pair<SizeType, SizeType>(lb, ub);
 }
 
 }}//end namespace
