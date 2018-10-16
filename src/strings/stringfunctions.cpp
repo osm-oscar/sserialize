@@ -85,6 +85,18 @@ bool oneIsPrefix(const std::string& a, const std::string& b) {
 	return true;
 }
 
+bool isPrefix(const std::string & prefix, const std::string & str) {
+	if (prefix.size() > str.size()) {
+		return false;
+	}
+	for(std::size_t i(0), s(prefix.size()); i < s; ++i) {
+		if (prefix[i] != str[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
 std::string::size_type calcLcp(const UByteArrayAdapter & strA, const std::string & strB) {
 	std::string::size_type len = (std::string::size_type) strA.size();
 	if (strB.size() < len) {

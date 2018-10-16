@@ -67,6 +67,8 @@ inline bool unicodeIsSmaller(T_OCTET_ITERATOR1 itA, const T_OCTET_ITERATOR1 & en
 
 bool oneIsPrefix(const std::string& a, const std::string& b);
 
+bool isPrefix(const std::string & prefix, const std::string & str);
+
 /** @param strA: string without header */
 std::string::size_type calcLcp(const UByteArrayAdapter & strA, const std::string & strB);
 
