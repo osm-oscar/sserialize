@@ -28,4 +28,10 @@
 	#undef SSERIALIZE_NO_CAST_CHECKS
 #endif
 
+#ifdef SSERIALIZE_WITH_NO_NULL_CHECKS
+	#define SSERIALIZE_NO_NULL_CHECKS
+#else
+	#undef SSERIALIZE_NO_NULL_CHECKS
+#endif
+
 #endif
