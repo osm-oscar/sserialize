@@ -1,11 +1,49 @@
 #ifndef SSERIALIZE_STATIC_GEO_SHAPE_H
 #define SSERIALIZE_STATIC_GEO_SHAPE_H
 #include <sserialize/spatial/GeoPoint.h>
+#include <sserialize/Static/GeoWay.h>
+#include <sserialize/Static/GeoPolygon.h>
+#include <sserialize/Static/GeoMultiPolygon.h>
 #include <memory>
 
 namespace sserialize {
 namespace Static {
 namespace spatial {
+namespace detail {
+	template<sserialize::spatial::GeoShapeType GST>
+	struct GeoShapeFromType;
+	
+	template<>
+	struct GeoShapeFromType<sserialize::spatial::GS_POINT> {
+		using type = sserialize::Static::spatial::GeoPoint;
+	};
+	
+	template<>
+	struct GeoShapeFromType<sserialize::spatial::GS_WAY> {
+		using type = sserialize::Static::spatial::GeoWay;
+	};
+	
+	template<>
+	struct GeoShapeFromType<sserialize::spatial::GS_POLYGON> {
+		using type = sserialize::Static::spatial::GeoPolygon;
+	};
+	
+	template<>
+	struct GeoShapeFromType<sserialize::spatial::GS_MULTI_POLYGON> {
+		using type = sserialize::Static::spatial::GeoMultiPolygon;
+	};
+	
+	template<>
+	struct GeoShapeFromType<sserialize::spatial::GS_SHAPE> {
+		using type = sserialize::spatial::GeoShape;
+	};
+	
+	template<>
+	struct GeoShapeFromType<sserialize::spatial::GS_REGION> {
+		using type = sserialize::spatial::GeoRegion;
+	};
+	
+}
 
 class GeoShape {
 	std::shared_ptr<sserialize::spatial::GeoShape> m_priv;
@@ -16,8 +54,12 @@ public:
 	inline bool valid() const { return m_priv.get() && type() != sserialize::spatial::GS_INVALID;}
 	inline uint32_t size() const { return m_priv->size(); }
 	
-	template<typename TGeoShapeType = sserialize::spatial::GeoShape>
-	std::shared_ptr<TGeoShapeType> get() const { return std::dynamic_pointer_cast<TGeoShapeType>(priv());}
+	template<sserialize::spatial::GeoShapeType GST = sserialize::spatial::GS_SHAPE>
+	auto get() const {
+		using return_type = typename detail::GeoShapeFromType<GST>::type;
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(GST, type());
+		return std::dynamic_pointer_cast<return_type>(priv());
+	}
 	
 	sserialize::spatial::GeoPoint first() const;
 	sserialize::spatial::GeoPoint at(uint32_t pos) const;

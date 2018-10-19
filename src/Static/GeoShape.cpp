@@ -72,14 +72,14 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 			return 1+SerializationInfo<sserialize::spatial::GeoPoint>::length;
 		case sserialize::spatial::GS_WAY:
 			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length +
-					PointsArraySizeGetter<sserialize::Static::spatial::GeoPolygon::PointsContainer>::getSizeInBytes( get<sserialize::Static::spatial::GeoWay>()->points());
+					PointsArraySizeGetter<sserialize::Static::spatial::GeoPolygon::PointsContainer>::getSizeInBytes( get<sserialize::spatial::GS_WAY>()->points());
 		case sserialize::spatial::GS_POLYGON:
 			return 1+SerializationInfo<sserialize::spatial::GeoRect>::length +
-					PointsArraySizeGetter<sserialize::Static::spatial::GeoPolygon::PointsContainer>::getSizeInBytes( get<sserialize::Static::spatial::GeoPolygon>()->points());
+					PointsArraySizeGetter<sserialize::Static::spatial::GeoPolygon::PointsContainer>::getSizeInBytes( get<sserialize::spatial::GS_POLYGON>()->points());
 		case sserialize::spatial::GS_MULTI_POLYGON:
 			{
 				OffsetType s = 1 + 2* SerializationInfo<sserialize::spatial::GeoRect>::length;
-				auto gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
+				auto gmpo = get<sserialize::spatial::GS_MULTI_POLYGON>();
 				s += gmpo->outerPolygons().getSizeInBytes();
 				s += gmpo->innerPolygons().getSizeInBytes();
 				s += psize_vu32( gmpo->size() );
@@ -95,14 +95,14 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 sserialize::spatial::GeoPoint GeoShape::first() const {
 	switch (type()) {
 		case sserialize::spatial::GS_POINT:
-			return *get<sserialize::Static::spatial::GeoPoint>();
+			return *get<sserialize::spatial::GS_POINT>();
 		case sserialize::spatial::GS_WAY:
-			return * (get<sserialize::Static::spatial::GeoWay>()->points().cbegin());
+			return * (get<sserialize::spatial::GS_WAY>()->points().cbegin());
 		case sserialize::spatial::GS_POLYGON:
-			return * (get<sserialize::Static::spatial::GeoPolygon>()->points().cbegin());
+			return * (get<sserialize::spatial::GS_POLYGON>()->points().cbegin());
 		case sserialize::spatial::GS_MULTI_POLYGON:
 		{
-			auto gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
+			auto gmpo = get<sserialize::spatial::GS_MULTI_POLYGON>();
 			if (gmpo->size()) {
 				return gmpo->outerPolygons().front().points().front();
 			}
@@ -116,13 +116,13 @@ sserialize::spatial::GeoPoint GeoShape::first() const {
 sserialize::spatial::GeoPoint GeoShape::at(uint32_t pos) const {
 	switch (type()) {
 		case sserialize::spatial::GS_POINT:
-			return *get<sserialize::Static::spatial::GeoPoint>();
+			return *get<sserialize::spatial::GS_POINT>();
 		case sserialize::spatial::GS_WAY:
-			return get<sserialize::Static::spatial::GeoWay>()->points().at(pos);
+			return get<sserialize::spatial::GS_WAY>()->points().at(pos);
 		case sserialize::spatial::GS_POLYGON:
-			return get<sserialize::Static::spatial::GeoPolygon>()->points().at(pos);
+			return get<sserialize::spatial::GS_POLYGON>()->points().at(pos);
 		case sserialize::spatial::GS_MULTI_POLYGON:
-			return get<sserialize::Static::spatial::GeoMultiPolygon>()->at(pos);
+			return get<sserialize::spatial::GS_MULTI_POLYGON>()->at(pos);
 		default:
 			return sserialize::spatial::GeoPoint();
 	};
@@ -134,15 +134,15 @@ bool GeoShape::intersects(const GeoShape & other) const {
 			return this->first().equal(other.first(), 0);
 		}
 		else {
-			return this->get<sserialize::spatial::GeoRegion>()->contains(other.first());
+			return this->get<sserialize::spatial::GS_REGION>()->contains(other.first());
 		}
 	}
 	else if (other.type() == sserialize::spatial::GS_POINT) {
 		//we know that this->type() != GS_POINT
-		return other.get<sserialize::spatial::GeoRegion>()->contains(other.first());
+		return other.get<sserialize::spatial::GS_REGION>()->contains(other.first());
 	}
 	else { //both are regions
-		return this->get<sserialize::spatial::GeoRegion>()->intersects(* other.get<sserialize::spatial::GeoRegion>() );
+		return this->get<sserialize::spatial::GS_REGION>()->intersects(* other.get<sserialize::spatial::GS_REGION>() );
 	}
 	return false;
 }
