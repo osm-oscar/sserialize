@@ -79,7 +79,7 @@ UByteArrayAdapter::OffsetType GeoShape::getSizeInBytes() const {
 		case sserialize::spatial::GS_MULTI_POLYGON:
 			{
 				OffsetType s = 1 + 2* SerializationInfo<sserialize::spatial::GeoRect>::length;
-				const sserialize::Static::spatial::GeoMultiPolygon * gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
+				auto gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
 				s += gmpo->outerPolygons().getSizeInBytes();
 				s += gmpo->innerPolygons().getSizeInBytes();
 				s += psize_vu32( gmpo->size() );
@@ -102,7 +102,7 @@ sserialize::spatial::GeoPoint GeoShape::first() const {
 			return * (get<sserialize::Static::spatial::GeoPolygon>()->points().cbegin());
 		case sserialize::spatial::GS_MULTI_POLYGON:
 		{
-			const sserialize::Static::spatial::GeoMultiPolygon * gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
+			auto gmpo = get<sserialize::Static::spatial::GeoMultiPolygon>();
 			if (gmpo->size()) {
 				return gmpo->outerPolygons().front().points().front();
 			}

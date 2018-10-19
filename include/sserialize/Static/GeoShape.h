@@ -17,7 +17,7 @@ public:
 	inline uint32_t size() const { return m_priv->size(); }
 	
 	template<typename TGeoShapeType = sserialize::spatial::GeoShape>
-	const TGeoShapeType * get() const { return dynamic_cast<const TGeoShapeType*>(priv().get());}
+	std::shared_ptr<TGeoShapeType> get() const { return std::dynamic_pointer_cast<TGeoShapeType>(priv());}
 	
 	sserialize::spatial::GeoPoint first() const;
 	sserialize::spatial::GeoPoint at(uint32_t pos) const;
