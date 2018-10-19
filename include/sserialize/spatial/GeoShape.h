@@ -63,6 +63,7 @@ GeoRect GeoShape::bounds(T_GEO_SHAPE_ITERATOR begin, T_GEO_SHAPE_ITERATOR end) {
 	return GeoRect();
 }
 
+std::string to_string(GeoShapeType gst);
 
 }}//end namespace
 
