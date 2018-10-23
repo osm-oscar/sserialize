@@ -33,6 +33,13 @@ void SimpleBitVector::set(std::size_t pos) {
 	m_d.at(pos/digits) |= (static_cast<BaseStorageType>(1) << (pos%digits));
 }
 
+void SimpleBitVector::unset(std::size_t pos) {
+	if (UNLIKELY_BRANCH(pos/digits >= m_d.size())) {
+		return;
+	}
+	m_d.at(pos/digits) &= ~(static_cast<BaseStorageType>(1) << (pos%digits));
+}
+
 bool SimpleBitVector::isSet(std::size_t pos) const {
 	if (UNLIKELY_BRANCH(pos/digits >= m_d.size())) {
 		return false;

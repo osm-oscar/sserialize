@@ -24,6 +24,7 @@ public:
 	std::size_t capacity() const;
 	void resize(std::size_t count);
 	void set(std::size_t pos);
+	void unset(std::size_t pos);
 	bool isSet(std::size_t pos) const;
 	void reset();
 	template<typename TInputIterator>
