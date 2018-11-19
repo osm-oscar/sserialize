@@ -46,7 +46,7 @@ namespace spatial {
 class Triangulation final {
 public:
 	typedef enum {F_CLEAN_GEOMETRY=0x1, F_DEGENERATE_FACES=0x2, F_BROKEN_GEOMETRY=0x4} FeatureFlags;
-	typedef enum {GCT_NONE=0, GCT_REMOVE_DEGENERATE_FACES, GCT_SNAP_VERTICES} GeometryCleanType;
+	typedef enum {GCT_NONE=0, GCT_REMOVE_DEGENERATE_FACES, GCT_SNAP_VERTICES, GCT_SNAP_ROUND} GeometryCleanType;
 	typedef enum {TT_ZIG_ZAG=0, TT_STRAIGHT=1} TraversalType;
 	typedef sserialize::spatial::GeoPoint Point;
 	typedef uint32_t FaceId;

@@ -213,7 +213,7 @@ struct PrintRemovedEdges {
 };
 
 ///ic: operator()(T_TDS::Edge) -> bool calls for every intersected constraint
-///iff returnv value is false, exit function, otherwise continue intersecting
+///iff return value is false, exit function, otherwise continue intersecting
 template<typename T_TDS, typename T_INTERSECTED_CONSTRAINTS>
 void intersects(T_TDS & tds, typename T_TDS::Vertex_handle sv, typename T_TDS::Vertex_handle tv, T_INTERSECTED_CONSTRAINTS ic) {
 	typedef T_TDS TDS;
