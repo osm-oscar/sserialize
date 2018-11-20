@@ -7,7 +7,7 @@
 #include <sstream>
 #include <sserialize/containers/WindowedArray.h>
 
-namespace std {
+namespace sserialize {
 
 template<typename T1, typename T2>
 std::ostream & operator<<(std::ostream & out, const std::pair<T1, T2> & s) {
@@ -103,10 +103,6 @@ std::ostream & operator<<(std::ostream & out, const std::deque<T> & s) {
 			return out << "]";
 	}
 }
-
-}//end namespace std
-
-namespace sserialize {
 
 template<char SEPARATOR, typename T_IT>
 std::ostream & print(std::ostream & out, T_IT begin, T_IT end) {
@@ -217,6 +213,6 @@ inline std::string prettyFormatSI(T_INTEGRAL_TYPE value) {
 	}
 }
 
-}
+} //end namespace sserialize
 
 #endif
