@@ -313,19 +313,20 @@ template<typename TKey, typename TValue, typename THash1, typename THash2, typen
 TValue &
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::operator[](const key_type & key) {
 	uint64_t pos = findBucket(key);
-	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
-	if (pos != findend && cp) {
-		return value(cp).second;
+	if (pos != findend && m_d[pos]) {
+		return value(m_d[pos]).second;
 	}
 	if (pos == findend || ((double)(size()+1)/m_d.size() > m_maxLoad)) {
 		rehash(m_d.size()*m_rehashMult);
 		return operator[](key);
 	}
 	else {
+		//we cannot do this above, since if pos == findend, then m_d[pos] is undefined behaviour (pointer overflows)
+		SizeType & cp = m_d[pos];
 		m_valueStorage.push_back(value_type(key, mapped_type()));
 		auto mySize = m_valueStorage.size();
 		sserialize::narrow_check_assign(cp) = mySize;
-		if ( mySize != cp ) {//get optimized our if return_type(m_valueStorage.size()) == SizeType
+		if ( mySize != cp ) {//get optimized out if return_type(m_valueStorage.size()) == SizeType
 			throw std::out_of_range("OADHashTable: overflow in TableStorage pointer type. Too many elements in hash.");
 		}
 		return value(cp).second;
