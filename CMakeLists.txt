@@ -13,12 +13,11 @@ ELSE(CMAKE_CROSSCOMPILING)
 	find_package(LIBRT REQUIRED)
 	find_package(Ragel REQUIRED)
 	find_package(Cryptopp REQUIRED)
-	find_package(ICU 4.9 REQUIRED)
+	find_package(ICU COMPONENTS uc i18n REQUIRED)
 	find_package(Threads)
 ENDIF(CMAKE_CROSSCOMPILING)
 
 include(AddTargetProperties)
-include(set_highest_cpp)
 
 set(MY_COMPILE_DEFINITIONS
 	"-DCGAL_HAS_THREADS"
@@ -141,7 +140,8 @@ set(MY_INCLUDE_DIRS
 )
 
 set(MY_LINK_LIBRARIES
-	${ICU_LIBRARIES}
+	ICU::i18n
+	ICU::uc
 	${LIBRT_LIBRARIES}
 	${CRYPTOPP_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
@@ -585,7 +585,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
 
 IF(NOT CMAKE_CROSSCOMPILING)
-	add_subdirectory(tests ${PROJECT_NAME}tests EXCLUDE_FROM_ALL)
-	add_subdirectory(tools ${PROJECT_NAME}-tools EXCLUDE_FROM_ALL)
-	add_subdirectory(benchmarks ${PROJECT_NAME}benchmarks EXCLUDE_FROM_ALL)
+	add_subdirectory(tests ${PROJECT_NAME}tests)
+	add_subdirectory(tools ${PROJECT_NAME}-tools)
+	add_subdirectory(benchmarks ${PROJECT_NAME}benchmarks)
 ENDIF(NOT CMAKE_CROSSCOMPILING)
