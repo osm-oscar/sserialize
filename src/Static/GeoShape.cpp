@@ -147,6 +147,48 @@ bool GeoShape::intersects(const GeoShape & other) const {
 	return false;
 }
 
+
+void GeoShape::doVisitPoints(PointVisitor & pv) const {
+	switch (type()) {
+		case sserialize::spatial::GS_POINT:
+			pv.visit(*get<sserialize::spatial::GS_POINT>());
+			break;
+		case sserialize::spatial::GS_WAY:
+			{
+				auto shape = this->get<sserialize::spatial::GS_WAY>();
+				for(auto p : shape->points()) {
+					pv.visit(p);
+				}
+			}
+			break;
+		case sserialize::spatial::GS_POLYGON:
+			{
+				auto shape = get<sserialize::spatial::GS_POLYGON>();
+				for(auto p : shape->points()) {
+					pv.visit(p);
+				}
+			}
+			break;
+		case sserialize::spatial::GS_MULTI_POLYGON:
+			{
+				auto shape = get<sserialize::spatial::GS_MULTI_POLYGON>();
+				for(auto poly : shape->outerPolygons()) {
+					for(auto p : poly.points()) {
+						pv.visit(p);
+					}
+				}
+				for(auto poly : shape->innerPolygons()) {
+					for(auto p : poly.points()) {
+						pv.visit(p);
+					}
+				}
+			}
+			break;
+		default:
+			break;
+	};
+}
+
 }}}//end namespace
 
 namespace sserialize {

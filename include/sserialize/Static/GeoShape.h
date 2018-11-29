@@ -61,6 +61,9 @@ public:
 		return std::dynamic_pointer_cast<return_type>(priv());
 	}
 	
+	template<typename TVisitor>
+	void visitPoints(TVisitor pv) const;
+	
 	sserialize::spatial::GeoPoint first() const;
 	sserialize::spatial::GeoPoint at(uint32_t pos) const;
 	
@@ -73,11 +76,30 @@ public:
 	bool intersects(const sserialize::spatial::GeoRect & boundary) const { return m_priv->intersects(boundary); }
 	
 	bool intersects(const GeoShape & other) const;
-	
 protected:
 	inline const std::shared_ptr<sserialize::spatial::GeoShape> & priv() const { return m_priv; }
-
+private:
+	struct PointVisitor {
+		virtual void visit(const sserialize::spatial::GeoPoint & point) = 0;
+	};
+	template<typename T>
+	struct TPointVisitor: PointVisitor {
+		TPointVisitor(T * t) : t(t) {}
+		virtual void visit(const sserialize::spatial::GeoPoint & point) override {
+			(*t)(point);
+		}
+		T * t;
+	};
+private:
+	void doVisitPoints(PointVisitor & pv) const;
 };
+
+
+template<typename TVisitor>
+void GeoShape::visitPoints(TVisitor pv) const {
+	TPointVisitor<TVisitor> tpv(&pv);
+	doVisitPoints(tpv);
+}
 
 }}}//end namespace
 
