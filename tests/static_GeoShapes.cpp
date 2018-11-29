@@ -122,7 +122,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("type", gs.type(), sserialize::spatial::GeoShapeType::GS_WAY);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (sserialize::OffsetType)rd.size(), gs.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", gw->size(), gs.size());
-		const sserialize::Static::spatial::GeoWay * sgw = gs.get<sserialize::Static::spatial::GeoWay>();
+		auto sgw = gs.get<sserialize::spatial::GS_WAY>();
 		CPPUNIT_ASSERT_MESSAGE("static geoway cast", sgw);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("boundary", gw->boundary(), gs.boundary());
 		for(uint32_t i = 0, s = (uint32_t) pts.size(); i < s; ++i) {
@@ -145,7 +145,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("type", sgs.type(), sserialize::spatial::GeoShapeType::GS_POLYGON);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("data size", (sserialize::OffsetType)d.size(), sgs.getSizeInBytes());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", gs->size(), sgs.size());
-			const sserialize::Static::spatial::GeoPolygon * sgpoly = sgs.get<sserialize::Static::spatial::GeoPolygon>();
+			auto sgpoly = sgs.get<sserialize::spatial::GS_POLYGON>();
 			CPPUNIT_ASSERT_MESSAGE("static geopolygon cast", sgpoly);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("boundary", gs->boundary(), sgs.boundary());
 			for(uint32_t j = 0, s = (uint32_t) gpoly->points().size(); j < s; ++j) {
@@ -177,7 +177,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", gmpo->size(), sgs.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("boundary", gmpo->boundary(), sgs.boundary());
 
-			const sserialize::Static::spatial::GeoMultiPolygon * sgmpo = sgs.get<sserialize::Static::spatial::GeoMultiPolygon>();
+			auto sgmpo = sgs.get<sserialize::spatial::GS_MULTI_POLYGON>();
 			CPPUNIT_ASSERT_MESSAGE("static GeoMultiPolygon cast", sgmpo);
 			
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("outerPolygons.size()", (uint32_t)gmpo->outerPolygons().size(), (uint32_t) sgmpo->outerPolygons().size());

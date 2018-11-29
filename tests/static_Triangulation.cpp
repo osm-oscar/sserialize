@@ -141,7 +141,7 @@ public:
 				}
 				
 			}
-			CPPUNIT_ASSERT_EQUAL(cgFaces, sfFaces);
+			CPPUNIT_ASSERT(cgFaces == sfFaces);
 		}
 	}
 	

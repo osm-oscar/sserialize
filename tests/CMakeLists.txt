@@ -28,7 +28,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
 
 MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
-	target_link_libraries("${PROJECT_NAME}_${_name}" sserializetests)
+	target_link_libraries("${PROJECT_NAME}_${_name}" ${PROJECT_NAME})
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
 
 #containers
@@ -111,31 +111,12 @@ ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
 #stuff with cgal deps
 IF(CGAL_FOUND)
 
-#this is not quite the right way, but cgal does nasty stuff with cgal
-#so we do nasty stuff as well
-SET(MY_SSERIALIZE_CGAL_LINK_LIBS
-	${TEST_LIB_LINK_LIBS}
-	"CGAL"
-	"mpfr"
-	"gmp"
-	"boost_thread"
-	"boost_system"
-)
-
-add_executable("${PROJECT_NAME}_sort_oom_sactc_data" sort_oom_sactc_data.cpp)
-target_link_libraries("${PROJECT_NAME}_sort_oom_sactc_data" ${MY_SSERIALIZE_CGAL_LINK_LIBS})
-add_dependencies("${PROJECT_NAME}_sort_oom_sactc_data" sserializetests)
-
-add_executable("${PROJECT_NAME}_search_CellTextCompleter" search_CellTextCompleter.cpp)
-target_link_libraries("${PROJECT_NAME}_search_CellTextCompleter" ${MY_SSERIALIZE_CGAL_LINK_LIBS})
-add_dependencies("${PROJECT_NAME}_search_CellTextCompleter" sserializetests)
-
-add_executable("${PROJECT_NAME}_static_Triangulation" static_Triangulation.cpp)
-target_link_libraries("${PROJECT_NAME}_static_Triangulation" ${MY_SSERIALIZE_CGAL_LINK_LIBS})
-add_dependencies("${PROJECT_NAME}_static_Triangulation" sserializetests)
+ADD_TEST_TARGET_SINGLE(sort_oom_sactc_data)
+ADD_TEST_TARGET_SINGLE(search_CellTextCompleter)
+ADD_TEST_TARGET_SINGLE(static_Triangulation)
 
 ENDIF(CGAL_FOUND)
 
 ELSE()
-	message(WARNING "Could not find cppunit library need to compile the tests")
+	message(WARNING "Could not find cppunit library needed to compile the tests")
 ENDIF (CPPUNIT_FOUND)
