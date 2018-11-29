@@ -62,7 +62,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 	
-	sserialize::UByteArrayAdapter inFileData( sserialize::UByteArrayAdapter::openRo(inFile, false, MAX_SIZE_FOR_FULL_MMAP, CHUNKED_MMAP_EXPONENT) );
+	sserialize::UByteArrayAdapter inFileData( sserialize::UByteArrayAdapter::openRo(inFile, false, SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, SSERIALIZE_CHUNKED_MMAP_EXPONENT) );
 	
 	if (!inFileData.size()) {
 		std::cout << "Failed to open in-file" << std::endl;
@@ -90,7 +90,7 @@ int main(int argc, char ** argv) {
 	
 	if (verify) {
 		outFileData = sserialize::UByteArrayAdapter();
-		outFileData = sserialize::UByteArrayAdapter::openRo(outFile, true, MAX_SIZE_FOR_FULL_MMAP, CHUNKED_MMAP_EXPONENT);
+		outFileData = sserialize::UByteArrayAdapter::openRo(outFile, true, SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, SSERIALIZE_CHUNKED_MMAP_EXPONENT);
 	
 		if (!outFile.size()) {
 			std::cout << "Failed to open compressed file" << std::endl;

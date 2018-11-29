@@ -10,9 +10,9 @@
 
 namespace sserialize {
 
-std::string UByteArrayAdapter::m_tempFilePrefix = TEMP_FILE_PREFIX;
-std::string UByteArrayAdapter::m_fastTempFilePrefix = TEMP_FILE_PREFIX;
-std::string UByteArrayAdapter::m_logFilePrefix = TEMP_FILE_PREFIX;
+std::string UByteArrayAdapter::m_tempFilePrefix = SSERIALIZE_TEMP_FILE_PREFIX;
+std::string UByteArrayAdapter::m_fastTempFilePrefix = SSERIALIZE_TEMP_FILE_PREFIX;
+std::string UByteArrayAdapter::m_logFilePrefix = SSERIALIZE_TEMP_FILE_PREFIX;
 
 namespace detail {
 namespace __UByteArrayAdapter {
@@ -766,13 +766,13 @@ int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) 
 
 INLINE_WITH_LTO
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset(const OffsetType pos) const {
-	if (m_len < pos+SSERIALIZED_OFFSET_BYTE_COUNT) return 0;
+	if (m_len < pos+SSERIALIZE_OFFSET_BYTE_COUNT) return 0;
 	return m_priv->getOffset(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset(const OffsetType pos) const {
-	if (m_len < pos+SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT) return 0;
+	if (m_len < pos+SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT) return 0;
 	return m_priv->getNegativeOffset(m_offSet+pos);
 }
 
@@ -814,14 +814,14 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putOffset(const OffsetType pos, const OffsetType value) {
-	range_check_push(pos, SSERIALIZED_OFFSET_BYTE_COUNT);
+	range_check_push(pos, SSERIALIZE_OFFSET_BYTE_COUNT);
 	
 	m_priv->putOffset(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putNegativeOffset(const OffsetType pos, const NegativeOffsetType value) {
-	range_check_push(pos, SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT);
+	range_check_push(pos, SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT);
 	
 	m_priv->putNegativeOffset(m_offSet+pos, value);
 }
@@ -990,7 +990,7 @@ void UByteArrayAdapter::putData(const OffsetType pos, const MemoryView & data) {
 
 UByteArrayAdapter UByteArrayAdapter::writeToDisk(std::string fileName, bool deleteOnClose) {
 	if (fileName.empty()) {
-		fileName = MmappedFile::findLockFilePath(PERSISTENT_CACHE_PATH, 2048);
+		fileName = MmappedFile::findLockFilePath(SSERIALIZE_PERSISTENT_CACHE_PATH, 2048);
 	}
 	if (fileName.empty()) {
 		sserialize::err("UByteArrayAdapter::writeToDisk", "Could not find a file");
@@ -1175,13 +1175,13 @@ void UByteArrayAdapter::setFastTempFilePrefix(const std::string & path) {
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset() {
 	OffsetType res = getOffset(m_getPtr);
-	m_getPtr += SSERIALIZED_OFFSET_BYTE_COUNT;
+	m_getPtr += SSERIALIZE_OFFSET_BYTE_COUNT;
 	return res;
 }
 
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset() {
 	NegativeOffsetType res = getNegativeOffset(m_getPtr);
-	m_getPtr += SSERIALIZED_NEGATIVE_OFFSET_BYTE_COUNT;
+	m_getPtr += SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT;
 	return res;
 }
 #define UBA_STREAMING_GET_FUNC(__NAME, __TYPE, __LENGTH) \

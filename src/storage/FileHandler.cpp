@@ -241,6 +241,6 @@ const std::string& FileHandler::getShmPrefix() {
 	return m_shmPrefix;
 }
 
-std::string FileHandler::m_shmPrefix = SHM_FILE_PREFIX;
+std::string FileHandler::m_shmPrefix = SSERIALIZE_SHM_FILE_PREFIX;
 
 }//end namespace sserialize

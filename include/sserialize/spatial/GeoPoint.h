@@ -66,9 +66,9 @@ public:
 	static double snapLat(double v);
 	static double snapLon(double v);
 	///set acc to 0 to get usualy equality
-	static bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON);
+	static bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = SSERIALIZE_EPSILON);
 	
-	bool equal(const sserialize::spatial::GeoPoint & b, double acc = EPSILON) const;
+	bool equal(const sserialize::spatial::GeoPoint & b, double acc = SSERIALIZE_EPSILON) const;
 	
 	///use equal function
 	bool operator!=(const GeoPoint & other) const = delete;
@@ -84,7 +84,7 @@ public:
 sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & destination, const GeoPoint & point);
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & destination, GeoPoint & p);
 
-bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = EPSILON);
+bool equal(const sserialize::spatial::GeoPoint & a, const sserialize::spatial::GeoPoint & b, double acc = SSERIALIZE_EPSILON);
 
 std::ostream & operator<<(std::ostream & out, const sserialize::spatial::GeoPoint & gp);
 
