@@ -104,6 +104,7 @@ private://used during construction
 private: //debug
 	void dumpParents(uint32_t rid) const;
 private:
+	GeoHierarchy m_gh;
 	std::vector<uint32_t> m_cellParentsPtrs;
 	std::vector<uint32_t> m_regionParentsPtrs;
 	std::vector<RegionDesc> m_regionDesc;
@@ -145,7 +146,8 @@ namespace spatial {
 namespace detail {
 
 template<typename TFilter>
-GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter)
+GeoHierarchySubGraph::GeoHierarchySubGraph(const GeoHierarchy & gh, const ItemIndexStore & idxStore, TFilter filter) :
+m_gh(gh)
 {
 	if (!gh.regionSize()) {
 		return;

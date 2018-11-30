@@ -1,11 +1,9 @@
 #ifndef SSERIALIZE_CELL_QUERY_RESULT_PRIVATE_H
 #define SSERIALIZE_CELL_QUERY_RESULT_PRIVATE_H
 #include <sserialize/Static/ItemIndexStore.h>
-#include <sserialize/Static/GeoHierarchy.h>
+#include <sserialize/spatial/CellQueryResult.h>
 #include <memory>
 #include <string.h>
-
-//TODO: add support to mix CQRs with cell local and cell global item ids
 
 namespace sserialize {
 namespace detail {
@@ -15,8 +13,8 @@ namespace TreedCellQueryResult {
 
 class CellQueryResult: public RefCountObject {
 public:
-	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
+	using CellInfo = sserialize::CellQueryResult::CellInfo;
 private:
 
 	friend class sserialize::detail::TreedCellQueryResult::TreedCQRImp;
@@ -40,7 +38,7 @@ private:
 		uint32_t idxPtr;
 	};
 private:
-	sserialize::Static::spatial::GeoHierarchy m_gh;
+	CellInfo m_ci;
 	sserialize::Static::ItemIndexStore m_idxStore;
 	int m_flags;
 	std::vector<CellDesc> m_desc;
@@ -50,19 +48,19 @@ private:
 	static bool flagCheck(int first, int second);
 public:
 	CellQueryResult();
-	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
-	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
-	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
-	inline const GeoHierarchy & geoHierarchy() const { return m_gh; }
+	CellQueryResult(const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
+	CellQueryResult(const ItemIndex & fullMatches, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
+	CellQueryResult(bool fullMatch, uint32_t cellId, const CellInfo & ci, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
+	inline const CellInfo & cellInfo() const { return m_ci; }
 	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
 	inline int flags() const { return m_flags; }
 	
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-					T_PMITEMSPTR_IT pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+					T_PMITEMSPTR_IT pmItemsBegin, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	virtual ~CellQueryResult();
 	int defaultIndexTypes() const { return m_idxStore.indexTypes(); }
 	uint32_t idxSize(uint32_t pos) const;
@@ -93,8 +91,8 @@ public:
 
 template<typename T_PMITEMSPTR_IT>
 CellQueryResult::CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
-				T_PMITEMSPTR_IT pmItemsIt, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags) :
-m_gh(gh),
+				T_PMITEMSPTR_IT pmItemsIt, const CellInfo & ci, const ItemIndexStore & idxStore, int flags) :
+m_ci(ci),
 m_idxStore(idxStore),
 m_flags(flags)
 {

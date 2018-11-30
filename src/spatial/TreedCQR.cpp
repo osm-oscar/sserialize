@@ -11,57 +11,57 @@ TreedCellQueryResult::TreedCellQueryResult() :
 m_priv(new detail::TreedCellQueryResult::TreedCQRImp())
 {}
 
-TreedCellQueryResult::TreedCellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags) :
-m_priv(new detail::TreedCellQueryResult::TreedCQRImp(gh, idxStore, flags))
+TreedCellQueryResult::TreedCellQueryResult(const CellInfo & ci, const ItemIndexStore & idxStore, int flags) :
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(ci, idxStore, flags))
 {}
 
 TreedCellQueryResult::TreedCellQueryResult(
 	const ItemIndex & fullMatches,
-	const GeoHierarchy & gh,
+	const CellInfo & ci,
 	const ItemIndexStore & idxStore,
 	int flags) : 
-m_priv( new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, gh, idxStore, flags) )
+m_priv( new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, ci, idxStore, flags) )
 {}
 
 
 TreedCellQueryResult::TreedCellQueryResult(
 	bool fullMatch,
 	uint32_t cellId,
-	const GeoHierarchy & gh,
+	const CellInfo & ci,
 	const ItemIndexStore & idxStore,
 	uint32_t cellIdxId,
 	int flags) :
-m_priv( new detail::TreedCellQueryResult::TreedCQRImp(fullMatch, cellId, gh, idxStore, cellIdxId, flags) )
+m_priv( new detail::TreedCellQueryResult::TreedCQRImp(fullMatch, cellId, ci, idxStore, cellIdxId, flags) )
 {}
 
 TreedCellQueryResult::TreedCellQueryResult(
 	const ItemIndex& fullMatches,
 	const ItemIndex& partialMatches,
 	const CompactUintArray::const_iterator& partialMatchesItemsPtrBegin,
-	const GeoHierarchy& gh,
+	const CellInfo& ci,
 	const ItemIndexStore& idxStore,
 	int flags) :
-m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore, flags))
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, ci, idxStore, flags))
 {}
 
 TreedCellQueryResult::TreedCellQueryResult(
 	const sserialize::ItemIndex& fullMatches,
 	const sserialize::ItemIndex& partialMatches,
 	const sserialize::RLEStream& partialMatchesItemsPtrBegin,
-	const sserialize::TreedCellQueryResult::GeoHierarchy& gh,
+	const CellInfo & ci,
 	const sserialize::TreedCellQueryResult::ItemIndexStore& idxStore,
 	int flags) :
-m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore, flags))
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, ci, idxStore, flags))
 {}
 
 TreedCellQueryResult::TreedCellQueryResult(
 	const ItemIndex& fullMatches,
 	const ItemIndex& partialMatches,
 	std::vector< sserialize::ItemIndex >::const_iterator partialMatchesItemsPtrBegin,
-	const GeoHierarchy& gh,
+	const CellInfo & ci,
 	const ItemIndexStore& idxStore,
 	int flags) :
-m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, gh, idxStore, flags))
+m_priv(new detail::TreedCellQueryResult::TreedCQRImp(fullMatches, partialMatches, partialMatchesItemsPtrBegin, ci, idxStore, flags))
 {}
 
 TreedCellQueryResult::TreedCellQueryResult(const CellQueryResult& cqr) :
@@ -77,8 +77,8 @@ TreedCellQueryResult & TreedCellQueryResult::operator=(const TreedCellQueryResul
 	return *this;
 }
 
-const TreedCellQueryResult::GeoHierarchy& TreedCellQueryResult::geoHierarchy() const {
-	return m_priv->geoHierarchy();
+const TreedCellQueryResult::CellInfo & TreedCellQueryResult::cellInfo() const {
+	return m_priv->cellInfo();
 }
 
 const TreedCellQueryResult::ItemIndexStore& TreedCellQueryResult::idxStore() const {

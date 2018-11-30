@@ -20,6 +20,13 @@ void SubSet::Node::dump() {
 	dump(std::cout);
 }
 
+SubSet::SubSet(Node * root, const sserialize::Static::spatial::GeoHierarchy & gh, const CellQueryResult & cqr, bool sparse) :
+m_gh(gh),
+m_root(root),
+m_cqr(cqr),
+m_sparse(sparse)
+{}
+
 sserialize::ItemIndex SubSet::items(const NodePtr & node) const {
 
 	struct MapFunc {
@@ -118,7 +125,7 @@ bool SubSet::regionByGhId(const SubSet::NodePtr& node, uint32_t ghId, SubSet::No
 }
 
 const sserialize::Static::spatial::GeoHierarchy & SubSet::geoHierarchy() const {
-	return m_cqr.geoHierarchy();
+	return m_gh;
 }
 
 uint32_t SubSet::storeId(const SubSet::NodePtr& node) const {
@@ -127,7 +134,7 @@ uint32_t SubSet::storeId(const SubSet::NodePtr& node) const {
 
 SubSet::NodePtr SubSet::regionByStoreId(uint32_t storeId) const {
 	NodePtr res;
-	regionByGhId(root(), cqr().geoHierarchy().storeIdToGhId(storeId), res);
+	regionByGhId(root(), geoHierarchy().storeIdToGhId(storeId), res);
 	return res;
 }
 
@@ -442,7 +449,12 @@ SubSet GeoHierarchy::subSet(const sserialize::CellQueryResult& cqr, bool sparse,
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
 		rootNode = createSubSet(cqr, nodes);
 	}
-	return SubSet(rootNode, cqr, sparse);
+	sserialize::Static::spatial::GeoHierarchy gh(
+		sserialize::RCPtrWrapper<sserialize::Static::spatial::detail::GeoHierarchy>(
+			const_cast<sserialize::Static::spatial::detail::GeoHierarchy*>(this)
+		)
+	);
+	return SubSet(rootNode, gh, cqr, sparse);
 }
 
 //TODO:implement sparse SubSet creation
@@ -464,7 +476,7 @@ FlatSubSet GeoHierarchy::flatSubSet(const sserialize::CellQueryResult& cqr, bool
 	return subSet;
 }
 
-SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size, uint32_t /*threadCount*/) const {
+SubSetBase::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::Node* *nodes, uint32_t size, uint32_t /*threadCount*/) const {
 	SubSet::Node * rootNode = new SubSet::Node(npos, 0);
 
 	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
@@ -512,7 +524,7 @@ SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, SubSet::N
 	return rootNode;
 }
 
-SubSet::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const {
+SubSetBase::Node * GeoHierarchy::createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const {
 	SubSet::Node * rootNode = new SubSet::Node(npos, 0);
 	
 	for(CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {
@@ -746,6 +758,46 @@ sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::
 	std::sort(intersectingCells.begin(), intersectingCells.end());
 	intersectingCells.resize(std::unique(intersectingCells.begin(), intersectingCells.end())-intersectingCells.begin());
 	return sserialize::ItemIndex(std::move(intersectingCells));
+}
+
+
+GeoHierarchy::SubSet
+GeoHierarchy::subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const {
+	return m_priv->subSet(cqr, sparse, threadCount);
+}
+
+GeoHierarchy::FlatSubSet
+GeoHierarchy::flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const {
+	return m_priv->flatSubSet(cqr, sparse);
+}
+
+GeoHierarchyCellInfo::GeoHierarchyCellInfo(const sserialize::Static::spatial::GeoHierarchy & gh) :
+m_gh(gh)
+{}
+
+GeoHierarchyCellInfo::SizeType
+GeoHierarchyCellInfo::cellSize() const {
+	return m_gh.cellSize();
+}
+
+sserialize::spatial::GeoRect
+GeoHierarchyCellInfo::cellBoundary(CellId cellId) const {
+	return m_gh.cellBoundary(cellId);
+}
+
+GeoHierarchyCellInfo::SizeType
+GeoHierarchyCellInfo::cellItemsCount(CellId cellId) const {
+	return m_gh.cellItemsCount(cellId);
+}
+
+GeoHierarchyCellInfo::IndexId
+GeoHierarchyCellInfo::cellItemsPtr(CellId cellId) const {
+	return m_gh.cellItemsPtr(cellId);
+}
+
+sserialize::RCPtrWrapper<interface::CQRCellInfoIface>
+GeoHierarchyCellInfo::makeRc(const sserialize::Static::spatial::GeoHierarchy & gh) {
+	return sserialize::RCPtrWrapper<interface::CQRCellInfoIface>( new GeoHierarchyCellInfo(gh) );
 }
 
 }}} //end namespace

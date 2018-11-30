@@ -97,6 +97,7 @@ m_flags(d.at(2)),
 m_tt( (TrieTypeMarker) d.at(3) ),
 m_idxStore(idxStore),
 m_gh(gh),
+m_ci(sserialize::Static::spatial::GeoHierarchyCellInfo::makeRc(gh)),
 m_ra(ra)
 {
 	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_CELL_TEXT_COMPLETER_VERSION, d.at(0), "sserialize::Static::CellTextCompleter");

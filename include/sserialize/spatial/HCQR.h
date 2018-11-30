@@ -9,14 +9,14 @@ class HCQRImp;
 
 class HCQR {
 public:
-	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
+	using CellInfo = sserialize::CellQueryResult::CellInfo;
 public:
 	HCQR();
 	HCQR(const HCQR & hcqr);
 	HCQR(const CellQueryResult & cqr);
 public:
-	const GeoHierarchy & gh() const;
+	const CellInfo & cellInfo() const;
 	const ItemIndexStore & store() const;
 public:
 	uint32_t maxItems() const;

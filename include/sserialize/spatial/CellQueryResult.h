@@ -11,11 +11,26 @@ namespace detail {
 	class CellQueryResult;
 }
 namespace Static {
-namespace spatial {
-	class GeoHierarchy;
-}
 	class ItemIndexStore;
 }
+
+namespace interface {
+	
+class CQRCellInfoIface: public sserialize::RefCountObject {
+public:
+	using CellId = uint32_t;
+	using SizeType = uint32_t;
+	using IndexId = uint32_t;
+public:
+	CQRCellInfoIface() {}
+	virtual ~CQRCellInfoIface() {}
+	virtual SizeType cellSize() const = 0;
+	virtual sserialize::spatial::GeoRect cellBoundary(CellId cellId) const = 0;
+	virtual SizeType cellItemsCount(CellId cellId) const = 0;
+	virtual IndexId cellItemsPtr(CellId cellId) const = 0;
+};
+
+} //end namespace interface
 
 namespace detail {
 
@@ -50,16 +65,17 @@ public:
 	CellQueryResultIterator operator+(difference_type v) const;
 };
 
-}
+} //end namespace detail
+
 
 class TreedCellQueryResult;
 
 class CellQueryResult {
 public:
-	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 	typedef detail::CellQueryResultIterator const_iterator;
 	typedef const_iterator iterator;
+	using CellInfo = sserialize::RCPtrWrapper<interface::CQRCellInfoIface>;
 	enum {
 		FF_NONE=0x0,
 		FF_EMPTY=0x1,
@@ -70,35 +86,35 @@ public:
 	} FeatureFlags;
 public:
 	CellQueryResult();
-	CellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags = FF_DEFAULTS);
-	CellQueryResult(const ItemIndex & fullMatches, const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+	CellQueryResult(const CellInfo & ci, const ItemIndexStore & idxStore, int flags = FF_DEFAULTS);
+	CellQueryResult(const ItemIndex & fullMatches, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	///cellIdxId is ignored if fullMatch is set
-	CellQueryResult(bool fullMatch, uint32_t cellId, const GeoHierarchy & gh, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
+	CellQueryResult(bool fullMatch, uint32_t cellId, const CellInfo & ci, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
+					const CellInfo & ci, const ItemIndexStore & idxStore,
 					int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
+					const CellInfo & ci, const ItemIndexStore & idxStore,
 					int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					std::vector<uint32_t>::const_iterator partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
+					const CellInfo & ci, const ItemIndexStore & idxStore,
 					int flags);
 	CellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					std::vector<sserialize::ItemIndex>::const_iterator partialMatchesIdx,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
+					const CellInfo & ci, const ItemIndexStore & idxStore,
 					int flags);
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
 	
-	const GeoHierarchy & geoHierarchy() const;
+	const CellInfo & cellInfo() const;
 	const ItemIndexStore & idxStore() const;
 	int flags() const;
 	

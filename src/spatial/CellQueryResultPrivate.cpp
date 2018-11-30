@@ -14,11 +14,11 @@ m_idx(0)
 CellQueryResult::CellQueryResult(const sserialize::ItemIndex & fmIdx,
 	const sserialize::ItemIndex & pmIdx,
 	std::vector<sserialize::ItemIndex>::const_iterator pmItemsIt,
-	const GeoHierarchy & gh,
+	const CellInfo & ci,
 	const ItemIndexStore & idxStore,
 	int flags)
 :
-m_gh(gh),
+m_ci(ci),
 m_idxStore(idxStore),
 m_flags(flags),
 m_idx(0)
@@ -67,11 +67,11 @@ m_idx(0)
 
 CellQueryResult::CellQueryResult(
 	const ItemIndex & fmIdx,
-	const GeoHierarchy & gh,
+	const CellInfo & ci,
 	const ItemIndexStore & idxStore,
 	int flags)
 :
-m_gh(gh),
+m_ci(ci),
 m_idxStore(idxStore),
 m_flags(flags),
 m_idx(0)
@@ -90,12 +90,12 @@ m_idx(0)
 CellQueryResult::CellQueryResult(
 	bool fullMatch,
 	uint32_t cellId,
-	const GeoHierarchy & gh,
+	const CellInfo & ci,
 	const ItemIndexStore & idxStore,
 	uint32_t cellIdxId,
 	int flags)
 :
-m_gh(gh),
+m_ci(ci),
 m_idxStore(idxStore),
 m_flags(flags),
 m_idx(0)
@@ -113,11 +113,11 @@ m_idx(0)
 }
 
 CellQueryResult::CellQueryResult(
-	const GeoHierarchy & gh,
+	const CellInfo & ci,
 	const ItemIndexStore & idxStore,
 	int flags)
 :
-m_gh(gh),
+m_ci(ci),
 m_idxStore(idxStore),
 m_flags(flags),
 m_idx(0)
@@ -152,7 +152,7 @@ uint32_t CellQueryResult::idxSize(uint32_t pos) const {
 		return (m_idx+pos)->idx.size();
 	}
 	if (cd.fullMatch) {
-		return m_gh.cellItemsCount(cd.cellId);
+		return m_ci->cellItemsCount(cd.cellId);
 	}
 	else {
 		return m_idxStore.idxSize( (m_idx+pos)->idxPtr );
@@ -167,12 +167,12 @@ const sserialize::ItemIndex & CellQueryResult::idx(uint32_t pos) const {
 	}
 	if (cd.fullMatch) {
 		if (flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) {
-			uint32_t cellSize = m_gh.cellItemsCount(cd.cellId);
+			uint32_t cellSize = m_ci->cellItemsCount(cd.cellId);
 			auto idxTypes = m_idxStore.indexTypes();
 			that->uncheckedSet(pos, sserialize::ItemIndexFactory::range(0, cellSize, 1, idxTypes));
 		}
 		else {
-			uint32_t idxId = m_gh.cellItemsPtr(cd.cellId);
+			uint32_t idxId = m_ci->cellItemsPtr(cd.cellId);
 			that->uncheckedSet(pos, m_idxStore.at(idxId));
 		}
 	}
@@ -191,7 +191,7 @@ sserialize::ItemIndex CellQueryResult::items(uint32_t pos) const {
 	else {
 			SSERIALIZE_CHEAP_ASSERT(flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS);
 			const CellDesc & cd = m_desc.at(pos);
-			sserialize::ItemIndex cellIdx = m_idxStore.at( m_gh.cellItemsPtr(cd.cellId) );
+			sserialize::ItemIndex cellIdx = m_idxStore.at( m_ci->cellItemsPtr(cd.cellId) );
 			if (cd.fullMatch) {
 				return cellIdx;
 			}
@@ -215,7 +215,7 @@ uint32_t CellQueryResult::idxId(uint32_t pos) const {
 	const CellDesc & cd = m_desc[pos];
 	if (cd.fullMatch) {
 		SSERIALIZE_CHEAP_ASSERT((flags()&sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) == 0);
-		return m_gh.cellItemsPtr(cd.cellId);
+		return m_ci->cellItemsPtr(cd.cellId);
 	}
 	else {
 		return (m_idx+pos)->idxPtr;
@@ -234,7 +234,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), oPtr->flags()));
 	
 	const CellQueryResult & o = *oPtr;
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	
@@ -308,7 +308,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const CellQueryResult & o = *other;
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
@@ -349,8 +349,8 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 				const sserialize::ItemIndex & myPIdx = idx(myI);
 				const sserialize::ItemIndex & oPIdx = o.idx(oI);
 				sserialize::ItemIndex res(myPIdx + oPIdx);
-				if (res.size() == m_gh.cellItemsCount(myCellId)) {
-					r.m_idx[r.m_desc.size()].idxPtr = m_gh.cellItemsPtr(myCellId);
+				if (res.size() == m_ci->cellItemsCount(myCellId)) {
+					r.m_idx[r.m_desc.size()].idxPtr = m_ci->cellItemsPtr(myCellId);
 					r.m_desc.push_back(CellDesc(1, 0, myCellId));
 				}
 				else {
@@ -427,7 +427,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const CellQueryResult & o = *other;
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * m_desc.size());
 	
@@ -485,7 +485,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const {
 	SSERIALIZE_CHEAP_ASSERT(flagCheck(flags(), other->flags()));
 	const CellQueryResult & o = *other;
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
@@ -564,7 +564,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 }
 
 CellQueryResult * CellQueryResult::allToFull() const {
-	CellQueryResult * rPtr = new CellQueryResult(m_gh, m_idxStore, m_flags);
+	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	
 	uint32_t totalSize = cellCount();
 	rPtr->m_desc.reserve(totalSize);
@@ -578,7 +578,7 @@ CellQueryResult * CellQueryResult::allToFull() const {
 }
 
 CellQueryResult * CellQueryResult::removeEmpty(uint32_t emptyCellCount) const {
-	detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_gh, m_idxStore, m_flags);
+	detail::CellQueryResult * rPtr = new detail::CellQueryResult(m_ci, m_idxStore, m_flags);
 	detail::CellQueryResult & r = *rPtr;
 	
 	if (emptyCellCount > cellCount()) {
@@ -630,7 +630,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 	} state;
 	state.totalSize = cellCount();
 	state.that = this;
-	state.rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
+	state.rPtr = new CellQueryResult(m_ci, m_idxStore, newFlags);
 	state.rPtr->m_desc.resize(state.totalSize);
 	state.rPtr->m_idx = (IndexDesc*) ::malloc(state.totalSize * sizeof(IndexDesc));
 	
@@ -655,7 +655,7 @@ CellQueryResult * CellQueryResult::toGlobalItemIds(uint32_t threadCount) const {
 						state->that->m_idxStore.at( state->that->idxId(i) ).putInto(tmpidx);
 					}
 					//TODO: speed up mapping
-					sserialize::ItemIndex cellIdx = state->that->idxStore().at( state->that->geoHierarchy().cellItemsPtr(cd.cellId) );
+					sserialize::ItemIndex cellIdx = state->that->idxStore().at( state->that->cellInfo()->cellItemsPtr(cd.cellId) );
 					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmpidx.size(), cellIdx.size());
 					for(uint32_t j(0), js(tmpidx.size()); j < js; ++j) {
 						uint32_t localId = tmpidx[j];
@@ -704,7 +704,7 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 	} state;
 	state.totalSize = cellCount();
 	state.that = this;
-	state.rPtr = new CellQueryResult(m_gh, m_idxStore, newFlags);
+	state.rPtr = new CellQueryResult(m_ci, m_idxStore, newFlags);
 	state.rPtr->m_desc.resize(state.totalSize);
 	state.rPtr->m_idx = (IndexDesc*) ::malloc(state.totalSize * sizeof(IndexDesc));
 	
@@ -730,7 +730,7 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 						srcIdx =  state->that->m_idxStore.at( state->that->idxId(i) );
 					}
 					//TODO: speed up mapping using caches
-					sserialize::ItemIndex cellIdx = state->that->m_idxStore.at( state->that->m_gh.cellItemsPtr(cd.cellId) );
+					sserialize::ItemIndex cellIdx = state->that->m_idxStore.at( state->that->m_ci->cellItemsPtr(cd.cellId) );
 					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(srcIdx.size(), cellIdx.size());
 					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL((cellIdx / srcIdx), srcIdx);
 					auto srcIt = srcIdx.begin();
@@ -768,7 +768,7 @@ CellQueryResult * CellQueryResult::toCellLocalItemIds(uint32_t threadCount) cons
 }
 
 bool CellQueryResult::selfCheck() {
-	uint32_t ghCellCount = m_gh.cellSize();
+	uint32_t ghCellCount = m_ci->cellSize();
 	int64_t lastCellId = -1;
 	for(uint32_t i(0), s(this->cellCount()); i < s; ++i) {
 		const CellDesc & cd = m_desc[i];
@@ -779,7 +779,7 @@ bool CellQueryResult::selfCheck() {
 			return 0;
 		}
 		lastCellId = cd.cellId;
-		uint32_t cellItemsCount = m_gh.cellItemsCount(cd.cellId);
+		uint32_t cellItemsCount = m_ci->cellItemsCount(cd.cellId);
 		if (idxSize(i) > cellItemsCount) {
 			return false;
 		}
@@ -811,7 +811,7 @@ ItemIndex CellQueryResult::cells() const {
 sserialize::spatial::GeoRect CellQueryResult::boundary() const {
 	sserialize::spatial::GeoRect result;
 	for(const CellDesc & cd : m_desc) {
-		result.enlarge( m_gh.cellBoundary(cd.cellId) );
+		result.enlarge( m_ci->cellBoundary(cd.cellId) );
 	}
 	return result;
 }

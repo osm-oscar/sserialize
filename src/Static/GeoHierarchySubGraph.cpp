@@ -90,7 +90,7 @@ GeoHierarchySubGraph::subSet(const sserialize::CellQueryResult& cqr, bool sparse
 		std::unordered_map<uint32_t, SubSet::Node*> nodes;
 		rootNode = createSubSet(cqr, nodes);
 	}
-	return SubSet(rootNode, cqr, sparse);
+	return SubSet(rootNode, m_gh, cqr, sparse);
 }
 
 sserialize::ItemIndex

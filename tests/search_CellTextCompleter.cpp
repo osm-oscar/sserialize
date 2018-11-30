@@ -96,6 +96,7 @@ public:
 	
 	sserialize::Static::ItemIndexStore ghIdxStore;
 	sserialize::Static::spatial::GeoHierarchy gh;
+	sserialize::CellQueryResult::CellInfo ci;
 
 	Item createItem(uint32_t minStrs, uint32_t maxStrs, uint32_t minCells, uint32_t maxCells, uint32_t maxCellId) {
 		uint32_t strCount = (rand() % (maxStrs-minStrs)) + minStrs;
@@ -280,6 +281,8 @@ public:
 			this->gh = sserialize::Static::spatial::GeoHierarchy(sghD);
 			
 			SSERIALIZE_CHEAP_ASSERT_EQUAL(this->gh.cellSize(), cellId);
+			
+			this->ci = sserialize::Static::spatial::GeoHierarchyCellInfo::makeRc(this->gh);
 		}
 		
 		//now kill the regionGraph, remove the cycles created by the parent-pointers
@@ -331,7 +334,7 @@ public:
 			pmi = sserialize::ItemIndex( std::move(pmiTmp) );
 		}
 		
-		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), gh, sserialize::Static::ItemIndexStore(), sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);
+		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), ci, sserialize::Static::ItemIndexStore(), sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);
 	}
 };
 

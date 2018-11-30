@@ -66,13 +66,14 @@ namespace spatial {
   */
 
 class GeoHierarchy;
+
 namespace detail {
 
 ///SubSet represents a SubSet of a GeoHierarchy. It's based on a CellQueryResult and has 2 incarnation
 ///A sparse SubSet has cellpositions/apxitemcount only for direct parents
 ///The id of the root-region equals GeoHierarchy::npos
 
-class SubSet {
+class SubSetBase {
 public:
 	class Node: public RefCountObject {
 	public:
@@ -135,35 +136,9 @@ public:
 		inline void visit(TP p) const { visitImp(p); }
 	};
 	typedef Node::NodePtr NodePtr;
-private:
-	NodePtr m_root;
-	CellQueryResult m_cqr;
-	bool m_sparse;
-private:
-	template<typename T_HASH_CONTAINER>
-	void insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const;
-	bool regionByGhId(const NodePtr& node, uint32_t ghId, NodePtr & dest) const;
-public:
-	SubSet() {}
-	SubSet(Node * root, const CellQueryResult & cqr, bool sparse) : m_root(root), m_cqr(cqr), m_sparse(sparse) {}
-	virtual ~SubSet()  {}
-	inline const NodePtr & root() const { return m_root;}
-	inline const CellQueryResult & cqr() const { return m_cqr; }
-	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
-	///Sparse SubSets have no itemcounts and need a recursive flattening strategy
-	inline bool sparse() const { return m_sparse; }
-	sserialize::ItemIndex items(const NodePtr & node) const;
-	sserialize::ItemIndex cells(const NodePtr & node) const;
-	sserialize::ItemIndex topK(const NodePtr & node, uint32_t numItems) const;
-	uint32_t storeId(const NodePtr & node) const;
-	NodePtr regionByStoreId(uint32_t storeId) const;
-	///Get a path to the first region where the result set branches into different regions
-	///@param fraction path ends if less than @fraction elements are within the next region
-	///@param globalFraction calculate fraction relative to all results or relative to the local region
-	///@param out : operator()(const NodePtr & node);
-	template<typename TOutputIterator>
-	void pathToBranch(TOutputIterator out, double fraction = 0.95, bool globalFraction = true) const;
 };
+
+class SubSet;
 
 class FlatSubSet {
 public:
@@ -204,45 +179,6 @@ public:
 	inline CellsIterator cellsEnd(uint32_t nodePos) const { return cells().cbegin() + at(nodePos+1).m_cellsBegin;}
 };
 
-template<typename T_HASH_CONTAINER>
-void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const {
-	idcsPos.insert(node->cellPositions().cbegin(), node->cellPositions().cend());
-	for(uint32_t i(0), s((uint32_t) node->size()); i < s; ++i) {
-		insertCellPositions(node->at(i), idcsPos);
-	}
-}
-
-template<typename TOutputIterator>
-void SubSet::pathToBranch(TOutputIterator out, double fraction, bool globalFraction) const {
-	typedef Node::iterator NodeIterator;
-	NodePtr rPtr = root();
-	double referenceItemCount = rPtr->maxItemsSize();
-	uint32_t curMax = 0;
-	while (rPtr->size()) {
-		curMax = 0;
-		NodeIterator curMaxChild = rPtr->begin();
-		for(NodeIterator it(rPtr->begin()), end(rPtr->end()); it != end; ++it) {
-			uint32_t tmp = (*it)->maxItemsSize();
-			if ( tmp > curMax ) {
-				curMax = tmp;
-				curMaxChild = it;
-			}
-		}
-		if ((double)(curMax)/referenceItemCount >= fraction) {
-			rPtr = *curMaxChild;
-			*out = rPtr;
-			++out;
-			if (!globalFraction) {
-				referenceItemCount = curMax;
-			}
-		}
-		else {
-			break;
-		}
-	}
-}
-
- 
 class GeoHierarchy: public RefCountObject {
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
@@ -253,8 +189,8 @@ public:
 	typedef sserialize::MultiVarBitArray CellDescriptionType;
 	typedef sserialize::BoundedCompactUintArray CellPtrListType;
 private:
-	SubSet::Node * createSubSet(const CellQueryResult & cqr, SubSet::Node** nodes, uint32_t size, uint32_t threadCount) const;
-	SubSet::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSet::Node*> & nodes) const;
+	SubSetBase::Node * createSubSet(const CellQueryResult & cqr, SubSetBase::Node** nodes, uint32_t size, uint32_t threadCount) const;
+	SubSetBase::Node * createSubSet(const CellQueryResult & cqr, std::unordered_map<uint32_t, SubSetBase::Node*> & nodes) const;
 private:
 	StoreIdToGhIdMap m_storeIdToGhId;
 	RegionDescriptionType m_regions;
@@ -396,6 +332,8 @@ public:
 
 class GeoHierarchy {
 private:
+	friend class detail::GeoHierarchy;
+private:
 	typedef RCPtrWrapper<detail::GeoHierarchy> DataPtr;
 public:
 	static const uint32_t npos = 0xFFFFFFFF;
@@ -469,11 +407,104 @@ public:
 	///@return cells whose bbox intersects @param rect
 	sserialize::ItemIndex intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t threadCount = 1) const;
 
-	inline SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const { return m_priv->subSet(cqr, sparse, threadCount); }
-	inline FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const { return m_priv->flatSubSet(cqr, sparse); }
+	SubSet subSet(const sserialize::CellQueryResult & cqr, bool sparse, uint32_t threadCount) const;
+	FlatSubSet flatSubSet(const sserialize::CellQueryResult & cqr, bool sparse) const;
+private:
+	GeoHierarchy(const RCPtrWrapper<detail::GeoHierarchy> & p) : m_priv(p) {}
 };
 
-}}} //end namespace
+class GeoHierarchyCellInfo: public interface::CQRCellInfoIface {
+public:
+	GeoHierarchyCellInfo(const sserialize::Static::spatial::GeoHierarchy & gh);
+	virtual ~GeoHierarchyCellInfo() override {}
+	
+	virtual SizeType cellSize() const override;
+	virtual sserialize::spatial::GeoRect cellBoundary(CellId cellId) const override;
+	virtual SizeType cellItemsCount(CellId cellId) const override;
+	virtual IndexId cellItemsPtr(CellId cellId) const override;
+public:
+	static sserialize::RCPtrWrapper<interface::CQRCellInfoIface> makeRc(const sserialize::Static::spatial::GeoHierarchy & gh);
+private:
+	sserialize::Static::spatial::GeoHierarchy m_gh;
+};
+
+namespace detail {
+
+class SubSet: public SubSetBase {
+private:
+	sserialize::Static::spatial::GeoHierarchy m_gh;
+	NodePtr m_root;
+	CellQueryResult m_cqr;
+	bool m_sparse;
+private:
+	template<typename T_HASH_CONTAINER>
+	void insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const;
+	bool regionByGhId(const NodePtr& node, uint32_t ghId, NodePtr & dest) const;
+public:
+	SubSet() {}
+	SubSet(Node * root, const sserialize::Static::spatial::GeoHierarchy & gh, const CellQueryResult & cqr, bool sparse);
+	virtual ~SubSet()  {}
+	inline const NodePtr & root() const { return m_root;}
+	inline const CellQueryResult & cqr() const { return m_cqr; }
+	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
+	///Sparse SubSets have no itemcounts and need a recursive flattening strategy
+	inline bool sparse() const { return m_sparse; }
+	sserialize::ItemIndex items(const NodePtr & node) const;
+	sserialize::ItemIndex cells(const NodePtr & node) const;
+	sserialize::ItemIndex topK(const NodePtr & node, uint32_t numItems) const;
+	uint32_t storeId(const NodePtr & node) const;
+	NodePtr regionByStoreId(uint32_t storeId) const;
+	///Get a path to the first region where the result set branches into different regions
+	///@param fraction path ends if less than @fraction elements are within the next region
+	///@param globalFraction calculate fraction relative to all results or relative to the local region
+	///@param out : operator()(const NodePtr & node);
+	template<typename TOutputIterator>
+	void pathToBranch(TOutputIterator out, double fraction = 0.95, bool globalFraction = true) const;
+};
+
+
+template<typename T_HASH_CONTAINER>
+void SubSet::insertCellPositions(const NodePtr & node, T_HASH_CONTAINER & idcsPos) const {
+	idcsPos.insert(node->cellPositions().cbegin(), node->cellPositions().cend());
+	for(uint32_t i(0), s((uint32_t) node->size()); i < s; ++i) {
+		insertCellPositions(node->at(i), idcsPos);
+	}
+}
+
+template<typename TOutputIterator>
+void SubSet::pathToBranch(TOutputIterator out, double fraction, bool globalFraction) const {
+	typedef Node::iterator NodeIterator;
+	NodePtr rPtr = root();
+	double referenceItemCount = rPtr->maxItemsSize();
+	uint32_t curMax = 0;
+	while (rPtr->size()) {
+		curMax = 0;
+		NodeIterator curMaxChild = rPtr->begin();
+		for(NodeIterator it(rPtr->begin()), end(rPtr->end()); it != end; ++it) {
+			uint32_t tmp = (*it)->maxItemsSize();
+			if ( tmp > curMax ) {
+				curMax = tmp;
+				curMaxChild = it;
+			}
+		}
+		if ((double)(curMax)/referenceItemCount >= fraction) {
+			rPtr = *curMaxChild;
+			*out = rPtr;
+			++out;
+			if (!globalFraction) {
+				referenceItemCount = curMax;
+			}
+		}
+		else {
+			break;
+		}
+	}
+}
+
+	
+} //end namespace detail
+
+}}} //end namespace sserialize::Static::spatial
 
 std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Cell & r);
 std::ostream & operator<<(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::Region & r);

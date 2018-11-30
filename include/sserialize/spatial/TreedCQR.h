@@ -22,49 +22,49 @@ namespace spatial {
 
 class TreedCellQueryResult {
 public:
-	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
+	using CellInfo = sserialize::CellQueryResult::CellInfo;
 private:
 	RCPtrWrapper<detail::TreedCellQueryResult::TreedCQRImp> m_priv;
 private:
 	TreedCellQueryResult(detail::TreedCellQueryResult::TreedCQRImp * priv);
 public:
 	TreedCellQueryResult();
-	TreedCellQueryResult(const GeoHierarchy & gh, const ItemIndexStore & idxStore, int flags);
+	TreedCellQueryResult(const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
-					const GeoHierarchy & gh,
+					const CellInfo & ci,
 					const ItemIndexStore & idxStore,
 					int flags = CellQueryResult::FF_DEFAULTS);
 	///cellIdxId is ignored if fullMatch is set
 	TreedCellQueryResult(bool fullMatch,
 					uint32_t cellId,
-					const GeoHierarchy & gh,
+					const CellInfo & ci,
 					const ItemIndexStore & idxStore,
 					uint32_t cellIdxId,
 					int flags = CellQueryResult::FF_DEFAULTS);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::CompactUintArray::const_iterator & partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh,
+					const CellInfo & ci,
 					const ItemIndexStore & idxStore,
 					int flags = CellQueryResult::FF_DEFAULTS);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					const sserialize::RLEStream & partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh,
+					const CellInfo & ci,
 					const ItemIndexStore & idxStore,
 					int flags = CellQueryResult::FF_DEFAULTS);
 	TreedCellQueryResult(const ItemIndex & fullMatches,
 					const ItemIndex & partialMatches,
 					std::vector<sserialize::ItemIndex>::const_iterator partialMatchesItemsPtrBegin,
-					const GeoHierarchy & gh, const ItemIndexStore & idxStore,
+					const CellInfo & ci, const ItemIndexStore & idxStore,
 					int flags = CellQueryResult::FF_DEFAULTS);
 	explicit TreedCellQueryResult(const sserialize::CellQueryResult & cqr);
 	virtual ~TreedCellQueryResult();
 	TreedCellQueryResult(const TreedCellQueryResult & other);
 	TreedCellQueryResult & operator=(const TreedCellQueryResult & other);
 	
-	const GeoHierarchy & geoHierarchy() const;
+	const CellInfo & cellInfo() const;
 	const ItemIndexStore & idxStore() const;
 	int flags() const;
 	
