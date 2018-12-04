@@ -53,8 +53,8 @@ public:
 			typedef sserialize::RLEStream const_iterator;
 			typedef sserialize::RLEStream BaseContainer;
 		private:
-			uint32_t m_fmPtr;
-			uint32_t m_pPtr;
+			uint32_t m_fmPtr{std::numeric_limits<uint32_t>::max()};
+			uint32_t m_pPtr{std::numeric_limits<uint32_t>::max()};
 			BaseContainer m_data;
 		public:
 			Type() {}
@@ -64,7 +64,7 @@ public:
 				m_pPtr = *m_data;
 				++m_data;
 			}
-			inline bool valid() const { return m_data.hasNext(); }
+			inline bool valid() const { return m_fmPtr != std::numeric_limits<uint32_t>::max() && m_pPtr != std::numeric_limits<uint32_t>::max(); }
 			inline const BaseContainer & data() const { return m_data; }
 			inline uint32_t fmPtr() const {
 				return m_fmPtr;
@@ -85,7 +85,7 @@ public:
 		Payload(const sserialize::UByteArrayAdapter& d);
 		~Payload() {}
 		inline sserialize::StringCompleter::QuerryType types() const { return (sserialize::StringCompleter::QuerryType) (m_types & 0xF); }
-		Type type(sserialize::StringCompleter::QuerryType qt) const;
+		Type type(int qt) const;
 		sserialize::UByteArrayAdapter typeData(sserialize::StringCompleter::QuerryType qt) const;
 		
 	};

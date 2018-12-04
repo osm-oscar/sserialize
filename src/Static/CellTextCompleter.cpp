@@ -56,27 +56,29 @@ sserialize::UByteArrayAdapter CellTextCompleter::Payload::typeData(sserialize::S
 }
 
 
-CellTextCompleter::Payload::Type CellTextCompleter::Payload::type(sserialize::StringCompleter::QuerryType qt) const {
-	qt = (sserialize::StringCompleter::QuerryType) (qt & sserialize::StringCompleter::QT_EPSS);
-	sserialize::StringCompleter::QuerryType myTypes = types();
-
-	if (! (qt & myTypes )) {
-		if (qt & sserialize::StringCompleter::QT_PREFIX) {
-			qt = (sserialize::StringCompleter::QuerryType)(myTypes & sserialize::StringCompleter::QT_EXACT);
-		}
-		else if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
-			qt = (sserialize::StringCompleter::QuerryType)(myTypes & sserialize::StringCompleter::QT_SUFFIX);
-		}
-		else {
-			qt = sserialize::StringCompleter::QT_NONE;
-		}
+CellTextCompleter::Payload::Type CellTextCompleter::Payload::type(int qt) const {
+	qt &= sserialize::StringCompleter::QT_EPSS;
+	
+	if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
+		qt |= sserialize::StringCompleter::QT_EPSS;
 	}
 	
-	if (qt == sserialize::StringCompleter::QT_NONE || sserialize::popCount<unsigned int>(qt) != 1) {
+	if (qt & sserialize::StringCompleter::QT_SUFFIX) {
+		qt |= sserialize::StringCompleter::QT_PREFIX;
+	}
+	
+	if (qt & sserialize::StringCompleter::QT_PREFIX) {
+		qt |= sserialize::StringCompleter::QT_EXACT;
+	}
+	
+	qt &= types();
+	
+	if (qt == sserialize::StringCompleter::QT_NONE) {
 		return Type();
 	}
 	
-	uint32_t pos = sserialize::popCount((static_cast<uint32_t>(qt)-1) & types());
+	//return the highest available type
+	uint32_t pos = sserialize::popCount((qt >> 1) & types());
 	
 	uint32_t totalOffset = 0;
 	for(uint32_t i(1); i <= pos; ++i) {
