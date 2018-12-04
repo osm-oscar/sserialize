@@ -57,7 +57,6 @@ public:
 	template<sserialize::spatial::GeoShapeType GST = sserialize::spatial::GS_SHAPE>
 	auto get() const {
 		using return_type = typename detail::GeoShapeFromType<GST>::type;
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(GST, type());
 		return std::dynamic_pointer_cast<return_type>(priv());
 	}
 	
