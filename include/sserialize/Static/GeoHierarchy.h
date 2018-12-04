@@ -205,6 +205,9 @@ public:
 	GeoHierarchy(const UByteArrayAdapter & data);
 	virtual ~GeoHierarchy();
 	OffsetType getSizeInBytes() const;
+	
+	bool hasRegionItems() const;
+	bool hasRegionNeighbors() const;
 
 	const RegionDescriptionType & regions() const { return m_regions; }
 	const CellDescriptionType & cells() const { return m_cells; }
@@ -213,7 +216,6 @@ public:
 	const CellPtrListType & cellPtrs() const { return m_cellPtrs; }
 
 	uint32_t cellSize() const;
-	
 	uint32_t cellParentsBegin(uint32_t id) const;
 	uint32_t cellDirectParentsEnd(uint32_t id) const;
 	uint32_t cellParentsEnd(uint32_t id) const;
@@ -226,6 +228,7 @@ public:
 	uint32_t regionSize() const;
 	uint32_t storeIdToGhId(uint32_t storeId) const;
 	uint32_t ghIdToStoreId(uint32_t regionId) const;
+	bool regionHasItemsInfo(uint32_t regionId) const;
 	
 	uint32_t regionCellIdxPtr(uint32_t pos) const;
 	uint32_t regionExclusiveCellIdxPtr(uint32_t pos) const;
@@ -298,6 +301,7 @@ public:
 	inline uint32_t ghId() const { return m_pos; }
 	uint32_t storeId() const;
 	sserialize::spatial::GeoRect boundary() const;
+	bool hasItemsInfo() const;
 	uint32_t cellIndexPtr() const;
 	uint32_t exclusiveCellIndexPtr() const;
 	///Offset into PtrArray
@@ -355,6 +359,9 @@ public:
 	GeoHierarchy(const GeoHierarchy & other) : m_priv(other.m_priv) {}
 	virtual ~GeoHierarchy() {}
 	inline OffsetType getSizeInBytes() const { return m_priv->getSizeInBytes(); }
+	
+	bool hasRegionItems() const { return m_priv->hasRegionItems(); }
+	bool hasRegionNeighbors() const { return m_priv->hasRegionNeighbors(); }
 	
 	inline const RegionDescriptionType & regions() const { return m_priv->regions(); }
 	inline const CellDescriptionType & cells() const { return m_priv->cells(); }

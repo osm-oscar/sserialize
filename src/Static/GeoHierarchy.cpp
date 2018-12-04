@@ -212,6 +212,11 @@ sserialize::spatial::GeoRect Region::boundary() const {
 	return m_db->regionBoundary(m_pos);
 }
 
+
+bool Region::hasItemsInfo() const {
+	return m_db->regionHasItemsInfo(m_pos);
+}
+
 uint32_t Region::cellIndexPtr() const {
 	return m_db->regions().at(m_pos, RD_CELL_LIST_PTR);
 }
@@ -284,10 +289,12 @@ uint32_t Region::child(uint32_t pos) const {
 }
 
 uint32_t Region::itemsPtr() const {
-	return m_db->regions().at(m_pos, RD_ITEMS_PTR);
+	SSERIALIZE_CHEAP_ASSERT(hasItemsInfo());
+	return m_db->regionItemsPtr(m_pos);
 }
 
 uint32_t Region::itemsCount() const {
+	SSERIALIZE_CHEAP_ASSERT(hasItemsInfo());
 	return m_db->regionItemsCount(m_pos);
 }
 
@@ -312,6 +319,14 @@ OffsetType GeoHierarchy::getSizeInBytes() const {
 	return 1 + m_storeIdToGhId.getSizeInBytes() +
 			m_regions.getSizeInBytes() + m_regionPtrs.getSizeInBytes() + m_regionBoundaries.getSizeInBytes() +
 			m_cells.getSizeInBytes() + m_cellPtrs.getSizeInBytes() + m_cellBoundaries.getSizeInBytes();
+}
+
+bool GeoHierarchy::hasRegionItems() const {
+	return m_regions.bitCount(Region::RD_ITEMS_PTR) > 1 && m_regions.bitCount(Region::RD_ITEMS_COUNT) > 1;
+}
+
+bool GeoHierarchy::hasRegionNeighbors() const {
+	return m_regions.bitCount(Region::RD_NEIGHBORS_OFFSET) > 1;
 }
 
 uint32_t GeoHierarchy::cellSize() const {
@@ -365,10 +380,12 @@ uint32_t GeoHierarchy::regionExclusiveCellIdxPtr(uint32_t pos) const {
 }
 
 uint32_t GeoHierarchy::regionItemsPtr(uint32_t pos) const {
+	SSERIALIZE_CHEAP_ASSERT(hasRegionItems());
 	return m_regions.at(pos, Region::RD_ITEMS_PTR);
 }
 
 uint32_t GeoHierarchy::regionItemsCount(uint32_t pos) const {
+	SSERIALIZE_CHEAP_ASSERT(hasRegionItems());
 	return m_regions.at(pos, Region::RD_ITEMS_COUNT);
 }
 
@@ -429,6 +446,9 @@ uint32_t GeoHierarchy::ghIdToStoreId(uint32_t regionId) const {
 	return m_regions.at(regionId, Region::RD_STORE_ID);
 }
 
+bool GeoHierarchy::regionHasItemsInfo(uint32_t regionId) const {
+	return hasRegionItems();
+}
 
 sserialize::spatial::GeoRect GeoHierarchy::regionBoundary(uint32_t pos) const {
 	return m_regionBoundaries.at(pos);
