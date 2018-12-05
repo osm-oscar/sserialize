@@ -625,7 +625,7 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 	LessThan ltp(m_traits.nodeIdentifierLessThanComparator());
 	Equal ep(m_traits.nodeIdentifierEqualPredicate());
 	
-	sserialize::oom_sort<TWithProgressInfo, true>(
+	auto sortEnd = sserialize::oom_sort<TWithProgressInfo, true>(
 		m_entries.begin(), m_entries.end(), ltp,
 		otraits.maxMemoryUsage(),
 		otraits.sortConcurrency(),
@@ -634,6 +634,7 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 		30, //max wait
 		ep
 	);
+	m_entries.resize(sortEnd - m_entries.begin());
 	
 // 	sserialize::oom_unique<ValueEntry, Equal, TWithProgressInfo>(m_entries, otraits.maxMemoryUsage()/2, ep);
 	
