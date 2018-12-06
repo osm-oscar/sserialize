@@ -49,7 +49,7 @@ uint32_t TriangulationGridLocator::faceHint(const TriangulationGridLocator::Poin
 uint32_t TriangulationGridLocator::faceId(double lat, double lon) const {
 	if (gridContains(lat, lon)) {//BUG: hint is sometimes wrong
 		uint32_t hint = faceHint(lat, lon);
-		return m_trs.locate(Point(lat, lon), hint);
+		return m_trs.locate(Point(lat, lon), hint, Triangulation::TT_STRAIGHT);
 	}
 	return NullFace;
 }
