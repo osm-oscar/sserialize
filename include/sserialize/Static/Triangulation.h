@@ -384,7 +384,9 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 			p = cv;
 			
 			if (cv == q) {
-				return returnFaceFromVertex(circleVertex);
+				uint32_t resultFaceId = returnFaceFromVertex(circleVertex);
+				SSERIALIZE_NORMAL_ASSERT(face(resultFaceId).contains(target));
+				return resultFaceId;
 			}
 			//p->q goes through circleVertex, we have to find the right triangle
 			//That triangle has circleVertex as a vertex
@@ -407,6 +409,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 					//we do this by checking if it is to the right of the line l->r or on it
 					CGAL::Orientation lrqO = ot(myLP, myRP, q);
 					if (lrqO == CGAL::Orientation::RIGHT_TURN || lrqO == CGAL::COLLINEAR) {
+						SSERIALIZE_NORMAL_ASSERT(cf.contains(target));
 						return cf.id();
 					}
 					else {
@@ -427,6 +430,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 				}
 				else if (lvOt == CGAL::Orientation::COLLINEAR) {
 					if (oal(p, q, myLP)) { //q lies on the edge, this has to come first in case both p and q lie on vertices
+						SSERIALIZE_NORMAL_ASSERT(cf.contains(target));
 						return cf.id();
 					}
 					else if (oal(p, myLP, q)) {
@@ -436,6 +440,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 				}
 				else if (rvOt == CGAL::Orientation::COLLINEAR) {
 					if (oal(p, q, myRP)) { //q lies on the edge, this has to come first in case both p and q lie on vertices
+						SSERIALIZE_NORMAL_ASSERT(cf.contains(target));
 						return cf.id();
 					}
 					else if (oal(p, myRP, q)) {
@@ -501,6 +506,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 				//this is the case if q is to the right of l->s 
 				CGAL::Orientation rsqO = ot(rp, sp, q);
 				if (rsqO == CGAL::Orientation::LEFT_TURN || rsqO == CGAL::Orientation::COLLINEAR) {
+					SSERIALIZE_NORMAL_ASSERT(curFace.contains(target));
 					return curFace.id();
 				}
 				if (!curFace.isNeighbor((uint32_t)lvIndex)) {
@@ -516,6 +522,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 				//this is the case if q is to the left of r->s
 				CGAL::Orientation lsqO = ot(lp, sp, q);
 				if (lsqO == CGAL::Orientation::RIGHT_TURN || lsqO == CGAL::Orientation::COLLINEAR) {
+					SSERIALIZE_NORMAL_ASSERT(curFace.contains(target));
 					return curFace.id();
 				}
 				if (!curFace.isNeighbor((uint32_t)rvIndex)) {
@@ -662,6 +669,7 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 		currentFace = face(state.faceId);
 		visitor(currentFace);
 	}
+	SSERIALIZE_NORMAL_ASSERT(currentFace.contains(target));
 	return currentFace.id();
 }
 
