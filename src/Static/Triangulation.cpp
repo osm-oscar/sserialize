@@ -58,12 +58,34 @@ uint32_t Triangulation::Face::vertexId(uint32_t pos) const {
 	return m_p->faceInfo().at(m_pos, FI_VERTEX_BEGIN+pos);
 }
 
+uint32_t Triangulation::Face::vertexId(const Point & p) const {
+	for(uint32_t i(0); i < 3; ++i) {
+		if (p.equal(point(i), 0)) {
+			return i;
+		}
+	}
+	throw sserialize::OutOfBoundsException("sserialize::Static::spatial::Triangulation::Face::vertexId");
+}
+
 Triangulation::Vertex Triangulation::Face::vertex(uint32_t pos) const {
 	return Vertex(m_p, vertexId(pos));
 }
 
+Triangulation::Vertex Triangulation::Face::vertex(const Point & p) const {
+	return vertex( vertexId(p) );
+}
+
 Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
 	return m_p->points().at(vertexId(pos));
+}
+
+bool Triangulation::Face::isVertex(const Point & p) const {
+	for(uint32_t i(0); i < 3; ++i) {
+		if (p.equal(point(i), 0)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool Triangulation::Face::contains(const Triangulation::Point & p) const {

@@ -121,8 +121,11 @@ public:
 		uint32_t neighborId(uint32_t pos) const;
 		Face neighbor(uint32_t pos) const;
 		uint32_t vertexId(uint32_t pos) const;
+		uint32_t vertexId(const Point & p) const;
 		Vertex vertex(uint32_t pos) const;
+		Vertex vertex(const Point & p) const;
 		Point point(uint32_t pos) const;
+		bool isVertex(const Point & p) const;
 		bool contains(const Point & p) const;
 		bool intersects(const Point & p, const Point & q) const;
 		///inexact computed centroid
