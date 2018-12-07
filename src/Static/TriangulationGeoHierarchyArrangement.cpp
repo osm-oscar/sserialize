@@ -72,6 +72,44 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(double lat, double lon) co
 	return tmp;
 }
 
+
+std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, double lon) const {
+	auto face = m_grid.face(lat, lon);
+	if (!face.valid()) {
+		return std::set<uint32_t>();
+	}
+	
+	std::set<uint32_t> result;
+	if (face.isVertex(Point(lat, lon))) {
+		auto vertex = face.vertex(Point(lat, lon));
+		auto fit = vertex.facesBegin();
+		auto fend = vertex.facesEnd();
+		while(true) {
+			uint32_t tmp = m_faceIdToRefinedCellId.at(fit.face().id());
+			if (tmp < cellCount()) {
+				result.insert(tmp);
+			}
+			if (fit == fend) {
+				break;
+			}
+			else {
+				++fit;
+			}
+		}
+	}
+	else {
+		uint32_t tmp = m_faceIdToRefinedCellId.at(face.id());
+		if (tmp < cellCount()) {
+			result.insert(tmp);
+		}
+	}
+	return result;
+}
+
+std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(const Point & p) const {
+	return cellIds(p.lat(), p.lon());
+}
+
 sserialize::ItemIndex
 TriangulationGeoHierarchyArrangement::
 cellsBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spatial::GeoPoint& end, double radius) const {

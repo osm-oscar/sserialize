@@ -49,6 +49,8 @@ public:
 	inline const Triangulation & tds() const { return m_grid.tds(); }
 	uint32_t cellId(double lat, double lon) const;
 	uint32_t cellId(const Point & p) const;
+	std::set<uint32_t> cellIds(double lat, double lon) const;
+	std::set<uint32_t> cellIds(const Point & p) const;
 	uint32_t cellIdFromFaceId(uint32_t faceId) const;
 	///returns the id of a face that is part of the cell with id=cellId
 	uint32_t faceIdFromCellId(uint32_t cellId) const;
