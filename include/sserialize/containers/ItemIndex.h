@@ -69,6 +69,8 @@ public:
 	typedef sserialize::AbstractArrayIterator<uint32_t> const_iterator;
 	typedef const_iterator iterator;
 	
+	static constexpr uint32_t npos = std::numeric_limits<uint32_t>::max();
+	
 private:
 	void createPrivate(const UByteArrayAdapter & index, const ItemIndex::Types type);
 private:
@@ -99,7 +101,7 @@ public:
 	Types type() const;
 
 	int count(uint32_t id) const;
-	int find(uint32_t id) const;
+	uint32_t find(uint32_t id) const;
 
 	void putInto(DynamicBitSet & bitSet) const;
 	void putInto(std::vector<uint32_t> & dest) const;

@@ -12,7 +12,7 @@ public:
 	typedef detail::AbstractArrayIterator<uint32_t> const_iterator_base_type;
 	typedef detail::AbstractArrayIterator<uint32_t> * const_iterator;
 	typedef const_iterator iterator;
-	static constexpr uint32_t npos = 0xFFFFFFFF;
+	static constexpr uint32_t npos = sserialize::ItemIndex::npos;
 public:
 	ItemIndexPrivate();
 	virtual ~ItemIndexPrivate();

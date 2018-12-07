@@ -122,7 +122,7 @@ ItemIndex::const_iterator ItemIndex::cend() const {
 	return const_iterator(priv()->cend());
 }
 
-int ItemIndex::find(uint32_t id) const {
+uint32_t ItemIndex::find(uint32_t id) const {
 	return priv()->find(id);
 }
 
