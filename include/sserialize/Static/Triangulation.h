@@ -186,6 +186,7 @@ public:
 	uint32_t traverse(const Point & target, const Point & source, TVisitor visitor, uint32_t sourceHint = NullFace, TraversalType tt = TT_ZIG_ZAG) const;
 	
 	///Locate the face the point lies in, need exact predicates, hint: id of start face
+	///Traversal types may return different faces iff target is equal to a vertex point
 	uint32_t locate(const Point & target, uint32_t hint = 0, TraversalType tt = TT_ZIG_ZAG) const;
 	
 	///Explores the triangulation starting at startFace
