@@ -446,7 +446,7 @@ uint32_t GeoHierarchy::ghIdToStoreId(uint32_t regionId) const {
 	return m_regions.at(regionId, Region::RD_STORE_ID);
 }
 
-bool GeoHierarchy::regionHasItemsInfo(uint32_t regionId) const {
+bool GeoHierarchy::regionHasItemsInfo(uint32_t /*regionId*/) const {
 	return hasRegionItems();
 }
 
