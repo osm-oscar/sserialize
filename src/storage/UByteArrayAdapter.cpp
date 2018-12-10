@@ -316,6 +316,10 @@ void UByteArrayAdapter::advice(UByteArrayAdapter::AdviseType type, UByteArrayAda
 	m_priv->advice(type, m_offSet, count);
 }
 
+void UByteArrayAdapter::sync() {
+	m_priv->sync();
+}
+
 void UByteArrayAdapter::zero() {
 	if (isContiguous()) {
 		::memset(&operator[](0), 0, sizeof(uint8_t)*m_len);

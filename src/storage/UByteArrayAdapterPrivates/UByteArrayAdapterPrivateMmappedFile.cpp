@@ -31,6 +31,10 @@ void UByteArrayAdapterPrivateMmappedFile::advice(UByteArrayAdapter::AdviseType a
 	};
 }
 
+void UByteArrayAdapterPrivateMmappedFile::sync() {
+	m_file.sync();
+}
+
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateMmappedFile::size() const {
 	return m_file.size();
 }

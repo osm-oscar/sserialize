@@ -65,6 +65,8 @@ public:
 
 //advise api
 	virtual void advice(UByteArrayAdapter::AdviseType /*at*/, UByteArrayAdapter::SizeType /*begin*/, UByteArrayAdapter::SizeType /*end*/) {}
+	
+	virtual void sync() {}
 
 //manipulators
 	virtual void setDeleteOnClose(bool del) { m_deleteOnClose = del;}
