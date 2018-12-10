@@ -122,6 +122,7 @@ public:
 	FlatTrieBase(const sserialize::UByteArrayAdapter & src);
 	virtual ~FlatTrieBase() {}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
+	UByteArrayAdapter data() const;
 	uint32_t size() const;
 	inline const UByteArrayAdapter & strData() const { return m_strData; }
 	StaticStringsIterator staticStringsBegin() const;

@@ -111,6 +111,14 @@ UByteArrayAdapter::OffsetType FlatTrieBase::getSizeInBytes() const {
 	return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_strData.size()+m_trie.getSizeInBytes();
 }
 
+UByteArrayAdapter FlatTrieBase::data() const {
+	UByteArrayAdapter result(m_strData);
+	result -= 1+UByteArrayAdapter::OffsetTypeSerializedLength();
+	result.resetPtrs();
+	result.resize(getSizeInBytes());
+	return result;
+}
+
 uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 // 	std::cout << "FlatTrie::find: searching for " << str << " with prefixMatch=" << (prefixMatch ? "true" : "false") << std::endl;
 	if (size() == 0) {
