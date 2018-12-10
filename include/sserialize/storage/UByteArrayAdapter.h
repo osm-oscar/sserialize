@@ -285,6 +285,8 @@ public://constructors
 public:
 	///Tell UByteArrayAdapter about the intended usage of the next count bytes
 	void advice(AdviseType type, SizeType count);
+	///Sync all data to disk
+	void sync();
 public://templated get/put functions to specify the types via template parameters
 	template<typename TValue>
 	TValue get(UByteArrayAdapter::OffsetType pos) const;
