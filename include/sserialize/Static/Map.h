@@ -49,6 +49,9 @@ public:
 	value_type find(const key_type & key) const;
 	size_type
 	findPosition(const key_type & key) const;
+public:
+	template<typename T_ITERATOR>
+	static UByteArrayAdapter & create(T_ITERATOR begin, T_ITERATOR end, UByteArrayAdapter & dest);
 };
 
 template<typename TKey, typename TValue>
@@ -120,6 +123,19 @@ Map<TKey, TValue>::find(const TKey & key) const {
 	else {
 		return atPosition(pos);
 	}
+}
+
+template<typename TKey, typename TValue>
+template<typename T_ITERATOR>
+UByteArrayAdapter &
+Map<TKey, TValue>::create(T_ITERATOR begin, T_ITERATOR end, UByteArrayAdapter & dest) {
+	using value_type = typename std::iterator_traits<T_ITERATOR>::value_type;
+	sserialize::Static::ArrayCreator<value_type> ac;
+	for( ; begin != end; ++begin) {
+		ac.put(*begin);
+	}
+	ac.flush();
+	return dest;
 }
 
 template<typename TKey, typename TValue>
