@@ -285,6 +285,9 @@ CellQueryResult::const_iterator CellQueryResult::cend() const {
 }
 
 sserialize::ItemIndex CellQueryResult::flaten(uint32_t threadCount) const {
+	if (!cellCount()) {
+		return sserialize::ItemIndex();
+	}
 	if (uint64_t(5) * cellCount() > cellInfo()->cellSize()) {
 		if (threadCount == 1) {
 			DynamicBitSet bitset;
