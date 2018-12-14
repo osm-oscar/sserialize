@@ -130,7 +130,7 @@ template<typename T_ITERATOR>
 UByteArrayAdapter &
 Map<TKey, TValue>::create(T_ITERATOR begin, T_ITERATOR end, UByteArrayAdapter & dest) {
 	using value_type = typename std::iterator_traits<T_ITERATOR>::value_type;
-	sserialize::Static::ArrayCreator<value_type> ac;
+	sserialize::Static::ArrayCreator<value_type> ac(dest);
 	for( ; begin != end; ++begin) {
 		ac.put(*begin);
 	}
