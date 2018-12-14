@@ -80,20 +80,35 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, dou
 	}
 	
 	std::set<uint32_t> result;
-	if (face.isVertex(Point(lat, lon))) {
-		auto vertex = face.vertex(Point(lat, lon));
-		auto fit = vertex.facesBegin();
-		auto fend = vertex.facesEnd();
-		while(true) {
-			uint32_t tmp = m_faceIdToRefinedCellId.at(fit.face().id());
+	auto where = face.where(Point(lat, lon));
+	SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(where, face.CT_OUTSIDE);
+	if (where != face.CT_INSIDE) {
+		if (face.CT_ON_VERTEX_0 <= where && where <= face.CT_ON_VERTEX_2) {
+			auto vertex = face.vertex(where-face.CT_ON_VERTEX_0);
+			auto fit = vertex.facesBegin();
+			auto fend = vertex.facesEnd();
+			while(true) {
+				uint32_t tmp = m_faceIdToRefinedCellId.at(fit.face().id());
+				if (tmp < cellCount()) {
+					result.insert(tmp);
+				}
+				if (fit == fend) {
+					break;
+				}
+				else {
+					++fit;
+				}
+			}
+		}
+		else { //on edge
+			uint32_t tmp = m_faceIdToRefinedCellId.at(face.id());
 			if (tmp < cellCount()) {
 				result.insert(tmp);
 			}
-			if (fit == fend) {
-				break;
-			}
-			else {
-				++fit;
+			
+			tmp = m_faceIdToRefinedCellId.at(face.neighborId(where-face.CT_ON_EDGE_0));
+			if (tmp < cellCount()) {
+				result.insert(tmp);
 			}
 		}
 	}
