@@ -15,7 +15,7 @@ RLEStream::Creator::~Creator() {
 }
 
 void RLEStream::Creator::put(uint32_t value) {
-	int32_t myDiff = narrow_check<int32_t>((int64_t)value - (int64_t)m_prevId);
+	int32_t myDiff = narrow_check<int32_t>(int64_t(value) - int64_t(m_prevId));
 	if (myDiff == m_rleDiff) {
 		++m_rleCount;
 	}
@@ -35,16 +35,16 @@ void RLEStream::Creator::checkpoint(uint32_t value) {
 
 void RLEStream::Creator::flush() {
 	if (m_rleCount == 1) {
-		if (m_prevId > (uint32_t)std::abs(m_rleDiff)) {
+		if (m_prevId > uint32_t(std::abs(m_rleDiff))) {
 			if (m_rleDiff < 0) {
-				m_dest->putVlPackedUint64( (static_cast<uint64_t>(-m_rleDiff) << 2) | 0x1);
+				m_dest->putVlPackedUint64( (uint64_t(-m_rleDiff) << 2) | 0x1);
 			}
 			else {
-				m_dest->putVlPackedUint64( (static_cast<uint64_t>(m_rleDiff) << 2) | 0x0);
+				m_dest->putVlPackedUint64( (uint64_t(m_rleDiff) << 2) | 0x0);
 			}
 		}
 		else { //full id
-			m_dest->putVlPackedUint64((static_cast<uint64_t>(m_prevId) << 2) | 0x2);
+			m_dest->putVlPackedUint64((uint64_t(m_prevId) << 2) | 0x2);
 		}
 	}
 	else if (m_rleCount > 1) {
@@ -124,7 +124,7 @@ RLEStream & RLEStream::operator++() {
 	--m_curRleCount;
 	//is the following necessary? whats the result of UINT32_MAX-INT32_MAX
 	if (m_curRleDiff < 0) {
-		m_curId -= (uint32_t)(-m_curRleDiff);
+		m_curId -= uint32_t(-m_curRleDiff);
 	}
 	else {
 		m_curId += m_curRleDiff;
