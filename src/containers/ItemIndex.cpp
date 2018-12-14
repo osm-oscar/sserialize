@@ -127,7 +127,7 @@ uint32_t ItemIndex::find(uint32_t id) const {
 }
 
 int ItemIndex::count(uint32_t id) const {
-	return (find(id) < 0 ? 0 : 1);
+	return find(id) != npos; //false -> 0, true -> 1
 }
 
 void ItemIndex::putInto(DynamicBitSet & bitSet) const {
