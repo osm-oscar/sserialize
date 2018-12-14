@@ -88,6 +88,70 @@ bool Triangulation::Face::isVertex(const Point & p) const {
 	return false;
 }
 
+bool Triangulation::Face::isOnEdge(const Point & p) const {
+	auto w = where(p);
+	return CT_ON_EDGE_0 <= w && w <= CT_ON_EDGE_2;
+}
+
+int Triangulation::Face::edge(const Point & p) const {
+	auto w = where(p);
+	if (CT_ON_EDGE_0 <= w && w <= CT_ON_EDGE_2) {
+		return w-CT_ON_EDGE_0;
+	}
+	else {
+		return -1;
+	}
+}
+
+Triangulation::Face::ContainmentType Triangulation::Face::where(const Triangulation::Point & p) const {
+	detail::Triangulation::Orientation<Triangulation::Point> ot;
+	CGAL::Sign ot0cw = ot(point(0), point(Triangulation::cw(0)), p);
+	CGAL::Sign ot0ccw = ot(point(0), point(Triangulation::ccw(0)), p);
+	CGAL::Sign otcwccw = ot(point(Triangulation::cw(0)), point(Triangulation::ccw(0)), p);
+	
+	if (CGAL::RIGHT_TURN == ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::RIGHT_TURN == otcwccw) {
+		return CT_INSIDE;
+	}
+	else if (CGAL::LEFT_TURN != ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::RIGHT_TURN == otcwccw) {
+		if (ot0cw == CGAL::COLLINEAR) {
+			return Triangulation::Face::ContainmentType(CT_ON_EDGE_0+Triangulation::ccw(0));
+		}
+		else {
+			return CT_INSIDE;
+		}
+	}
+	else if (CGAL::RIGHT_TURN == ot0cw && CGAL::RIGHT_TURN != ot0ccw && CGAL::RIGHT_TURN == otcwccw) {
+		if (ot0ccw == CGAL::COLLINEAR) {
+			return Triangulation::Face::ContainmentType(CT_ON_EDGE_0+Triangulation::cw(0));
+		}
+		else {
+			return CT_INSIDE;
+		}
+	}
+	else if (CGAL::RIGHT_TURN == ot0cw && CGAL::LEFT_TURN == ot0ccw && CGAL::LEFT_TURN != otcwccw) {
+		if (otcwccw == CGAL::COLLINEAR) {
+			return CT_ON_EDGE_0;
+		}
+		else {
+			return CT_INSIDE;
+		}
+	}
+	else if (((CGAL::COLLINEAR == ot0cw)+(CGAL::COLLINEAR == ot0ccw)+(CGAL::COLLINEAR == otcwccw)) == 2) {
+		if (CGAL::COLLINEAR == ot0cw && CGAL::COLLINEAR == ot0ccw) {
+			return CT_ON_VERTEX_0;
+		}
+		else if (CGAL::COLLINEAR == ot0cw && CGAL::COLLINEAR == otcwccw) {
+			return Triangulation::Face::ContainmentType(CT_ON_VERTEX_0+Triangulation::cw(0));
+		}
+		else {
+			return Triangulation::Face::ContainmentType(CT_ON_VERTEX_0+Triangulation::ccw(0));
+		}
+	}
+	else {
+		return CT_OUTSIDE;
+	}
+};
+
 bool Triangulation::Face::contains(const Triangulation::Point & p) const {
 	detail::Triangulation::Orientation<Triangulation::Point> ot;
 	CGAL::Sign ot0cw = ot(point(0), point(Triangulation::cw(0)), p);

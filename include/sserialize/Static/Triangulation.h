@@ -109,6 +109,13 @@ public:
 	private:
 		Face(const Triangulation * p, uint32_t pos);
 	public:
+		enum ContainmentType {
+			CT_OUTSIDE=0x0,
+			CT_INSIDE=0x1,
+			CT_ON_EDGE_0=0x2, CT_ON_EDGE_1=CT_ON_EDGE_0+1, CT_ON_EDGE_2=CT_ON_EDGE_0+2,
+			CT_ON_VERTEX_0=0x8, CT_ON_VERTEX_1=CT_ON_VERTEX_0+1, CT_ON_VERTEX_2=CT_ON_VERTEX_0+2
+		};
+	public:
 		Face();
 		~Face();
 		inline uint32_t id() const { return m_pos; }
@@ -126,6 +133,10 @@ public:
 		Vertex vertex(const Point & p) const;
 		Point point(uint32_t pos) const;
 		bool isVertex(const Point & p) const;
+		bool isOnEdge(const Point & p) const;
+		///return the edge on which the point p lies
+		int edge(const Point & p) const;
+		ContainmentType where(const Point & p) const;
 		bool contains(const Point & p) const;
 		bool intersects(const Point & p, const Point & q) const;
 		///inexact computed centroid
