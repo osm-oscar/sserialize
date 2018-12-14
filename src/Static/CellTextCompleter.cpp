@@ -77,11 +77,10 @@ CellTextCompleter::Payload::Type CellTextCompleter::Payload::type(int qt) const 
 		return Type();
 	}
 	
-	//return the highest available type
-	uint32_t pos = sserialize::popCount((qt >> 1) & types());
+	uint32_t pos = sserialize::popCount(qt);
 	
 	uint32_t totalOffset = 0;
-	for(uint32_t i(1); i <= pos; ++i) {
+	for(uint32_t i(1); i < pos; ++i) {
 		totalOffset += m_offsets[i-1];
 	}
 
