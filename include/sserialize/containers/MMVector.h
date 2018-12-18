@@ -118,20 +118,26 @@ public:
 	}
 	
 	void shrink_to_fit() {
-		m_begin = resize(m_pP);
-		m_capacity = m_pP;
+		if (m_pP < m_capacity) {
+			m_begin = m_d.resize(m_pP);
+			m_capacity = m_pP;
+		}
 	}
-	
+	///deinits the memory and resets the size to 0, capacity may only increase
 	void resize(SizeType size, const TValue & v = TValue()) {
 		if (size < m_pP) {
 			sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::deinitMemory(m_begin+size, m_begin+m_pP);
 		}
-		m_begin = m_d.resize(size);
-		if (size > m_pP) {
-			sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::initMemory(m_begin+m_pP, m_begin+size, v);
+		else {
+			if (size > m_capacity) {
+				m_begin = m_d.resize(size);
+				m_capacity = size;
+			}
+			if (size > m_pP) {
+				sserialize::detail::MmappedMemory::MmappedMemoryHelper<TValue>::initMemory(m_begin+m_pP, m_begin+size, v);
+			}
 		}
 		m_pP = size;
-		m_capacity = size;
 	}
 	
 	template<typename... Args>
