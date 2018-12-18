@@ -11,8 +11,8 @@
 namespace sserialize {
 
 class TimeMeasurer {
-private:
-	struct timeval m_begin, m_end;
+public:
+	using TimeType = uint64_t;
 public:
 	TimeMeasurer() {
 		::memset(&m_begin, 0, sizeof(struct timeval));
@@ -29,38 +29,40 @@ public:
 		gettimeofday(&m_end, NULL);
 	}
 	
-	inline long beginTime() const {
+	inline TimeType beginTime() const {
 		return m_begin.tv_sec;
 	}
 	
 	/** @return returns the elapsed time in useconds  */
-	inline long elapsedTime() const {
+	inline TimeType elapsedTime() const {
 		long mtime, seconds, useconds;
 		seconds  = m_end.tv_sec  - m_begin.tv_sec;
 		useconds = m_end.tv_usec - m_begin.tv_usec;
-		mtime = (long)((double)((seconds) * 1000*1000 + useconds) + 0.5);
+		mtime = (TimeType)((double)((seconds) * 1000*1000 + useconds) + 0.5);
 		return mtime;
 	}
 	
-	inline long elapsedUseconds() const {
+	inline TimeType elapsedUseconds() const {
 		return elapsedTime();
 	}
 
-	inline long elapsedMilliSeconds() const {
+	inline TimeType elapsedMilliSeconds() const {
 		return elapsedTime()/1000;
 	}
 	
-	inline long elapsedSeconds() const {
+	inline TimeType elapsedSeconds() const {
 		return elapsedTime()/1000000;
 	}
 
-	inline long elapsedMinutes() {
+	inline TimeType elapsedMinutes() {
 		return elapsedSeconds()/60;
 	}
 	
 	inline void reset() {
 		m_begin = m_end;
 	}
+private:
+	struct timeval m_begin, m_end;
 };
 
 std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm);
