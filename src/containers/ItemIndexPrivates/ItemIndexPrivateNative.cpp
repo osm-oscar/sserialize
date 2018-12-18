@@ -129,9 +129,13 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateNative::symmetricDifference(const 
 }
 
 ItemIndexNativeCreator::ItemIndexNativeCreator(uint32_t maxSize) :
-m_mem((maxSize+1)*sizeof(uint32_t), MM_PROGRAM_MEMORY),
+m_mem((sserialize::UByteArrayAdapter::SizeType(maxSize)+1)*sizeof(uint32_t), MM_PROGRAM_MEMORY),
 m_it(m_mem.begin()+sizeof(uint32_t))
-{}
+{
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(maxSize, std::numeric_limits<uint32_t>::max());
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint64_t(m_mem.begin()), uint64_t(m_it));
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(uint64_t(m_it), uint64_t(m_mem.end()));
+}
 
 ItemIndexNativeCreator::~ItemIndexNativeCreator()
 {}
@@ -141,16 +145,20 @@ uint32_t ItemIndexNativeCreator::size() const {
 }
 
 void ItemIndexNativeCreator::push_back(uint32_t id) {
-	SSERIALIZE_CHEAP_ASSERT_SMALLER(m_it, m_mem.end());
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint64_t(m_it), uint64_t(m_mem.end()));
 	if (UNLIKELY_BRANCH(m_it >= m_mem.end())) {
 		throw sserialize::OutOfBoundsException("sserialize::ItemIndexNativeCreator::push_back");
 	}
 	::memmove(m_it, &id, sizeof(uint32_t));
 	m_it += sizeof(uint32_t);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(uint64_t(m_it), uint64_t(m_mem.end()));
 }
 
 void ItemIndexNativeCreator::flush() {
-	m_mem.resize(m_it - m_mem.begin());
+	SSERIALIZE_CHEAP_ASSERT_SMALLER(uint64_t(m_mem.begin()), uint64_t(m_it));
+	auto finalSize = m_it - m_mem.begin();
+	m_mem.resize(finalSize); //resize invalidates iterators
+	m_it = m_mem.begin()+finalSize;
 	data().putUint32(0, size());
 }
 
