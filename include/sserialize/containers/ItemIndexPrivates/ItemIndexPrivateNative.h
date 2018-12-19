@@ -19,20 +19,6 @@ namespace ItemIndexPrivate {
   */
 
 class ItemIndexPrivateNative final: public sserialize::ItemIndexPrivate {
-private:
-	uint32_t m_size;
-	UByteArrayAdapter::MemoryView m_dataMem;
-private:
-	inline uint32_t uncheckedAt(uint32_t pos, const uint8_t * data) const {
-		data += sizeof(uint32_t)*pos;
-		uint32_t res;
-		::memmove(&res, data, sizeof(uint32_t));
-		return res;
-	}
-	
-	template<typename TFunc>
-	sserialize::ItemIndexPrivate * genericSetOp(const ItemIndexPrivateNative * other) const;
-	
 public:
 	ItemIndexPrivateNative();
 	ItemIndexPrivateNative(const sserialize::UByteArrayAdapter & data);
@@ -52,6 +38,9 @@ public:
 	///return the mean bit per number including header
 	virtual uint8_t bpn() const override;
 	
+
+	virtual const_iterator cbegin() const override;
+	virtual const_iterator cend() const override;
 	
 	virtual void putInto(sserialize::DynamicBitSet & bitSet) const override;
 	virtual void putInto(uint32_t* dest) const override;
@@ -72,6 +61,34 @@ public:
 	static bool create(const T_SORTED_CONTAINER & src, UByteArrayAdapter & dest) {
 		return create(src.cbegin(), src.cend(), dest);
 	}
+private:
+	class MyIterator: public ItemIndexPrivate::const_iterator_base_type {
+	public:
+		MyIterator(const MyIterator & other) = default;
+		MyIterator(uint8_t const * data);
+		virtual ~MyIterator();
+		virtual uint32_t get() const override;
+		virtual void next() override;
+		virtual bool notEq(const ItemIndexPrivate::const_iterator_base_type * other) const override;
+		virtual bool eq(const ItemIndexPrivate::const_iterator_base_type * other) const override;
+		virtual ItemIndexPrivate::const_iterator_base_type * copy() const override;
+	private:
+		uint8_t const * m_data;
+	};
+private:
+	inline uint32_t uncheckedAt(uint32_t pos, const uint8_t * data) const {
+		data += sizeof(uint32_t)*pos;
+		uint32_t res;
+		::memmove(&res, data, sizeof(uint32_t));
+		return res;
+	}
+	
+	template<typename TFunc>
+	sserialize::ItemIndexPrivate * genericSetOp(const ItemIndexPrivateNative * other) const;
+private:
+	uint32_t m_size;
+	UByteArrayAdapter::MemoryView m_dataMem;
+
 };
 
 template<typename T_UINT32_ITERATOR>

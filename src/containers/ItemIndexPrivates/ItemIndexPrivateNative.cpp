@@ -7,6 +7,41 @@ namespace sserialize {
 namespace detail {
 namespace ItemIndexPrivate {
 
+ItemIndexPrivateNative::MyIterator::MyIterator(uint8_t const * data) :
+m_data(data)
+{}
+
+ItemIndexPrivateNative::MyIterator::~MyIterator() {}
+
+uint32_t
+ItemIndexPrivateNative::MyIterator::get() const {
+	uint32_t res;
+	::memmove(&res, m_data, sizeof(uint32_t));
+	return res;
+}
+
+void
+ItemIndexPrivateNative::MyIterator::next() {
+	m_data += sizeof(uint32_t);
+}
+
+bool
+ItemIndexPrivateNative::MyIterator::notEq(const ItemIndexPrivate::const_iterator_base_type * other) const {
+	SSERIALIZE_CHEAP_ASSERT(dynamic_cast<MyIterator const*>(other));
+	return m_data !=  static_cast<MyIterator const*>(other)->m_data;
+}
+
+bool
+ItemIndexPrivateNative::MyIterator::eq(const ItemIndexPrivate::const_iterator_base_type * other) const {
+	SSERIALIZE_CHEAP_ASSERT(dynamic_cast<MyIterator const*>(other));
+	return m_data ==  static_cast<MyIterator const*>(other)->m_data;
+}
+
+sserialize::ItemIndexPrivate::const_iterator_base_type *
+ItemIndexPrivateNative::MyIterator::copy() const {
+	return new ItemIndexPrivateNative::MyIterator(m_data);
+}
+
 ItemIndexPrivateNative::ItemIndexPrivateNative(const UByteArrayAdapter& data) :
 m_size(data.getUint32(0)),
 m_dataMem( UByteArrayAdapter(data, sserialize::SerializationInfo<uint32_t>::length, m_size*sizeof(uint32_t)/sizeof(uint8_t)).asMemView() )
@@ -94,6 +129,15 @@ UByteArrayAdapter ItemIndexPrivateNative::data() const {
 
 sserialize::ItemIndex::Types ItemIndexPrivateNative::type() const {
 	return sserialize::ItemIndex::T_NATIVE;
+}
+
+
+ItemIndexPrivateNative::const_iterator ItemIndexPrivateNative::cbegin() const {
+	return new MyIterator(m_dataMem.get());
+}
+
+ItemIndexPrivateNative::const_iterator ItemIndexPrivateNative::cend() const {
+	return new MyIterator(m_dataMem.get()+size()*sizeof(uint32_t));
 }
 
 sserialize::ItemIndexPrivate* ItemIndexPrivateNative::intersect(const ItemIndexPrivate* other) const {
