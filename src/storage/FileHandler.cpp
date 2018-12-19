@@ -6,6 +6,8 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <thread>
+#include <chrono>
 
 
 namespace sserialize {
@@ -167,7 +169,9 @@ bool FileHandler::close(int fd, void * mem, OffsetType size, bool sync) {
 
 int FileHandler::shmCreate(std::string& fileName) {
 	std::stringstream ss;
-	ss << "/" << m_shmPrefix << rand() << rand();
+	ss << "/" << m_shmPrefix;
+	ss << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	ss << std::this_thread::get_id();
 	fileName = ss.str();
 	if (fileName.size() > 255) {
 		fileName.resize(255);
