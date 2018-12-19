@@ -265,7 +265,7 @@ public:
 	MmappedMemorySharedMemory(OffsetType size) : m_data(0), m_size(0) {
 		m_fd = FileHandler::shmCreate(m_name);
 		if (m_fd < 0) {
-			throw sserialize::CreationException("sserialize::MmappedMemorySharedMemory unable to create shm region");
+			throw sserialize::CreationException("sserialize::MmappedMemorySharedMemory unable to create shm region with a size of " + std::to_string(size));
 		}
 		
 		m_data = (TValue*) FileHandler::resize(m_fd, 0, 0, size*sizeof(TValue), false, true);
