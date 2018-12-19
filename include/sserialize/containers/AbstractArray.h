@@ -55,11 +55,13 @@ public:
 	virtual TReturnType get() const override { return *m_it;}
 	virtual void next() override { ++m_it;}
 	virtual bool notEq(const AbstractArrayIterator<TReturnType> * other) const override {
-		const AbstractArrayIteratorDefaultImp * oIt = dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other));
+		const AbstractArrayIteratorDefaultImp * oIt = static_cast<const AbstractArrayIteratorDefaultImp* >(other);
 		return !oIt || oIt->m_it != m_it;
 	}
 	virtual bool eq(const AbstractArrayIterator<TReturnType> * other) const override {
-		const AbstractArrayIteratorDefaultImp * oIt = dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const AbstractArrayIteratorDefaultImp* >(other));
+		const AbstractArrayIteratorDefaultImp * oIt = static_cast<const AbstractArrayIteratorDefaultImp* >(other);
 		return oIt && !(oIt->m_it != m_it);
 	}
 	

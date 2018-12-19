@@ -356,11 +356,13 @@ public:
 	virtual TReturnType get() const override { return m_data->at(m_pos);}
 	virtual void next() override { m_pos += (m_data->size() > m_pos ? 1 : 0);}
 	virtual bool notEq(const MyBaseClass * other) const override {
-		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other));
+		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = static_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
 		return !oIt || oIt->m_data != m_data || oIt->m_pos != m_pos;
 	}
 	virtual bool eq(const MyBaseClass * other) const override {
-		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
+		SSERIALIZE_CHEAP_ASSERT(dynamic_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other));
+		const detail::VectorAbstractArrayIterator<TReturnType> * oIt = static_cast<const detail::VectorAbstractArrayIterator<TReturnType>* >(other);
 		return oIt && oIt->m_data == m_data && oIt->m_pos != m_pos;
 	};
 	virtual sserialize::detail::AbstractArrayIterator<TReturnType> * copy() const override {
