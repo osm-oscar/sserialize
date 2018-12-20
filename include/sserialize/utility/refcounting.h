@@ -196,11 +196,20 @@ public:
 public:
 	RCPtrWrapper() : MyBaseClass(0) {};
 	explicit RCPtrWrapper(RCObj * data) : MyBaseClass(data) {}
-	RCPtrWrapper(const RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
-	RCPtrWrapper(const RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) : MyBaseClass(other.priv()) {}
+	template<typename RcObjSubClass, typename TDummy = typename std::enable_if<std::is_base_of<RCObj, RcObjSubClass>::value>::type >
+	RCPtrWrapper(const RCPtrWrapper<RcObjSubClass, T_CAN_DISABLE_REFCOUNTING> & other) :
+	MyBaseClass(other.priv())
+	{}
+	
+	template<typename RcObjSubClass, typename TDummy = typename std::enable_if<std::is_base_of<RCObj, RcObjSubClass>::value>::type >
+	RCPtrWrapper(const RCWrapper<RcObjSubClass, T_CAN_DISABLE_REFCOUNTING> & other) :
+	MyBaseClass(other.priv())
+	{}
+	
 	virtual ~RCPtrWrapper() {}
-
-	RCPtrWrapper & operator=(const RCPtrWrapper & other) {
+	
+	template<typename RcObjSubClass, typename TDummy = typename std::enable_if<std::is_base_of<RCObj, RcObjSubClass>::value>::type >
+	RCPtrWrapper & operator=(const RCPtrWrapper<RcObjSubClass, T_CAN_DISABLE_REFCOUNTING> & other) {
 		reset(other.priv());
 		return *this;
 	}
