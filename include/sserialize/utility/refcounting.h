@@ -62,9 +62,11 @@ public:
 	{
 		reset(p);
 	}
+	RCBase(RCBase const &) = delete;
 	virtual ~RCBase() {
 		reset(0);
 	}
+	RCBase& operator=(RCBase const&) = delete;
 	bool enabledRC() {
 		return m_enabled;
 	}
@@ -121,9 +123,11 @@ public:
 	RCBase(RCObj* p) : m_priv(0) {
 		reset(p);
 	}
+	RCBase(RCBase const &) = delete;
 	virtual ~RCBase() {
 		reset(0);
 	}
+	RCBase& operator=(RCBase const&) = delete;
 	bool enabledRC() {
 		return true;
 	}
@@ -186,6 +190,7 @@ protected:
 template<typename RCObj, bool T_CAN_DISABLE_REFCOUNTING = false>
 class RCPtrWrapper final : public detail::RCBase<RCObj, T_CAN_DISABLE_REFCOUNTING> {
 public:
+	using Self = RCPtrWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>;
 	typedef RCObj element_type;
 	friend class RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING>;
 private:
@@ -196,6 +201,7 @@ public:
 public:
 	RCPtrWrapper() : MyBaseClass(0) {};
 	explicit RCPtrWrapper(RCObj * data) : MyBaseClass(data) {}
+	
 	template<typename RcObjSubClass, typename TDummy = typename std::enable_if<std::is_base_of<RCObj, RcObjSubClass>::value>::type >
 	RCPtrWrapper(const RCPtrWrapper<RcObjSubClass, T_CAN_DISABLE_REFCOUNTING> & other) :
 	MyBaseClass(other.priv())
@@ -206,10 +212,23 @@ public:
 	MyBaseClass(other.priv())
 	{}
 	
+	RCPtrWrapper(const Self & other) :
+	MyBaseClass(other.priv())
+	{}
+
+	RCPtrWrapper(const RCWrapper<RCObj, T_CAN_DISABLE_REFCOUNTING> & other) :
+	MyBaseClass(other.priv())
+	{}
+	
 	virtual ~RCPtrWrapper() {}
 	
 	template<typename RcObjSubClass, typename TDummy = typename std::enable_if<std::is_base_of<RCObj, RcObjSubClass>::value>::type >
 	RCPtrWrapper & operator=(const RCPtrWrapper<RcObjSubClass, T_CAN_DISABLE_REFCOUNTING> & other) {
+		reset(other.priv());
+		return *this;
+	}
+
+	RCPtrWrapper & operator=(const Self & other) {
 		reset(other.priv());
 		return *this;
 	}
