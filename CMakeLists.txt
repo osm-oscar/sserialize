@@ -333,6 +333,7 @@ set(EXTERNAL_SOURCES_CPP
 )
 
 set(INCLUDE_HEADERS
+include/sserialize/Static/Version.h
 include/sserialize/Static/CQRDilator.h
 include/sserialize/Static/Completer.h
 include/sserialize/Static/DynamicKeyValueObjectStore.h
