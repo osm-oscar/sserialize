@@ -17,7 +17,7 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 	
 	if (elusec/div_h) {
 		out << elusec/div_h << "h";
-		elusec -= elusec%div_h;
+		elusec = elusec%div_h;
 	}
 	
 	if (hasPrev || elusec/div_m) {
@@ -25,7 +25,7 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 			out << " ";
 		}
 		out << elusec/div_m << "m";
-		elusec -= elusec%div_m;
+		elusec = elusec%div_m;
 		hasPrev = true;
 		numPrints += 1;
 	}
@@ -35,7 +35,7 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 			out << " ";
 		}
 		out << elusec/div_s << "s";
-		elusec -= elusec%div_s;
+		elusec = elusec%div_s;
 		hasPrev = true;
 		numPrints += 1;
 	}
@@ -45,7 +45,7 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 			out << " ";
 		}
 		out << elusec/div_ms << "ms";
-		elusec -= elusec%div_ms;
+		elusec = elusec%div_ms;
 		hasPrev = true;
 		numPrints += 1;
 	}
