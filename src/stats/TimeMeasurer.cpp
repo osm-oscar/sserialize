@@ -54,7 +54,7 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 		if (hasPrev) {
 			out << " ";
 		}
-		out << elusec<< "um";
+		out << elusec<< "us";
 	}
 	return out;
 }
