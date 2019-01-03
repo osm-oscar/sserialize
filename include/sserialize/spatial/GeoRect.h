@@ -46,6 +46,8 @@ public:
 	
 	double diagInM() const;
 	double lengthInM() const;
+	///in m^2
+	double area() const;
 	
 	double length() const;
 	

@@ -114,6 +114,22 @@ double GeoRect::lengthInM() const {
 	return dist;
 }
 
+
+double GeoRect::area() const {
+	double A, P;
+	struct geod_geodesic g;
+	struct geod_polygon p;
+	geod_init(&g, 6378137, 1/298.257223563);
+	geod_polygon_init(&p, 0);
+
+	geod_polygon_addpoint(&g, &p,  minLat(),  minLon());
+	geod_polygon_addpoint(&g, &p,  minLat(), maxLon());
+	geod_polygon_addpoint(&g, &p, maxLat(),  maxLon());
+	geod_polygon_addpoint(&g, &p, maxLat(),  minLon());
+	geod_polygon_compute(&g, &p, 0, 1, &A, &P);
+	return std::abs<double>(A);
+}
+
 bool GeoRect::overlap(const GeoRect & other) const {
 	if ((m_lat[0] > other.m_lat[1]) || // this is left of other
 		(m_lat[1] < other.m_lat[0]) || // this is right of other
