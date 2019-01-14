@@ -88,9 +88,12 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, dou
 			auto fit = vertex.facesBegin();
 			auto fend = vertex.facesEnd();
 			while(true) {
-				uint32_t tmp = m_faceIdToRefinedCellId.at(fit.face().id());
-				if (tmp < cellCount()) {
-					result.insert(tmp);
+				auto cf = fit.face();
+				if (cf.valid()) {
+					uint32_t tmp = m_faceIdToRefinedCellId.at(cf.id());
+					if (tmp < cellCount()) {
+						result.insert(tmp);
+					}
 				}
 				if (fit == fend) {
 					break;
@@ -106,9 +109,12 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, dou
 				result.insert(tmp);
 			}
 			
-			tmp = m_faceIdToRefinedCellId.at(face.neighborId(where-face.CT_ON_EDGE_0));
-			if (tmp < cellCount()) {
-				result.insert(tmp);
+			auto nFace = face.neighbor(where-face.CT_ON_EDGE_0);
+			if (nFace.valid()) {
+				tmp = m_faceIdToRefinedCellId.at(nFace.id());
+				if (tmp < cellCount()) {
+					result.insert(tmp);
+				}
 			}
 		}
 	}
