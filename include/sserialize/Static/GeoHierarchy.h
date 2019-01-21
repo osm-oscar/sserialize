@@ -453,7 +453,7 @@ public:
 	virtual ~SubSet()  {}
 	inline const NodePtr & root() const { return m_root;}
 	inline const CellQueryResult & cqr() const { return m_cqr; }
-	inline const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
+	const sserialize::Static::spatial::GeoHierarchy & geoHierarchy() const;
 	///Sparse SubSets have no itemcounts and need a recursive flattening strategy
 	inline bool sparse() const { return m_sparse; }
 	sserialize::ItemIndex items(const NodePtr & node) const;
