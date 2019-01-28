@@ -6,6 +6,12 @@
 namespace sserialize {
 
 struct FileHandler {
+	
+	static bool fileExists(std::string const & fileName);
+	
+	static OffsetType fileSize(std::string const & fileName);
+	static OffsetType fileSize(int fd);
+	
 	static void * mmapFile(int fd, OffsetType size, bool prePopulate, bool randomAccess);
 	//mmap a file and create if it does not exist
 	static void * mmapFile(const std::string & fileName, int & fd, OffsetType & size, bool prePopulate, bool randomAccess);
@@ -27,9 +33,6 @@ struct FileHandler {
 
 	///Throws IOException on error
 	static void pread(int fd, void * dest, OffsetType size, OffsetType offset);
-	
-	static OffsetType fileSize(const std::string & str);
-	static OffsetType fileSize(int fd);
 	
 	static void setShmPrefix(const std::string & name);
 	static const std::string & getShmPrefix();

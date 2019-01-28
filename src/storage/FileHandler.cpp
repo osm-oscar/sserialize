@@ -5,12 +5,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <thread>
 #include <chrono>
 
 
 namespace sserialize {
+	
+bool FileHandler::fileExists(std::string const & fileName) {
+	struct ::stat64 stFileInfo;
+	return (::stat64(fileName.c_str(), &stFileInfo) == 0 );
+}
+
+OffsetType FileHandler::fileSize(std::string const & fileName) {
+	struct ::stat64 stFileInfo;
+	if (::stat64(fileName.c_str(), &stFileInfo) == 0) {
+		return stFileInfo.st_size;
+	}
+	return 0;
+}
+
+OffsetType FileHandler::fileSize(int fd) {
+	struct ::stat64 stFileInfo;
+	if (::fstat64(fd, &stFileInfo) == 0) {
+		return stFileInfo.st_size;
+	}
+	return 0;
+}
 
 void * FileHandler::mmapFile(int fd, OffsetType fileSize, bool prePopulate, bool randomAccess) {
 	int param = MAP_SHARED;
@@ -32,7 +54,7 @@ void * FileHandler::mmapFile(int fd, OffsetType fileSize, bool prePopulate, bool
 }
 
 void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType & fileSize, bool prePopulate, bool randomAccess) {
-	bool fExisted = MmappedFile::fileExists(fileName);
+	bool fExisted = FileHandler::fileExists(fileName);
 	fd = ::open(fileName.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		return 0;
@@ -46,7 +68,7 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 		fileSize = 512;
 	}
 	else {
-		fileSize = MmappedFile::fileSize(fd);
+		fileSize = FileHandler::fileSize(fd);
 	}
 		
 	void * d = mmapFile(fd, fileSize, prePopulate, randomAccess);
@@ -228,14 +250,6 @@ void FileHandler::pread(int fd, void * dest, OffsetType size, OffsetType offset)
 	}
 }
 
-
-OffsetType FileHandler::fileSize(const std::string & str) {
-	return MmappedFile::fileSize(str);
-}
-
-OffsetType FileHandler::fileSize(int fd) {
-	return MmappedFile::fileSize(fd);
-}
 
 void FileHandler::setShmPrefix(const std::string& name) {
 	m_shmPrefix = name;
