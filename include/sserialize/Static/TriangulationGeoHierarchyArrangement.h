@@ -70,6 +70,9 @@ public:
 	sserialize::ItemIndex trianglesAlongPath(const std::vector<sserialize::spatial::GeoPoint>::iterator & begin, const std::vector<sserialize::spatial::GeoPoint>::iterator & end) const;
 	template<typename T_GEOPOINT_ITERATOR>
 	inline sserialize::ItemIndex trianglesAlongPath(const T_GEOPOINT_ITERATOR & begin, const T_GEOPOINT_ITERATOR & end) const;
+public:
+	void statsSummary(std::ostream & out) const;
+	void stats(std::ostream & out) const;
 };
 
 

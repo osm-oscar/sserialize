@@ -323,5 +323,37 @@ TriangulationGeoHierarchyArrangement::trianglesAlongPath(const std::vector<sseri
 	return this->trianglesAlongPath(myBegin, myEnd);
 }
 
+void
+TriangulationGeoHierarchyArrangement::statsSummary(std::ostream & out) const {
+	sserialize::MinMaxMean<double> area;
+	
+	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+		double cellArea = 0.0;
+		this->cfGraph(i).visitCB([&cellArea](Triangulation::Face const & face) {
+			cellArea += face.area();
+		});
+		area.update(cellArea);
+	}
+	std::cout << "# cells: " << cellCount() << '\n';
+	std::cout << "min cell area km^2: " << area.min()/(1000*1000) << '\n'; 
+	std::cout << "mean cell area km^2: " << area.mean()/(1000*1000) << '\n'; 
+	std::cout << "max cell area km^2: " << area.max()/(1000*1000) << '\n'; 
+	std::cout << std::flush;
+}
+
+void
+TriangulationGeoHierarchyArrangement::stats(std::ostream & out) const {
+	out << "cell id;area;number of triangles\n"; 
+	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+		double cellArea = 0.0;
+		uint32_t triangCount = 0;
+		this->cfGraph(i).visitCB([&cellArea, &triangCount](Triangulation::Face const & face) {
+			cellArea += face.area();
+			++triangCount;
+		});
+		out << i << ';' << cellArea << ';' << triangCount << '\n';
+	}
+	out << std::flush;
+}
 
 }}}//end namespace
