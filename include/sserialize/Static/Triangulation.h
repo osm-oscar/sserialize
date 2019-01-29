@@ -147,6 +147,9 @@ public:
 		void dump() const;
 		bool operator==(const Face & other) const;
 		bool operator!=(const Face & other) const;
+		//inexact area computation on sphere s^2 in m^2
+		double area() const;
+		
 	};
 	
 	class FaceCirculator final {
