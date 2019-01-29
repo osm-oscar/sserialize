@@ -334,11 +334,11 @@ TriangulationGeoHierarchyArrangement::statsSummary(std::ostream & out) const {
 		});
 		area.update(cellArea);
 	}
-	std::cout << "# cells: " << cellCount() << '\n';
-	std::cout << "min cell area km^2: " << area.min()/(1000*1000) << '\n'; 
-	std::cout << "mean cell area km^2: " << area.mean()/(1000*1000) << '\n'; 
-	std::cout << "max cell area km^2: " << area.max()/(1000*1000) << '\n'; 
-	std::cout << std::flush;
+	out << "# cells: " << cellCount() << '\n';
+	out << "min cell area km^2: " << area.min()/(1000*1000) << '\n'; 
+	out << "mean cell area km^2: " << area.mean()/(1000*1000) << '\n'; 
+	out << "max cell area km^2: " << area.max()/(1000*1000) << '\n'; 
+	out << std::flush;
 }
 
 void
