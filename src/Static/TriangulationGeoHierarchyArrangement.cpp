@@ -1,6 +1,7 @@
 #include <sserialize/Static/TriangulationGeoHierarchyArrangement.h>
 #include <sserialize/utility/exceptions.h>
 #include <sserialize/spatial/LatLonCalculations.h>
+#include <sserialize/mt/ThreadPool.h>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
@@ -325,26 +326,45 @@ TriangulationGeoHierarchyArrangement::trianglesAlongPath(const std::vector<sseri
 
 void
 TriangulationGeoHierarchyArrangement::statsSummary(std::ostream & out) const {
-	sserialize::MinMaxMean<double> area;
+	struct State {
+		std::mutex lock;
+		sserialize::MinMaxMean<double> area;
+		const TriangulationGeoHierarchyArrangement * that;
+	};
+	struct Worker {
+		Worker(State * state) : state(state) {}
+		Worker(Worker const & other) : state(other.state) {}
+		~Worker() {
+			std::lock_guard<std::mutex> lck(state->lock);
+			state->area.update(area);
+		}
+		State * state;
+		sserialize::MinMaxMean<double> area;
+		void operator()() {
+			for(uint32_t i(0), s(state->that->cellCount()); i < s; ++i) {
+				double cellArea = 0.0;
+				state->that->cfGraph(i).visitCB([&cellArea](Triangulation::Face const & face) {
+					cellArea += face.area();
+				});
+				area.update(cellArea);
+			}
+		}
+	};
+	State state;
+	state.that = this;
+	sserialize::ThreadPool::execute(Worker(&state), 0, sserialize::ThreadPool::CopyTaskTag());
 	
-	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
-		double cellArea = 0.0;
-		this->cfGraph(i).visitCB([&cellArea](Triangulation::Face const & face) {
-			cellArea += face.area();
-		});
-		area.update(cellArea);
-	}
 	out << "# cells: " << cellCount() << '\n';
-	out << "min cell area km^2: " << area.min()/(1000*1000) << '\n'; 
-	out << "mean cell area km^2: " << area.mean()/(1000*1000) << '\n'; 
-	out << "max cell area km^2: " << area.max()/(1000*1000) << '\n'; 
+	out << "min cell area km^2: " << state.area.min()/(1000*1000) << '\n'; 
+	out << "mean cell area km^2: " << state.area.mean()/(1000*1000) << '\n'; 
+	out << "max cell area km^2: " << state.area.max()/(1000*1000) << '\n'; 
 	out << std::flush;
 }
 
 void
 TriangulationGeoHierarchyArrangement::stats(std::ostream & out) const {
 	out << "cell id;area;number of triangles\n"; 
-	for(uint32_t i(0), s(cellCount()); i < s; ++i) {
+	for(uint32_t i(1), s(cellCount()); i < s; ++i) {
 		double cellArea = 0.0;
 		uint32_t triangCount = 0;
 		this->cfGraph(i).visitCB([&cellArea, &triangCount](Triangulation::Face const & face) {

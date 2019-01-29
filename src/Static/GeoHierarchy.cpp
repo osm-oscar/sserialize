@@ -618,7 +618,6 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	uint32_t largestCellId = 0;
 	uint32_t smallestCellSize = 0xFFFFFFFF;
 	uint32_t smallestCellId = 0;
-	sserialize::MinMaxMean<double> cellArea;
 	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
 		uint32_t cellItemCount = cellItemsCount(i);
 		cellItemSizes[i] = cellItemCount;
@@ -631,7 +630,17 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 			smallestCellId = i;
 		}
 		cellAncestorCount[i] = cellParentsSize(i);
-		cellArea.update(cellBoundary(i).area());
+	}
+	
+	sserialize::MinMaxMean<double> cellArea;
+	sserialize::MinMaxMean<double> rootCellArea;
+	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
+		if (cellParentsSize(i)) {
+			cellArea.update(cellBoundary(i).area());
+		}
+		else {
+			rootCellArea.update(cellBoundary(i).area());
+		}
 	}
 	
 	std::sort(cellDepths.begin(), cellDepths.end());
@@ -677,6 +686,10 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	out << "\tmin: " << cellArea.min()/(1000*1000) << "\n";
 	out << "\tmean: " << cellArea.mean()/(1000*1000) << "\n";
 	out << "\tmax: " << cellArea.max()/(1000*1000) << "\n";
+	out << "Root cell area info [km^2]:\n";
+	out << "\tmin: " << rootCellArea.min()/(1000*1000) << "\n";
+	out << "\tmean: " << rootCellArea.mean()/(1000*1000) << "\n";
+	out << "\tmax: " << rootCellArea.max()/(1000*1000) << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
