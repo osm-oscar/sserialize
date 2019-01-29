@@ -618,6 +618,7 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	uint32_t largestCellId = 0;
 	uint32_t smallestCellSize = 0xFFFFFFFF;
 	uint32_t smallestCellId = 0;
+	sserialize::MinMaxMean<double> cellArea;
 	for(uint32_t i(0), s(cellSize()); i < s; ++i) {
 		uint32_t cellItemCount = cellItemsCount(i);
 		cellItemSizes[i] = cellItemCount;
@@ -630,6 +631,7 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 			smallestCellId = i;
 		}
 		cellAncestorCount[i] = cellParentsSize(i);
+		cellArea.update(cellBoundary(i).area());
 	}
 	
 	std::sort(cellDepths.begin(), cellDepths.end());
@@ -671,6 +673,10 @@ std::ostream & GeoHierarchy::printStats(std::ostream & out, const sserialize::St
 	out << "\tmax: " << cellAncestorCount.back() << "\n";
 	out << "\tmean: " << ca_mean << "\n";
 	out << "\tstddef: " << ca_stddev << "\n";
+	out << "Cell area info [km^2]:\n";
+	out << "\tmin: " << cellArea.min()/(1000*1000) << "\n";
+	out << "\tmean: " << cellArea.mean()/(1000*1000) << "\n";
+	out << "\tmax: " << cellArea.max()/(1000*1000) << "\n";
 	out << "sserialize::Static::spatial::GeoHierarchy::stats--END" << std::endl;
 	return out;
 }
@@ -731,7 +737,7 @@ bool GeoHierarchy::consistencyCheck(const sserialize::Static::ItemIndexStore & s
 	return allOk;
 }
 
-sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t threadCount) const {
+sserialize::ItemIndex GeoHierarchy::intersectingCells(const sserialize::Static::ItemIndexStore& idxStore, const sserialize::spatial::GeoRect & rect, uint32_t /*threadCount*/) const {
 	std::deque<uint32_t> queue;
 	std::vector<uint32_t> intersectingCells;
 	std::unordered_set<uint32_t> visitedRegions;
