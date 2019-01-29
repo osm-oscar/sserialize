@@ -342,11 +342,7 @@ TriangulationGeoHierarchyArrangement::statsSummary(std::ostream & out) const {
 		sserialize::MinMaxMean<double> area;
 		void operator()() {
 			for(uint32_t i(0), s(state->that->cellCount()); i < s; ++i) {
-				double cellArea = 0.0;
-				state->that->cfGraph(i).visitCB([&cellArea](Triangulation::Face const & face) {
-					cellArea += face.area();
-				});
-				area.update(cellArea);
+				area.update(state->that->cfGraph(i).area());
 			}
 		}
 	};
@@ -363,7 +359,7 @@ TriangulationGeoHierarchyArrangement::statsSummary(std::ostream & out) const {
 
 void
 TriangulationGeoHierarchyArrangement::stats(std::ostream & out) const {
-	out << "cell id;area;number of triangles\n"; 
+	out << "cell id;area [m^2];number of triangles\n"; 
 	for(uint32_t i(1), s(cellCount()); i < s; ++i) {
 		double cellArea = 0.0;
 		uint32_t triangCount = 0;

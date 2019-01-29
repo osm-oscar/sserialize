@@ -28,6 +28,7 @@ public:
 	TRACFGraph & operator=(const TRACFGraph &) = default;
 	uint32_t size() const;
 	uint32_t cellId() const;
+	double area() const;
 	template<typename T_CALLBACK>
 	void visitCB(T_CALLBACK cb) const {
 		uint32_t myCellId = cellId();
@@ -98,6 +99,16 @@ uint32_t TRACFGraph<T_TRA>::size() const {
 		m_size.value = s;
 	}
 	return m_size.value;
+}
+
+template<typename T_TRA>
+double TRACFGraph<T_TRA>::area() const {
+	SSERIALIZE_CHEAP_ASSERT(m_tra);
+	double cellArea = 0.0;
+	this->visitCB([&cellArea](Triangulation::Face const & face) {
+		cellArea += face.area();
+	});
+	return cellArea;
 }
 
 
