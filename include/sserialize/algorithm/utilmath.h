@@ -212,6 +212,39 @@ public:
 };
 
 template<typename T>
+class MinMaxMean final {
+public:
+	typedef T value_type;
+public:
+	MinMaxMean() : m_sum(), m_count(0) {}
+	~MinMaxMean() {}
+	inline const value_type & min() const { return m_minmax.min(); }
+	inline const value_type & max() const { return m_minmax.max(); }
+	inline const value_type & sum() const { return m_sum; }
+	inline const std::size_t & count() const { return m_count; }
+	inline value_type mean() const { return sum()/count(); }
+	void update(const value_type & v) {
+		m_minmax.update(v);
+		m_sum += v;
+		m_count += 1;
+	}
+	void update(const MinMaxMean & o) {
+		m_minmax.update(o.m_minmax);
+		m_sum += o.m_sum;
+		m_count += o.m_count;
+	}
+	void reset() {
+		m_minmax.reset();
+		m_sum = T();
+		m_count = 0;
+	}
+private:
+	MinMax<T> m_minmax;
+	T m_sum;
+	std::size_t m_count;
+};
+
+template<typename T>
 class AtomicMinMax final {
 public:
 	typedef T value_type;
@@ -236,6 +269,39 @@ public:
 		m_max.update(o.max());
 		m_min.update(o.min());
 	}
+};
+
+template<typename T>
+class AtomicMinMaxMean final {
+public:
+	typedef T value_type;
+public:
+	AtomicMinMaxMean() : m_sum(), m_count(0) {}
+	~AtomicMinMaxMean() {}
+	inline const value_type & min() const { return m_minmax.min(); }
+	inline const value_type & max() const { return m_minmax.max(); }
+	inline const value_type & sum() const { return m_sum; }
+	inline const std::size_t & count() const { return m_count; }
+	inline value_type mean() const { return sum()/count(); }
+	void update(const value_type & v) {
+		m_minmax.update(v);
+		m_sum.fetch_add(v, std::memory_order_relaxed);
+		m_count.fetch_add(1, std::memory_order_relaxed);
+	}
+	void update(const AtomicMinMaxMean & o) {
+		m_minmax.update(o.m_minmax);
+		m_sum.fetch_add(o.m_sum, std::memory_order_relaxed);
+		m_count.fetch_add(o.m_count, std::memory_order_relaxed);
+	}
+	void reset() {
+		m_minmax.reset();
+		m_sum = T();
+		m_count = 0;
+	}
+private:
+	AtomicMinMax<T> m_minmax;
+	std::atomic<T> m_sum;
+	std::atomic<std::size_t> m_count;
 };
 
 }//end namespace
