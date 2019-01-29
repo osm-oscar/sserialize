@@ -218,6 +218,7 @@ public:
 public:
 	MinMaxMean() : m_sum(), m_count(0) {}
 	~MinMaxMean() {}
+	inline const MinMax<T> & minmax() const { return m_minmax; }
 	inline const value_type & min() const { return m_minmax.min(); }
 	inline const value_type & max() const { return m_minmax.max(); }
 	inline const value_type & sum() const { return m_sum; }
@@ -292,6 +293,11 @@ public:
 		m_minmax.update(o.m_minmax);
 		m_sum.fetch_add(o.m_sum, std::memory_order_relaxed);
 		m_count.fetch_add(o.m_count, std::memory_order_relaxed);
+	}
+	void update(const MinMaxMean<T> & o) {
+		m_minmax.update(o.minmax());
+		m_sum.fetch_add(o.sum(), std::memory_order_relaxed);
+		m_count.fetch_add(o.count(), std::memory_order_relaxed);
 	}
 	void reset() {
 		m_minmax.reset();
