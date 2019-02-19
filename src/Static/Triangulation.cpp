@@ -199,7 +199,7 @@ bool Triangulation::Face::operator!=(const Triangulation::Face& other) const {
 
 double
 Triangulation::Face::area() const {
-	double A, P;
+	double A;
 	struct geod_geodesic g;
 	struct geod_polygon p;
 	geod_init(&g, 6378137, 1/298.257223563);
@@ -210,7 +210,7 @@ Triangulation::Face::area() const {
 	geod_polygon_addpoint(&g, &p, p0.lat(), p0.lon());
 	geod_polygon_addpoint(&g, &p, p1.lat(), p1.lon());
 	geod_polygon_addpoint(&g, &p, p2.lat(), p2.lon());
-	geod_polygon_compute(&g, &p, 0, 1, &A, &P);
+	geod_polygon_compute(&g, &p, 0, 1, &A, 0);
 	return std::abs<double>(A);
 }
 
