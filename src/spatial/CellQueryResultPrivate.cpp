@@ -256,12 +256,18 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 		switch(ct) {
 		case 0x0: //both partial
 			{
-				const sserialize::ItemIndex & myPIdx = idx(myI);
-				const sserialize::ItemIndex & oPIdx = o.idx(oI);
-				sserialize::ItemIndex res(myPIdx / oPIdx);
-				if (res.size()) {
-					r.uncheckedSet((uint32_t)r.m_desc.size(), res);
-					r.m_desc.push_back(CellDesc(0, 1, myCellId));
+				if (!myCD.fetched && !oCD.fetched && m_idx[myI].idxPtr == o.m_idx[oI].idxPtr) {
+					r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
+					r.m_desc.push_back(myCD);
+				}
+				else {
+					const sserialize::ItemIndex & myPIdx = idx(myI);
+					const sserialize::ItemIndex & oPIdx = o.idx(oI);
+					sserialize::ItemIndex res(myPIdx / oPIdx);
+					if (res.size()) {
+						r.uncheckedSet((uint32_t)r.m_desc.size(), res);
+						r.m_desc.push_back(CellDesc(0, 1, myCellId));
+					}
 				}
 			}
 			break;
@@ -346,16 +352,22 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		switch(ct) {
 		case 0x0: //both partial
 			{
-				const sserialize::ItemIndex & myPIdx = idx(myI);
-				const sserialize::ItemIndex & oPIdx = o.idx(oI);
-				sserialize::ItemIndex res(myPIdx + oPIdx);
-				if (res.size() == m_ci->cellItemsCount(myCellId)) {
-					r.m_idx[r.m_desc.size()].idxPtr = m_ci->cellItemsPtr(myCellId);
-					r.m_desc.push_back(CellDesc(1, 0, myCellId));
+				if (!myCD.fetched && !oCD.fetched && m_idx[myI].idxPtr == o.m_idx[oI].idxPtr) {
+					r.m_idx[r.m_desc.size()].idxPtr = m_idx[myI].idxPtr;
+					r.m_desc.push_back(myCD);
 				}
 				else {
-					r.uncheckedSet((uint32_t)r.m_desc.size(), res);
-					r.m_desc.push_back(CellDesc(0, 1, myCellId));
+					const sserialize::ItemIndex & myPIdx = idx(myI);
+					const sserialize::ItemIndex & oPIdx = o.idx(oI);
+					sserialize::ItemIndex res(myPIdx + oPIdx);
+					if (res.size() == m_ci->cellItemsCount(myCellId)) {
+						r.m_idx[r.m_desc.size()].idxPtr = m_ci->cellItemsPtr(myCellId);
+						r.m_desc.push_back(CellDesc(1, 0, myCellId));
+					}
+					else {
+						r.uncheckedSet((uint32_t)r.m_desc.size(), res);
+						r.m_desc.push_back(CellDesc(0, 1, myCellId));
+					}
 				}
 			}
 			break;
@@ -452,7 +464,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 			++oI;
 			continue;
 		}
-		if (!oCD.fullMatch) {
+		if (!oCD.fullMatch && (myCD.fetched || oCD.fetched || m_idx[myI].idxPtr != o.m_idx[oI].idxPtr)) {
 			const sserialize::ItemIndex & myPIdx = idx(myI);
 			const sserialize::ItemIndex & oPIdx = o.idx(oI);
 			sserialize::ItemIndex res(myPIdx - oPIdx);
@@ -520,7 +532,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 			continue;
 		}
 		int ct = (myCD.fullMatch << 1) | oCD.fullMatch;
-		if (ct != 0x3) {
+		if (ct != 0x3 && (myCD.fetched || oCD.fetched || m_idx[myI].idxPtr != o.m_idx[oI].idxPtr)) {
 			const sserialize::ItemIndex & myPIdx = idx(myI);
 			const sserialize::ItemIndex & oPIdx = o.idx(oI);
 			sserialize::ItemIndex res(myPIdx ^ oPIdx);
