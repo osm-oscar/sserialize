@@ -7,7 +7,9 @@
 
 namespace sserialize {
 ///This is a partially stl-compatible vector basend on MmappedMemory.
-///This is especially usefull in combination with shared or file-based memory to create large vectors without the overhead of reallocation (the paging will do this for us)
+///This is especially usefull in combination with shared or file-based memory to create large vectors without the overhead of reallocation (the paging will do this for us)#
+///Beware that this will not call destructors if memory gets moved beacause of a resize
+///Destructors are called upon destruction of the occupied memory
 template<typename TValue>
 class MMVector final {
 public:

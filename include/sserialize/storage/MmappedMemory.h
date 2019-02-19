@@ -306,7 +306,7 @@ public:
 /** This class provides a temporary memory extension with the possiblity to grow the storage
   * It does not copy the data, this is just an adaptor to a piece of memory (kind of an enhanced array pointer).
   * @warning The memory allocated and deallocated is not initalized or deinitialized in any way
-  * Use the MMVector if you need funtionality equivalent to std::vector
+  * Use the MMVector if you need functionality equivalent to std::vector
   */
 template<typename TValue>
 class MmappedMemory {
