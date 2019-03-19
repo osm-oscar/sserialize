@@ -269,8 +269,6 @@ set(SPATIAL_SOURCES_CPP
 	src/spatial/CellQueryResultPrivate.cpp
 	src/spatial/TreedCQRImp.cpp
 	src/spatial/TreedCQR.cpp
-	src/spatial/HCQR.cpp
-	src/spatial/HCQRImp.cpp
 	src/spatial/CellDistance.cpp
 	src/spatial/GridTextCompleter.cpp
 	src/spatial/GridTreeArrangement.cpp
@@ -504,8 +502,6 @@ include/sserialize/spatial/GeoWay.h
 include/sserialize/spatial/GeoUnionShape.h
 include/sserialize/spatial/GeoShapeFactory.h
 include/sserialize/spatial/PointOnS2.h
-include/sserialize/spatial/HCQRImp.h
-include/sserialize/spatial/HCQR.h
 include/sserialize/spatial/GeoMultiPolygon.h
 include/sserialize/spatial/GeoPolygon.h
 include/sserialize/spatial/GeoShape.h
