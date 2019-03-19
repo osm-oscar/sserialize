@@ -1,6 +1,5 @@
 #ifndef SSERIALIZE_SPATIAL_HCQR_H
 #define SSERIALIZE_SPATIAL_HCQR_H
-#include <sserialize/spatial/CellQueryResult.h>
 
 namespace sserialize {
 namespace spatial {
@@ -10,13 +9,11 @@ class HCQRImp;
 class HCQR {
 public:
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
-	using CellInfo = sserialize::CellQueryResult::CellInfo;
 public:
 	HCQR();
 	HCQR(const HCQR & hcqr);
 	HCQR(const CellQueryResult & cqr);
 public:
-	const CellInfo & cellInfo() const;
 	const ItemIndexStore & store() const;
 public:
 	uint32_t maxItems() const;
