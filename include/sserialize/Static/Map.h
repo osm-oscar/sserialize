@@ -99,6 +99,7 @@ typename Map<TKey, TValue>::mapped_type
 Map<TKey, TValue>::at(const TKey & key) const {
 	size_type pos = findPosition(key);
 	if (pos == npos) {
+		throw sserialize::OutOfBoundsException("Map does not contain the requested key");
 		return TValue();
 	}
 	else {
@@ -118,6 +119,7 @@ typename Map<TKey, TValue>::value_type
 Map<TKey, TValue>::find(const TKey & key) const {
 	size_type pos = findPosition(key);
 	if (pos == npos) {
+		throw sserialize::OutOfBoundsException("Map does not contain the requested key");
 		return value_type();
 	}
 	else {
