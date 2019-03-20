@@ -24,6 +24,7 @@ public:
 private:
 	typedef uint64_t HashValue;
 	struct HashListEntry {
+		HashListEntry() : HashListEntry(std::numeric_limits<uint64_t>::max(), std::numeric_limits<IdType>::max()) {}
 		HashListEntry(uint64_t prev, IdType id) : prev(prev), id(id) {}
 		uint64_t prev;
 		IdType id;

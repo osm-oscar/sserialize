@@ -204,50 +204,22 @@ public:
 template<typename TValue>
 class MmappedMemoryInMemory: public MmappedMemoryInterface<TValue> {
 private:
-	TValue * m_data;
-	OffsetType m_size;
+	std::vector<TValue> m_data;
 public:
-	MmappedMemoryInMemory(OffsetType size) : m_data(0), m_size(0) {
+	MmappedMemoryInMemory(OffsetType size) {
 		if (size) {
-			m_data = (TValue*) malloc(sizeof(TValue)*size);
-			if (!m_data) {
-				throw sserialize::CreationException("MmappedMemory::MmappedMemory");
-			}
-			else {
-				m_size = size;
-			}
+			m_data.resize(size);
+			m_data.shrink_to_fit();
 		}
 	}
-	virtual ~MmappedMemoryInMemory() override {
-		if (m_data) {
-			free(m_data);
-			m_data = 0;
-			m_size = 0;
-		}
-	}
-	virtual TValue * data() override { return m_data; }
+	virtual ~MmappedMemoryInMemory() override {}
+	virtual TValue * data() override { return m_data.data(); }
 	virtual TValue * resize(OffsetType newSize) override {
-		if (!newSize) {
-			free(m_data);
-			m_data = 0;
-			m_size = 0;
-			return 0;
-		}
-		TValue * newD = (TValue*) realloc(m_data, sizeof(TValue)*newSize);
-		if (!newD) {
-			newD = (TValue*) malloc(sizeof(TValue)*newSize);
-			if (newD) {
-				free(m_data);
-			}
-			else {
-				throw sserialize::CreationException("MmappedMemory::resize");
-			}
-		}
-		m_size = newSize;
-		m_data = newD;
-		return m_data;
+		m_data.resize(newSize);
+		m_data.shrink_to_fit();
+		return data();
 	}
-	virtual OffsetType size() const override { return m_size; }
+	virtual OffsetType size() const override { return m_data.size(); }
 	virtual MmappedMemoryType type() const override { return sserialize::MM_PROGRAM_MEMORY;}
 };
 
