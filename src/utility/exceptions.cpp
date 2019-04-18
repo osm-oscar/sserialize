@@ -150,5 +150,11 @@ Exception()
 	setMsg("PreconditionViolationException: " + what);
 }
 
+AllocationException::AllocationException(const std::string & what) :
+Exception()
+{
+	setMsg("AllocationException: " + what);
+}
+
 
 } //end namespace sserialize
