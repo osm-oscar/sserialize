@@ -309,6 +309,21 @@ void UByteArrayAdapter::swap(UByteArrayAdapter& other) {
 	swap(m_putPtr, other.m_putPtr);
 }
 
+
+UByteArrayAdapter
+UByteArrayAdapter::fromGetPtr() const {
+	UByteArrayAdapter result(*this);
+	result.shrinkToGetPtr();
+	return result;
+}
+
+UByteArrayAdapter
+UByteArrayAdapter::fromPutPtr() const {
+	UByteArrayAdapter result(*this);
+	result.shrinkToPutPtr();
+	return result;
+}
+
 void UByteArrayAdapter::advice(UByteArrayAdapter::AdviseType type, UByteArrayAdapter::SizeType count) {
 	if (count > m_len) {
 		count = m_len;

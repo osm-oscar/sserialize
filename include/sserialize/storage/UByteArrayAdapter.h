@@ -283,6 +283,9 @@ public://constructors
 #endif
 	void swap(UByteArrayAdapter & other);
 public:
+	UByteArrayAdapter fromGetPtr() const;
+	UByteArrayAdapter fromPutPtr() const;
+public:
 	///Tell UByteArrayAdapter about the intended usage of the next count bytes
 	void advice(AdviseType type, SizeType count);
 	///Sync all data to disk
