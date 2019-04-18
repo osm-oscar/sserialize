@@ -100,14 +100,14 @@ void assert_smaller_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	#endif
 #endif
 
-#define SSERIALIZE_ASSERT_WITH_LINE(__BOOL, __LN) sserialize::assert_true(__BOOL, "In File " __FILE__ " in Line " __LN ":" #__BOOL);
-#define SSERIALIZE_ASSERT_MESSAGE_WITH_LINE(__BOOL, __MSG, __LN) sserialize::assert_true_message(__BOOL, __MSG);
-#define SSERIALIZE_ASSERT_EQUAL_WITH_LINE(__V1, __V2, __LN) sserialize::assert_equal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " == " #__V2);
-#define SSERIALIZE_ASSERT_NOT_EQUAL_WITH_LINE(__V1, __V2, __LN) sserialize::assert_notequal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " != " #__V2);
-#define SSERIALIZE_ASSERT_LARGER_WITH_LINE(__V1, __V2, __LN) sserialize::assert_larger(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " > " #__V2);
-#define SSERIALIZE_ASSERT_LARGER_OR_EQUAL_WITH_LINE(__V1, __V2, __LN) sserialize::assert_larger_or_equal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " >= " #__V2);
-#define SSERIALIZE_ASSERT_SMALLER_WITH_LINE(__V1, __V2, __LN) sserialize::assert_smaller(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " < " #__V2);
-#define SSERIALIZE_ASSERT_SMALLER_OR_EQUAL_WITH_LINE(__V1, __V2, __LN) sserialize::assert_smaller_or_equal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " <= " #__V2);
+#define SSERIALIZE_ASSERT_WITH_LINE(__BOOL, __LN) {sserialize::assert_true(bool(__BOOL), "In File " __FILE__ " in Line " __LN ":" #__BOOL);}
+#define SSERIALIZE_ASSERT_MESSAGE_WITH_LINE(__BOOL, __MSG, __LN) {sserialize::assert_true_message(bool(__BOOL), __MSG);}
+#define SSERIALIZE_ASSERT_EQUAL_WITH_LINE(__V1, __V2, __LN) {sserialize::assert_equal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " == " #__V2);}
+#define SSERIALIZE_ASSERT_NOT_EQUAL_WITH_LINE(__V1, __V2, __LN) {sserialize::assert_notequal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " != " #__V2);}
+#define SSERIALIZE_ASSERT_LARGER_WITH_LINE(__V1, __V2, __LN)  {sserialize::assert_larger(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " > " #__V2);}
+#define SSERIALIZE_ASSERT_LARGER_OR_EQUAL_WITH_LINE(__V1, __V2, __LN) {sserialize::assert_larger_or_equal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " >= " #__V2);}
+#define SSERIALIZE_ASSERT_SMALLER_WITH_LINE(__V1, __V2, __LN) {sserialize::assert_smaller(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " < " #__V2);}
+#define SSERIALIZE_ASSERT_SMALLER_OR_EQUAL_WITH_LINE(__V1, __V2, __LN) {sserialize::assert_smaller_or_equal(__V1, __V2, "In File " __FILE__ " in Line " __LN ":" #__V1 " <= " #__V2);}
 
 #define SSERIALIZE_ASSERT(__BOOL) SSERIALIZE_ASSERT_WITH_LINE(__BOOL, SSA_MY_STR(__LINE__))
 #define SSERIALIZE_ASSERT_MESSAGE(__BOOL, __MSG) SSERIALIZE_ASSERT_MESSAGE_WITH_LINE(__BOOL, __MSG, SSA_MY_STR(__LINE__))
