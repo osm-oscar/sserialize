@@ -214,7 +214,7 @@ public:
 	template<typename TValue>
 	using StreamingSerializer = detail::__UByteArrayAdapter::StreamingSerializer<TValue>;
 public: //static functions
-	static UByteArrayAdapter createCache(OffsetType size, sserialize::MmappedMemoryType mmt);
+	static UByteArrayAdapter createCache(OffsetType size = 0, sserialize::MmappedMemoryType mmt = MM_PROGRAM_MEMORY);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
 	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
 	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
