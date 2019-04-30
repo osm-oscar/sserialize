@@ -121,12 +121,24 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   *   struct FullMatchPredicate {
   *     bool operator()(item_type item);
   *   }
+  *   ///return if item produces partial-match cells with foreign ids
+  *   struct ForeignObjectsPredicate {
+  *     bool operator()(item_type item);
+  *   }
   *   struct ItemId {
   *     uint32_t operator()(item_type item);
   *   }
   *   struct ItemCells {
   *     template<typename TOutputIterator>
   *     void operator()(item_type item, TOutputIterator out);
+  *   }
+  *   struct ForeignObjects {
+  *       template<typename TOutputIterator>
+  *       void cells(item_type item, TOutputIterator out);
+  *       ///has to return cell local ids if needed
+  *       template<typename TOutputIterator>
+  *       void items(item_type item, uint32_t cellId, TOutputIterator out);
+  *     }
   *   }
   *   struct ItemTextSearchNodes {
   *     template<typename TOutputIterator>
@@ -185,11 +197,14 @@ template<typename TItemIterator, typename TInputTraits, bool TWithProgressInfo>
 bool
 OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits, uint32_t threadCount)
 {
-	typedef typename TInputTraits::FullMatchPredicate FullMatchPredicate;
-	typedef typename TInputTraits::ItemId ItemIdExtractor;
-	typedef typename TInputTraits::ItemCells ItemCellsExtractor;
-	typedef typename TInputTraits::ItemTextSearchNodes ItemTextSearchNodesExtractor;
-	typedef TItemIterator ItemIterator;
+	using ItemIterator = TItemIterator;
+	using InputTraits = TInputTraits;
+	using FullMatchPredicate = typename InputTraits::FullMatchPredicate;
+	using ForeignObjectsPredicate = typename InputTraits::ForeignObjectsPredicate;
+	using ItemIdExtractor = typename InputTraits::ItemId;
+	using ItemCellsExtractor = typename InputTraits::ItemCells;
+	using ForeignObjects = typename InputTraits::ForeignObjects;
+	using ItemTextSearchNodesExtractor = typename InputTraits::ItemTextSearchNodes;
 	
 	struct State {
 		TItemIterator it;
@@ -225,11 +240,15 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		
 		//item dependend
 		FullMatchPredicate fmPred;
+		ForeignObjectsPredicate foPred;
 		ItemIdExtractor itemIdE;
 		ItemCellsExtractor itemCellsE;
+		ForeignObjects foE;
 		ItemTextSearchNodesExtractor nodesE;
 		
 		std::vector<uint32_t> itemCells;
+		std::vector<uint32_t> foreignCells;
+		std::vector<uint32_t> foreignItems;
 		std::vector<NodeIdentifier> itemNodes;
 		
 		std::back_insert_iterator< std::vector<uint32_t> > itemCellsBI;
@@ -292,6 +311,22 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 					}
 					flushOnFull();
 				}
+				if (foPred(item)) {
+					foE.cells(item, std::back_inserter(foreignCells));
+					for (uint32_t cellId : foreignCells) {
+						foE.items(item, cellId, std::back_inserter(foreignItems));
+						e.cellId(cellId);
+						for(uint32_t itemId : foreignItems) { //these already are cell local if needed
+							e.itemId(itemId);
+							for(const auto & node : itemNodes) {
+								e.nodeId(node);
+								outBuffer.push_back(e);
+							}
+						}
+						foreignItems.clear();
+					}
+					foreignCells.clear();
+				}
 				state->incCounter();
 			}
 			flush();
@@ -300,8 +335,10 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		state(state),
 		outBufferSize((10*1024*1024)/sizeof(ValueEntry)),
 		fmPred(itraits.fullMatchPredicate()),
+		foPred(itraits.foreignObjectsPredicate()),
 		itemIdE(itraits.itemId()),
 		itemCellsE(itraits.itemCells()),
+		foE(itraits.foreignObjects()),
 		nodesE(itraits.itemTextSearchNodes()),
 		itemCellsBI(itemCells),
 		itemNodesBI(itemNodes)
@@ -311,10 +348,14 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		outBuffer(std::move(other.outBuffer)),
 		outBufferSize(other.outBufferSize),
 		fmPred(std::move(other.fmPred)),
+		foPred(std::move(other.foPred)),
 		itemIdE(std::move(other.itemIdE)),
 		itemCellsE(std::move(other.itemCellsE)),
+		foE(std::move(other.foE)),
 		nodesE(std::move(other.nodesE)),
 		itemCells(std::move(other.itemCells)),
+		foreignCells(std::move(other.foreignCells)),
+		foreignItems(std::move(other.foreignItems)),
 		itemNodes(std::move(other.itemNodes)),
 		itemCellsBI(itemCells),
 		itemNodesBI(itemNodes)
