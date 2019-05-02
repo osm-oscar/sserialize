@@ -50,7 +50,7 @@ std::ostream & operator<<(std::ostream & out, const TimeMeasurer & tm) {
 		numPrints += 1;
 	}
 	
-	if (numPrints < 3 && (hasPrev || elusec)) {
+	if (numPrints < 3 && (!hasPrev || elusec)) {
 		if (hasPrev) {
 			out << " ";
 		}
