@@ -472,8 +472,12 @@ bool UByteArrayAdapter::shrinkStorage(OffsetType byte) {
 	if (byte > m_len)
 		byte = m_len;
 	bool ok = m_priv->shrinkStorage(m_offSet+m_len-byte);
-	if (ok)
+	if (ok) {
 		m_len -= byte;
+	}
+	else {
+		throw sserialize::AllocationException("Could not allocate " + std::to_string(byte) + " Bytes");
+	}
 	return ok;
 }
 
