@@ -99,6 +99,15 @@ detail::NarrowCheckAssigner<I> narrow_check_assign(I & lhs) {
 	return detail::NarrowCheckAssigner<I>(lhs);
 }
 
+template<typename I, typename J>
+auto checked_add(I const & first, J const & second) {
+	decltype(first+second) result;
+	if (__builtin_add_overflow(first, second, result)) {
+		throw sserialize::TypeOverflowException("Add overflows");
+	}
+	return result;
+}
+
 }//end namespace sserialize
 
 #endif
