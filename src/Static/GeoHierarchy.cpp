@@ -703,6 +703,7 @@ GeoHierarchy::Region GeoHierarchy::region(uint32_t id) const {
 		return rootRegion();
 	}
 	else {
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(id, regionSize());
 		return Region(id, m_priv);
 	}
 }
