@@ -6,19 +6,20 @@
 #include <unistd.h>
 
 namespace sserialize {
+	
+void assertion_failed(const char * msg);
+void assertion_failed(std::string const & msg);
 
-inline void __assert_function(const std::string & message) {
-	while (true) {
-		std::cout << message << std::endl;
-		::sleep(1);
-	}
+template<typename T1, typename T2>
+void assertion_failed(const T1 & v1, const T2 & v2, const char * msg) {
+	std::stringstream ss;
+	ss << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
+	assertion_failed(ss.str());
 }
 
 inline void assert_true(bool value, const char * msg) {
 	if (UNLIKELY_BRANCH(!value)) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg;
-		__assert_function(ss.str());
+		assertion_failed(msg);
 	}
 }
 
@@ -27,56 +28,44 @@ inline void assert_true_message(bool value, const std::string & msg) {
 }
 
 template<typename T1, typename T2>
-void assert_equal(const T1 & v1, const T2 & v2, const char * msg) {
+inline void assert_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 == v2))) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
-		__assert_function(ss.str());
+		assertion_failed(v1, v2, msg);
 	}
 }
 
 template<typename T1, typename T2>
-void assert_notequal(const T1 & v1, const T2 & v2, const char * msg) {
+inline void assert_notequal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 != v2))) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
-		__assert_function(ss.str());
+		assertion_failed(v1, v2, msg);
 	}
 }
 
 template<typename T1, typename T2>
-void assert_larger(const T1 & v1, const T2 & v2, const char * msg) {
+inline void assert_larger(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 > v2))) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
-		__assert_function(ss.str());
+		assertion_failed(v1, v2, msg);
 	}
 }
 
 template<typename T1, typename T2>
-void assert_larger_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
+inline void assert_larger_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 >= v2))) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
-		__assert_function(ss.str());
+		assertion_failed(v1, v2, msg);
 	}
 }
 
 template<typename T1, typename T2>
-void assert_smaller(const T1 & v1, const T2 & v2, const char * msg) {
+inline void assert_smaller(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 < v2))) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
-		__assert_function(ss.str());
+		assertion_failed(v1, v2, msg);
 	}
 }
 
 template<typename T1, typename T2>
-void assert_smaller_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
+inline void assert_smaller_or_equal(const T1 & v1, const T2 & v2, const char * msg) {
 	if (UNLIKELY_BRANCH(!(v1 <= v2))) {
-		std::stringstream ss;
-		ss << "ASSERTION FAILED!" << msg << " with LEFT=" << v1 << ", RIGHT=" << v2;
-		__assert_function(ss.str());
+		assertion_failed(v1, v2, msg);
 	}
 }
 

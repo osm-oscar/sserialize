@@ -312,6 +312,7 @@ set(UTILITY_SOURCES_CPP
 	src/utility/refcounting.cpp
 	src/utility/debuggerfunctions.cpp
 	src/utility/Bitpacking.cpp
+	src/utility/assert.cpp
 	src/algorithm/utilmath.cpp
 )
 
