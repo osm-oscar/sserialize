@@ -42,6 +42,9 @@ public:
 	///lon is between -180 and +180 degrees
 	inline double & lon() { return m_lon; }
 	
+	uint32_t intLat() const;
+	uint32_t intLon() const;
+	
 	
 	virtual GeoShapeType type() const;
 	virtual GeoRect boundary() const;

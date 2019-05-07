@@ -98,6 +98,14 @@ bool GeoPoint::isSnapped() const {
 	return m_lat == toDoubleLat(toIntLat(m_lat)) && m_lon == toDoubleLon(toIntLon(m_lon));
 }
 
+uint32_t GeoPoint::intLat() const {
+	return toIntLat(lat());
+}
+
+uint32_t GeoPoint::intLon() const {
+	return toIntLon(lon());
+}
+
 GeoRect GeoPoint::boundary() const {
 	return GeoRect(lat(), lat(), lon(), lon());
 }
