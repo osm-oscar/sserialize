@@ -31,7 +31,7 @@ private:
 				minUsage = it->second.first;
 			}
 		}
-		//we defentetly have one here
+		//we definetly have one here
 		return minUsageIt;
 	}
 public:
