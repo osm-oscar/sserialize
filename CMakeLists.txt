@@ -435,6 +435,7 @@ include/sserialize/containers/VariantStore.h
 include/sserialize/containers/WindowedArray.h
 include/sserialize/containers/UnionFind.h
 include/sserialize/containers/DirectRandomCache.h
+include/sserialize/containers/RandomCache.h
 include/sserialize/containers/KeyValueObjectStore.h
 include/sserialize/containers/HuffmanTree.h
 include/sserialize/containers/SortedOffsetIndexPrivate.h
