@@ -91,7 +91,7 @@ m_data(data)
 template<typename TKey, typename TValue>
 bool
 Map<TKey, TValue>::contains(const TKey & key) const {
-	return (findPosition(key) >= 0);
+	return (findPosition(key) != npos);
 }
 
 template<typename TKey, typename TValue>
