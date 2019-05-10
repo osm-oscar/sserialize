@@ -56,10 +56,10 @@ public:
 	
 	void evict() {
 		size_type m_x = (m_a*m_x+m_b)%size();
-		m_kv.erase(m_k.at(m_x));
+		key_type & k = m_k.at(m_x);
+		m_kv.erase(k);
 		if (m_k.size() > 1) {
-			using std::swap;
-			swap(m_k.at(m_x), m_k.back());
+			k = std::move(m_k.back());
 		}
 		m_k.pop_back();
 	}
