@@ -5,6 +5,7 @@
 #include <sserialize/containers/AbstractArray.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/CompactUintArray.h>
+#include <sserialize/iterator/RangeGenerator.h>
 #include <vector>
 #include <set>
 #include <deque>
@@ -39,10 +40,11 @@ public:
 		T_BOUNDED_COMPACT_UINT_ARRAY=0x200,
 		//the following are all in-memory
 		T_EMPTY=0x400,
-		T_INDIRECT=2*T_EMPTY,
-		T_STL_DEQUE=4*T_EMPTY,
-		T_STL_VECTOR=8*T_EMPTY,
-		__T_LAST_ENTRY=T_STL_VECTOR,
+		T_INDIRECT=0x800,
+		T_STL_DEQUE=0x1000,
+		T_STL_VECTOR=0x2000,
+		T_RANGE_GENERATOR=0x4000,
+		__T_LAST_ENTRY=T_RANGE_GENERATOR,
 		//The following indicates that the type has to be encoded in the data or somewhere else
 		T_MULTIPLE=0x800000 
 	};
@@ -87,6 +89,7 @@ public:
 	explicit ItemIndex(const std::vector<uint32_t> & index);
 	explicit ItemIndex(std::vector<uint32_t> && index);
 	explicit ItemIndex(const sserialize::BoundedCompactUintArray & index);
+	explicit ItemIndex(RangeGenerator<uint32_t> const & index);
 	template<typename T_ITERATOR>
 	explicit ItemIndex(const T_ITERATOR & begin, const T_ITERATOR & end) : ItemIndex(std::vector<uint32_t>(begin, end)) {}
 	~ItemIndex();

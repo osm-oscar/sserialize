@@ -247,6 +247,7 @@ set(CONTAINTERS_SOURCES_CPP
 	src/containers/ItemIndexPrivates/ItemIndexPrivatePFoR.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateFoR.cpp
 	src/containers/ItemIndexPrivates/ItemIndexPrivateBoundedCompactUintArray.cpp
+	src/containers/ItemIndexPrivates/ItemIndexPrivateRangeGenerator.cpp
 )
 
 set(SPATIAL_SOURCES_CPP
@@ -424,6 +425,7 @@ include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateNative.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateEliasFano.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRleDE.h
 include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateBoundedCompactUintArray.h
+include/sserialize/containers/ItemIndexPrivates/ItemIndexPrivateRangeGenerator.h
 include/sserialize/containers/LFUCache.h
 include/sserialize/containers/MMVector.h
 include/sserialize/containers/MultiVarBitArray.h

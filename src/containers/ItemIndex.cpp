@@ -87,6 +87,11 @@ ItemIndex::ItemIndex(const sserialize::BoundedCompactUintArray & index) {
 	MyBaseClass::setPrivate(myPriv);
 }
 
+ItemIndex::ItemIndex(RangeGenerator<uint32_t> const & index) {
+	sserialize::ItemIndexPrivate * myPriv = new sserialize::ItemIndexPrivateRangeGenerator(index);
+	MyBaseClass::setPrivate(myPriv);
+}
+
 ItemIndex::~ItemIndex() {}
 
 ItemIndex & ItemIndex::operator=(const ItemIndex & idx) {

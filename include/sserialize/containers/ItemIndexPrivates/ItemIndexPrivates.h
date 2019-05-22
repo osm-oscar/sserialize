@@ -12,4 +12,5 @@
 #include "ItemIndexPrivatePFoR.h"
 #include "ItemIndexPrivateFoR.h"
 #include "ItemIndexPrivateBoundedCompactUintArray.h"
+#include "ItemIndexPrivateRangeGenerator.h"
 #endif
