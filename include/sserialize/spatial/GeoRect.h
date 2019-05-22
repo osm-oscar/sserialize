@@ -72,6 +72,9 @@ public:
 	void enlarge(const GeoRect & other);
 	void enlarge(double lat, double lon);
 	
+	GeoRect enlarged(const GeoRect & other) const;
+	GeoRect enlarged(double lat, double lon) const;
+	
 	
 	///Resize this Rect by lat in latitude and lon in longitude
 	void resize(double latFactor, double lonFactor);

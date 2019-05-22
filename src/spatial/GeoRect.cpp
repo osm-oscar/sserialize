@@ -215,6 +215,18 @@ void GeoRect::enlarge(double lat, double lon) {
 	}
 }
 
+GeoRect GeoRect::enlarged(const GeoRect & other) const {
+	GeoRect result(*this);
+	result.enlarge(other);
+	return result;
+}
+
+GeoRect GeoRect::enlarged(double lat, double lon) const {
+	GeoRect result(*this);
+	result.enlarge(lat, lon);
+	return result;
+}
+
 void GeoRect::resize(double latFactor, double lonFactor) {
 	double latLen = (maxLat()-minLat())/2.0;
 	double lonLen = (maxLon()-minLon())/2.0;
