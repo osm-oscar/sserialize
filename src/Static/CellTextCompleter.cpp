@@ -18,27 +18,14 @@ m_data(d)
 	m_data.shrinkToGetPtr();
 }
 
-sserialize::UByteArrayAdapter CellTextCompleter::Payload::typeData(sserialize::StringCompleter::QuerryType qt) const {
-	qt = (sserialize::StringCompleter::QuerryType) (qt & sserialize::StringCompleter::QT_EPSS);
-	sserialize::StringCompleter::QuerryType myTypes = types();
-
-	if (! (qt & myTypes )) {
-		if (qt & sserialize::StringCompleter::QT_PREFIX) {
-			qt = (sserialize::StringCompleter::QuerryType)(myTypes & sserialize::StringCompleter::QT_EXACT);
-		}
-		else if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
-			qt = (sserialize::StringCompleter::QuerryType)(myTypes & sserialize::StringCompleter::QT_SUFFIX);
-		}
-		else {
-			qt = sserialize::StringCompleter::QT_NONE;
-		}
-	}
-	
-	if (qt == sserialize::StringCompleter::QT_NONE || sserialize::popCount<unsigned int>(qt) != 1) {
+sserialize::UByteArrayAdapter CellTextCompleter::Payload::typeData(int qt) const {
+	qt = sserialize::StringCompleter::toAvailable(qt, types());
+	if (qt == sserialize::StringCompleter::QT_NONE) {
+		throw sserialize::OutOfBoundsException("CellTextCompleter::Payload::typeData: requested qt not available");
 		return sserialize::UByteArrayAdapter();
 	}
 	
-	uint32_t pos = sserialize::popCount((static_cast<uint32_t>(qt)-1) & types());
+	uint32_t pos = qt2Pos(qt, types());
 	
 	uint32_t totalOffset = 0;
 	UByteArrayAdapter::OffsetType dataLength;
@@ -55,38 +42,18 @@ sserialize::UByteArrayAdapter CellTextCompleter::Payload::typeData(sserialize::S
 	return sserialize::UByteArrayAdapter(m_data, totalOffset, dataLength);
 }
 
-
-CellTextCompleter::Payload::Type CellTextCompleter::Payload::type(int qt) const {
-	qt &= sserialize::StringCompleter::QT_EPSS;
-	
-	if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
-		qt |= sserialize::StringCompleter::QT_EPSS;
-	}
-	
-	if (qt & sserialize::StringCompleter::QT_SUFFIX) {
-		qt |= sserialize::StringCompleter::QT_PREFIX;
-	}
-	
-	if (qt & sserialize::StringCompleter::QT_PREFIX) {
-		qt |= sserialize::StringCompleter::QT_EXACT;
-	}
-	
-	qt &= types();
-	
-	if (qt == sserialize::StringCompleter::QT_NONE) {
-		return Type();
-	}
-	
-	uint32_t pos = sserialize::popCount(qt);
-	
-	uint32_t totalOffset = 0;
-	for(uint32_t i(1); i < pos; ++i) {
-		totalOffset += m_offsets[i-1];
-	}
-
-	return Type(sserialize::RLEStream(m_data+totalOffset));
+uint32_t CellTextCompleter::Payload::qt2Pos(int requested, int available) {
+	return sserialize::popCount((static_cast<uint32_t>(requested)-1) & available);
 }
 
+CellTextCompleter::Payload::Type CellTextCompleter::Payload::type(int qt) const {
+	try {
+		return Type(sserialize::RLEStream(typeData(qt)));
+	}
+	catch (sserialize::OutOfBoundsException const & e) {
+		return Type();
+	}
+}
 
 CellTextCompleter::CellTextCompleter() {}
 

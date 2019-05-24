@@ -48,6 +48,7 @@ public:
 	
 	class Payload {
 	public:
+		using QuerryType = sserialize::StringCompleter::QuerryType;
 		class Type {
 		public:
 			typedef sserialize::RLEStream const_iterator;
@@ -84,10 +85,13 @@ public:
 		Payload() {}
 		Payload(const sserialize::UByteArrayAdapter& d);
 		~Payload() {}
-		inline sserialize::StringCompleter::QuerryType types() const { return (sserialize::StringCompleter::QuerryType) (m_types & 0xF); }
+		inline QuerryType types() const {
+			return (QuerryType) (m_types & 0xF);
+		}
 		Type type(int qt) const;
-		sserialize::UByteArrayAdapter typeData(sserialize::StringCompleter::QuerryType qt) const;
-		
+		UByteArrayAdapter typeData(int qt) const;
+	public:
+		static uint32_t qt2Pos(int requested, int available);
 	};
 	typedef enum {TT_TRIE=0, TT_FLAT_TRIE=1} TrieTypeMarker;
 	typedef sserialize::UnicodeStringMap<Payload> Trie;
