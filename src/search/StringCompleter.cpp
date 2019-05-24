@@ -1,6 +1,7 @@
 #include <sserialize/search/StringCompleter.h>
 #include <sserialize/search/StringCompleterPrivate.h>
 #include <sserialize/strings/unicode_case_functions.h>
+#include <sserialize/algorithm/utilmath.h>
 
 namespace sserialize {
 
@@ -162,6 +163,27 @@ StringCompleter::QuerryType StringCompleter::normalize(std::string & q) {
 		qt = sserialize::StringCompleter::QT_SUBSTRING;
 	}
 	return (StringCompleter::QuerryType)qt;
+}
+
+StringCompleter::QuerryType
+StringCompleter::toAvailable(int requested, int available) {
+	uint32_t qt = requested & sserialize::StringCompleter::QT_EPSS;
+
+	if (! (qt & available )) {
+		if (qt & sserialize::StringCompleter::QT_PREFIX) {
+			qt = available & sserialize::StringCompleter::QT_EXACT;
+		}
+		else if (qt & sserialize::StringCompleter::QT_SUBSTRING) {
+			qt = available & sserialize::StringCompleter::QT_SUFFIX;
+		}
+		else {
+			qt = sserialize::StringCompleter::QT_NONE;
+		}
+	}
+	if (sserialize::popCount<uint32_t>(qt) > 1) {
+		qt = 1 << sserialize::fastLog2(qt);
+	}
+	return QuerryType(qt);
 }
 
 bool StringCompleter::matches(const std::string & str, const std::string & qstr, StringCompleter::QuerryType qt) {

@@ -94,6 +94,7 @@ public:
 	
 	///maps query strings to queries, strings smaller than 2 are mapped to exact, with size 2 to Prefix, the rest to substring by default
 	static QuerryType normalize(std::string & qstr);
+	static QuerryType toAvailable(int requested, int available);
 	
 	static bool matches(const std::string & str, const std::string & qstr, QuerryType qt);
 };
