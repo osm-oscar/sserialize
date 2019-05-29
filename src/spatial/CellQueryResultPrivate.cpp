@@ -785,14 +785,17 @@ bool CellQueryResult::selfCheck() {
 	for(uint32_t i(0), s(this->cellCount()); i < s; ++i) {
 		const CellDesc & cd = m_desc[i];
 		if (cd.cellId >= ghCellCount) {
+			SSERIALIZE_CHEAP_ASSERT_SMALLER(cd.cellId, ghCellCount);
 			return false;
 		}
 		if (int64_t(cd.cellId) < lastCellId) {
-			return 0;
+			SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(int64_t(cd.cellId), lastCellId);
+			return false;
 		}
 		lastCellId = cd.cellId;
 		uint32_t cellItemsCount = m_ci->cellItemsCount(cd.cellId);
 		if (idxSize(i) > cellItemsCount) {
+			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(idxSize(i), cellItemsCount);
 			return false;
 		}
 		if ((flags() & sserialize::CellQueryResult::FF_CELL_LOCAL_ITEM_IDS) && !cd.fullMatch && this->idxSize(i)) {
@@ -804,6 +807,7 @@ bool CellQueryResult::selfCheck() {
 				idx = this->idxStore().at(this->idxId(i));
 			}
 			if (idx.front() >= cellItemsCount || idx.back() >= cellItemsCount) {
+				SSERIALIZE_CHEAP_ASSERT(!(idx.front() >= cellItemsCount || idx.back() >= cellItemsCount));
 				return false;
 			}
 		}
