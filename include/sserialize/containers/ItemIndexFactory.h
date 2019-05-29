@@ -91,6 +91,9 @@ public:
 	uint32_t addIndex(const ItemIndex & idx);
 	
 	inline UByteArrayAdapter & getIndexStore() { return m_indexStore;}
+	///Make sure that you do not read any indexes while adding an index to the factory
+	///Adding an index may cause a resize in the storage back end which invalidates memory regions
+	///This is only a problem for multi-threaded usage where one thread reads an index and another one adds an index which causes the resize
 	sserialize::Static::ItemIndexStore asItemIndexStore();
 	inline uint32_t hitCount() { return m_hitCount; }
 	
