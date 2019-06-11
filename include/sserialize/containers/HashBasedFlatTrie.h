@@ -237,6 +237,7 @@ private:
 private:
 	StringStorage m_stringData;
 	StringHandler m_strHandler;
+	std::mutex m_specStrLock;
 	HashTable m_ht;
 private:
 	void finalize(uint64_t nodeBegin, uint64_t nodeEnd, uint32_t posInStr);
@@ -287,7 +288,6 @@ public:
 	StaticString insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
 	TValue & operator[](const StaticString & str);
 	///You have to call finalize() before using this @param prefixMatch strIt->strEnd can be a prefix of the path
-	///This is NOT thread-safe
 	template<typename T_OCTET_ITERATOR>
 	NodePtr findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERATOR& strEnd, bool prefixMatch);
 	
@@ -452,6 +452,7 @@ HashBasedFlatTrie<TValue>::Node::apply(TFunc & fn) {
 template<typename TValue>
 bool
 HashBasedFlatTrie<TValue>::count(const std::string & a) {
+	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = a.c_str();
 	bool ret = count(StaticString(a.size()));
 	m_strHandler.specialString = 0;
@@ -470,6 +471,7 @@ HashBasedFlatTrie<TValue>::insert(const std::string & a) {
 	if (a.size() > std::numeric_limits<uint32_t>::max()) {
 		throw sserialize::OutOfBoundsException("HashBasedFlatTrie::insert: string is too long");
 	}
+	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = a.c_str();
 	StaticString ret = insert(StaticString((uint32_t) a.size()));
 	m_strHandler.specialString = 0;
@@ -499,9 +501,15 @@ HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERAT
 		throw sserialize::UnimplementedFunctionException("sserialize::HashBasedFlatTrie::findNode with prefixMatch==true");
 	}
 	std::string tmp(strIt, strEnd);
-	m_strHandler.specialString = tmp.c_str();
-	StaticString sstr((uint32_t) tmp.size());
-	typename HashTable::iterator nodeBegin = m_ht.find(sstr);
+	typename HashTable::iterator nodeBegin;
+	{
+		std::lock_guard<std::mutex> lck(m_specStrLock);
+		m_strHandler.specialString = tmp.c_str();
+		StaticString sstr((uint32_t) tmp.size());
+		nodeBegin = m_ht.find(sstr);
+		m_strHandler.specialString = 0;
+	}
+	
 	if (nodeBegin != m_ht.end()) {
 		struct MyComp {
 			inline bool operator()(uint32_t a, const std::pair<StaticString, TValue> & b) const {
