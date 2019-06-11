@@ -276,6 +276,7 @@ public:
 	iterator end() { return m_ht.end(); }
 	const_iterator end() const { return m_ht.cend(); }
 	const_iterator cend() const { return m_ht.cend(); }
+
 	///Adding items invalidates this
 	const char * staticStringBegin(const StaticString & str) const { return m_strHandler.strBegin(str); }
 	///Adding items invalidates this
@@ -286,6 +287,8 @@ public:
 	StaticString insert(const StaticString & a);
 	template<typename T_OCTET_ITERATOR>
 	StaticString insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR & end);
+	TValue & at(std::string const & str);
+	TValue const & at(std::string const & str) const;
 	TValue & operator[](const StaticString & str);
 	///You have to call finalize() before using this @param prefixMatch strIt->strEnd can be a prefix of the path
 	template<typename T_OCTET_ITERATOR>
@@ -490,6 +493,40 @@ HashBasedFlatTrie<TValue>::operator[](const StaticString & a) {
 		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
 		return m_ht[StaticString(strOff, a.size())];
+	}
+}
+
+template<typename TValue>
+TValue &
+HashBasedFlatTrie<TValue>::at(std::string const & str) {
+	std::lock_guard<std::mutex> lck(m_specStrLock);
+	m_strHandler.specialString = str.c_str();
+	StaticString sstr((uint32_t) str.size());
+	try {
+		TValue & v = m_ht.at(sstr);
+		m_strHandler.specialString = 0;
+		return v;
+	}
+	catch (std::out_of_range const & e) {
+		m_strHandler.specialString = 0;
+		throw e;
+	}
+}
+
+template<typename TValue>
+TValue const &
+HashBasedFlatTrie<TValue>::at(std::string const & str) const {
+	std::lock_guard<std::mutex> lck(m_specStrLock);
+	m_strHandler.specialString = str.c_str();
+	StaticString sstr((uint32_t) str.size());
+	try {
+		TValue const & v = m_ht.at(sstr);
+		m_strHandler.specialString = 0;
+		return v;
+	}
+	catch (std::out_of_range const & e) {
+		m_strHandler.specialString = 0;
+		throw e;
 	}
 }
 
