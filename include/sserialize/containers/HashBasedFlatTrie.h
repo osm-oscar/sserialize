@@ -268,8 +268,11 @@ public:
 	bool count(const StaticString & str) const;
 	bool count(const std::string & str);
 	
+	iterator begin() { return m_ht.begin(); }
 	const_iterator begin() const { return m_ht.cbegin(); }
 	const_iterator cbegin() const { return m_ht.cbegin(); }
+	
+	iterator end() { return m_ht.end(); }
 	const_iterator end() const { return m_ht.cend(); }
 	const_iterator cend() const { return m_ht.cend(); }
 	///Adding items invalidates this
