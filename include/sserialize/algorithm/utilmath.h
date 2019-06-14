@@ -145,11 +145,11 @@ inline int32_t fastLog2(uint32_t x)  {
 }
 
 inline bool geoEq(const double a, const double b) {
-	return std::abs<double>(a-b) < SSERIALIZE_EPSILON;
+	return ::fabs(a-b) < SSERIALIZE_EPSILON;
 }
 
 inline bool geoNeq(const double a, const double b) {
-	return std::abs<double>(a-b) >= SSERIALIZE_EPSILON;
+	return ::fabs(a-b) >= SSERIALIZE_EPSILON;
 }
 
 template<typename T>

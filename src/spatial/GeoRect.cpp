@@ -274,13 +274,11 @@ sserialize::UByteArrayAdapter & operator>>(::sserialize::UByteArrayAdapter & src
 }
 
 bool operator==(const GeoRect & a, const GeoRect & b) {
-	return sserialize::geoEq(a.minLat(), b.minLat()) && sserialize::geoEq(a.maxLat(), b.maxLat())
-				&& sserialize::geoEq(a.minLon(), b.minLon()) && sserialize::geoEq(a.maxLon(), b.maxLon());
+	return a.minLat() == b.minLat() && a.maxLat() == b.maxLat() && a.minLon() == b.minLon() && a.maxLon() == b.maxLon();
 }
 
 bool operator!=(const GeoRect & a, const GeoRect & b) {
-	return sserialize::geoNeq(a.minLat(), b.minLat()) || sserialize::geoNeq(a.maxLat(), b.maxLat())
-				|| sserialize::geoNeq(a.minLon(), b.minLon()) || sserialize::geoNeq(a.maxLon(), b.maxLon());
+	return !(a == b);
 }
 
 std::ostream & operator<<(std::ostream & out, const GeoRect & rect) {
