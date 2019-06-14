@@ -46,9 +46,11 @@ public:
 	
 	double diagInM() const;
 	double lengthInM() const;
-	///in m^2
-	double area() const;
+	double areaInM2() const;
 	
+	///area in euclidean space
+	double area() const;
+	///length in euclidean space
 	double length() const;
 	
 	bool overlap(const GeoRect & other) const;
