@@ -123,7 +123,7 @@ sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter &
 
 
 //loop unrolling: 133ms -> 118ms
-__attribute__((optimize("unroll-loops")))
+SSERIALIZE_UNROLL_LOOPS
 sserialize::SizeType FoRBlock::decodeBlock(const sserialize::UByteArrayAdapter & d, uint32_t prev, uint32_t size, uint32_t bpn) {
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(UByteArrayAdapter::SizeType(0), d.tellGetPtr());
 	m_values.resize(size);

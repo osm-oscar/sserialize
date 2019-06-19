@@ -147,7 +147,7 @@ public:
 	///src and dest should be random access iterators
 	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	SSERIALIZE_UNROLL_LOOPS_TREE_VECTORIZE
 	inline void unpack(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) const {
 		struct Executer {
 			T_SOURCE_ITERATOR src;
@@ -168,7 +168,7 @@ public:
 // 		}
 	}
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	SSERIALIZE_UNROLL_LOOPS_TREE_VECTORIZE
 	inline void unpack_simd(T_SOURCE_ITERATOR src, T_DESTINATION_ITERATOR dest) const {
 		std::array<BufferType, BlockSize> buffers;
 		for(uint32_t i(0); i < BlockSize; ++i) {
@@ -186,7 +186,7 @@ public:
 	///value_type(source) == uint8_t and memmove(&BufferType, src, BufferSize) is available
 	///There are no restrictions for the ouput iterator
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	SSERIALIZE_UNROLL_LOOPS_TREE_VECTORIZE
 	T_SOURCE_ITERATOR unpack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output, std::size_t count) const {
 		SSERIALIZE_CHEAP_ASSERT(count%BlockSize == 0);
 		if (UseSimd) {
@@ -204,7 +204,7 @@ public:
 	
 	//Pack BlockSize elements into BlockBits bits into output
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-// 	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+// 	SSERIALIZE_UNROLL_LOOPS_TREE_VECTORIZE
 	inline void pack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output) const {
 		struct Executer {
 			BufferType flushBuffer{0};
@@ -239,7 +239,7 @@ public:
 	}
 	
 	template<typename T_SOURCE_ITERATOR, typename T_DESTINATION_ITERATOR>
-	__attribute__((optimize("unroll-loops"))) __attribute__((optimize("tree-vectorize")))
+	SSERIALIZE_UNROLL_LOOPS_TREE_VECTORIZE
 	T_DESTINATION_ITERATOR pack(T_SOURCE_ITERATOR input, T_DESTINATION_ITERATOR output, std::size_t count) const {
 		SSERIALIZE_CHEAP_ASSERT(count%BlockSize == 0);
 		for(uint32_t i(0); i < count; i += BlockSize, input += BlockSize, output += BlockBytes) {

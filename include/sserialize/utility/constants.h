@@ -34,4 +34,14 @@
 	#undef SSERIALIZE_NO_NULL_CHECKS
 #endif
 
+#ifndef __clang__
+	#define SSERIALIZE_UNROLL_LOOPS __attribute__((optimize("unroll-loops")))
+	#define SSERIALIZE_TREE_VECTORIZE __attribute__((optimize("tree-vectorize")))
+#else
+	#define SSERIALIZE_UNROLL_LOOPS
+	#define SSERIALIZE_TREE_VECTORIZE
+#endif
+
+#define SSERIALIZE_UNROLL_LOOPS_TREE_VECTORIZE SSERIALIZE_UNROLL_LOOPS SSERIALIZE_TREE_VECTORIZE
+
 #endif
