@@ -2,6 +2,7 @@
 #include <sserialize/storage/pack_unpack_functions.h>
 
 namespace sserialize {
+SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
 namespace UByteArrayAdapterNonContiguous {
 
 UByteArrayAdapterPrivateCompressedMmappedFile::UByteArrayAdapterPrivateCompressedMmappedFile(const CompressedMmappedFile& file) : m_file(file) {}

@@ -5,6 +5,7 @@
 #include <array>
 
 namespace sserialize {
+SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
 namespace UByteArrayAdapterNonContiguous {
 
 template<typename T_CONTAINER>

@@ -21,6 +21,7 @@
 #define BUFFER_SIZE 4096
 
 namespace sserialize {
+SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
 namespace UByteArrayAdapterNonContiguous {
 
 UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateFile::populateCache(UByteArrayAdapter::OffsetType pos, UByteArrayAdapter::OffsetType len) const {

@@ -17,6 +17,7 @@
 #include <sserialize/utility/exceptions.h>
 
 namespace sserialize {
+SSERIALIZE_NAMESPACE_INLINE_UBA_NON_CONTIGUOUS
 namespace UByteArrayAdapterNonContiguous {
 
 UByteArrayAdapterPrivateThreadSafeFile::UByteArrayAdapterPrivateThreadSafeFile() :
