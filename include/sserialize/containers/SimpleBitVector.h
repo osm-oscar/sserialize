@@ -21,6 +21,8 @@ public:
 	SimpleBitVector & operator=(SimpleBitVector && other) = default;
 	void swap(SimpleBitVector & other);
 	std::size_t storageSizeInBytes() const;
+	///O(n)
+	std::size_t size() const;
 	std::size_t capacity() const;
 	void resize(std::size_t count);
 	void set(std::size_t pos);

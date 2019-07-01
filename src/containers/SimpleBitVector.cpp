@@ -1,5 +1,6 @@
 #include <sserialize/containers/SimpleBitVector.h>
 #include <sserialize/utility/constants.h>
+#include <sserialize/algorithm/utilmath.h>
 
 namespace sserialize {
 
@@ -16,6 +17,14 @@ void SimpleBitVector::swap(SimpleBitVector & other) {
 
 std::size_t SimpleBitVector::storageSizeInBytes() const {
 	return m_d.size() * sizeof(BaseStorageType);
+}
+
+std::size_t SimpleBitVector::size() const {
+	std::size_t result = 0;
+	for(auto c : m_d) {
+		result += sserialize::popCount(c);
+	}
+	return result;
 }
 
 std::size_t SimpleBitVector::capacity() const {
