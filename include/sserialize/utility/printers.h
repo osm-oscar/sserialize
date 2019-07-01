@@ -50,6 +50,24 @@ std::ostream & operator<<(std::ostream & out, const std::vector<T> & s) {
 	}
 }
 
+template<typename U, typename V>
+std::ostream & operator<<(std::ostream & out, const std::map<U, V> & s) {
+	if (!s.size())
+		return out << "std::map<0>{}";
+	typename std::map<U, V>::const_iterator end(s.cend());
+	typename std::map<U, V>::const_iterator it(s.cbegin());
+	
+	out << "std::map<" << s.size() << ">{";
+	while (true) {
+		out << it->first << ": " << it->second;
+		++it;
+		if (it != end)
+			out << ", ";
+		else
+			return out << "}";
+	}
+}
+
 template<typename T>
 std::ostream & operator<<(std::ostream & out, const std::set<T> & s) {
 	if (!s.size())
