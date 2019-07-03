@@ -482,15 +482,6 @@ SizeType Array<TValue>::find(const TValue& value) const {
 }
 
 template<typename TValue>
-sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Array<TValue> & destination) {
-	sserialize::UByteArrayAdapter tmpAdap(source);
-	tmpAdap.shrinkToGetPtr();
-	destination = sserialize::Static::Array<TValue>(tmpAdap);
-	source.incGetPtr(destination.getSizeInBytes());
-	return source;
-}
-
-template<typename TValue>
 bool operator==(const sserialize::Static::Array<TValue> & dequeA, const sserialize::Static::Array<TValue> & dequeB) {
 	if (dequeA.size() != dequeB.size())
 		return false;
@@ -613,6 +604,25 @@ bool operator>=(const sserialize::Static::Array<TValue> & dequeA, const sseriali
 }
 
 }//end namespace Static
+
+template<typename TValue>
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, sserialize::Static::Array<TValue> & destination) {
+	sserialize::UByteArrayAdapter tmpAdap(source);
+	tmpAdap.shrinkToGetPtr();
+	destination = sserialize::Static::Array<TValue>(tmpAdap);
+	source.incGetPtr(destination.getSizeInBytes());
+	return source;
+}
+
+template<typename TValue, typename TAlloc>
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & source, std::vector<TValue, TAlloc> & destination) {
+	sserialize::UByteArrayAdapter tmpAdap(source);
+	tmpAdap.shrinkToGetPtr();
+	sserialize::Static::Array<TValue> tmp(tmpAdap);
+	source.incGetPtr(tmp.getSizeInBytes());
+	destination.assign(tmp.begin(), tmp.end());
+	return source;
+}
 
 template<typename TValue>
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & destination, const std::deque<TValue> & source) {
