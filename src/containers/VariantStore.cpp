@@ -6,8 +6,7 @@ namespace sserialize {
 VariantStore::VariantStore(UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt) :
 m_data(dest),
 m_ac(&m_data, Serializer(), sserialize::MMVector<uint64_t>(mmt)),
-m_hashList(mmt),
-m_hitCount(0)
+m_hashList(mmt)
 {}
 
 
@@ -20,7 +19,8 @@ m_data(std::move(other.m_data)),
 m_ac(std::move(other.m_ac)),
 m_hash(std::move(other.m_hash)),
 m_hashList(std::move(other.m_hashList)),
-m_hitCount(other.m_hitCount.load())
+m_hitCount(other.m_hitCount.load()),
+m_ddm(other.m_ddm)
 {}
 
 VariantStore::~VariantStore() {}

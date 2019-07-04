@@ -21,37 +21,6 @@ public:
 	typedef uint64_t SizeType;
 	typedef SizeType IdType;
 	typedef enum {DDM_FORCE_OFF, DDM_FORCE_ON, DDM_DEFAULT} DeduplicationMode; 
-private:
-	typedef uint64_t HashValue;
-	struct HashListEntry {
-		HashListEntry() : HashListEntry(std::numeric_limits<uint64_t>::max(), std::numeric_limits<IdType>::max()) {}
-		HashListEntry(uint64_t prev, IdType id) : prev(prev), id(id) {}
-		uint64_t prev;
-		IdType id;
-	} __attribute__ ((packed));
-	typedef std::unordered_map<HashValue, uint64_t> DataHash;//maps from HashValue -> HashList position
-	typedef sserialize::MMVector<HashListEntry> HashList;
-	typedef sserialize::Static::detail::ArrayCreator::DefaultStreamingSerializer<value_type> Serializer;
-	typedef sserialize::Static::ArrayCreator<UByteArrayAdapter, Serializer, sserialize::MMVector<uint64_t> > ArrayCreator;
-private:
-	static constexpr IdType nid = std::numeric_limits<IdType>::max();
-private:
-	UByteArrayAdapter m_data;
-	ArrayCreator m_ac;
-	DataHash m_hash;
-	HashList m_hashList;
-	std::atomic<uint64_t> m_hitCount;
-	MultiReaderSingleWriterLock m_hashLock;
-	MultiReaderSingleWriterLock m_dataLock;
-	DeduplicationMode m_ddm;
-	
-	HashValue hashFunc(const UByteArrayAdapter::MemoryView & v);
-	bool dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id);
-	
-	///returns the id of the data or npos if none was found @thread-safety: yes
-	IdType getStoreId(const UByteArrayAdapter::MemoryView & v, HashValue hv);
-
-private://deleted functions
 public:
 	///create the DataSetStore at dest.tellPutPtr()
 	VariantStore(sserialize::UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt);
@@ -78,6 +47,36 @@ public:
 	void flush();
 	
 	UByteArrayAdapter getFlushedData() const;
+private:
+	typedef uint64_t HashValue;
+	struct HashListEntry {
+		HashListEntry() : HashListEntry(std::numeric_limits<uint64_t>::max(), std::numeric_limits<IdType>::max()) {}
+		HashListEntry(uint64_t prev, IdType id) : prev(prev), id(id) {}
+		uint64_t prev;
+		IdType id;
+	} __attribute__ ((packed));
+	typedef std::unordered_map<HashValue, uint64_t> DataHash;//maps from HashValue -> HashList position
+	typedef sserialize::MMVector<HashListEntry> HashList;
+	typedef sserialize::Static::detail::ArrayCreator::DefaultStreamingSerializer<value_type> Serializer;
+	typedef sserialize::Static::ArrayCreator<UByteArrayAdapter, Serializer, sserialize::MMVector<uint64_t> > ArrayCreator;
+	static constexpr IdType nid = std::numeric_limits<IdType>::max();
+private:
+
+	HashValue hashFunc(const UByteArrayAdapter::MemoryView & v);
+	bool dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id);
+	
+	///returns the id of the data or npos if none was found @thread-safety: yes
+	IdType getStoreId(const UByteArrayAdapter::MemoryView & v, HashValue hv);
+
+private:
+	UByteArrayAdapter m_data;
+	ArrayCreator m_ac;
+	DataHash m_hash;
+	HashList m_hashList;
+	std::atomic<uint64_t> m_hitCount{0};
+	MultiReaderSingleWriterLock m_hashLock;
+	MultiReaderSingleWriterLock m_dataLock;
+	DeduplicationMode m_ddm{DDM_FORCE_ON};
 };
 
 }//end namespace
