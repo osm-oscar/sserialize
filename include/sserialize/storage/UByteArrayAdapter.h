@@ -551,6 +551,7 @@ sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, 
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const double value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const float value);
 sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const std::string & value);
+sserialize::UByteArrayAdapter& operator<<(sserialize::UByteArrayAdapter & data, const sserialize::UByteArrayAdapter & value);
 
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, int64_t & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, uint64_t & value);
