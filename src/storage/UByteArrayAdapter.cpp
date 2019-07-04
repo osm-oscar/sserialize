@@ -214,6 +214,10 @@ UByteArrayAdapter::UByteArrayAdapter(OffsetType size, sserialize::MmappedMemoryT
 UByteArrayAdapter( UByteArrayAdapter::createCache(size, mmt) )
 {}
 
+UByteArrayAdapter::UByteArrayAdapter(sserialize::MmappedMemoryType mmt) :
+UByteArrayAdapter(0, mmt)
+{}
+
 UByteArrayAdapter::UByteArrayAdapter(OffsetType size, std::string fileName) :
 UByteArrayAdapter( UByteArrayAdapter::createFile(size, fileName) )
 {}
