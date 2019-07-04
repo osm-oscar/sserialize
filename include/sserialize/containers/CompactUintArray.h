@@ -268,6 +268,9 @@ public:
 	///Creates a new BoundedCompactUintArray beginning at dest.tellPutPtr()
 	template<typename T_SOURCE_CONTAINER>
 	static uint32_t create(const T_SOURCE_CONTAINER& src, sserialize::UByteArrayAdapter& dest);
+	///Creates a new BoundedCompactUintArray beginning at dest.tellPutPtr()
+	template<typename T_ITERATOR>
+	static void create(T_ITERATOR begin, T_ITERATOR end, sserialize::UByteArrayAdapter& dest);
 	inline const_iterator end() const { return const_iterator(m_size, this);}
 	inline const_iterator cend() const { return const_iterator(m_size, this);}
 	template<typename T_OUTPUT_ITERATOR>
@@ -285,6 +288,21 @@ uint32_t BoundedCompactUintArray::create(const T_SOURCE_CONTAINER & src, UByteAr
 	else {
 		dest.putVlPackedUint64(0);
 		return 1;
+	}
+}
+
+template<typename T_ITERATOR>
+void BoundedCompactUintArray::create(T_ITERATOR begin, T_ITERATOR end, UByteArrayAdapter & dest) {
+	using std::distance;
+	auto size = distance(begin, end);
+	if (size) {
+		auto maxElem = *std::max_element(begin, end);
+		uint32_t bits = minStorageBits64(maxElem);
+		dest.putVlPackedUint64( static_cast<uint64_t>(size) << 6 | (bits-1));
+		CompactUintArray::create(begin, end, dest, bits);
+	}
+	else {
+		dest.putVlPackedUint64(0);
 	}
 }
 
