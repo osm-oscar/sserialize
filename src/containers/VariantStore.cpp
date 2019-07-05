@@ -5,8 +5,7 @@ namespace sserialize {
 
 VariantStore::VariantStore(UByteArrayAdapter dest, sserialize::MmappedMemoryType mmt) :
 m_data(dest),
-m_ac(&m_data, Serializer(), sserialize::MMVector<uint64_t>(mmt)),
-m_hashList(mmt)
+m_ac(&m_data, Serializer(), sserialize::MMVector<uint64_t>(mmt))
 {}
 
 
@@ -18,7 +17,6 @@ VariantStore::VariantStore(VariantStore && other) :
 m_data(std::move(other.m_data)),
 m_ac(std::move(other.m_ac)),
 m_hash(std::move(other.m_hash)),
-m_hashList(std::move(other.m_hashList)),
 m_hitCount(other.m_hitCount.load()),
 m_ddm(other.m_ddm)
 {}
@@ -29,7 +27,6 @@ VariantStore & VariantStore::operator=(VariantStore && other) {
 	m_data = std::move(other.m_data);
 	m_ac = std::move(other.m_ac);
 	m_hash = std::move(other.m_hash);
-	m_hashList = std::move(other.m_hashList);
 	m_hitCount.store(other.m_hitCount.load());
 	return *this;
 }
@@ -51,62 +48,30 @@ VariantStore::SizeType VariantStore::hitCount() const {
 	return m_hitCount.load();
 }
 
-VariantStore::HashValue VariantStore::hashFunc(const UByteArrayAdapter::MemoryView & v) {
-	uint64_t h = 0;
-	for(UByteArrayAdapter::MemoryView::const_iterator it(v.cbegin()), end(v.cend()); it != end; ++it) {
-		hash_combine(h, *it);
-	}
-	return h;
+VariantStore::DataHashKey VariantStore::hashFunc(const UByteArrayAdapter & v) {
+	sserialize::ShaHasher<UByteArrayAdapter> hasher;
+	return hasher(v);
 }
 
-bool VariantStore::dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id) {
-	m_dataLock.acquireReadLock();
-	UByteArrayAdapter tmp = m_ac.dataAt(id);
-	if (tmp.size() != v.size()) {
-		m_dataLock.releaseReadLock();
-		return false;
-	}
-	else {
-		UByteArrayAdapter::MemoryView mv( tmp.asMemView() );
-		bool eq = memcmp(mv.get(), v.get(), v.size()) == 0;
-		m_dataLock.releaseReadLock();
-		return eq;
-	}
-}
-
-VariantStore::IdType VariantStore::getStoreId(const UByteArrayAdapter::MemoryView & v, uint64_t hv) {
+VariantStore::IdType VariantStore::getStoreId(DataHashKey const & hv) {
 	m_hashLock.acquireReadLock();
 	if (m_hash.count(hv) == 0) {
 		m_hashLock.releaseReadLock();
 		return nid;
 	}
 	else {
-		HashListEntry hle = m_hashList.at(m_hash[hv]);
+		IdType id = m_hash.at(hv);
 		m_hashLock.releaseReadLock();
-		while (true) {
-			if (dataInStore(v, hle.id)) {
-				return hle.id;
-			}
-			if (hle.prev) {
-				m_hashLock.acquireReadLock();
-				hle = m_hashList.at(hle.prev);
-				m_hashLock.releaseReadLock();
-			}
-			else {
-				break;
-			}
-		}
+		return id;
 	}
-	return nid;
 }
 
 VariantStore::IdType VariantStore::insert(const sserialize::UByteArrayAdapter & data, DeduplicationMode ddm) {
 	if (ddm == DDM_DEFAULT) {
 		ddm = m_ddm;
 	}
-	sserialize::UByteArrayAdapter::MemoryView mv(data.asMemView());
-	HashValue hv = hashFunc(mv);
-	IdType id = (ddm == DDM_FORCE_ON ? getStoreId(mv, hv) : nid);
+	auto hv = hashFunc(data);
+	IdType id = (ddm == DDM_FORCE_ON ? getStoreId(hv) : nid);
 	if (id == VariantStore::nid) {
 		m_dataLock.acquireWriteLock();
 		id = m_ac.size();
@@ -114,12 +79,7 @@ VariantStore::IdType VariantStore::insert(const sserialize::UByteArrayAdapter & 
 		m_dataLock.releaseWriteLock();
 		
 		m_hashLock.acquireWriteLock();
-		uint64_t prevElement = 0;
-		if (m_hash.count(hv)) {
-			prevElement = m_hash[hv];
-		}
-		m_hash[hv] = m_hashList.size();
-		m_hashList.emplace_back(prevElement, id);
+		m_hash[hv] = id;
 		m_hashLock.releaseWriteLock();
 	}
 	else {

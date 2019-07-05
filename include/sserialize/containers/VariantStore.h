@@ -3,9 +3,11 @@
 #include <forward_list>
 #include <unordered_map>
 #include <iostream>
+
 #include <sserialize/mt/MultiReaderSingleWriterLock.h>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/algorithm/hashspecializations.h>
 
 namespace sserialize {
 
@@ -48,31 +50,20 @@ public:
 	
 	UByteArrayAdapter getFlushedData() const;
 private:
-	typedef uint64_t HashValue;
-	struct HashListEntry {
-		HashListEntry() : HashListEntry(std::numeric_limits<uint64_t>::max(), std::numeric_limits<IdType>::max()) {}
-		HashListEntry(uint64_t prev, IdType id) : prev(prev), id(id) {}
-		uint64_t prev;
-		IdType id;
-	} __attribute__ ((packed));
-	typedef std::unordered_map<HashValue, uint64_t> DataHash;//maps from HashValue -> HashList position
-	typedef sserialize::MMVector<HashListEntry> HashList;
+	typedef ShaHasherDigestData DataHashKey;
+	typedef std::unordered_map<DataHashKey, IdType> DataHashType; //Hash->id
 	typedef sserialize::Static::detail::ArrayCreator::DefaultStreamingSerializer<value_type> Serializer;
 	typedef sserialize::Static::ArrayCreator<UByteArrayAdapter, Serializer, sserialize::MMVector<uint64_t> > ArrayCreator;
 	static constexpr IdType nid = std::numeric_limits<IdType>::max();
 private:
-
-	HashValue hashFunc(const UByteArrayAdapter::MemoryView & v);
-	bool dataInStore(const UByteArrayAdapter::MemoryView & v, IdType id);
+	DataHashKey hashFunc(const UByteArrayAdapter & v);
 	
 	///returns the id of the data or npos if none was found @thread-safety: yes
-	IdType getStoreId(const UByteArrayAdapter::MemoryView & v, HashValue hv);
-
+	IdType getStoreId(DataHashKey const & hv);
 private:
 	UByteArrayAdapter m_data;
 	ArrayCreator m_ac;
-	DataHash m_hash;
-	HashList m_hashList;
+	DataHashType m_hash;
 	std::atomic<uint64_t> m_hitCount{0};
 	MultiReaderSingleWriterLock m_hashLock;
 	MultiReaderSingleWriterLock m_dataLock;
