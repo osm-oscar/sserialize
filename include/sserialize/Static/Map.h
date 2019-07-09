@@ -43,6 +43,7 @@ public:
 	
 	inline sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {return m_data.getSizeInBytes();}
 	inline size_type size() const { return m_data.size();}
+	size_type count(const key_type & key) const;
 	bool contains(const key_type & key) const;
 	mapped_type at(const key_type & key) const;
 	value_type atPosition(const size_type pos) const;
@@ -87,6 +88,12 @@ template<typename TKey, typename TValue>
 Map<TKey, TValue>::Map(const UByteArrayAdapter & data) :
 m_data(data)
 {}
+
+template<typename TKey, typename TValue>
+typename Map<TKey, TValue>::size_type
+Map<TKey, TValue>::count(const key_type & key) const {
+	return contains(key);
+}
 
 template<typename TKey, typename TValue>
 bool
