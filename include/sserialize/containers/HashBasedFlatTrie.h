@@ -236,8 +236,8 @@ private:
 	typedef OADHashTable<StaticString, TValue, HashFunc1, HashFunc2,  HTValueStorage, HTStorage, StringEq> HashTable;
 private:
 	StringStorage m_stringData;
-	StringHandler m_strHandler;
-	std::mutex m_specStrLock;
+	mutable StringHandler m_strHandler;
+	mutable std::mutex m_specStrLock;
 	HashTable m_ht;
 private:
 	void finalize(uint64_t nodeBegin, uint64_t nodeEnd, uint32_t posInStr);

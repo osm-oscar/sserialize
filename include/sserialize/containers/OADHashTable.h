@@ -354,7 +354,7 @@ template<typename TKey, typename TValue, typename THash1, typename THash2, typen
 const TValue &
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::at(const key_type & key) const {
 	uint64_t pos = findBucket(key);
-	SizeType & cp = m_d[pos]; //saves some calls  m_d[]
+	SizeType const & cp = m_d[pos]; //saves some calls  m_d[]
 	if (pos != findend && cp) {
 		return value(cp).second;
 	}
