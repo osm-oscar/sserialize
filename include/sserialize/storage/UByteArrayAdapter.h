@@ -31,6 +31,7 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
+#include <sserialize/storage/SerializationInfo.h>
 #include <stdint.h>
 #include <iterator>
 #include <deque>
@@ -563,6 +564,15 @@ sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, 
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, double & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, float & value);
 sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, std::string & value);
+
+template<typename T>
+sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, T & value) {
+	sserialize::UByteArrayAdapter tmp(data);
+	tmp.shrinkToGetPtr();
+	value = T(tmp);
+	data.incGetPtr( sserialize::SerializationInfo<T>::sizeInBytes(value) );
+	return data;
+}
 
 //template specialiazations
 
