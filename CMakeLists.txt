@@ -581,6 +581,7 @@ set(SOURCES_CPP
 add_library(${PROJECT_NAME} STATIC ${SOURCES_CPP})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${MY_LINK_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${MY_COMPILE_DEFINITIONS})
+target_compile_options(${PROJECT_NAME} PUBLIC "-Wreorder") #sserialize heavily depends on the correct initialization order
 target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
