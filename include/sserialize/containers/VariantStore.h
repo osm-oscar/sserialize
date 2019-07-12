@@ -13,7 +13,7 @@ namespace sserialize {
 
 /** This class is a storage for arbitrary data sets.
 	You can enable deduplication on a per-insertion basis
-	Current version flushes to a simple sserialize::Static::Array
+	Current version flushes to a simple sserialize::Static::Array<sserialize::UByteArrayAdapter>
 	Future versions may implement compression, though this can already be accomplished by adding the compressed data.
 */
 
