@@ -29,15 +29,33 @@ ensureVersion(sserialize::UByteArrayAdapter const & d, VersionType want, Version
 	return d;
 }
 
-template<typename TVersionType = uint8_t, typename TBase = void>
-class Version: public TBase {
+template<uint8_t TVersion>
+class SimpleVersion {
 public:
-	using VersionType = TVersionType;
+	using VersionType = uint8_t;
+	static constexpr VersionType value = TVersion;
+	struct Consume {};
+	struct NoConsume {};
 public:
-	Version(VersionType want, VersionType have) {
-		ensureVersion(want, have);
+	SimpleVersion() {}
+	//this will consume the version information and modify d accordingly
+	SimpleVersion(sserialize::UByteArrayAdapter & d, Consume) {
+		auto have = d.get<VersionType>(0);
+		ensureVersion(SimpleVersion::value, have);
+		d += sserialize::SerializationInfo<VersionType>::sizeInBytes(have);
+	}
+	//this will NOT consume the version information and wil NOT modify 
+	SimpleVersion(sserialize::UByteArrayAdapter const & d, NoConsume) {
+		auto have = d.get<VersionType>(0);
+		ensureVersion(SimpleVersion::value, have);
 	}
 };
+
+template<uint8_t TVersion>
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, SimpleVersion<TVersion> const &) {
+	dest.put<typename SimpleVersion<TVersion>::VersionType >(SimpleVersion<TVersion>::value);
+	return dest;
+}
 
 }}//end namespace sserialize::Static
 
