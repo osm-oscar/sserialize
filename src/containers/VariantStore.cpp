@@ -28,6 +28,7 @@ VariantStore & VariantStore::operator=(VariantStore && other) {
 	m_ac = std::move(other.m_ac);
 	m_hash = std::move(other.m_hash);
 	m_hitCount.store(other.m_hitCount.load());
+	m_ddm = other.m_ddm;
 	return *this;
 }
 
