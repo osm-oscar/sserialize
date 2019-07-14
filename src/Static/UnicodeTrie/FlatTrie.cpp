@@ -101,11 +101,10 @@ Node::const_iterator Node::cend() const {
 FlatTrieBase::FlatTrieBase() {}
 
 FlatTrieBase::FlatTrieBase(const sserialize::UByteArrayAdapter & src) :
+Version(src, Version::NoConsume()),
 m_strData(src, 1+UByteArrayAdapter::OffsetTypeSerializedLength(), src.getOffset(1)),
 m_trie(src+(1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_strData.size()))
-{
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_BASE_VERSION, src.at(0), "sserialize::Static::UnicodeTrie::FlatTrieBase");
-}
+{}
 
 UByteArrayAdapter::OffsetType FlatTrieBase::getSizeInBytes() const {
 	return 1+UByteArrayAdapter::OffsetTypeSerializedLength()+m_strData.size()+m_trie.getSizeInBytes();

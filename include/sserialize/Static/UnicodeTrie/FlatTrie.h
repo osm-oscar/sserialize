@@ -2,6 +2,7 @@
 #define SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_H
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/Static/Array.h>
+#include <sserialize/Static/Version.h>
 #include <sserialize/containers/UnicodeStringMap.h>
 #include <sserialize/vendor/utf8.h>
 #include <sserialize/iterator/Iterator.h>
@@ -85,8 +86,9 @@ public:
   *
   */
   
-class FlatTrieBase {
+class FlatTrieBase: sserialize::Static::SimpleVersion<1, FlatTrieBase> {
 public:
+	using Version = sserialize::Static::SimpleVersion<1, FlatTrieBase>;
 	typedef enum {TA_STR_OFFSET=0, TA_STR_LEN=1} TrieAccessors;
 	static constexpr uint32_t npos = 0xFFFFFFFF;
 	typedef detail::FlatTrie::StaticString StaticString;
@@ -152,7 +154,9 @@ public:
   *
   */
 template<typename TValue>
-class FlatTrie: public FlatTrieBase {
+class FlatTrie: public FlatTrieBase, sserialize::Static::SimpleVersion<1, FlatTrie<TValue> > {
+public:
+	using Version = sserialize::Static::SimpleVersion<1, FlatTrie<TValue> >;
 public:
 	typedef TValue value_type;
 private:
@@ -207,9 +211,9 @@ public:
 template<typename TValue>
 FlatTrie<TValue>::FlatTrie(const sserialize::UByteArrayAdapter & src) :
 FlatTrieBase(src),
+Version(src+FlatTrieBase::getSizeInBytes(), typename Version::NoConsume()),
 m_values(src+(1+FlatTrieBase::getSizeInBytes()))
 {
-	SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_UNICODE_TRIE_FLAT_TRIE_VERSION, src.at(FlatTrieBase::getSizeInBytes()), "sserialize::Static::UnicodeTrie::FlatTrie");
 	SSERIALIZE_EQUAL_LENGTH_CHECK(FlatTrieBase::size(), m_values.size(), "sserialize::Static::UnicodeTrie::FlatTrie");
 }
 
