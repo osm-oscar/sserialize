@@ -51,7 +51,7 @@ void SimpleBitVector::getSet(TOutputIterator out) const {
 	for(BaseStorageType x : m_d) {
 		for(std::size_t myV(v); x; ++myV, x >>= 1) {
 			if (x & 0x1) {
-				*out = (T_CAST_TYPE) myV;
+				*out = T_CAST_TYPE(myV);
 				++out;
 			}
 		}
