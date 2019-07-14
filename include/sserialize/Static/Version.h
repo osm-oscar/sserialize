@@ -29,7 +29,7 @@ ensureVersion(sserialize::UByteArrayAdapter const & d, VersionType want, Version
 	return d;
 }
 
-template<uint8_t TVersion>
+template<uint8_t TVersion, typename TParent = void>
 class SimpleVersion {
 public:
 	using VersionType = uint8_t;
@@ -49,11 +49,14 @@ public:
 		auto have = d.get<VersionType>(0);
 		ensureVersion(SimpleVersion::value, have);
 	}
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const {
+		return sserialize::SerializationInfo<VersionType>::length;
+	}
 };
 
-template<uint8_t TVersion>
-sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, SimpleVersion<TVersion> const &) {
-	dest.put<typename SimpleVersion<TVersion>::VersionType >(SimpleVersion<TVersion>::value);
+template<uint8_t TVersion, typename TParent>
+sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, SimpleVersion<TVersion, TParent> const &) {
+	dest.put<typename SimpleVersion<TVersion, TParent>::VersionType >(SimpleVersion<TVersion, TParent>::value);
 	return dest;
 }
 
