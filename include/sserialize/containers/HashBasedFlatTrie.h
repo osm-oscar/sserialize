@@ -309,7 +309,7 @@ public:
 	bool append(UByteArrayAdapter & dest);
 	
 	///you can only call this after finalize(), calls payloadHandler in in-order
-	template<typename T_PH, typename T_STATIC_PAYLOAD = TValue>
+	template<typename T_PH, typename T_STATIC_PAYLOAD = typename std::result_of<T_PH(NodePtr)>::type>
 	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
 	
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
@@ -899,10 +899,12 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	std::cout << "sserialize::HashBasedFlatTrie copying payload..." << std::flush;
 	tm.begin();
 	dest.putUint8(1);//version of FlatTrie
-	Static::ArrayCreator<UByteArrayAdapter> vsCreator(dest);
+	Static::ArrayCreator<T_STATIC_PAYLOAD> vsCreator(dest);
 	vsCreator.reserveOffsets(m_ht.size());
 	for(uint32_t i(0), s(m_ht.size()); i < s; ++i) {
-		vsCreator.put(tmpPayload.dataAt(nodeIdToData[i]));
+		vsCreator.beginRawPut();
+		vsCreator.rawPut() << tmpPayload.dataAt(nodeIdToData[i]);
+		vsCreator.endRawPut();
 	}
 	vsCreator.flush();
 	tm.end();
