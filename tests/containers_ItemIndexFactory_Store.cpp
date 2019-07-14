@@ -76,9 +76,10 @@ public:
 		
 		CPPUNIT_ASSERT_MESSAGE("Serialization failed", flushedDataSize);
 
-		UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData());
+		UByteArrayAdapter dataAdap( m_idxFactory.getFlushedData() );
 		Static::ItemIndexStore sdb(dataAdap);
 		
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.getFlushedData().size() != ItemIndexStore.getSizeInBytes()", m_idxFactory.getFlushedData().size(), sdb.getSizeInBytes());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("ItemIndexFactory.size() != ItemIndexStore.size()", m_idxFactory.size(), sdb.size());
 
 		for(size_t i = 0; i < m_sets.size(); ++i) {
