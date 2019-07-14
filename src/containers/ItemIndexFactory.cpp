@@ -28,7 +28,7 @@ m_type(ItemIndex::T_RLE_DE),
 m_compressionType(Static::ItemIndexStore::IC_NONE)
 {
 	if (memoryBased)
-		 setIndexFile( UByteArrayAdapter(new std::vector<uint8_t>(), true) );
+		setIndexFile( UByteArrayAdapter(new std::vector<uint8_t>(), true) );
 	else
 		setIndexFile( UByteArrayAdapter::createCache(8*1024*1024, sserialize::MM_FILEBASED) );
 }
@@ -104,6 +104,7 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	m_header.putOffset(0); //dummy offset
 	m_indexStore = m_header;
 	m_indexStore.shrinkToPutPtr();
+	m_header.resize(m_header.tellPutPtr());
 	m_header.resetPtrs();
 	addIndex(std::set<uint32_t>());
 }
