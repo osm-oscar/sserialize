@@ -173,10 +173,10 @@ ItemIndex::Types ItemIndexStore::indexType(uint32_t pos) const {
 }
 
 OffsetType ItemIndexStore::getSizeInBytes() const {
-	OffsetType r = SerializationInfo<uint8_t>::length*3;
-	r += UByteArrayAdapter::OffsetTypeSerializedLength();
+	OffsetType r = (m_version >= 5 ? 9 : 8);
 	r += m_data.size();
 	r += m_index.getSizeInBytes();
+	r += m_idxSizes.getSizeInBytes();
 	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
 		r += m_hd->getSizeInBytes();
 	}

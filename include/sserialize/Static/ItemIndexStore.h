@@ -12,7 +12,7 @@
  *------------------------------------------------------------------------------------------------------------------------------------------------------
  *VERSION|IndexTypes|IndexCompressionType|datalength| Data     |      Offsets    |Index sizes|HuffmanDecodeTable|DSTEntryLength|DecompressionSizeTable
  *------------------------------------------------------------------------------------------------------------------------------------------------------
- *   1   |    1     |        1           |OffsetType|datalength|SortedOffsetIndex|Array<u32> |HuffmanDecoder    |     u8       |CompactUintArray
+ *   1   |    2     |        1           |OffsetType|datalength|SortedOffsetIndex|Array<u32> |HuffmanDecoder    |     u8       |CompactUintArray
  *
  * struct ItemIndexStore {
  *   uint<8> version;
