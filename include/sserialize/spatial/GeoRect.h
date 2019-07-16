@@ -22,6 +22,8 @@ public:
 	GeoRect(const UByteArrayAdapter & data);
 	~GeoRect();
 	
+	std::string asLeafletBBox() const;
+	
 	bool valid() const;
 	
 	double* lat();

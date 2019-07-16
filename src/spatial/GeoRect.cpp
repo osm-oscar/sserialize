@@ -64,6 +64,13 @@ GeoRect::GeoRect(const UByteArrayAdapter & data) {
 
 GeoRect::~GeoRect() {}
 
+std::string GeoRect::asLeafletBBox() const {
+	std::stringstream ss;
+	ss.imbue(std::locale("C"));
+	ss << m_lon[0] << ',' << m_lat[0] << ',' << m_lon[1] << ',' << m_lat[1];
+	return ss.str();
+}
+
 bool GeoRect::valid() const {
 	return !( m_lat[0] == 0 && m_lat[1] == 0 && m_lon[0] == 0 && m_lon[1] == 0 );
 }
