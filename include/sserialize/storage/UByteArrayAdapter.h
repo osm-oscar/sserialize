@@ -290,6 +290,8 @@ public:
 public:
 	///Tell UByteArrayAdapter about the intended usage of the next count bytes
 	void advice(AdviseType type, SizeType count);
+	///Tell UByteArrayAdapter about the intended usage of all of its data
+	void advice(AdviseType type);
 	///Sync all data to disk
 	void sync();
 public://templated get/put functions to specify the types via template parameters

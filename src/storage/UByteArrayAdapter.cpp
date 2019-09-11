@@ -335,6 +335,10 @@ void UByteArrayAdapter::advice(UByteArrayAdapter::AdviseType type, UByteArrayAda
 	m_priv->advice(type, m_offSet, count);
 }
 
+void UByteArrayAdapter::advice(AdviseType type) {
+	advice(type, size());
+}
+
 void UByteArrayAdapter::sync() {
 	m_priv->sync();
 }
