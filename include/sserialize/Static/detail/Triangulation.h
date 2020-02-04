@@ -106,6 +106,10 @@ struct IntPoint {
 	
 	IntPoint(uint64_t v) : lat(v >> 32), lon(v & 0xFFFFFFFF) {}
 	
+	~IntPoint() {}
+	
+	IntPoint & operator=(IntPoint const&) = default;
+	
 	GeoPoint toGeoPoint() const {
 		double dlat = sserialize::spatial::GeoPoint::toDoubleLat(lat);
 		double dlon = sserialize::spatial::GeoPoint::toDoubleLon(lon);

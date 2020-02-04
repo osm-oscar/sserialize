@@ -38,6 +38,7 @@ public:
 	CTCValueStoreNode(uint32_t nodeId, sserialize::StringCompleter::QuerryType qt) : m_nodeId(nodeId), m_qt(qt) {}
 	CTCValueStoreNode(const CTCValueStoreNode & other) : m_nodeId(other.nodeId()), m_qt(other.qt()) {}
 	~CTCValueStoreNode() {}
+	CTCValueStoreNode & operator=(CTCValueStoreNode const&) = default;
 	inline bool operator==(const CTCValueStoreNode & other) const { return m_nodeId == other.m_nodeId && m_qt == other.m_qt; }
 	inline bool operator<(const CTCValueStoreNode & other) const {
 		SSERIALIZE_CHEAP_ASSERT(qt() && other.qt());

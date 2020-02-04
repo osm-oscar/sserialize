@@ -21,6 +21,7 @@ public:
 	GeoRect(const std::string & str, bool fromLeafletBBox = false);
 	GeoRect(const UByteArrayAdapter & data);
 	~GeoRect();
+	GeoRect & operator=(GeoRect const &) = default;
 	
 	std::string asLeafletBBox() const;
 	

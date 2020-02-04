@@ -30,9 +30,12 @@ public:
 		uint32_t m_intLon;
 	public:
 		ForwardIterator();
-		ForwardIterator(const ForwardIterator & other);
+		ForwardIterator(const ForwardIterator & other) = default;
+		ForwardIterator(ForwardIterator && other) = default;
 		ForwardIterator(const UByteArrayAdapter & d, uint32_t size, bool end);
 		virtual ~ForwardIterator() {}
+		ForwardIterator & operator=(ForwardIterator const &) = default;
+		ForwardIterator & operator=(ForwardIterator &&) = default;
 		inline GeoPoint operator*() const {
 			return GeoPoint::fromIntLatLon(m_intLat, m_intLon);
 		}

@@ -240,6 +240,7 @@ public:
 		}
 	}
 	~ArrayOffsetIndex() {}
+	ArrayOffsetIndex & operator=(ArrayOffsetIndex const &) = default;
 	sserialize::UByteArrayAdapter::OffsetType at(SizeType pos) const { return sserialize::SerializationInfo<TValue>::length*pos; }
 	SizeType size() const { return m_size; }
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const {
@@ -264,6 +265,7 @@ public:
 	ArrayOffsetIndex(const MyType & other) : m_index(other.m_index) {}
 	ArrayOffsetIndex(sserialize::UByteArrayAdapter::OffsetType /*dataSize*/, const sserialize::UByteArrayAdapter & d) : m_index(d) {}
 	~ArrayOffsetIndex() {}
+	ArrayOffsetIndex & operator=(ArrayOffsetIndex const &) = default;
 	inline sserialize::UByteArrayAdapter::OffsetType at(SizeType pos) const { return m_index.at( narrow_check<uint32_t>(pos) ); }
 	SizeType size() const { return m_index.size(); }
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const { return m_index.getSizeInBytes();}

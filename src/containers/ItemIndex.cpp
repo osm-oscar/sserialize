@@ -61,22 +61,24 @@ ItemIndex ItemIndex::uniteWithTree(uint32_t start, uint32_t end, const std::vect
 	return ItemIndex::uniteWithTree(start, mid, set) + ItemIndex::uniteWithTree(mid+1, end, set);
 }
 
-ItemIndex::ItemIndex() : RCWrapper< sserialize::ItemIndexPrivate > ( new ItemIndexPrivateEmpty()) {}
-ItemIndex::ItemIndex(ItemIndexPrivate * data): RCWrapper< sserialize::ItemIndexPrivate >(data) {}
+ItemIndex::ItemIndex() : MyBaseClass( new ItemIndexPrivateEmpty()) {}
+ItemIndex::ItemIndex(ItemIndexPrivate * data): MyBaseClass(data) {}
 
 
-ItemIndex::ItemIndex(const ItemIndex & other) : RCWrapper< sserialize::ItemIndexPrivate >(other) {}
+ItemIndex::ItemIndex(const ItemIndex & other) : MyBaseClass(other) {}
+
+ItemIndex::ItemIndex(ItemIndex && idx) : MyBaseClass(std::move(idx)) {}
 
 ItemIndex::ItemIndex(std::initializer_list<uint32_t> l) :
 ItemIndex(std::vector<uint32_t>(l.begin(), l.end()))
 {}
 
-ItemIndex::ItemIndex(const UByteArrayAdapter & index, ItemIndex::Types type) : RCWrapper< sserialize::ItemIndexPrivate >(0) {
+ItemIndex::ItemIndex(const UByteArrayAdapter & index, ItemIndex::Types type) : MyBaseClass(0) {
 	createPrivate(index, type);
 }
 
-ItemIndex::ItemIndex(const std::deque<uint32_t> & index) : RCWrapper< sserialize::ItemIndexPrivate >(new sserialize::ItemIndexPrivateStlDeque( index ) ) {}
-ItemIndex::ItemIndex(const std::vector< uint32_t >& index) : RCWrapper< sserialize::ItemIndexPrivate >(new sserialize::ItemIndexPrivateStlVector(index)) {}
+ItemIndex::ItemIndex(const std::deque<uint32_t> & index) : MyBaseClass(new sserialize::ItemIndexPrivateStlDeque( index ) ) {}
+ItemIndex::ItemIndex(const std::vector< uint32_t >& index) : MyBaseClass(new sserialize::ItemIndexPrivateStlVector(index)) {}
 ItemIndex::ItemIndex(std::vector<uint32_t> && index) {
 	sserialize::ItemIndexPrivateStlVector * myPriv = new sserialize::ItemIndexPrivateStlVector(std::move(index));
 	MyBaseClass::setPrivate(myPriv);
@@ -95,7 +97,12 @@ ItemIndex::ItemIndex(RangeGenerator<uint32_t> const & index) {
 ItemIndex::~ItemIndex() {}
 
 ItemIndex & ItemIndex::operator=(const ItemIndex & idx) {
-	RCWrapper< sserialize::ItemIndexPrivate >::operator=(idx);
+	MyBaseClass::operator=(idx);
+	return *this;
+}
+
+ItemIndex & ItemIndex::operator=(ItemIndex && idx) {
+	MyBaseClass::operator=(std::move(idx));
 	return *this;
 }
 

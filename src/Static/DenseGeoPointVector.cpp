@@ -13,14 +13,6 @@ m_intLat(0),
 m_intLon(0)
 {}
 
-DenseGeoPointVector::ForwardIterator::ForwardIterator(const DenseGeoPointVector::ForwardIterator & other) :
-m_d(other.m_d),
-m_pos(other.m_pos),
-m_size(other.m_size),
-m_intLat(other.m_intLat),
-m_intLon(other.m_intLon)
-{}
-
 DenseGeoPointVector::ForwardIterator::ForwardIterator(const UByteArrayAdapter & d, uint32_t size, bool end) :
 m_d(d),
 m_pos((end ? size : 0)),
