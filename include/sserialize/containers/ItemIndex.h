@@ -22,7 +22,7 @@ class ItemIndexPrivate;
   * The constructors may throw an exception!
   */
 
-class ItemIndex: public RCWrapper<ItemIndexPrivate>  {
+class ItemIndex final: public RCWrapper<ItemIndexPrivate>  {
 	typedef RCWrapper<ItemIndexPrivate> MyBaseClass;
 public:
 	enum Types {
