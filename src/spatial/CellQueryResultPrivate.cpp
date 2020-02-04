@@ -57,10 +57,6 @@ m_idx(0)
 		m_desc.emplace_back(0, 1, *pmIt);
 		this->uncheckedSet(pos, *pmItemsIt);
 	}
-	
-	m_desc.shrink_to_fit();
-	
-	m_idx = (IndexDesc*) ::realloc((void*)m_idx, m_desc.size()*sizeof(IndexDesc));
 
 	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
@@ -134,6 +130,12 @@ CellQueryResult::~CellQueryResult() {
 	}
 	free(m_idx);
 	m_idx = 0;
+}
+
+void CellQueryResult::shrink_to_fit() {
+	m_desc.shrink_to_fit();
+	///Note that ItemIndex is trivially relocatable
+	m_idx = (IndexDesc*) ::realloc((void*)m_idx, sizeof(IndexDesc)*m_desc.size());
 }
 
 void CellQueryResult::uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx) {
@@ -240,6 +242,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 	const CellQueryResult & o = *oPtr;
 	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
+	r.m_desc.reserve(std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * std::min<std::size_t>(m_desc.size(), o.m_desc.size()));
 	
 
@@ -311,7 +314,6 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 		++myI;
 		++oI;
 	}
-	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	return rPtr;
 }
 
@@ -320,6 +322,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 	const CellQueryResult & o = *other;
 	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
+	r.m_desc.reserve(m_desc.size() + o.m_desc.size());
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
 	uint32_t myI(0), myEnd((uint32_t)m_desc.size()), oI(0), oEnd((uint32_t)o.m_desc.size());
@@ -435,7 +438,6 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		r.m_desc.push_back(oCD);
 		++oI;
 	}
-	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(r.m_desc.size(), std::max<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
@@ -445,6 +447,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 	const CellQueryResult & o = *other;
 	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
+	r.m_desc.reserve(m_desc.size());
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * m_desc.size());
 	
 	uint32_t myI(0), myEnd((uint32_t) m_desc.size());
@@ -493,7 +496,6 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 		++myI;
 		continue;
 	}
-	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(r.m_desc.size(), m_desc.size());
 	return rPtr;
 }
@@ -503,6 +505,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 	const CellQueryResult & o = *other;
 	CellQueryResult * rPtr = new CellQueryResult(m_ci, m_idxStore, m_flags);
 	CellQueryResult & r = *rPtr;
+	r.m_desc.reserve(m_desc.size() + o.m_desc.size());
 	r.m_idx = (IndexDesc*) malloc(sizeof(IndexDesc) * (m_desc.size() + o.m_desc.size()));
 	
 	uint32_t myI(0), myEnd((uint32_t)m_desc.size()), oI(0), oEnd((uint32_t)o.m_desc.size());
@@ -574,7 +577,6 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 		++oI;
 		continue;
 	}
-	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(r.m_desc.size(), (m_desc.size() + o.m_desc.size()));
 	return rPtr;
 }

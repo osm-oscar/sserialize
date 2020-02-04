@@ -61,6 +61,7 @@ public:
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	virtual ~CellQueryResult();
+	void shrink_to_fit();
 	inline const CellInfo & cellInfo() const { return m_ci; }
 	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
 	inline int flags() const { return m_flags; }
@@ -133,9 +134,6 @@ m_flags(flags)
 		m_desc.emplace_back(0, 0, *pmIt);
 		idxPtr->idxPtr = (sserialize::Static::ItemIndexStore::IdType)*pmItemsIt;
 	}
-	
-	m_desc.shrink_to_fit();
-	m_idx = (IndexDesc*)::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
 	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }

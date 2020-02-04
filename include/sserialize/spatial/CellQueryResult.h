@@ -113,6 +113,7 @@ public:
 	virtual ~CellQueryResult();
 	CellQueryResult(const CellQueryResult & other);
 	CellQueryResult & operator=(const CellQueryResult & other);
+	void shrink_to_fit();
 	
 	const CellInfo & cellInfo() const;
 	const ItemIndexStore & idxStore() const;

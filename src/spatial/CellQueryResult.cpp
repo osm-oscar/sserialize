@@ -156,6 +156,10 @@ CellQueryResult & CellQueryResult::operator=(const CellQueryResult & other) {
 	return *this;
 }
 
+void CellQueryResult::shrink_to_fit() {
+	m_priv->shrink_to_fit();
+}
+
 const CellQueryResult::CellInfo & CellQueryResult::cellInfo() const {
 	return m_priv->cellInfo();
 }

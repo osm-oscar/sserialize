@@ -324,8 +324,6 @@ sserialize::detail::CellQueryResult * TreedCQRImp::toCQR(T_PROGRESS_FUNCION pf, 
 				r.m_desc.push_back(detail::CellQueryResult::CellDesc(cd.fullMatch, 0, cd.cellId));
 			}
 		}
-		r.m_desc.shrink_to_fit();
-		r.m_idx = (detail::CellQueryResult::IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(detail::CellQueryResult::IndexDesc));
 		return rPtr;
 	}
 }
