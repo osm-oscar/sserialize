@@ -16,6 +16,8 @@ public:
 	typedef sserialize::Static::ItemIndexStore ItemIndexStore;
 	using CellInfo = sserialize::CellQueryResult::CellInfo;
 private:
+	
+	static_assert(sserialize::is_trivially_relocatable<sserialize::ItemIndex>::value, "ItemIndex has to be trivially relocatable");
 
 	friend class sserialize::detail::TreedCellQueryResult::TreedCQRImp;
 	
@@ -51,10 +53,6 @@ public:
 	CellQueryResult(const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	CellQueryResult(const ItemIndex & fullMatches, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	CellQueryResult(bool fullMatch, uint32_t cellId, const CellInfo & ci, const ItemIndexStore & idxStore, uint32_t cellIdxId, int flags);
-	inline const CellInfo & cellInfo() const { return m_ci; }
-	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
-	inline int flags() const { return m_flags; }
-	
 	///@parameter fmBegin begining of the fully matched cells
 	template<typename T_PMITEMSPTR_IT>
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
@@ -62,6 +60,9 @@ public:
 	CellQueryResult(const sserialize::ItemIndex & fmIdx, const sserialize::ItemIndex & pmIdx,
 					std::vector<sserialize::ItemIndex>::const_iterator pmItemsBegin, const CellInfo & ci, const ItemIndexStore & idxStore, int flags);
 	virtual ~CellQueryResult();
+	inline const CellInfo & cellInfo() const { return m_ci; }
+	inline const ItemIndexStore & idxStore() const { return m_idxStore; }
+	inline int flags() const { return m_flags; }
 	int defaultIndexTypes() const { return m_idxStore.indexTypes(); }
 	uint32_t idxSize(uint32_t pos) const;
 	///this is thread-safe for different pos
