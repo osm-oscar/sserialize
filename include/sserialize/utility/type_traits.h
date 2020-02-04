@@ -12,6 +12,11 @@ namespace sserialize {
 	struct is_trivially_copyable {
 		static constexpr bool value = IS_TRIVIALLY_COPYABLE(__T);
 	};
+	
+	template<typename __T>
+	struct is_trivially_relocatable {
+		static constexpr bool value = sserialize::is_trivially_copyable<__T>::value;
+	};
 }//end namespace sserialize
 
 #endif
