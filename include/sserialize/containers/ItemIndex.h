@@ -6,6 +6,7 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/CompactUintArray.h>
 #include <sserialize/iterator/RangeGenerator.h>
+#include <sserialize/utility/type_traits.h>
 #include <vector>
 #include <set>
 #include <deque>
@@ -183,6 +184,11 @@ public:
 	static ItemIndex constrainedIntersect(const std::vector< ItemIndex > & intersect, uint32_t count, ItemFilter * filter = 0);
 	
 	static ItemIndex uniteK(const sserialize::ItemIndex& a, const sserialize::ItemIndex& b, uint32_t numItems);
+};
+
+template<>
+struct is_trivially_relocatable<sserialize::ItemIndex> {
+	static constexpr bool value = true;
 };
 
 sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & source, sserialize::ItemIndex & destination);

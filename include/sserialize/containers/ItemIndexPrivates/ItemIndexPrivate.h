@@ -7,6 +7,7 @@
 
 namespace sserialize {
 
+///Implementations are NOT allowed to hold pointers to sserialize::ItemIndex
 class ItemIndexPrivate: public RefCountObject {
 public:
 	typedef detail::AbstractArrayIterator<uint32_t> const_iterator_base_type;
