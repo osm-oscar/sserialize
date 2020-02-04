@@ -491,7 +491,8 @@ ItemIndex ItemIndex::constrainedIntersect(const std::vector< ItemIndex >& inters
 			}
 			return ItemIndexPrivateRleDE::constrainedIntersect(intersectPrivates, count);
 		}
-		//else fall through and use full intersect 
+		//else fall through and use full intersect
+		[[fallthrough]];
 	}
 	default:
 		ItemIndex idx = ItemIndex::intersect( intersect );

@@ -68,6 +68,7 @@ void SetOpTreePrivateSimple::handParse(const std::string & qstr) {
 				else {
 					state = QSPS_READ_TOKEN;
 					//fall through to QSPS_READ_TOKEN to copy current ucode
+					[[fallthrough]];
 				}
 			case QSPS_READ_TOKEN:
 				if (ucode == '\\') {

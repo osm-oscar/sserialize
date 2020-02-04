@@ -106,6 +106,7 @@ sserialize::spatial::GeoPoint GeoShape::first() const {
 			if (gmpo->size()) {
 				return gmpo->outerPolygons().front().points().front();
 			}
+			return sserialize::spatial::GeoPoint();
 		}
 		default:
 			return sserialize::spatial::GeoPoint();

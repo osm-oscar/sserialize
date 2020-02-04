@@ -585,6 +585,11 @@ target_compile_options(${PROJECT_NAME} PUBLIC "-Wreorder") #sserialize heavily d
 target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
+set_source_files_properties(
+	src/search/SetOpTreePrivateSimple_parser.cpp
+	PROPERTIES
+	COMPILE_OPTIONS "-Wimplicit-fallthrough=0"
+)
 
 IF(NOT CMAKE_CROSSCOMPILING)
 	add_subdirectory(tests ${PROJECT_NAME}tests EXCLUDE_FROM_ALL)

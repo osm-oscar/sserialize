@@ -327,6 +327,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::intersect(const sserialize::ItemIndexPri
 		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = one-rle
 			//only set pushType here and fall through to handling of the rest
 			pushType = 0x3;
+			[[fallthrough]];
 		case (0x4 | 0x1) ://myVal is zero-rle and oVal is zero-rle => pushType = 0-rle
 		case (0x4 | 0x3) ://myVal is zero-rle and oVal is one-rle => pushType = 0-rle
 		case ((0x4 | 0x8) | 0x1): //myval is 1-rle and oVal is zero-rle => pushType = 0-rle
@@ -558,6 +559,7 @@ ItemIndexPrivate * ItemIndexPrivateWAH::difference(const sserialize::ItemIndexPr
 		case ((0x4 | 0x8) | 0x3): //myval is 1-rle and oVal is one-rle => pushType = zero-rle
 			//only set pushType here and fall through to handling of the rest
 			pushType = 0x1;
+			[[fallthrough]];
 		case (0x4 | 0x1) ://myVal is zero-rle and oVal is zero-rle => pushType = myVal
 		case (0x4 | 0x3) ://myVal is zero-rle and oVal is one-rle => pushType = myVal
 		case ((0x4 | 0x8) | 0x1): //myval is 1-rle and oVal is zero-rle => pushType = myVal
@@ -802,6 +804,7 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 			case 0x1: //0s rle encoded
 				currentWorkingWord = 0;
 				//fall through to check for word
+				[[fallthrough]];
 			case 0x3: //1s rle encoded, currentWorkingWord stays the smae
 				intersectEncWords[i] = ((intersectEncWords[i] >> 2) - 1); //move out flags 
 				loadNext = !intersectEncWords[i]; //check if no rle anymore
@@ -828,6 +831,7 @@ ItemIndex ItemIndexPrivateWAH::fusedIntersectDifference(const std::vector< ItemI
 			case 0x3: //1s rle encoded, zero word
 				currentWorkingWord = 0;
 				//fall through to check for word
+				[[fallthrough]];
 			case 0x1: //0s rle encoded, currentWorkingWord stays the same
 				subtractEncWords[i] = ((subtractEncWords[i] >> 2) - 1); //move out flags 
 				loadNext = !intersectEncWords[i]; //check if no rle anymore
@@ -892,6 +896,7 @@ ItemIndex ItemIndexPrivateWAH::constrainedIntersect(const std::vector< sserializ
 			case 0x1: //0s rle encoded
 				currentWorkingWord = 0;
 				//fall through to check for word
+				[[fallthrough]];
 			case 0x3: //1s rle encoded, currentWorkingWord stays the smae
 				intersectEncWords[i] = ((intersectEncWords[i] >> 2) - 1); //move out flags 
 				loadNext = !(intersectEncWords[i]); //check if no rle anymore
