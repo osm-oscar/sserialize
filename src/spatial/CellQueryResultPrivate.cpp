@@ -59,8 +59,8 @@ m_idx(0)
 	}
 	
 	m_desc.shrink_to_fit();
-	//return should stay the same since gthis is just a shrink
-	m_idx = (IndexDesc*) ::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
+	
+	m_idx = (IndexDesc*) ::realloc((void*)m_idx, m_desc.size()*sizeof(IndexDesc));
 
 	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
 }
@@ -135,7 +135,7 @@ CellQueryResult::~CellQueryResult() {
 	free(m_idx);
 	m_idx = 0;
 }
-	
+
 void CellQueryResult::uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx) {
 	new(m_idx+pos) sserialize::ItemIndex(idx);
 }
@@ -311,7 +311,7 @@ CellQueryResult * CellQueryResult::intersect(const CellQueryResult * oPtr) const
 		++myI;
 		++oI;
 	}
-	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	return rPtr;
 }
 
@@ -435,7 +435,7 @@ CellQueryResult * CellQueryResult::unite(const CellQueryResult * other) const {
 		r.m_desc.push_back(oCD);
 		++oI;
 	}
-	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(r.m_desc.size(), std::max<std::size_t>(m_desc.size(), o.m_desc.size()));
 	return rPtr;
 }
@@ -493,7 +493,7 @@ CellQueryResult * CellQueryResult::diff(const CellQueryResult * other) const {
 		++myI;
 		continue;
 	}
-	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(r.m_desc.size(), m_desc.size());
 	return rPtr;
 }
@@ -574,7 +574,7 @@ CellQueryResult * CellQueryResult::symDiff(const CellQueryResult * other) const 
 		++oI;
 		continue;
 	}
-	r.m_idx = (IndexDesc*) realloc(r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
+	r.m_idx = (IndexDesc*) realloc((void*)r.m_idx, r.m_desc.size()*sizeof(IndexDesc));
 	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(r.m_desc.size(), (m_desc.size() + o.m_desc.size()));
 	return rPtr;
 }

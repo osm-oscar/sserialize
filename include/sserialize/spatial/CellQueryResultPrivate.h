@@ -135,7 +135,6 @@ m_flags(flags)
 	}
 	
 	m_desc.shrink_to_fit();
-	//return should stay the same since gthis is just a shrink
 	m_idx = (IndexDesc*)::realloc(m_idx, m_desc.size()*sizeof(IndexDesc));
 
 	SSERIALIZE_EXPENSIVE_ASSERT(selfCheck());
