@@ -47,6 +47,7 @@ private:
 	IndexDesc * m_idx;
 private:
 	void uncheckedSet(uint32_t pos, const sserialize::ItemIndex & idx);
+	void uncheckedSet(uint32_t pos, sserialize::ItemIndex && idx);
 	static bool flagCheck(int first, int second);
 public:
 	CellQueryResult();

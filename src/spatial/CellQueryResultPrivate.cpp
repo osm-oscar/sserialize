@@ -140,6 +140,10 @@ void CellQueryResult::uncheckedSet(uint32_t pos, const sserialize::ItemIndex & i
 	new(m_idx+pos) sserialize::ItemIndex(idx);
 }
 
+void CellQueryResult::uncheckedSet(uint32_t pos, sserialize::ItemIndex && idx) {
+	new(m_idx+pos) sserialize::ItemIndex(std::move(idx));
+}
+
 bool CellQueryResult::flagCheck(int first, int second) { 
 	return ((first | second) == first) &&
 		((first & sserialize::CellQueryResult::FF_EMPTY) != sserialize::CellQueryResult::FF_EMPTY) &&
