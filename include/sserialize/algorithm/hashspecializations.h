@@ -9,6 +9,10 @@
 
 namespace CryptoPP {
 
+
+#if CRYPTOPP_VERSION >= 820
+class SHA3_128: public SHA3_Final<16> {};
+#else
 class SHA3_128 : public SHA3
 {
 public:
@@ -22,6 +26,7 @@ public:
 	static const char *StaticAlgorithmName() {return "SHA3-128";}
 	#endif
 };
+#endif
 
 } // end namespace CryptoPP
 
