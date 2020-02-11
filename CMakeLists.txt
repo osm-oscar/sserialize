@@ -283,6 +283,8 @@ set(SPATIAL_SOURCES_CPP
 	src/spatial/dgg/SimpleGridSpatialGrid.cpp
 	src/spatial/dgg/SpatialGrid.cpp
 	src/spatial/dgg/StaticHCQRSpatialGrid.cpp
+	src/spatial/dgg/Static/SpatialGridInfo.cpp
+	src/spatial/dgg/Static/HCQRCellInfo.cpp
 )
 
 set(ITERATOR_SOURCES_CPP
@@ -543,6 +545,8 @@ include/sserialize/spatial/dgg/HCQRSpatialGrid.h
 include/sserialize/spatial/dgg/SimpleGridSpatialGrid.h
 include/sserialize/spatial/dgg/SpatialGrid.h
 include/sserialize/spatial/dgg/StaticHCQRSpatialGrid.h
+include/sserialize/spatial/dgg/Static/SpatialGridInfo.h
+include/sserialize/spatial/dgg/Static/HCQRCellInfo.h
 include/sserialize/stats/ProgressInfo.h
 include/sserialize/stats/histogram2d.h
 include/sserialize/stats/memusage.h
