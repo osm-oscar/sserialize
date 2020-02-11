@@ -626,7 +626,7 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 	
 	//This function either returns the edge through which the line source->target passes
 	//or a vertex of f that is collinear to source->target in the direction of target
-	auto faceStep = [this, &ot, &source, &target](Face const & f) -> State {
+	auto faceStep = [&ot, &source, &target](Face const & f) -> State {
 		State state;
 		assert(!f.contains(target));
 		std::array<CGAL::Sign, 3> ots = {{
