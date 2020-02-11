@@ -1,7 +1,10 @@
 #include <sserialize/spatial/dgg/SpatialGrid.h>
 
 namespace sserialize::spatial::dgg::interface {
-	
+
+std::string SpatialGrid::typeId() const {
+	return name();
+}
 
 SpatialGrid::Size
 SpatialGrid::childPosition(PixelId parent, PixelId child) const {
@@ -19,5 +22,9 @@ std::string
 SpatialGrid::to_string(PixelId pixel) const {
 	return std::to_string(pixel);
 }
+
+SpatialGrid::SpatialGrid() {}
+
+SpatialGrid::~SpatialGrid() {}
 
 }//end namespace sserialize::spatial::dgg::interface

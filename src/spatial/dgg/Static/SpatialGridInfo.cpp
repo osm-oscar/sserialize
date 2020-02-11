@@ -33,13 +33,12 @@ MetaData::offset(DataMembers member) const {
 }
 
 
-Data::Data(const sserialize::UByteArrayAdapter & d) :
-m_type(decltype(m_type)(sserialize::Static::ensureVersion(d, MetaData::version, d.getUint8(0)).getUint8(1))),
-m_levels(d.getUint8(2)),
-m_trixelId2HtmIndexId(d+3),
-m_htmIndexId2TrixelId(d+(3+m_trixelId2HtmIndexId.getSizeInBytes())),
-m_trixelItemIndexIds(d+(3+m_trixelId2HtmIndexId.getSizeInBytes()+m_htmIndexId2TrixelId.getSizeInBytes()))
-{}
+Data::Data(sserialize::UByteArrayAdapter d) {
+	sserialize::Static::ensureVersion(MetaData::version, d.getUint8(0));
+	++d;
+	d >> m_type >> m_levels >> m_trixelId2HtmIndexId >> m_htmIndexId2TrixelId >> m_trixelId2HtmIndexId;
+
+}
 
 } //end namespace ssinfo::HtmInfo
 	

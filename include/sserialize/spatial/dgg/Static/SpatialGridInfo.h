@@ -8,8 +8,8 @@ namespace sserialize::spatial::dgg::Static {
 
 
 /**
- *  struct SpatialGridInfo: Version(2) {
- *      uint<8> type;
+ *  struct SpatialGridInfo: Version(3) {
+ *      std::string type;
  *      uint<8> levels;
  *      sserialize::BoundedCompactUintArray trixelId2HtmIndexId;
  *      sserialize::Static::Map<uint64_t, uint32_t> htmIndexId2TrixelId; 
@@ -31,12 +31,6 @@ namespace SpatialGridInfo {
 			trixelItemIndexIds
 		};
         static constexpr uint8_t version{2};
-		enum SpatialGridTypes : uint8_t {
-			SG_HTM=0,
-			SG_H3=1,
-			SG_SIMPLEGRID=2,
-			SG_S2GEOM=3
-		};
 	public:
 		MetaData(Data const * d) : m_d(d) {}
 	public:
@@ -50,7 +44,7 @@ namespace SpatialGridInfo {
 	struct Types;
 	
 	template<> struct Types<MetaData::DataMembers::type>
-	{ using type = MetaData::SpatialGridTypes; };
+	{ using type = std::string; };
 	
 	template<> struct Types<MetaData::DataMembers::levels>
 	{ using type = uint8_t; };
@@ -66,7 +60,7 @@ namespace SpatialGridInfo {
 	
 	class Data: sserialize::RefCountObject {
 	public:
-		Data(const sserialize::UByteArrayAdapter & d);
+		Data(sserialize::UByteArrayAdapter d);
 		~Data() {}
 	public:
 		inline Types<MetaData::DataMembers::type>::type const & type() const { return m_type; }
@@ -92,6 +86,7 @@ public:
 	using SGPixelId = sserialize::spatial::dgg::interface::SpatialGrid::PixelId;
 public:
 	using MetaData = ssinfo::SpatialGridInfo::MetaData;
+	
 public:
 	SpatialGridInfo(const sserialize::UByteArrayAdapter & d);
 	~SpatialGridInfo();

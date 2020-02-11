@@ -42,6 +42,9 @@ public:
 	static constexpr PixelId NoPixelId = std::numeric_limits<PixelId>::max();
 public: //global stuff
 	virtual std::string name() const = 0;
+	//by default typeId() == name()
+	virtual std::string typeId() const;
+public:
 	virtual Level maxLevel() const = 0;
 	virtual Level defaultLevel() const = 0;
 	virtual PixelId rootPixelId() const = 0;
@@ -64,8 +67,8 @@ public: //info
 	virtual sserialize::spatial::GeoRect bbox(PixelId pixel) const = 0;
 	virtual std::string to_string(PixelId pixel) const;
 protected:
-	SpatialGrid() {}
-	virtual ~SpatialGrid() {}
+	SpatialGrid();
+	virtual ~SpatialGrid();
 };
 	
 }//end namespace sserialize::spatial::dgg::interface

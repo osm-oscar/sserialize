@@ -18,6 +18,7 @@ namespace sserialize::spatial::dgg {
 	
 class SimpleGridSpatialGrid final: public interface::SpatialGrid {
 public:
+	static void registerWithSpatialGridRegistry();
 	static sserialize::RCPtrWrapper<SimpleGridSpatialGrid> make(uint32_t maxLevel);
 public:
 	std::string name() const override;

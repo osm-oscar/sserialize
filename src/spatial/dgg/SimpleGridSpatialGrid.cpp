@@ -1,8 +1,16 @@
 #include <sserialize/spatial/dgg/SimpleGridSpatialGrid.h>
 #include <sserialize/utility/exceptions.h>
+#include <sserialize/spatial/dgg/Static/SpatialGridRegistry.h>
 
 
 namespace sserialize::spatial::dgg {
+	
+void SimpleGridSpatialGrid::registerWithSpatialGridRegistry() {
+	using Registry = sserialize::spatial::dgg::Static::SpatialGridRegistry;
+	Registry::get().set("s2geom", [](Registry::SpatialGridInfo const & info) -> Registry::SpatialGridPtr {
+		return SimpleGridSpatialGrid::make(info.levels());
+	});
+}
 
 sserialize::RCPtrWrapper<SimpleGridSpatialGrid>
 SimpleGridSpatialGrid::make(uint32_t maxLevel) {
