@@ -42,23 +42,62 @@ public:
 /*
  *struct CompactNode {
  *  u1 type = {FULL, PARTIAL};
- *  u5 numPixelIdBits;
+ *  u6 numPixelIdBits;
  *  u<numPixelIdBits> pixelId;
  *  u5 numItemIndexIdBits;
  *  u<numItemIndexIdBits> itemIndexId; //present if type==PARTIAL
  *};
  *
  */
-class CompactNode {
+class CompactNode final {
 public:
-	static void create(sserialize::spatial::dgg::impl::HCQRSpatialGrid::TreeNode const & src, sserialize::MultiBitBackInserter & dest);
+	using SourceNode = sserialize::spatial::dgg::impl::HCQRSpatialGrid::TreeNode;
+	using PixelId = SourceNode::PixelId;
+	using ItemIndexId = sserialize::Static::ItemIndexStore::IdType;
+public:
+	static void create(SourceNode const & src, sserialize::MultiBitBackInserter & dest);
+public:
+	CompactNode(sserialize::UByteArrayAdapter const & d);
+	~CompactNode();
+	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
+public:
+	bool isFullMatch() const;
+	bool isPartialMatch() const;
+	PixelId pixelId() const;
+	ItemIndexId itemIndexId() const;
+private:
+	bool m_fm;
+	PixelId m_pid;
+	ItemIndexId m_itemIndexId;
+};
+
+/**
+ * struct CompactTree {
+ *   vu32 nodeCount;
+ *   CompactNode nodes[nodeCount]; 
+ * };
+ */
+
+class CompactTree final {
+public:
+	using HCQRSpatialGrid = sserialize::spatial::dgg::impl::HCQRSpatialGrid;
+	using SpatialGrid = sseralize::spatial::dgg::interface::SpatialGrid;
+public:
+	CompactTree(sserialize::UByteArrayAdapter const & d);
+	~CompactTree();
+public:
+	uint32_t nodeCount() const;
+	HCQRSpatialGrid::TreeNodePtr tree(SpatialGrid const & sg) const;
+private:
+	sserialize::UByteArrayAdapter m_d;
 };
 
 } //end namespace detail::HCQRTextIndex
 
 /**
-*  struct HCQRTextIndex: Version(1) {
+*  struct HCQRTextIndex: Version(3) {
 *      uint<8> supportedQueries;
+*      uint<8> payloadFlags;
 *      SpatialGridInfo sgInfo;
 *      sserialize::Static::FlatTrieBase trie;
 *      sserialize::Static::Array<detail::HCQRTextIndex::Payload> mixed;
@@ -77,8 +116,9 @@ public:
 	using HCQRPtr = sserialize::spatial::dgg::interface::HCQR::HCQRPtr;
 public:
     struct MetaData {
-        static constexpr uint8_t version{2};
+        static constexpr uint8_t version{3};
     };
+	enum PayloadFlags : int {FULL_TREE=0x1, COMPACT_NODES=0x2};
 public:
 	static sserialize::RCPtrWrapper<Self> make(const sserialize::UByteArrayAdapter & d, const sserialize::Static::ItemIndexStore & idxStore);
 	~HCQRTextIndex() override;
@@ -107,8 +147,10 @@ private:
 	HCQRTextIndex(const sserialize::UByteArrayAdapter & d, const sserialize::Static::ItemIndexStore & idxStore);
 private:
 	Payload::Type typeFromCompletion(const std::string& qs, sserialize::StringCompleter::QuerryType qt, Payloads const & pd) const;
+	HCQRPtr hcqrFromPayload(Payload::Type const & d) const;
 private:
 	char m_sq;
+	uint8_t m_payloadFlags;
 	std::shared_ptr<SpatialGridInfo> m_sgInfo;
 	Trie m_trie;
 	Payloads m_mixed;

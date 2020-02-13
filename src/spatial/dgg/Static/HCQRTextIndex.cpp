@@ -54,7 +54,7 @@ CompactNode::create(sserialize::spatial::dgg::impl::HCQRSpatialGrid::TreeNode co
 		dest.push_back(0, 1);
 	}
 	auto pixelIdBits = sserialize::fastLog2(src.pixelId());
-	dest.push_back(pixelIdBits, 5);
+	dest.push_back(pixelIdBits, 6);
 	dest.push_back(src.pixelId(), pixelIdBits);
 	
 	if (!src.isFullMatch()) {
@@ -62,6 +62,90 @@ CompactNode::create(sserialize::spatial::dgg::impl::HCQRSpatialGrid::TreeNode co
 		dest.push_back(idxIdBits, 5);
 		dest.push_back(src.itemIndexId(), idxIdBits);
 	}
+}
+
+CompactNode::CompactNode(sserialize::UByteArrayAdapter const & d) {
+	sserialize::MultiBitIterator it(d);
+	m_fm = it.get16(1);
+	it += 1;
+	uint32_t pixelIdBits = it.get16(6);
+	it += 6;
+	m_pid = it.get<PixelId>(pixelIdBits);
+	it += pixelIdBits;
+	if (isPartialMatch()) {
+		uint32_t itemIndexIdBits = it.get16(5);
+		m_itemIndexId = it.get<ItemIndexId>(itemIndexIdBits);
+	}
+	
+}
+
+CompactNode::~CompactNode() {}
+
+sserialize::UByteArrayAdapter::SizeType CompactNode::getSizeInBytes() const {
+	sserialize::UByteArrayAdapter::SizeType numBits = 1+6;
+	numBits += sserialize::fastLog2(pixelId());
+	if (isPartialMatch()) {
+		numBits += 5+sserialize::fastLog2(itemIndexId());
+	}
+	return numBits/8+sserialize::UByteArrayAdapter::SizeType(numBits%8 != 0);
+}
+
+bool CompactNode::isFullMatch() const {
+	return m_fm;
+}
+
+bool CompactNode::isPartialMatch() const {
+	return !isFullMatch();
+}
+
+CompactNode::SourceNode::PixelId CompactNode::pixelId() const {
+	return m_pid;
+}
+
+sserialize::Static::ItemIndexStore::IdType CompactNode::itemIndexId() const {
+	return m_itemIndexId;
+}
+
+CompactTree::CompactTree(sserialize::UByteArrayAdapter const & d) : m_d(d) {}
+
+CompactTree::~CompactTree() {}
+
+
+uint32_t CompactTree::nodeCount() const {
+	return m_d.getVlPackedUint32(0);
+}
+
+CompactTree::HCQRSpatialGrid::TreeNodePtr CompactTree::tree(SpatialGrid const & sg) const {
+	sserialize::UByteArrayAdapter d(m_d);
+	uint32_t nc = d.getVlPackedUint32();
+	d.shrinkToGetPtr();
+	std::unordered_map<HCQRSpatialGrid::PixelId, HCQRSpatialGrid::TreeNodePtr> nodes;
+	for(uint32_t i(0), s(nc); i < s; ++i) {
+		CompactNode n(d);
+		d += n.getSizeInBytes();
+		HCQRSpatialGrid::TreeNode::make_unique(
+			n.pixelId(),
+			(n.isFullMatch() ? HCQRSpatialGrid::TreeNode::IS_FULL_MATCH : HCQRSpatialGrid::TreeNode::IS_PARTIAL_MATCH),
+			n.itemIndexId()
+		);
+	}
+	//leaf nodes are in queue, construct the tree
+	while(nodes.size() > 1) {
+		decltype(nodes) tmp;
+		for(auto & x : nodes) {
+			auto pid = sg.parent(x.first);
+			if (!tmp.count(pid)) {
+				tmp[pid] = HCQRSpatialGrid::TreeNode::make_unique(pid, HCQRSpatialGrid::TreeNode::IS_INTERNAL);
+			}
+			tmp.at(pid)->children().push_back(std::move(x.second));
+		}
+		
+		std::swap(tmp, nodes);
+		for(auto & x: nodes) {
+			x.second->sortChildren();
+		}
+	}
+	return std::move(nodes.at(sg.rootPixelId()));
 }
 	
 }//end namespace detail::HCQRTextIndex
@@ -105,10 +189,9 @@ HCQRTextIndex::getSupportedQueries() const {
 
 HCQRTextIndex::HCQRPtr
 HCQRTextIndex::complete(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const {
-	using MyHCQR = sserialize::spatial::dgg::Static::impl::HCQRSpatialGrid;
     try {
 		Payload::Type t(typeFromCompletion(qstr, qt, m_mixed));
-		return HCQRPtr( new MyHCQR(t, idxStore(), sgPtr(), sgiPtr()) );
+		return hcqrFromPayload(t);
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
 		return HCQRPtr();
@@ -117,10 +200,9 @@ HCQRTextIndex::complete(const std::string & qstr, const sserialize::StringComple
 
 HCQRTextIndex::HCQRPtr
 HCQRTextIndex::items(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const {
-	using MyHCQR = sserialize::spatial::dgg::Static::impl::HCQRSpatialGrid;
     try {
 		Payload::Type t(typeFromCompletion(qstr, qt, m_items));
-		return HCQRPtr( new MyHCQR(t, idxStore(), sgPtr(), sgiPtr()) );
+		return hcqrFromPayload(t);
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
 		return HCQRPtr();
@@ -129,10 +211,9 @@ HCQRTextIndex::items(const std::string & qstr, const sserialize::StringCompleter
 
 HCQRTextIndex::HCQRPtr
 HCQRTextIndex::regions(const std::string & qstr, const sserialize::StringCompleter::QuerryType qt) const {
-	using MyHCQR = sserialize::spatial::dgg::Static::impl::HCQRSpatialGrid;
     try {
 		Payload::Type t(typeFromCompletion(qstr, qt, m_regions));
-		return HCQRPtr( new MyHCQR(t, idxStore(), sgPtr(), sgiPtr()) );
+		return hcqrFromPayload(t);
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
 		return HCQRPtr();
@@ -210,6 +291,20 @@ HCQRTextIndex::typeFromCompletion(const std::string& qs, sserialize::StringCompl
 		throw sserialize::OutOfBoundsException("HCQRTextIndex::typeFromCompletion");
 	}
 	return pd.at(pos).type(qt);
+}
+
+HCQRTextIndex::HCQRPtr
+HCQRTextIndex::hcqrFromPayload(Payload::Type const & d) const {
+	if (m_payloadFlags & PayloadFlags::FULL_TREE) {
+		using MyHCQR = sserialize::spatial::dgg::Static::impl::HCQRSpatialGrid;
+		return HCQRPtr( new MyHCQR(d, idxStore(), sgPtr(), sgiPtr()) );
+	}
+	else {
+		using MyHCQR = sserialize::spatial::dgg::impl::HCQRSpatialGrid;
+		detail::HCQRTextIndex::CompactTree ctree(d);
+		auto rn = ctree.tree();
+		return HCQRPtr( new MyHCQR(std::move(rn), idxStore(), sgPtr(), sgiPtr()) );
+	}
 }
 
 }//end namespace sserialize::spatial::dgg::Static
