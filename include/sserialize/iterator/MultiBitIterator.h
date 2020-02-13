@@ -53,6 +53,11 @@ public:
 	inline uint32_t get32(uint8_t len) const { return getN<uint32_t>(len);}
 	///get the first @len bits with up to 64 bits
 	inline uint64_t get64(uint8_t len) const { return getN<uint64_t>(len);}
+	///get the first @len bits
+	template<typename T>
+	inline typename std::enable_if<std::is_integral<T>::value && std::is_unsigend<T>::value && !std::is_same<T, uint8_t>::value, T>::type get<T>(uint8_t len) {
+		return getN<T>(len);
+	}
 	///@param bitCount this should not be larger than INT_MAX
 	MultiBitIterator & operator+=(uint32_t bitCount);
 	void reset();
