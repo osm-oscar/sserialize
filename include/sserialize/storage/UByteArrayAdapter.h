@@ -668,6 +668,15 @@ UBA_DESERIALIZER_SPECIALIZATIONS(std::string, getString);
 
 }}//end namespace detail::__UByteArrayAdapter
 
+template<>
+struct SerializationInfo<std::string> {
+	static const bool is_fixed_length = false;
+	static const OffsetType length = 0;
+	static const OffsetType max_length = 0;
+	static const OffsetType min_length = 0;
+	static OffsetType sizeInBytes(const std::string & value);
+};
+
 }//end namespace
 
 

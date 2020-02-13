@@ -1518,4 +1518,9 @@ UBA_OPERATOR_GET_STREAMING_FUNC(getString, std::string);
 
 #undef UBA_OPERATOR_STREAMING_FUNC
 
+INLINE_WITH_LTO OffsetType SerializationInfo<std::string>::sizeInBytes(const std::string & value) {
+	return psize_vu32((uint32_t) value.size()) + value.size();
+
+}
+
 }//end namespace
