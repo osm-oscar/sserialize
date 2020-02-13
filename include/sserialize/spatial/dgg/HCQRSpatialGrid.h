@@ -51,6 +51,8 @@ public:
 	inline void setFlags(int f) { m_f = f; }
 	inline Children & children() { return m_children; }
 public:
+	void sortChildren();
+public:
 	bool valid() const;
 private:
 	TreeNode(PixelId pixelId, int flags, uint32_t itemIndexId);
@@ -80,6 +82,12 @@ public:
     );
     HCQRSpatialGrid(
 		sserialize::CellQueryResult const & cqr,
+        sserialize::Static::ItemIndexStore idxStore,
+        sserialize::RCPtrWrapper<sserialize::spatial::dgg::interface::SpatialGrid> sg,
+        sserialize::RCPtrWrapper<sserialize::spatial::dgg::interface::SpatialGridInfo> sgi
+    );
+    HCQRSpatialGrid(
+		TreeNodePtr && root,
         sserialize::Static::ItemIndexStore idxStore,
         sserialize::RCPtrWrapper<sserialize::spatial::dgg::interface::SpatialGrid> sg,
         sserialize::RCPtrWrapper<sserialize::spatial::dgg::interface::SpatialGridInfo> sgi

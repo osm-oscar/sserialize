@@ -41,6 +41,13 @@ TreeNode::shallowCopy(Children && newChildren) const {
     return result;
 }
 
+void TreeNode::sortChildren() {
+	sort(children().begin(), children().end(),
+		[](std::unique_ptr<TreeNode> const & a, std::unique_ptr<TreeNode> const & b) -> bool {
+			return a->pixelId() < b->pixelId();
+		}
+	);
+}
 
 bool TreeNode::valid() const {
 	return (flags() == IS_INTERNAL && children().size()) || (flags() == IS_FULL_MATCH && itemIndexId() == npos) || (flags() == IS_FETCHED && itemIndexId() != npos) || (flags() == IS_PARTIAL_MATCH && itemIndexId() != npos);
@@ -100,17 +107,24 @@ HCQRSpatialGrid(idxStore, sg, sgi)
         ///children have to be sorted according to their PixelId
         for(auto & x : clevel) {
             using std::sort;
-            sort(x.second->children().begin(), x.second->children().end(),
-                [](std::unique_ptr<TreeNode> const & a, std::unique_ptr<TreeNode> const & b) -> bool {
-                    return a->pixelId() < b->pixelId();
-                }
-            );
+			x.second->sortChildren();
         }
     }
     if (clevel.size()) {
 		m_root = std::move(clevel.begin()->second);
 	}
 }
+
+HCQRSpatialGrid::HCQRSpatialGrid(
+	TreeNodePtr && root,
+	sserialize::Static::ItemIndexStore idxStore,
+	sserialize::RCPtrWrapper<sserialize::spatial::dgg::interface::SpatialGrid> sg,
+	sserialize::RCPtrWrapper<sserialize::spatial::dgg::interface::SpatialGridInfo> sgi
+) :
+Parent(sg, sgi),
+m_root(std::move(root)),
+m_items(idxStore)
+{}
 
 HCQRSpatialGrid::~HCQRSpatialGrid() {}
 
