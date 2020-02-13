@@ -30,7 +30,7 @@ namespace SpatialGridInfo {
 			htmIndexId2TrixelId,
 			trixelItemIndexIds
 		};
-        static constexpr uint8_t version{2};
+        static constexpr uint8_t version{3};
 	public:
 		MetaData(Data const * d) : m_d(d) {}
 	public:

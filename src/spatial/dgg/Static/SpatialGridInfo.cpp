@@ -9,26 +9,38 @@ namespace ssinfo::SpatialGridInfo {
 
 sserialize::UByteArrayAdapter::SizeType
 MetaData::getSizeInBytes() const {
-	return 3+m_d->trixelId2HtmIndexId().getSizeInBytes()+m_d->htmIndexId2TrixelId().getSizeInBytes()+m_d->trixelItemIndexIds().getSizeInBytes();;
+	return 
+		sserialize::SerializationInfo<decltype(MetaData::version)>::length+
+		sserialize::SerializationInfo<Types<DataMembers::type>::type>::sizeInBytes(m_d->type())+
+		sserialize::SerializationInfo<Types<DataMembers::levels>::type>::sizeInBytes(m_d->levels())+
+		m_d->trixelId2HtmIndexId().getSizeInBytes()+
+		m_d->htmIndexId2TrixelId().getSizeInBytes()+
+		m_d->trixelItemIndexIds().getSizeInBytes();
 }
 
 sserialize::UByteArrayAdapter::SizeType
 MetaData::offset(DataMembers member) const {
-	switch(member) {
-		case DataMembers::type:
-			return 1;
-		case DataMembers::levels:
-			return 2;
-		case DataMembers::trixelId2HtmIndexId:
-			return 3;
-		case DataMembers::htmIndexId2TrixelId:
-			return 3+m_d->trixelId2HtmIndexId().getSizeInBytes();
-		case DataMembers::trixelItemIndexIds:
-			return 3+m_d->trixelId2HtmIndexId().getSizeInBytes()+m_d->htmIndexId2TrixelId().getSizeInBytes();
-		default:
-			throw sserialize::InvalidEnumValueException("MetaData");
-			break;
-	};
+	sserialize::UByteArrayAdapter::SizeType offset = sserialize::SerializationInfo<decltype(MetaData::version)>::length;
+	if (member == DataMembers::type) {
+		return offset;
+	}
+	offset += sserialize::SerializationInfo<Types<DataMembers::type>::type>::sizeInBytes(m_d->type());
+	if (member == DataMembers::levels) {
+		return offset;
+	}
+	offset += sserialize::SerializationInfo<Types<DataMembers::levels>::type>::sizeInBytes(m_d->levels());
+	if (member == DataMembers::trixelId2HtmIndexId) {
+		return offset;
+	}
+	offset += m_d->trixelId2HtmIndexId().getSizeInBytes();
+	if (member == DataMembers::htmIndexId2TrixelId) {
+		return offset;
+	}
+	offset += m_d->htmIndexId2TrixelId().getSizeInBytes();
+	if (member == DataMembers::trixelItemIndexIds) {
+		return offset;
+	}
+	throw sserialize::InvalidEnumValueException("MetaData");
 	return 0;
 }
 
