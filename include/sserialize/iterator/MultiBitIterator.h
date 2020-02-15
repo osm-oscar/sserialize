@@ -2,6 +2,7 @@
 #define SSERIALIZE_MULTI_BIT_ITERATOR_H
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <limits>
+#include <type_traits>
 
 namespace sserialize {
 
@@ -55,7 +56,7 @@ public:
 	inline uint64_t get64(uint8_t len) const { return getN<uint64_t>(len);}
 	///get the first @len bits
 	template<typename T>
-	inline typename std::enable_if<std::is_integral<T>::value && std::is_unsigend<T>::value && !std::is_same<T, uint8_t>::value, T>::type get<T>(uint8_t len) {
+	inline typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value && !std::is_same<T, uint8_t>::value, T>::type get(uint8_t len) {
 		return getN<T>(len);
 	}
 	///@param bitCount this should not be larger than INT_MAX

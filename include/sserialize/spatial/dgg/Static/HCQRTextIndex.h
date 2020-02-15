@@ -81,7 +81,7 @@ private:
 class CompactTree final {
 public:
 	using HCQRSpatialGrid = sserialize::spatial::dgg::impl::HCQRSpatialGrid;
-	using SpatialGrid = sseralize::spatial::dgg::interface::SpatialGrid;
+	using SpatialGrid = sserialize::spatial::dgg::interface::SpatialGrid;
 public:
 	CompactTree(sserialize::UByteArrayAdapter const & d);
 	~CompactTree();
