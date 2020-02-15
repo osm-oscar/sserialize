@@ -302,7 +302,7 @@ HCQRTextIndex::hcqrFromPayload(Payload::Type const & d) const {
 	else {
 		using MyHCQR = sserialize::spatial::dgg::impl::HCQRSpatialGrid;
 		detail::HCQRTextIndex::CompactTree ctree(d);
-		auto rn = ctree.tree();
+		auto rn = ctree.tree(sg());
 		return HCQRPtr( new MyHCQR(std::move(rn), idxStore(), sgPtr(), sgiPtr()) );
 	}
 }
