@@ -5,6 +5,8 @@
 #include <vector>
 #include <stdint.h>
 #include <iostream>
+#include <mutex>
+#include <shared_mutex>
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/algorithm/utilcontainerfuncs.h>
 #include <sserialize/containers/ItemIndex.h>
@@ -12,7 +14,6 @@
 #include <sserialize/utility/types.h>
 #include <sserialize/Static/ItemIndexStore.h>
 #include <sserialize/storage/pack_unpack_functions.h>
-#include <sserialize/mt/MultiReaderSingleWriterLock.h>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/algorithm/hashspecializations.h>
 
@@ -96,6 +97,10 @@ public:
 	
 	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, int type);
 private:
+	using MutexType = std::shared_mutex;
+	using WriteLock = std::unique_lock<MutexType>;
+	using ReadLock = std::shared_lock<MutexType>;
+private:
 	DataHashKey hashFunc(const UByteArrayAdapter & v);
 	DataHashKey hashFunc(const std::vector< uint8_t >& v);
 	///returns the id of the index or -1 if none was found @thread-safety: yes
@@ -115,8 +120,8 @@ private:
 	bool m_useDeduplication;
 	int m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
-	MultiReaderSingleWriterLock m_mapLock;
-	MultiReaderSingleWriterLock m_dataLock;
+	MutexType m_mapLock;
+	MutexType m_dataLock;
 };
 
 template<class TSortedContainer>

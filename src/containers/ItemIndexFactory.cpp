@@ -149,28 +149,24 @@ int64_t ItemIndexFactory::getIndex(const std::vector<uint8_t> & v, ItemIndexFact
 		return -1;
 	}
 	hv = hashFunc(v);
-	m_mapLock.acquireReadLock();
+	ReadLock mapLock(m_mapLock);
 	if (m_hash.count(hv) == 0) {
-		m_mapLock.releaseReadLock();
 		return -1;
 	}
 	else {
 		uint32_t id = m_hash.at(hv);
-		m_mapLock.releaseReadLock();
 		return id;
 	}
 }
 
 bool ItemIndexFactory::indexInStore(const std::vector< uint8_t >& v, uint32_t id) {
-	m_dataLock.acquireReadLock();
+	ReadLock dataLock(m_dataLock);
 	sserialize::UByteArrayAdapter::OffsetType offset = m_idToOffsets.at(id);
 	if (v.size() > (m_indexStore.tellPutPtr()-offset)) {
-		m_dataLock.releaseReadLock();
 		return false;
 	}
 	UByteArrayAdapter::MemoryView mv( m_indexStore.getMemView(offset, v.size()) );
 	bool eq = memcmp(mv.get(), v.data(), v.size()) == 0;
-	m_dataLock.releaseReadLock();
 	return eq;
 }
 
@@ -192,7 +188,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		id = getIndex(idx, hv);
 	}
 	if (id < 0) {
-		m_dataLock.acquireWriteLock();
+		WriteLock dataLock(m_dataLock);
 		sserialize::UByteArrayAdapter::OffsetType dataOffset = m_indexStore.tellPutPtr();
 		m_indexStore.putData(idx);
 		id = m_idToOffsets.size();
@@ -202,12 +198,11 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 		if (m_type & ItemIndex::T_MULTIPLE) {
 			m_idxTypes.push_back(type);
 		}
-		m_dataLock.releaseWriteLock();
+		dataLock.unlock();
 		
 		if (m_useDeduplication) {
-			m_mapLock.acquireWriteLock();
+			WriteLock mapLock(m_mapLock);
 			m_hash[hv] = id;
-			m_mapLock.releaseWriteLock();
 		}
 	}
 	else {//index is in store, so we have deduplication enabled
@@ -217,7 +212,7 @@ uint32_t ItemIndexFactory::addIndex(const std::vector<uint8_t> & idx, uint32_t i
 }
 
 void ItemIndexFactory::recalculateDeduplicationData() {
-	m_mapLock.acquireWriteLock();
+	WriteLock mapLock(m_mapLock);
 	m_hash.clear();
 	std::vector<uint8_t> idxData;
 	for(uint32_t id(0), s(size()); id < s; ++id) {
@@ -225,7 +220,6 @@ void ItemIndexFactory::recalculateDeduplicationData() {
 		SSERIALIZE_NORMAL_ASSERT(m_hash.count(hv) == 0);
 		m_hash[hv] = id;
 	}
-	m_mapLock.releaseWriteLock();
 }
 
 UByteArrayAdapter ItemIndexFactory::getFlushedData() {
