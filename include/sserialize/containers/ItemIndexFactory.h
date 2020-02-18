@@ -30,28 +30,6 @@ public:
 	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
 	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
 	typedef sserialize::MMVector<uint8_t> ItemIndexTypesContainer;
-private:
-	UByteArrayAdapter m_header;
-	UByteArrayAdapter m_indexStore;
-	DataHashType m_hash;
-	IdToOffsetsType m_idToOffsets;
-	ItemIndexSizesContainer m_idxSizes;
-	ItemIndexTypesContainer m_idxTypes;
-	std::atomic<uint64_t> m_hitCount;
-	bool m_checkIndex;
-	bool m_useDeduplication;
-	int m_type;
-	Static::ItemIndexStore::IndexCompressionType m_compressionType;
-	MultiReaderSingleWriterLock m_mapLock;
-	MultiReaderSingleWriterLock m_dataLock;
-private:
-	DataHashKey hashFunc(const UByteArrayAdapter & v);
-	DataHashKey hashFunc(const std::vector< uint8_t >& v);
-	///returns the id of the index or -1 if none was found @thread-safety: yes
-	int64_t getIndex(const std::vector< uint8_t >& v, DataHashKey & hv);
-	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
-	///adds the data of an index to store @thread-safety: true
-	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize, ItemIndex::Types type);
 public://deleted functions
 	ItemIndexFactory(const ItemIndexFactory & other) = delete;
 	ItemIndexFactory & operator=(const ItemIndexFactory & other) = delete;
@@ -117,7 +95,28 @@ public:
 	static ItemIndex create(const TSortedContainer& idx, int type, ItemIndex::CompressionLevel cl = ItemIndex::CL_DEFAULT);
 	
 	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, int type);
-
+private:
+	DataHashKey hashFunc(const UByteArrayAdapter & v);
+	DataHashKey hashFunc(const std::vector< uint8_t >& v);
+	///returns the id of the index or -1 if none was found @thread-safety: yes
+	int64_t getIndex(const std::vector< uint8_t >& v, DataHashKey & hv);
+	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
+	///adds the data of an index to store @thread-safety: true
+	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize, ItemIndex::Types type);
+private:
+	UByteArrayAdapter m_header;
+	UByteArrayAdapter m_indexStore;
+	DataHashType m_hash;
+	IdToOffsetsType m_idToOffsets;
+	ItemIndexSizesContainer m_idxSizes;
+	ItemIndexTypesContainer m_idxTypes;
+	std::atomic<uint64_t> m_hitCount;
+	bool m_checkIndex;
+	bool m_useDeduplication;
+	int m_type;
+	Static::ItemIndexStore::IndexCompressionType m_compressionType;
+	MultiReaderSingleWriterLock m_mapLock;
+	MultiReaderSingleWriterLock m_dataLock;
 };
 
 template<class TSortedContainer>
