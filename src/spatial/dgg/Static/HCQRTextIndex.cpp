@@ -221,12 +221,12 @@ HCQRTextIndex::regions(const std::string & qstr, const sserialize::StringComplet
 }
 
 HCQRTextIndex::HCQRPtr
-HCQRTextIndex::cell(uint32_t cellId) const {
+HCQRTextIndex::cell(uint32_t /*cellId*/) const {
 	throw sserialize::UnimplementedFunctionException("OscarSearchSgIndex::cell");
 }
 
 HCQRTextIndex::HCQRPtr
-HCQRTextIndex::region(uint32_t regionId) const {
+HCQRTextIndex::region(uint32_t /*regionId*/) const {
 	throw sserialize::UnimplementedFunctionException("OscarSearchSgIndex::region");
 }
 	

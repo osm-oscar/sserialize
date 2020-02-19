@@ -1372,14 +1372,14 @@ HCQRSpatialGrid::operator-(HCQR const & other) const {
 }
 
 HCQRSpatialGrid::HCQRPtr
-HCQRSpatialGrid::compactified(SizeType maxPMLevel) const {
+HCQRSpatialGrid::compactified(SizeType /*maxPMLevel*/) const {
 	throw sserialize::UnimplementedFunctionException("Missing function");
     return HCQRSpatialGrid::HCQRPtr();
 }
 
 
 HCQRSpatialGrid::HCQRPtr
-HCQRSpatialGrid::expanded(SizeType level) const {
+HCQRSpatialGrid::expanded(SizeType /*level*/) const {
 	throw sserialize::UnimplementedFunctionException("Missing function");
     return HCQRSpatialGrid::HCQRPtr();
 }

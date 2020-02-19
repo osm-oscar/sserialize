@@ -70,12 +70,12 @@ SimpleGridSpatialGrid::parent(PixelId) const {
 }
 
 SimpleGridSpatialGrid::Size
-SimpleGridSpatialGrid::childrenCount(PixelId pixel) const {
+SimpleGridSpatialGrid::childrenCount(PixelId /*pixel*/) const {
 	return 4;
 }
 
 std::unique_ptr<SimpleGridSpatialGrid::TreeNode>
-SimpleGridSpatialGrid::tree(CellIterator begin, CellIterator end) const {
+SimpleGridSpatialGrid::tree(CellIterator /*begin*/, CellIterator /*end*/) const {
 	return std::unique_ptr<SimpleGridSpatialGrid::TreeNode>();
 }
 

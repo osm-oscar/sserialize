@@ -228,13 +228,13 @@ GeoHierarchySpatialGrid::isAncestor(PixelId ancestor, PixelId decendant) const {
 }
 
 GeoHierarchySpatialGrid::PixelId
-GeoHierarchySpatialGrid::index(double lat, double lon, Level level) const {
+GeoHierarchySpatialGrid::index(double /*lat*/, double /*lon*/, Level /*level*/) const {
 	throw sserialize::UnimplementedFunctionException("GeoHierarchySpatialGrid::tree");
 	return 0;
 }
 
 GeoHierarchySpatialGrid::PixelId
-GeoHierarchySpatialGrid::index(double lat, double lon) const {
+GeoHierarchySpatialGrid::index(double /*lat*/, double /*lon*/) const {
 	throw sserialize::UnimplementedFunctionException("GeoHierarchySpatialGrid::tree");
 	return 0;
 }
@@ -275,7 +275,7 @@ GeoHierarchySpatialGrid::childrenCount(PixelId pixelId) const {
 }
 
 std::unique_ptr<sserialize::spatial::dgg::interface::SpatialGrid::TreeNode>
-GeoHierarchySpatialGrid::tree(CellIterator begin, CellIterator end) const {
+GeoHierarchySpatialGrid::tree(CellIterator /*begin*/, CellIterator /*end*/) const {
 	throw sserialize::UnimplementedFunctionException("GeoHierarchySpatialGrid::tree");
 	return std::unique_ptr<sserialize::spatial::dgg::interface::SpatialGrid::TreeNode>();
 }
