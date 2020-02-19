@@ -6,9 +6,9 @@
 #include <sserialize/Static/Array.h>
 #include <sserialize/containers/OOMArray.h>
 #include <sserialize/containers/ArraySet.h>
-#include <sserialize/algorithm/oom_algorithm.h>
 #include <sserialize/spatial/DistanceCalculator.h>
 #include <sserialize/Static/detail/Triangulation.h>
+#include <sserialize/stats/ProgressInfo.h>
 
 #ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	#include <sserialize/algorithm/hashspecializations.h>
@@ -586,7 +586,7 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 
 	//This function either returns the face through which the LINE source->target leaves v
 	//OR it returns another vertex that is also on the LINE source->target
-	auto vertexStep = [this, &ot, &source, &target](Vertex const & v) -> State {
+	auto vertexStep = [&ot, &source, &target](Vertex const & v) -> State {
 		assert(v.valid());
 		State result;
 		Triangulation::FaceCirculator fcBegin(v.facesBegin()), fcEnd(v.facesEnd());
