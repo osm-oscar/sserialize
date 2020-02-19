@@ -780,7 +780,7 @@ HCQRSpatialGrid::compactified(SizeType maxPMLevel) const {
 					flags |= children.back()->flags();
                 }
                 //check if we can compactify even further by merging partial-match indexes to parent nodes
-                if ((flags & (TreeNode::IS_FULL_MATCH | TreeNode::IS_INTERNAL)) == 0 && that.sg().level(node.pixelId()) > maxPMLevel) {
+                if ((flags & (TreeNode::IS_FULL_MATCH | TreeNode::IS_INTERNAL)) == 0 && that.sg().level(node.pixelId()) > sserialize::narrow_check<int>(maxPMLevel)) {
                     sserialize::SizeType dataSize = 0;
                     std::vector<sserialize::ItemIndex> indexes;
                     for(auto & x : children) {
