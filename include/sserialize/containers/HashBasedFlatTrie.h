@@ -811,7 +811,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	else {
 // 		threadCount = 1;
 		typename HashTable::const_iterator htBegin = m_ht.begin();
-		uint32_t htSize = size();
+		SSERIALIZE_CHEAP_ASSERT_EXEC(uint32_t htSize = size());
 		std::vector< std::vector<NodePtr> > nodesInLevelOrder(depth(root()));
 		nodesInLevelOrder[0].push_back(root());
 		for(uint32_t i(0), s((uint32_t) (nodesInLevelOrder.size()-1)); i < s; ++i) {
