@@ -2,6 +2,8 @@
 #define SSERIALIZE_STATIC_SPATIAL_DETAIL_TRIANGULATION_H
 #include <sserialize/Static/GeoPoint.h>
 #include <sserialize/spatial/LatLonCalculations.h>
+#include <sserialize/stats/ProgressInfo.h>
+
 #ifdef SSERIALIZE_HAS_LIB_RATSS
 	#include <sserialize/Static/PointOnS2.h>
 	#include <libratss/ProjectS2.h>
