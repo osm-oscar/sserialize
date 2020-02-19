@@ -97,9 +97,9 @@ public:
 	
 	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, int type);
 private:
-	using MutexType = std::shared_mutex;
+	using MutexType = std::mutex;
 	using WriteLock = std::unique_lock<MutexType>;
-	using ReadLock = std::shared_lock<MutexType>;
+	using ReadLock = std::unique_lock<MutexType>;
 private:
 	DataHashKey hashFunc(const UByteArrayAdapter & v);
 	DataHashKey hashFunc(const std::vector< uint8_t >& v);
