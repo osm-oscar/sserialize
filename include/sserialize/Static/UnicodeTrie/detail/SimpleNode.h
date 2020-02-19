@@ -46,6 +46,7 @@ public:
 };
 
 struct SimpleNodeCreator: sserialize::Static::UnicodeTrie::NodeCreator {
+	~SimpleNodeCreator() override {}
 	virtual uint32_t type() const override;
 	virtual bool append(const NodeSerializationInfo & src, sserialize::UByteArrayAdapter & dest) override;
 };

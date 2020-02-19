@@ -40,6 +40,7 @@ struct NodeSerializationInfo {
 }
 
 struct NodeCreator {
+	virtual ~NodeCreator() {}
 	virtual uint32_t type() const = 0;
 	virtual bool append(const detail::NodeSerializationInfo & src, sserialize::UByteArrayAdapter & dest) = 0;
 };
