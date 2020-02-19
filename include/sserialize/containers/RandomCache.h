@@ -43,7 +43,7 @@ public:
 	
 	void insert(const TKey & key, const TValue & value) {
 		if (size()+1 >= m_maxSize) {
-			size_type m_x = (m_a*m_x+m_b)%size();
+			m_x = (m_a*m_x+m_b)%size();
 			m_kv.erase(m_k.at(m_x));
 			m_k.at(m_x) = key;
 			m_kv[key] = value;
@@ -54,8 +54,9 @@ public:
 		}
 	}
 	
+	
 	void evict() {
-		size_type m_x = (m_a*m_x+m_b)%size();
+		m_x = (m_a*m_x+m_b)%size();
 		key_type & k = m_k.at(m_x);
 		m_kv.erase(k);
 		if (m_k.size() > 1) {
