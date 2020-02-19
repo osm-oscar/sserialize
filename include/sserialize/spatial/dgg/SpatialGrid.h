@@ -35,6 +35,7 @@ public:
 	using Level = int32_t;
 	using Size = uint32_t;
 	class TreeNode {
+	public:
 		PixelId cellId;
 		std::vector< std::unique_ptr<TreeNode> > children; 
 	};
