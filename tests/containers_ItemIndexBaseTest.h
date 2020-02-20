@@ -336,7 +336,7 @@ public:
 		
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
 		
-			int count = 0;
+			uint32_t count = 0;
 			for(std::set<uint32_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count << "; run=" << i;
