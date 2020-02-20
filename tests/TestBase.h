@@ -5,6 +5,11 @@
 #include <cppunit/Asserter.h>
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestResult.h>
+#include <sserialize/utility/printers.h>
+
+namespace std {
+	using sserialize::operator<<;
+}
 
 namespace sserialize {
 namespace tests {
