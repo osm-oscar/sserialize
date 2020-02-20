@@ -48,8 +48,8 @@ public:
 	void setType(int type);
 	///create the ItemIndexStore at the beginning of data
 	void setIndexFile(UByteArrayAdapter data);
-	///insert IndexStore
-	std::vector<uint32_t> insert(const sserialize::Static::ItemIndexStore & store);
+	///insert IndexStore, threadCount > 1 change the order of index ids
+	std::vector<uint32_t> insert(const sserialize::Static::ItemIndexStore & store, uint32_t threadCount = 1);
 	
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	//default is on

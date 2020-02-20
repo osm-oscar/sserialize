@@ -10,6 +10,7 @@
 #include <sserialize/iterator/MultiBitBackInserter.h>
 #include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/iterator/TransformIterator.h>
+#include <sserialize/mt/ThreadPool.h>
 #include <minilzo/minilzo.h>
 #include <unordered_map>
 #include <iostream>
@@ -109,28 +110,47 @@ void ItemIndexFactory::setIndexFile(sserialize::UByteArrayAdapter data) {
 	addIndex(std::set<uint32_t>());
 }
 
-std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemIndexStore& store) {
+std::vector<uint32_t> ItemIndexFactory::insert(const sserialize::Static::ItemIndexStore& store, uint32_t threadCount) {
 	m_idToOffsets.reserve(store.size()+size());
 	m_idxSizes.reserve(store.size()+size());
 	if (m_useDeduplication) {
 		m_hash.reserve(store.size()+size());
 	}
-	std::vector<uint32_t> res;
-	res.reserve(store.size());
-	res.push_back(0);
-	std::vector<uint32_t> tmp; 
-	ItemIndex tmpIdx;
-	sserialize::ProgressInfo info;
-	info.begin(store.size(), "Adding indices from store");
-	for(uint32_t i = 1, s = store.size(); i < s; ++i) {//skip the first index as that one is by definition 0
-		tmp.clear();
-		tmpIdx = store.at(i);
-		tmpIdx.putInto(tmp);
-		res.push_back(addIndex(tmp));
-		info(i);
-	}
-	info.end();
-	return res;
+	struct State {
+		sserialize::Static::ItemIndexStore const & src;
+		sserialize::ItemIndexFactory & dest;
+		sserialize::ProgressInfo pinfo;
+		std::atomic<uint64_t> i{1};
+		std::vector<uint32_t> oldToNewId;
+		State(sserialize::Static::ItemIndexStore const & src, sserialize::ItemIndexFactory & dest) :
+		src(src),
+		dest(dest),
+		oldToNewId(src.size(), 0)
+		{}
+	};
+	struct Worker {
+		State * state;
+		std::vector<uint32_t> tmp;
+		Worker(State * state) : state(state) {}
+		Worker(Worker const & other) : state(other.state) {}
+		void operator()() {
+			while(true) {
+				auto i = state->i.fetch_add(1, std::memory_order_relaxed);
+				if (i >= state->src.size()) {
+					return;
+				}
+				state->src.at(i).putInto(tmp);
+				state->oldToNewId[i] = state->dest.addIndex(tmp);
+				tmp.clear();
+				state->pinfo(state->i.load(std::memory_order_relaxed));
+			}
+		}
+	};
+	State state(store, *this);
+	state.pinfo.begin(store.size());
+	sserialize::ThreadPool::execute(Worker(&state), threadCount, sserialize::ThreadPool::CopyTaskTag());
+	state.pinfo.end();
+	return state.oldToNewId;
 }
 
 ItemIndexFactory::DataHashKey ItemIndexFactory::hashFunc(const UByteArrayAdapter & v) {
