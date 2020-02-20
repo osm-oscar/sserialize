@@ -522,11 +522,22 @@ public:
 			}
 		}
 	};
+	struct ForeignObjectsPredicate {
+		bool operator()(item_type) { false; }
+	};
+	struct ForeignObjects {
+		template<typename TOutputIterator>
+		void cells(item_type, TOutputIterator) {}
+		template<typename TOutputIterator>
+		void items(item_type, uint32_t, TOutputIterator) {}
+	};
 public:
 	ExactStrings exactStrings() { return ExactStrings(); }
 	SuffixStrings suffixStrings() { return SuffixStrings(); }
 	ItemId itemId() { return ItemId(); }
 	ItemCells itemCells() { return ItemCells(); }
+	ForeignObjectsPredicate foreignObjectsPredicate() { return ForeignObjectsPredicate(); }
+	ForeignObjects foreignObjects() { return ForeignObjects(); }
 };
 
 
