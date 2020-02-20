@@ -23,12 +23,16 @@ public:
 			std::generate(data.begin(), data.end(), []() { return rand(); });
 			std::vector<uint32_t> data2(data);
 			
-			sserialize::oom_sort(data.begin(), data.end(), [](uint32_t a, uint32_t b) { return a < b; },
-									(static_cast<uint64_t>(1) << 22)/scaleFactor, sserialize::MM_PROGRAM_MEMORY);
+			sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+			sortTraits
+				.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
+				.mmt(sserialize::MM_PROGRAM_MEMORY);
+			
+			sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
 			CPPUNIT_ASSERT(data2.size() == data.size());
 			
-			sserialize::mt_sort(data2.begin(), data2.end(), [](uint32_t a, uint32_t b) { return a < b; });
+			sserialize::mt_sort(data2.begin(), data2.end(), sortTraits.compare());
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corruption in run ", i), std::equal(data2.begin(), data2.end(), data.begin()));
 		}
 	}
@@ -37,7 +41,12 @@ public:
 		sserialize::MMVector<uint32_t> data(sserialize::MM_FILEBASED, 1025*1023*1024);
 		std::generate(data.begin(), data.end(), []() { return rand(); });
 		
-		sserialize::oom_sort(data.begin(), data.end(), std::less<uint32_t>(), 1 << 30);
+		sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+		sortTraits
+			.maxMemoryUsage(1 << 30)
+			.mmt(sserialize::MM_PROGRAM_MEMORY);
+				
+		sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 		CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted"), std::is_sorted(data.begin(), data.end()));
 		
 		//data corruption is difficult to check
@@ -54,12 +63,16 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", realData.size(), data.size());
 			CPPUNIT_ASSERT_MESSAGE("realData != data", sserialize::equal(realData.begin(), realData.end(), data.begin(), data.end(), [](uint32_t a, uint32_t b) {return a == b;}));
 			
-			sserialize::oom_sort(data.begin(), data.end(), [](uint32_t a, uint32_t b) { return a < b; },
-									(static_cast<uint64_t>(1) << 22)/scaleFactor, sserialize::MM_PROGRAM_MEMORY);
+			sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+			sortTraits
+				.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
+				.mmt(sserialize::MM_PROGRAM_MEMORY);
+			
+			sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
 			CPPUNIT_ASSERT(realData.size() == data.size());
 			
-			sserialize::mt_sort(realData.begin(), realData.end(), [](uint32_t a, uint32_t b) { return a < b; });
+			sserialize::mt_sort(realData.begin(), realData.end(), sortTraits.compare());
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corruption in run ", i), std::equal(realData.begin(), realData.end(), data.begin()));
 		}
 	}
@@ -77,12 +90,17 @@ public:
 			});
 			std::vector<uint32_t> data2(data);
 			
-			sserialize::oom_sort(data.begin(), data.end(), std::less<uint32_t>(), (1 << 22)/scaleFactor);
+			sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+			sortTraits
+				.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
+				.mmt(sserialize::MM_PROGRAM_MEMORY);
+			
+			sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
 			auto end = sserialize::oom_unique(data.begin(), data.end());
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not unique in run ", i), sserialize::is_unique(data.begin(), end));
 			
-			sserialize::mt_sort(data2.begin(), data2.end(), [](uint32_t a, uint32_t b) { return a < b; });
+			sserialize::mt_sort(data2.begin(), data2.end(), sortTraits.compare());
 			auto end2 = std::unique(data2.begin(), data2.end());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of unique part", std::distance(data2.begin(), end2), std::distance(data.begin(), end));
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corrupted in run ", i), std::equal(data2.begin(), end2, data.begin()));
@@ -104,12 +122,17 @@ public:
 			sserialize::OOMArray<uint32_t> data(sserialize::MM_PROGRAM_MEMORY);
 			data.replace(data.end(), realData.begin(), realData.end());
 			
-			sserialize::oom_sort(data.begin(), data.end(), std::less<uint32_t>(), (1 << 22)/scaleFactor);
+			sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+			sortTraits
+				.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
+				.mmt(sserialize::MM_PROGRAM_MEMORY);
+			
+			sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
 			auto end = sserialize::oom_unique(data.begin(), data.end());
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not unique in run ", i), sserialize::is_unique(data.begin(), end));
 			
-			sserialize::mt_sort(realData.begin(), realData.end(), [](uint32_t a, uint32_t b) { return a < b; });
+			sserialize::mt_sort(realData.begin(), realData.end(), sortTraits.compare());
 			auto end2 = std::unique(realData.begin(), realData.end());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size of unique part", std::distance(realData.begin(), end2), std::distance(data.begin(), end));
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corrupted in run ", i), std::equal(realData.begin(), end2, data.begin()));
@@ -130,12 +153,14 @@ public:
 			sserialize::OOMArray<uint32_t> data(sserialize::MM_PROGRAM_MEMORY);
 			data.replace(data.end(), realData.begin(), realData.end());
 			
-			sserialize::oom_sort<false, true>(
-				data.begin(), data.end(),
-				std::less<uint32_t>(),
-				(1 << 22)/scaleFactor,
-				sserialize::MM_PROGRAM_MEMORY
-			);
+			sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+			sortTraits
+				.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
+				.mmt(sserialize::MM_PROGRAM_MEMORY)
+				.makeUnique(true);
+			
+			sserialize::oom_sort(data.begin(), data.end(), sortTraits);
+			
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
 			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not unique in run ", i), sserialize::is_unique(data.begin(), data.end()));
 			

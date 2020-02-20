@@ -5,7 +5,7 @@
 #include <sserialize/containers/MMVector.h>
 
 void help() {
-	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -w <max wait in s> -st <memory|mmap|oompm|oomff|oomsf> -sp <source tmp path> -tp <tmp path> --u[niquify]" << std::endl;
+	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -w <max wait in s> -st <memory|mmap|oompm|oomff|oomsf> -sp <source tmp path> -tp <tmp path> --u[niquify] --no-fetch-lock --no-flush-lock" << std::endl;
 }
 
 enum SrcFileType {
@@ -19,7 +19,10 @@ struct State {
 	uint32_t threadCount = 2;
 	uint32_t queueDepth = 32;
 	uint32_t maxWait = 10;
+	sserialize::MmappedMemoryType tmt{sserialize::MM_SLOW_FILEBASED};
 	bool uniquify = false;
+	bool fetchLock{true};
+	bool flushLock{true};
 };
 
 template<typename T_SRC_CONTAINER_TYPE>
@@ -28,6 +31,17 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 	
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
+	
+	sserialize::detail::oom::SortTraits<true, std::less<uint64_t>, std::equal_to<uint64_t> > sortTraits;
+	sortTraits
+		.maxMemoryUsage(state.memorySize)
+		.maxThreadCount(state.threadCount)
+		.mmt(sserialize::MM_SLOW_FILEBASED)
+		.queueDepth(state.queueDepth)
+		.maxWait(state.maxWait)
+		.ioFetchLock(state.fetchLock)
+		.ioFlushLock(state.flushLock)
+		.makeUnique(state.uniquify);
 	
 	if (state.uniquify) {
 		pinfo.begin(state.entryCount/3, "Creating file");
@@ -41,13 +55,7 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 		}
 		pinfo.end();
 		tm.begin();
-		sserialize::oom_sort<true>(
-			data.begin(), data.end(),
-			std::less<uint64_t>(),
-			state.memorySize, state.threadCount,
-			sserialize::MM_SLOW_FILEBASED, 
-			state.queueDepth, state.maxWait
-		);
+		sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 		tm.end();
 		std::cout << "Sorting took " << tm << std::endl;
 		pinfo.begin(state.entryCount/3, "Verifying");
@@ -71,13 +79,7 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 		}
 		pinfo.end();
 		tm.begin();
-		sserialize::oom_sort<false>(
-			data.begin(), data.end(),
-			std::less<uint64_t>(),
-			state.memorySize, state.threadCount,
-			sserialize::MM_SLOW_FILEBASED, 
-			state.queueDepth, state.maxWait
-		);
+		sserialize::oom_sort(data.begin(), data.end(), sortTraits);
 		tm.end();
 		std::cout << "Sorting took " << tm << std::endl;
 		pinfo.begin(state.entryCount, "Verifying");
@@ -148,6 +150,12 @@ int main(int argc, char ** argv) {
 		else if (token == "-u" || token == "--uniquify") {
 			state.uniquify = true;
 		}
+		else if (token == "--no-fetch-lock") {
+			state.fetchLock = false;
+		}
+		else if (token == "--no-flush-lock") {
+			state.flushLock = false;
+		}
 		else if (token == "-h" || token == "--help") {
 			help();
 			return 0;
@@ -183,18 +191,21 @@ int main(int argc, char ** argv) {
 	case SFT_MEM:
 		{
 			std::vector<uint64_t> data;
+			state.tmt = sserialize::MM_PROGRAM_MEMORY;
 			worker(data, state);
 			break;
 		}
 	case SFT_MMAP:
 		{
 			sserialize::MMVector<uint64_t> data(sserialize::MM_FAST_FILEBASED);
+			state.tmt = sserialize::MM_FAST_FILEBASED;
 			worker(data, state);
 			break;
 		}
 	case SFT_OOM_ARRAY_FF:
 		{
 			sserialize::OOMArray<uint64_t> data(sserialize::MM_FAST_FILEBASED);
+			state.tmt = sserialize::MM_FAST_FILEBASED;
 			data.backBufferSize(100*1024*1024);
 			worker(data, state);
 			break;
@@ -202,6 +213,7 @@ int main(int argc, char ** argv) {
 	case SFT_OOM_ARRAY_SF:
 		{
 			sserialize::OOMArray<uint64_t> data(sserialize::MM_SLOW_FILEBASED);
+			state.tmt = sserialize::MM_SLOW_FILEBASED;
 			data.backBufferSize(100*1024*1024);
 			worker(data, state);
 			break;

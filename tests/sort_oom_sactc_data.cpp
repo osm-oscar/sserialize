@@ -72,14 +72,16 @@ void work(TC & entries, State & state) {
 	MyLessThan ltp(nltp);
 	MyEqual ep(nep);
 	
-	sserialize::oom_sort<true>(
-		entries.begin(), entries.end(),
-		ltp,
-		state.maxMemoryUsage, 2, sserialize::MM_SLOW_FILEBASED,
-		64,
-		10,
-		ep
-	);
+	sserialize::detail::oom::SortTraits<false, MyLessThan, MyEqual> traits(nltp, nep);
+	traits
+		.maxMemoryUsage(state.maxMemoryUsage)
+		.maxThreadCount(2
+		).mmt(sserialize::MM_SLOW_FILEBASED)
+		.queueDepth(64)
+		.maxWait(10)
+		.makeUnique(true);
+	
+	sserialize::oom_sort(entries.begin(), entries.end(), traits);
 	using std::is_sorted;
 	if(!is_sorted(entries.begin(), entries.end(), ltp)) {
 		std::cout << std::endl;

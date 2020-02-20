@@ -164,7 +164,55 @@ struct IteratorRangeDataSwaper< sserialize::detail::OOMArray::Iterator<TValue> >
 	}
 };
 
+//default sort traits
+template<
+	bool TWithProgressInfo,
+	typename TCompare,
+	typename TEqual
+>
+class SortTraits {
+public:
+	static constexpr bool withProgressInfo = TWithProgressInfo;
+	using Compare = TCompare;
+	using Equal = TEqual;
+	using Self = SortTraits<withProgressInfo, Compare, Equal>;
+private: //need to come first in order to access them with decltype
+	Compare m_compare;
+	Equal m_equal;
+	bool m_makeUnique{false};
+	bool m_ioFetchLock{true};
+	bool m_ioFlushLock{true};
+	uint64_t m_maxMemoryUsage{0x100000000};
+	uint32_t m_maxThreadCount{2};
+	sserialize::MmappedMemoryType m_mmt{sserialize::MM_FILEBASED};
+	uint32_t m_queueDepth{64};
+	uint32_t m_maxWait{10};
+public:
+	SortTraits(Compare c = Compare(), Equal e = Equal()) : m_compare(c), m_equal(e) {}
+	~SortTraits() {}
+#define SSERIALIZE_OOM_SORT_TRAITS_GET_SET(__NAME) \
+	Self & __NAME(decltype(Self::m_##__NAME) v) { m_##__NAME = v; return *this;} \
+	auto __NAME() const { return m_##__NAME;}
+	
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(makeUnique)
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(ioFetchLock)
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(ioFlushLock)
+	//max memory size in bytes
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(maxMemoryUsage)
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(maxThreadCount)
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(mmt)
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(queueDepth)
+	//maximum time a thread waits before it (temporarily) removes itself from processing
+	SSERIALIZE_OOM_SORT_TRAITS_GET_SET(maxWait)
+#undef SSERIALIZE_OOM_SORT_TRAITS_GET_SET
+public:
+	Compare compare() const { return m_compare; }
+	Equal equal() const { return m_equal; }
+};
+
 }}//end namespace detail::oom
+
+
 
 ///A standard out-of-memory sorting algorithm. It first sorts the input in chunks of size maxMemoryUsage/threadCount
 ///These chunks are then merged together in possibly multiple phases. In a single phase up to queueDepth chunks are merged together.
@@ -178,19 +226,15 @@ struct IteratorRangeDataSwaper< sserialize::detail::OOMArray::Iterator<TValue> >
 ///Thus for very large data sizes it may be better to use only one thread to create the largest chunks possible
 ///TODO: use mt_sort for large chunks if threadCount == 1 or add ability to define a sort operator
 template<
-	bool TUniquify = false,
-	bool TWithProgressInfo = true,
 	typename TInputOutputIterator,
-	typename CompFunc = std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>,
-	typename EqualFunc = std::equal_to<typename std::iterator_traits<TInputOutputIterator>::value_type>
+	typename Traits =
+		detail::oom::SortTraits<
+			true,
+			std::less<typename std::iterator_traits<TInputOutputIterator>::value_type>,
+			std::equal_to<typename std::iterator_traits<TInputOutputIterator>::value_type>
+		>
 >
-TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator end, CompFunc comp = CompFunc(),
-				uint64_t maxMemoryUsage = 0x100000000,
-				uint32_t maxThreadCount = 2,
-				sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED,
-				uint32_t queueDepth = 64,
-				uint32_t maxWait = 10,
-				EqualFunc equal = EqualFunc())
+TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator end, Traits traits = Traits())
 {
 	typedef TInputOutputIterator SrcIterator;
 	typedef typename std::iterator_traits<SrcIterator>::value_type value_type;
@@ -200,8 +244,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	
 	SSERIALIZE_CHEAP_ASSERT(begin < end);
 	
-	if (!maxThreadCount) {
-		maxThreadCount = std::thread::hardware_concurrency();
+	if (!traits.maxThreadCount()) {
+		throw sserialize::ConfigurationException("sserialize::oom::oom_sort","maxThreadCount == 0");
 	}
 	
 	static constexpr uint64_t INVALID_CHUNK_OFFSET = std::numeric_limits<uint64_t>::max();
@@ -224,17 +268,15 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	};
 	
 	struct Config {
-		uint32_t maxThreadCount;
-		//maximum time a thread wait before it remove itself from processing
-		uint32_t maxWait;
+		Traits & traits;
 		//chunk size in number of entries
 		uint64_t initialChunkSize;
-		//max memory size in bytes
-		uint64_t maxMemoryUsage;
 		//tmp buffer size in bytes
 		uint64_t tmpBuffferSize;
-		CompFunc * comp;
-		EqualFunc * equal;
+		Config(Traits & traits) :
+			traits(traits),
+			initialChunkSize(this->traits.maxMemoryUsage()/(traits.maxThreadCount()*sizeof(value_type)))
+		{}
 	};
 	
 	struct WorkerBalanceInfo {
@@ -246,31 +288,24 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	};
 	
 	struct State {
-		OptionalProgressInfo<TWithProgressInfo> pinfo;
-		uint64_t sortCompleted;
+		OptionalProgressInfo<Traits::withProgressInfo> pinfo;
+		std::atomic<uint64_t> sortCompleted;
 		SrcIterator srcIt;
 		uint64_t srcSize;
 		uint64_t srcOffset;
 		///for TUniquify==false -> resultSize = srcSize
 		uint64_t resultSize;
 		std::mutex ioLock;
-		
+
 		//if TUniquify is true, then these are NOT necessarily contiguous, BUT they are always sorted in ascending order
 		std::vector< ChunkDescription > pendingChunks;
 		std::vector<InputBuffer> activeChunkBuffers;
 		std::vector<value_type> activeChunkBufferValues;
 	};
 	
-	Config cfg;
+	Config cfg(traits);
 	State state;
 	WorkerBalanceInfo wbi;
-	
-	cfg.maxThreadCount = maxThreadCount;
-	cfg.maxWait = maxWait;
-	cfg.maxMemoryUsage = maxMemoryUsage;
-	cfg.initialChunkSize = maxMemoryUsage/(maxThreadCount*sizeof(value_type));
-	cfg.comp = &comp;
-	cfg.equal = &equal;
 	
 	state.srcIt = begin;
 	using std::distance;
@@ -279,16 +314,16 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	state.resultSize = 0;
 
 	//now check if we really have to use out-of-memory sorting
-	if (detail::oom::InMemorySort<TInputOutputIterator>::canSort && state.srcSize*sizeof(value_type) <= maxMemoryUsage) {
-		if (TWithProgressInfo) {
+	if (detail::oom::InMemorySort<TInputOutputIterator>::canSort && state.srcSize*sizeof(value_type) <= traits.maxMemoryUsage()) {
+		if (Traits::withProgressInfo) {
 			std::cout << "Using in-memory sorting..." << std::flush;
 		}
-		detail::oom::InMemorySort<TInputOutputIterator>::sort(begin, end, comp);
-		if (TUniquify) {
+		detail::oom::InMemorySort<TInputOutputIterator>::sort(begin, end, traits.compare());
+		if (traits.makeUnique()) {
 			using std::unique;
-			return unique(begin, end, equal);
+			return unique(begin, end, traits.equal());
 		}
-		if (TWithProgressInfo) {
+		if (Traits::withProgressInfo) {
 			std::cout << "done" << std::endl;
 		}
 		return end;
@@ -338,9 +373,16 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				auto chunkEnd = chunkBegin+currentChunkSize;
 				state->srcOffset += currentChunkSize;
 				state->srcIt = chunkEnd;
+				
+				if (!cfg->traits.ioFetchLock()) {
+					ioLock.unlock();
+				}
+				
 				buffer.assign(chunkBegin, chunkEnd);
 				
-				ioLock.unlock();
+				if (cfg->traits.ioFetchLock()) {
+					ioLock.unlock();
+				}
 				
 				//check if we want to activate another thread
 				if (lockTime < 1) {
@@ -353,11 +395,11 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				}
 				
 				using std::sort;
-				sort(buffer.begin(), buffer.end(), *(cfg->comp));
+				sort(buffer.begin(), buffer.end(), cfg->traits.compare());
 				
-				if (TUniquify) {
+				if (cfg->traits.makeUnique()) {
 					using std::unique;
-					auto lastUnique = unique(buffer.begin(), buffer.end(), *(cfg->equal));
+					auto lastUnique = unique(buffer.begin(), buffer.end(), cfg->traits.equal());
 					buffer.resize(std::distance(buffer.begin(), lastUnique));
 				}
 				
@@ -374,22 +416,28 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				//and the result size
 				state->resultSize += buffer.size();
 				
+				if (!cfg->traits.ioFlushLock()) {
+					ioLock.unlock();
+				}
+				
 				//flush back
 				using std::move;
 				move(buffer.begin(), buffer.end(), chunkBegin);
 				
+				if (cfg->traits.ioFlushLock()) {
+					ioLock.unlock();
+				}
+				
 				state->sortCompleted += currentChunkSize;
 				state->pinfo(state->sortCompleted);
 				
-				ioLock.unlock();
-				
 				//check if we need to pause processing
-				if (lockTime > cfg->maxWait) {
+				if (lockTime > cfg->traits.maxWait()) {
 					std::unique_lock<std::mutex> wbiLck(wbi->mtx);
 					if (state->srcOffset >= state->srcSize) {
 						continue;
 					}
-					if (cfg->maxThreadCount-wbi->pausedWorkers > 2) {
+					if (cfg->traits.maxThreadCount()-wbi->pausedWorkers > 2) {
 						wbi->pausedWorkers += 1;
 						while (true) {
 							wbi->cv.wait(wbiLck);
@@ -407,9 +455,9 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	{
 		state.sortCompleted = 0;
 		state.pinfo.begin(state.srcSize, "Sorting chunks");
-		if (maxThreadCount > 1) {
+		if (traits.maxThreadCount() > 1) {
 			std::vector<std::thread> ts;
-			for(uint32_t i(0); i < maxThreadCount; ++i) {
+			for(uint32_t i(0), s(traits.maxThreadCount()); i < s; ++i) {
 				ts.emplace_back(std::thread(Worker(&state, &cfg, &wbi)));
 			}
 			for(std::thread & t : ts) {
@@ -423,7 +471,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		state.pinfo.end();
 	}
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(state.srcOffset, state.srcSize);
-	if (TUniquify) {
+	if (traits.makeUnique()) {
 		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.resultSize, state.srcSize);
 	}
 	else {
@@ -431,25 +479,24 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	}
 	
 	//now merge the chunks, use about 1/4 of memory for the temporary storage
-	cfg.tmpBuffferSize = cfg.maxMemoryUsage/4;
-	cfg.maxMemoryUsage -= cfg.tmpBuffferSize;
-	sserialize::OOMArray<value_type> tmp(mmt);
+	cfg.tmpBuffferSize = cfg.traits.maxMemoryUsage()/4;
+	sserialize::OOMArray<value_type> tmp(traits.mmt());
 	
 	struct PrioComp {
-		CompFunc * comp;
+		typename Traits::Compare comp;
 		std::vector<value_type> * chunkBufferValues;
 		bool operator()(uint32_t a, uint32_t b) {
 			const value_type & av = (*chunkBufferValues)[a];
 			const value_type & bv = (*chunkBufferValues)[b];
-			return !( (*comp)(av, bv) );
+			return !( comp(av, bv) );
 		}
-		PrioComp(CompFunc * comp, std::vector<value_type> * chunkBufferValues) : comp(comp), chunkBufferValues(chunkBufferValues) {}
+		PrioComp(typename Traits::Compare comp, std::vector<value_type> * chunkBufferValues) : comp(comp), chunkBufferValues(chunkBufferValues) {}
 		PrioComp(const PrioComp & other) : comp(other.comp), chunkBufferValues(other.chunkBufferValues) {}
 	};
 	
 	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
 	
-	MyPrioQ pq(PrioComp(&comp, &(state.activeChunkBufferValues)));
+	MyPrioQ pq(PrioComp(traits.compare(), &(state.activeChunkBufferValues)));
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
 		state.pinfo.begin(state.resultSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
@@ -468,10 +515,10 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			{//fill the activeChunkBuffers
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBuffers.size());
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBufferValues.size());
-				uint64_t chunkBufferSize = cfg.maxMemoryUsage/std::min<uint32_t>(queueDepth, cbs-cbi);
-				for(; cbi < cbs && state.activeChunkBuffers.size() < queueDepth; ++cbi) {
+				uint64_t chunkBufferSize = (traits.maxMemoryUsage()-cfg.tmpBuffferSize)/std::min<uint32_t>(traits.queueDepth(), cbs-cbi);
+				for(; cbi < cbs && state.activeChunkBuffers.size() < traits.queueDepth(); ++cbi) {
 					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi);
-					if (!TUniquify || pendingChunk.size()) {
+					if (!traits.makeUnique() || pendingChunk.size()) {
 						state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
 						state.activeChunkBufferValues.emplace_back(state.activeChunkBuffers.back().get());
 						pq.push(state.activeChunkBuffers.size()-1);
@@ -487,7 +534,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				pq.pop();
 				InputBuffer & chunkBuffer = state.activeChunkBuffers[pqMin];
 				value_type & v = state.activeChunkBufferValues[pqMin];
-				if (!TUniquify || !tmp.size() || !equal(tmp.back(), v)) {
+				if (!traits.makeUnique() || !tmp.size() || !traits.equal()(tmp.back(), v)) {
 					tmp.emplace_back(std::move(v));
 					state.resultSize += 1;
 				}
@@ -502,7 +549,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			}
 			state.pinfo(tmp.size());
 			
-			if (!TUniquify || nextRoundPendingChunks.back().first != tmp.size()) {
+			if (!traits.makeUnique() || nextRoundPendingChunks.back().first != tmp.size()) {
 				nextRoundPendingChunks.back().second = tmp.size();
 			}
 			else {
@@ -515,7 +562,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			state.activeChunkBufferValues.clear();
 		}
 		
-		if (TUniquify) {
+		if (traits.makeUnique()) {
 			SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
 		}
 		else {
@@ -550,7 +597,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	#endif
 	
 	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
-	if (TUniquify) {
+	if (traits.makeUnique()) {
 		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.resultSize, state.srcSize);
 	}
 	else {
