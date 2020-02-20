@@ -674,7 +674,9 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 		.mmt(otraits.mmt())
 		.queueDepth(1024)
 		.maxWait(30)
-		.makeUnique(true);
+		.makeUnique(true)
+		.ioFetchLock(otraits.mmt() == sserialize::MM_SLOW_FILEBASED)
+		.ioFlushLock(otraits.mmt() == sserialize::MM_SLOW_FILEBASED);
 	
 	auto sortEnd = sserialize::oom_sort(m_entries.begin(), m_entries.end(), sortTraits);
 	m_entries.resize(sortEnd - m_entries.begin());
