@@ -287,6 +287,7 @@ void printHelp() {
 	-t type\ttransform to (rline|wah|de|rlede|simple|native|eliasfano|pfor) \n \
 	-nd\tdisable deduplication of item index store \n \
 	-c\tcheck item index store \n \
+	-tc\tthread count (default: 1) \n \
 	--fsck (indexsizes) \
 	" << std::endl;
 }
@@ -311,6 +312,7 @@ int main(int argc, char ** argv) {
 	bool checkCompressed = false;
 	bool checkIndex = false;
 	bool deduplication = true;
+	uint32_t threadCount = 1;
 	std::string fsck;
 	std::string equalityTest;
 	int transform = ItemIndex::T_NULL;
@@ -366,6 +368,10 @@ int main(int argc, char ** argv) {
 		}
 		else if (curArg == "-nd") {
 			deduplication = false;
+		}
+		else if ((curArg == "-tc" || curArg == "--threadCount") && i+1 < argc) {
+			threadCount = ::atoi(argv[i+1]);
+			++i;
 		}
 		else if (curArg == "--fsck" && i+1 < argc) {
 			fsck = std::string(argv[i+1]);
@@ -580,7 +586,7 @@ int main(int argc, char ** argv) {
 		factory.setDeduplication(deduplication);
 		factory.setCheckIndex(checkCompressed);
 		std::cout << "Transforming index" << std::endl;
-		factory.insert(store);
+		factory.insert(store, threadCount);
 		std::cout << "Serializing IndexStore" << std::endl;
 		UByteArrayAdapter::OffsetType s = factory.flush();
 		outData = factory.getFlushedData();
