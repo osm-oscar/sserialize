@@ -13,7 +13,7 @@ struct FileHandler {
 	static OffsetType fileSize(int fd);
 	
 	static void * mmapFile(int fd, OffsetType size, bool prePopulate, bool randomAccess);
-	//mmap a file and create if it does not exist
+	//mmap a file and create if it does not exist, depending on the access permissions of the file the returned memory may be any of rdonly,wronly,rw
 	static void * mmapFile(const std::string & fileName, int & fd, OffsetType & size, bool prePopulate, bool randomAccess);
 	
 	static int open(const std::string & fileName);

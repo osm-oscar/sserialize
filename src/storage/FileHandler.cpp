@@ -57,6 +57,10 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 	bool fExisted = FileHandler::fileExists(fileName);
 	fd = ::open(fileName.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
+		//don't create read-only file, just open it
+		fd = ::open(fileName.c_str(), O_RDONLY, S_IRUSR | S_IWUSR);
+	}
+	if (fd < 0) {
 		return 0;
 	}
 	if (!fExisted) {
@@ -83,7 +87,11 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 }
 
 int FileHandler::open(const std::string& fileName) {
-	return ::open(fileName.c_str(), O_RDWR);
+	int fd = ::open(fileName.c_str(), O_RDWR);
+	if (fd < 0) {
+		fd = ::open(fileName.c_str(), O_RDONLY);
+	}
+	return fd;
 }
 
 int FileHandler::createTmp(sserialize::OffsetType fileSize, std::string& tmpFileName, bool fastFile, bool directIo) {
