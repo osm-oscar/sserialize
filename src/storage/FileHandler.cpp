@@ -43,6 +43,10 @@ void * FileHandler::mmapFile(int fd, OffsetType fileSize, bool prePopulate, bool
 	void * data = ::mmap(0, fileSize, PROT_READ | PROT_WRITE, param, fd, 0);
 
 	if (data == MAP_FAILED) {
+		data = ::mmap(0, fileSize, PROT_READ, param, fd, 0);
+	}
+	
+	if (data == MAP_FAILED) {
 		return data;
 	}
 
@@ -58,7 +62,7 @@ void * FileHandler::mmapFile(const std::string & fileName, int & fd, OffsetType 
 	fd = ::open(fileName.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		//don't create read-only file, just open it
-		fd = ::open(fileName.c_str(), O_RDONLY, S_IRUSR | S_IWUSR);
+		fd = ::open(fileName.c_str(), O_RDONLY);
 	}
 	if (fd < 0) {
 		return 0;
