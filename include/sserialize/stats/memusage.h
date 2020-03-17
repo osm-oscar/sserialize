@@ -34,7 +34,7 @@ public:
 		std::cout << "Data: " << data << std::endl;
 		std::cout << "END Memory usage -- " << footer << std::endl;
 	}
-	inline void print() {
+	inline void print() const {
 		print(std::string(), std::string());
 	}
 };
