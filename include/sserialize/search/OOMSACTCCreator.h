@@ -577,11 +577,17 @@ struct Worker {
 }}//end namespace detail::OOMSACTCCreator
 
 template<typename TItemIterator, typename TRegionIterator, typename TItemTraits, typename TRegionTraits, bool TWithProgressInfo = true>
-void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterator regionsBegin, TRegionIterator regionsEnd,
-					TItemTraits itemTraits, TRegionTraits regionTraits,
-					uint64_t maxMemoryUsage, uint32_t insertionConcurrency, uint32_t sortConcurrency, uint32_t payloadConcurrency,
-					sserialize::StringCompleter::SupportedQuerries sq,
-					sserialize::ItemIndexFactory & idxFactory, sserialize::UByteArrayAdapter & dest)
+void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd,
+				 TRegionIterator regionsBegin, TRegionIterator regionsEnd, 
+				 TItemTraits itemTraits, TRegionTraits regionTraits,
+				 uint64_t maxMemoryUsage,
+				 uint32_t insertionConcurrency,
+				 uint32_t sortConcurrency,
+				 uint32_t payloadConcurrency,
+				 MmappedMemoryType tmpFileType,
+				 sserialize::StringCompleter::SupportedQuerries sq,
+				 sserialize::ItemIndexFactory & idxFactory, 
+				 sserialize::UByteArrayAdapter & dest)
 {
 	typedef detail::OOMSACTCCreator::BaseTraits BaseTraits;
 	typedef TItemTraits ItemTraits;
@@ -711,7 +717,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd, TRegionIterat
 	{
 		dest.putUint8(1); //version of sserialize::Static::UnicodeTrie::FlatTrie
 		sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> pc(dest);
-		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, sserialize::MM_SLOW_FILEBASED, sortConcurrency, payloadConcurrency);
+		OutputTraits outPutTraits(&idxFactory, &pc, maxMemoryUsage, tmpFileType, sortConcurrency, payloadConcurrency);
 		vc.append<OutputTraits, TWithProgressInfo>(outPutTraits);
 		outPutTraits.flushPayload();
 		pc.flush();

@@ -573,8 +573,11 @@ public:
 		sserialize::ItemIndexFactory idxFactory(true);
 		sserialize::UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 		
-		sserialize::appendSACTC(ra().items.begin(), ra().items.end(), ra().regions.begin(), ra().regions.end(),
-								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(), 0xFFFFFFFF, 0, 2, 0, supportedQuerries, idxFactory, dest);
+		sserialize::appendSACTC(ra().items.begin(), ra().items.end(),
+								ra().regions.begin(), ra().regions.end(),
+								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(),
+								0xFFFFFFFF, 0, 2, 0, sserialize::MM_SLOW_FILEBASED, supportedQuerries,
+								idxFactory, dest);
 
 		sserialize::Static::UnicodeTrie::FlatTrie<sserialize::UByteArrayAdapter> trie(dest+3);
 								
