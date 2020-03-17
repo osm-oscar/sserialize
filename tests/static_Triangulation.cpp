@@ -57,7 +57,7 @@ public:
 		CGAL::cpp11::copy_n(g, NUM_TRIANG_POINTS, std::back_inserter(m_pts));
 		
 		for(const Point & p : m_pts) {
-			assert(sserialize::spatial::GeoPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y())).valid());
+			CPPUNIT_ASSERT(sserialize::spatial::GeoPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y())).valid());
 		}
 		
 		m_ctr.insert(m_pts.begin(), m_pts.end());
