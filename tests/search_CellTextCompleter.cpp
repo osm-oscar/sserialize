@@ -523,7 +523,7 @@ public:
 		}
 	};
 	struct ForeignObjectsPredicate {
-		bool operator()(item_type) { false; }
+		bool operator()(item_type) { return false; }
 	};
 	struct ForeignObjects {
 		template<typename TOutputIterator>
