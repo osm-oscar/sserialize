@@ -154,6 +154,7 @@ RAGEL_PARSER(src/search/SetOpTreePrivateSimple_parser.rl)
 
 set(STORAGE_SOURCES_CPP
 	src/storage/MmappedFile.cpp
+	src/storage/MmappedMemory.cpp
 	src/storage/ChunkedMmappedFile.cpp
 	src/storage/CompressedMmappedFile.cpp
 	src/storage/UByteArrayAdapter.cpp

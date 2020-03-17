@@ -337,6 +337,9 @@ void swap(MmappedMemory<TValue> & a, MmappedMemory<TValue> & b) {
 	a.swap(b);
 }
 
+std::string toString(MmappedMemoryType mmt);
+void from(std::string const & str, MmappedMemoryType & mmt);
+
 }//end namespace
 
 
