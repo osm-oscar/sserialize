@@ -26,8 +26,25 @@ namespace sserialize {
 
 class ItemIndexFactory {
 public:
+	class IndexId {
+	public:
+		IndexId() = default;
+		IndexId(uint32_t v) : m_v(v) {}
+		IndexId(IndexId const & other) = default;
+		IndexId & operator=(IndexId const & other) = default;
+	public:
+		inline operator uint32_t() const {
+			SSERIALIZE_CHEAP_ASSERT(valid());
+			return m_v;
+		}
+		inline bool valid() const { return m_v != INVALID;}
+	private:
+		enum Types {INVALID=0xFFFFFFFF};
+	private:
+		uint32_t m_v{INVALID};
+	};
 	typedef ShaHasherDigestData DataHashKey;
-	typedef std::unordered_map<DataHashKey, uint32_t> DataHashType; //Hash->id
+	typedef std::unordered_map<DataHashKey, IndexId> DataHashType; //Hash->id
 	typedef sserialize::MMVector<uint64_t > IdToOffsetsType;
 	typedef sserialize::MMVector<uint32_t> ItemIndexSizesContainer;
 	typedef sserialize::MMVector<uint8_t> ItemIndexTypesContainer;
