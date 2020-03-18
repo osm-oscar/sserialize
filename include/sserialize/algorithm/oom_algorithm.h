@@ -586,16 +586,6 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		swap(state.pendingChunks, nextRoundPendingChunks);
 	}
 	
-	#ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
-	{
-		using std::is_sorted;
-		using sserialize::is_unique;
-		if (TUniquify) {
-			
-		}
-	}
-	#endif
-	
 	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
 	if (traits.makeUnique()) {
 		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(state.resultSize, state.srcSize);
