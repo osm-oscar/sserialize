@@ -42,6 +42,9 @@ public:
 	inline bool hasNext() {
 		return m_curOffset < m_size;
 	}
+	inline uint32_t size() const {
+		return m_size;
+	}
 	inline UByteArrayAdapter::OffsetType dataSize() const {
 		return MyBaseClass::priv()->dataSize();
 	}
@@ -51,7 +54,6 @@ public:
 	}
 protected:
 	Base() : MyBaseClass(0), m_size(0), m_curOffset(0) {}
-	uint32_t size() const { return m_size; }
 	uint32_t offset() const { return m_curOffset; }
 private:
 	uint32_t m_size;
