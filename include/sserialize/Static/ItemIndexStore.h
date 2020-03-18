@@ -4,18 +4,12 @@
 #include <sserialize/containers/ItemIndex.h>
 #include "HuffmanDecoder.h"
 #include <unordered_set>
-#define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 5
+#define SSERIALIZE_STATIC_ITEM_INDEX_STORE_VERSION 6
 
-/*Version 5
- *
- *
- *------------------------------------------------------------------------------------------------------------------------------------------------------
- *VERSION|IndexTypes|IndexCompressionType|datalength| Data     |      Offsets    |Index sizes|HuffmanDecodeTable|DSTEntryLength|DecompressionSizeTable
- *------------------------------------------------------------------------------------------------------------------------------------------------------
- *   1   |    2     |        1           |OffsetType|datalength|SortedOffsetIndex|Array<u32> |HuffmanDecoder    |     u8       |CompactUintArray
+/*Version 6
  *
  * struct ItemIndexStore {
- *   uint<8> version;
+ *   uint<8> version{6};
  *   uint<16> indexTypes;
  *   uint<8> indexCompressionType;
  *   OffsetType dataLength;
@@ -23,8 +17,7 @@
  *   SortedOffsetIndex offsets;
  *   Array< uint<32>, offsets.size> indexSizes;
  *   HuffmanDecoder huffmanDecodeTable;
- *   uint<8> decompressedSizeTableEntryLength;
- *   CompactUintArray<decompressedSizeTableEntryLength> decompressionSizeTable;
+ *   BoundedCompactUintArray decompressionSizeTable;
  *   CompactUintArray<log2(indexTypes)> indexTypeInfo;
  * };
  * 
@@ -144,13 +137,14 @@ private:
 	typedef sserialize::Static::ItemIndexStore::IndexCompressionType IndexCompressionType;
 private:
 	class LZODecompressor: public RefCountObject {
-		CompactUintArray m_data;
 	public:
 		LZODecompressor();
 		LZODecompressor(const sserialize::UByteArrayAdapter & data);
 		virtual ~LZODecompressor();
 		OffsetType getSizeInBytes() const;
 		UByteArrayAdapter decompress(uint32_t id, const sserialize::UByteArrayAdapter & src) const;
+	private:
+		BoundedCompactUintArray m_data;
 	};
 private:
 	uint8_t m_version;

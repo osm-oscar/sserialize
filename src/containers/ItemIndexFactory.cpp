@@ -599,7 +599,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 
 UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Static::ItemIndexStore & store, UByteArrayAdapter & dest) {
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(5);//version
+	dest.putUint8(6);//version
 	dest.putUint16(store.indexTypes());
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_LZO | store.compressionType());
 	dest.putOffset(0);
@@ -611,8 +611,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 	HEAP_ALLOC_MINI_LZO(wrkmem, LZO1X_1_MEM_COMPRESS);
 
 	
-	uint32_t bufferSize = 10*1024*1024;
-	uint8_t * outBuf = new uint8_t[2*bufferSize];
+	std::vector<uint8_t> outBuf;
 
 	UByteArrayAdapter::OffsetType totalOutPutBuffLen = 0;
 	
@@ -622,32 +621,33 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
 		UByteArrayAdapter::MemoryView idxData( store.rawDataAt(i).asMemView() );
 		uncompressedSizes.push_back(narrow_check<uint32_t>(idxData.size()));
-		if (idxData.size() > bufferSize) {
-			delete[] outBuf;
-			bufferSize = (uint32_t) idxData.size();
-			outBuf = new uint8_t[2*bufferSize];
-			
-		}
-		lzo_uint outBufLen = bufferSize*2;
-		int r = ::lzo1x_1_compress(idxData.get(), idxData.size(), outBuf, &outBufLen, wrkmem);
+		outBuf.resize(2*idxData.size());
+		lzo_uint outBufLen = outBuf.size();
+		int r = ::lzo1x_1_compress(idxData.get(), idxData.size(), outBuf.data(), &outBufLen, wrkmem);
 		if (r != LZO_E_OK) {
-			delete[] outBuf;
-			std::cerr << "Compression Error" << std::endl;
+			std::stringstream ss;
+			ss << "lzo1x_1_compress returned error " << r << " for index " << i;
+			throw sserialize::CreationException(ss.str());
 			return 0;
 		}
 		totalOutPutBuffLen += outBufLen;
-		dest.putData(outBuf, outBufLen);
+		dest.putData(outBuf.data(), outBufLen);
 		pinfo(i);
 	}
 	pinfo.end();
 	
 	if (totalOutPutBuffLen != dest.tellPutPtr()-destDataBeginOffset) {
-		std::cout << "Compression failed" << std::endl;
+		std::stringstream ss;
+		ss << "totalOutPutBuffLen != dest.tellPutPtr()-destDataBeginOffset with ";
+		ss << "totalOutPutBuffLen=" << totalOutPutBuffLen;
+		ss << ", dest.tellPutPtr()=" << dest.tellPutPtr();
+		ss << ", destDataBeginOffset=" << destDataBeginOffset;
+		throw sserialize::CreationException(ss.str());
 		return 0;
 	}
 	
 	std::cout << "Data section has a size of " << dest.tellPutPtr()-destDataBeginOffset << std::endl;
-	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
+	dest.putOffset(beginOffset+4, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Current size:" << dest.tellPutPtr()-beginOffset << std::endl;
@@ -668,21 +668,13 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		dest.putData(htData);
 	}
 	//now add the table with the uncompressedSizes
-	UByteArrayAdapter bitneed = dest;
-	bitneed.shrinkToPutPtr();
-	dest.putUint8(0);
-	uint8_t bitsForUncompressedSizes = CompactUintArray::create(uncompressedSizes, dest);
-	if (!bitsForUncompressedSizes) {
-		std::cout << "Failed to create the index for the uncompressed sizes" << std::endl;
-		return 0;
-	}
-	bitneed.putUint8(bitsForUncompressedSizes);
+	BoundedCompactUintArray::create(uncompressedSizes, dest);
 	//finally the index type info
 	if (store.indexTypes() & ItemIndex::T_MULTIPLE) {
-		auto deref = [&store](uint32_t pos) -> int {
+		auto deref = [&store](uint32_t pos) -> uint32_t {
 			return sserialize::msb( uint32_t(store.indexType(pos)) );
 		};
-		using MyIterator = sserialize::TransformIterator<decltype(deref), int, sserialize::RangeGenerator<uint32_t>::const_iterator>;
+		using MyIterator = sserialize::TransformIterator<decltype(deref), uint32_t, sserialize::RangeGenerator<uint32_t>::const_iterator>;
 		uint32_t bits = sserialize::msb(sserialize::msb(uint32_t(store.indexTypes() - ItemIndex::T_MULTIPLE))) + 1;
 		CompactUintArray::create(MyIterator(deref, 0), MyIterator(deref, store.size()), dest, bits);
 	}

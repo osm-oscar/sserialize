@@ -67,13 +67,13 @@ namespace detail {
 ItemIndexStore::LZODecompressor::LZODecompressor() {}
 
 ItemIndexStore::LZODecompressor::LZODecompressor(const sserialize::UByteArrayAdapter & data) :
-m_data(data+1, data.getUint8(0))
+m_data(data)
 {}
 
 ItemIndexStore::LZODecompressor::~LZODecompressor() {}
 
 OffsetType ItemIndexStore::LZODecompressor::getSizeInBytes() const {
-	return SerializationInfo<uint8_t>::length + m_data.data().size();
+	return m_data.getSizeInBytes();
 }
 
 UByteArrayAdapter ItemIndexStore::LZODecompressor::decompress(uint32_t id, const UByteArrayAdapter & src) const {
@@ -105,7 +105,7 @@ m_compression(sserialize::Static::ItemIndexStore::IC_NONE)
 ItemIndexStore::ItemIndexStore(UByteArrayAdapter data) :
 m_version(data.getUint8(0))
 {
-	if (m_version == 5) {
+	if (m_version == 5 || m_version == 6) {
 		m_type = data.getUint16(1);
 		m_compression = IndexCompressionType(data.getUint8(3));
 		data.resetGetPtr();
@@ -144,6 +144,9 @@ m_version(data.getUint8(0))
 	}
 	
 	if  (m_compression & sserialize::Static::ItemIndexStore::IC_LZO) {
+		if (m_version < 6) {
+			throw sserialize::VersionMissMatchException("LZO compressed ItemIndexStore needs at least version 6", 6, m_version);
+		}
 		m_lzod.reset(new LZODecompressor(data));
 		data += m_lzod->getSizeInBytes();
 	}
