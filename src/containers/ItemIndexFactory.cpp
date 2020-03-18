@@ -577,7 +577,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	}
 	pinfo.end("Encoded words");
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(store.size(), newOffsets.size());
-	dest.putOffset(beginOffset+3, dest.tellPutPtr()-destDataBeginOffset);
+	dest.putOffset(beginOffset+4, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
 	sserialize::Static::SortedOffsetIndexPrivate::create(newOffsets, dest);
 	std::cout << "Offset index created. Current size: " << dest.tellPutPtr()-beginOffset;
