@@ -29,10 +29,27 @@ public:
 	class IndexId {
 	public:
 		IndexId() = default;
-		IndexId(uint32_t v) : m_v(v) {}
+		IndexId(uint64_t v) : m_v(v) {
+			if (v >= INVALID) {
+				throw std::overflow_error("IndexId is too large");
+			}
+		}
 		IndexId(IndexId const & other) = default;
 		IndexId & operator=(IndexId const & other) = default;
 	public:
+		IndexId & operator=(uint32_t v) {
+			m_v = v;
+			SSERIALIZE_CHEAP_ASSERT(valid());
+			return *this;
+		}
+		IndexId & operator=(uint64_t v) {
+			if (v >= INVALID) {
+				throw std::overflow_error("IndexId is too large");
+			}
+			m_v = v;
+			SSERIALIZE_CHEAP_ASSERT(valid());
+			return *this;
+		}
 		inline operator uint32_t() const {
 			SSERIALIZE_CHEAP_ASSERT(valid());
 			return m_v;
@@ -56,7 +73,7 @@ public:
 	ItemIndexFactory(ItemIndexFactory && other);
 	~ItemIndexFactory();
 	ItemIndexFactory & operator=(ItemIndexFactory && other);
-	uint32_t size() { return (uint32_t)m_idToOffsets.size();}
+	uint32_t size() { return m_idCounter;}
 	int types() const;
 	ItemIndex::Types type(uint32_t pos) const;
 	Static::ItemIndexStore::IndexCompressionType compressionType() const { return m_compressionType; }
@@ -71,6 +88,8 @@ public:
 	void setCheckIndex(bool checkIndex) { m_checkIndex = checkIndex;}
 	//default is on
 	void setDeduplication(bool dedup) { m_useDeduplication  = dedup; }
+	
+	void setGrowSize(UByteArrayAdapter::SizeType v) { m_growSize = v; }
 	
 	void recalculateDeduplicationData();
 	
@@ -114,31 +133,41 @@ public:
 	
 	static ItemIndex range(uint32_t begin, uint32_t end, uint32_t step, int type);
 private:
-	using MutexType = std::mutex;
-	using WriteLock = std::unique_lock<MutexType>;
-	using ReadLock = std::unique_lock<MutexType>;
-private:
 	DataHashKey hashFunc(const UByteArrayAdapter & v);
 	DataHashKey hashFunc(const std::vector< uint8_t >& v);
 	///returns the id of the index or -1 if none was found @thread-safety: yes
 	int64_t getIndex(const std::vector< uint8_t >& v, DataHashKey & hv);
-	bool indexInStore(const std::vector< uint8_t >& v, uint32_t id);
 	///adds the data of an index to store @thread-safety: true
 	uint32_t addIndex(const std::vector<uint8_t> & idx, uint32_t idxSize, ItemIndex::Types type);
 private:
+	//data
 	UByteArrayAdapter m_header;
 	UByteArrayAdapter m_indexStore;
+	//meta data
+	UByteArrayAdapter::SizeType m_dataOffset;
+	uint64_t m_idCounter;
 	DataHashType m_hash;
+	
+	//aux data
 	IdToOffsetsType m_idToOffsets;
 	ItemIndexSizesContainer m_idxSizes;
 	ItemIndexTypesContainer m_idxTypes;
+	
+	//stats
 	std::atomic<uint64_t> m_hitCount;
+	
+	//config
 	bool m_checkIndex;
 	bool m_useDeduplication;
 	int m_type;
 	Static::ItemIndexStore::IndexCompressionType m_compressionType;
-	MutexType m_mapLock;
-	MutexType m_dataLock;
+	UByteArrayAdapter::SizeType m_growSize;
+	uint32_t m_auxDataGrow;
+	
+	//locks
+	std::shared_mutex m_dataGrowLock;
+	std::mutex m_auxDataLock;
+	std::mutex m_metaDataLock;
 };
 
 template<class TSortedContainer>
