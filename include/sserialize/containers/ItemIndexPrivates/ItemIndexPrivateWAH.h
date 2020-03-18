@@ -91,6 +91,7 @@ public:
 			}
 			else {
 				dest.putUint32(static_cast<uint32_t>(1) << (val+1) );
+				dest.putUint32(beginning, 4);
 			}
 			return true;
 		}
