@@ -640,7 +640,7 @@ Tree::push(Node const & node) {
 	m_md.setDataSize(nodeData().tellPutPtr());
 	NodePosition rnp;
 	if (node.isRoot()) {
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(0, ndp);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(int(0), ndp);
 		rnp = NodePosition(0, ndp);
 	}
 	else {
