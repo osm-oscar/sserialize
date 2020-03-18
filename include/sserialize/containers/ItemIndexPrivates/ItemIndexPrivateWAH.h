@@ -30,7 +30,7 @@ private:
 	mutable UByteArrayAdapter m_cache;
 private:
 	///@return returns the data iterator DO NOT call reset() on them!
-	const UDWConstrainedIterator & dataIterator() const;
+	UDWConstrainedIterator dataIterator() const;
 	
 public:
 	ItemIndexPrivateWAH();

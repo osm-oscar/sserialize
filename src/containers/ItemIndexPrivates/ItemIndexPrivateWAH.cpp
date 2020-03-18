@@ -9,7 +9,7 @@ namespace sserialize {
 
 ItemIndexPrivateWAH::ItemIndexPrivateWAH(const UByteArrayAdapter & data) :
 m_curData(data+8, data.getUint32(0)/4),
-m_fullData(m_curData),
+m_fullData(data, m_curData.size()+2),
 m_size(data.getUint32(4)),
 m_curId(0),
 m_cache(UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), sserialize::MM_PROGRAM_MEMORY) )
@@ -21,8 +21,9 @@ m_curId(0)
 	uint32_t cpCount = data.next()/4;
 	m_size = data.next();
 	m_cache = UByteArrayAdapter::createCache(std::min<uint32_t>(1024, m_size*4), sserialize::MM_PROGRAM_MEMORY);
-	m_fullData = UDWConstrainedIterator(data.getPrivate(), cpCount);
-	m_curData = m_fullData;
+	m_curData = UDWConstrainedIterator(data.getPrivate(), cpCount);
+	data.reset();
+	m_fullData = UDWConstrainedIterator(data.getPrivate(), cpCount+2);
 }
 
 ItemIndexPrivateWAH::ItemIndexPrivateWAH() : m_size(0), m_curId(0){}
@@ -37,8 +38,11 @@ uint32_t ItemIndexPrivateWAH::find(uint32_t id) const {
 	return sserialize::ItemIndexPrivate::find(id);
 }
 
-const UDWConstrainedIterator & ItemIndexPrivateWAH::dataIterator() const {
-	return m_fullData;
+UDWConstrainedIterator ItemIndexPrivateWAH::dataIterator() const {
+	UDWConstrainedIterator tmp(m_fullData);
+	tmp.next(); //extract cpCount
+	tmp.next(); //extract size
+	return tmp;
 }
 
 uint32_t ItemIndexPrivateWAH::at(uint32_t pos) const {
@@ -95,8 +99,9 @@ uint32_t ItemIndexPrivateWAH::size() const {
 
 uint8_t ItemIndexPrivateWAH::bpn() const { return 0; }
 
-
-UByteArrayAdapter::SizeType ItemIndexPrivateWAH::getSizeInBytes() const { return 0; }
+UByteArrayAdapter::SizeType ItemIndexPrivateWAH::getSizeInBytes() const {
+	return m_fullData.dataSize();
+}
 
 void ItemIndexPrivateWAH::putInto(DynamicBitSet & bitSet) const {
 	if (!size()) {
