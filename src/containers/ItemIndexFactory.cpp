@@ -543,7 +543,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	}
 	
 	UByteArrayAdapter::OffsetType beginOffset = dest.tellPutPtr();
-	dest.putUint8(5);
+	dest.putUint8(6);
 	dest.putUint16(ItemIndex::T_WAH);
 	dest.putUint8(Static::ItemIndexStore::IndexCompressionType::IC_VARUINT32);
 	dest.putOffset(0);
@@ -552,30 +552,29 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithVarUint(sserialize::
 	std::vector<uint32_t> idxSizes;
 	newOffsets.reserve(store.size());
 	
-	
-	UByteArrayAdapter data = store.getData();
-	data.resetGetPtr();
 	ProgressInfo pinfo;
-	pinfo.begin(data.size(), "Encoding words");
-	while(data.getPtrHasNext()) {
+	pinfo.begin(store.size(), "Encoding indices");
+	for(std::size_t i(0), s(store.size()); i < s; ++i) {
+		sserialize::breakHereIf(i == 1418);
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
-		uint32_t indexSize = data.getUint32();
-		uint32_t indexCount = data.getUint32();
+		UByteArrayAdapter idxData = store.rawDataAt(i);
+		uint32_t indexSize = idxData.getUint32();
+		uint32_t indexCount = idxData.getUint32();
 		
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexSize, store.rawDataAt(newOffsets.size()-1).getUint32(0));
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexCount, store.rawDataAt(newOffsets.size()-1).getUint32(4));
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexSize+8, store.rawDataAt(newOffsets.size()-1).size());
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexSize, store.rawDataAt(i).getUint32(0));
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexCount, store.rawDataAt(i).getUint32(4));
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(indexSize+8, store.rawDataAt(i).size());
 		
 		dest.putVlPackedUint32(indexSize);
 		dest.putVlPackedUint32(indexCount);
 		indexSize = indexSize / 4;
 		for(uint32_t i = 0; i < indexSize; ++i) {
-			uint32_t src = data.getUint32();
+			uint32_t src = idxData.getUint32();
 			dest.putVlPackedUint32(src);
 		}
-		pinfo(data.tellGetPtr());
+		pinfo(i);
 	}
-	pinfo.end("Encoded words");
+	pinfo.end("Encoded indices");
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(store.size(), newOffsets.size());
 	dest.putOffset(beginOffset+4, dest.tellPutPtr()-destDataBeginOffset);
 	std::cout << "Creating offset index" << std::endl;
