@@ -521,13 +521,16 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					if (!traits.makeUnique() || pendingChunk.size()) {
 						state.activeChunkBuffers.emplace_back(begin+pendingChunk.first, pendingChunk.size(), chunkBufferSize);
 						state.activeChunkBufferValues.emplace_back(state.activeChunkBuffers.back().get());
-						pq.push(state.activeChunkBuffers.size()-1);
 					}
 				}
 			}
 			
 			//add our result chunk to the queue (we don't know the size yet, just the beginning)
 			nextRoundPendingChunks.emplace_back(tmp.size());
+			
+			for(std::size_t i(0); i < state.activeChunkBuffers.size(); ++i) {
+				pq.push(i);
+			}
 			
 			while (pq.size()) {
 				uint32_t pqMin = pq.top();
