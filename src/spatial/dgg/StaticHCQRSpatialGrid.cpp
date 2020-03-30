@@ -640,7 +640,7 @@ Tree::push(Node const & node) {
 	m_md.setDataSize(nodeData().tellPutPtr());
 	NodePosition rnp;
 	if (node.isRoot()) {
-		SSERIALIZE_CHEAP_ASSERT_EQUAL(int(0), ndp);
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(sserialize::UByteArrayAdapter::SizeType(0), ndp);
 		rnp = NodePosition(0, ndp);
 	}
 	else {
@@ -683,7 +683,7 @@ Tree::updateNextNode(NodePosition const & target, NodePosition const & nextNodeP
 		SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(m_sg->parent(node(nextNodePosition).pixelId()), m_sg->parent(tn.pixelId()));
 		tn.setNextNodeOffset(nextNodePosition.dataOffset() - target.dataOffset());
 	}
-	SSERIALIZE_CHEAP_ASSERT_LARGER(tn.nextNodeOffset(), 0);
+	SSERIALIZE_CHEAP_ASSERT_LARGER(tn.nextNodeOffset(), uint32_t(0));
 	update(target, tn);
 }
 

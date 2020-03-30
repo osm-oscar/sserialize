@@ -371,7 +371,7 @@ HCQRSpatialGrid::operator/(HCQR const & other) const {
 					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(firstSg.items(firstNode) / secondSg.items(secondNode), dest.items(*rptr));
 				}
 				else {
-					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(0, (firstSg.items(firstNode) / secondSg.items(secondNode)).size());
+					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(uint32_t(0), (firstSg.items(firstNode) / secondSg.items(secondNode)).size());
 				}
 			#endif
 			return rptr;
@@ -744,7 +744,7 @@ HCQRSpatialGrid::operator-(HCQR const & other) const {
 					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL((firstSg.items(firstNode) / firstSg.sgi().items(rptr->pixelId())) - (secondSg.items(secondNode) / secondSg.sgi().items(rptr->pixelId())), dest.items(*rptr));
 				}
 				else {
-					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(0, ((firstSg.items(firstNode) / firstSg.sgi().items(rptr->pixelId())) - (secondSg.items(secondNode) / secondSg.sgi().items(rptr->pixelId()))).size());
+					SSERIALIZE_EXPENSIVE_ASSERT_EQUAL(uint32_t(0), ((firstSg.items(firstNode) / firstSg.sgi().items(rptr->pixelId())) - (secondSg.items(secondNode) / secondSg.sgi().items(rptr->pixelId()))).size());
 				}
 			#endif
 			return rptr;
