@@ -549,6 +549,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						for(; chunkBegin != chunkEnd; ++chunkBegin) {
 							m_queue.push(chunkBegin);
 						}
+						m_lock.clear();
 					}
 					PreQueue(PreQueue const &) = delete;
 					PreQueue(PreQueue && other) :
@@ -559,7 +560,9 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					m_begin(other.m_begin.load()),
 					m_end(other.m_end.load()),
 					m_eof(other.m_eof.load())
-					{}
+					{
+						m_lock.clear();
+					}
 					PreQueue & operator=(PreQueue &&) = delete;
 					PreQueue & operator=(PreQueue const &) = delete;
 				public:
@@ -583,7 +586,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					}
 					void run() {
 						//try locking
-						if (!m_lock.test_and_set(std::memory_order_acquire)) {
+						if (m_lock.test_and_set(std::memory_order_acquire)) {
 							return;
 						}
 						//Fetch thread increases begin. We keep a sentinel value between end and begin (and empty entry)
