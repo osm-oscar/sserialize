@@ -273,8 +273,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		uint64_t initialChunkSize;
 		//tmp buffer size in bytes
 		uint64_t tmpBuffferSize;
-		//merge buffer size in bytes
-		uint64_t mergeBufferSize;
+		//merge buffer size in number of entries
+		uint64_t mergeBufferEntries;
 		Config(Traits & traits) :
 			traits(traits),
 			initialChunkSize(this->traits.maxMemoryUsage()/(traits.maxThreadCount()*sizeof(value_type)))
@@ -480,8 +480,12 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		SSERIALIZE_CHEAP_ASSERT_EQUAL(state.resultSize, state.srcSize);
 	}
 	
-	//now merge the chunks, use about 1/4 of memory for the temporary storage
-	cfg.tmpBuffferSize = cfg.traits.maxMemoryUsage()/4;
+	//now merge the chunks, use at most 1/4 or 1 GiB  of memory for the temporary storage
+	//Using more than 1 GiB will likely reduce the write performance since then we are writing very large chunks while the queue is full
+	cfg.tmpBuffferSize = std::min<uint64_t>(1024*1024*1024, cfg.traits.maxMemoryUsage()/4);
+	if (traits.maxThreadCount() > 1) {
+		cfg.mergeBufferEntries = std::max<uint64_t>(128, cfg.traits.maxMemoryUsage()/(4*sizeof(value_type)*(traits.maxThreadCount()-1)));
+	}
 	sserialize::OOMArray<value_type> tmp(traits.mmt());
 	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
@@ -501,7 +505,10 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			{//fill the activeChunkBuffers
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBuffers.size());
 				SSERIALIZE_CHEAP_ASSERT(!state.activeChunkBufferValues.size());
-				uint64_t chunkBufferSize = (traits.maxMemoryUsage()-cfg.tmpBuffferSize)/std::min<uint32_t>(traits.queueDepth(), cbs-cbi);
+				uint64_t chunkBufferSize = traits.maxMemoryUsage();
+				chunkBufferSize -= cfg.tmpBuffferSize;
+				chunkBufferSize -= sizeof(value_type)*cfg.mergeBufferEntries*(traits.maxThreadCount()-1);
+				chunkBufferSize /= std::min<uint32_t>(traits.queueDepth(), cbs-cbi);
 				for(; cbi < cbs && state.activeChunkBuffers.size() < traits.queueDepth(); ++cbi) {
 					const ChunkDescription & pendingChunk = state.pendingChunks.at(cbi);
 					if (!traits.makeUnique() || pendingChunk.size()) {
@@ -530,7 +537,6 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			
 			if (traits.maxThreadCount() > 1) {
 				//use 1/4 of max memory for all buffers, but at least 128 entries per buffer
-				cfg.mergeBufferSize = std::max<uint64_t>(128, cfg.traits.maxMemoryUsage()/(4*sizeof(value_type)*(traits.maxThreadCount()-1)));
 				//We have a single fetch and multiple push threads
 				class PreQueue {
 				public:
@@ -538,7 +544,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					m_cfg(cfg),
 					m_state(state),
 					m_queue(PrioComp(m_cfg->traits.compare(), &(m_state->activeChunkBufferValues))),
-					m_buffer(m_cfg->mergeBufferSize)
+					m_buffer(m_cfg->mergeBufferEntries)
 					{
 						for(; chunkBegin != chunkEnd; ++chunkBegin) {
 							m_queue.push(chunkBegin);
@@ -570,7 +576,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						if (m_begin.load(std::memory_order_consume) != m_end.load(std::memory_order_acquire)) {
 							uint32_t myBegin = m_begin.load(std::memory_order_acquire);
 							result = std::move(m_buffer[myBegin]);
-							m_begin.store((myBegin+1) % m_cfg->mergeBufferSize, std::memory_order_release);
+							m_begin.store((myBegin+1) % m_cfg->mergeBufferEntries, std::memory_order_release);
 							return true;
 						}
 						return false;
@@ -588,13 +594,13 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						//changes to end from other threads have to show up here
 						//Note that we are now the only thread changing value in this queue
 						uint32_t end = m_end.load(std::memory_order_acquire);
-						while (m_queue.size() && m_begin.load(std::memory_order_acquire) != ((end+1)%m_cfg->mergeBufferSize)) {
+						while (m_queue.size() && m_begin.load(std::memory_order_acquire) != ((end+1)%m_cfg->mergeBufferEntries)) {
 							uint32_t pqMin = m_queue.top();
 							m_queue.pop();
 							InputBuffer & chunkBuffer = m_state->activeChunkBuffers[pqMin];
 							value_type & v = m_state->activeChunkBufferValues[pqMin];
 							m_buffer[end] = std::move(v);
-							end = (end+1)%m_cfg->mergeBufferSize;
+							end = (end+1)%m_cfg->mergeBufferEntries;
 							m_end.store(end, std::memory_order_release);
 							if (chunkBuffer.next()) {
 								m_state->activeChunkBufferValues[pqMin] = chunkBuffer.get();
