@@ -133,7 +133,7 @@ int main(int argc, char ** argv) {
 			if (token == "mmap") {
 				sft = SFT_MMAP;
 			}
-			else if (token == "mem") {
+			else if (token == "mem" || token == "memory") {
 				sft = SFT_MEM;
 			}
 			else if (token == "oomff") {
