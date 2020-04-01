@@ -540,14 +540,11 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				//We have a single fetch and multiple push threads
 				class PreQueue {
 				public:
-					uint32_t MinBufferFillPercent{20};
-				public:
 					PreQueue(Config * cfg, State * state, uint32_t chunkBegin, uint32_t chunkEnd) : 
 					m_cfg(cfg),
 					m_state(state),
 					m_queue(PrioComp(m_cfg->traits.compare(), &(m_state->activeChunkBufferValues))),
-					m_buffer(m_cfg->mergeBufferEntries),
-					m_minFill(std::max<std::size_t>(MinBufferFillPercent*m_cfg->mergeBufferEntries/100, 1))
+					m_bufferSize(std::max<std::size_t>(m_cfg->mergeBufferEntries/2, 1))
 					{
 						for(; chunkBegin != chunkEnd; ++chunkBegin) {
 							m_queue.push(chunkBegin);
@@ -558,12 +555,12 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					m_cfg(other.m_cfg),
 					m_state(other.m_state),
 					m_queue(std::move(other.m_queue)),
-					m_buffer(std::move(other.m_buffer)),
-					m_begin(other.m_begin),
-					m_size(other.m_size),
+					m_bufferSize(other.m_bufferSize),
+					m_frontBuffer(std::move(other.m_frontBuffer)),
+					m_frontBufferPos(other.m_frontBufferPos),
+					m_backBuffer(std::move(other.m_backBuffer)),
 					m_eof(other.m_eof)
-					{
-					}
+					{}
 					PreQueue & operator=(PreQueue &&) = delete;
 					PreQueue & operator=(PreQueue const &) = delete;
 				public:
@@ -571,57 +568,80 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					///if this returns true, then result holds a new value
 					///Otherwise no new value is available anymore
 					bool pop(value_type & result) {
-						std::unique_lock<std::mutex> lck(m_lock);
-						while (m_size || !m_eof) {
-							if (m_size) {
-								result = std::move(m_buffer[m_begin]);
-								m_begin = (m_begin+1) % m_cfg->mergeBufferEntries;
-								m_size -= 1;
-								if (m_size <= m_minFill) {
+						if (m_frontBufferPos >= m_frontBuffer.size()) {
+							std::unique_lock<std::mutex> lck(m_lock);
+							if (m_backBuffer.size()) {
+								std::swap(m_frontBuffer, m_backBuffer);
+								m_frontBufferPos = 0;
+								m_backBuffer.clear();
+								m_prod_cv.notify_one();
+							}
+							else if (!m_eof) {
+								m_prod_cv.notify_one();
+								m_con_cv.wait(lck, [&]() { return m_backBuffer.size() || m_eof; });
+								if (m_backBuffer.size()) {
+									std::swap(m_backBuffer, m_frontBuffer);
+									m_frontBufferPos = 0;
+									m_backBuffer.clear();
 									m_prod_cv.notify_one();
 								}
-								return true;
+								else {
+									SSERIALIZE_CHEAP_ASSERT(m_eof);
+									return false;
+								}
 							}
 							else {
-								m_prod_cv.notify_one();
-								m_con_cv.wait(lck);
+								return false;
 							}
 						}
-						return false;
+						result = std::move(m_frontBuffer[m_frontBufferPos]);
+						m_frontBufferPos += 1;
+						return true;
 					}
 					void run() {
 						while (!m_eof) {
 							std::unique_lock<std::mutex> lck(m_lock);
-							if (m_size >= m_minFill) {
-								m_prod_cv.wait(lck, [&](){ return m_size < m_minFill; });
+							if (m_backBuffer.size()) {
+								m_prod_cv.wait(lck, [&](){ return !m_backBuffer.size(); });
 							}
-							while (m_queue.size() && m_size < m_cfg->mergeBufferEntries) {
-								uint32_t pqMin = m_queue.top();
-								m_queue.pop();
-								InputBuffer & chunkBuffer = m_state->activeChunkBuffers[pqMin];
-								value_type & v = m_state->activeChunkBufferValues[pqMin];
-								m_buffer[(m_begin+m_size)%m_cfg->mergeBufferEntries] = std::move(v);
-								m_size += 1;
-								if (chunkBuffer.next()) {
-									m_state->activeChunkBufferValues[pqMin] = chunkBuffer.get();
-									m_queue.push(pqMin);
-								}
-							}
-							m_eof= !m_queue.size();
+							fillBackBuffer();
+							m_eof = !m_queue.size();
 							m_con_cv.notify_one();
+						}
+					}
+					void init() {
+						std::lock_guard<std::mutex> lck(m_lock);
+						fillBackBuffer();
+						std::swap(m_backBuffer, m_frontBuffer);
+						fillBackBuffer();
+					}
+				private:
+					///m_lock has to be locked
+					void fillBackBuffer() {
+						SSERIALIZE_CHEAP_ASSERT(!m_backBuffer.size());
+						while (m_queue.size() && m_backBuffer.size() < m_bufferSize) {
+							uint32_t pqMin = m_queue.top();
+							m_queue.pop();
+							InputBuffer & chunkBuffer = m_state->activeChunkBuffers[pqMin];
+							value_type & v = m_state->activeChunkBufferValues[pqMin];
+							m_backBuffer.emplace_back(std::move(v));
+							if (chunkBuffer.next()) {
+								m_state->activeChunkBufferValues[pqMin] = chunkBuffer.get();
+								m_queue.push(pqMin);
+							}
 						}
 					}
 				private:
 					Config * m_cfg;
 					State * m_state;
 					MyPrioQ m_queue;
-					std::vector<value_type> m_buffer;
-					std::size_t m_minFill;
-					std::mutex m_lock;
+					std::size_t m_bufferSize{0};
+					std::vector<value_type> m_frontBuffer; //only touched by the consumer thread
+					std::size_t m_frontBufferPos{0};
+					std::vector<value_type> m_backBuffer;
+					std::mutex m_lock; //locks access to the backBuffer
 					std::condition_variable m_prod_cv;
 					std::condition_variable m_con_cv;
-					uint32_t m_begin{0};
-					uint32_t m_size{0};
 					bool m_eof{false};
 				};
 				
@@ -640,6 +660,17 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					}
 				}
 
+				for(std::size_t i(0), s(queues.size()); i < s; ++i) {
+					queueWorkers.emplace_back([&](std::size_t mainQueueId) {
+						queues[mainQueueId].init();
+					}, i);
+				}
+				
+				for(std::size_t i(0), s(queueWorkers.size()); i < s; ++i) {
+					queueWorkers[i].join();
+				}
+				queueWorkers.clear();
+				
 				for(std::size_t i(0), s(queues.size()); i < s; ++i) {
 					queueWorkers.emplace_back([&](std::size_t mainQueueId) {
 						queues[mainQueueId].run();
