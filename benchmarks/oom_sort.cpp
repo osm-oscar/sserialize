@@ -5,7 +5,20 @@
 #include <sserialize/containers/MMVector.h>
 
 void help() {
-	std::cout << "prg -s <size in mebi> -m <memory-size in mebi> -q <queue depth> -t <thread count> -w <max wait in s> -st <memory|mmap|oompm|oomff|oomsf> -sp <source tmp path> -tp <tmp path> --u[niquify] --no-fetch-lock --no-flush-lock" << std::endl;
+	std::cout << "prg\n"
+		"-s <size in mebi>                    Source size\n"
+		"-m <memory-size in mebi>             Working memory\n"
+		"-q <queue depth>                     Depth of the merge queue\n"
+		"-t <thread count>                    Number of worker threads\n"
+		"-w <max wait in s>                   Maximum time in seconds a worker may wait for io to be active\n"
+		"-st <memory|mmap|oompm|oomff|oomsf>  Storage type of the source\n"
+		"-tt <mem|shared|fastfile|slowfile>   Storage type of the temporary storage as defined my MmappedMemoryType\n"
+		"-ff <path>                           Fast file path\n"
+		"-sf <path>                           Slow file path\n"
+		"--u[niquify]                         Uniquify result\n"
+		"--no-fetch-lock                      Don't use a fetch lock\n"
+		"--no-flush-lock                      Don't use a flush lock\n"
+	<< std::endl;
 }
 
 enum SrcFileType {
@@ -36,7 +49,7 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 	sortTraits
 		.maxMemoryUsage(state.memorySize)
 		.maxThreadCount(state.threadCount)
-		.mmt(sserialize::MM_SLOW_FILEBASED)
+		.mmt(state.tmt)
 		.queueDepth(state.queueDepth)
 		.maxWait(state.maxWait)
 		.ioFetchLock(state.fetchLock)
@@ -122,11 +135,13 @@ int main(int argc, char ** argv) {
 			state.maxWait = atoi(argv[i+1]);
 			++i;
 		}
-		else if (token == "-sp" && i+1 < argc) {
+		else if (token == "-ff" && i+1 < argc) {
 			sserialize::UByteArrayAdapter::setFastTempFilePrefix(std::string(argv[i+1]));
+			++i;
 		}
-		else if (token == "-tp" && i+1 < argc) {
+		else if (token == "-sf" && i+1 < argc) {
 			sserialize::UByteArrayAdapter::setTempFilePrefix(std::string(argv[i+1]));
+			++i;
 		}
 		else if (token == "-st" && i+1 < argc) {
 			token = std::string(argv[i+1]);
@@ -147,6 +162,11 @@ int main(int argc, char ** argv) {
 			}
 			++i;
 		}
+		else if (token == "-tt" && i+1 < argc) {
+			token = std::string(argv[i+1]);
+			sserialize::from(token, state.tmt);
+			++i;
+		}
 		else if (token == "-u" || token == "--uniquify") {
 			state.uniquify = true;
 		}
@@ -160,6 +180,17 @@ int main(int argc, char ** argv) {
 			help();
 			return 0;
 		}
+		else {
+			help();
+			std::cerr << "Unrecognized option: " << token << std::endl;
+			return -1;
+		}
+	}
+	
+	if (state.tmt == sserialize::MM_INVALID) {
+		help();
+		std::cerr << "Storage type of temporary files is invalid" << std::endl;
+		return -1;
 	}
 	
 	std::cout << "Fast file path: " << sserialize::UByteArrayAdapter::getFastTempFilePrefix() << '\n';
