@@ -217,6 +217,8 @@ int main(int argc, char ** argv) {
 		std::cout << "invalid";
 		break;
 	};
+	std::cout << '\n';
+	std::cout << "Temp file type: " << sserialize::toString(state.tmt) << '\n';
 	std::cout << std::endl;
 	switch (sft) {
 	case SFT_MEM:
