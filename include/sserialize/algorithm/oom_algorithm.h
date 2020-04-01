@@ -584,10 +584,13 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						}
 						return false;
 					}
-					void run() {
+					//returns false if no more work is available
+					bool run(bool lock = true) {
 						//try locking
-						if (m_lock.test_and_set(std::memory_order_acquire)) {
-							return;
+						if (lock) {
+							if (m_lock.test_and_set(std::memory_order_acquire)) {
+								return true;
+							}
 						}
 						//Fetch thread increases begin. We keep a sentinel value between end and begin (and empty entry)
 						//We can simply check whether the next entry modulo the buffer size is the begin pointer. The result is that m_end is still a one-passed-the-end iterator.
@@ -611,7 +614,10 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 							}
 						}
 						m_eof.store(!m_queue.size(), std::memory_order_release);
-						m_lock.clear(std::memory_order_release);
+						if (lock) {
+							m_lock.clear(std::memory_order_release);
+						}
+						return m_queue.size();
 					}
 				private:
 					Config * m_cfg;
@@ -638,17 +644,26 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						);
 					}
 				}
+
 				for(std::size_t i(0), s(traits.maxThreadCount()-1); i < s; ++i) {
-					queueWorkers.emplace_back([&]() {
-						bool hasActive = true;
-						while(hasActive) {
-							hasActive = false;
-							for(std::size_t i(0), s(queues.size()); i < s; ++i) {
-								queues[i].run();
-								hasActive = !queues[i].eof() || hasActive;
+					queueWorkers.emplace_back([&](std::size_t mainQueueId) {
+						if (mainQueueId != std::numeric_limits<std::size_t>::max()) {
+							while(true) {
+								if (!queues[mainQueueId].run(false)) {
+									break;
+								}
 							}
 						}
-					});
+						else {
+							bool hasActive = true;
+							while(hasActive) {
+								hasActive = false;
+								for(std::size_t i(0), s(queues.size()); i < s; ++i) {
+									hasActive = queues[i].run() || hasActive;
+								}
+							}
+						}
+					}, (s == queues.size() ? i : std::numeric_limits<std::size_t>::max()));
 				}
 				
 				MyPrioQ pq(PrioComp(traits.compare(), &queueValues));
