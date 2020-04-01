@@ -540,16 +540,18 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				//We have a single fetch and multiple push threads
 				class PreQueue {
 				public:
+					uint32_t MinBufferFillPercent{20};
+				public:
 					PreQueue(Config * cfg, State * state, uint32_t chunkBegin, uint32_t chunkEnd) : 
 					m_cfg(cfg),
 					m_state(state),
 					m_queue(PrioComp(m_cfg->traits.compare(), &(m_state->activeChunkBufferValues))),
-					m_buffer(m_cfg->mergeBufferEntries)
+					m_buffer(m_cfg->mergeBufferEntries),
+					m_minFill(std::max<std::size_t>(MinBufferFillPercent*m_cfg->mergeBufferEntries/100, 1))
 					{
 						for(; chunkBegin != chunkEnd; ++chunkBegin) {
 							m_queue.push(chunkBegin);
 						}
-						m_lock.clear();
 					}
 					PreQueue(PreQueue const &) = delete;
 					PreQueue(PreQueue && other) :
@@ -557,77 +559,70 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					m_state(other.m_state),
 					m_queue(std::move(other.m_queue)),
 					m_buffer(std::move(other.m_buffer)),
-					m_begin(other.m_begin.load()),
-					m_end(other.m_end.load()),
-					m_eof(other.m_eof.load())
+					m_begin(other.m_begin),
+					m_size(other.m_size),
+					m_eof(other.m_eof)
 					{
-						m_lock.clear();
 					}
 					PreQueue & operator=(PreQueue &&) = delete;
 					PreQueue & operator=(PreQueue const &) = delete;
 				public:
-					bool eof() const { return m_begin.load(std::memory_order_consume) == m_end.load(std::memory_order_acquire) && m_eof.load(std::memory_order_acquire); }
 					///Since we don't use locking only a single consumer is allowed
 					///if this returns true, then result holds a new value
-					///Otherwise no new value is available yet
-					///Check eof() whether new values may be produced
+					///Otherwise no new value is available anymore
 					bool pop(value_type & result) {
-						//Consumer increases the begin pointer
-						//thus we have to make sure that loads of m_begin are ordered within the consumer thread)
-						//Producers increase the end pointer
-						//thus we have to make sure that all writes to the end have finished with their respective data writes
-						if (m_begin.load(std::memory_order_consume) != m_end.load(std::memory_order_acquire)) {
-							uint32_t myBegin = m_begin.load(std::memory_order_acquire);
-							result = std::move(m_buffer[myBegin]);
-							m_begin.store((myBegin+1) % m_cfg->mergeBufferEntries, std::memory_order_release);
-							return true;
+						std::unique_lock<std::mutex> lck(m_lock);
+						while (m_size || !m_eof) {
+							if (m_size) {
+								result = std::move(m_buffer[m_begin]);
+								m_begin = (m_begin+1) % m_cfg->mergeBufferEntries;
+								m_size -= 1;
+								if (m_size <= m_minFill) {
+									m_prod_cv.notify_one();
+								}
+								return true;
+							}
+							else {
+								m_prod_cv.notify_one();
+								m_con_cv.wait(lck);
+							}
 						}
 						return false;
 					}
-					//returns false if no more work is available
-					bool run(bool lock = true) {
-						//try locking
-						if (lock) {
-							if (m_lock.test_and_set(std::memory_order_acquire)) {
-								return true;
+					void run() {
+						while (!m_eof) {
+							std::unique_lock<std::mutex> lck(m_lock);
+							if (m_size >= m_minFill) {
+								m_prod_cv.wait(lck, [&](){ return m_size < m_minFill; });
 							}
-						}
-						//Fetch thread increases begin. We keep a sentinel value between end and begin (and empty entry)
-						//We can simply check whether the next entry modulo the buffer size is the begin pointer. The result is that m_end is still a one-passed-the-end iterator.
-						//In the following load only begin may increase.
-						//if it happens that m_begin == m_end (the buffer is empty) we can safely advance m_end
-						//However if m_end points to the element before begin (the sentinel value) then we cannot fetch another value and have to wait for the fetch thread to advance the begin pointer
-						//changes to end from other threads have to show up here
-						//Note that we are now the only thread changing value in this queue
-						uint32_t end = m_end.load(std::memory_order_acquire);
-						while (m_queue.size() && m_begin.load(std::memory_order_acquire) != ((end+1)%m_cfg->mergeBufferEntries)) {
-							uint32_t pqMin = m_queue.top();
-							m_queue.pop();
-							InputBuffer & chunkBuffer = m_state->activeChunkBuffers[pqMin];
-							value_type & v = m_state->activeChunkBufferValues[pqMin];
-							m_buffer[end] = std::move(v);
-							end = (end+1)%m_cfg->mergeBufferEntries;
-							m_end.store(end, std::memory_order_release);
-							if (chunkBuffer.next()) {
-								m_state->activeChunkBufferValues[pqMin] = chunkBuffer.get();
-								m_queue.push(pqMin);
+							while (m_queue.size() && m_size < m_cfg->mergeBufferEntries) {
+								uint32_t pqMin = m_queue.top();
+								m_queue.pop();
+								InputBuffer & chunkBuffer = m_state->activeChunkBuffers[pqMin];
+								value_type & v = m_state->activeChunkBufferValues[pqMin];
+								m_buffer[(m_begin+m_size)%m_cfg->mergeBufferEntries] = std::move(v);
+								m_size += 1;
+								if (chunkBuffer.next()) {
+									m_state->activeChunkBufferValues[pqMin] = chunkBuffer.get();
+									m_queue.push(pqMin);
+								}
 							}
+							m_eof= !m_queue.size();
+							m_con_cv.notify_one();
 						}
-						m_eof.store(!m_queue.size(), std::memory_order_release);
-						if (lock) {
-							m_lock.clear(std::memory_order_release);
-						}
-						return m_queue.size();
 					}
 				private:
 					Config * m_cfg;
 					State * m_state;
 					MyPrioQ m_queue;
 					std::vector<value_type> m_buffer;
-					std::atomic_flag m_lock;
-					std::atomic<uint32_t> m_begin{0};
-					std::atomic<uint32_t> m_end{0};
-					std::atomic<bool> m_eof{false};
+					std::size_t m_minFill;
+					std::mutex m_lock;
+					std::condition_variable m_prod_cv;
+					std::condition_variable m_con_cv;
+					uint32_t m_begin{0};
+					uint32_t m_size{0};
+					bool m_eof{false};
 				};
 				
 				std::vector<PreQueue> queues;
@@ -645,39 +640,18 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					}
 				}
 
-				for(std::size_t i(0), s(traits.maxThreadCount()-1); i < s; ++i) {
+				for(std::size_t i(0), s(queues.size()); i < s; ++i) {
 					queueWorkers.emplace_back([&](std::size_t mainQueueId) {
-						if (mainQueueId != std::numeric_limits<std::size_t>::max()) {
-							while(true) {
-								if (!queues[mainQueueId].run(false)) {
-									break;
-								}
-							}
-						}
-						else {
-							bool hasActive = true;
-							while(hasActive) {
-								hasActive = false;
-								for(std::size_t i(0), s(queues.size()); i < s; ++i) {
-									hasActive = queues[i].run() || hasActive;
-								}
-							}
-						}
-					}, (s == queues.size() ? i : std::numeric_limits<std::size_t>::max()));
+						queues[mainQueueId].run();
+					}, i);
 				}
 				
 				MyPrioQ pq(PrioComp(traits.compare(), &queueValues));
 				queueValues.resize(queues.size());
 				
 				for(std::size_t i(0); i < queues.size(); ++i) {
-					while (true) {
-						if (queues[i].pop(queueValues[i])) { 
-							pq.push(i);
-							break;
-						}
-						else if (queues[i].eof()) {
-							break;
-						}
+					if (queues[i].pop(queueValues[i])) { 
+						pq.push(i);
 					}
 				}
 				
@@ -690,14 +664,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						state.resultSize += 1;
 					}
 					//get our next element
-					while (true) {
-						if (queues[pqMin].pop(v)) {
-							pq.push(pqMin);
-							break;
-						}
-						else if (queues[pqMin].eof()) {
-							break;
-						}
+					if (queues[pqMin].pop(v)) {
+						pq.push(pqMin);
 					}
 					if (tmp.size() % 1000 == 0) {
 						state.pinfo(tmp.size());
