@@ -273,6 +273,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		uint64_t initialChunkSize;
 		//tmp buffer size in bytes
 		uint64_t tmpBuffferSize;
+		//merge buffer size in bytes
+		uint64_t mergeBufferSize;
 		Config(Traits & traits) :
 			traits(traits),
 			initialChunkSize(this->traits.maxMemoryUsage()/(traits.maxThreadCount()*sizeof(value_type)))
@@ -482,22 +484,6 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 	cfg.tmpBuffferSize = cfg.traits.maxMemoryUsage()/4;
 	sserialize::OOMArray<value_type> tmp(traits.mmt());
 	
-	struct PrioComp {
-		typename Traits::Compare comp;
-		std::vector<value_type> * chunkBufferValues;
-		bool operator()(uint32_t a, uint32_t b) {
-			const value_type & av = (*chunkBufferValues)[a];
-			const value_type & bv = (*chunkBufferValues)[b];
-			return !( comp(av, bv) );
-		}
-		PrioComp(typename Traits::Compare comp, std::vector<value_type> * chunkBufferValues) : comp(comp), chunkBufferValues(chunkBufferValues) {}
-		PrioComp(const PrioComp & other) : comp(other.comp), chunkBufferValues(other.chunkBufferValues) {}
-	};
-	
-	typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
-	
-	MyPrioQ pq(PrioComp(traits.compare(), &(state.activeChunkBufferValues)));
-	
 	for(uint32_t queueRound(0); state.pendingChunks.size() > 1; ++queueRound) {
 		state.pinfo.begin(state.resultSize, std::string("Merging sorted chunks round ") + std::to_string(queueRound));
 		
@@ -528,27 +514,201 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			//add our result chunk to the queue (we don't know the size yet, just the beginning)
 			nextRoundPendingChunks.emplace_back(tmp.size());
 			
-			for(std::size_t i(0); i < state.activeChunkBuffers.size(); ++i) {
-				pq.push(i);
-			}
+			struct PrioComp {
+				typename Traits::Compare comp;
+				std::vector<value_type> * chunkBufferValues;
+				bool operator()(uint32_t a, uint32_t b) {
+					const value_type & av = (*chunkBufferValues)[a];
+					const value_type & bv = (*chunkBufferValues)[b];
+					return !( comp(av, bv) );
+				}
+				PrioComp(typename Traits::Compare comp, std::vector<value_type> * chunkBufferValues) : comp(comp), chunkBufferValues(chunkBufferValues) {}
+				PrioComp(const PrioComp & other) : comp(other.comp), chunkBufferValues(other.chunkBufferValues) {}
+			};
 			
-			while (pq.size()) {
-				uint32_t pqMin = pq.top();
-				pq.pop();
-				InputBuffer & chunkBuffer = state.activeChunkBuffers[pqMin];
-				value_type & v = state.activeChunkBufferValues[pqMin];
-				if (!traits.makeUnique() || !tmp.size() || !traits.equal()(tmp.back(), v)) {
-					tmp.emplace_back(std::move(v));
-					state.resultSize += 1;
+			typedef std::priority_queue<uint32_t, std::vector<uint32_t>, PrioComp> MyPrioQ;
+			
+			if (traits.maxThreadCount() > 1) {
+				//use 1/4 of max memory for all buffers, but at least 128 entries per buffer
+				cfg.mergeBufferSize = std::max<uint64_t>(128, cfg.traits.maxMemoryUsage()/(4*sizeof(value_type)*(traits.maxThreadCount()-1)));
+				//We have a single fetch and multiple push threads
+				class PreQueue {
+				public:
+					PreQueue(Config * cfg, State * state, uint32_t chunkBegin, uint32_t chunkEnd) : 
+					m_cfg(cfg),
+					m_state(state),
+					m_queue(PrioComp(m_cfg->traits.compare(), &(m_state->activeChunkBufferValues))),
+					m_buffer(m_cfg->mergeBufferSize)
+					{
+						for(; chunkBegin != chunkEnd; ++chunkBegin) {
+							m_queue.push(chunkBegin);
+						}
+					}
+					PreQueue(PreQueue const &) = delete;
+					PreQueue(PreQueue && other) :
+					m_cfg(other.m_cfg),
+					m_state(other.m_state),
+					m_queue(std::move(other.m_queue)),
+					m_buffer(std::move(other.m_buffer)),
+					m_begin(other.m_begin.load()),
+					m_end(other.m_end.load()),
+					m_eof(other.m_eof.load())
+					{}
+					PreQueue & operator=(PreQueue &&) = delete;
+					PreQueue & operator=(PreQueue const &) = delete;
+				public:
+					bool eof() const { return m_begin.load(std::memory_order_consume) == m_end.load(std::memory_order_acquire) && m_eof.load(std::memory_order_acquire); }
+					///Since we don't use locking only a single consumer is allowed
+					///if this returns true, then result holds a new value
+					///Otherwise no new value is available yet
+					///Check eof() whether new values may be produced
+					bool pop(value_type & result) {
+						//Consumer increases the begin pointer
+						//thus we have to make sure that loads of m_begin are ordered within the consumer thread)
+						//Producers increase the end pointer
+						//thus we have to make sure that all writes to the end have finished with their respective data writes
+						if (m_begin.load(std::memory_order_consume) != m_end.load(std::memory_order_acquire)) {
+							uint32_t myBegin = m_begin.load(std::memory_order_acquire);
+							result = std::move(m_buffer[myBegin]);
+							m_begin.store((myBegin+1) % m_cfg->mergeBufferSize, std::memory_order_release);
+							return true;
+						}
+						return false;
+					}
+					void run() {
+						//try locking
+						if (!m_lock.test_and_set(std::memory_order_acquire)) {
+							return;
+						}
+						//Fetch thread increases begin. We keep a sentinel value between end and begin (and empty entry)
+						//We can simply check whether the next entry modulo the buffer size is the begin pointer. The result is that m_end is still a one-passed-the-end iterator.
+						//In the following load only begin may increase.
+						//if it happens that m_begin == m_end (the buffer is empty) we can safely advance m_end
+						//However if m_end points to the element before begin (the sentinel value) then we cannot fetch another value and have to wait for the fetch thread to advance the begin pointer
+						//changes to end from other threads have to show up here
+						//Note that we are now the only thread changing value in this queue
+						uint32_t end = m_end.load(std::memory_order_acquire);
+						while (m_queue.size() && m_begin.load(std::memory_order_acquire) != ((end+1)%m_cfg->mergeBufferSize)) {
+							uint32_t pqMin = m_queue.top();
+							m_queue.pop();
+							InputBuffer & chunkBuffer = m_state->activeChunkBuffers[pqMin];
+							value_type & v = m_state->activeChunkBufferValues[pqMin];
+							m_buffer[end] = std::move(v);
+							end = (end+1)%m_cfg->mergeBufferSize;
+							m_end.store(end, std::memory_order_release);
+							if (chunkBuffer.next()) {
+								m_state->activeChunkBufferValues[pqMin] = chunkBuffer.get();
+								m_queue.push(pqMin);
+							}
+						}
+						m_eof.store(!m_queue.size(), std::memory_order_release);
+						m_lock.clear(std::memory_order_release);
+					}
+				private:
+					Config * m_cfg;
+					State * m_state;
+					MyPrioQ m_queue;
+					std::vector<value_type> m_buffer;
+					std::atomic_flag m_lock;
+					std::atomic<uint32_t> m_begin{0};
+					std::atomic<uint32_t> m_end{0};
+					std::atomic<bool> m_eof{false};
+				};
+				
+				std::vector<PreQueue> queues;
+				std::vector<value_type> queueValues;
+				std::vector<std::thread> queueWorkers;
+				{
+					std::size_t chunksPerQueue = state.activeChunkBuffers.size()/(traits.maxThreadCount()-1)+std::size_t(state.activeChunkBuffers.size()%(traits.maxThreadCount()-1) > 0);
+					for(std::size_t i(0); i < state.activeChunkBuffers.size(); i += chunksPerQueue) {
+						queues.emplace_back(
+								&cfg,
+								&state,
+								uint32_t(i),
+								std::min<uint32_t>(state.activeChunkBuffers.size(), i+chunksPerQueue)
+						);
+					}
 				}
-				if (chunkBuffer.next()) {
-					state.activeChunkBufferValues[pqMin] = chunkBuffer.get();
-					pq.push(pqMin);
+				for(std::size_t i(0), s(traits.maxThreadCount()-1); i < s; ++i) {
+					queueWorkers.emplace_back([&]() {
+						bool hasActive = true;
+						while(hasActive) {
+							hasActive = false;
+							for(std::size_t i(0), s(queues.size()); i < s; ++i) {
+								queues[i].run();
+								hasActive = !queues[i].eof() || hasActive;
+							}
+						}
+					});
 				}
-				if (tmp.size() % 1000 == 0) {
-					state.pinfo(tmp.size());
+				
+				MyPrioQ pq(PrioComp(traits.compare(), &queueValues));
+				queueValues.resize(queues.size());
+				
+				for(std::size_t i(0); i < queues.size(); ++i) {
+					while (true) {
+						if (queues[i].pop(queueValues[i])) { 
+							pq.push(i);
+							break;
+						}
+						else if (queues[i].eof()) {
+							break;
+						}
+					}
 				}
-				SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
+				
+				while(pq.size()) {
+					uint32_t pqMin = pq.top();
+					pq.pop();
+					value_type & v = queueValues[pqMin];
+					if (!traits.makeUnique() || !tmp.size() || !traits.equal()(tmp.back(), v)) {
+						tmp.emplace_back(std::move(v));
+						state.resultSize += 1;
+					}
+					//get our next element
+					while (true) {
+						if (queues[pqMin].pop(v)) {
+							pq.push(pqMin);
+							break;
+						}
+						else if (queues[pqMin].eof()) {
+							break;
+						}
+					}
+					if (tmp.size() % 1000 == 0) {
+						state.pinfo(tmp.size());
+					}
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
+				}
+				for(std::size_t i(0), s(queueWorkers.size()); i < s; ++i) {
+					queueWorkers[i].join();
+				}
+			}
+			else {
+				MyPrioQ pq(PrioComp(traits.compare(), &(state.activeChunkBufferValues)));
+			
+				for(std::size_t i(0); i < state.activeChunkBuffers.size(); ++i) {
+					pq.push(i);
+				}
+			
+				while (pq.size()) {
+					uint32_t pqMin = pq.top();
+					pq.pop();
+					InputBuffer & chunkBuffer = state.activeChunkBuffers[pqMin];
+					value_type & v = state.activeChunkBufferValues[pqMin];
+					if (!traits.makeUnique() || !tmp.size() || !traits.equal()(tmp.back(), v)) {
+						tmp.emplace_back(std::move(v));
+						state.resultSize += 1;
+					}
+					if (chunkBuffer.next()) {
+						state.activeChunkBufferValues[pqMin] = chunkBuffer.get();
+						pq.push(pqMin);
+					}
+					if (tmp.size() % 1000 == 0) {
+						state.pinfo(tmp.size());
+					}
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
+				}
 			}
 			state.pinfo(tmp.size());
 			
