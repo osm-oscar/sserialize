@@ -498,8 +498,6 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		//setup temporary store
 		tmp.clear();
 		tmp.reserve(state.resultSize);
-		tmp.backBufferSize(cfg.tmpBuffferSize);
-		tmp.readBufferSize(sizeof(value_type));
 		
 		for(uint32_t cbi(0), cbs((uint32_t)state.pendingChunks.size()); cbi < cbs;) {
 			{//fill the activeChunkBuffers
@@ -538,7 +536,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 			if (traits.maxThreadCount() > 1) {
 				//use 1/4 of max memory for all buffers, but at least 128 entries per buffer
 				//We have a single fetch and multiple push threads
-				class PreQueue {
+				class PreQueue final {
 				public:
 					PreQueue(Config * cfg, State * state, uint32_t chunkBegin, uint32_t chunkEnd) : 
 					m_cfg(cfg),
@@ -563,6 +561,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					{}
 					PreQueue & operator=(PreQueue &&) = delete;
 					PreQueue & operator=(PreQueue const &) = delete;
+					~PreQueue() {}
 				public:
 					///Since we don't use locking only a single consumer is allowed
 					///if this returns true, then result holds a new value
@@ -645,6 +644,114 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					bool m_eof{false};
 				};
 				
+				class FlushQueue final {
+				public:
+					FlushQueue(Config * cfg, State * state, sserialize::OOMArray<value_type> * dest) :
+					m_cfg(cfg),
+					m_state(state),
+					m_dest(dest)
+					{
+						uint32_t numWorkers;
+						if (cfg->traits.mmt() == MM_SLOW_FILEBASED) {
+							numWorkers = 1;
+						}
+						else if (cfg->traits.ioFlushLock()) {
+							numWorkers = 2;
+						}
+						else {
+							numWorkers = std::max<uint32_t>(2, (cfg->traits.maxThreadCount()-2)/2);
+						}
+						for(uint32_t i(0); i < numWorkers; ++i) {
+							m_workers.emplace_back([this](){ this->run();});
+						}
+						m_bufferSize = std::max<std::size_t>(128, cfg->tmpBuffferSize/(m_workers.size()*sizeof(value_type)));
+					}
+					~FlushQueue() {
+						flush();
+						m_running = false;
+						m_cv.notify_all();
+						for(auto & x : m_workers) {
+							x.join();
+						}
+						//flush last entry
+						m_dest->replace(m_offset, m_data.begin(), m_data.end());
+					}
+					uint64_t size() const {
+						return m_offset+m_data.size();
+					}
+					value_type const & back() const {
+						return m_data.back();
+					}
+					void emplace_back(value_type && value) {
+						m_data.emplace_back(std::move(value));
+						if (m_data.size() >= m_bufferSize) {
+							flush();
+						}
+					}
+				public:
+					//Flush data
+					void flush() {
+						//we move the last entry to our next buffer to implement the back() function
+						std::vector<value_type> oldData;
+						oldData.reserve(m_bufferSize);
+						
+						std::lock_guard<std::mutex> lck(m_lock);
+						std::swap(oldData, m_data);
+						m_data.emplace_back(std::move(oldData.back()));
+						
+						oldData.pop_back();
+						std::size_t dataSize = oldData.size();
+						m_entries.emplace(m_offset, std::move(oldData));
+						
+						m_offset += dataSize;
+						m_cv.notify_one();
+					}
+				private:
+					struct Entry {
+						uint64_t offset;
+						std::vector<value_type> data;
+						Entry(uint64_t offset, std::vector<value_type> && data) :
+						offset(offset),
+						data(std::move(data))
+						{}
+						Entry(Entry &&) = default;
+						Entry & operator=(Entry &&) = default;
+					};
+				private:
+					///function run by the worker threads
+					void run() {
+						std::unique_lock<std::mutex> lck(m_lock, std::defer_lock);
+						while (true) {
+							lck.lock();
+							if (!m_entries.size()) {
+								if (m_running.load(std::memory_order_relaxed)) {
+									m_cv.wait(lck, [&](){ return m_entries.size() || !m_running.load(std::memory_order_relaxed);});
+								}
+							}
+							if (!m_entries.size()) {
+								SSERIALIZE_CHEAP_ASSERT(!m_running.load(std::memory_order_relaxed));
+								break;
+							}
+							Entry e = std::move(m_entries.front());
+							m_entries.pop();
+							lck.unlock();
+							m_dest->replace(e.offset, e.data.begin(), e.data.end());
+						}
+					}
+				private:
+					Config * m_cfg;
+					State * m_state;
+					sserialize::OOMArray<value_type> * m_dest;
+					std::size_t m_bufferSize;
+					uint64_t m_offset{0};
+					std::vector<value_type> m_data;
+					std::vector<std::thread> m_workers;
+					std::queue<Entry> m_entries;
+					std::mutex m_lock;
+					std::condition_variable m_cv;
+					std::atomic_bool m_running;
+				};
+				
 				std::vector<PreQueue> queues;
 				std::vector<value_type> queueValues;
 				std::vector<std::thread> queueWorkers;
@@ -686,28 +793,35 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					}
 				}
 				
+				//resize tmp to state.resultSize to facilitate parallel io
+				tmp.resize(state.resultSize);
+				FlushQueue flushQueue(&cfg, &state, &tmp);
+				
 				while(pq.size()) {
 					uint32_t pqMin = pq.top();
 					pq.pop();
 					value_type & v = queueValues[pqMin];
-					if (!traits.makeUnique() || !tmp.size() || !traits.equal()(tmp.back(), v)) {
-						tmp.emplace_back(std::move(v));
+					if (!traits.makeUnique() || !flushQueue.size() || !traits.equal()(flushQueue.back(), v)) {
+						flushQueue.emplace_back(std::move(v));
 						state.resultSize += 1;
 					}
 					//get our next element
 					if (queues[pqMin].pop(v)) {
 						pq.push(pqMin);
 					}
-					if (tmp.size() % 1000 == 0) {
-						state.pinfo(tmp.size());
+					if (flushQueue.size() % 1000 == 0) {
+						state.pinfo(flushQueue.size());
 					}
-					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(tmp.size(), state.srcSize);
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(flushQueue.size(), state.srcSize);
 				}
 				for(std::size_t i(0), s(queueWorkers.size()); i < s; ++i) {
 					queueWorkers[i].join();
 				}
 			}
 			else {
+				tmp.backBufferSize(cfg.tmpBuffferSize);
+				tmp.readBufferSize(sizeof(value_type));
+				
 				MyPrioQ pq(PrioComp(traits.compare(), &(state.activeChunkBufferValues)));
 			
 				for(std::size_t i(0); i < state.activeChunkBuffers.size(); ++i) {
