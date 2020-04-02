@@ -98,6 +98,10 @@ public:
 	template<typename TSourceIterator>
 	iterator replace(const iterator & position, TSourceIterator srcBegin, const TSourceIterator & end);
 	
+	///invalidates iterators, unbuffered io
+	template<typename TSourceIterator>
+	SizeType replace(SizeType position, TSourceIterator srcBegin, const TSourceIterator & end);
+	
 	///buffered io
 	template<typename... Args>
 	void emplace_back(Args... args) {
@@ -696,7 +700,15 @@ typename OOMArray<TValue, TEnable>::iterator
 OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator srcBegin, const TSourceIterator & srcEnd) {
 	using std::distance;
 	//first copy the stuff that is before the back-buffer
-	SizeType offset = position.m_p;
+	auto offset = replace(position.p(), srcBegin, srcEnd);
+	return iterator(this, offset, position.bufferSize());
+}
+
+template<typename TValue, typename TEnable>
+template<typename TSourceIterator>
+typename OOMArray<TValue, TEnable>::SizeType
+OOMArray<TValue, TEnable>::replace(SizeType position, TSourceIterator srcBegin, const TSourceIterator & srcEnd) {
+	SizeType offset = position;
 	SizeType count = distance(srcBegin, srcEnd);
 	
 	if (offset+count > m_backBufferBegin) {
@@ -724,13 +736,13 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 		offset += (bufIt-myBuffer);
 	}
 	delete[] myBuffer;
-	SSERIALIZE_CHEAP_ASSERT_EQUAL(position.p()+count, offset);
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(position+count, offset);
 	
 	if (m_syncOnFlush) {
 		::fdatasync(m_fd);
 		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 	}
-	return iterator(this, offset, position.bufferSize());
+	return offset;
 }
 
 template<typename TValue, typename TEnable>
