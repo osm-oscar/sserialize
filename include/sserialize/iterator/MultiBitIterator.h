@@ -5,6 +5,31 @@
 #include <type_traits>
 
 namespace sserialize {
+namespace detail {
+
+
+template<uint32_t bytes>
+struct UnsignedFromBytes;
+
+#define UNSIGNED_FROM_BYTES_SPEC(__BYTES, __TYPE) template<> struct UnsignedFromBytes<__BYTES> { using type = __TYPE; };
+
+UNSIGNED_FROM_BYTES_SPEC(1, uint8_t)
+UNSIGNED_FROM_BYTES_SPEC(2, uint16_t)
+UNSIGNED_FROM_BYTES_SPEC(3, uint32_t)
+UNSIGNED_FROM_BYTES_SPEC(4, uint32_t)
+UNSIGNED_FROM_BYTES_SPEC(5, uint64_t)
+UNSIGNED_FROM_BYTES_SPEC(6, uint64_t)
+UNSIGNED_FROM_BYTES_SPEC(7, uint64_t)
+UNSIGNED_FROM_BYTES_SPEC(8, uint64_t)
+
+#undef UNSIGNED_FROM_BYTES_SPEC
+
+template<uint32_t bits>
+struct UnsignedFromBits {
+	using type = typename UnsignedFromBytes<bits/8 + uint32_t(bits%8 != 0)>::type;
+};
+
+}
 
 class MultiBitIterator {
 	UByteArrayAdapter m_data;
@@ -58,6 +83,14 @@ public:
 	template<typename T>
 	inline typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value && !std::is_same<T, uint8_t>::value, T>::type get(uint8_t len) {
 		return getN<T>(len);
+	}
+	template<typename T>
+	inline typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value && std::is_same<T, uint8_t>::value, T>::type get(uint8_t len) {
+		return uint8_t( getN<uint16_t>(len) );
+	}
+	template<uint32_t bits>
+	inline auto get() {
+		return get<typename detail::UnsignedFromBits<bits>::type>(bits);
 	}
 	///@param bitCount this should not be larger than INT_MAX
 	MultiBitIterator & operator+=(uint32_t bitCount);
