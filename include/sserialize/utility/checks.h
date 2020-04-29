@@ -28,6 +28,26 @@ narrow_check(float value) {
 	return static_cast<I>(value);
 }
 
+template<typename I>
+inline
+typename std::enable_if<std::is_signed<I>::value, I>::type
+narrow_check(double value) {
+	if (UNLIKELY_BRANCH(value < std::ceil(double(std::numeric_limits<I>::min())) || value > std::floor((double)std::numeric_limits<I>::max()))) {
+		throw sserialize::TypeOverflowException("out of range");
+	}
+	return static_cast<I>(value);
+}
+
+template<typename I>
+inline
+typename std::enable_if<std::is_signed<I>::value, I>::type
+narrow_check(float value) {
+	if (UNLIKELY_BRANCH(value < std::ceil(double(std::numeric_limits<I>::min())) || value > std::floor((float)std::numeric_limits<I>::max()))) {
+		throw sserialize::TypeOverflowException("out of range");
+	}
+	return static_cast<I>(value);
+}
+
 template<typename I, typename J>
 inline
 typename std::enable_if<std::is_signed<I>::value && std::is_signed<J>::value, I>::type
