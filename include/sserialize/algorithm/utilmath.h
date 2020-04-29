@@ -282,7 +282,7 @@ public:
 	inline const value_type & min() const { return m_minmax.min(); }
 	inline const value_type & max() const { return m_minmax.max(); }
 	inline const value_type & sum() const { return m_sum; }
-	inline const std::size_t & count() const { return m_count; }
+	inline std::size_t count() const { return m_count; }
 	inline value_type mean() const { return sum()/count(); }
 	void update(const value_type & v) {
 		m_minmax.update(v);
