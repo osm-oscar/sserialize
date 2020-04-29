@@ -2,6 +2,7 @@
 
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/iterator/MultiBitBackInserter.h>
+#include <sserialize/iterator/MultiBitIterator.h>
 #include <sserialize/search/StringCompleter.h>
 #include <sserialize/Static/UnicodeTrie/FlatTrie.h>
 #include <sserialize/Static/Map.h>
@@ -57,19 +58,26 @@ public:
 public:
 	static void create(SourceNode const & src, sserialize::MultiBitBackInserter & dest);
 public:
-	CompactNode(sserialize::UByteArrayAdapter const & d);
+	CompactNode() = default;
+	CompactNode(CompactNode const &) = default;
+	CompactNode(sserialize::MultiBitIterator it);
 	~CompactNode();
-	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const;
+	CompactNode & operator=(CompactNode const&) = default;
+	sserialize::UByteArrayAdapter::SizeType getSizeInBits() const;
 public:
 	bool isFullMatch() const;
 	bool isPartialMatch() const;
 	PixelId pixelId() const;
 	ItemIndexId itemIndexId() const;
 private:
-	bool m_fm;
-	PixelId m_pid;
-	ItemIndexId m_itemIndexId;
+	friend sserialize::MultiBitIterator & operator>>(sserialize::MultiBitIterator & src, CompactNode & dest);
+private:
+	bool m_fm{false};
+	PixelId m_pid{sserialize::spatial::dgg::interface::SpatialGrid::NoPixelId};
+	ItemIndexId m_itemIndexId{sserialize::Static::ItemIndexStore::npos};
 };
+
+sserialize::MultiBitIterator & operator>>(MultiBitIterator & src, CompactNode & dest);
 
 /**
  * struct CompactTree {

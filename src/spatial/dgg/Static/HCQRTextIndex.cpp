@@ -44,7 +44,6 @@ Payload::typeData(QuerryType qt) const {
 	return d;
 }
 
-
 void
 CompactNode::create(sserialize::spatial::dgg::impl::HCQRSpatialGrid::TreeNode const & src, sserialize::MultiBitBackInserter & dest) {
 	if (src.isFullMatch()) {
@@ -64,30 +63,34 @@ CompactNode::create(sserialize::spatial::dgg::impl::HCQRSpatialGrid::TreeNode co
 	}
 }
 
-CompactNode::CompactNode(sserialize::UByteArrayAdapter const & d) {
-	sserialize::MultiBitIterator it(d);
-	m_fm = it.get16(1);
+sserialize::MultiBitIterator & operator>>(MultiBitIterator & it, CompactNode & dest) {
+	dest.m_fm = it.get<1>();
 	it += 1;
-	uint32_t pixelIdBits = it.get16(6);
+	auto pixelIdBits = it.get<6>();
 	it += 6;
-	m_pid = it.get<PixelId>(pixelIdBits);
+	dest.m_pid = it.get<CompactNode::PixelId>(pixelIdBits);
 	it += pixelIdBits;
-	if (isPartialMatch()) {
-		uint32_t itemIndexIdBits = it.get16(5);
-		m_itemIndexId = it.get<ItemIndexId>(itemIndexIdBits);
+	if (dest.isPartialMatch()) {
+		auto itemIndexIdBits = it.get<5>();
+		dest.m_itemIndexId = it.get<CompactNode::ItemIndexId>(itemIndexIdBits);
+		it += itemIndexIdBits;
 	}
-	
+	return it;
+}
+
+CompactNode::CompactNode(sserialize::MultiBitIterator it) {
+	it >> *this;
 }
 
 CompactNode::~CompactNode() {}
 
-sserialize::UByteArrayAdapter::SizeType CompactNode::getSizeInBytes() const {
+sserialize::UByteArrayAdapter::SizeType CompactNode::getSizeInBits() const {
 	sserialize::UByteArrayAdapter::SizeType numBits = 1+6;
 	numBits += sserialize::fastLog2(pixelId());
 	if (isPartialMatch()) {
 		numBits += 5+sserialize::fastLog2(itemIndexId());
 	}
-	return numBits/8+sserialize::UByteArrayAdapter::SizeType(numBits%8 != 0);
+	return numBits;
 }
 
 bool CompactNode::isFullMatch() const {
@@ -110,7 +113,6 @@ CompactTree::CompactTree(sserialize::UByteArrayAdapter const & d) : m_d(d) {}
 
 CompactTree::~CompactTree() {}
 
-
 uint32_t CompactTree::nodeCount() const {
 	return m_d.getVlPackedUint32(0);
 }
@@ -119,10 +121,11 @@ CompactTree::HCQRSpatialGrid::TreeNodePtr CompactTree::tree(SpatialGrid const & 
 	sserialize::UByteArrayAdapter d(m_d);
 	uint32_t nc = d.getVlPackedUint32();
 	d.shrinkToGetPtr();
+	MultiBitIterator it(d);
+	CompactNode n;
 	std::unordered_map<HCQRSpatialGrid::PixelId, HCQRSpatialGrid::TreeNodePtr> nodes;
 	for(uint32_t i(0), s(nc); i < s; ++i) {
-		CompactNode n(d);
-		d += n.getSizeInBytes();
+		it >> n;
 		HCQRSpatialGrid::TreeNode::make_unique(
 			n.pixelId(),
 			(n.isFullMatch() ? HCQRSpatialGrid::TreeNode::IS_FULL_MATCH : HCQRSpatialGrid::TreeNode::IS_PARTIAL_MATCH),
