@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.12)
 project(sserialize-tools)
 
 MACRO(ADD_TOOLS_TARGET_SINGLE _name)

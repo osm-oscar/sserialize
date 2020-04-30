@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.12)
 project(sserialize C CXX)
 set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -618,7 +618,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${MY_LINK_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${MY_COMPILE_DEFINITIONS})
 target_compile_options(${PROJECT_NAME} PUBLIC "-Wreorder") #sserialize heavily depends on the correct initialization order
 target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 add_target_properties(${PROJECT_NAME} COMPILE_FLAGS -fPIC)
 set_source_files_properties(
 	src/search/SetOpTreePrivateSimple_parser.cpp
