@@ -224,21 +224,18 @@ int main(int argc, char ** argv) {
 	case SFT_MEM:
 		{
 			std::vector<uint64_t> data;
-			state.tmt = sserialize::MM_PROGRAM_MEMORY;
 			worker(data, state);
 			break;
 		}
 	case SFT_MMAP:
 		{
 			sserialize::MMVector<uint64_t> data(sserialize::MM_FAST_FILEBASED);
-			state.tmt = sserialize::MM_FAST_FILEBASED;
 			worker(data, state);
 			break;
 		}
 	case SFT_OOM_ARRAY_FF:
 		{
 			sserialize::OOMArray<uint64_t> data(sserialize::MM_FAST_FILEBASED);
-			state.tmt = sserialize::MM_FAST_FILEBASED;
 			data.backBufferSize(100*1024*1024);
 			worker(data, state);
 			break;
@@ -246,7 +243,6 @@ int main(int argc, char ** argv) {
 	case SFT_OOM_ARRAY_SF:
 		{
 			sserialize::OOMArray<uint64_t> data(sserialize::MM_SLOW_FILEBASED);
-			state.tmt = sserialize::MM_SLOW_FILEBASED;
 			data.backBufferSize(100*1024*1024);
 			worker(data, state);
 			break;
