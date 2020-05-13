@@ -424,7 +424,7 @@ void OOMArray<TValue, TEnable>::fill(std::vector<TValue> & buffer, SizeType buff
 	}
 	#endif
 	buffer.clear();
-	if (p >= size()) {
+	if (!bufferSize || p >= size()) {
 		buffer.shrink_to_fit();
 		return;
 	}
