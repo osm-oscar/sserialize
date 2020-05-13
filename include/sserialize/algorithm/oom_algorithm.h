@@ -749,7 +749,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					std::queue<Entry> m_entries;
 					std::mutex m_lock;
 					std::condition_variable m_cv;
-					std::atomic_bool m_running;
+					std::atomic_bool m_running{true};
 				};
 				
 				std::vector<PreQueue> queues;
