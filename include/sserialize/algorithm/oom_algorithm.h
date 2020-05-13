@@ -691,6 +691,14 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				public:
 					//Flush data
 					void flush() {
+						//Check if we can flush data without exceeding our memory constraints
+						{
+							std::unique_lock<std::mutex> lck(m_submitLock);
+							if (m_pendingFlushSize >= m_bufferSize*m_workers.size()) {
+								m_submitCv.wait(lck, [&]{ return m_pendingFlushSize < m_bufferSize*m_workers.size(); });
+							}
+						}
+						
 						//we move the last entry to our next buffer to implement the back() function
 						std::vector<value_type> oldData;
 						oldData.reserve(m_bufferSize);
@@ -704,6 +712,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						m_entries.emplace(m_offset, std::move(oldData));
 						
 						m_offset += dataSize;
+						m_pendingFlushSize += dataSize;
+						
 						m_cv.notify_one();
 					}
 				private:
@@ -736,6 +746,10 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 							m_entries.pop();
 							lck.unlock();
 							m_dest->replace(e.offset, e.data.begin(), e.data.end());
+							//notify submit thread that it can continue issuing new data
+							std::lock_guard<std::mutex> submitLck(m_submitLock);
+							m_pendingFlushSize -= e.data.size();
+							m_submitCv.notify_one();
 						}
 					}
 				private:
@@ -750,6 +764,9 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					std::mutex m_lock;
 					std::condition_variable m_cv;
 					std::atomic_bool m_running{true};
+					std::mutex m_submitLock;
+					std::condition_variable m_submitCv;
+					std::size_t m_pendingFlushSize{0};
 				};
 				
 				std::vector<PreQueue> queues;
