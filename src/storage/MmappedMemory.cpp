@@ -16,7 +16,7 @@ void from(std::string const & str, MmappedMemoryType & mmt) {
 	if ("shared" == str || "shm" == str || "shared memory" == str) {
 		mmt = MM_SHARED_MEMORY;
 	}
-	else if ("slow-file" == str || "slow file" == str || "fastfile" == str) {
+	else if ("slow-file" == str || "slow file" == str || "slowfile" == str) {
 		mmt = MM_SLOW_FILEBASED;
 	}
 	else if ("fast-file" == str || "fast file" == str || "fastfile" == str) {
