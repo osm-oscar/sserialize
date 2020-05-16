@@ -24,10 +24,10 @@ CQRDilator::~CQRDilator() {}
 sserialize::ItemIndex CQRDilator::dilate(const sserialize::CellQueryResult& src, double diameter, uint32_t threadCount) const {
 	struct MyIterator {
 		sserialize::CellQueryResult::const_iterator m_it;
-		inline bool operator!=(const MyIterator & other) { return m_it != other.m_it; }
-		inline bool operator==(const MyIterator & other) { return m_it == other.m_it; }
+		inline bool operator!=(const MyIterator & other) const { return m_it != other.m_it; }
+		inline bool operator==(const MyIterator & other) const { return m_it == other.m_it; }
 		inline MyIterator & operator++() { ++m_it; return *this; }
-		inline uint32_t operator*() { return m_it.cellId(); }
+		inline uint32_t operator*() const { return m_it.cellId(); }
 		MyIterator(const sserialize::CellQueryResult::const_iterator & it) : m_it(it) {}
 	};
 	return m_priv->dilate<MyIterator>(MyIterator(src.begin()), MyIterator(src.end()), diameter, threadCount);
