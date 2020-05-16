@@ -155,6 +155,19 @@ public:
 	
 private:
 	void fill(std::vector<value_type> & buffer, SizeType bufferSize, SizeType p);
+	///invalidates iterators, unbuffered io
+	template<typename TSourceIterator>
+	SizeType replaceWithoutFlush(SizeType position, TSourceIterator srcBegin, TSourceIterator const & srcEnd);
+	SizeType replaceWithoutFlush(SizeType position, typename std::vector<TValue>::iterator srcBegin, typename std::vector<TValue>::iterator srcEnd) {
+		return replaceWithoutFlush(position, &(*srcBegin), &(*srcEnd));
+	}
+	SizeType replaceWithoutFlush(SizeType position, typename std::vector<TValue>::const_iterator srcBegin, typename std::vector<TValue>::const_iterator srcEnd) {
+		return replaceWithoutFlush(position, &(*srcBegin), &(*srcEnd));
+	}
+	SizeType replaceWithoutFlush(SizeType position, TValue * srcBegin, TValue * srcEnd) {
+		return replaceWithoutFlush(position, (TValue const*)(srcBegin), (TValue const*)(srcEnd)); 
+	}
+	SizeType replaceWithoutFlush(SizeType position, TValue const * srcBegin, TValue const *srcEnd);
 private:
 	int m_fd;
 	std::string m_fn;
@@ -717,6 +730,22 @@ OOMArray<TValue, TEnable>::replace(SizeType position, TSourceIterator srcBegin, 
 		m_backBufferBegin = std::max<uint64_t>(offset+count, m_backBufferBegin);
 	}
 	
+	offset = replaceWithoutFlush(position, srcBegin, srcEnd);
+	
+	if (m_syncOnFlush) {
+		::fdatasync(m_fd);
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
+	}
+	return offset;
+}
+
+template<typename TValue, typename TEnable>
+template<typename TSourceIterator>
+typename OOMArray<TValue, TEnable>::SizeType
+OOMArray<TValue, TEnable>::replaceWithoutFlush(SizeType position, TSourceIterator srcBegin, const TSourceIterator & srcEnd) {
+	SizeType offset = position;
+	SizeType count = distance(srcBegin, srcEnd);
+
 	//set buffer size to be between sizeof(value_type) and 1 GiB
 	SizeType myBufferSize = std::max<SizeType>(1, std::min<SizeType>(std::min<SizeType>(m_backBufferSize, (1024*1024*1024)/sizeof(value_type)), count));
 	TValue * myBuffer = new TValue[myBufferSize];
@@ -738,11 +767,15 @@ OOMArray<TValue, TEnable>::replace(SizeType position, TSourceIterator srcBegin, 
 	delete[] myBuffer;
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(position+count, offset);
 	
-	if (m_syncOnFlush) {
-		::fdatasync(m_fd);
-		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
-	}
 	return offset;
+}
+
+template<typename TValue, typename TEnable>
+typename OOMArray<TValue, TEnable>::SizeType
+OOMArray<TValue, TEnable>::replaceWithoutFlush(SizeType position, TValue const * srcBegin, TValue const *srcEnd) {
+	std::size_t writeSize = sizeof(TValue)*std::distance(srcBegin, srcEnd);
+	FileHandler::pwrite(m_fd, srcBegin, writeSize, position*sizeof(TValue));
+	return position+writeSize;
 }
 
 template<typename TValue, typename TEnable>
