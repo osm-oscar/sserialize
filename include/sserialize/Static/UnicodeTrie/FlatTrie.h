@@ -51,8 +51,8 @@ public:
 		Iterator(const uint32_t parentBegin, const uint32_t parentEnd, const CompFunc & compFunc);
 		~Iterator() {}
 		Iterator & operator++();
-		bool operator!=(const Iterator & other);
-		bool operator==(const Iterator & other);
+		bool operator!=(const Iterator & other) const;
+		bool operator==(const Iterator & other) const;
 		Node operator*() const;
 	};
 	typedef Iterator const_iterator;

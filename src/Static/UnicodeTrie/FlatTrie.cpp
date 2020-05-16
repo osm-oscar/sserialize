@@ -43,14 +43,14 @@ Node::Iterator & Node::Iterator::operator++() {
 	return *this;
 }
 
-bool Node::Iterator::operator!=(const Iterator & other) {
+bool Node::Iterator::operator!=(const Iterator & other) const {
 	return m_childNodeBegin != other.m_childNodeBegin ||
 			m_childNodeEnd != other.m_childNodeEnd ||
 			m_childrenEnd != other.m_childrenEnd ||
 			m_compFunc != other.m_compFunc;
 }
 
-bool Node::Iterator::operator==(const Iterator & other) {
+bool Node::Iterator::operator==(const Iterator & other) const {
 	return m_childNodeBegin == other.m_childNodeBegin ||
 			m_childNodeEnd == other.m_childNodeEnd ||
 			m_childrenEnd == other.m_childrenEnd ||
