@@ -223,7 +223,7 @@ void MmappedFilePrivate::cache(OffsetType begin, SizeType size) {
 	long int pageSize =  std::max<long int>(512, sysconf(_SC_PAGE_SIZE) );
 	volatile uint8_t v = 0;
 	for(const uint8_t * d(m_data+begin), * s(m_data+begin+size); d < s; d += pageSize) {
-		v += *d;
+		v = v + *d;
 	}
 	::madvise(m_data+begin, size, MADV_NORMAL);
 }
