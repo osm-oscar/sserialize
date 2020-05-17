@@ -87,7 +87,7 @@ StringCompleter::SupportedQuerries StringCompleter::getSupportedQuerries() {
 bool StringCompleter::supportsQuerry(StringCompleter::QuerryType qt) {
 	StringCompleter::SupportedQuerries sq = getSupportedQuerries();
 	if (sq & SQ_CASE_SENSITIVE || qt & QT_CASE_INSENSITIVE ) {
-		return (sq & qt) == qt;
+		return (int(sq) & int(qt)) == qt;
 	}
 	else {
 		return false;
