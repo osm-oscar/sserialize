@@ -143,8 +143,8 @@ public:
 			Iterator(const HashBasedFlatTrie::iterator & parentBegin, const HashBasedFlatTrie::iterator & parentEnd, const HashBasedFlatTrie::CompFunc & compFunc);
 			~Iterator();
 			Iterator & operator++();
-			bool operator!=(const Iterator & other);
-			bool operator==(const Iterator & other);
+			bool operator!=(const Iterator & other) const;
+			bool operator==(const Iterator & other) const;
 			NodePtr operator*() const;
 		};
 		typedef Iterator const_iterator;
@@ -408,7 +408,7 @@ HashBasedFlatTrie<TValue>::Node::Iterator::operator++() {
 
 template<typename TValue>
 bool
-HashBasedFlatTrie<TValue>::Node::Iterator::operator!=(const Iterator & other) {
+HashBasedFlatTrie<TValue>::Node::Iterator::operator!=(const Iterator & other) const {
 	return m_childNodeBegin != other.m_childNodeBegin ||
 			m_childNodeEnd != other.m_childNodeEnd ||
 			m_childrenEnd != other.m_childrenEnd ||
@@ -417,7 +417,7 @@ HashBasedFlatTrie<TValue>::Node::Iterator::operator!=(const Iterator & other) {
 
 template<typename TValue>
 bool
-HashBasedFlatTrie<TValue>::Node::Iterator::operator==(const Iterator & other) {
+HashBasedFlatTrie<TValue>::Node::Iterator::operator==(const Iterator & other) const {
 	return m_childNodeBegin == other.m_childNodeBegin ||
 			m_childNodeEnd == other.m_childNodeEnd ||
 			m_childrenEnd == other.m_childrenEnd ||
