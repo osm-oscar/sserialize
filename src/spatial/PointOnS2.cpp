@@ -17,7 +17,7 @@ m_denom(1)
 PointOnS2::PointOnS2(const GeoPoint & gp) {
 	mpq_class x, y, z;
 	::ratss::ProjectS2 proj;
-	proj.projectFromGeo(gp.lat(), gp.lon(), x, y, z, 64, ::ratss::ProjectS2::ST_FX | ::ratss::ProjectS2::ST_PLANE);
+	proj.projectFromGeo(mpfr::mpreal(gp.lat()), mpfr::mpreal(gp.lon()), x, y, z, 64, ::ratss::ST_FX | ::ratss::ST_PLANE);
 	init(x, y, z);
 }
 
