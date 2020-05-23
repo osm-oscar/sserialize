@@ -557,7 +557,7 @@ uint8_t UByteArrayAdapter::at(OffsetType pos) const {
 	if (pos < m_len) {
 		return m_priv->getUint8(m_offSet+pos);
 	}
-	return 0;
+	throw OutOfBoundsException();
 }
 
 UByteArrayAdapter UByteArrayAdapter::operator+(OffsetType offSet) const {
@@ -695,43 +695,50 @@ const UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetTy
 
 INLINE_WITH_LTO
 int64_t UByteArrayAdapter::getInt64(const OffsetType pos) const {
-	if (m_len < pos+8) return 0;
+	if (m_len < pos+8)
+		throw OutOfBoundsException();
 	return m_priv->getInt64(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint64_t UByteArrayAdapter::getUint64(const OffsetType pos) const {
-	if (m_len < pos+8) return 0;
+	if (m_len < pos+8)
+		throw OutOfBoundsException();
 	return m_priv->getUint64(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 int32_t UByteArrayAdapter::getInt32(const OffsetType pos) const {
-	if (m_len < pos+4) return 0;
+	if (m_len < pos+4)
+		throw OutOfBoundsException();
 	return m_priv->getInt32(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getUint32(const OffsetType pos) const {
-	if (m_len < pos+4) return 0;
+	if (m_len < pos+4)
+		throw OutOfBoundsException();
 	return m_priv->getUint32(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getUint24(const OffsetType pos) const {
-	if (m_len < pos+3) return 0;
+	if (m_len < pos+3)
+		throw OutOfBoundsException();
 	return m_priv->getUint24(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint16_t UByteArrayAdapter::getUint16(const OffsetType pos) const {
-	if (m_len < pos+2) return 0;
+	if (m_len < pos+2)
+		throw OutOfBoundsException();
 	return m_priv->getUint16(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint8_t UByteArrayAdapter::getUint8(const OffsetType pos) const {
-	if (m_len < pos+1) return 0;
+	if (m_len < pos+1)
+		throw OutOfBoundsException();
 	return m_priv->getUint8(m_offSet+pos);
 }
 
@@ -749,61 +756,63 @@ float UByteArrayAdapter::getFloat(const OffsetType pos) const {
 
 uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
-		return 0; //we need to read at least one byte
+		throw OutOfBoundsException();
 	int len = (int) std::min<SizeType>(10, m_len - pos);
 	uint64_t res = m_priv->getVlPackedUint64(m_offSet+pos, &len);
 	if (length)
 		*length = len;
 	if (len < 0)
-		return 0;
+		throw OutOfBoundsException();
 	return res;
 }
 
 int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
-		return 0; //we need to read at least one byte
+		throw OutOfBoundsException();
 	int len = (int) std::min<SizeType>(10, m_len - pos);
 	int64_t res = m_priv->getVlPackedInt64(m_offSet+pos, &len);
 	if (length)
 		*length = len;
 	if (len < 0)
-		return 0;
+		throw OutOfBoundsException();
 	return res;
 }
 
 uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
-		return 0; //we need to read at least one byte
+		throw OutOfBoundsException();
 	int len = (int) std::min<SizeType>(5, m_len - pos);
 	uint32_t res = m_priv->getVlPackedUint32(m_offSet+pos, &len);
 	if (length)
 		*length = len;
 	if (len < 0)
-		return 0;
+		throw OutOfBoundsException();
 	return res;
 }
 
 int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) const {
 	if (m_len < pos+1)
-		return 0; //we need to read at least one byte
+		throw OutOfBoundsException();
 	int len = (int) std::min<SizeType>(5, m_len - pos);
 	uint32_t res = m_priv->getVlPackedInt32(m_offSet+pos, &len);
 	if (length)
 		*length = len;
 	if (len < 0)
-		return 0;
+		throw OutOfBoundsException();
 	return res;
 }
 
 INLINE_WITH_LTO
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset(const OffsetType pos) const {
-	if (m_len < pos+SSERIALIZE_OFFSET_BYTE_COUNT) return 0;
+	if (m_len < pos+SSERIALIZE_OFFSET_BYTE_COUNT)
+		throw OutOfBoundsException();
 	return m_priv->getOffset(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset(const OffsetType pos) const {
-	if (m_len < pos+SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT) return 0;
+	if (m_len < pos+SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT)
+		throw OutOfBoundsException();
 	return m_priv->getNegativeOffset(m_offSet+pos);
 }
 
@@ -811,9 +820,7 @@ std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) con
 	int len = -1;
 	uint32_t strLen = getVlPackedUint32(pos, &len);
 	if (len < 0 || pos+len+strLen > m_len) {
-		if (length)
-			*length = -1;
-		return std::string();
+		throw OutOfBoundsException();
 	}
 	if (length)
 		*length = strLen+len;
@@ -824,9 +831,7 @@ UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * l
 	int len = -1;
 	uint32_t strLen = getVlPackedUint32(pos, &len);
 	if (len < 0 || pos+len+strLen > m_len) {
-		if (length)
-			*length = -1;
-		return UByteArrayAdapter();
+		throw OutOfBoundsException();
 	}
 	if (length)
 		*length = strLen+len;
@@ -836,7 +841,7 @@ UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * l
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
 	if (pos > m_len)
-		return 0;
+		throw OutOfBoundsException();
 	if (pos+len > m_len)
 		len = m_len - pos;
 	m_priv->get(m_offSet+pos, dest, len);
@@ -1251,12 +1256,12 @@ int64_t UByteArrayAdapter::getVlPackedInt64() {
 
 uint32_t UByteArrayAdapter::getVlPackedUint32() {
 	if (m_len < m_getPtr+1) {
-		return 0; //we need to read at least one byte
+		throw OutOfBoundsException();
 	}
 	int len = (int) std::min<OffsetType>(5, m_len - m_getPtr);
 	uint32_t res = m_priv->getVlPackedUint32(m_offSet+m_getPtr, &len);
 	if (len < 0)
-		return 0;
+		throw OutOfBoundsException();
 	m_getPtr += len;
 	return res;
 }
