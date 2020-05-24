@@ -346,7 +346,7 @@ public:
 			for(std::set<uint32_t>::iterator it = testValues.begin(); it != testValues.end(); ++it) {
 				std::stringstream ss;
 				ss << "id at " << count << "; run=" << i;
-				CPPUNIT_ASSERT_MESSAGE(ss.str(), (idx.find(*it) < 0) == (realValues.count(*it) == 0));
+				CPPUNIT_ASSERT_MESSAGE(ss.str(), (idx.find(*it) != sserialize::ItemIndex::npos) == (realValues.count(*it) == 0));
 			}
 		}
 	}
