@@ -358,6 +358,7 @@ public:
 	GeoHierarchy(const UByteArrayAdapter & data) : m_priv(new detail::GeoHierarchy(data)) {}
 	GeoHierarchy(const GeoHierarchy & other) : m_priv(other.m_priv) {}
 	virtual ~GeoHierarchy() {}
+	GeoHierarchy & operator=(GeoHierarchy const &) = default;
 	inline OffsetType getSizeInBytes() const { return m_priv->getSizeInBytes(); }
 	
 	bool hasRegionItems() const { return m_priv->hasRegionItems(); }

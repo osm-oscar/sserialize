@@ -82,6 +82,7 @@ public:
 	SortedStringTable(const UByteArrayAdapter & data);
 	SortedStringTable(const SortedStringTable & other);
 	virtual ~SortedStringTable();
+	SortedStringTable & operator=(SortedStringTable const &) = default;
 	SizeType find(const std::string & value) const;
 	std::pair<SizeType, SizeType> range(const std::string & prefix) const;
 	inline bool count(const std::string & value) const { return find(value) != npos; }

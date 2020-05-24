@@ -34,6 +34,7 @@ public:
 	StringsItemDBWrapper() : RCWrapper< StringsItemDBWrapperPrivate< ItemType > >(0) {}
 	StringsItemDBWrapper(StringsItemDBWrapperPrivate<ItemType> * data) :
 		RCWrapper< StringsItemDBWrapperPrivate< ItemType > >(data) {}
+	StringsItemDBWrapper(StringsItemDBWrapper const & other) = default;
 	virtual ~StringsItemDBWrapper() {}
 	StringsItemDBWrapper & operator=(const StringsItemDBWrapper<ItemType> & other) {
 		RCWrapper< StringsItemDBWrapperPrivate< ItemType > >::operator=(other);
