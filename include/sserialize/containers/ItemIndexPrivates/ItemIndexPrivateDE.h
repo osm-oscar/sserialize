@@ -146,22 +146,30 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateDE::genericOp(const sserialize::It
 			}
 			aIndexIt++;
 			bIndexIt++;
-			aItemId += aData.getVlPackedUint32();
-			bItemId += bData.getVlPackedUint32();
+			if (aIndexIt < aSize) {
+				aItemId += aData.getVlPackedUint32();
+			}
+			if (bIndexIt < bSize) {
+				bItemId += bData.getVlPackedUint32();
+			}
 		}
 		else if (aItemId < bItemId) {
 			if (TFunc::pushFirstSmaller) {
 				creator.push_back(aItemId);
 			}
 			aIndexIt++;
-			aItemId += aData.getVlPackedUint32();
+			if (aIndexIt < aSize) {
+				aItemId += aData.getVlPackedUint32();
+			}
 		}
 		else { //bItemId is smaller
 			if (TFunc::pushSecondSmaller) {
 				creator.push_back(bItemId);
 			}
 			bIndexIt++;
-			bItemId += bData.getVlPackedUint32();
+			if (bIndexIt < bSize) {
+				bItemId += bData.getVlPackedUint32();
+			}
 		}
 	}
 
