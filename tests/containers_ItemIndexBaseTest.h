@@ -105,6 +105,22 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("united special is broken", unitedReal, unitedIdx);
 		}
 		{
+			std::vector<uint32_t> arv{159295, 159296, 261460, 261461, 261462, 487889, 491103};
+			std::vector<uint32_t> brv{2359, 13006, 13013, 36842, 58856, 61436, 71860, 116575};
+			sserialize::ItemIndex aidx, bidx;
+
+			std::set<uint32_t> realResult;
+			realResult.insert(arv.begin(), arv.end());
+			realResult.insert(brv.begin() ,brv.end());
+
+			create(arv, aidx);
+			create(brv, bidx);
+
+			sserialize::ItemIndex result = sserialize::ItemIndex::unite(aidx, bidx);
+
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("special unite broken", sserialize::ItemIndex(realResult.begin(), realResult.end()), result);
+		}
+		{
 			std::vector<uint32_t> src[2] = { std::vector<uint32_t>{15310}, std::vector<uint32_t>{13058, 13288} };
 			std::vector<ItemIndex> idcs(2);
 			for(uint32_t i=0; i < 2; ++i) {
