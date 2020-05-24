@@ -554,10 +554,9 @@ const uint8_t& UByteArrayAdapter::operator*() const {
 }
 
 uint8_t UByteArrayAdapter::at(OffsetType pos) const {
-	if (pos < m_len) {
-		return m_priv->getUint8(m_offSet+pos);
-	}
-	throw OutOfBoundsException();
+	range_check(pos, 1);
+
+	return m_priv->getUint8(m_offSet+pos);
 }
 
 UByteArrayAdapter UByteArrayAdapter::operator+(OffsetType offSet) const {
@@ -672,9 +671,7 @@ UByteArrayAdapter UByteArrayAdapter::makeContigous(const UByteArrayAdapter & d) 
 }
 
 UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetType pos, OffsetType size) {
-	if (m_len < pos+size) {
-		throw sserialize::OutOfBoundsException();
-	}
+	range_check(pos, size);
 	uint8_t * data = 0;
 	bool isCopy = !m_priv->isContiguous();
 	if (size) {
@@ -695,68 +692,70 @@ const UByteArrayAdapter::MemoryView UByteArrayAdapter::getMemView(const OffsetTy
 
 INLINE_WITH_LTO
 int64_t UByteArrayAdapter::getInt64(const OffsetType pos) const {
-	if (m_len < pos+8)
-		throw OutOfBoundsException();
+	range_check(pos, 8);
+
 	return m_priv->getInt64(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint64_t UByteArrayAdapter::getUint64(const OffsetType pos) const {
-	if (m_len < pos+8)
-		throw OutOfBoundsException();
+	range_check(pos, 8);
+
 	return m_priv->getUint64(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 int32_t UByteArrayAdapter::getInt32(const OffsetType pos) const {
-	if (m_len < pos+4)
-		throw OutOfBoundsException();
+	range_check(pos, 4);
+
 	return m_priv->getInt32(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getUint32(const OffsetType pos) const {
-	if (m_len < pos+4)
-		throw OutOfBoundsException();
+	range_check(pos, 4);
+
 	return m_priv->getUint32(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint32_t UByteArrayAdapter::getUint24(const OffsetType pos) const {
-	if (m_len < pos+3)
-		throw OutOfBoundsException();
+	range_check(pos, 3);
+
 	return m_priv->getUint24(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint16_t UByteArrayAdapter::getUint16(const OffsetType pos) const {
-	if (m_len < pos+2)
-		throw OutOfBoundsException();
+	range_check(pos, 2);
+	
 	return m_priv->getUint16(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 uint8_t UByteArrayAdapter::getUint8(const OffsetType pos) const {
-	if (m_len < pos+1)
-		throw OutOfBoundsException();
+	range_check(pos, 1);
+
 	return m_priv->getUint8(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 double UByteArrayAdapter::getDouble(const OffsetType pos) const {
-	if (m_len < pos+8) return std::numeric_limits<double>::signaling_NaN();
+	range_check(pos, 8);
+
 	return unpack_double_from_uint64_t(m_priv->getUint64(m_offSet+pos));
 }
 
 INLINE_WITH_LTO
 float UByteArrayAdapter::getFloat(const OffsetType pos) const {
-	if (m_len < pos+4) return std::numeric_limits<float>::signaling_NaN();
+	range_check(pos, 4);
+
 	return unpack_float_from_uint32_t(m_priv->getUint32(m_offSet+pos));
 }
 
 uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length) const {
-	if (m_len < pos+1)
-		throw OutOfBoundsException();
+	range_check(pos, 1);
+
 	int len = (int) std::min<SizeType>(10, m_len - pos);
 	uint64_t res = m_priv->getVlPackedUint64(m_offSet+pos, &len);
 	if (length)
@@ -767,8 +766,8 @@ uint64_t UByteArrayAdapter::getVlPackedUint64(const OffsetType pos, int * length
 }
 
 int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) const {
-	if (m_len < pos+1)
-		throw OutOfBoundsException();
+	range_check(pos, 1);
+
 	int len = (int) std::min<SizeType>(10, m_len - pos);
 	int64_t res = m_priv->getVlPackedInt64(m_offSet+pos, &len);
 	if (length)
@@ -779,8 +778,8 @@ int64_t UByteArrayAdapter::getVlPackedInt64(const OffsetType pos, int * length) 
 }
 
 uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length) const {
-	if (m_len < pos+1)
-		throw OutOfBoundsException();
+	range_check(pos, 1);
+
 	int len = (int) std::min<SizeType>(5, m_len - pos);
 	uint32_t res = m_priv->getVlPackedUint32(m_offSet+pos, &len);
 	if (length)
@@ -791,8 +790,8 @@ uint32_t UByteArrayAdapter::getVlPackedUint32(const OffsetType pos, int * length
 }
 
 int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) const {
-	if (m_len < pos+1)
-		throw OutOfBoundsException();
+	range_check(pos, 1);
+	
 	int len = (int) std::min<SizeType>(5, m_len - pos);
 	uint32_t res = m_priv->getVlPackedInt32(m_offSet+pos, &len);
 	if (length)
@@ -804,24 +803,24 @@ int32_t UByteArrayAdapter::getVlPackedInt32(const OffsetType pos, int * length) 
 
 INLINE_WITH_LTO
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getOffset(const OffsetType pos) const {
-	if (m_len < pos+SSERIALIZE_OFFSET_BYTE_COUNT)
-		throw OutOfBoundsException();
+	range_check(pos, SSERIALIZE_OFFSET_BYTE_COUNT);
+
 	return m_priv->getOffset(m_offSet+pos);
 }
 
 INLINE_WITH_LTO
 UByteArrayAdapter::NegativeOffsetType UByteArrayAdapter::getNegativeOffset(const OffsetType pos) const {
-	if (m_len < pos+SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT)
-		throw OutOfBoundsException();
+	range_check(pos, SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT);
+
 	return m_priv->getNegativeOffset(m_offSet+pos);
 }
 
 std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) const {
 	int len = -1;
 	uint32_t strLen = getVlPackedUint32(pos, &len);
-	if (len < 0 || pos+len+strLen > m_len) {
-		throw OutOfBoundsException();
-	}
+
+	range_check(pos, len+strLen);
+
 	if (length)
 		*length = strLen+len;
 	return m_priv->getString(m_offSet+pos+len, strLen);
@@ -830,9 +829,9 @@ std::string UByteArrayAdapter::getString(const OffsetType pos, int * length) con
 UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * length) const {
 	int len = -1;
 	uint32_t strLen = getVlPackedUint32(pos, &len);
-	if (len < 0 || pos+len+strLen > m_len) {
-		throw OutOfBoundsException();
-	}
+
+	range_check(pos, len+strLen);
+
 	if (length)
 		*length = strLen+len;
 	//no need to adjust get pointer here, as in case of streaming, the get pointer is BEFORE pos
@@ -840,8 +839,8 @@ UByteArrayAdapter UByteArrayAdapter::getStringData(const OffsetType pos, int * l
 }
 
 UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
-	if (pos > m_len)
-		throw OutOfBoundsException();
+	range_check(pos, 0);
+
 	if (pos+len > m_len)
 		len = m_len - pos;
 	m_priv->get(m_offSet+pos, dest, len);
@@ -850,77 +849,77 @@ UByteArrayAdapter::OffsetType UByteArrayAdapter::getData(const UByteArrayAdapter
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putOffset(const OffsetType pos, const OffsetType value) {
-	range_check_push(pos, SSERIALIZE_OFFSET_BYTE_COUNT);
+	range_check(pos, SSERIALIZE_OFFSET_BYTE_COUNT);
 	
 	m_priv->putOffset(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putNegativeOffset(const OffsetType pos, const NegativeOffsetType value) {
-	range_check_push(pos, SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT);
+	range_check(pos, SSERIALIZE_NEGATIVE_OFFSET_BYTE_COUNT);
 	
 	m_priv->putNegativeOffset(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putUint64(const OffsetType pos, const uint64_t value) {
-	range_check_push(pos, 8);
+	range_check(pos, 8);
 	
 	m_priv->putUint64(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putInt64(const OffsetType pos, const int64_t value) {
-	range_check_push(pos, 8);
+	range_check(pos, 8);
 	
 	m_priv->putInt64(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putInt32(const OffsetType pos, const int32_t value) {
-	range_check_push(pos, 4);
+	range_check(pos, 4);
 	
 	m_priv->putInt32(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putUint32(const OffsetType pos, const uint32_t value) {
-	range_check_push(pos, 4);
+	range_check(pos, 4);
 	
 	m_priv->putUint32(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putUint24(const OffsetType pos, const uint32_t value) {
-	range_check_push(pos, 3);
+	range_check(pos, 3);
 	
 	m_priv->putUint24(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putUint16(const OffsetType pos, const uint16_t value) {
-	range_check_push(pos, 2);
+	range_check(pos, 2);
 
 	m_priv->putUint16(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putUint8(const OffsetType pos, const uint8_t value) {
-	range_check_push(pos, 1);
+	range_check(pos, 1);
 	
 	m_priv->putUint8(m_offSet+pos, value);
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putDouble(const OffsetType pos, const double value) {
-	range_check_push(pos, 8);
+	range_check(pos, 8);
 	
 	m_priv->putUint64(m_offSet+pos, pack_double_to_uint64_t(value));
 }
 
 INLINE_WITH_LTO
 void UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
-	range_check_push(pos, 4);
+	range_check(pos, 4);
 	
 	m_priv->putUint32(m_offSet+pos, pack_float_to_uint32_t(value));
 }
@@ -961,7 +960,7 @@ int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) 
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(str.size(), (std::size_t) std::numeric_limits<int>::max());
 	UByteArrayAdapter::OffsetType needSize = psize_vu32((uint32_t) str.size()) + str.size();
 	
-	range_check_push(pos, needSize);
+	range_check(pos, needSize);
 	
 	int len = putVlPackedUint32(pos, (uint32_t) str.size());
 	for(size_t i = 0; i < str.size(); i++) {
@@ -975,7 +974,7 @@ void UByteArrayAdapter::putData(OffsetType pos, const uint8_t * data, OffsetType
 		return;
 	}
 	
-	range_check_push(pos, len);
+	range_check(pos, len);
 
 	m_priv->put(m_offSet+pos, data, len);
 }
@@ -985,7 +984,7 @@ void UByteArrayAdapter::putData(const OffsetType pos, const std::deque<uint8_t>&
 		return;
 	}
 	
-	range_check_push(pos, data.size());
+	range_check(pos, data.size());
 
 	for(size_t i = 0; i < data.size(); i++) {
 		putUint8(pos+i, data[i]);
@@ -1003,7 +1002,7 @@ void UByteArrayAdapter::putData(const OffsetType pos, const UByteArrayAdapter & 
 		return;
 	}
 
-	range_check_push(pos, data.size());
+	range_check(pos, data.size());
 	
 	if (m_priv->isContiguous()) {
 		putData(pos, &data[0], data.size());
@@ -1255,9 +1254,8 @@ int64_t UByteArrayAdapter::getVlPackedInt64() {
 }
 
 uint32_t UByteArrayAdapter::getVlPackedUint32() {
-	if (m_len < m_getPtr+1) {
-		throw OutOfBoundsException();
-	}
+	range_check(m_getPtr, 1);
+
 	int len = (int) std::min<OffsetType>(5, m_len - m_getPtr);
 	uint32_t res = m_priv->getVlPackedUint32(m_offSet+m_getPtr, &len);
 	if (len < 0)
@@ -1311,9 +1309,9 @@ bool UByteArrayAdapter::resizeForPush(OffsetType pos, OffsetType length) {
 }
 
 INLINE_WITH_LTO
-void UByteArrayAdapter::range_check_push(OffsetType pos, OffsetType pushLength) const {
-	if ( UNLIKELY_BRANCH(m_len < pos+pushLength) ) {
-		throw OutOfBoundsException();
+void UByteArrayAdapter::range_check(OffsetType pos, OffsetType length) const {
+	if ( UNLIKELY_BRANCH(m_len < pos+length) ) {
+		throw OutOfBoundsException(pos, length, m_len);
 	}
 }
 
