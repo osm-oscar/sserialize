@@ -45,7 +45,11 @@ private:
 		int remainingBits = std::numeric_limits<T_UINT_TYPE>::digits - headerLength;
 		do {
 			uint8_t srcRShift = (uint8_t)(remainingBits > 8 ? 0 : 8-remainingBits);
-			uint8_t byte = m_data.getUint8(getPtr);
+			uint8_t byte = 0;
+			try { //UBA does not return 0 anymore on out of bounds access
+				byte = m_data.getUint8(getPtr);
+			}
+			catch (OutOfBoundsException const &) {}
 			++getPtr;
 			byte >>= srcRShift;
 			res |= byte;
@@ -56,7 +60,7 @@ private:
 			else {
 				break;
 			}
-		} while(remainingBits > 0); //no need to check for the end of m_data as it will return zeros on out_of_bounds (saves a lot of calls to size())
+		} while(remainingBits > 0);
 		return res;
 	}
 	
