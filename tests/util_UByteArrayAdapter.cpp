@@ -106,26 +106,37 @@ void put(sserialize::UByteArrayAdapter & d, const IntegerType & t) {
 	switch (t.type) {
 	case IntegerType::U8:
 		d.putUint8((uint8_t)t.value);
+		break;
 	case IntegerType::U16:
 		d.putUint16((uint16_t)t.value);
+		break;
 	case IntegerType::U24:
 		d.putUint24((uint32_t)t.value);
+		break;
 	case IntegerType::U32:
 		d.putUint32((uint32_t)t.value);
+		break;
 	case IntegerType::U64:
 		d.putUint64((uint64_t)t.value);
+		break;
 	case IntegerType::S32:
 		d.putInt32((int32_t)t.value);
+		break;
 	case IntegerType::S64:
 		d.putInt64((int64_t)t.value);
+		break;
 	case IntegerType::VU32:
 		d.putVlPackedUint32((uint32_t)t.value);
+		break;
 	case IntegerType::VS32:
 		d.putVlPackedInt32((int32_t)t.value);
+		break;
 	case IntegerType::VU64:
 		d.putVlPackedUint64((uint64_t)t.value);
+		break;
 	case IntegerType::VS64:
 		d.putVlPackedInt64((int64_t)t.value);
+		break;
 	default:
 		break;
 	}
