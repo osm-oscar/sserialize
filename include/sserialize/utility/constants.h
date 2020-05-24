@@ -7,6 +7,9 @@
 	#define MARK_DEPRECATED(func) func __attribute__ ((deprecated))
 	#define LIKELY_BRANCH(x)    __builtin_expect (!!(x), 1)
 	#define UNLIKELY_BRANCH(x)  __builtin_expect (!!(x), 0)
+	#ifndef WARN_UNUSED_RESULT
+		#define WARN_UNUSED_RESULT __attribute__ ((__warn_unused_result__))
+	#endif
 #elif defined(_MSC_VER)
 	#define MARK_DEPRECATED(func) __declspec(deprecated) func
 	#define LIKELY_BRANCH(x) x
@@ -15,6 +18,7 @@
 	#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
 	#define DEPRECATED(func) func
 #endif
+
 
 #ifdef SSERIALIZE_WITH_INLINE_IN_LTO
 	#define INLINE_WITH_LTO __attribute__((used)) inline
