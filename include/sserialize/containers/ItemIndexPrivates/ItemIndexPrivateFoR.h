@@ -362,23 +362,31 @@ sserialize::ItemIndexPrivate * ItemIndexPrivateFoR::genericSetOp(const ItemIndex
 				creator.push_back(myId);
 			}
 			++myI;
-			myIt->next();
+			if (myI < myS) {
+				myIt->next();
+			}
 		}
 		else if (oId < myId) {
 			if (TFunc::pushSecondSmaller) {
 				creator.push_back(oId);
 			}
 			++oI;
-			oIt->next();
+			if (oI < oS) {
+				oIt->next();
+			}
 		}
 		else {
 			if (TFunc::pushEqual) {
 				creator.push_back(myId);
 			}
 			++myI;
-			myIt->next();
+			if (myI < myS) {
+				myIt->next();
+			}
 			++oI;
-			oIt->next();
+			if (oI < oS) {
+				oIt->next();
+			}
 		}
 	}
 	if (TFunc::pushFirstRemainder) {
