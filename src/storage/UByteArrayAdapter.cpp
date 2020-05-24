@@ -536,12 +536,15 @@ void UByteArrayAdapter::setDeleteOnClose(bool del) {
 }
 
 uint8_t & UByteArrayAdapter::operator[](const OffsetType pos) {
-	SSERIALIZE_CHEAP_ASSERT_SMALLER(pos, m_len);
+	range_check(pos, 1);
+
 	return (*m_priv)[m_offSet+pos];
 }
 
 
 const uint8_t & UByteArrayAdapter::operator[](const OffsetType pos) const {
+	range_check(pos, 1);
+	
 	return (*m_priv)[m_offSet+pos];
 }
 
@@ -927,32 +930,38 @@ void UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
 /** @return: Length of the number, -1 on failure **/
 
 int UByteArrayAdapter::putVlPackedUint64(const OffsetType pos, const uint64_t value) {
-	if (m_len < pos+1) return -1; //we need to write at least one byte
+	range_check(pos, 1);
+
 	return m_priv->putVlPackedUint64(m_offSet+pos, value, m_len-pos);
 }
 
 int UByteArrayAdapter::putVlPackedInt64(const OffsetType pos, const int64_t value) {
-	if (m_len < pos+1) return -1; //we need to write at least one byte
+	range_check(pos, 1);
+
 	return m_priv->putVlPackedInt64(m_offSet+pos, value, m_len-pos);
 }
 
 int UByteArrayAdapter::putVlPackedUint32(const OffsetType pos, const uint32_t value) {
-	if (m_len < pos+1) return -1; //we need to write at least one byte
+	range_check(pos, 1);
+	
 	return m_priv->putVlPackedUint32(m_offSet+pos, value, m_len-pos);
 }
 
 int UByteArrayAdapter::putVlPackedPad4Uint32(const OffsetType pos, const uint32_t value) {
-	if (m_len < pos+1) return -1; //we need to write at least one byte
+	range_check(pos, 1);
+	
 	return m_priv->putVlPackedPad4Uint32(m_offSet+pos, value, m_len-pos);
 }
 
 int UByteArrayAdapter::putVlPackedInt32(const OffsetType pos, const int32_t value) {
-	if (m_len < pos+1) return -1; //we need to write at least one byte
+	range_check(pos, 1);
+
 	return m_priv->putVlPackedInt32(m_offSet+pos, value, m_len-pos);
 }
 
 int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t value) {
-	if (m_len < pos+1) return -1; //we need to write at least one byte
+	range_check(pos, 1);
+
 	return m_priv->putVlPackedPad4Int32(m_offSet+pos, value, m_len-pos);
 }
 
