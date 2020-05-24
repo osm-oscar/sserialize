@@ -165,7 +165,12 @@ sserialize::ItemIndexPrivate* ItemIndexPrivateRleDE::genericOp(const sserialize:
 	ItemIndexPrivateRleDECreator creator(dest);
 
 	auto getNext = [](UByteArrayAdapter & data, uint32_t & val, uint32_t & rle) {
-		val = data.getVlPackedUint32();
+		if (data.tellGetPtr() < data.size()) {
+			val = data.getVlPackedUint32();
+		}
+		else {
+			val = 0;
+		}
 		if (val & 0x1) {
 			rle = val >> 1;
 			val = data.getVlPackedUint32();

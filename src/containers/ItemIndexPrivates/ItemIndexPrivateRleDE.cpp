@@ -394,6 +394,20 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPriv
 
 	aId = aVal;
 	bId = bVal;
+
+	auto getNext = [](UByteArrayAdapter & data, uint32_t & val, uint32_t & rle) {
+		if (data.tellGetPtr() < data.size()) {
+			val = data.getVlPackedUint32();
+		}
+		else {
+			val = 0;
+		}
+		if (val & 0x1) {
+			rle = val >> 1;
+			val = data.getVlPackedUint32();
+		}
+		val >>= 1;
+	};
 	
 	while (aIndexIt < aSize && bIndexIt < bSize && creator.size() < numItems) {
 		if (aId == bId) {
@@ -404,12 +418,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPriv
 			}
 				
 			if (!aRle) {
-				aVal = aData.getVlPackedUint32();
-				if (aVal & 0x1) {
-					aRle = aVal >> 1;
-					aVal = aData.getVlPackedUint32();
-				}
-				aVal >>= 1;
+				getNext(aData, aVal, aRle);
 			}
 			aId += aVal;
 			++aIndexIt;
@@ -419,11 +428,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPriv
 			}
 				
 			if (!bRle) {
-				bVal = bData.getVlPackedUint32();
-				if (bVal & 0x1) {
-					bRle = bVal >> 1;
-					bVal = bData.getVlPackedUint32();
-				}
+				getNext(bData, bVal, bRle);
 				bVal >>= 1;
 			}
 			bId += bVal;
@@ -437,12 +442,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPriv
 			}
 				
 			if (!aRle) {
-				aVal = aData.getVlPackedUint32();
-				if (aVal & 0x1) {
-					aRle = aVal >> 1;
-					aVal = aData.getVlPackedUint32();
-				}
-				aVal >>= 1;
+				getNext(aData, aVal, aRle);
 			}
 			aId += aVal;
 			++aIndexIt;
@@ -455,12 +455,7 @@ ItemIndexPrivate * ItemIndexPrivateRleDE::uniteK(const sserialize::ItemIndexPriv
 			}
 				
 			if (!bRle) {
-				bVal = bData.getVlPackedUint32();
-				if (bVal & 0x1) {
-					bRle = bVal >> 1;
-					bVal = bData.getVlPackedUint32();
-				}
-				bVal >>= 1;
+				getNext(bData, bVal, bRle);
 			}
 			bId += bVal;
 			++bIndexIt;
