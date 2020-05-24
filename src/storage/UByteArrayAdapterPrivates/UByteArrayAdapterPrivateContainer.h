@@ -160,7 +160,7 @@ UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateContainer<T_CONTAINER>::ge
 
 template<typename T_CONTAINER>
 uint64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	uint8_t bufLen = std::min(9, *length);
+	uint8_t bufLen = std::min(10, *length);
 	*length = bufLen;
 	uint8_t buf[bufLen];
 	for(uint8_t i = 0; i < bufLen; i++) {
@@ -171,7 +171,7 @@ uint64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedUint64(UByte
 
 template<typename T_CONTAINER>
 int64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	uint8_t bufLen = std::min(9, *length);
+	uint8_t bufLen = std::min(10, *length);
 	uint8_t buf[bufLen];
 	for(uint8_t i = 0; i < bufLen; i++) {
 		buf[i] = (*m_data)[pos+i];
@@ -273,7 +273,7 @@ void UByteArrayAdapterPrivateContainer<T_CONTAINER>::putNegativeOffset(UByteArra
 
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	uint8_t buf[9];
+	uint8_t buf[10];
 	int len = p_vu64(value, buf);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
@@ -285,7 +285,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArray
 
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	uint8_t buf[9];
+	uint8_t buf[10];
 	int len = p_vs64(value, buf);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {

@@ -152,7 +152,7 @@ UByteArrayAdapter::NegativeOffsetType UByteArrayAdapterPrivateCompressedMmappedF
 }
 
 int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	SizeType bufLen = (*length > 9 ? 9 : *length);
+	SizeType bufLen = (*length > 10 ? 10 : *length);
 	*length = (int) bufLen;
 	uint8_t buf[bufLen];
 #ifdef SSERIALIZE_WITH_THREADS
@@ -166,7 +166,7 @@ int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArr
 }
 
 uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	SizeType bufLen = (*length > 9 ? 9 : *length);
+	SizeType bufLen = (*length > 10 ? 10 : *length);
 	*length = (int) bufLen;
 	uint8_t buf[bufLen];
 #ifdef SSERIALIZE_WITH_THREADS
