@@ -9,6 +9,7 @@ private:
 	uint8_t * m_data;
 protected:
 	uint8_t* & data();
+	uint8_t* const & data() const;
 public:
     UByteArrayAdapterPrivateArray(uint8_t * data) : UByteArrayAdapterPrivate(), m_data(data) {}
 	virtual ~UByteArrayAdapterPrivateArray();

@@ -26,6 +26,11 @@ uint8_t*& UByteArrayAdapterPrivateArray::data() {
 }
 
 UBAA_INLINE_WITH_LTO
+uint8_t* const & UByteArrayAdapterPrivateArray::data() const {
+	return m_data;
+}
+
+UBAA_INLINE_WITH_LTO
 uint8_t & UByteArrayAdapterPrivateArray::operator[](UByteArrayAdapter::OffsetType pos) {
 	return m_data[pos];
 }
