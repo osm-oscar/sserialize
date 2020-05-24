@@ -40,6 +40,8 @@ public:
 class OutOfBoundsException: public Exception {
 public:
 	OutOfBoundsException();
+	OutOfBoundsException(std::size_t position, std::size_t maxSize);
+	OutOfBoundsException(std::size_t position, std::size_t length, std::size_t maxSize);
 	OutOfBoundsException(const std::string & what);
 };
 

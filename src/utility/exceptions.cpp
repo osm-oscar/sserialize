@@ -58,6 +58,14 @@ Exception()
 	setMsg("OutOfBoundsException");
 }
 
+OutOfBoundsException::OutOfBoundsException(std::size_t position, std::size_t maxSize) :
+OutOfBoundsException("pos=" + std::to_string(position) + ", max_size=" + std::to_string(maxSize))
+{}
+
+OutOfBoundsException::OutOfBoundsException(std::size_t position, std::size_t length, std::size_t maxSize) :
+OutOfBoundsException("pos=" + std::to_string(position) + ", length=" + std::to_string(length) + ", max_size=" + std::to_string(maxSize))
+{}
+
 OutOfBoundsException::OutOfBoundsException(const std::string & what) :
 Exception()
 {
