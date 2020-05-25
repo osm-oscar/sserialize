@@ -932,37 +932,61 @@ void UByteArrayAdapter::putFloat(const OffsetType pos, const float value) {
 int UByteArrayAdapter::putVlPackedUint64(const OffsetType pos, const uint64_t value) {
 	range_check(pos, 1);
 
-	return m_priv->putVlPackedUint64(m_offSet+pos, value, m_len-pos);
+	int len = m_priv->putVlPackedUint64(m_offSet+pos, value, m_len-pos);
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw OutOfBoundsException();
+	}
+	return len;
 }
 
 int UByteArrayAdapter::putVlPackedInt64(const OffsetType pos, const int64_t value) {
 	range_check(pos, 1);
 
-	return m_priv->putVlPackedInt64(m_offSet+pos, value, m_len-pos);
+	int len = m_priv->putVlPackedInt64(m_offSet+pos, value, m_len-pos);
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw OutOfBoundsException();
+	}
+	return len;
 }
 
 int UByteArrayAdapter::putVlPackedUint32(const OffsetType pos, const uint32_t value) {
 	range_check(pos, 1);
 	
-	return m_priv->putVlPackedUint32(m_offSet+pos, value, m_len-pos);
+	int len = m_priv->putVlPackedUint32(m_offSet+pos, value, m_len-pos);
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw OutOfBoundsException();
+	}
+	return len;
 }
 
 int UByteArrayAdapter::putVlPackedPad4Uint32(const OffsetType pos, const uint32_t value) {
 	range_check(pos, 1);
 	
-	return m_priv->putVlPackedPad4Uint32(m_offSet+pos, value, m_len-pos);
+	int len = m_priv->putVlPackedPad4Uint32(m_offSet+pos, value, m_len-pos);
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw OutOfBoundsException();
+	}
+	return len;
 }
 
 int UByteArrayAdapter::putVlPackedInt32(const OffsetType pos, const int32_t value) {
 	range_check(pos, 1);
 
-	return m_priv->putVlPackedInt32(m_offSet+pos, value, m_len-pos);
+	int len = m_priv->putVlPackedInt32(m_offSet+pos, value, m_len-pos);
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw OutOfBoundsException();
+	}
+	return len;
 }
 
 int UByteArrayAdapter::putVlPackedPad4Int32(const OffsetType pos, const int32_t value) {
 	range_check(pos, 1);
 
-	return m_priv->putVlPackedPad4Int32(m_offSet+pos, value, m_len-pos);
+	int len = m_priv->putVlPackedPad4Int32(m_offSet+pos, value, m_len-pos);
+	if (UNLIKELY_BRANCH(len < 0)) {
+		throw OutOfBoundsException();
+	}
+	return len;
 }
 
 int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) {
