@@ -87,22 +87,22 @@ UByteArrayAdapter::OffsetType UByteArrayAdapterPrivateArray::getOffset(UByteArra
 
 UBAA_INLINE_WITH_LTO
 uint64_t UByteArrayAdapterPrivateArray::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	return up_vu64(&(m_data[pos]), length);
+	return up_vu64(data()+pos, data()+pos+*length, length);
 }
 
 UBAA_INLINE_WITH_LTO
 int64_t UByteArrayAdapterPrivateArray::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
-	return up_vs64(&(m_data[pos]), length);
+	return up_vs64(data()+pos, data()+pos+*length, length);
 }
 
 UBAA_INLINE_WITH_LTO
 uint32_t UByteArrayAdapterPrivateArray::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
-	return up_vu32(&(m_data[pos]), length);
+	return up_vu32(data()+pos, data()+pos+*length, length);
 }
 
 UBAA_INLINE_WITH_LTO
 int32_t UByteArrayAdapterPrivateArray::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
-	return up_vs32(&(m_data[pos]), length);
+	return up_vs32(data()+pos, data()+pos+*length, length);
 }
 
 UBAA_INLINE_WITH_LTO
@@ -162,28 +162,28 @@ void UByteArrayAdapterPrivateArray::putNegativeOffset(UByteArrayAdapter::OffsetT
 }
 
 UBAA_INLINE_WITH_LTO
-int UByteArrayAdapterPrivateArray::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	return p_vu64(value, &(m_data[pos]));
+int UByteArrayAdapterPrivateArray::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType maxLen) {
+	return p_vu64(value, data()+pos, data()+pos+maxLen);
 }
 
 UBAA_INLINE_WITH_LTO
-int UByteArrayAdapterPrivateArray::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	return p_vs64(value, &(m_data[pos]));
+int UByteArrayAdapterPrivateArray::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType maxLen) {
+	return p_vs64(value, data()+pos, data()+pos+maxLen);
 }
 
 UBAA_INLINE_WITH_LTO
-int UByteArrayAdapterPrivateArray::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	return p_vu32(value, &(m_data[pos]));
+int UByteArrayAdapterPrivateArray::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType maxLen) {
+	return p_vu32(value, data()+pos, data()+pos+maxLen);
 }
 
 UBAA_INLINE_WITH_LTO
 int UByteArrayAdapterPrivateArray::putVlPackedPad4Uint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	return p_vu32pad4(value, &(m_data[pos]));
+	return p_vu32pad4(value, data()+pos);
 }
 
 UBAA_INLINE_WITH_LTO
-int UByteArrayAdapterPrivateArray::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
-	return p_vs32(value, &(m_data[pos]));
+int UByteArrayAdapterPrivateArray::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen) {
+	return p_vs32(value, data()+pos, data()+pos+maxLen);
 }
 
 UBAA_INLINE_WITH_LTO

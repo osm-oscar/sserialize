@@ -272,28 +272,46 @@ inline uint32_t pack_float_to_uint32_t(const float src) {
 }
 
 typedef void(*PackFunctionsFuncPtr)(uint32_t s, uint8_t * d);
-typedef uint32_t(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d);
-typedef uint32_t(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d);
+typedef int(*VlPackUint32FunctionsFuncPtr)(uint32_t s, uint8_t * d, uint8_t * e);
+typedef int(*VlPackInt32FunctionsFuncPtr)(int32_t s, uint8_t * d, uint8_t * e);
 
-typedef uint32_t(*VlUnPackUint32FunctionsFuncPtr)(uint8_t * s, int * len);
-typedef int32_t(*VlUnPackInt32FunctionsFuncPtr)(int8_t * s, int * len);
+typedef uint32_t(*VlUnPackUint32FunctionsFuncPtr)(uint8_t * s, uint8_t * e, int * len);
+typedef int32_t(*VlUnPackInt32FunctionsFuncPtr)(int8_t * s, uint8_t * e, int * len);
 
 template<typename UnsignedType>
-uint32_t p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s, uint8_t * d) {
-	uint32_t i = 0;
-	do {
-		d[i] = s & 0x7F;
-		s = s >> 7;
-		if (s) {
-			d[i] |= 0x80;
-		}
-		++i;
-	} while (s);
+WARN_UNUSED_RESULT int p_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s, uint8_t * d, uint8_t * e) {
+	const std::size_t maxBytes = std::numeric_limits<UnsignedType>::digits/7 + std::size_t(std::numeric_limits<UnsignedType>::digits%7 > 0); 
+	int i = 0;
+	if (UNLIKELY_BRANCH(std::distance(d, e) < maxBytes)) {
+		do {
+			if (UNLIKELY_BRANCH(e <= d)) {
+				return -i;
+			}
+			*d = s & 0x7F;
+			s = s >> 7;
+			if (s) {
+				*d |= 0x80;
+			}
+			++i;
+			++d;
+		} while (s);
+	}
+	else {
+		do {
+			*d = s & 0x7F;
+			s = s >> 7;
+			if (s) {
+				*d |= 0x80;
+			}
+			++i;
+			++d;
+		} while (s);
+	}
 	return i;
 }
 
 template<typename SignedType>
-uint32_t p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s, uint8_t * d) {
+WARN_UNUSED_RESULT int p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type s, uint8_t * d, uint8_t * e) {
 	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
 	UnsignedType tmp;
 	SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(s, std::numeric_limits<SignedType>::min());
@@ -306,16 +324,16 @@ uint32_t p_v(typename std::enable_if<std::is_signed<SignedType>::value && std::i
 		tmp = (UnsignedType) s;
 		tmp <<= 1;
 	}
-	return p_v<UnsignedType>(tmp, d);
+	return p_v<UnsignedType>(tmp, d, e);
 }
 
 template<>
-uint32_t p_v<uint32_t>(uint32_t s, uint8_t * d);
+WARN_UNUSED_RESULT int p_v<uint32_t>(uint32_t s, uint8_t * d, uint8_t * e);
 
 template<>
-uint32_t p_v<uint64_t>(uint64_t s, uint8_t * d);
+WARN_UNUSED_RESULT int p_v<uint64_t>(uint64_t s, uint8_t * d, uint8_t * e);
 
-inline uint32_t p_vu32(uint32_t s, uint8_t * d) { return p_v<uint32_t>(s, d);}
+inline uint32_t p_vu32(uint32_t s, uint8_t * d, uint8_t * e) { return p_v<uint32_t>(s, d, e);}
 
 inline uint32_t p_vu32pad4(uint32_t s, uint8_t * d) {
 	uint32_t i = 0;
@@ -328,9 +346,9 @@ inline uint32_t p_vu32pad4(uint32_t s, uint8_t * d) {
 	return i;
 }
 
-inline uint32_t p_vu64(uint64_t s, uint8_t * d) { return p_v<uint64_t>(s, d);}
+inline WARN_UNUSED_RESULT int p_vu64(uint64_t s, uint8_t * d, uint8_t * e) { return p_v<uint64_t>(s, d, e);}
 
-inline uint32_t p_vs32(int32_t s, uint8_t * d) { return p_v<int32_t>(s, d);}
+inline WARN_UNUSED_RESULT int p_vs32(int32_t s, uint8_t * d, uint8_t * e) { return p_v<int32_t>(s, d, e);}
 
 inline uint32_t p_vs32pad4(int32_t s, uint8_t * d) {
 	uint32_t tmp;
@@ -345,20 +363,37 @@ inline uint32_t p_vs32pad4(int32_t s, uint8_t * d) {
 	return p_vu32pad4(tmp, d);
 }
 
-inline uint32_t p_vs64(int64_t s, uint8_t * d) { return p_v<int64_t>(s, d);}
+inline WARN_UNUSED_RESULT int p_vs64(int64_t s, uint8_t * d, uint8_t * e) { return p_v<int64_t>(s, d, e);}
 
 template<typename UnsignedType>
-inline typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type up_v(uint8_t * s, int * len) {
-	const int maxLen = std::numeric_limits<UnsignedType>::digits/7 + (std::numeric_limits<uint32_t>::digits % 7 ? 1 : 0);
+inline typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type up_v(uint8_t * s, uint8_t * e, int * len) {
+	const int maxLen = std::numeric_limits<UnsignedType>::digits/7 + (std::numeric_limits<UnsignedType>::digits % 7 ? 1 : 0);
+
 	UnsignedType retVal = 0;
 	int myLen = 0;
 	int myShift = 0;
-	do {
-		retVal |= static_cast<UnsignedType>(s[myLen] & 0x7F) << myShift;
-		++myLen;
-		myShift += 7;
+	if (UNLIKELY_BRANCH(std::distance(s, e) < maxLen)) {
+		do {
+			if (UNLIKELY_BRANCH(e <= s)) {
+				myLen *= -1;
+				break;
+			}
+			retVal |= static_cast<UnsignedType>(*s & 0x7F) << myShift;
+			++myLen;
+			++s;
+			myShift += 7;
+		}
+		while (myLen < maxLen && *(s-1) & 0x80);
 	}
-	while (myLen < maxLen && s[myLen-1] & 0x80);
+	else {
+		do {
+			retVal |= static_cast<UnsignedType>(*s & 0x7F) << myShift;
+			++myLen;
+			++s;
+			myShift += 7;
+		}
+		while (myLen < maxLen && *(s-1) & 0x80);
+	}
 	
 	if (len) {
 		*len = myLen;
@@ -368,9 +403,9 @@ inline typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_
 }
 
 template<typename SignedType>
-typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type up_v(uint8_t * s, int * len) {
+typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<SignedType>::value, SignedType >::type up_v(uint8_t * s, uint8_t * e, int * len) {
 	typedef typename std::make_unsigned<SignedType>::type UnsignedType;
-	UnsignedType tmp = up_v<UnsignedType>(s, len);
+	UnsignedType tmp = up_v<UnsignedType>(s, e, len);
 	//check if signed or unsigned
 	SignedType stmp = (tmp >> 1);
 	if (tmp & 0x1)
@@ -378,10 +413,10 @@ typename std::enable_if<std::is_signed<SignedType>::value && std::is_integral<Si
 	return stmp;
 }
 
-inline uint32_t up_vu32(uint8_t * s, int * len) { return up_v<uint32_t>(s, len);}
-inline uint64_t up_vu64(uint8_t * s, int * len) { return up_v<uint64_t>(s, len);}
-inline int32_t up_vs32(uint8_t * s, int * len) { return up_v<int32_t>(s, len);}
-inline int64_t up_vs64(uint8_t* s, int* len) { return up_v<int64_t>(s, len);}
+inline uint32_t up_vu32(uint8_t * s, uint8_t * e, int * len) { return up_v<uint32_t>(s, e, len);}
+inline uint64_t up_vu64(uint8_t * s, uint8_t * e, int * len) { return up_v<uint64_t>(s, e, len);}
+inline int32_t up_vs32(uint8_t * s, uint8_t * e, int * len) { return up_v<int32_t>(s, e, len);}
+inline int64_t up_vs64(uint8_t* s, uint8_t * e, int* len) { return up_v<int64_t>(s, e, len);}
 
 template<typename UnsignedType>
 sserialize::SizeType psize_v(typename std::enable_if<std::is_unsigned<UnsignedType>::value && std::is_integral<UnsignedType>::value, UnsignedType >::type s) {

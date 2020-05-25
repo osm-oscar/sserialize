@@ -162,7 +162,7 @@ int64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt64(UByteArr
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vs64(buf, length);
+	return up_vs64(buf, buf+bufLen, length);
 }
 
 uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -176,7 +176,7 @@ uint64_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint64(UByteA
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vu64(buf, length);
+	return up_vu64(buf, buf+bufLen, length);
 }
 
 uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -190,7 +190,7 @@ uint32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedUint32(UByteA
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vu32(buf, length);
+	return up_vu32(buf, buf+bufLen, length);
 }
 
 int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -203,7 +203,7 @@ int32_t UByteArrayAdapterPrivateCompressedMmappedFile::getVlPackedInt32(UByteArr
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vs32(buf, length);
+	return up_vs32(buf, buf+bufLen, length);
 }
 
 void UByteArrayAdapterPrivateCompressedMmappedFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {

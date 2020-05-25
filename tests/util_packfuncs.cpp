@@ -110,9 +110,9 @@ public:
 			sserialize::p_u32(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u32", num, sserialize::up_u32(buf));
 			
-			uint32_t len = sserialize::p_v<uint32_t>(num, buf);
+			uint32_t len = sserialize::p_v<uint32_t>(num, buf, buf+16);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32 len", realLen, len);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32", sserialize::up_v<uint32_t>(buf, 0), num);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v32", sserialize::up_v<uint32_t>(buf, buf+16, 0), num);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), sserialize::SizeType(len), sserialize::psize_vu32(num));
 
 
@@ -124,8 +124,8 @@ public:
 				sserialize::p_s32(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("s32-", sNum, sserialize::up_s32(buf));
 				
-				uint32_t len = sserialize::p_v<int32_t>(sNum, buf);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_sv32", sserialize::up_v<int32_t>(buf, 0), sNum);
+				uint32_t len = sserialize::p_v<int32_t>(sNum, buf, buf+16);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_sv32", sserialize::up_v<int32_t>(buf, buf+16, 0), sNum);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), sserialize::SizeType(len), sserialize::psize_vs32(sNum));
 			}
 		}
@@ -176,9 +176,9 @@ public:
 			sserialize::p_u64(num, buf);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u64", num, sserialize::up_u64(buf));
 			
-			uint32_t len = sserialize::p_v<uint64_t>(num, buf);
+			uint32_t len = sserialize::p_v<uint64_t>(num, buf, buf+16);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64 len", realLen, len);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64", sserialize::up_v<uint64_t>(buf, 0), num);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("u/p_v64", sserialize::up_v<uint64_t>(buf, buf+16, 0), num);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", num), sserialize::SizeType(len), sserialize::psize_v<uint64_t>(num));
 
 
@@ -190,8 +190,8 @@ public:
 				sserialize::p_s64(sNum, buf);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("s64-", sNum, sserialize::up_s64(buf));
 				
-				uint32_t len = sserialize::p_v<int64_t>(sNum, buf);
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("pack/unpack", sserialize::up_v<int64_t>(buf, 0), sNum);
+				uint32_t len = sserialize::p_v<int64_t>(sNum, buf, buf+16);
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("pack/unpack", sserialize::up_v<int64_t>(buf, buf+16, 0), sNum);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("vl_size ", "bpn=", bpn, ";num=", sNum), sserialize::SizeType(len), sserialize::psize_v<int64_t>(sNum));
 			}
 		}

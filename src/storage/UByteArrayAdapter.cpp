@@ -1374,7 +1374,7 @@ UBA_PUT_STREAMING_FUNC(putFloat, float, 4);
 #define UBA_PUT_VL_STREAMING_FUNC(__NAME, __BUFSIZE, __SERFUNC, __TYPE) \
 int UByteArrayAdapter::__NAME(const __TYPE value) { \
 	uint8_t tmp[__BUFSIZE]; \
-	int len = __SERFUNC(value, tmp); \
+	int len = __SERFUNC(value, tmp, tmp+__BUFSIZE); \
 	if (len < 0) \
 		return -1; \
 	putData(tmp, len); \

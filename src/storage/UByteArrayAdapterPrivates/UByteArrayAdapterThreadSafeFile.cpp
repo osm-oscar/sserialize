@@ -146,28 +146,28 @@ uint64_t UByteArrayAdapterPrivateThreadSafeFile::getVlPackedUint64(UByteArrayAda
 	uint8_t buf[10];
 	SignedOffsetType readSize = std::min<sserialize::OffsetType>(10, m_size-pos);
 	FileHandler::pread(m_fd, buf, readSize, pos);
-	return up_vu64(buf, length);
+	return up_vu64(buf, buf+readSize, length);
 }
 
 int64_t UByteArrayAdapterPrivateThreadSafeFile::getVlPackedInt64(UByteArrayAdapter::OffsetType pos, int * length) const {
 	uint8_t buf[10];
 	SignedOffsetType readSize = std::min<sserialize::OffsetType>(10, m_size-pos);
 	FileHandler::pread(m_fd, buf, readSize, pos);
-	return up_vs64(buf, length);
+	return up_vs64(buf, buf+readSize, length);
 }
 
 uint32_t UByteArrayAdapterPrivateThreadSafeFile::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
 	uint8_t buf[5];
 	SignedOffsetType readSize = std::min<sserialize::OffsetType>(5, m_size-pos);
 	FileHandler::pread(m_fd, buf, readSize, pos);
-	return up_vu32(buf, length);
+	return up_vu32(buf, buf+readSize, length);
 }
 
 int32_t UByteArrayAdapterPrivateThreadSafeFile::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
 	uint8_t buf[5];
 	SignedOffsetType readSize = std::min<sserialize::OffsetType>(5, m_size-pos);
 	FileHandler::pread(m_fd, buf, readSize, pos);
-	return up_vs32(buf, length);
+	return up_vs32(buf, buf+readSize, length);
 }
 
 void UByteArrayAdapterPrivateThreadSafeFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
@@ -240,21 +240,21 @@ void UByteArrayAdapterPrivateThreadSafeFile::putNegativeOffset(UByteArrayAdapter
 
 int UByteArrayAdapterPrivateThreadSafeFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[10];
-	int myLen = p_v<decltype(value)>(value, buf);
+	int myLen = p_v<decltype(value)>(value, buf, buf+10);
 	FileHandler::pwrite(m_fd, buf, myLen, pos);
 	return myLen;
 }
 
 int UByteArrayAdapterPrivateThreadSafeFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[10];
-	int myLen = p_v<decltype(value)>(value, buf);
+	int myLen = p_v<decltype(value)>(value, buf, buf+10);
 	FileHandler::pwrite(m_fd, buf, myLen, pos);
 	return myLen;
 }
 
 int UByteArrayAdapterPrivateThreadSafeFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
-	int myLen = p_v<decltype(value)>(value, buf);
+	int myLen = p_v<decltype(value)>(value, buf, buf+5);
 	FileHandler::pwrite(m_fd, buf, myLen, pos);
 	return myLen;
 }
@@ -268,7 +268,7 @@ int UByteArrayAdapterPrivateThreadSafeFile::putVlPackedPad4Uint32(UByteArrayAdap
 
 int UByteArrayAdapterPrivateThreadSafeFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
-	int myLen = p_v<decltype(value)>(value, buf);
+	int myLen = p_v<decltype(value)>(value, buf, buf+5);
 	FileHandler::pwrite(m_fd, buf, myLen, pos);
 	return myLen;
 }

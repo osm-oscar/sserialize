@@ -14,8 +14,8 @@ bool test_packFunctions2() {
 
 #define VL_PACK_32_TEST(__VALUE, __LEN) \
 	should = __VALUE; \
-	len = p_vu32((uint32_t) should, array); \
-	is = up_vu32(array, &len); \
+	len = p_vu32((uint32_t) should, array, array+10); \
+	is = up_vu32(array, array+10, &len); \
 	if (is != should) std::cout << __LEN << " byte: vl_pack/unpack wrong" << std::endl;\
 	if (len != __LEN) std::cout << __LEN << " byte: p_vu32 returned length wrong: " << len << std::endl; \
 	if (psize_vu32((uint32_t) should) != __LEN) std::cout << __LEN << " byte: psize_vu32 wrong" << std::endl; \
@@ -32,8 +32,8 @@ VL_PACK_32_TEST(0x00000000, 1);
 	
 #define VL_PACK_64_TEST(__VALUE, __LEN) \
 	should = __VALUE; \
-	len = p_vu64(should, array); \
-	is = up_vu64(array, &len); \
+	len = p_vu64(should, array, array+10); \
+	is = up_vu64(array, array+10, &len); \
 	if (is != should) std::cout << __LEN << " byte: vl_pack/unpack64 wrong" << std::endl;\
 	if (len != __LEN) std::cout << __LEN << " byte: p_vu64 returned length wrong: " << len << std::endl; \
 	if (psize_vu64(should) != __LEN) std::cout << __LEN << " byte: psize_vu64 wrong: " << psize_vu64(should) << std::endl; \
@@ -58,39 +58,39 @@ VL_PACK_64_TEST(0x00000000, 1);
 	int32_t isn;
 
 	shouldn = -0x7FEFEFEF; //32 bits
-	p_vs32(shouldn, array);
-	isn = up_vs32(array, &len);
+	p_vs32(shouldn, array, array+10);
+	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "5 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 5) std::cout << "5 byte: psize_vs32 wrong" << std::endl;
 
 	
 	shouldn = -0x07FFFFFF; //28 bits
-	p_vs32(shouldn, array);
-	isn = up_vs32(array, &len);
+	p_vs32(shouldn, array, array+10);
+	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "4 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 4) std::cout << "4 byte: psize_vs32 wrong" << std::endl;
 	
 	shouldn = -0x0007FFFF;
-	p_vs32(shouldn, array);
-	isn = up_vs32(array, &len);
+	p_vs32(shouldn, array, array+10);
+	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "3 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 3) std::cout << "3 byte: psize_vs32 wrong" << std::endl;
 	
 	shouldn = -0x000007FF;
-	p_vs32(shouldn, array);
-	isn = up_vs32(array, &len);
+	p_vs32(shouldn, array, array+10);
+	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "2 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 2) std::cout << "2 byte: psize_vs32 wrong" << std::endl;
 	
 	shouldn = -0x0000003F;
-	p_vs32(shouldn, array);
-	isn = up_vs32(array, &len);
+	p_vs32(shouldn, array, array+10);
+	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "1 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 1) std::cout << "1 byte: psize_vs32 wrong" << std::endl;
 
 	shouldn = 0x0;
-	p_vs32(shouldn, array);
-	isn = up_vs32(array, &len);
+	p_vs32(shouldn, array, array+10);
+	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn || len != 1)
 		std::cout << "1 byte (0x0): vl_pack/unpack_int32_t wrong" << std::endl;
 	
@@ -108,8 +108,8 @@ inline bool test_packFunctions() {
 	for(int i=0; i < 1000*1000; i++) {
 		should = (double)rand()/RAND_MAX * 0x1FFFFFFF;
 		if (should < 0x1FFFFFFF) {
-			int orgLen = p_vu32(should, array);
-			is = up_vu32(array, &len);
+			int orgLen = p_vu32(should, array, array+10);
+			is = up_vu32(array, array+10, &len);
 			if (is != should) {
 				std::cout << "vl_pack/unpack_uint32_t wrong" << should << ":" << is << std::endl;
 				return false;
@@ -130,7 +130,7 @@ inline bool test_packFunctions() {
 		should = (double)rand()/RAND_MAX * 0xFFFFFFF;
 		if (should < 0x1FFFFFFF) {
 			int orgLen = p_vu32pad4(should, array);
-			is = up_vu32(array, &len);
+			is = up_vu32(array, array+10, &len);
 			if (is != should) {
 				std::cout << "vl_pack_/unpack_uint32_t_pad4 wrong" << should << ":" << is << std::endl;
 				return false;
@@ -152,8 +152,8 @@ inline bool test_packFunctions() {
 	for(int i=0; i < 1000*1000; i++) {
 		shouldn = (double)rand()/RAND_MAX * 0x3FFFFFF - 0x1FFFFFF;
 		if (shouldn < 0xFFFFFFF && shouldn > -0xFFFFFFF) {
-			int orgLen = p_vs32(shouldn, array);
-			isn = up_vs32(array, &len);
+			int orgLen = p_vs32(shouldn, array, array+10);
+			isn = up_vs32(array, array+10, &len);
 			if (isn != shouldn) {
 				std::cout << "vl_pack/unpack_int32_t wrong " << shouldn << ":" << isn << std::endl;
 				return false;
@@ -173,7 +173,7 @@ inline bool test_packFunctions() {
 		shouldn = (double)rand()/RAND_MAX * 0x3FFFFFF - 0x1FFFFFF;
 		if (shouldn < 0xFFFFFFF && shouldn > -0xFFFFFFF) {
 			int orgLen = p_vs32pad4(shouldn, array);
-			isn = up_vs32(array, &len);
+			isn = up_vs32(array, array+10, &len);
 			if (isn != shouldn) {
 				std::cout << "vl_pack/unpack_int32_t_pad4 wrong " << shouldn << ":" << isn << std::endl;
 				return false;

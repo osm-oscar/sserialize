@@ -166,7 +166,7 @@ uint64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedUint64(UByte
 	for(uint8_t i = 0; i < bufLen; i++) {
 		buf[i] = (*m_data)[pos+i];
 	}
-	return up_vu64(buf, length);
+	return up_vu64(buf, buf+bufLen, length);
 }
 
 template<typename T_CONTAINER>
@@ -176,7 +176,7 @@ int64_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedInt64(UByteAr
 	for(uint8_t i = 0; i < bufLen; i++) {
 		buf[i] = (*m_data)[pos+i];
 	}
-	return up_vs64(buf, length);
+	return up_vs64(buf, buf+bufLen, length);
 }
 
 template<typename T_CONTAINER>
@@ -187,7 +187,7 @@ uint32_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedUint32(UByte
 	for(uint8_t i = 0; i < bufLen; i++) {
 		buf[i] = (*m_data)[pos+i];
 	}
-	return up_vu32(buf, length);
+	return up_vu32(buf, buf+bufLen, length);
 }
 
 template<typename T_CONTAINER>
@@ -197,7 +197,7 @@ int32_t UByteArrayAdapterPrivateContainer<T_CONTAINER>::getVlPackedInt32(UByteAr
 	for(uint8_t i = 0; i < bufLen; i++) {
 		buf[i] = (*m_data)[pos+i];
 	}
-	return up_vs32(buf, length);
+	return up_vs32(buf, buf+bufLen, length);
 }
 
 template<typename T_CONTAINER>
@@ -274,7 +274,7 @@ void UByteArrayAdapterPrivateContainer<T_CONTAINER>::putNegativeOffset(UByteArra
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[10];
-	int len = p_vu64(value, buf);
+	int len = p_vu64(value, buf, buf+10);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
 			(*m_data)[pos+i] = buf[i];
@@ -286,7 +286,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint64(UByteArray
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[10];
-	int len = p_vs64(value, buf);
+	int len = p_vs64(value, buf, buf+10);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
 			(*m_data)[pos+i] = buf[i];
@@ -298,7 +298,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt64(UByteArrayA
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
-	int len = p_vu32(value, buf);
+	int len = p_vu32(value, buf, buf+5);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
 			(*m_data)[pos+i] = buf[i];
@@ -322,7 +322,7 @@ int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedPad4Uint32(UByteA
 template<typename T_CONTAINER>
 int UByteArrayAdapterPrivateContainer<T_CONTAINER>::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
-	int len = p_vs32(value, buf);
+	int len = p_vs32(value, buf, buf+5);
 	if (len > 0) {
 		for(uint8_t i = 0; i < len; i++) {
 			(*m_data)[pos+i] = buf[i];

@@ -172,7 +172,7 @@ uint64_t UByteArrayAdapterPrivateChunkedMmappedFile::getVlPackedUint64(UByteArra
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vu64(buf, length);
+	return up_vu64(buf, buf+bufLen, length);
 }
 
 
@@ -187,7 +187,7 @@ int64_t UByteArrayAdapterPrivateChunkedMmappedFile::getVlPackedInt64(UByteArrayA
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vs64(buf, length);
+	return up_vs64(buf, buf+bufLen, length);
 }
 
 uint32_t UByteArrayAdapterPrivateChunkedMmappedFile::getVlPackedUint32(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -201,7 +201,7 @@ uint32_t UByteArrayAdapterPrivateChunkedMmappedFile::getVlPackedUint32(UByteArra
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vu32(buf, length);
+	return up_vu32(buf, buf+bufLen, length);
 }
 
 int32_t UByteArrayAdapterPrivateChunkedMmappedFile::getVlPackedInt32(UByteArrayAdapter::OffsetType pos, int * length) const {
@@ -214,7 +214,7 @@ int32_t UByteArrayAdapterPrivateChunkedMmappedFile::getVlPackedInt32(UByteArrayA
 #ifdef SSERIALIZE_WITH_THREADS
 	m_fileLock.unlock();
 #endif
-	return up_vs32(buf, length);
+	return up_vs32(buf, buf+bufLen, length);
 }
 
 void UByteArrayAdapterPrivateChunkedMmappedFile::get(UByteArrayAdapter::OffsetType pos, uint8_t * dest, UByteArrayAdapter::OffsetType len) const {
@@ -322,7 +322,7 @@ void UByteArrayAdapterPrivateChunkedMmappedFile::putNegativeOffset(UByteArrayAda
 /** @return: Length of the number, -1 on failure **/
 int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint64(UByteArrayAdapter::OffsetType pos, uint64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[10];
-	int len = p_vu64(value, buf);
+	int len = p_vu64(value, buf, buf+10);
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
@@ -335,7 +335,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint64(UByteArrayAdap
 
 int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt64(UByteArrayAdapter::OffsetType pos, int64_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[10];
-	int len = p_vs64(value, buf);
+	int len = p_vs64(value, buf, buf+10);
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
@@ -348,7 +348,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt64(UByteArrayAdapt
 
 int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedUint32(UByteArrayAdapter::OffsetType pos, uint32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
-	int len = p_vu32(value, buf);
+	int len = p_vu32(value, buf, buf+5);
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS
@@ -374,7 +374,7 @@ int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedPad4Uint32(UByteArray
 
 int UByteArrayAdapterPrivateChunkedMmappedFile::putVlPackedInt32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType /*maxLen*/) {
 	uint8_t buf[5];
-	int len = p_vs32(value, buf);
+	int len = p_vs32(value, buf, buf+5);
 	if (len > 0) {
 		SizeType mlen = len;
 #ifdef SSERIALIZE_WITH_THREADS

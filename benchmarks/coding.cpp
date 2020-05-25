@@ -58,14 +58,14 @@ std::vector<long int> test32VlPack(const std::vector<uint32_t> & nums, std::size
 		uint8_t * dptr = data.data();
 		tm.begin();
 		for(std::size_t i(0); i < testLength; ++i) {
-			uint32_t len = sserialize::p_v<uint32_t>(nums[i], dptr);
+			uint32_t len = sserialize::p_v<uint32_t>(nums[i], dptr, dptr+5);
 			dptr += len;
 		}
 		uint32_t num = 0;
 		dptr = data.data();
 		for(std::size_t i(0); i < testLength; ++i) {
 			int len = 5;
-			num += sserialize::up_v<uint32_t>(dptr, &len);
+			num += sserialize::up_v<uint32_t>(dptr, dptr+5, &len);
 			dptr += len;
 		}
 		tm.end();
@@ -215,14 +215,14 @@ std::vector<long int> test64VlPack(const std::vector<uint64_t> & nums, std::size
 		uint8_t * dptr = data.data();
 		tm.begin();
 		for(std::size_t i(0); i < testLength; ++i) {
-			uint32_t len = sserialize::p_v<uint64_t>(nums[i], dptr);
+			uint32_t len = sserialize::p_v<uint64_t>(nums[i], dptr, dptr+10);
 			dptr += len;
 		}
 		uint64_t num = 0;
 		dptr = data.data();
 		for(std::size_t i(0); i < testLength; ++i) {
 			int len = 10;
-			num += sserialize::up_v<uint64_t>(dptr, &len);
+			num += sserialize::up_v<uint64_t>(dptr, dptr+10, &len);
 			dptr += len;
 		}
 		tm.end();
