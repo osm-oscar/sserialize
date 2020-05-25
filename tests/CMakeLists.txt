@@ -29,6 +29,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
 MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
 	target_link_libraries("${PROJECT_NAME}_${_name}" ${PROJECT_NAME})
+	set(SSERIALIZETESTS_ALL_TARGETS ${SSERIALIZETESTS_ALL_TARGETS} "${PROJECT_NAME}_${_name}")
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
 
 #containers
@@ -116,6 +117,8 @@ ADD_TEST_TARGET_SINGLE(search_CellTextCompleter)
 ADD_TEST_TARGET_SINGLE(static_Triangulation)
 
 ENDIF(CGAL_FOUND)
+
+add_custom_target(${PROJECT_NAME}_all DEPENDS ${SSERIALIZETESTS_ALL_TARGETS})
 
 ELSE()
 	message(WARNING "Could not find cppunit library needed to compile the tests")
