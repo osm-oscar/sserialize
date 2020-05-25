@@ -285,12 +285,18 @@ public:
 
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
+
+	if (sserialize::tests::TestBase::printHelp()) {
+		return 0;
+	}
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  UBAVec::suite() );
 
-	runner.eventManager().popProtector();
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	
 	bool ok = runner.run();
 	return ok ? 0 : 1;
