@@ -28,6 +28,7 @@ m_intLon(0)
 }
 
 DenseGeoPointVector::ForwardIterator & DenseGeoPointVector::ForwardIterator::operator++() {
+	++m_pos;
 	if (m_pos < m_size) {
 		int32_t intLatDiff = m_d.getVlPackedInt32();
 		int32_t intLonDiff = m_d.getVlPackedInt32();
@@ -45,7 +46,6 @@ DenseGeoPointVector::ForwardIterator & DenseGeoPointVector::ForwardIterator::ope
 		else {
 			m_intLon = m_intLon + intLonDiff;
 		}
-		++m_pos;
 	}
 	return *this;
 }
