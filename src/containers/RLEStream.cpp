@@ -102,7 +102,11 @@ RLEStream& RLEStream::operator=(RLEStream&& other) {
 
 RLEStream & RLEStream::operator++() {
 	if (!m_curRleCount) {
-		uint64_t curWord = m_d.getVlPackedUint64();
+		uint64_t curWord = 0;
+		try {
+			curWord = m_d.getVlPackedUint64();
+		}
+		catch (sserialize::OutOfBoundsException const &) {}
 		uint8_t tmp = curWord & 0x3;
 		curWord >>= 2;
 		switch (tmp) {
