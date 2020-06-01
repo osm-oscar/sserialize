@@ -170,35 +170,38 @@ public:
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::complete(const std::string& qstr, const sserialize::StringCompleter::QuerryType qt) const {
+	Payload::Type t;
 	try {
-		Payload::Type t(typeFromCompletion(qstr, qt));
-		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_ci, m_idxStore, flags());
+		t = typeFromCompletion(qstr, qt);
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
 		return T_CQR_TYPE(m_ci, m_idxStore, flags());
 	}
+	return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_ci, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::regions(const std::string& qstr, const sserialize::StringCompleter::QuerryType qt) const {
+	Payload::Type t;
 	try {
-		Payload::Type t(typeFromCompletion(qstr, qt));
-		return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_ci, m_idxStore, flags());
+		t = typeFromCompletion(qstr, qt);
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
 		return T_CQR_TYPE(m_ci, m_idxStore, flags());
 	}
+	return T_CQR_TYPE(m_idxStore.at( t.fmPtr() ), m_ci, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE>
 T_CQR_TYPE CellTextCompleter::items(const std::string& qstr, const sserialize::StringCompleter::QuerryType qt) const {
+	Payload::Type t;
 	try {
-		Payload::Type t(typeFromCompletion(qstr, qt));
-		return T_CQR_TYPE(sserialize::ItemIndex(), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_ci, m_idxStore, flags());
+		t = typeFromCompletion(qstr, qt);
 	}
 	catch (const sserialize::OutOfBoundsException & e) {
 		return T_CQR_TYPE(m_ci, m_idxStore, flags());
 	}
+	return T_CQR_TYPE(sserialize::ItemIndex(), m_idxStore.at( t.pPtr() ), t.pItemsPtrBegin(), m_ci, m_idxStore, flags());
 }
 
 template<typename T_CQR_TYPE>
