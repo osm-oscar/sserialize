@@ -13,6 +13,8 @@ std::vector<sserialize::spatial::GeoPoint> createPoints(uint32_t count, double m
 	sserialize::spatial::GeoPoint prev;
 	prev.lat() = ((double)rand()/RAND_MAX)*180.0-90.0;
 	prev.lon() = ((double)rand()/RAND_MAX)*360.0-180.0;
+
+	prev.normalize(prev.NT_WRAP);
 	
 	res.push_back(prev);
 	
@@ -21,6 +23,7 @@ std::vector<sserialize::spatial::GeoPoint> createPoints(uint32_t count, double m
 		double difflon = ((double)rand()/RAND_MAX)*maxdiff;
 		prev.lat() += difflat;
 		prev.lon() += difflon;
+		prev.normalize(prev.NT_WRAP);
 		res.push_back(prev);
 	}
 	return res;
@@ -126,12 +129,21 @@ public:
 
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
+
+	if (sserialize::tests::TestBase::printHelp()) {
+		return 0;
+	}
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	for(uint32_t i = 0; i < 10; i++) {
 		runner.addTest(  TestDenseGeoPointVector::suite() );
 	}
+
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
+
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
