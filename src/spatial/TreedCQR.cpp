@@ -106,19 +106,42 @@ bool TreedCellQueryResult::fullMatch(uint32_t pos) const {
 }
 
 TreedCellQueryResult TreedCellQueryResult::operator/(const sserialize::TreedCellQueryResult& o) const {
-	return TreedCellQueryResult(m_priv->intersect(o.m_priv.priv()));
+	if ((flags() | o.flags()) & CellQueryResult::FF_EMPTY) {
+		return TreedCellQueryResult();
+	}
+	else {
+		return TreedCellQueryResult(m_priv->intersect(o.m_priv.priv()));
+	}
 }
 
 TreedCellQueryResult TreedCellQueryResult::operator+(const sserialize::TreedCellQueryResult & o) const {
-	return TreedCellQueryResult(m_priv->unite(o.m_priv.priv()));
+	if (flags() & CellQueryResult::FF_EMPTY) {
+		return o;
+	}
+	else {
+		return TreedCellQueryResult(m_priv->unite(o.m_priv.priv()));
+	}
 }
 
 TreedCellQueryResult TreedCellQueryResult::operator-(const TreedCellQueryResult & o) const {
-	return TreedCellQueryResult(m_priv->diff(o.m_priv.priv()));
+	if ((flags() | o.flags()) & CellQueryResult::FF_EMPTY) {
+		return *this;
+	}
+	else {
+		return TreedCellQueryResult(m_priv->diff(o.m_priv.priv()));
+	}
 }
 
 TreedCellQueryResult TreedCellQueryResult::operator^(const TreedCellQueryResult & o) const {
-	return TreedCellQueryResult(m_priv->symDiff(o.m_priv.priv()));
+	if (flags() & CellQueryResult::FF_EMPTY) {
+		return o;
+	}
+	else if (o.flags() & CellQueryResult::FF_EMPTY) {
+		return *this;
+	}
+	else {
+		return TreedCellQueryResult(m_priv->symDiff(o.m_priv.priv()));
+	}
 }
 
 TreedCellQueryResult TreedCellQueryResult::allToFull() const {

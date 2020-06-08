@@ -217,19 +217,42 @@ bool CellQueryResult::fullMatch(uint32_t pos) const {
 }
 
 CellQueryResult CellQueryResult::operator/(const sserialize::CellQueryResult& o) const {
-	return CellQueryResult(m_priv->intersect(o.m_priv.priv()));
+	if ((flags() | o.flags()) & FF_EMPTY) {
+		return CellQueryResult();
+	}
+	else {
+		return CellQueryResult(m_priv->intersect(o.m_priv.priv()));
+	}
 }
 
 CellQueryResult CellQueryResult::operator+(const sserialize::CellQueryResult & o) const {
-	return CellQueryResult(m_priv->unite(o.m_priv.priv()));
+	if (flags() & FF_EMPTY) {
+		return o;
+	}
+	else {
+		return CellQueryResult(m_priv->unite(o.m_priv.priv()));
+	}
 }
 
 CellQueryResult CellQueryResult::operator-(const CellQueryResult & o) const {
-	return CellQueryResult(m_priv->diff(o.m_priv.priv()));
+	if ((flags() | o.flags()) & FF_EMPTY) {
+		return *this;
+	}
+	else {
+		return CellQueryResult(m_priv->diff(o.m_priv.priv()));
+	}
 }
 
 CellQueryResult CellQueryResult::operator^(const CellQueryResult & o) const {
-	return CellQueryResult(m_priv->symDiff(o.m_priv.priv()));
+	if (flags() & FF_EMPTY) {
+		return o;
+	}
+	else if (o.flags() & FF_EMPTY) {
+		return *this;
+	}
+	else {
+		return CellQueryResult(m_priv->symDiff(o.m_priv.priv()));
+	}
 }
 
 CellQueryResult CellQueryResult::allToFull() const {
