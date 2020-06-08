@@ -26,6 +26,11 @@ m_lat(p.first),
 m_lon(p.second)
 {}
 
+GeoPoint::GeoPoint(double lat, double lon, NormalizationType nt) :
+GeoPoint(lat, lon)
+{
+	normalize(nt);
+}
 
 GeoPoint::GeoPoint(const UByteArrayAdapter & data) :
 m_lat(toDoubleLat(data.getUint32(0))),

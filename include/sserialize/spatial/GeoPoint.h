@@ -19,6 +19,7 @@ private:
 public:
 	GeoPoint();
 	GeoPoint(double lat, double lon);
+	GeoPoint(double lat, double lon, NormalizationType nt);
 	GeoPoint(std::pair<double, double> p);
 	GeoPoint(std::pair<float, float> p);
 	GeoPoint(const UByteArrayAdapter & data);
