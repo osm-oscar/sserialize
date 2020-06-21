@@ -198,7 +198,7 @@ IdType DynamicBitSet::upperBound() const {
 }
 
 bool DynamicBitSet::isSet(sserialize::SizeType pos) const {
-	return m_data.at( pos/8 ) & (static_cast<uint8_t>(1) << (pos % 8));
+	return m_data.size() > pos/8 && (m_data.at( pos/8 ) & (static_cast<uint8_t>(1) << (pos % 8)));
 }
 
 void DynamicBitSet::set(sserialize::SizeType pos) {
