@@ -55,6 +55,8 @@ public:
 	const std::string & storageFileName() const { return m_fn; }
 	SizeType size() const { return m_backBufferBegin+m_backBuffer.size(); }
 	void reserve(SizeType reserveSize);
+	//resize without init
+	void truncate(SizeType newSize);
 	void resize(SizeType newSize, const value_type & value = value_type());
 	void clear();
 	void shrink_to_fit();
@@ -599,6 +601,15 @@ void OOMArray<TValue, TEnable>::backBufferSize(SizeType s) {
 template<typename TValue, typename TEnable>
 void OOMArray<TValue, TEnable>::reserve(SizeType /*reserveSize*/) {
 	//nothing to reserve here
+}
+
+template<typename TValue, typename TEnable>
+void OOMArray<TValue, TEnable>::truncate(SizeType newSize) {
+	flush();
+	if (::ftruncate(m_fd, newSize*sizeof(value_type)) < 0) {
+		throw sserialize::IOException("OOMArray::resize: " + std::string(::strerror(errno)));
+	}
+	m_backBufferBegin = newSize;
 }
 
 template<typename TValue, typename TEnable>
