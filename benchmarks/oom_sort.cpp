@@ -112,7 +112,7 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 					}
 				}
 			}
-			for(uint64_t i(count); i < state.entryCount; ++i) {
+			for(uint64_t i(count+1); i <= state.entryCount; ++i) {
 				data.push_back(i);
 			}
 		}
@@ -140,7 +140,7 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 		else {
 			for(uint64_t i(0), s(state.entryCount); i < s; ++i) {
 				if (data.at(i) != i+1) {
-					std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+					std::cout << "Sort is BROKEN! SHOULD=" << i+1 << "IS=" << data.at(i) << std::endl;
 					break;
 				}
 				if (i % 1000 == 0) {
