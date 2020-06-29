@@ -652,11 +652,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					m_dest(dest)
 					{
 						uint32_t numWorkers;
-						if (cfg->traits.mmt() == MM_SLOW_FILEBASED) {
+						if (cfg->traits.mmt() == MM_SLOW_FILEBASED || cfg->traits.ioFlushLock()) {
 							numWorkers = 1;
-						}
-						else if (cfg->traits.ioFlushLock()) {
-							numWorkers = 2;
 						}
 						else {
 							numWorkers = std::max<uint32_t>(2, (cfg->traits.maxThreadCount()-2)/2);
