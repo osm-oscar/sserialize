@@ -808,7 +808,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				}
 				
 				//resize tmp to state.resultSize to facilitate parallel io
-				tmp.resize(state.resultSize);
+				tmp.truncate(state.resultSize);
 				FlushQueue flushQueue(&cfg, &state, &tmp);
 				
 				while(pq.size()) {
