@@ -4,6 +4,8 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/containers/MMVector.h>
 
+#include <random>
+
 void help() {
 	std::cout << "prg\n"
 		"-s <size in mebi>                    Source size\n"
@@ -18,6 +20,7 @@ void help() {
 		"--u[niquify]                         Uniquify result\n"
 		"--no-fetch-lock                      Don't use a fetch lock\n"
 		"--no-flush-lock                      Don't use a flush lock\n"
+		"--random-data                        Use random test data\n"
 	<< std::endl;
 }
 
@@ -36,6 +39,7 @@ struct State {
 	bool uniquify = false;
 	bool fetchLock{true};
 	bool flushLock{true};
+	bool random{false};
 };
 
 template<typename T_SRC_CONTAINER_TYPE>
@@ -83,11 +87,33 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 		pinfo.end();
 	}
 	else {
+		uint64_t numChunks = state.entryCount*sizeof(uint64_t)/state.memorySize*state.threadCount;
 		pinfo.begin(state.entryCount, "Creating file");
-		for(int64_t i(state.entryCount); i > 0; --i) {
-			data.push_back(i);
-			if ((i & 0x3FF) == 0) {
-				pinfo(state.entryCount-i);
+		if (state.random) {
+			auto g = std::default_random_engine();
+			std::uniform_int_distribution<uint64_t> d;
+			for(uint64_t i(0); i < state.entryCount; ++i) {
+				data.push_back(d(g));
+				if ((i & 0x3FF) == 0) {
+					pinfo(i);
+				}
+			}
+		}
+		else {
+			uint64_t count = 0;
+			for(uint64_t chunk(0); chunk < numChunks; ++chunk) {
+				for(uint64_t i(0), s(state.entryCount/numChunks); i < s; ++i) {
+					uint64_t v = chunk+i*numChunks;
+					uint64_t vi = numChunks*s - v;
+					data.push_back(vi);
+					++count;
+					if ((count & 0x3FF) == 0) {
+						pinfo(count);
+					}
+				}
+			}
+			for(uint64_t i(count); i < state.entryCount; ++i) {
+				data.push_back(i);
 			}
 		}
 		pinfo.end();
@@ -96,12 +122,30 @@ void worker(T_SRC_CONTAINER_TYPE & data, State & state) {
 		tm.end();
 		std::cout << "Sorting took " << tm << std::endl;
 		pinfo.begin(state.entryCount, "Verifying");
-		for(uint64_t i(0), s(state.entryCount); i < s; ++i) {
-			if (data.at(i) != i+1) {
-				std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+		if (state.random) {
+			uint64_t prev = data.at(0);
+			for(uint64_t i(1), s(state.entryCount); i < s; ++i) {
+				uint64_t cur = data.at(i);
+				if (prev > cur) {
+					std::cout << "Sort is broken: prev > cur" << std::endl;
+					break;
+				}
+				prev = cur;
+
+				if (i % 1000 == 0) {
+					pinfo(i);
+				}
 			}
-			if (i % 1000 == 0) {
-				pinfo(i);
+		}
+		else {
+			for(uint64_t i(0), s(state.entryCount); i < s; ++i) {
+				if (data.at(i) != i+1) {
+					std::cout << "Sort is BROKEN! SHOULD=" << i << "IS=" << data.at(i) << std::endl;
+					break;
+				}
+				if (i % 1000 == 0) {
+					pinfo(i);
+				}
 			}
 		}
 		pinfo.end();
@@ -175,6 +219,9 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "--no-flush-lock") {
 			state.flushLock = false;
+		}
+		else if (token == "--random-data") {
+			state.random = true;
 		}
 		else if (token == "-h" || token == "--help") {
 			help();
