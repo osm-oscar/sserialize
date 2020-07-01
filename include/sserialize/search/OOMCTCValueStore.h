@@ -672,7 +672,7 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 		.maxMemoryUsage(otraits.maxMemoryUsage())
 		.maxThreadCount(otraits.sortConcurrency())
 		.mmt(otraits.mmt())
-		.queueDepth(1024)
+		.queueDepth(std::max<uint32_t>(1024, 512*otraits.sortConcurrency()))
 		.maxWait(30)
 		.makeUnique(true)
 		.ioFetchLock(otraits.mmt() == sserialize::MM_SLOW_FILEBASED)
