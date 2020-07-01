@@ -497,7 +497,6 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 		
 		//setup temporary store
 		tmp.clear();
-		tmp.reserve(state.resultSize);
 		
 		for(uint32_t cbi(0), cbs((uint32_t)state.pendingChunks.size()); cbi < cbs;) {
 			{//fill the activeChunkBuffers
@@ -649,8 +648,13 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					FlushQueue(Config * cfg, State * state, sserialize::OOMArray<value_type> * dest) :
 					m_cfg(cfg),
 					m_state(state),
-					m_dest(dest)
+					m_dest(dest),
+					m_offset(m_dest->size())
 					{
+						SSERIALIZE_CHEAP_ASSERT_SMALLER(m_dest->size(), state->resultSize);
+						//resize dest to maximum target size to facilitate parallel io
+						m_dest->truncate(state->resultSize);
+
 						uint32_t numWorkers;
 						if (cfg->traits.mmt() == MM_SLOW_FILEBASED || cfg->traits.ioFlushLock()) {
 							numWorkers = 1;
@@ -672,6 +676,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						}
 						//flush last entry
 						m_dest->replace(m_offset, m_data.begin(), m_data.end());
+						//resize dest to correct size
+						m_dest->resize(size());
 					}
 					uint64_t size() const {
 						return m_offset+m_data.size();
@@ -742,6 +748,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 							Entry e = std::move(m_entries.front());
 							m_entries.pop();
 							lck.unlock();
+							SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(e.offset+e.data.size(), m_dest->size());
 							m_dest->replace(e.offset, e.data.begin(), e.data.end());
 							//notify submit thread that it can continue issuing new data
 							std::lock_guard<std::mutex> submitLck(m_submitLock);
@@ -754,8 +761,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					State * m_state;
 					sserialize::OOMArray<value_type> * m_dest;
 					std::size_t m_bufferSize;
-					uint64_t m_offset{0};
-					std::vector<value_type> m_data;
+					uint64_t m_offset;
+					std::vector<value_type> m_data; //This is only touched by the single producer thread
 					std::vector<std::thread> m_workers;
 					std::queue<Entry> m_entries;
 					std::mutex m_lock;
@@ -807,17 +814,14 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					}
 				}
 				
-				//resize tmp to state.resultSize to facilitate parallel io
-				tmp.truncate(state.resultSize);
 				FlushQueue flushQueue(&cfg, &state, &tmp);
-				
+
 				while(pq.size()) {
 					uint32_t pqMin = pq.top();
 					pq.pop();
 					value_type & v = queueValues[pqMin];
 					if (!traits.makeUnique() || !flushQueue.size() || !traits.equal()(flushQueue.back(), v)) {
 						flushQueue.emplace_back(std::move(v));
-						state.resultSize += 1;
 					}
 					//get our next element
 					if (queues[pqMin].pop(v)) {
@@ -826,13 +830,14 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					if (flushQueue.size() % 1000 == 0) {
 						state.pinfo(flushQueue.size());
 					}
-					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(flushQueue.size(), state.srcSize);
+					SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(flushQueue.size(), state.resultSize);
 				}
 				for(std::size_t i(0), s(queueWorkers.size()); i < s; ++i) {
 					queueWorkers[i].join();
 				}
 			}
 			else {
+				tmp.reserve(state.resultSize);
 				tmp.backBufferSize(cfg.tmpBuffferSize);
 				tmp.readBufferSize(sizeof(value_type));
 				
@@ -849,7 +854,6 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					value_type & v = state.activeChunkBufferValues[pqMin];
 					if (!traits.makeUnique() || !tmp.size() || !traits.equal()(tmp.back(), v)) {
 						tmp.emplace_back(std::move(v));
-						state.resultSize += 1;
 					}
 					if (chunkBuffer.next()) {
 						state.activeChunkBufferValues[pqMin] = chunkBuffer.get();
