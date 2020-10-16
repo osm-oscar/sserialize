@@ -548,6 +548,16 @@ CompactUintArray(0)
 	
 }
 
+BoundedCompactUintArray::BoundedCompactUintArray(sserialize::UByteArrayAdapter & d, sserialize::UByteArrayAdapter::ConsumeTag) :
+BoundedCompactUintArray(d)
+{
+	d += getSizeInBytes();
+}
+
+BoundedCompactUintArray::BoundedCompactUintArray(sserialize::UByteArrayAdapter const & d, sserialize::UByteArrayAdapter::NoConsumeTag) :
+BoundedCompactUintArray(d)
+{}
+
 BoundedCompactUintArray::BoundedCompactUintArray(const BoundedCompactUintArray & other) :
 CompactUintArray(other),
 m_size(other.m_size)

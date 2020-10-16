@@ -23,6 +23,8 @@ protected:
 public:
     StringTable();
     StringTable(const UByteArrayAdapter& data);
+    StringTable(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+    StringTable(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
     StringTable(Static::Array< std::string > * data);
     StringTable(const StringTable & other);
 	virtual ~StringTable();
@@ -69,6 +71,8 @@ class FrequencyStringTable: public StringTable {
 public:
 	FrequencyStringTable();
 	FrequencyStringTable(const UByteArrayAdapter & data);
+	FrequencyStringTable(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	FrequencyStringTable(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	FrequencyStringTable(const FrequencyStringTable & other);
 	FrequencyStringTable & operator=(const FrequencyStringTable & other);
 	virtual ~FrequencyStringTable();
@@ -80,6 +84,8 @@ class SortedStringTable: public StringTable {
 public:
 	SortedStringTable();
 	SortedStringTable(const UByteArrayAdapter & data);
+	SortedStringTable(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	SortedStringTable(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	SortedStringTable(const SortedStringTable & other);
 	virtual ~SortedStringTable();
 	SortedStringTable & operator=(SortedStringTable const &) = default;

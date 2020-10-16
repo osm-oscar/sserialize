@@ -87,6 +87,8 @@ public:
 	ItemIndex(ItemIndex && idx);
 	explicit ItemIndex(std::initializer_list<uint32_t> l);
 	explicit ItemIndex(const UByteArrayAdapter & index, Types type = T_REGLINE);
+	explicit ItemIndex(UByteArrayAdapter & index, Types type, UByteArrayAdapter::ConsumeTag);
+	explicit ItemIndex(UByteArrayAdapter const & index, Types type, UByteArrayAdapter::NoConsumeTag);
 	explicit ItemIndex(const std::deque<uint32_t> & index);
 	explicit ItemIndex(const std::vector<uint32_t> & index);
 	explicit ItemIndex(std::vector<uint32_t> && index);

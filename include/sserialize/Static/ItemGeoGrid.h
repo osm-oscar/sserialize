@@ -37,7 +37,19 @@ private:
 	}
 public:
 	ItemGeoGrid() : MyParentClass(), m_indexStore() {}
-	ItemGeoGrid(const UByteArrayAdapter & data, const DataBaseType & db, const Static::ItemIndexStore & indexStore) : MyParentClass(data), m_db(db), m_indexStore(indexStore) {}
+	ItemGeoGrid(const UByteArrayAdapter & data, const DataBaseType & db, const Static::ItemIndexStore & indexStore) :
+	MyParentClass(data),
+	m_db(db),
+	m_indexStore(indexStore)
+	{}
+	ItemGeoGrid(UByteArrayAdapter & data, const DataBaseType & db, const Static::ItemIndexStore & indexStore, UByteArrayAdapter::ConsumeTag) :
+	ItemGeoGrid(data)
+	{
+		data += getSizeInBytes();
+	}
+	ItemGeoGrid(UByteArrayAdapter const & data, const DataBaseType & db, const Static::ItemIndexStore & indexStore, UByteArrayAdapter::NoConsumeTag) :
+	ItemGeoGrid(data)
+	{}
 	virtual ~ItemGeoGrid() {}
 	const DataBaseType & db()  const { return m_db; }
 	DataBaseType & db() { return m_db; }

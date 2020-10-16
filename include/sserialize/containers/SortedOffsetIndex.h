@@ -23,6 +23,8 @@ public:
 public:
 	SortedOffsetIndex();
 	SortedOffsetIndex(const UByteArrayAdapter & data);
+	SortedOffsetIndex(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	SortedOffsetIndex(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	SortedOffsetIndex(const SortedOffsetIndex & other);
 	virtual ~SortedOffsetIndex();
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;

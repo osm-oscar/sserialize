@@ -260,6 +260,8 @@ private:
 public:
 	BoundedCompactUintArray() : m_size(0) {}
 	BoundedCompactUintArray(const sserialize::UByteArrayAdapter & d);
+	BoundedCompactUintArray(sserialize::UByteArrayAdapter & d, sserialize::UByteArrayAdapter::ConsumeTag);
+	BoundedCompactUintArray(sserialize::UByteArrayAdapter const & d, sserialize::UByteArrayAdapter::NoConsumeTag);
 	BoundedCompactUintArray(const BoundedCompactUintArray & other);
 	virtual ~BoundedCompactUintArray();
 	BoundedCompactUintArray & operator=(const BoundedCompactUintArray & other);

@@ -189,6 +189,12 @@ public:
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
 	
+	struct ConsumeTag {};
+	struct NoConsumeTag {};
+
+	static constexpr ConsumeTag Consume = ConsumeTag();
+	static constexpr NoConsumeTag NoConsume = NoConsumeTag();
+	
 	typedef enum {
 		//will read the next bytes
 		AT_READ = 0x1,

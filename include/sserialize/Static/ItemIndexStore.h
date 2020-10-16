@@ -110,6 +110,8 @@ protected:
 public:
 	ItemIndexStore();
 	ItemIndexStore(const sserialize::UByteArrayAdapter & data);
+	ItemIndexStore(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	ItemIndexStore(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	explicit ItemIndexStore(interfaces::ItemIndexStore * base);
 	~ItemIndexStore() {}
 	inline OffsetType getSizeInBytes() const { return priv()->getSizeInBytes();}
@@ -159,6 +161,8 @@ private:
 public:
 	ItemIndexStore();
 	ItemIndexStore(sserialize::UByteArrayAdapter data);
+	ItemIndexStore(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	ItemIndexStore(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	virtual ~ItemIndexStore();
 	virtual OffsetType getSizeInBytes() const override;
 	virtual uint32_t size() const override;

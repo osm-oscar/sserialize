@@ -101,6 +101,8 @@ private:
 public:
 	KeyValueObjectStore();
 	KeyValueObjectStore(const sserialize::UByteArrayAdapter & data);
+	KeyValueObjectStore(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	KeyValueObjectStore(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	virtual ~KeyValueObjectStore();
 	uint32_t size() const;
 	const KeyStringTable & keyStringTable() const;
@@ -133,6 +135,8 @@ private:
 public:
 	KeyValueObjectStorePrivate();
 	KeyValueObjectStorePrivate(const sserialize::UByteArrayAdapter & data);
+	KeyValueObjectStorePrivate(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	KeyValueObjectStorePrivate(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	virtual ~KeyValueObjectStorePrivate();
 	uint32_t size() const;
 	inline const KeyStringTable & keyStringTable() const { return m_keyStringTable; }

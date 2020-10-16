@@ -33,6 +33,8 @@ private:
 public:
 	Map();
 	Map(const UByteArrayAdapter & data);
+	Map(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	Map(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	~Map() {}
 	iterator begin() { return m_data.begin(); }
 	const_iterator begin() const { return m_data.begin(); }
@@ -87,6 +89,18 @@ Map<TKey, TValue>::Map() {}
 template<typename TKey, typename TValue>
 Map<TKey, TValue>::Map(const UByteArrayAdapter & data) :
 m_data(data)
+{}
+
+template<typename TKey, typename TValue>
+Map<TKey, TValue>::Map(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+Map(data)
+{
+	data += getSizeInBytes();
+}
+
+template<typename TKey, typename TValue>
+Map<TKey, TValue>::Map(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+Map(data)
 {}
 
 template<typename TKey, typename TValue>

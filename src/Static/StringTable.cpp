@@ -16,6 +16,16 @@ StringTable::StringTable(const UByteArrayAdapter& data) :
 RCWrapper< sserialize::Static::Array<std::string> >(new sserialize::Static::Array< std::string >(data) )
 {}
 
+StringTable::StringTable(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+StringTable(data)
+{
+	data += getSizeInBytes();
+}
+
+StringTable::StringTable(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+StringTable(data)
+{}
+
 StringTable::~StringTable() {}
 
 StringTable::StringTable(Array< std::string >* data): RCWrapper< sserialize::Static::Array< std::string > >(data)
@@ -280,18 +290,57 @@ std::ostream& StringTable::printStats(std::ostream& out) const {
 	return out;
 }
 
-FrequencyStringTable::FrequencyStringTable() : StringTable() {}
-FrequencyStringTable::FrequencyStringTable(const UByteArrayAdapter & data) : StringTable(data) {}
-FrequencyStringTable::FrequencyStringTable(const FrequencyStringTable & other) : StringTable(other) {}
+FrequencyStringTable::FrequencyStringTable() :
+StringTable()
+{}
+
+FrequencyStringTable::FrequencyStringTable(const UByteArrayAdapter & data) :
+StringTable(data)
+{}
+
+FrequencyStringTable::FrequencyStringTable(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+FrequencyStringTable(data)
+{
+	data += getSizeInBytes();
+}
+
+FrequencyStringTable::FrequencyStringTable(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+FrequencyStringTable(data)
+{}
+
+FrequencyStringTable::FrequencyStringTable(const FrequencyStringTable & other) :
+StringTable(other)
+{}
+
 FrequencyStringTable::~FrequencyStringTable() {}
+
 FrequencyStringTable & FrequencyStringTable::operator=(const FrequencyStringTable & other) {
 	StringTable::operator=(other);
 	return *this;
 }
 
-SortedStringTable::SortedStringTable() : StringTable() {}
-SortedStringTable::SortedStringTable(const UByteArrayAdapter & data) : StringTable(data) {}
-SortedStringTable::SortedStringTable(const sserialize::Static::SortedStringTable & other) : StringTable(other) {}
+SortedStringTable::SortedStringTable() :
+StringTable()
+{}
+
+SortedStringTable::SortedStringTable(const UByteArrayAdapter & data) :
+StringTable(data)
+{}
+
+SortedStringTable::SortedStringTable(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+SortedStringTable(data)
+{
+	data += getSizeInBytes();
+}
+
+SortedStringTable::SortedStringTable(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+SortedStringTable(data)
+{}
+
+SortedStringTable::SortedStringTable(const sserialize::Static::SortedStringTable & other) :
+StringTable(other)
+{}
+
 SortedStringTable::~SortedStringTable() {}
 sserialize::Static::StringTable::SizeType SortedStringTable::find(const std::string& value) const {
 	SizeType tmp = binarySearchKeyInArray(*priv(), value);

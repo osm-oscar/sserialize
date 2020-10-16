@@ -292,6 +292,8 @@ public:
 	Array();
 	/** Creates a new deque at data.putPtr */
 	Array(const UByteArrayAdapter & data);
+	Array(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	Array(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	/** This does not copy the ref count, but inits it */
 	Array(const Array & other) : RefCountObject(), m_data(other.m_data), m_index(other.m_index) {}
 	virtual ~Array() {}
@@ -411,6 +413,18 @@ m_index(m_data.size(), data + (1 + UByteArrayAdapter::OffsetTypeSerializedLength
 SSERIALIZE_VERSION_MISSMATCH_CHECK(SSERIALIZE_STATIC_ARRAY_VERSION, data.at(0), "Static::Array");
 SSERIALIZE_LENGTH_CHECK(m_index.size()*sserialize::SerializationInfo<TValue>::min_length, m_data.size(), "Static::Array::Array::Insufficient data");
 }
+
+template<typename TValue>
+Array<TValue>::Array(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+Array(data)
+{
+	data += getSizeInBytes();
+}
+
+template<typename TValue>
+Array<TValue>::Array(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+Array(data)
+{}
 
 template<typename TValue>
 TValue

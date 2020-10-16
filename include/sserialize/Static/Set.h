@@ -40,6 +40,8 @@ private:
 public:
 	Set();
 	Set(const UByteArrayAdapter & data);
+	Set(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	Set(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	~Set() {}
 	iterator begin() { return iterator(0, this); }
 	const_iterator cbegin() const { return const_iterator(0, this); }
@@ -88,6 +90,18 @@ m_index(data+5)
 	m_data = UByteArrayAdapter(data, 5+m_index.getSizeInBytes(), data.getUint32(1));
 	SSERIALIZE_LENGTH_CHECK(m_index.size(), m_data.size(), "Static::Set::Set::Insufficient data");
 }
+
+template<typename TValue>
+Set<TValue>::Set(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+Set(data)
+{
+	data += getSizeInBytes();
+}
+
+template<typename TValue>
+Set<TValue>::Set(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+Set(data)
+{}
 
 template<>
 Set<int32_t>::Set(const UByteArrayAdapter & data);

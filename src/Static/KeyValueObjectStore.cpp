@@ -152,6 +152,14 @@ KeyValueObjectStore::KeyValueObjectStore(const sserialize::UByteArrayAdapter & d
 m_priv(new KeyValueObjectStorePrivate(data))
 {}
 
+KeyValueObjectStore::KeyValueObjectStore(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag t) :
+m_priv(new KeyValueObjectStorePrivate(data, t))
+{}
+
+KeyValueObjectStore::KeyValueObjectStore(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag t) :
+m_priv(new KeyValueObjectStorePrivate(data, t))
+{}
+
 KeyValueObjectStore::~KeyValueObjectStore() {}
 
 
@@ -229,6 +237,16 @@ m_items(data+(m_keyStringTable.getSizeInBytes()+m_valueStringTable.getSizeInByte
 		throw sserialize::OutOfBoundsException("sserialize::KeyValueObjectStore: too many items");
 	}
 }
+
+KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+KeyValueObjectStorePrivate(data)
+{
+	data += getSizeInBytes();
+}
+
+KeyValueObjectStorePrivate::KeyValueObjectStorePrivate(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+KeyValueObjectStorePrivate(data)
+{}
 
 KeyValueObjectStorePrivate::~KeyValueObjectStorePrivate() {}
 

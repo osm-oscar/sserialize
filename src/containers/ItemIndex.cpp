@@ -77,6 +77,16 @@ ItemIndex::ItemIndex(const UByteArrayAdapter & index, ItemIndex::Types type) : M
 	createPrivate(index, type);
 }
 
+ItemIndex::ItemIndex(UByteArrayAdapter & index, Types type, UByteArrayAdapter::ConsumeTag) :
+ItemIndex(index, type)
+{
+	index += getSizeInBytes();
+}
+
+ItemIndex::ItemIndex(UByteArrayAdapter const & index, Types type, UByteArrayAdapter::NoConsumeTag) :
+ItemIndex(index, type)
+{}
+
 ItemIndex::ItemIndex(const std::deque<uint32_t> & index) : MyBaseClass(new sserialize::ItemIndexPrivateStlDeque( index ) ) {}
 ItemIndex::ItemIndex(const std::vector< uint32_t >& index) : MyBaseClass(new sserialize::ItemIndexPrivateStlVector(index)) {}
 ItemIndex::ItemIndex(std::vector<uint32_t> && index) {

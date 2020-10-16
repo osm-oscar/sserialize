@@ -59,7 +59,19 @@ UByteArrayAdapter::OffsetType ItemIndexStoreId::getSizeInBytes(ItemIndexStoreId:
 }
 
 ItemIndexStore::ItemIndexStore() : m_priv(new detail::ItemIndexStore()) {}
-ItemIndexStore::ItemIndexStore(const sserialize::UByteArrayAdapter & data) : m_priv(new detail::ItemIndexStore(data)) {}
+
+ItemIndexStore::ItemIndexStore(const sserialize::UByteArrayAdapter & data) :
+m_priv(new detail::ItemIndexStore(data))
+{}
+
+ItemIndexStore::ItemIndexStore(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag t) :
+m_priv(new detail::ItemIndexStore(data, t))
+{}
+
+ItemIndexStore::ItemIndexStore(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag t) :
+m_priv(new detail::ItemIndexStore(data, t))
+{}
+
 ItemIndexStore::ItemIndexStore(interfaces::ItemIndexStore * base) : m_priv(base) {}
 
 namespace detail {
@@ -157,6 +169,16 @@ m_version(data.getUint8(0))
 		data += m_idxTypeInfo.getSizeInBytes();
 	}
 }
+
+ItemIndexStore::ItemIndexStore(sserialize::UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
+ItemIndexStore(data)
+{
+	data += getSizeInBytes();
+}
+
+ItemIndexStore::ItemIndexStore(sserialize::UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
+ItemIndexStore(data)
+{}
 
 ItemIndexStore::~ItemIndexStore() {}
 
