@@ -353,8 +353,6 @@ include/sserialize/Static/Completer.h
 include/sserialize/Static/DynamicFixedLengthVector.h
 include/sserialize/Static/DynamicKeyValueObjectStore.h
 include/sserialize/Static/DynamicVector.h
-include/sserialize/Static/FileBasedCompleter.h
-include/sserialize/Static/FileBasedCompleterGeo.h
 include/sserialize/Static/FlatGeneralizedTrie.h
 include/sserialize/Static/Fraction.h
 include/sserialize/Static/GeneralizedTrie.h
