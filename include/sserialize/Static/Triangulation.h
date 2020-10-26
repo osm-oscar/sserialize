@@ -49,11 +49,27 @@ public:
 	typedef enum {GCT_NONE=0, GCT_REMOVE_DEGENERATE_FACES, GCT_SNAP_VERTICES, GCT_SNAP_ROUND} GeometryCleanType;
 	typedef enum {TT_ZIG_ZAG=0, TT_STRAIGHT=1} TraversalType;
 	typedef sserialize::spatial::GeoPoint Point;
-	typedef uint32_t FaceId;
-	typedef uint32_t VertexId;
 	class Face;
 	class Vertex;
 	class FaceCirculator;
+	
+	class VertexId final {
+	public:
+		static constexpr uint32_t npos = 0xFFFFFFFF;
+		using Self = VertexId;
+	public:
+		VertexId() {}
+		VertexId(uint32_t v) : m_v(v) {}
+		VertexId(Self const &) = default;
+		Self & operator=(Self const &) = default;
+	public:
+		operator uint32_t() const { return m_v; }
+	public:
+		bool operator!=(Self const & other) const { return m_v != other.m_v; }
+		bool operator==(Self const & other) const { return m_v != other.m_v; }
+	private:
+		uint32_t m_v{npos};
+	};
 	
 	class Vertex final {
 	private:
@@ -87,6 +103,26 @@ public:
 		bool operator!=(const Vertex & other) const;
 		void dump(std::ostream & out) const;
 		void dump() const;
+	};
+	
+	class FaceId final {
+	public:
+		static constexpr uint32_t npos = 0xFFFFFFFF;
+		using Self = FaceId;
+	public:
+		FaceId() {}
+		FaceId(uint32_t v) : m_v(v) {}
+		FaceId(Self const &) = default;
+		Self & operator=(Self const &) = default;
+	public:
+		operator uint32_t() const { return m_v; }
+	public:
+		bool operator!=(Self const & other) const { return m_v != other.m_v; }
+		bool operator==(Self const & other) const { return m_v != other.m_v; }
+		bool operator==(uint32_t v) const { return m_v == v; }
+		bool operator!=(uint32_t v) const { return m_v != v; }
+	private:
+		uint32_t m_v{npos};
 	};
 
 	///A Face has up to 3 neighbors
@@ -171,8 +207,8 @@ public:
 		const Face & face() const;
 	};
 public:
-	static constexpr uint32_t NullFace = 0xFFFFFFFF;
-	static constexpr uint32_t NullVertex = 0xFFFFFFFF;
+	static constexpr uint32_t NullFace = FaceId::npos;
+	static constexpr uint32_t NullVertex = VertexId::npos;
 private:
 	typedef sserialize::MultiVarBitArray FaceInfos;
 	typedef sserialize::MultiVarBitArray VertexInfos;
