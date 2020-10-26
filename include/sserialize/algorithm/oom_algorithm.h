@@ -12,6 +12,7 @@
 #include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <sserialize/utility/assert.h>
+#include <sserialize/utility/debuggerfunctions.h>
 
 namespace sserialize {
 namespace detail {
