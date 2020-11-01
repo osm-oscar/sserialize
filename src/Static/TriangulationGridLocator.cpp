@@ -39,7 +39,12 @@ bool TriangulationGridLocator::contains(double lat, double lon) const {
 }
 
 uint32_t TriangulationGridLocator::faceHint(double lat, double lon) const {
-	return m_grid.at(lat, lon);
+	try {
+		return m_grid.at(lat, lon);
+	}
+	catch (sserialize::OutOfBoundsException const &) { //no face hint available, this means that the point is outside of the triangulation
+		return NullFace;
+	}
 }
 
 uint32_t TriangulationGridLocator::faceHint(const TriangulationGridLocator::Point& p) const {
