@@ -18,13 +18,37 @@ struct Entry {
 	typedef THandleType handle_type;
 	value_type value;
 	///by definition: single-element sets point to themselves!
-	uint64_t parent:40;
+	uint64_t parent:36;
 	///rank of this element, grows only logarithmical
-	uint64_t rank:24;
-	Entry(handle_type parent, const value_type & v = value_type()) : value(v), parent(parent), rank(0) {}
-	Entry(handle_type parent, value_type && v) : value(std::move(v)), parent(parent), rank(0) {}
+	uint64_t rank:28;
+	Entry(handle_type parent, const value_type & v = value_type()) :
+	value(v),
+	parent(parent),
+	rank(0)
+	{
+		if (parent != this->parent) {
+			throw std::overflow_error("UnionFind::Entry: Parent exceeds representable size");
+		}
+	}
+	Entry(handle_type parent, value_type && v) :
+	value(std::move(v)),
+	parent(parent),
+	rank(0)
+	{
+		if (parent != this->parent) {
+			throw std::overflow_error("UnionFind::Entry: Parent exceeds representable size");
+		}
+	}
 	template<typename... TArgs>
-	Entry(handle_type parent, TArgs... args) : value(std::forward<TArgs>(args)...), parent(parent), rank(0) {}
+	Entry(handle_type parent, TArgs... args) :
+	value(std::forward<TArgs>(args)...),
+	parent(parent),
+	rank(0)
+	{
+		if (parent != this->parent) {
+			throw std::overflow_error("UnionFind::Entry: Parent exceeds representable size");
+		}
+	}
 };
 
 template<typename TValueType, typename THandleType>
@@ -76,6 +100,7 @@ public: //value type interaction
 	template<typename... TArgs>
 	handle_type make_set(TArgs... args);
 public: //union find operations
+	///Unite operation invalidates representatives for a and b
 	void unite(handle_type a, handle_type b);
 	///return the representative for the set a
 	handle_type find(handle_type a);
@@ -180,6 +205,9 @@ UnionFind<TValueType>::unite(handle_type a, handle_type b) {
 	else {
 		epa.parent = pb;
 		epb.rank += 1;
+		if (!epb.rank) { //overflow happened
+			throw std::overflow_error("UnionFind::unite: rank exceeded representable size");
+		}
 	}
 }
 
