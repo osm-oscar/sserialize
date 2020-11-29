@@ -11,6 +11,14 @@ bool toBool(const std::string& str) {
 	return (str == "yes" || str == "true" || str == "1");
 }
 
+double toDouble(std::string const & str, std::locale const & locale) {
+	std::istringstream ss(str);
+	ss.imbue(locale);
+	double result;
+	ss >> result;
+	return result;
+}
+
 double stod(const std::string& str) {
 	std::istringstream is(str);
 	is.imbue(std::locale("C"));
