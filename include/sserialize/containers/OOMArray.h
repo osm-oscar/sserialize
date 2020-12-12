@@ -725,6 +725,7 @@ OOMArray<TValue, TEnable>::replace(const iterator & position, TSourceIterator sr
 	using std::distance;
 	//first copy the stuff that is before the back-buffer
 	auto offset = replace(position.p(), srcBegin, srcEnd);
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(offset, size());
 	return iterator(this, offset, position.bufferSize());
 }
 
@@ -742,11 +743,13 @@ OOMArray<TValue, TEnable>::replace(SizeType position, TSourceIterator srcBegin, 
 	}
 	
 	offset = replaceWithoutFlush(position, srcBegin, srcEnd);
+	SSERIALIZE_CHEAP_ASSERT_EQUAL(offset, position+count);
 	
 	if (m_syncOnFlush) {
 		::fdatasync(m_fd);
 		SSERIALIZE_NORMAL_ASSERT_EQUAL(sserialize::MmappedFile::fileSize(m_fd), m_backBufferBegin*sizeof(value_type));
 	}
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(offset, size());
 	return offset;
 }
 
@@ -777,7 +780,7 @@ OOMArray<TValue, TEnable>::replaceWithoutFlush(SizeType position, TSourceIterato
 	}
 	delete[] myBuffer;
 	SSERIALIZE_CHEAP_ASSERT_EQUAL(position+count, offset);
-	
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(offset, size());
 	return offset;
 }
 
