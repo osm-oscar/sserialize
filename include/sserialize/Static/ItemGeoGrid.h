@@ -43,12 +43,12 @@ public:
 	m_indexStore(indexStore)
 	{}
 	ItemGeoGrid(UByteArrayAdapter & data, const DataBaseType & db, const Static::ItemIndexStore & indexStore, UByteArrayAdapter::ConsumeTag) :
-	ItemGeoGrid(data)
+	ItemGeoGrid(data, db, indexStore)
 	{
 		data += getSizeInBytes();
 	}
 	ItemGeoGrid(UByteArrayAdapter const & data, const DataBaseType & db, const Static::ItemIndexStore & indexStore, UByteArrayAdapter::NoConsumeTag) :
-	ItemGeoGrid(data)
+	ItemGeoGrid(data, db, indexStore)
 	{}
 	virtual ~ItemGeoGrid() {}
 	const DataBaseType & db()  const { return m_db; }
