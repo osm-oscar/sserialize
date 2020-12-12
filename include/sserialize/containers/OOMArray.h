@@ -786,7 +786,8 @@ typename OOMArray<TValue, TEnable>::SizeType
 OOMArray<TValue, TEnable>::replaceWithoutFlush(SizeType position, TValue const * srcBegin, TValue const *srcEnd) {
 	std::size_t writeSize = sizeof(TValue)*std::distance(srcBegin, srcEnd);
 	FileHandler::pwrite(m_fd, srcBegin, writeSize, position*sizeof(TValue));
-	return position+writeSize;
+	SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(position+writeSize/sizeof(TValue), size());
+	return position+writeSize/sizeof(TValue);
 }
 
 template<typename TValue, typename TEnable>
