@@ -128,6 +128,24 @@ auto checked_add(I const & first, J const & second) {
 	return result;
 }
 
+template<typename I, typename J>
+auto checked_mult(I const & first, J const & second) {
+	decltype(first*second) result;
+	if (__builtin_mul_overflow(first, second, result)) {
+		throw sserialize::TypeOverflowException("Multi overflows");
+	}
+	return result;
+}
+
+template<typename I, typename J>
+auto checked_sub(I const & first, J const & second) {
+	decltype(first-second) result;
+	if (__builtin_sub_overflow(first, second, result)) {
+		throw sserialize::TypeOverflowException("Sub overflows");
+	}
+	return result;
+}
+
 }//end namespace sserialize
 
 #endif
