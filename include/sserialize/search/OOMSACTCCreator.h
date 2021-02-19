@@ -204,7 +204,7 @@ public:
 	
 	///This class needs to be thread-safe in the backend (one instance per thread)
 	///Needs to have a correct move ctor
-	class ItemTextSearchNodes {
+	class ItemSearchStructureNodes {
 	private:
 		typedef std::insert_iterator< std::unordered_set<uint32_t> > MyInsertIterator;
 		typedef ExactStringDerefIterator<MyInsertIterator> MyExactStringInsertIterator;
@@ -220,13 +220,13 @@ public:
 		std::unordered_set<CTCValueStoreNode> m_allNodes;
 		sserialize::StringCompleter::SupportedQuerries m_sq;
 	public:
-		ItemTextSearchNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss, sserialize::StringCompleter::SupportedQuerries sq) :
+		ItemSearchStructureNodes(const MyStaticTrieInfo * ti, const ExactStrings & es, const SuffixStrings & ss, sserialize::StringCompleter::SupportedQuerries sq) :
 		m_ti(ti), m_es(es), m_ss(ss),
 		m_esi(ti, MyInsertIterator(m_exactNodes, m_exactNodes.begin())),
 		m_ssi(ti, MyInsertIterator(m_suffixNodes, m_suffixNodes.begin())),
 		m_sq(sq)
 		{}
-		ItemTextSearchNodes(ItemTextSearchNodes && other) : 
+		ItemSearchStructureNodes(ItemSearchStructureNodes && other) : 
 		m_ti(std::move(other.m_ti)), m_es(std::move(other.m_es)), m_ss(std::move(other.m_ss)),
 		m_exactNodes(std::move(other.m_exactNodes)), m_suffixNodes(std::move(other.m_suffixNodes)),
 		m_esi(m_ti, MyInsertIterator(m_exactNodes, m_exactNodes.begin())),
@@ -307,7 +307,7 @@ public:
 	MyBaseTraits(baseTraits), m_ti(ti), m_fullMatch(allAreFullMatch), m_sq(sq) {}
 
 	FullMatchPredicate fullMatchPredicate() { return FullMatchPredicate(m_fullMatch); }
-	ItemTextSearchNodes itemTextSearchNodes() { return ItemTextSearchNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings(), m_sq); }
+	ItemSearchStructureNodes itemTextSearchNodes() { return ItemSearchStructureNodes(m_ti, MyBaseTraits::exactStrings(), MyBaseTraits::suffixStrings(), m_sq); }
 };
 
 class OutputTraits {

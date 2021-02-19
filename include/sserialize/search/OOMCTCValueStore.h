@@ -101,9 +101,16 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
 };
 
 /**
-  * This class creates the values stored in a text search data structure
-  * The text search has to provide a deterministic mapping of strings to unsigned integers,
-  * from now on called nodeId.
+  * This class creates the values stored in a search data structure
+  * The search data structure has to provide a deterministic mapping of items to NodeIds.
+  * A NodeId is internal to the search data structure.
+  * With this class you can create a mapping from NodeId -> (CellId -> ItemIds).
+  * Let us consider the use case of a simple inverted index
+  * Here Items have strings and reside in cells. An item may reside in multiple cells.
+  * Additionally an Item may span a set of cells.
+  * These are full-match Items, i.e. searching for a term matching these items yields the spanned cells.
+  * On the other hand we have partial-match items.
+  * These items reside in cells and hence a query will return all (cell, item) tuples matching the term.
   * 
   * struct BaseTraits {
   *   typdef <some type> NodeIdentifier
@@ -140,7 +147,7 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   *       void items(item_type item, uint32_t cellId, TOutputIterator out);
   *     }
   *   }
-  *   struct ItemTextSearchNodes {
+  *   struct ItemSearchNodes {
   *     template<typename TOutputIterator>
   *     void operator()(item_type item, TOutputIterator out);
   *   }
@@ -204,7 +211,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	using ItemIdExtractor = typename InputTraits::ItemId;
 	using ItemCellsExtractor = typename InputTraits::ItemCells;
 	using ForeignObjects = typename InputTraits::ForeignObjects;
-	using ItemTextSearchNodesExtractor = typename InputTraits::ItemTextSearchNodes;
+	using ItemSearchStructureNodesExtractor = typename InputTraits::ItemSearchStructureNodes;
 	
 	struct State {
 		TItemIterator it;
@@ -244,7 +251,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		ItemIdExtractor itemIdE;
 		ItemCellsExtractor itemCellsE;
 		ForeignObjects foE;
-		ItemTextSearchNodesExtractor nodesE;
+		ItemSearchStructureNodesExtractor nodesE;
 		
 		std::vector<uint32_t> itemCells;
 		std::vector<uint32_t> foreignCells;
