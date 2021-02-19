@@ -170,6 +170,7 @@ set(STORAGE_SOURCES_CPP
 	src/storage/UByteArrayAdapterPrivates/UByteArrayAdapterMV.cpp
 	src/storage/FileHandler.cpp
 	src/storage/pack_unpack_functions.cpp
+	src/storage/Size.cpp
 )
 
 set(MT_SOURCES_CPP
@@ -557,6 +558,7 @@ include/sserialize/stats/TimeMeasuerer.h
 include/sserialize/stats/statfuncs.h
 include/sserialize/storage/ChunkedMmappedFile.h
 include/sserialize/storage/CompressedMmappedFile.h
+include/sserialize/storage/Size.h
 include/sserialize/storage/FlushBuffer.h
 include/sserialize/storage/MmappedFile.h
 include/sserialize/storage/OrderedFlushBuffer.h
