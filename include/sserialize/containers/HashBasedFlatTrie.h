@@ -30,25 +30,47 @@ namespace HashBasedFlatTrie {
 
 class StaticString final {
 public:
-	typedef uint32_t OffsetType;
-	static constexpr OffsetType special = 0xFFFFFFFF;
+	using SizeType = uint32_t;
+	using OffsetType = uint64_t;
+	static constexpr SizeType OffsetBits = 32;
+	static constexpr SizeType SizeBits = 64-OffsetBits;
+	static constexpr OffsetType noff = sserialize::createMask64(OffsetBits);
+	static constexpr OffsetType nsize = sserialize::createMask64(SizeBits);
+	static constexpr OffsetType MaxOffset = noff-1;
+	static constexpr SizeType MaxStringSize = nsize-1;
 protected:
+public:
+	StaticString() : m_off(noff), m_size(nsize) {}
+	StaticString(const StaticString & other) :
+	m_off(other.m_off),
+	m_size(other.m_size)
+	{}
+	~StaticString() {}
+	inline OffsetType offset() const { return m_off; }
+	inline SizeType size() const { return m_size; }
+	inline bool isSpecial() const { return m_off == noff; }
+	inline bool isInvalid() const { return m_off == noff && m_size == nsize; }
+	///returns a copy with adjusted size
+	StaticString addOffset(SizeType off) const { return StaticString(m_off + off, m_size-off); }
+private:
 	template<typename TValue>
 	friend class sserialize::HashBasedFlatTrie;
-	uint32_t m_off;
-	uint32_t m_size;
-	StaticString(uint32_t offset, uint32_t size) : m_off(offset), m_size(size) {}
-	StaticString(uint32_t size) : m_off(special), m_size(size) {}
-public:
-	StaticString() : m_off(special), m_size(special) {}
-	StaticString(const StaticString & other) : m_off(other.m_off), m_size(other.m_size) {}
-	~StaticString() {}
-	inline uint32_t offset() const { return m_off; }
-	inline uint32_t size() const { return m_size; }
-	inline bool isSpecial() const { return m_off == special; }
-	inline bool isInvalid() const { return m_off == special && m_size == special; }
-	///returns a copy with adjusted size
-	StaticString addOffset(OffsetType off) const { return StaticString(m_off + off, m_size-off); }
+private:
+	StaticString(OffsetType offset, SizeType size) :
+	m_off(offset),
+	m_size(size)
+	{
+		if ( UNLIKELY_BRANCH(m_off != offset) ) {
+			throw std::out_of_range("StaticString: offset is too large");
+		}
+		if ( UNLIKELY_BRANCH(m_size != size) ) {
+			throw std::out_of_range("StaticString: size is too large");
+		}
+	}
+	StaticString(SizeType size) : StaticString(noff, size) {}
+private:
+	uint64_t m_off:OffsetBits;
+	uint64_t m_size:SizeBits;
 };
 
 }}//end namespace detail::HashBasedFlatTrie
@@ -59,11 +81,12 @@ private:
 	struct StringHandler;
 public:
 	typedef detail::HashBasedFlatTrie::StaticString StaticString;
+	using SizeType = uint32_t;
 	typedef TValue mapped_type;
 	typedef StaticString key_type;
 	typedef MMVector<char> StringStorage;
 	typedef MMVector< std::pair<key_type, TValue> > HTValueStorage;
-	typedef MMVector<uint32_t> HTStorage;
+	typedef MMVector<SizeType> HTStorage;
 	typedef typename HTValueStorage::const_iterator const_iterator;
 	typedef typename HTValueStorage::iterator iterator;
 private:
@@ -79,13 +102,14 @@ private:
 	};
 	
 	struct CompFunc {
+		using CodePoint = uint32_t;
 		const StringHandler * strHandler;
-		uint32_t posInStr;
-		CompFunc(const StringHandler * strHandler, uint32_t posInStr) : strHandler(strHandler), posInStr(posInStr) {}
-		inline bool operator()(uint32_t a, const std::pair<StaticString, TValue> & b) const {
+		StaticString::SizeType posInStr;
+		CompFunc(const StringHandler * strHandler, StaticString::SizeType posInStr) : strHandler(strHandler), posInStr(posInStr) {}
+		inline bool operator()(CodePoint a, const std::pair<StaticString, TValue> & b) const {
 			return a < utf8::peek_next(strHandler->strBegin(b.first)+posInStr, strHandler->strEnd(b.first));
 		}
-		inline bool operator()(const std::pair<StaticString, TValue> & a, uint32_t b) const {
+		inline bool operator()(const std::pair<StaticString, TValue> & a, CodePoint b) const {
 			return utf8::peek_next(strHandler->strBegin(a.first)+posInStr, strHandler->strEnd(a.first)) < b;
 		}
 		inline bool operator==(const CompFunc & other) const { return posInStr == other.posInStr && strHandler == other.strHandler; }
@@ -240,7 +264,7 @@ private:
 	mutable std::mutex m_specStrLock;
 	HashTable m_ht;
 private:
-	void finalize(uint64_t nodeBegin, uint64_t nodeEnd, uint32_t posInStr);
+	void finalize(uint64_t nodeBegin, uint64_t nodeEnd, StaticString::SizeType posInStr);
 	uint32_t depth(const NodePtr & n) {
 		uint32_t mD = 0;
 		for(auto c : *n) {
@@ -259,13 +283,13 @@ public:
 		m_ht = HashTable(HashFunc1(strHandlerPtr), HashFunc2(strHandlerPtr), StringEq(strHandlerPtr), 0.8, HTValueStorage(hashMMT), HTStorage(hashMMT));
 	}
 	~HashBasedFlatTrie() {}
-	uint64_t minStorageSize() const { return m_stringData.size() + m_ht.storageCapacity()*sizeof(typename HTValueStorage::value_type) + m_ht.capacity()*sizeof(HTStorage::value_type);}
+	UByteArrayAdapter::SizeType minStorageSize() const { return m_stringData.size() + m_ht.storageCapacity()*sizeof(typename HTValueStorage::value_type) + m_ht.capacity()*sizeof(HTStorage::value_type);}
 	///reserve @param count strings
-	void reserve(uint32_t count) { m_ht.reserve(count); }
+	void reserve(SizeType count) { m_ht.reserve(count); }
 	
 	const HashTable & hashTable() const { return m_ht; }
 	
-	uint32_t size() const { return m_ht.size(); }
+	SizeType size() const { return m_ht.size(); }
 	bool count(const StaticString & str) const;
 	bool count(const std::string & str);
 	
@@ -315,7 +339,7 @@ public:
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
 	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
 
-	bool valid(uint32_t & offendingString) const;
+	bool valid(SizeType & offendingString) const;
 	
 	bool checkTrieEquality(const sserialize::Static::UnicodeTrie::FlatTrieBase & sft) const;
 	
@@ -471,12 +495,12 @@ HashBasedFlatTrie<TValue>::count(const StaticString & a) const {
 template<typename TValue>
 typename HashBasedFlatTrie<TValue>::StaticString
 HashBasedFlatTrie<TValue>::insert(const std::string & a) {
-	if (a.size() > std::numeric_limits<uint32_t>::max()) {
+	if (a.size() > StaticString::MaxStringSize) {
 		throw sserialize::OutOfBoundsException("HashBasedFlatTrie::insert: string is too long");
 	}
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = a.c_str();
-	StaticString ret = insert(StaticString((uint32_t) a.size()));
+	StaticString ret = insert(StaticString(a.size()));
 	m_strHandler.specialString = 0;
 	return ret;
 }
@@ -489,10 +513,8 @@ HashBasedFlatTrie<TValue>::operator[](const StaticString & a) {
 		return m_ht[a];
 	}
 	else {
-		typename StaticString::OffsetType strOff;
-		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
-		return m_ht[StaticString(strOff, a.size())];
+		return m_ht[StaticString(m_stringData.size(), a.size())];
 	}
 }
 
@@ -501,7 +523,7 @@ TValue &
 HashBasedFlatTrie<TValue>::at(std::string const & str) {
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = str.c_str();
-	StaticString sstr((uint32_t) str.size());
+	StaticString sstr(str.size());
 	try {
 		TValue & v = m_ht.at(sstr);
 		m_strHandler.specialString = 0;
@@ -518,7 +540,7 @@ TValue const &
 HashBasedFlatTrie<TValue>::at(std::string const & str) const {
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = str.c_str();
-	StaticString sstr((uint32_t) str.size());
+	StaticString sstr(str.size());
 	try {
 		TValue const & v = m_ht.at(sstr);
 		m_strHandler.specialString = 0;
@@ -542,7 +564,7 @@ HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERAT
 	{
 		std::lock_guard<std::mutex> lck(m_specStrLock);
 		m_strHandler.specialString = tmp.c_str();
-		StaticString sstr((uint32_t) tmp.size());
+		StaticString sstr(tmp.size());
 		nodeBegin = m_ht.find(sstr);
 		m_strHandler.specialString = 0;
 	}
@@ -574,11 +596,9 @@ HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 		return a;
 	}
 	else {//special string (comes from outside)
-		typename StaticString::OffsetType strOff;
-		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
 		SSERIALIZE_NORMAL_ASSERT(utf8::is_valid(m_strHandler.strBegin(a), m_strHandler.strEnd(a)));
-		StaticString ns(strOff, a.size());
+		StaticString ns(m_stringData.size(), a.size());
 		m_ht.insert(ns);
 		return ns;
 	}
@@ -592,7 +612,7 @@ HashBasedFlatTrie<TValue>::insert(T_OCTET_ITERATOR begin, const T_OCTET_ITERATOR
 }
 
 template<typename TValue>
-void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEndOff, uint32_t posInStr) {
+void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEndOff, StaticString::SizeType posInStr) {
 	if (nodeBeginOff != nodeEndOff) {
 		{//find the end of our current node
 			const_iterator nodeBegin = begin()+nodeBeginOff;
@@ -635,8 +655,8 @@ void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEnd
 }
 
 template<typename TValue>
-bool HashBasedFlatTrie<TValue>::valid(uint32_t & offendingString) const {
-	uint32_t counter = 0;
+bool HashBasedFlatTrie<TValue>::valid(SizeType & offendingString) const {
+	SizeType counter = 0;
 	for(const auto & x : *this) {
 		if (!utf8::is_valid(m_strHandler.strBegin(x.first), m_strHandler.strEnd(x.first))) {
 			offendingString = counter;
@@ -652,9 +672,9 @@ void HashBasedFlatTrie<TValue>::finalize(uint32_t threadCount) {
 	const StringHandler * strHandler = &m_strHandler;
 	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	std::cout << "Finalizing HashBasedFlatTrie with size=" << size() << std::endl;
-	uint32_t brokenString = 0;
+	SizeType brokenString = 0;
 	if (!valid(brokenString)) {
-		throw sserialize::CorruptDataException("String is not valid at position=" + sserialize::toString<uint32_t>(brokenString));
+		throw sserialize::CorruptDataException("String is not valid at position=" + sserialize::toString<SizeType>(brokenString));
 	}
 	#endif
 	auto sortFunc = [strHandler](const typename HashTable::value_type & a, const typename HashTable::value_type & b) {
@@ -681,7 +701,7 @@ bool HashBasedFlatTrie<TValue>::checkTrieEquality(const Static::UnicodeTrie::Fla
 		}
 	}
 	const_iterator rIt(m_ht.cbegin()), rEnd(m_ht.cend());
-	uint32_t sI(0), sS(sft.size());
+	SizeType sI(0), sS(sft.size());
 	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
 		auto sftX = sft.sstr(sI);
 		if (rIt->first.size() != sftX.size() || rIt->first.offset() != sftX.off()) {
