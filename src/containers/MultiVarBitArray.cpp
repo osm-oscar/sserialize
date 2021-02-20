@@ -40,7 +40,7 @@ m_size(data.getUint32(1))
 
 MultiVarBitArrayPrivate::~MultiVarBitArrayPrivate() {}
 
-uint32_t MultiVarBitArrayPrivate::size() const {
+MultiVarBitArray::SizeType MultiVarBitArrayPrivate::size() const {
 	return m_size;
 }
 
@@ -62,7 +62,8 @@ uint8_t MultiVarBitArrayPrivate::bitCount(uint32_t pos) const {
 	return m_bitSums[pos] - m_bitSums[pos-1];
 }
 
-uint32_t MultiVarBitArrayPrivate::at(uint32_t pos, uint32_t subPos) const {
+MultiVarBitArrayPrivate::value_type
+MultiVarBitArrayPrivate::at(SizeType pos, uint32_t subPos) const {
 	if (pos >= m_size) {
 		throw sserialize::OutOfBoundsException("MultiVarBitArrayPrivate::at: pos >= size with pos=" + std::to_string(pos) + " and size=" + std::to_string(m_size) );
 		return 0;
@@ -88,14 +89,15 @@ uint32_t MultiVarBitArrayPrivate::at(uint32_t pos, uint32_t subPos) const {
 	
 }
 
-uint32_t MultiVarBitArrayPrivate::set(uint32_t pos, uint32_t subPos, uint32_t value) {
+MultiVarBitArrayPrivate::value_type
+MultiVarBitArrayPrivate::set(SizeType pos, uint32_t subPos, value_type value) {
 	if (pos >= m_size) {
 		throw sserialize::OutOfBoundsException("MultiVarBitArrayPrivate::set");
 		return ~value;
 	}
 
 	uint8_t bitCount = this->bitCount(subPos);
-	uint32_t mymask = createMask(bitCount);
+	value_type mymask = createMask64(bitCount);
 
 	value = value & mymask;
 	
@@ -142,7 +144,7 @@ UByteArrayAdapter & MultiVarBitArrayPrivate::data() {
 	return m_data;
 }
 
-void MultiVarBitArrayPrivate::setSize(uint32_t newSize) {
+void MultiVarBitArrayPrivate::setSize(SizeType newSize) {
 	m_size = newSize;
 }
 
@@ -163,7 +165,7 @@ MultiVarBitArray& MultiVarBitArray::operator=(const MultiVarBitArray& other) {
 	return *this;
 }
 
-uint32_t MultiVarBitArray::size() const {
+MultiVarBitArray::SizeType MultiVarBitArray::size() const {
 	return priv()->size();
 }
 
@@ -171,16 +173,18 @@ UByteArrayAdapter::OffsetType MultiVarBitArray::getSizeInBytes() const {
 	return priv()->getSizeInBytes();
 }
 
-uint32_t MultiVarBitArray::at(uint32_t pos, uint32_t subPos) const {
+MultiVarBitArray::value_type
+MultiVarBitArray::at(SizeType pos, uint32_t subPos) const {
 	return priv()->at(pos, subPos);
 }
 
-uint32_t MultiVarBitArray::set(uint32_t pos, uint32_t subPos, uint32_t value) {
+MultiVarBitArray::value_type
+MultiVarBitArray::set(SizeType pos, uint32_t subPos, value_type value) {
 	return priv()->set(pos, subPos, value);
 }
 
 
-void MultiVarBitArray::setSize(uint32_t newSize) {
+void MultiVarBitArray::setSize(SizeType newSize) {
 	priv()->setSize(newSize);
 }
 
@@ -214,7 +218,7 @@ UByteArrayAdapter& MultiVarBitArray::data() {
 	return priv()->data();
 }
 
-UByteArrayAdapter::OffsetType MultiVarBitArray::minStorageBytes(const std::vector< uint8_t >& bitConfig, const uint32_t count) {
+UByteArrayAdapter::OffsetType MultiVarBitArray::minStorageBytes(const std::vector< uint8_t >& bitConfig, const SizeType count) {
 	uint32_t sum = std::accumulate(bitConfig.begin(), bitConfig.end(), static_cast<uint32_t>(0));
 	return minStorageBytes(sum, count);
 }
@@ -246,7 +250,7 @@ MultiVarBitArrayCreator::MultiVarBitArrayCreator(const std::vector<uint8_t> & bi
 
 MultiVarBitArrayCreator::~MultiVarBitArrayCreator() {}
 
-bool MultiVarBitArrayCreator::reserve(uint32_t count) {
+bool MultiVarBitArrayCreator::reserve(SizeType count) {
 	if (m_arr.size() >= count)
 		return true;
 	UByteArrayAdapter::OffsetType storageNeed = MultiVarBitArray::minStorageBytes(m_arr.totalBitSum(), count);
@@ -257,14 +261,15 @@ bool MultiVarBitArrayCreator::reserve(uint32_t count) {
 	return true;
 }
 
-bool MultiVarBitArrayCreator::set(uint32_t pos, uint32_t subPos, uint32_t value) {
+bool MultiVarBitArrayCreator::set(SizeType pos, uint32_t subPos, value_type value) {
 	if (m_arr.size() <= pos)
 		if( !reserve(pos+1) )
 			return false;
 	return value == m_arr.set(pos, subPos, value);
 }
 
-uint32_t MultiVarBitArrayCreator::at(uint32_t pos, uint32_t subPos) const {
+MultiVarBitArrayCreator::value_type
+MultiVarBitArrayCreator::at(SizeType pos, uint32_t subPos) const {
 	return m_arr.at(pos, subPos);
 }
 

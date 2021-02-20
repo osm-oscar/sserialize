@@ -4,6 +4,7 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/debug.h>
+#include <sserialize/storage/Size.h>
 
 namespace sserialize {
 
@@ -27,23 +28,26 @@ namespace sserialize {
   */
 	
 class MultiVarBitArrayPrivate: public RefCountObject {
+public:
+	using value_type = uint64_t;
+	using SizeType = Size;
 private:
 	UByteArrayAdapter m_data;
 	std::vector<uint16_t> m_bitSums;
-	uint32_t m_size;
+	SizeType m_size;
 public:
 	MultiVarBitArrayPrivate();
 	MultiVarBitArrayPrivate(const UByteArrayAdapter & data);
 	MultiVarBitArrayPrivate(const std::vector< uint8_t >& bitConfig, const sserialize::UByteArrayAdapter& data);
 	virtual ~MultiVarBitArrayPrivate();
-	uint32_t size() const;
+	SizeType size() const;
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	uint32_t at(uint32_t pos, uint32_t subPos) const;
-	uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
+	value_type at(SizeType pos, uint32_t subPos) const;
+	value_type set(SizeType pos, uint32_t subPos, value_type value);
 
 	const UByteArrayAdapter & data() const;
 	UByteArrayAdapter & data();
-	void setSize(uint32_t newSize);
+	void setSize(SizeType newSize);
 
 	uint16_t bitsPerEntry() const;
 	uint32_t bitConfigCount() const;
@@ -51,6 +55,9 @@ public:
 };
 
 class MultiVarBitArray: public RCWrapper<MultiVarBitArrayPrivate> {
+public:
+	using value_type = MultiVarBitArrayPrivate::value_type;
+	using SizeType = MultiVarBitArrayPrivate::SizeType;
 protected:
 	typedef RCWrapper<MultiVarBitArrayPrivate> MyParentClass;
 public:
@@ -60,17 +67,17 @@ public:
 	virtual ~MultiVarBitArray();
 	MultiVarBitArray & operator=(const MultiVarBitArray & other);
 	
-	uint32_t size() const;
+	SizeType size() const;
 	///This is not valid if you used the second constructor with a given bitConfig
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	uint32_t at(uint32_t pos, uint32_t subPos) const;
-	uint32_t set(uint32_t pos, uint32_t subPos, uint32_t value);
+	value_type at(SizeType pos, uint32_t subPos) const;
+	value_type set(SizeType pos, uint32_t subPos, value_type value);
 
 	///return the data without the header
 	const UByteArrayAdapter & data() const;
 	///return the data without the header
 	UByteArrayAdapter & data();
-	void setSize(uint32_t newSize);
+	void setSize(SizeType newSize);
 
 	uint16_t totalBitSum() const;
 	uint32_t bitConfigCount() const;
@@ -79,12 +86,15 @@ public:
 	std::ostream & printStats(std::ostream & out) const;
 
 // 	static MultiVarBitArray create(const std::vector< uint8_t >& bitConfig, sserialize::UByteArrayAdapter& destination, uint32_t initCount);
-	static UByteArrayAdapter::OffsetType minStorageBytes(const std::vector<uint8_t> & bitConfig, const uint32_t count);
+	static UByteArrayAdapter::OffsetType minStorageBytes(const std::vector<uint8_t> & bitConfig, const SizeType count);
 	static UByteArrayAdapter::OffsetType minStorageBytes(const uint32_t sum, const sserialize::UByteArrayAdapter::OffsetType count);
 	enum { HEADER_SIZE=6}; //use const expr later
 };
 
 class MultiVarBitArrayCreator {
+public:
+	using value_type = MultiVarBitArray::value_type;
+	using SizeType = MultiVarBitArray::SizeType;
 private:
 	UByteArrayAdapter & m_data; //this holds the original dat ref
 	UByteArrayAdapter m_header;
@@ -94,10 +104,10 @@ public:
 	/** This will create MultiVarBitArray at the beginning of data.tellPutPtr() */
 	MultiVarBitArrayCreator(const std::vector< uint8_t >& bitConfig, sserialize::UByteArrayAdapter& data);
 	virtual ~MultiVarBitArrayCreator();
-	bool reserve(uint32_t count);
+	bool reserve(SizeType count);
 	/** This will increase the Array to fit pos */
-	bool set(uint32_t pos, uint32_t subPos, uint32_t value);
-	uint32_t at(uint32_t pos, uint32_t subPos) const;
+	bool set(SizeType pos, uint32_t subPos, value_type value);
+	value_type at(SizeType pos, uint32_t subPos) const;
 	
 	/** Flushes everthing to that, adjusting the length of the data and returns the data-block associated with the created MultiVarBitArray */
 	UByteArrayAdapter flush();
