@@ -13,20 +13,21 @@
 #include <sserialize/utility/VersionChecker.h>
 #include <fstream>
 #include <functional>
-#define SSERIALIZE_STATIC_ARRAY_VERSION 4
+#define SSERIALIZE_STATIC_ARRAY_VERSION 5
 
-/** FileFormat: v4
+/** FileFormat: v5
  *
  *-------------------------------------------------------------
  *Version|DataLen        |Data| (Data offsets or entry length)
  *-------------------------------------------------------------
- *  u8   |UBA::OffsetType|  * | (SortedOffsetIndex or vu32)
+ *  u8   |UBA::OffsetType|  * | (SortedOffsetIndex or vu64)
  * SIZE = Size of Data
  * 
  * data offsets/entry length: entry length if entry has constant length but is not integral, otherweise offset index
  * 
  * Changelog:
  * v4: remove Data Offsets index for constant-length types,
+ * v5: Use vu64 to encode array size
  * 
  * 
  */
@@ -71,7 +72,7 @@ public:
 	m_offsets(ofs),
 	m_ss(ss)
 	{
-		m_dest->putUint8(4);//version
+		m_dest->putUint8(5);//version
 		m_dataLenPtr = m_dest->tellPutPtr();
 		m_dest->putOffset(0);
 		
@@ -83,7 +84,7 @@ public:
 	m_offsets(ofs),
 	m_ss(ss)
 	{
-		m_dest->putUint8(4);//version
+		m_dest->putUint8(5);//version
 		m_dataLenPtr = m_dest->tellPutPtr();
 		m_dest->putOffset(0); //data len
 		
@@ -161,7 +162,7 @@ public:
 		m_dest->putOffset(m_dataLenPtr, m_dest->tellPutPtr() - m_dataBegin); //datasize
 		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
 			if (!std::is_integral<TValue>::value) {
-				m_dest->putVlPackedUint32(sserialize::SerializationInfo<TValue>::length);
+				m_dest->putVlPackedUint64(sserialize::SerializationInfo<TValue>::length);
 			}
 		}
 		else {
@@ -232,10 +233,10 @@ public:
 	{
 		SSERIALIZE_EQUAL_LENGTH_CHECK(sserialize::UByteArrayAdapter::OffsetType(m_size)*sserialize::SerializationInfo<TValue>::length, dataSize, "ArrayOffsetIndex");
 		if (!std::is_integral<TValue>::value) {
-			if (d.getVlPackedUint32(0) != sserialize::SerializationInfo<TValue>::length) {
+			if (d.getVlPackedUint64(0) != sserialize::SerializationInfo<TValue>::length) {
 				throw sserialize::CorruptDataException("sserialize::Static::Array: sizeof(value_type) - WANT=" +
 					std::to_string(sserialize::SerializationInfo<TValue>::length) +
-					", IS=" + std::to_string(d.getVlPackedUint32(0)));
+					", IS=" + std::to_string(d.getVlPackedUint64(0)));
 			}
 		}
 	}
