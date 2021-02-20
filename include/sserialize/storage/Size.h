@@ -18,19 +18,31 @@ public:
 	Size() {}
 	Size(Size const &) = default;
 	Size(Size &&) = default;
-	Size(underlying_type v) : m_v(v) {}
+	template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true>
+	Size(I v) :
+	m_v(v)
+	{
+		SSERIALIZE_CHEAP_ASSERT_EQUAL(m_v, v);
+	}
 	Size(UByteArrayAdapter const & src) : m_v(src.getOffset(0)) {}
 	Size(UByteArrayAdapter & src, UByteArrayAdapter::ConsumeTag) : m_v(src.getOffset()) {}
 	Size(UByteArrayAdapter const & src, UByteArrayAdapter::NoConsumeTag) : Size(src) {}
 	~Size() {}
-	inline Size & operator=(underlying_type v) {
+	template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true>
+	inline Size & operator=(I v) {
 		m_v = v;
 		return *this;
 	}
 	Size & operator=(Size const&) = default;
 	Size & operator=(Size &&) = default;
 public:
-	#define OP(__W) inline bool operator __W(Size const & o) const { return m_v __W o.m_v; }
+	#define OP(__W) \
+		friend inline bool operator __W(Size const & a, Size const & b) { return a.m_v __W b.m_v; } \
+		template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true> \
+		friend inline bool operator __W(Size const & a, I b) { return a.m_v __W b; } \
+		template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true> \
+		friend inline bool operator __W(I a, Size const & b) { return a __W b.m_v; }
+		
 	OP(!=)
 	OP(==)
 	OP(<)
@@ -40,11 +52,18 @@ public:
 	#undef OP
 public:
 #define OP(__W) \
-	inline Size & operator __W ## =(Size const & o) { \
+	inline Size & operator __W ## = (Size const & o) { \
 		m_v __W ## = o.m_v; \
 		return *this; \
 	} \
-	inline Size operator __W (Size const & o) const { return Size(m_v __W o.m_v); }
+	inline Size operator __W (Size const & o) const { return Size(m_v __W o.m_v); } \
+	template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true> \
+	inline Size operator __W ## = (I v) { \
+		return m_v __W v; \
+		return *this; \
+	} \
+	template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true> \
+	inline Size operator __W (I v) { return Size(m_v __W v); }
 	
 	OP(*)
 	OP(+)
