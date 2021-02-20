@@ -104,11 +104,11 @@ UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::getSizeInBytes() const {
 }
 
 
-uint32_t SortedOffsetIndexPrivate::size() const {
+sserialize::SizeType SortedOffsetIndexPrivate::size() const {
 	return m_size;
 }
 
-UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::at(uint32_t pos) const {
+UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::at(sserialize::SizeType pos) const {
 	if (pos >= m_size)
 		pos = m_size-1; //if size==1 => pos = 0
 	if (m_size > 1) {

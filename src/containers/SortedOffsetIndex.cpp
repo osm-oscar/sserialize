@@ -34,11 +34,11 @@ UByteArrayAdapter::OffsetType SortedOffsetIndex::getSizeInBytes() const {
 	return priv()->getSizeInBytes();
 }
 
-uint32_t SortedOffsetIndex::size() const {
+SizeType SortedOffsetIndex::size() const {
 	return priv()->size();
 }
 
-UByteArrayAdapter::OffsetType SortedOffsetIndex::at(uint32_t pos) const {
+UByteArrayAdapter::OffsetType SortedOffsetIndex::at(SizeType pos) const {
 	return priv()->at(pos);
 }
 

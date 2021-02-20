@@ -10,7 +10,7 @@ namespace Static {
   * It has some limitations (due to the implementation of the static SortedOffsetIndex)
   * max(offset[i]) < max(uint36_t) for all i
   * offset[i+1]-offset[i] < max(uint32_t) for all i
-  * You can store up to max(uint32_t) elements in it
+  * You can store up to max(uint36_t) elements in it
   */
 
 class SortedOffsetIndexPrivate;
@@ -20,6 +20,7 @@ private:
 	typedef RCWrapper<SortedOffsetIndexPrivate> MyParentClass;
 public:
 	typedef enum {T_REGLINE} Types;
+	using SizeType = sserialize::SizeType;
 public:
 	SortedOffsetIndex();
 	SortedOffsetIndex(const UByteArrayAdapter & data);
@@ -29,8 +30,8 @@ public:
 	virtual ~SortedOffsetIndex();
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	SortedOffsetIndex & operator=(const SortedOffsetIndex & other);
-	uint32_t size() const;
-	UByteArrayAdapter::OffsetType at(uint32_t pos) const;
+	SizeType size() const;
+	UByteArrayAdapter::OffsetType at(SizeType pos) const;
 };
 
 template<typename T_SORTED_CONTAINER>
@@ -38,8 +39,8 @@ bool operator==(const T_SORTED_CONTAINER & other, const sserialize::Static::Sort
 	if (other.size() != index.size())
 		return false;
 	typename T_SORTED_CONTAINER::const_iterator otherIt(other.begin());
-	uint32_t i = 0;
-	uint32_t indexSize = index.size();
+	SizeType i = 0;
+	SizeType indexSize = index.size();
 	for(; i < indexSize; ++i, ++otherIt) {
 		if (index.at(i) != *otherIt)
 			return false;

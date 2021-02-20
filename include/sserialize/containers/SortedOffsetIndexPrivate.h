@@ -31,8 +31,11 @@ namespace Static {
 
 class SortedOffsetIndexPrivate: public sserialize::RefCountObject {
 private:
+	static constexpr uint8_t IdBits = 6;
+	static constexpr sserialize::SizeType MaxSize = sserialize::createMask64(64-IdBits);
+private:
 	CompactUintArray m_idStore;
-	uint32_t m_size;
+	sserialize::SizeType m_size;
 	uint64_t m_slopenom;
 	int64_t m_yintercept; 
 	int64_t m_idOffset;//negative id-offset
@@ -97,15 +100,15 @@ public:
 	SortedOffsetIndexPrivate(const UByteArrayAdapter & data);
 	virtual ~SortedOffsetIndexPrivate();
 	virtual UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	uint32_t size() const;
-	UByteArrayAdapter::OffsetType at(uint32_t pos) const;
+	sserialize::SizeType size() const;
+	UByteArrayAdapter::OffsetType at(sserialize::SizeType pos) const;
 	
 	///Append a SortedOffsetIndexPrivate at dest
 	template<typename TSortedContainer>
 	static bool create(const TSortedContainer & src, sserialize::UByteArrayAdapter & destination) {
 		SSERIALIZE_EXPENSIVE_ASSERT(std::is_sorted(src.cbegin(), src.cend()));
 		
-		if (src.size() > std::numeric_limits<uint32_t>::max()) {
+		if (src.size() > MaxSize) {
 			throw sserialize::OutOfBoundsException("sserialize::SortedOffsetIndex::create: too many entries in src");
 		}
 	
@@ -126,7 +129,7 @@ public:
 				idOffset = 0;
 			}
 
-			uint64_t countTypeHeader = static_cast<uint64_t>(src.size()) << 6;
+			uint64_t countTypeHeader = static_cast<uint64_t>(src.size()) << IdBits;
 			countTypeHeader |= (bitsForIds-1);
 
 			if (destination.putVlPackedUint64(countTypeHeader) < 0)
