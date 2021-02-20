@@ -18,13 +18,47 @@ class FlatTrieBase;
 namespace detail {
 namespace FlatTrie {
 
-struct StaticString {
-	StaticString(uint32_t off, uint32_t size) : m_off(off), m_size(size) {}
-	StaticString() : m_off(0), m_size(0) {}
-	uint32_t m_off;
-	uint32_t m_size;
-	inline uint32_t size() const { return m_size; }
-	inline uint32_t off() const { return m_off; }
+class StaticString final {
+public:
+	using SizeType = uint32_t;
+	using OffsetType = uint64_t;
+	static constexpr SizeType OffsetBits = 32;
+	static constexpr SizeType SizeBits = 64-OffsetBits;
+	static constexpr OffsetType noff = sserialize::createMask64(OffsetBits);
+	static constexpr OffsetType nsize = sserialize::createMask64(SizeBits);
+	static constexpr OffsetType MaxOffset = noff-1;
+	static constexpr SizeType MaxStringSize = nsize-1;
+public:
+	StaticString() : m_off(noff), m_size(nsize) {}
+	StaticString(const StaticString & other) :
+	m_off(other.m_off),
+	m_size(other.m_size)
+	{}
+	StaticString(OffsetType offset, SizeType size) :
+	m_off(offset),
+	m_size(size)
+	{
+		if ( UNLIKELY_BRANCH(m_off != offset) ) {
+			throw std::out_of_range("StaticString: offset is too large");
+		}
+		if ( UNLIKELY_BRANCH(m_size != size) ) {
+			throw std::out_of_range("StaticString: size is too large");
+		}
+	}
+	StaticString(SizeType size) :
+	StaticString(noff, size)
+	{}
+	~StaticString() {}
+public:
+	inline OffsetType offset() const { return m_off; }
+	inline SizeType size() const { return m_size; }
+	inline bool isSpecial() const { return m_off == noff; }
+	inline bool isInvalid() const { return m_off == noff && m_size == nsize; }
+	///returns a copy with adjusted size
+	inline StaticString addOffset(SizeType off) const { return StaticString(m_off + off, m_size-off); }
+private:
+	uint64_t m_off:OffsetBits;
+	uint64_t m_size:SizeBits;
 };
 
 struct CompFunc {

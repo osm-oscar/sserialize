@@ -192,7 +192,7 @@ FlatTrieBase::StaticString FlatTrieBase::sstr(uint32_t pos) const {
 }
 
 UByteArrayAdapter FlatTrieBase::strData(const FlatTrieBase::StaticString & str) const {
-	return UByteArrayAdapter(m_strData, str.off(), str.size());
+	return UByteArrayAdapter(m_strData, str.offset(), str.size());
 }
 
 std::string FlatTrieBase::strAt(const StaticString & str) const {
