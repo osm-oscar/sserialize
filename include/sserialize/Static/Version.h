@@ -29,25 +29,36 @@ ensureVersion(sserialize::UByteArrayAdapter const & d, VersionType want, Version
 	return d;
 }
 
+template<typename VersionType>
+sserialize::UByteArrayAdapter const &
+ensureVersion(sserialize::UByteArrayAdapter & d,  VersionType want, UByteArrayAdapter::ConsumeTag) {
+	ensureVersion(want, d.get<VersionType>());
+	return d;
+}
+
+template<typename VersionType>
+sserialize::UByteArrayAdapter const &
+ensureVersion(sserialize::UByteArrayAdapter const & d,  VersionType want, UByteArrayAdapter::NoConsumeTag) {
+	ensureVersion(want, d.get<VersionType>(0));
+	return d;
+}
+
 template<uint8_t TVersion, typename TParent = void>
 class SimpleVersion {
 public:
 	using VersionType = uint8_t;
 	static constexpr VersionType value = TVersion;
-	struct Consume {};
-	struct NoConsume {};
+	using Consume = UByteArrayAdapter::ConsumeTag;
+	using NoConsume = UByteArrayAdapter::NoConsumeTag;
 public:
 	SimpleVersion() {}
 	//this will consume the version information and modify d accordingly
-	SimpleVersion(sserialize::UByteArrayAdapter & d, Consume) {
-		auto have = d.get<VersionType>(0);
-		ensureVersion(SimpleVersion::value, have);
-		d += sserialize::SerializationInfo<VersionType>::sizeInBytes(have);
+	SimpleVersion(sserialize::UByteArrayAdapter & d, UByteArrayAdapter::ConsumeTag c) {
+		ensureVersion<VersionType>(d, value, c);
 	}
 	//this will NOT consume the version information and wil NOT modify 
-	SimpleVersion(sserialize::UByteArrayAdapter const & d, NoConsume) {
-		auto have = d.get<VersionType>(0);
-		ensureVersion(SimpleVersion::value, have);
+	SimpleVersion(sserialize::UByteArrayAdapter const & d, UByteArrayAdapter::NoConsumeTag c) {
+		ensureVersion<VersionType>(d, value, c);
 	}
 	sserialize::UByteArrayAdapter::SizeType getSizeInBytes() const {
 		return sserialize::SerializationInfo<VersionType>::length;
