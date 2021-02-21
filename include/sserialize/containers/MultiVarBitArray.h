@@ -5,6 +5,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/utility/debug.h>
 #include <sserialize/storage/Size.h>
+#include <sserialize/Static/Version.h>
 
 namespace sserialize {
 
@@ -20,17 +21,23 @@ namespace sserialize {
   * 
   * Limits:
   * The maximum bitSum is 0xFFFF
-  * File format:
-  * ----------------------------------------------------------
-  * VERSION|count|configcount|bitconfig(sums)|data
-  * ----------------------------------------------------------
-  *     1     4        1     |compactuintarra|multivarbitarr 
+  * 
+  * struct MultiVarBitArray {
+  *   SimpleVersion<1> version;
+  *   Size size;
+  *   uint8_t numberOfFields;
+  *   CompactUintArray bitconfig(5, numberOfFields);
+  *   UByteArrayAdapter data;
+  * }
+  * 
   */
 	
 class MultiVarBitArrayPrivate: public RefCountObject {
 public:
 	using value_type = uint64_t;
 	using SizeType = Size;
+	using Version = Static::SimpleVersion<1, MultiVarBitArrayPrivate>;
+	static constexpr UByteArrayAdapter::SizeType HEADER_SIZE = SerializationInfo<Version>::length + SerializationInfo<SizeType>::length + SerializationInfo<uint8_t>::length;
 private:
 	UByteArrayAdapter m_data;
 	std::vector<uint16_t> m_bitSums;
@@ -63,6 +70,8 @@ protected:
 public:
 	MultiVarBitArray();
 	MultiVarBitArray(const UByteArrayAdapter & data);
+	MultiVarBitArray(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag);
+	MultiVarBitArray(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag);
 	MultiVarBitArray(const MultiVarBitArray & other);
 	virtual ~MultiVarBitArray();
 	MultiVarBitArray & operator=(const MultiVarBitArray & other);
@@ -88,7 +97,7 @@ public:
 // 	static MultiVarBitArray create(const std::vector< uint8_t >& bitConfig, sserialize::UByteArrayAdapter& destination, uint32_t initCount);
 	static UByteArrayAdapter::OffsetType minStorageBytes(const std::vector<uint8_t> & bitConfig, const SizeType count);
 	static UByteArrayAdapter::OffsetType minStorageBytes(const uint32_t sum, const sserialize::UByteArrayAdapter::OffsetType count);
-	enum { HEADER_SIZE=6}; //use const expr later
+	static constexpr UByteArrayAdapter::SizeType HEADER_SIZE=MultiVarBitArrayPrivate::HEADER_SIZE;
 };
 
 class MultiVarBitArrayCreator {
