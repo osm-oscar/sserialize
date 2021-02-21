@@ -63,7 +63,7 @@ private:
 
 struct CompFunc {
 	const FlatTrieBase * strHandler;
-	uint32_t posInStr;
+	StaticString::SizeType posInStr;
 	CompFunc(const FlatTrieBase * strHandler, uint32_t posInStr) : strHandler(strHandler), posInStr(posInStr) {}
 	bool operator()(uint32_t a, const StaticString & b) const;
 	bool operator()(const StaticString & a, uint32_t b) const;
