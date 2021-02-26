@@ -26,15 +26,15 @@ MultiVarBitArrayPrivate::MultiVarBitArrayPrivate(const UByteArrayAdapter & data)
 RefCountObject(),
 m_size(data+sserialize::SerializationInfo<Version>::length)
 {
-	Static::ensureVersion<uint8_t>(1, data.getUint8(0));
+	Version version(data, Version::NoConsume());
 	uint16_t bitConfigCount = data.getUint8(sserialize::SerializationInfo<Version>::length+sserialize::SerializationInfo<SizeType>::length);
-	CompactUintArray carr(data+MultiVarBitArray::HEADER_SIZE, 5);
+	CompactUintArray carr(data+MultiVarBitArray::HEADER_SIZE, BitConfigEntrySize);
 	m_bitSums.reserve(bitConfigCount);
 	m_bitSums.push_back(carr.at(0)+1);
 	for(uint16_t i = 1; i < bitConfigCount; i++)
 		m_bitSums.push_back(m_bitSums[i-1]+1+carr.at(i));
 	
-	UByteArrayAdapter::OffsetType dataOffset = MultiVarBitArray::HEADER_SIZE + CompactUintArray::minStorageBytes(5, bitConfigCount);
+	UByteArrayAdapter::OffsetType dataOffset = MultiVarBitArray::HEADER_SIZE + CompactUintArray::minStorageBytes(BitConfigEntrySize, bitConfigCount);
 	m_data = data+dataOffset;
 }
 
@@ -56,7 +56,7 @@ MultiVarBitArray::SizeType MultiVarBitArrayPrivate::size() const {
 
 UByteArrayAdapter::OffsetType MultiVarBitArrayPrivate::getSizeInBytes() const {
 	return MultiVarBitArray::HEADER_SIZE +
-			CompactUintArray::minStorageBytes(5, bitConfigCount()) +
+			CompactUintArray::minStorageBytes(BitConfigEntrySize, bitConfigCount()) +
 			MultiVarBitArray::minStorageBytes(bitsPerEntry(), size());
 }
 
@@ -91,7 +91,7 @@ MultiVarBitArrayPrivate::at(SizeType pos, uint32_t subPos) const {
 	uint8_t byteShift = 8 - initShift;
 	posStart++;
 	for(uint8_t bitsRead = 8 - initShift, i  = 0; bitsRead < bitCount; bitsRead+=8, i++) {
-		uint32_t newByte = m_data.at(posStart+i);
+		value_type newByte = m_data.at(posStart+i);
 		newByte = (newByte << (8*i+byteShift));
 		res |= newByte;
 	}
@@ -239,20 +239,18 @@ UByteArrayAdapter::OffsetType MultiVarBitArray::minStorageBytes(const uint32_t b
 
 MultiVarBitArrayCreator::MultiVarBitArrayCreator(const std::vector<uint8_t> & bitConfig, UByteArrayAdapter& data) : m_data(data), m_header(m_data) {
 	m_header.shrinkToPutPtr();
-	m_headerSize = MultiVarBitArray::HEADER_SIZE + (uint32_t) CompactUintArray::minStorageBytes(5, bitConfig.size());
+	m_headerSize = MultiVarBitArray::HEADER_SIZE + (uint32_t) CompactUintArray::minStorageBytes(MultiVarBitArrayPrivate::BitConfigEntrySize, bitConfig.size());
 	if (m_header.size() < m_headerSize) {
 		m_header.growStorage( m_headerSize - m_header.size() );
 	}
-	m_header << MultiVarBitArrayPrivate::Version() << SizeType(0) << uint8_t(0);
+	m_header << MultiVarBitArrayPrivate::Version() << SizeType(0) << uint8_t(bitConfig.size());
 	m_header.resetPutPtr();
-	CompactUintArray carr(m_header+MultiVarBitArray::HEADER_SIZE, 5);
+	CompactUintArray carr(m_header+MultiVarBitArray::HEADER_SIZE, MultiVarBitArrayPrivate::BitConfigEntrySize);
 	for(uint32_t i = 0; i < bitConfig.size(); i++) {
-		if (bitConfig[i]  == 0 || bitConfig[i] > 32) {
-			carr.set(i, 31);
+		if (bitConfig[i]  == 0 || bitConfig[i] > 64) {
+			throw sserialize::OutOfBoundsException("MultiVarBitArrayCreator: entry of bit config is no in range: " + std::to_string(bitConfig[i]) + " not in [1, 64]");
 		}
-		else {
-			carr.set(i, bitConfig[i]-1);
-		}
+		carr.set(i, bitConfig[i]-1);
 	}
 	m_arr = MultiVarBitArray(m_header);
 }
@@ -270,11 +268,13 @@ bool MultiVarBitArrayCreator::reserve(SizeType count) {
 	return true;
 }
 
-bool MultiVarBitArrayCreator::set(SizeType pos, uint32_t subPos, value_type value) {
-	if (m_arr.size() <= pos)
-		if( !reserve(pos+1) )
-			return false;
-	return value == m_arr.set(pos, subPos, value);
+void MultiVarBitArrayCreator::set(SizeType pos, uint32_t subPos, value_type value) {
+	if (m_arr.size() <= pos && !reserve(pos+1)) {
+		throw sserialize::AllocationException("MultiVarBitArrayCreator::set");
+	}
+	if (UNLIKELY_BRANCH(value != m_arr.set(pos, subPos, value))) {
+		throw sserialize::TypeOverflowException("MultiVarBitArrayCreator::set");
+	}
 }
 
 MultiVarBitArrayCreator::value_type
@@ -283,7 +283,7 @@ MultiVarBitArrayCreator::at(SizeType pos, uint32_t subPos) const {
 }
 
 UByteArrayAdapter MultiVarBitArrayCreator::flush() {
-	m_header.put(sserialize::SerializationInfo<MultiVarBitArrayPrivate::Version>::length, m_arr.size());
+	m_header.put<SizeType>(sserialize::SerializationInfo<MultiVarBitArrayPrivate::Version>::length, m_arr.size());
 
 	UByteArrayAdapter::OffsetType storageNeed = MultiVarBitArray::minStorageBytes(m_arr.totalBitSum(), m_arr.size());
 	if (m_header.size() < m_headerSize+storageNeed) {//no flush has happened yet

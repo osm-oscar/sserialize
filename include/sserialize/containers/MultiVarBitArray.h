@@ -23,10 +23,10 @@ namespace sserialize {
   * The maximum bitSum is 0xFFFF
   * 
   * struct MultiVarBitArray {
-  *   SimpleVersion<1> version;
+  *   SimpleVersion<2> version;
   *   Size size;
   *   uint8_t numberOfFields;
-  *   CompactUintArray bitconfig(5, numberOfFields);
+  *   CompactUintArray bitconfig(6, numberOfFields);
   *   UByteArrayAdapter data;
   * }
   * 
@@ -36,8 +36,9 @@ class MultiVarBitArrayPrivate: public RefCountObject {
 public:
 	using value_type = uint64_t;
 	using SizeType = Size;
-	using Version = Static::SimpleVersion<1, MultiVarBitArrayPrivate>;
+	using Version = Static::SimpleVersion<2, MultiVarBitArrayPrivate>;
 	static constexpr UByteArrayAdapter::SizeType HEADER_SIZE = SerializationInfo<Version>::length + SerializationInfo<SizeType>::length + SerializationInfo<uint8_t>::length;
+	static constexpr uint8_t BitConfigEntrySize = 6;
 private:
 	UByteArrayAdapter m_data;
 	std::vector<uint16_t> m_bitSums;
@@ -115,7 +116,7 @@ public:
 	virtual ~MultiVarBitArrayCreator();
 	bool reserve(SizeType count);
 	/** This will increase the Array to fit pos */
-	bool set(SizeType pos, uint32_t subPos, value_type value);
+	void set(SizeType pos, uint32_t subPos, value_type value);
 	value_type at(SizeType pos, uint32_t subPos) const;
 	
 	/** Flushes everthing to that, adjusting the length of the data and returns the data-block associated with the created MultiVarBitArray */
