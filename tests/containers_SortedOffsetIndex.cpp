@@ -9,6 +9,7 @@
 #include "TestBase.h"
 
 using namespace sserialize;
+using SizeType = Static::SortedOffsetIndex::SizeType;
 
 
 std::set<uint32_t> myCreateNumbers(uint32_t count) {
@@ -75,7 +76,7 @@ public:
 			Static::SortedOffsetIndexPrivate::create(realValues, dest);
 			Static::SortedOffsetIndex idx(dest);
 		
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 		
 			uint32_t count = 0;
@@ -98,7 +99,7 @@ public:
 			CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
 			Static::SortedOffsetIndex idx(dest);
 		
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 		
 			uint32_t count = 0;
@@ -125,7 +126,7 @@ public:
 			CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
 			Static::SortedOffsetIndex idx(dest);
 		
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 		
 			count = 0;
@@ -146,7 +147,7 @@ public:
 				CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
 				Static::SortedOffsetIndex idx(dest);
 			
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 			
 				uint32_t count = 0;
@@ -167,7 +168,7 @@ public:
 		CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
 		Static::SortedOffsetIndex idx(dest);
 	
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)realValues.size(), idx.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 	
 		uint32_t count = 0;
@@ -194,7 +195,7 @@ public:
 			Static::SortedOffsetIndexPrivate::create(values, d);
 			Static::SortedOffsetIndex idx(d);
 		
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", (uint32_t)values.size(), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", sserialize::Static::SortedOffsetIndex::SizeType(values.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)d.size(), idx.getSizeInBytes());
 		
 			uint32_t count = 0;
