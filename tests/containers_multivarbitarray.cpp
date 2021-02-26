@@ -12,9 +12,9 @@ using namespace sserialize;
 template<uint32_t TValueCount, uint32_t TSubValueCount>
 class MultiVarBitArrayTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( MultiVarBitArrayTest );
-CPPUNIT_TEST( testEquality );
-CPPUNIT_TEST( testBitCount );
 CPPUNIT_TEST( testSize );
+CPPUNIT_TEST( testBitCount );
+CPPUNIT_TEST( testEquality );
 CPPUNIT_TEST_SUITE_END();
 private:
 	using value_type = MultiVarBitArray::value_type;
@@ -30,13 +30,13 @@ public:
 		auto bit_dist = std::uniform_int_distribution<uint8_t>(1, 64);
 		auto value_dist = std::uniform_int_distribution<uint64_t>();
 		auto gen = std::mt19937(0);
-		for(size_t i = 0; i < TSubValueCount; i++) {
+		for(std::size_t i = 0; i < TSubValueCount; i++) {
 			m_bitConfig.push_back(bit_dist(gen));
 		}
 		
-		for(size_t i = 0; i < TValueCount; i++) {
+		for(std::size_t i = 0; i < TValueCount; i++) {
 			std::vector<value_type> subValues;
-			for(size_t j = 0; j < TSubValueCount; j++) {
+			for(std::size_t j = 0; j < TSubValueCount; j++) {
 				subValues.push_back( value_dist(gen) & createMask64(m_bitConfig[j]) );
 			}
 			m_values.push_back(subValues);
@@ -49,9 +49,9 @@ public:
 		MultiVarBitArrayCreator creator(m_bitConfig, m_data);
 		creator.reserve(TValueCount);
 		
-		for(uint32_t i = 0; i < TValueCount; i++) {
-			for(uint32_t j = 0; j < TSubValueCount; j++) {
-				creator.set(i,j, m_values[i][j] );
+		for(std::size_t i = 0; i < TValueCount; i++) {
+			for(std::size_t j = 0; j < TSubValueCount; j++) {
+				creator.set(i,j, m_values[i][j]);
 			}
 		}
 		UByteArrayAdapter fd = creator.flush();
@@ -62,8 +62,8 @@ public:
 	virtual void tearDown() {}
 	
 	void testEquality() {
-		for(uint32_t i = 0; i < TValueCount; i++) {
-			for(uint32_t j = 0; j < TSubValueCount; j++) {
+		for(std::size_t i = 0; i < TValueCount; i++) {
+			for(std::size_t j = 0; j < TSubValueCount; j++) {
 				std::stringstream ss;
 				ss << "pos=" << i << ", subpos=" << j;
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), m_values[i][j], m_arr.at(i,j)  );
@@ -78,7 +78,7 @@ public:
 	
 	void testBitCount() {
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("bitconfig.size() is wrong", (uint32_t) m_bitConfig.size(), m_arr.bitConfigCount());
-		for(uint32_t i = 0; i < m_bitConfig.size(); i++) {
+		for(std::size_t i = 0; i < m_bitConfig.size(); i++) {
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("bitconfig is broken", m_bitConfig.at(i), m_arr.bitCount(i));
 		}
 	}
@@ -136,6 +136,9 @@ int main(int argc, char ** argv) {
 	runner.addTest( MultiVarBitArrayTest<128*1024, 3>::suite() );
 	runner.addTest( MultiVarBitArrayTest<1024*1024, 3>::suite() );
 	runner.addTest( MultiVarBitArraySpecialTest::suite() );
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
