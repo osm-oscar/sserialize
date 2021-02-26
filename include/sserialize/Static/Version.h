@@ -71,7 +71,18 @@ sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest,
 	return dest;
 }
 
-}}//end namespace sserialize::Static
+}
+	
+template<uint8_t TVersion, typename TParent>
+struct SerializationInfo<Static::SimpleVersion<TVersion, TParent>>:
+	SerializationInfo<typename Static::SimpleVersion<TVersion, TParent>::VersionType>
+{
+	static OffsetType sizeInBytes(const Static::SimpleVersion<TVersion, TParent> & value) {
+		return value.getSizeInBytes();
+	}
+};
+
+}//end namespace sserialize::Static
 
 
 #endif
