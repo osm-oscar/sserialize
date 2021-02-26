@@ -8,86 +8,67 @@
 
 namespace sserialize {
 
-template<typename I>
-inline
-typename std::enable_if<std::is_unsigned<I>::value, I>::type
-narrow_check(double value) {
-	if (UNLIKELY_BRANCH(value < 0.0 || value > std::floor((double)std::numeric_limits<I>::max()))) {
-		throw sserialize::TypeOverflowException("out of range");
-	}
-	return static_cast<I>(value);
-}
+template<typename To, typename From, typename Enable = void>
+struct NarrowCheck;
 
-template<typename I>
-inline
-typename std::enable_if<std::is_unsigned<I>::value, I>::type
-narrow_check(float value) {
-	if (UNLIKELY_BRANCH(value < 0.0 || value > std::floor((float)std::numeric_limits<I>::max()))) {
-		throw sserialize::TypeOverflowException("out of range");
+///Float specializations
+template<typename To, typename From>
+struct NarrowCheck<To, From, std::enable_if_t<(std::is_integral_v<To> && std::is_floating_point_v<From>)> > {
+	static To cast(From value) {
+		if (UNLIKELY_BRANCH(value < std::ceil(From(std::numeric_limits<To>::min())) || value > std::floor(From(std::numeric_limits<To>::max())))) {
+			throw sserialize::TypeOverflowException("out of range");
+		}
+		return static_cast<To>(value);
 	}
-	return static_cast<I>(value);
-}
+};
 
-template<typename I>
-inline
-typename std::enable_if<std::is_signed<I>::value, I>::type
-narrow_check(double value) {
-	if (UNLIKELY_BRANCH(value < std::ceil(double(std::numeric_limits<I>::min())) || value > std::floor((double)std::numeric_limits<I>::max()))) {
-		throw sserialize::TypeOverflowException("out of range");
-	}
-	return static_cast<I>(value);
-}
+//Integer variants
 
-template<typename I>
-inline
-typename std::enable_if<std::is_signed<I>::value, I>::type
-narrow_check(float value) {
-	if (UNLIKELY_BRANCH(value < std::ceil(double(std::numeric_limits<I>::min())) || value > std::floor((float)std::numeric_limits<I>::max()))) {
-		throw sserialize::TypeOverflowException("out of range");
+template<typename To, typename From>
+struct NarrowCheck<To, From, std::enable_if_t<(std::is_signed_v<To> && std::is_signed_v<From> && std::is_integral_v<From>)> > {
+	static To cast(From value) {
+		if (UNLIKELY_BRANCH(value < std::numeric_limits<To>::min() || value > std::numeric_limits<To>::max())) {
+			throw sserialize::TypeOverflowException("out of range");
+		}
+		return static_cast<To>(value);
 	}
-	return static_cast<I>(value);
-}
+};
 
-template<typename I, typename J>
-inline
-typename std::enable_if<std::is_signed<I>::value && std::is_signed<J>::value, I>::type
-narrow_check(J value) {
-	if (UNLIKELY_BRANCH(value < std::numeric_limits<I>::min() || value > std::numeric_limits<I>::max())) {
-		throw sserialize::TypeOverflowException("out of range");
+template<typename To, typename From>
+struct NarrowCheck<To, From, std::enable_if_t<(std::is_signed_v<To> && std::is_unsigned_v<From> && std::is_integral_v<From>)> > {
+	static To cast(From value) {
+		if (UNLIKELY_BRANCH(value > static_cast<typename std::make_unsigned<To>::type>(std::numeric_limits<To>::max()))) {
+			throw sserialize::TypeOverflowException("out of range");
+		}
+		return static_cast<To>(value);
 	}
-	return static_cast<I>(value);
-}
+};
 
-template<typename I, typename J>
-inline
-typename std::enable_if<std::is_signed<I>::value && std::is_unsigned<J>::value, I>::type
-narrow_check(J value) {
-	if (UNLIKELY_BRANCH(value > static_cast<typename std::make_unsigned<I>::type>(std::numeric_limits<I>::max()))) {
-		throw sserialize::TypeOverflowException("out of range");
+template<typename To, typename From>
+struct NarrowCheck<To, From, std::enable_if_t<(std::is_unsigned_v<To> && std::is_signed_v<From> && std::is_integral_v<From>)> > {
+	static To cast(From value) {
+		if (UNLIKELY_BRANCH(value < 0 || static_cast<typename std::make_unsigned<From>::type>(value) > std::numeric_limits<To>::max())) {
+			throw sserialize::TypeOverflowException("out of range");
+		}
+		return static_cast<To>(value);
 	}
-	return static_cast<I>(value);
-}
+};
+
+template<typename To, typename From>
+struct NarrowCheck<To, From, std::enable_if_t<(std::is_unsigned_v<To> && std::is_unsigned_v<From> && std::is_integral_v<From>)> > {
+	static To cast(From value) {
+		if (UNLIKELY_BRANCH(value > std::numeric_limits<To>::max())) {
+			throw sserialize::TypeOverflowException("out of range");
+		}
+		return static_cast<To>(value);
+	}
+};
 
 template<typename I, typename J>
-inline
-typename std::enable_if<std::is_unsigned<I>::value && std::is_signed<J>::value, I>::type
+auto
 narrow_check(J value) {
-	if (UNLIKELY_BRANCH(value < 0 || static_cast<typename std::make_unsigned<J>::type>(value) > std::numeric_limits<I>::max())) {
-		throw sserialize::TypeOverflowException("out of range");
-	}
-	return static_cast<I>(value);
+	return NarrowCheck<I, J>::cast(value);
 }
-
-template<typename I, typename J>
-inline
-typename std::enable_if<std::is_unsigned<I>::value && std::is_unsigned<J>::value, I>::type
-narrow_check(J value) {
-	if (UNLIKELY_BRANCH(value > std::numeric_limits<I>::max())) {
-		throw sserialize::TypeOverflowException("out of range");
-	}
-	return static_cast<I>(value);
-}
-
 
 ///assign lhs to rhs. Use it like narrow_check_assign(lhs, rhs);
 template<typename I, typename J>
@@ -106,7 +87,7 @@ namespace detail {
 		
 		template<typename J>
 		inline I & operator=(const J & rhs) {
-			m_lhs = narrow_check<I>(rhs);
+			m_lhs = sserialize::narrow_check<I>(rhs);
 			return m_lhs;
 		}
 	};
