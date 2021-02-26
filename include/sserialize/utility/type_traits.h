@@ -8,14 +8,14 @@
 #endif
 
 namespace sserialize {
-	template<typename __T>
+	template<typename T>
 	struct is_trivially_copyable {
-		static constexpr bool value = IS_TRIVIALLY_COPYABLE(__T);
+		static constexpr bool value = IS_TRIVIALLY_COPYABLE(T);
 	};
 	
-	template<typename __T>
+	template<typename T>
 	struct is_trivially_relocatable {
-		static constexpr bool value = sserialize::is_trivially_copyable<__T>::value;
+		static constexpr bool value = sserialize::is_trivially_copyable<T>::value;
 	};
 }//end namespace sserialize
 
