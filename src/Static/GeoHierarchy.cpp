@@ -10,6 +10,7 @@ namespace spatial {
 namespace detail {
 
 void SubSet::Node::dump(std::ostream& out) {
+	using sserialize::operator<<;
 	out << "sserialize::spatial::GeoHierarchy::SubSet::Node\n";
 	out << "GH-Id: " << m_ghId << "\n";
 	out << "ItemSize: " << m_itemSize << "\n";
