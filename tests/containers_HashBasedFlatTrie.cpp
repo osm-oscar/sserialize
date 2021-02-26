@@ -123,13 +123,13 @@ public:
 	m_ht.finalize();
 }
 protected:
-	std::string const & testString(std::size_t pos) override {
+	std::string const & testString(std::size_t /*pos*/) override {
 		return m_testString;
 	}
 	std::size_t numTestStrings() const override {
 		return 1;
 	}
-	std::string const & checkString(std::size_t pos) override {
+	std::string const & checkString(std::size_t /*pos*/) override {
 		return m_testString;
 	}
 	std::size_t numCheckStrings() const override {
