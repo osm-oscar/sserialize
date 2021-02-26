@@ -10,6 +10,14 @@ IF(CMAKE_CROSSCOMPILING)
 	find_package(Ragel REQUIRED)
 	set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM_BEFORE})
 ELSE(CMAKE_CROSSCOMPILING)
+	#set(CMAKE_C_CLANG_TIDY clang-tidy;
+		#-header-filter=.;
+		#-checks=bugprone*,clang-analyzer*;
+	#)
+	#set(CMAKE_CXX_CLANG_TIDY clang-tidy;
+		#-header-filter=.;
+		#-checks=bugprone*,clang-analyzer*;
+	#)
 	find_package(LIBRT REQUIRED)
 	find_package(Ragel REQUIRED)
 	find_package(Cryptopp REQUIRED)
