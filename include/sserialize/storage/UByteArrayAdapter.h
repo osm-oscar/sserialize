@@ -584,7 +584,7 @@ sserialize::UByteArrayAdapter& operator>>(sserialize::UByteArrayAdapter & data, 
 
 //template specialiazations
 
-#define UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(__TYPE, __GETFUNC, __PUTFUNC) \
+#define SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(__TYPE, __GETFUNC, __PUTFUNC) \
 template<> \
 inline void UByteArrayAdapter::put(const __TYPE & v) { \
 	__PUTFUNC(v); \
@@ -610,17 +610,15 @@ inline void UByteArrayAdapter::get(UByteArrayAdapter::OffsetType pos, __TYPE & v
 	v = __GETFUNC(pos); \
 } \
 
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint8_t, getUint8, putUint8);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint16_t, getUint16, putUint16);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint32_t, getUint32, putUint32);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(int32_t, getInt32, putInt32);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint64_t, getUint64, putUint64);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(int64_t, getInt64, putInt64);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(float, getFloat, putFloat);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(double, getDouble, putDouble);
-UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(std::string, getString, putString);
-
-#undef UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint8_t, getUint8, putUint8);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint16_t, getUint16, putUint16);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint32_t, getUint32, putUint32);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(int32_t, getInt32, putInt32);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(uint64_t, getUint64, putUint64);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(int64_t, getInt64, putInt64);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(float, getFloat, putFloat);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(double, getDouble, putDouble);
+SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(std::string, getString, putString);
 
 template<>
 inline void UByteArrayAdapter::put(const sserialize::UByteArrayAdapter & v) {
