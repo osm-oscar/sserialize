@@ -1,5 +1,7 @@
+#pragma once
 #ifndef SSERIALIZE_HASH_BASED_FLAT_TRIE_H
 #define SSERIALIZE_HASH_BASED_FLAT_TRIE_H
+#include <sserialize/storage/Size.h>
 #include <sserialize/containers/OADHashTable.h>
 #include <sserialize/containers/MMVector.h>
 #include <sserialize/iterator/TransformIterator.h>
@@ -38,7 +40,7 @@ private:
 	struct StringHandler;
 public:
 	typedef detail::HashBasedFlatTrie::StaticString StaticString;
-	using SizeType = uint32_t;
+	using SizeType = sserialize::Size;
 	typedef TValue mapped_type;
 	typedef StaticString key_type;
 	typedef MMVector<char> StringStorage;
@@ -700,12 +702,12 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 		maxLen = std::max<uint64_t>(maxLen, x.first.size());
 	}
 	uint64_t maxOffset = maxBegin - m_stringData.begin();
-	if (maxOffset > std::numeric_limits<uint32_t>::max() || maxLen > std::numeric_limits<uint32_t>::max()) {
+	if (maxOffset > std::numeric_limits<SizeType>::max() || maxLen > std::numeric_limits<SizeType>::max()) {
 		throw sserialize::OutOfBoundsException("String data is too large");
 	}
 	
 	MultiVarBitArrayCreator tsCreator(std::vector<uint8_t>({(uint8_t)CompactUintArray::minStorageBits(maxOffset), (uint8_t)CompactUintArray::minStorageBits(maxLen)}), dest);
-	uint32_t count = 0;
+	SizeType count = 0;
 	const char * strDataBegin = m_stringData.begin();
 	pinfo.begin(m_ht.size(), "sserialize::HashBasedFlatTrie serializing trie");
 #if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
@@ -713,7 +715,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	uint64_t debugCheckSizeEntry = m_ht.begin()->first.size();
 #endif
 	for(const auto & x : m_ht) {
-		bool ok = tsCreator.set(count, 0, (uint32_t) (m_strHandler.strBegin(x.first)-strDataBegin));
+		bool ok = tsCreator.set(count, 0, SizeType(m_strHandler.strBegin(x.first)-strDataBegin));
 		ok = tsCreator.set(count, 1, x.first.size()) && ok;
 		SSERIALIZE_CHEAP_ASSERT(ok);
 		++count;
@@ -741,7 +743,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
 bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
-	if (size() > std::numeric_limits<uint32_t>::max()) {
+	if (size() > std::numeric_limits<SizeType>::max()) {
 		throw sserialize::CreationException("HashBasedFlatTrie: unable to serialize. Too many nodes.");
 	}
 
@@ -751,8 +753,8 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	sserialize::ProgressInfo pinfo;
 	sserialize::TimeMeasurer tm;
 	sserialize::Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> tmpPayload(size(), size());
-	std::vector<uint32_t> nodeIdToData(size(), std::numeric_limits<uint32_t>::max());
-	uint32_t count = 0;
+	std::vector<SizeType> nodeIdToData(size(), std::numeric_limits<SizeType>::max());
+	SizeType count = 0;
 	if (threadCount <= 1) {
 		std::vector<NodePtr> nodesInLevelOrder;
 		nodesInLevelOrder.reserve(size());
@@ -760,7 +762,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			std::cout << "sserialize::HashBasedFlatTrie collecting trie nodes..." << std::flush;
 			tm.begin();
 			nodesInLevelOrder.push_back(root());
-			uint32_t i = 0;
+			SizeType i = 0;
 			while (i < nodesInLevelOrder.size()) {
 				NodePtr & n = nodesInLevelOrder[i];
 				for(NodePtr cn : *n) {
@@ -776,7 +778,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 		pinfo.begin(nodesInLevelOrder.size(), "sserialize::HashBasedFlatTrie serializing payload");
 		while (nodesInLevelOrder.size()) {
 			NodePtr & n = nodesInLevelOrder.back();
-			uint32_t id = (uint32_t) (n->m_begin - m_ht.begin());
+			SizeType id = SizeType(n->m_begin - m_ht.begin());
 			nodeIdToData[id] = tmpPayload.size();
 			tmpPayload.beginRawPush() << payloadHandler(n);
 			tmpPayload.endRawPush();
@@ -788,10 +790,10 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	else {
 // 		threadCount = 1;
 		typename HashTable::const_iterator htBegin = m_ht.begin();
-		SSERIALIZE_CHEAP_ASSERT_EXEC(uint32_t htSize = size());
+		SSERIALIZE_CHEAP_ASSERT_EXEC(SizeType htSize = size());
 		std::vector< std::vector<NodePtr> > nodesInLevelOrder(depth(root()));
 		nodesInLevelOrder[0].push_back(root());
-		for(uint32_t i(0), s((uint32_t) (nodesInLevelOrder.size()-1)); i < s; ++i) {
+		for(SizeType i(0), s(SizeType(nodesInLevelOrder.size()-1)); i < s; ++i) {
 			const std::vector<NodePtr> & levelNodes = nodesInLevelOrder[i];
 			std::vector<NodePtr> & destLevelNodes = nodesInLevelOrder[i+1];
 			for(const NodePtr & n : levelNodes) {
@@ -817,7 +819,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
 			NodePtr * levelNodesIt = &levelNodes[0];
 			NodePtr * levelNodesEnd = levelNodesIt+levelNodes.size();
-			uint32_t blockSize = (uint32_t) (levelNodes.size()/threadCount);
+			std::size_t blockSize = SizeType(levelNodes.size()/threadCount);
 			
 			for(uint32_t i(0); i < threadCount; ++i) {
 				T_PH * pH = &payloadHandlers[i];
@@ -825,7 +827,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 				threadPool.sheduleTask(
 					[=, &levelNodesIt, &levelNodesEnd, &nodeFetchMtx, &runningBlockTasks, &dataAccessMtx, &nodeIdToData, &tmpPayload, &htBegin]() {
 						Static::DynamicVector<UByteArrayAdapter, UByteArrayAdapter> myTmpPayload(blockSize, blockSize*16, sserialize::MM_PROGRAM_MEMORY);
-						std::vector<uint32_t> nodeIds;
+						std::vector<SizeType> nodeIds;
 						nodeIds.reserve(blockSize);
 						while(true) {
 							nodeFetchMtx.lock();
@@ -833,7 +835,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 								NodePtr & n = *levelNodesIt;
 								++levelNodesIt;
 								nodeFetchMtx.unlock();
-								uint32_t id = (uint32_t) (n->rawBegin() - htBegin);
+								SizeType id = SizeType(n->rawBegin() - htBegin);
 								SSERIALIZE_CHEAP_ASSERT_SMALLER(id, htSize);
 								
 								myTmpPayload.beginRawPush() << (*pH)(n);
@@ -848,7 +850,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 						}
 						{//do the real push
 							std::lock_guard<std::mutex> dALck(dataAccessMtx);
-							for(uint32_t i(0), s((uint32_t) nodeIds.size()); i < s; ++i) {
+							for(SizeType i(0), s(SizeType(nodeIds.size())); i < s; ++i) {
 								nodeIdToData.at(nodeIds.at(i)) = tmpPayload.size();
 								tmpPayload.beginRawPush().putData(myTmpPayload.dataAt(i));
 								tmpPayload.endRawPush();
@@ -878,7 +880,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 	dest.putUint8(1);//version of FlatTrie
 	Static::ArrayCreator<T_STATIC_PAYLOAD> vsCreator(dest);
 	vsCreator.reserveOffsets(m_ht.size());
-	for(uint32_t i(0), s(m_ht.size()); i < s; ++i) {
+	for(SizeType i(0), s(m_ht.size()); i < s; ++i) {
 		vsCreator.beginRawPut();
 		vsCreator.rawPut() << tmpPayload.dataAt(nodeIdToData[i]);
 		vsCreator.endRawPut();
