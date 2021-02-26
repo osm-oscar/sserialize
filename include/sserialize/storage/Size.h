@@ -56,8 +56,8 @@ public:
 	} \
 	inline Size operator __W (Size const & o) const { return Size(m_v __W o.m_v); } \
 	template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true> \
-	inline Size operator __W ## = (I v) { \
-		return m_v __W v; \
+	inline Size & operator __W ## = (I v) { \
+		m_v __W ## = v; \
 		return *this; \
 	} \
 	template<typename I, std::enable_if_t< std::is_integral_v<I>, bool> = true> \
@@ -68,6 +68,37 @@ public:
 	OP(/)
 	OP(-)
 #undef OP
+
+#define INTEGRAL_OPS(__TYPE, __OP) \
+	inline Size & operator __OP ## = (__TYPE v) { \
+		m_v __OP ## = v; \
+		return *this; \
+	} \
+	inline Size operator __OP (__TYPE v) { return Size(m_v __OP v); }
+	
+#define INTEGRAL_CAST_OP(__TYPE) \
+	inline operator __TYPE() const { return narrow_check<__TYPE>(m_v); }
+	
+#define FOR_EACH_OP(__TYPE) \
+	INTEGRAL_CAST_OP(__TYPE)
+/**
+// 	INTEGRAL_OPS(__TYPE, *) \
+// 	INTEGRAL_OPS(__TYPE, /) \
+// 	INTEGRAL_OPS(__TYPE, +) \
+// 	INTEGRAL_OPS(__TYPE, -) \
+**/
+	
+// 	FOR_EACH_OP(uint8_t)
+// 	FOR_EACH_OP(uint16_t)
+// 	FOR_EACH_OP(uint32_t)
+	FOR_EACH_OP(uint64_t)
+// 	FOR_EACH_OP(int8_t)
+// 	FOR_EACH_OP(int16_t)
+// 	FOR_EACH_OP(int32_t)
+// 	FOR_EACH_OP(int64_t)
+#undef INTEGRAL_OPS
+#undef FOR_EACH_OP
+	
 	Size & operator++() {
 		++m_v;
 		return *this;
@@ -91,8 +122,6 @@ public:
 		v.m_v = src.getOffset();
 		return src;
 	}
-public:
-	inline operator underlying_type() const { return m_v; }
 private:
 	underlying_type m_v{0};
 };
@@ -110,17 +139,6 @@ struct SerializationInfo<Size> {
 };
 
 SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(sserialize::Size, getOffset, putOffset)
-
-template<typename I, typename J>
-inline
-typename std::enable_if<std::is_same<Size, I>::value && std::is_unsigned<J>::value, I>::type
-narrow_check(J value) {
-	if (UNLIKELY_BRANCH(value > sserialize::createMask64(SerializationInfo<Size>::length*8))) {
-		throw sserialize::TypeOverflowException("out of range");
-	}
-	return static_cast<I>(value);
-}
-
 }
 
 namespace std {
@@ -135,3 +153,22 @@ struct numeric_limits<sserialize::Size>  {
 };
 
 } //end namespace std
+
+namespace sserialize {
+	
+
+template<typename To>
+struct NarrowCheck<To, sserialize::Size, void> {
+	static To cast(sserialize::Size value) {
+		return sserialize::narrow_check<To, sserialize::Size::underlying_type>(static_cast<sserialize::Size::underlying_type>(value));
+	}
+};
+
+template<typename From>
+struct NarrowCheck<sserialize::Size, From, void> {
+	static sserialize::Size cast(From value) {
+		return sserialize::Size( sserialize::narrow_check<sserialize::Size::underlying_type, From>(value) );
+	}
+};
+	
+}
