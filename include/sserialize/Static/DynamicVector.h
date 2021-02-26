@@ -3,6 +3,7 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 #include <sserialize/Static/Array.h>
 #include <sserialize/containers/MMVector.h>
+#include <sserialize/storage/Size.h>
 
 namespace sserialize {
 namespace Static {
@@ -10,27 +11,29 @@ namespace Static {
 template<typename TPushValue, typename TGetValue = TPushValue>
 class DynamicVector {
 public:
-	uint32_t m_size;
+	using SizeType = sserialize::Size;
+public:
+	SizeType m_size;
 	sserialize::MMVector<OffsetType> m_offsets;
 	UByteArrayAdapter m_data;
 private:
 	DynamicVector(const DynamicVector & other);
 	DynamicVector & operator=(const DynamicVector & other);
 public:
-	DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED);
+	DynamicVector(SizeType approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt = sserialize::MM_FILEBASED);
 	virtual ~DynamicVector();
 	void swap(DynamicVector & other);
-	uint32_t size() const;
+	SizeType size() const;
 	OffsetType reservedSize() const;
-	void reserve(uint32_t /*size*/) { std::cerr << "Reserving is not supported by sserialize::Static::DynamicVector" << std::endl; }
+	void reserve(SizeType /*size*/) { std::cerr << "Reserving is not supported by sserialize::Static::DynamicVector" << std::endl; }
 	template<typename TStreamingSerializer = UByteArrayAdapter::StreamingSerializer<TPushValue> >
 	void push_back(const TPushValue & value, const TStreamingSerializer & serializer = TStreamingSerializer());
 	void pop_back();
 	UByteArrayAdapter & beginRawPush();
 	void endRawPush();
 	template<typename TDeserializer = UByteArrayAdapter::Deserializer<TGetValue> >
-	TGetValue at(uint32_t pos, const TDeserializer & derefer = TDeserializer()) const;
-	UByteArrayAdapter dataAt(uint32_t pos) const;
+	TGetValue at(SizeType pos, const TDeserializer & derefer = TDeserializer()) const;
+	UByteArrayAdapter dataAt(SizeType pos) const;
 	
 	UByteArrayAdapter & toArray(UByteArrayAdapter & dest) const;
 };
@@ -41,7 +44,7 @@ void swap(sserialize::Static::DynamicVector<TPushValue, TGetValue> & a, sseriali
 }
 
 template<typename TPushValue, typename TGetValue>
-DynamicVector<TPushValue, TGetValue>::DynamicVector(uint32_t approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt ) :
+DynamicVector<TPushValue, TGetValue>::DynamicVector(SizeType approxItemCount, OffsetType initalDataSize, sserialize::MmappedMemoryType mmt ) :
 m_size(0),
 m_offsets(mmt),
 m_data(UByteArrayAdapter::createCache(initalDataSize, mmt))
@@ -62,7 +65,8 @@ void DynamicVector<TPushValue, TGetValue>::swap(DynamicVector & other) {
 }
 
 template<typename TPushValue, typename TGetValue>
-uint32_t DynamicVector<TPushValue, TGetValue>::size() const {
+typename DynamicVector<TPushValue, TGetValue>::SizeType
+DynamicVector<TPushValue, TGetValue>::size() const {
 	return m_size;
 }
 
@@ -106,19 +110,19 @@ void DynamicVector<TPushValue, TGetValue>::endRawPush() {
 
 template<typename TPushValue, typename TGetValue>
 template<typename TDeserializer>
-TGetValue DynamicVector<TPushValue, TGetValue>::at(uint32_t pos, const TDeserializer & deserializer) const {
+TGetValue DynamicVector<TPushValue, TGetValue>::at(SizeType pos, const TDeserializer & deserializer) const {
 	if (pos >= size())
 		return TGetValue();
 	return deserializer(dataAt(pos));
 }
 
 template<typename TPushValue, typename TGetValue>
-UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(uint32_t pos) const {
+UByteArrayAdapter DynamicVector<TPushValue, TGetValue>::dataAt(SizeType pos) const {
 	if (pos >= size())
 		return UByteArrayAdapter();
 	OffsetType begin = m_offsets.at(pos);
 	OffsetType len;
-	if (pos == m_size-1) {
+	if (pos == m_size-SizeType(1)) {
 		len = m_data.tellPutPtr()-begin;
 	}
 	else {
