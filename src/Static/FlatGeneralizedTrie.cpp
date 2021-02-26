@@ -155,7 +155,7 @@ UByteArrayAdapter FlatGST::fgstStringAt(uint32_t pos) const {
 
 int32_t
 FlatGST::lowerBound(const std::string& str, sserialize::StringCompleter::QuerryType qt) const {
-	if (m_strEntries.size() == 0)
+	if (m_strEntries.size() == SizeType(0u))
 		return -1;
 
 	uint32_t left = 0;
