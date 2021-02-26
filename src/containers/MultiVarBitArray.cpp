@@ -38,13 +38,13 @@ m_size(data+sserialize::SerializationInfo<Version>::length)
 	m_data = data+dataOffset;
 }
 
-MultiVarBitArray::MultiVarBitArray(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag c) :
+MultiVarBitArray::MultiVarBitArray(UByteArrayAdapter & data, UByteArrayAdapter::ConsumeTag) :
 MultiVarBitArray(data)
 {
 	data += getSizeInBytes();
 }
 
-MultiVarBitArray::MultiVarBitArray(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag c) :
+MultiVarBitArray::MultiVarBitArray(UByteArrayAdapter const & data, UByteArrayAdapter::NoConsumeTag) :
 MultiVarBitArray(data)
 {}
 
