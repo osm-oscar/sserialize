@@ -34,7 +34,7 @@ public:
 	m_off(other.m_off),
 	m_size(other.m_size)
 	{}
-	StaticString(OffsetType offset, SizeType size) :
+	explicit StaticString(OffsetType offset, SizeType size) :
 	m_off(offset),
 	m_size(size)
 	{
@@ -45,7 +45,7 @@ public:
 			throw std::out_of_range("StaticString: size is too large");
 		}
 	}
-	StaticString(SizeType size) :
+	explicit StaticString(SizeType size) :
 	StaticString(noff, size)
 	{}
 	~StaticString() {}
@@ -73,16 +73,17 @@ struct CompFunc {
 
 class Node {
 public:
+	using SizeType = sserialize::Size;
 	class Iterator {
 	public:
 		typedef Node value_type;
 	private:
-		uint32_t m_childNodeBegin;
-		uint32_t m_childNodeEnd;
-		uint32_t m_childrenEnd;
+		SizeType m_childNodeBegin;
+		SizeType m_childNodeEnd;
+		SizeType m_childrenEnd;
 		CompFunc m_compFunc;
 	public:
-		Iterator(const uint32_t parentBegin, const uint32_t parentEnd, const CompFunc & compFunc);
+		Iterator(const SizeType parentBegin, const SizeType parentEnd, const CompFunc & compFunc);
 		~Iterator() {}
 		Iterator & operator++();
 		bool operator!=(const Iterator & other) const;
@@ -93,12 +94,12 @@ public:
 	typedef Iterator iterator;
 private:
 	const FlatTrieBase * m_trie;
-	uint32_t m_begin;
-	uint32_t m_end;
+	SizeType m_begin;
+	SizeType m_end;
 public:
-	Node(uint32_t begin, uint32_t end, const FlatTrieBase * trie);
+	Node(SizeType begin, SizeType end, const FlatTrieBase * trie);
 	virtual ~Node() {}
-	inline uint32_t id() const { return m_begin; }
+	inline SizeType id() const { return m_begin; }
 	StaticString sstr() const;
 	UByteArrayAdapter strData() const;
 	std::string str() const;
@@ -123,23 +124,25 @@ public:
 class FlatTrieBase: sserialize::Static::SimpleVersion<1, FlatTrieBase> {
 public:
 	using Version = sserialize::Static::SimpleVersion<1, FlatTrieBase>;
+	using SizeType = sserialize::MultiVarBitArray::SizeType;
 	typedef enum {TA_STR_OFFSET=0, TA_STR_LEN=1} TrieAccessors;
-	static constexpr uint32_t npos = 0xFFFFFFFF;
+	static constexpr SizeType npos = std::numeric_limits<SizeType>::max();
 	typedef detail::FlatTrie::StaticString StaticString;
+	using StringSizeType = StaticString::SizeType;
 	typedef detail::FlatTrie::Node Node;
 	class StaticStringsIterator: public sserialize::StaticIterator<std::forward_iterator_tag, detail::FlatTrie::StaticString>  {
 	private:
 		const FlatTrieBase * m_trie;
-		uint32_t m_pos;
+		SizeType m_pos;
 	public:
-		StaticStringsIterator(uint32_t pos, const FlatTrieBase * trie) : m_trie(trie), m_pos(pos) {}
+		StaticStringsIterator(SizeType pos, const FlatTrieBase * trie) : m_trie(trie), m_pos(pos) {}
 		~StaticStringsIterator() {}
-		inline uint32_t id() const { return m_pos; }
+		inline SizeType id() const { return m_pos; }
 		inline value_type operator*() const { return m_trie->sstr(m_pos); }
 		inline StaticStringsIterator & operator++() { ++m_pos; return *this; }
 		inline StaticStringsIterator operator++(int) { return StaticStringsIterator(m_pos++, m_trie); }
-		inline StaticStringsIterator & operator+=(uint32_t o) { m_pos += o; return *this; }
-		inline StaticStringsIterator operator+(uint32_t o) { return StaticStringsIterator(m_pos+o, m_trie); }
+		inline StaticStringsIterator & operator+=(SizeType o) { m_pos += o; return *this; }
+		inline StaticStringsIterator operator+(SizeType o) { return StaticStringsIterator(m_pos+o, m_trie); }
 		inline bool operator!=(const StaticStringsIterator & other) const { return m_pos != other.m_pos || m_trie != other.m_trie; }
 	};
 private:
@@ -159,18 +162,18 @@ public:
 	virtual ~FlatTrieBase() {}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	UByteArrayAdapter data() const;
-	uint32_t size() const;
+	SizeType size() const;
 	inline const UByteArrayAdapter & strData() const { return m_strData; }
 	StaticStringsIterator staticStringsBegin() const;
 	StaticStringsIterator staticStringsEnd() const;
-	StaticString sstr(uint32_t pos) const;
+	StaticString sstr(SizeType pos) const;
 	std::string strAt(const StaticString & str) const;
-	std::string strAt(uint32_t pos) const;
+	std::string strAt(SizeType pos) const;
 	UByteArrayAdapter strData(const StaticString & str) const;
 	UByteArrayAdapter strData(uint32_t pos) const;
-	inline uint32_t strSize(const StaticString & str) const { return str.size(); }
-	inline uint32_t strSize(uint32_t pos) const { return strSize(sstr(pos)); }
-	uint32_t find(const std::string & str, bool prefixMatch) const;
+	inline StringSizeType strSize(const StaticString & str) const { return str.size(); }
+	inline StringSizeType strSize(SizeType pos) const { return strSize(sstr(pos)); }
+	SizeType find(const std::string & str, bool prefixMatch) const;
 	Node root() const;
 	std::ostream & printStats(std::ostream & out) const;
 	///visit all nodes in depth-first search
@@ -191,6 +194,7 @@ template<typename TValue>
 class FlatTrie: public FlatTrieBase, sserialize::Static::SimpleVersion<1, FlatTrie<TValue> > {
 public:
 	using Version = sserialize::Static::SimpleVersion<1, FlatTrie<TValue> >;
+	using SizeType = FlatTrieBase::SizeType;
 public:
 	typedef TValue value_type;
 private:
@@ -200,7 +204,7 @@ public:
 	FlatTrie(const sserialize::UByteArrayAdapter & src);
 	virtual ~FlatTrie() {}
 	UByteArrayAdapter::OffsetType getSizeInBytes() const { return FlatTrieBase::getSizeInBytes() + 1 + m_values.getSizeInBytes(); }
-	inline TValue at(uint32_t pos) const { return m_values.at(pos); }
+	inline TValue at(SizeType pos) const { return m_values.at(pos); }
 	///throws sserialize::OutOfBoundsException on miss
 	TValue at(const std::string & str, bool prefixMatch) const;
 	template<typename T_OCTET_ITERATOR>

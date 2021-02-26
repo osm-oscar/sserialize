@@ -23,6 +23,7 @@ public:
 	void testStaticNode();
 	void testStaticSearch();
 protected:
+	using SizeType = sserialize::Size;
 	using ValueType = sserialize::Size;
 	using MyT = sserialize::HashBasedFlatTrie<ValueType>;
 	using MyST = sserialize::Static::UnicodeTrie::FlatTrie<ValueType>;
@@ -330,7 +331,7 @@ TestHashBasedFlatTrieBase::testSerialization() {
 	sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 	m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); });
 	MyST sft(hftOut);
-	CPPUNIT_ASSERT_EQUAL_MESSAGE("size", m_ht.size(), sft.size());
+	CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(m_ht.size()), SizeType(sft.size()));
 	MyT::const_iterator rIt(m_ht.begin()), rEnd(m_ht.end());
 	uint32_t sI(0), sS(sft.size());
 	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {
@@ -346,7 +347,7 @@ TestHashBasedFlatTrieBase::testParallelSerialization() {
 	sserialize::UByteArrayAdapter hftOut(sserialize::UByteArrayAdapter::createCache(1, sserialize::MM_PROGRAM_MEMORY));
 	m_ht.append(hftOut, [](const MyT::NodePtr & n) { return n->value(); }, std::thread::hardware_concurrency());
 	MyST sft(hftOut);
-	CPPUNIT_ASSERT_EQUAL_MESSAGE("size", m_ht.size(), sft.size());
+	CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(m_ht.size()), SizeType(sft.size()));
 	MyT::const_iterator rIt(m_ht.begin()), rEnd(m_ht.end());
 	uint32_t sI(0), sS(sft.size());
 	for(; sI < sS && rIt != rEnd; ++sI, ++rIt) {

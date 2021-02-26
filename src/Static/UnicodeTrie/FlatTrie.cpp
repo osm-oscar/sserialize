@@ -5,7 +5,7 @@ namespace sserialize {
 namespace Static {
 namespace UnicodeTrie {
 
-constexpr uint32_t FlatTrieBase::npos;
+constexpr FlatTrieBase::SizeType FlatTrieBase::npos;
 
 namespace detail {
 namespace FlatTrie {
@@ -21,7 +21,7 @@ bool CompFunc::operator()(const StaticString & a, uint32_t b) const {
 }
 
 
-Node::Iterator::Iterator(const uint32_t parentBegin, const uint32_t parentEnd, const CompFunc & compFunc) :
+Node::Iterator::Iterator(const SizeType parentBegin, const SizeType parentEnd, const CompFunc & compFunc) :
 m_childNodeBegin(parentBegin),
 m_childNodeEnd(parentBegin),
 m_childrenEnd(parentEnd),
@@ -61,7 +61,7 @@ Node Node::Iterator::operator*() const {
 	return Node(m_childNodeBegin, m_childNodeEnd, m_compFunc.strHandler);
 }
 
-Node::Node(uint32_t begin, uint32_t end, const FlatTrieBase * trie) :
+Node::Node(SizeType begin, SizeType end, const FlatTrieBase * trie) :
 m_trie(trie),
 m_begin(begin),
 m_end(end)
@@ -118,15 +118,15 @@ UByteArrayAdapter FlatTrieBase::data() const {
 	return result;
 }
 
-uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
+FlatTrieBase::SizeType FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 // 	std::cout << "FlatTrie::find: searching for " << str << " with prefixMatch=" << (prefixMatch ? "true" : "false") << std::endl;
-	if (size() == 0) {
+	if (size() == SizeType(0)) {
 		return npos;
 	}
 
-	uint32_t left = 0;
-	uint32_t right = size()-1;
-	uint32_t mid  = (right-left)/2 + left;
+	SizeType left = 0;
+	SizeType right = size()-1;
+	SizeType mid  = (right-left)/2 + left;
 
 	std::string::size_type lLcp = calcLcp(strData(left), str);
 	if (lLcp == str.size()) {//first is match
@@ -136,7 +136,7 @@ uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 	std::string::size_type mLcp = 0;
 	int8_t cmp = compare(strData(mid), str, mLcp);
 	
-	while(right-left > 1) {
+	while(right-left > SizeType(1)) {
 		mid = (right-left)/2 + left;
 		cmp = compare(strData(mid), str, mLcp);
 		if (cmp == -1) { // mid is smaller than str
@@ -175,7 +175,7 @@ uint32_t FlatTrieBase::find(const std::string & str, bool prefixMatch) const {
 	return npos;
 }
 
-uint32_t FlatTrieBase::size() const {
+FlatTrieBase::SizeType FlatTrieBase::size() const {
 	return m_trie.size();
 }
 
@@ -187,7 +187,7 @@ FlatTrieBase::StaticStringsIterator FlatTrieBase::staticStringsEnd() const {
 	return FlatTrieBase::StaticStringsIterator(size(), this);
 }
 
-FlatTrieBase::StaticString FlatTrieBase::sstr(uint32_t pos) const {
+FlatTrieBase::StaticString FlatTrieBase::sstr(SizeType pos) const {
 	return FlatTrieBase::StaticString(m_trie.at(pos, TA_STR_OFFSET), m_trie.at(pos, FlatTrieBase::TA_STR_LEN));
 }
 
@@ -204,7 +204,7 @@ UByteArrayAdapter FlatTrieBase::strData(uint32_t pos) const {
 	return strData(sstr(pos));
 }
 
-std::string FlatTrieBase::strAt(uint32_t pos) const {
+std::string FlatTrieBase::strAt(SizeType pos) const {
 	return strAt(sstr(pos));
 }
 
