@@ -138,7 +138,7 @@ public:
 	UByteArrayAdapter dataAt(SizeType id) const {
 		sserialize::UByteArrayAdapter::OffsetType begin = 0;
 		sserialize::UByteArrayAdapter::OffsetType len = 0;
-		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
+		if constexpr (sserialize::SerializationInfo<TValue>::is_fixed_length) {
 			begin = id*sserialize::SerializationInfo<TValue>::length;
 			len = sserialize::SerializationInfo<TValue>::length;
 		}
@@ -159,8 +159,8 @@ public:
 		OffsetType oiBegin = m_dest->tellPutPtr();
 		#endif
 		m_dest->putOffset(m_dataLenPtr, m_dest->tellPutPtr() - m_dataBegin); //datasize
-		if (sserialize::SerializationInfo<TValue>::is_fixed_length) {
-			if (!std::is_integral<TValue>::value) {
+		if constexpr (sserialize::SerializationInfo<TValue>::is_fixed_length) {
+			if constexpr (!std::is_integral<TValue>::value) {
 				m_dest->putVlPackedUint32(sserialize::SerializationInfo<TValue>::length);
 			}
 		}
