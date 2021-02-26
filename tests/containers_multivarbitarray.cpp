@@ -5,6 +5,7 @@
 #include <sserialize/utility/printers.h>
 #include "datacreationfuncs.h"
 #include "TestBase.h"
+#include <random>
 
 using namespace sserialize;
 
@@ -16,21 +17,27 @@ CPPUNIT_TEST( testBitCount );
 CPPUNIT_TEST( testSize );
 CPPUNIT_TEST_SUITE_END();
 private:
-	std::vector< std::vector<uint32_t> > m_values;
+	using value_type = MultiVarBitArray::value_type;
+	using SizeType = MultiVarBitArray::SizeType;
+private:
+	std::vector< std::vector<value_type> > m_values;
 	std::vector<uint8_t> m_bitConfig;
 	UByteArrayAdapter m_data;
 	MultiVarBitArray m_arr;
 public:
 	MultiVarBitArrayTest() : m_data(new std::vector<uint8_t>(), true) {}
 	virtual void setUp() {
+		auto bit_dist = std::uniform_int_distribution<uint8_t>(1, 64);
+		auto value_dist = std::uniform_int_distribution<uint64_t>();
+		auto gen = std::mt19937(0);
 		for(size_t i = 0; i < TSubValueCount; i++) {
-			m_bitConfig.push_back( (rand() & 0x1F)+1 );
+			m_bitConfig.push_back(bit_dist(gen));
 		}
 		
 		for(size_t i = 0; i < TValueCount; i++) {
-			std::vector<uint32_t> subValues;
+			std::vector<value_type> subValues;
 			for(size_t j = 0; j < TSubValueCount; j++) {
-				subValues.push_back( rand() & createMask(m_bitConfig[j]) );
+				subValues.push_back( value_dist(gen) & createMask64(m_bitConfig[j]) );
 			}
 			m_values.push_back(subValues);
 		}
@@ -65,7 +72,7 @@ public:
 	}
 	
 	void testSize() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("size()", TValueCount, m_arr.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("size()", SizeType(TValueCount), m_arr.size());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("getSizeInBytes()", (UByteArrayAdapter::OffsetType) m_data.tellPutPtr()-4, m_arr.getSizeInBytes());
 	}
 	
