@@ -8,7 +8,7 @@ namespace sserialize {
 template<typename T_TYPE>
 struct SerializationInfo {
 	static const bool is_fixed_length = false;
-	static const OffsetType length = 0;
+// 	static const OffsetType length = 0;
 	static const OffsetType max_length = std::numeric_limits<OffsetType>::max();
 	static const OffsetType min_length = 0;
 	static OffsetType sizeInBytes(const T_TYPE & value) {
