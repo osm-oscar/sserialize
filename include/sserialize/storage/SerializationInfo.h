@@ -18,8 +18,25 @@ struct SerializationInfo {
 
 //default overloads
 
-#define SERIALIZATION_INFO_FIXED_LENGTH_SPECIALICATIONS_FUNC(__TYPE, __LENGTH) template<> \
+#define SERIALIZATION_INFO_FIXED_LENGTH_SPECIALICATIONS_FUNC(__TYPE, __LENGTH) \
+template<> \
 struct SerializationInfo<__TYPE> { \
+	static const bool is_fixed_length = true; \
+	static const OffsetType length = __LENGTH; \
+	static const OffsetType max_length = __LENGTH; \
+	static const OffsetType min_length = __LENGTH; \
+	static inline OffsetType sizeInBytes(const __TYPE & /*value*/) { return __LENGTH; } \
+}; \
+template<> \
+struct SerializationInfo<const __TYPE> { \
+	static const bool is_fixed_length = true; \
+	static const OffsetType length = __LENGTH; \
+	static const OffsetType max_length = __LENGTH; \
+	static const OffsetType min_length = __LENGTH; \
+	static inline OffsetType sizeInBytes(const __TYPE & /*value*/) { return __LENGTH; } \
+}; \
+template<> \
+struct SerializationInfo<volatile __TYPE> { \
 	static const bool is_fixed_length = true; \
 	static const OffsetType length = __LENGTH; \
 	static const OffsetType max_length = __LENGTH; \
