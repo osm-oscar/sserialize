@@ -472,8 +472,10 @@ HashBasedFlatTrie<TValue>::operator[](const StaticString & a) {
 		return m_ht[a];
 	}
 	else {
+		typename StaticString::OffsetType strOff;
+		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
-		return m_ht[StaticString(m_stringData.size(), a.size())];
+		return m_ht[StaticString(strOff, a.size())];
 	}
 }
 
@@ -555,9 +557,11 @@ HashBasedFlatTrie<TValue>::insert(const StaticString & a) {
 		return a;
 	}
 	else {//special string (comes from outside)
+		typename StaticString::OffsetType strOff;
+		narrow_check_assign(strOff) = m_stringData.size();
 		m_stringData.push_back(m_strHandler.strBegin(a), m_strHandler.strEnd(a));
 		SSERIALIZE_NORMAL_ASSERT(utf8::is_valid(m_strHandler.strBegin(a), m_strHandler.strEnd(a)));
-		StaticString ns(m_stringData.size(), a.size());
+		StaticString ns(strOff, a.size());
 		m_ht.insert(ns);
 		return ns;
 	}
