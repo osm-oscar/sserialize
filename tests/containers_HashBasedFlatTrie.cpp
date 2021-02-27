@@ -8,6 +8,7 @@
 
 const char * inFileName = 0;
 uint64_t LARGE_TEST_TARGET_SIZE = uint64_t(std::numeric_limits<uint32_t>::max())+4096;
+sserialize::MmappedMemoryType LARGE_TEST_MMT = sserialize::MM_SHARED_MEMORY;
 
 class TestHashBasedFlatTrieBase: public sserialize::tests::TestBase {
 public:
@@ -114,12 +115,14 @@ public:
 public:
 	void init() override {}
 	void setUp() override {
-// 		m_ht.reserve(numTestStrings());
+		m_ht = MyT(LARGE_TEST_MMT, LARGE_TEST_MMT);
+		m_ht.reserve(numTestStrings());
 		sserialize::ProgressInfo pinfo;
 		pinfo.begin(numTestStrings());
 		for(std::size_t i(0), s(numTestStrings()); i < s;) {
 			for (std::size_t j(0); j < 0xFFFF && i < s; ++i, ++j) {
 				m_ht[m_ht.insert(testString(i))] = i;
+				CPPUNIT_ASSERT(m_ht.size() >= i);
 			}
 			pinfo(i);
 		}
@@ -130,8 +133,8 @@ protected:
 	std::string const & testString(std::size_t pos) override {
 		if (pos != m_lastTestString) {
 			m_lastTestString = pos;
-			for(std::size_t i(0); i < 5; ++i, pos >>= 7) {
-				m_testString[i] = (pos & 0x1F);
+			for(std::size_t i(0); i < 5; ++i, pos /= 127) {
+				m_testString[i] = (pos % 127)+1;
 			}
 		}
 		return m_testString;
@@ -425,7 +428,7 @@ TestHashBasedFlatTrieBase::testStaticSearch() {
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
 	if (sserialize::tests::TestBase::printHelp()) {
-		std::cout << "prog [--large] [-f <file with strings>]" << std::endl;
+		std::cout << "prog [--large] [--large-size <size in M>] [--large-mmt <mmt> ] [-f <file with strings>]" << std::endl;
 		return 0;
 	}
 	bool test_large = false;
@@ -434,6 +437,16 @@ int main(int argc, char ** argv) {
 		std::string token(argv[i]);
 		if (token == "--large") {
 			test_large = true;
+		}
+		else if (token == "--large-size" && i+1 < argc) {
+			LARGE_TEST_TARGET_SIZE = std::stoul(argv[i+1])*1000*1000;
+			test_large = true;
+			++i;
+		}
+		else if (token == "--large-mmt" && i+1 < argc) {
+			sserialize::from(argv[i+1], LARGE_TEST_MMT);
+			test_large = true;
+			++i;
 		}
 		else if (token == "-f" && i+1 < argc) {
 			filename.assign(argv[i+1]);
