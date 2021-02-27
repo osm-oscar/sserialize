@@ -241,7 +241,26 @@ public:
 		const StringHandler * strHandlerPtr = &m_strHandler;
 		m_ht = HashTable(HashFunc1(strHandlerPtr), HashFunc2(strHandlerPtr), StringEq(strHandlerPtr), 0.8, HTValueStorage(hashMMT), HTStorage(hashMMT));
 	}
+	HashBasedFlatTrie(HashBasedFlatTrie const&) = delete;
 	~HashBasedFlatTrie() {}
+	HashBasedFlatTrie & operator=(HashBasedFlatTrie const&) = delete;
+	HashBasedFlatTrie & operator=(HashBasedFlatTrie && o) {
+		if (&o == this) {
+			return *this;
+		}
+		std::lock_guard<std::mutex> lck1(m_specStrLock);
+		std::lock_guard<std::mutex> lck2(o.m_specStrLock);
+		m_stringData = std::move(o.m_stringData);
+		m_strHandler.specialString = 0;
+		m_strHandler.strStorage = &m_stringData;
+		m_ht = std::move(o.m_ht);
+		const StringHandler * strHandlerPtr = &m_strHandler;
+		m_ht.hash1() = HashFunc1(strHandlerPtr);
+		m_ht.hash2() = HashFunc2(strHandlerPtr);
+		m_ht.keyEq() = StringEq(strHandlerPtr);
+		return *this;
+	}
+	
 	UByteArrayAdapter::SizeType minStorageSize() const { return m_stringData.size() + m_ht.storageCapacity()*sizeof(typename HTValueStorage::value_type) + m_ht.capacity()*sizeof(HTStorage::value_type);}
 	///reserve @param count strings
 	void reserve(SizeType count) { m_ht.reserve(count); }
