@@ -818,7 +818,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			std::vector<NodePtr> & levelNodes = nodesInLevelOrder.back();
 			NodePtr * levelNodesIt = &levelNodes[0];
 			NodePtr * levelNodesEnd = levelNodesIt+levelNodes.size();
-			std::size_t blockSize = SizeType(levelNodes.size()/threadCount);
+			std::size_t blockSize = levelNodes.size()/threadCount;
 			
 			for(uint32_t i(0); i < threadCount; ++i) {
 				T_PH * pH = &payloadHandlers[i];
@@ -849,7 +849,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 						}
 						{//do the real push
 							std::lock_guard<std::mutex> dALck(dataAccessMtx);
-							for(SizeType i(0), s(SizeType(nodeIds.size())); i < s; ++i) {
+							for(std::size_t i(0), s(SizeType(nodeIds.size())); i < s; ++i) {
 								nodeIdToData.at(nodeIds.at(i)) = tmpPayload.size();
 								tmpPayload.beginRawPush().putData(myTmpPayload.dataAt(i));
 								tmpPayload.endRawPush();
