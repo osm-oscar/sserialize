@@ -245,14 +245,14 @@ public:
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 uint64_t
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::findBucket(const key_type & key) const {
-	uint64_t h1 = (m_hash1(key)) & ~0x1;
+	uint64_t h1 = (m_hash1(key)) & ~uint64_t(0x1);
 	uint64_t s = m_d.size();
 	uint64_t cpos = h1%s;
 	SizeType cp = m_d[cpos];
 	if (!cp || m_keyEq(value(cp).first, key) ) {
 		return cpos;
 	}
-	uint64_t h2 = (m_hash2(key) & ~0x1);
+	uint64_t h2 = (m_hash2(key) & ~uint64_t(0x1));
 	for(uint64_t i = 1, maxCollisions = std::min<uint64_t>(s, m_maxCollisions); i < maxCollisions; ++i) {
 		cpos = (h1 + i*h2) % s;
 		SizeType cp = m_d[cpos];
