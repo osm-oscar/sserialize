@@ -7,9 +7,11 @@
 #include "TestBase.h"
 
 const char * inFileName = 0;
+uint64_t LARGE_TEST_TARGET_SIZE = uint64_t(std::numeric_limits<uint32_t>::max())+4096;
 
 class TestHashBasedFlatTrieBase: public sserialize::tests::TestBase {
 public:
+	virtual void init() = 0;
 	//setup hft with strings of testString() function
 	void setUp() override;
 public:
@@ -69,7 +71,8 @@ CPPUNIT_TEST( testStaticSearch );
 // CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
-	TestHashBasedFlatTrieSimple() {
+	TestHashBasedFlatTrieSimple() {}
+	void init() override {
 		m_testStrings = {//all: missing empty parent
 			"A", //single
 			"BB", "BC", "BD", //missing parent
@@ -107,27 +110,34 @@ CPPUNIT_TEST( testStaticSearch );
 // CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
-	TestHashBasedFlatTrieLarge() {
-		m_testString.resize(uint64_t(std::numeric_limits<uint32_t>::max())+4096);
-		for(uint64_t i(0); i < m_testString.size(); ++i) {
-			m_testString.at(i) = '0'+i%10;
-		}
-	}
+	TestHashBasedFlatTrieLarge() : m_testString("     ") {}
 public:
+	void init() override {}
 	void setUp() override {
-	auto sstr = m_ht.insert(m_testString);
-	for(std::size_t i(0), s(m_testString.size()); i < s; ++i) {
-		m_ht[sstr] = i;
-		sstr = sstr.addOffset(1);
+// 		m_ht.reserve(numTestStrings());
+		sserialize::ProgressInfo pinfo;
+		pinfo.begin(numTestStrings());
+		for(std::size_t i(0), s(numTestStrings()); i < s;) {
+			for (std::size_t j(0); j < 0xFFFF && i < s; ++i, ++j) {
+				m_ht[m_ht.insert(testString(i))] = i;
+			}
+			pinfo(i);
+		}
+		pinfo.end();
+		m_ht.finalize();
 	}
-	m_ht.finalize();
-}
 protected:
-	std::string const & testString(std::size_t /*pos*/) override {
+	std::string const & testString(std::size_t pos) override {
+		if (pos != m_lastTestString) {
+			m_lastTestString = pos;
+			for(std::size_t i(0); i < 5; ++i, pos >>= 7) {
+				m_testString[i] = (pos & 0x1F);
+			}
+		}
 		return m_testString;
 	}
 	std::size_t numTestStrings() const override {
-		return 1;
+		return LARGE_TEST_TARGET_SIZE;
 	}
 	std::string const & checkString(std::size_t /*pos*/) override {
 		return m_testString;
@@ -155,7 +165,8 @@ CPPUNIT_TEST( testSpecialStaticSearch );
 // CPPUNIT_TEST( testParentChildRelation );
 CPPUNIT_TEST_SUITE_END();
 public:
-	TestHashBasedFlatTrieFile() {
+	TestHashBasedFlatTrieFile() {}
+	void init() override {
 		if (!inFileName) {
 			return;
 		}
@@ -212,6 +223,8 @@ public:
 
 void
 TestHashBasedFlatTrieBase::setUp() {
+	init();
+	m_ht.reserve(numTestStrings());
 	for(std::size_t i(0), s(numTestStrings()); i < s; ++i) {
 		m_ht[m_ht.insert(testString(i))] = i; 
 	}
