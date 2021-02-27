@@ -210,6 +210,9 @@ public:
 	///if you change something here, then you're on your own
 	inline THash2 & hash2() { return m_hash2; }
 	inline const THash2 & hash2() const { return m_hash2; }
+	///if you change something here, then you're on your own
+	inline TKeyEq & keyEq() { return m_keyEq; }
+	inline const TKeyEq & keyEq() const { return m_keyEq; }
 	
 	void reserve(SizeType count);
 	///Adding more elements to the hash invalidates iterators iff storage container invalidates iterators on insertion
