@@ -715,9 +715,8 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 	uint64_t debugCheckSizeEntry = m_ht.begin()->first.size();
 #endif
 	for(const auto & x : m_ht) {
-		bool ok = tsCreator.set(count, 0, SizeType(m_strHandler.strBegin(x.first)-strDataBegin));
-		ok = tsCreator.set(count, 1, x.first.size()) && ok;
-		SSERIALIZE_CHEAP_ASSERT(ok);
+		tsCreator.set(count, 0, SizeType(m_strHandler.strBegin(x.first)-strDataBegin));
+		tsCreator.set(count, 1, x.first.size());
 		++count;
 		pinfo(count);
 #if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
