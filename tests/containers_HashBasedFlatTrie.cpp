@@ -411,17 +411,38 @@ TestHashBasedFlatTrieBase::testStaticSearch() {
 
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
-	
+	if (sserialize::tests::TestBase::printHelp()) {
+		std::cout << "prog [--large] [-f <file with strings>]" << std::endl;
+		return 0;
+	}
+	bool test_large = false;
+	std::string filename;
+	for(int i(0); i < argc; ++i) {
+		std::string token(argv[i]);
+		if (token == "--large") {
+			test_large = true;
+		}
+		else if (token == "-f" && i+1 < argc) {
+			filename.assign(argv[i+1]);
+			++i;
+		}
+	}
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
-	runner.addTest( TestHashBasedFlatTrieLarge::suite() );
-	if (argc > 1 && sserialize::MmappedFile::fileExists(argv[1])) {
-		inFileName = argv[1];
+	if (test_large) {
+		runner.addTest( TestHashBasedFlatTrieLarge::suite() );
+	}
+	else if (filename.size()) {
+		inFileName = filename.c_str();
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
 	}
-	runner.eventManager().popProtector();
+	else {
+		runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
+	}
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
