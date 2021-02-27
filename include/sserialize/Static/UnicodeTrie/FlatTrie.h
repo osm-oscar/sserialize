@@ -56,6 +56,9 @@ public:
 	inline bool isInvalid() const { return m_off == noff && m_size == nsize; }
 	///returns a copy with adjusted size
 	inline StaticString addOffset(SizeType off) const { return StaticString(m_off + off, m_size-off); }
+	inline StaticString shrinkBy(SizeType size) const {
+		return StaticString(m_off, this->size()-std::min(this->size(), size));
+	}
 private:
 	uint64_t m_off:OffsetBits;
 	uint64_t m_size:SizeBits;
