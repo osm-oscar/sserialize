@@ -34,6 +34,7 @@ void TestBase::init(int argc, char ** argv) {
 		}
 		else if (token == "--tc-shm-file" && i+1 < argc) {
 			sserialize::FileHandler::setShmPrefix(std::string(argv[i+1]));
+			++i;
 		}
 		else if (token == "--pop-protector") {
 			sm_popProtector = true;
