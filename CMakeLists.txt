@@ -119,8 +119,9 @@ set(SSERIALIZE_INLINE_IN_LTO_ENABLED
 	FORCE
 )
 
+option(SSERIALIZE_DISABLE_DTS2 "Build all of sserialize")
 #enable dt2 on 64 Bit builds
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+if ((NOT SSERIALIZE_DISABLE_DTS2) AND  (CMAKE_SIZEOF_VOID_P EQUAL 8))
 	add_subdirectory(vendor/libdts2 ${PROJECT_NAME}dts2)
 	
 	set(MY_COMPILE_DEFINITIONS
