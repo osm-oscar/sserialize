@@ -38,7 +38,7 @@ public:
 	m_off(offset),
 	m_size(size)
 	{
-		if ( UNLIKELY_BRANCH(m_off != offset) ) {
+		if ( UNLIKELY_BRANCH(m_off != offset || m_off >= noff) ) {
 			throw std::out_of_range("StaticString: offset is too large");
 		}
 		if ( UNLIKELY_BRANCH(m_size != size) ) {
