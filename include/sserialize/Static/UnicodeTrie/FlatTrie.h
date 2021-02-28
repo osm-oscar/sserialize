@@ -22,7 +22,7 @@ class StaticString final {
 public:
 	using SizeType = uint32_t;
 	using OffsetType = uint64_t;
-	static constexpr SizeType OffsetBits = 32;
+	static constexpr SizeType OffsetBits = 36;
 	static constexpr SizeType SizeBits = 64-OffsetBits;
 	static constexpr OffsetType noff = sserialize::createMask64(OffsetBits);
 	static constexpr OffsetType nsize = sserialize::createMask64(SizeBits);
