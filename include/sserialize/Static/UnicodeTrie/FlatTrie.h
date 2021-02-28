@@ -60,8 +60,13 @@ public:
 	}
 private:
 	explicit StaticString(SizeType size) :
-	StaticString(noff, size)
-	{}
+	m_off(noff),
+	m_size(size)
+	{
+		if ( UNLIKELY_BRANCH(m_size != size) ) {
+			throw std::out_of_range("StaticString: size is too large");
+		}
+	}
 private:
 	uint64_t m_off:OffsetBits;
 	uint64_t m_size:SizeBits;
