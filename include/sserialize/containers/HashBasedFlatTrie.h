@@ -459,7 +459,7 @@ bool
 HashBasedFlatTrie<TValue>::count(const std::string & a) {
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = a.c_str();
-	bool ret = count(StaticString(a.size()));
+	bool ret = count(StaticString::make_special(a.size()));
 	m_strHandler.specialString = 0;
 	return ret;
 }
@@ -478,7 +478,7 @@ HashBasedFlatTrie<TValue>::insert(const std::string & a) {
 	}
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = a.c_str();
-	StaticString ret = insert(StaticString(a.size()));
+	StaticString ret = insert(StaticString::make_special(a.size()));
 	m_strHandler.specialString = 0;
 	return ret;
 }
@@ -503,7 +503,7 @@ TValue &
 HashBasedFlatTrie<TValue>::at(std::string const & str) {
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = str.c_str();
-	StaticString sstr(str.size());
+	auto sstr = StaticString::make_special(str.size());
 	try {
 		TValue & v = m_ht.at(sstr);
 		m_strHandler.specialString = 0;
@@ -520,7 +520,7 @@ TValue const &
 HashBasedFlatTrie<TValue>::at(std::string const & str) const {
 	std::lock_guard<std::mutex> lck(m_specStrLock);
 	m_strHandler.specialString = str.c_str();
-	StaticString sstr(str.size());
+	auto sstr = StaticString::make_special(str.size());
 	try {
 		TValue const & v = m_ht.at(sstr);
 		m_strHandler.specialString = 0;
@@ -544,7 +544,7 @@ HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERAT
 	{
 		std::lock_guard<std::mutex> lck(m_specStrLock);
 		m_strHandler.specialString = tmp.c_str();
-		StaticString sstr(tmp.size());
+		auto sstr = StaticString::make_special(tmp.size());
 		nodeBegin = m_ht.find(sstr);
 		m_strHandler.specialString = 0;
 	}

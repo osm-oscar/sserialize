@@ -45,10 +45,9 @@ public:
 			throw std::out_of_range("StaticString: size is too large");
 		}
 	}
-	explicit StaticString(SizeType size) :
-	StaticString(noff, size)
-	{}
 	~StaticString() {}
+public:
+	static StaticString make_special(SizeType size) { return StaticString(size); }
 public:
 	inline OffsetType offset() const { return m_off; }
 	inline SizeType size() const { return m_size; }
@@ -59,6 +58,10 @@ public:
 	inline StaticString shrinkBy(SizeType size) const {
 		return StaticString(m_off, this->size()-std::min(this->size(), size));
 	}
+private:
+	explicit StaticString(SizeType size) :
+	StaticString(noff, size)
+	{}
 private:
 	uint64_t m_off:OffsetBits;
 	uint64_t m_size:SizeBits;
