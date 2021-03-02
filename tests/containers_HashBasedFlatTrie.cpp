@@ -15,6 +15,8 @@ public:
 	virtual void init() = 0;
 	//setup hft with strings of testString() function
 	void setUp() override;
+	//sub classes allocating memory should also implement this
+	void tearDown() override;
 public:
 	void testTrieEquality();
 	void testFlatCorrect();
@@ -43,6 +45,12 @@ protected:
 };
 
 class TestHashBasedFlatTrieBaseWithStrings: public TestHashBasedFlatTrieBase {
+public:
+	void tearDown() override {
+		m_testStrings.clear();
+		m_checkStrings.clear();
+		TestHashBasedFlatTrieBase::tearDown();
+	}
 protected:
 	std::string const & testString(std::size_t pos) override {
 		return m_testStrings.at(pos);
@@ -232,6 +240,10 @@ TestHashBasedFlatTrieBase::setUp() {
 		m_ht[m_ht.insert(testString(i))] = i; 
 	}
 	m_ht.finalize();
+}
+
+void TestHashBasedFlatTrieBase::tearDown() {
+	m_ht = MyT();
 }
 
 void
