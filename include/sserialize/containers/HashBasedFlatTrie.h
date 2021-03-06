@@ -824,8 +824,8 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 					#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
 					int64_t id = destLevelNodes.back()->rawBegin() - htBegin;
 					#endif
-					SSERIALIZE_CHEAP_ASSERT(id >= 0 && id < htSize);
-					SSERIALIZE_CHEAP_ASSERT(id < size());
+					SSERIALIZE_CHEAP_ASSERT(id >= 0 && uint64_t(id) < htSize);
+					SSERIALIZE_CHEAP_ASSERT(id >= 0 && uint64_t(id) < size());
 				}
 			}
 		}
