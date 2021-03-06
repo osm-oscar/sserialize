@@ -508,11 +508,13 @@ public:
 	};
 	typedef ExactStrings SuffixStrings;
 	struct ItemId {
+		using id_type = uint32_t;
 		static constexpr bool HasCellLocalIds = false;
-		uint32_t operator()(const item_type & item) { return item.id; }
-		uint32_t operator()(const item_type & item, uint32_t) { return item.id; }
+		id_type operator()(const item_type & item) { return item.id; }
+		id_type operator()(const item_type & item, uint32_t) { return item.id; }
 	};
 	struct ItemCells {
+		using id_type = uint32_t;
 		static constexpr bool HasCellLocalIds = false;
 		template<typename TOutputIterator>
 		void operator()(const item_type & item, TOutputIterator out) {
