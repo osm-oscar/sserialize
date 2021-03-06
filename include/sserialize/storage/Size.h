@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <functional>
 
 #include <sserialize/utility/constants.h>
 #include <sserialize/storage/UByteArrayAdapter.h>
@@ -150,6 +151,16 @@ struct numeric_limits<sserialize::Size>  {
 	static constexpr bool is_specialized = true;
 	static constexpr value_type min() { return value_type(underlying_type(0)); }
 	static constexpr value_type max() { return value_type(underlying_type(0xFFFFFFFFFF)); }
+};
+
+template<>
+struct hash< sserialize::Size > {
+	using value_type = sserialize::Size;
+	using underlying_type = value_type::underlying_type;
+	std::hash<underlying_type> hS;
+	inline std::size_t operator()(const value_type & v) const {
+		return hS( static_cast<underlying_type>(v) );
+	}
 };
 
 } //end namespace std
