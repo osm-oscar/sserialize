@@ -49,6 +49,7 @@ public:
 	typedef typename HTValueStorage::const_iterator const_iterator;
 	typedef typename HTValueStorage::iterator iterator;
 private:
+	using CodePoint = uint32_t;
 
 	struct StringHandler {
 		const StringStorage * strStorage;
@@ -298,7 +299,7 @@ public:
 	
 	///call this if you want to navigate the trie
 	///you can always choose to add more strings to trie, but then you'd have to call this again
-	void finalize(uint32_t threadCount = 0);
+	void finalize(std::size_t threadCount = 0);
 	
 	///before using this, finalize has to be called and no inserts were made afterwards
 	NodePtr root() { return NodePtr(m_ht.begin(), m_ht.end(), &m_strHandler); }
@@ -312,7 +313,7 @@ public:
 	
 	///you can only call this after finalize(), calls payloadHandler in in-order
 	template<typename T_PH, typename T_STATIC_PAYLOAD = typename std::result_of<T_PH(NodePtr)>::type>
-	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount = 1);
+	bool append(UByteArrayAdapter & dest, T_PH payloadHandler, std::size_t threadCount = 1);
 	
 	static NodePtr make_nodeptr(Node & node) { return NodePtr(node); }
 	static NodePtr make_nodeptr(const Node & node) { return NodePtr(node); }
@@ -402,7 +403,7 @@ typename HashBasedFlatTrie<TValue>::Node::Iterator &
 HashBasedFlatTrie<TValue>::Node::Iterator::operator++() {
 	m_childNodeBegin = m_childNodeEnd;
 	if (m_childNodeBegin != m_childrenEnd) {
-		uint32_t cp = utf8::peek_next( m_compFunc.strHandler->strBegin(m_childNodeBegin->first)+m_compFunc.posInStr, m_compFunc.strHandler->strEnd(m_childNodeBegin->first));
+		CodePoint cp = utf8::peek_next( m_compFunc.strHandler->strBegin(m_childNodeBegin->first)+m_compFunc.posInStr, m_compFunc.strHandler->strEnd(m_childNodeBegin->first));
 		m_childNodeEnd = std::upper_bound(m_childNodeBegin, m_childrenEnd, cp, m_compFunc);
 	}
 	return *this;
@@ -551,10 +552,10 @@ HashBasedFlatTrie<TValue>::findNode(T_OCTET_ITERATOR strIt, const T_OCTET_ITERAT
 	
 	if (nodeBegin != m_ht.end()) {
 		struct MyComp {
-			inline bool operator()(uint32_t a, const std::pair<StaticString, TValue> & b) const {
+			inline bool operator()(CodePoint a, const std::pair<StaticString, TValue> & b) const {
 				return a < b.first.size();
 			}
-			inline bool operator()(const std::pair<StaticString, TValue> & a, uint32_t b) const {
+			inline bool operator()(const std::pair<StaticString, TValue> & a, CodePoint b) const {
 				return a.first.size() < b;
 			}
 		};
@@ -603,7 +604,7 @@ void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEnd
 			const char * beginLookUp = m_strHandler.strBegin(nodeBegin->first) + posInStr;
 			const char * endLookUp = beginLookUp;
 			while (posInStr < nodeBegin->first.size()) {
-				uint32_t cp = utf8::next(endLookUp, nodeStrEnd);
+				CodePoint cp = utf8::next(endLookUp, nodeStrEnd);
 				const_iterator endChildNode = std::upper_bound(nodeBegin, nodeEnd, cp, CompFunc(&m_strHandler, posInStr));
 				if (endChildNode == nodeEnd) {
 					posInStr += endLookUp - beginLookUp;
@@ -627,10 +628,10 @@ void HashBasedFlatTrie<TValue>::finalize(uint64_t nodeBeginOff, uint64_t nodeEnd
 			const_iterator nodeBegin = begin()+nodeBeginOff;
 			const_iterator nodeEnd = begin()+nodeEndOff;
 			const char * childNextCP = m_strHandler.strBegin(nodeBegin->first)+posInStr;
-			uint32_t cp = utf8::next(childNextCP, m_strHandler.strEnd(nodeBegin->first));
+			CodePoint cp = utf8::next(childNextCP, m_strHandler.strEnd(nodeBegin->first));
 			const_iterator endChildNode = std::upper_bound(nodeBegin, nodeEnd, cp, compFunc);
 			uint64_t childEndOff = endChildNode-begin();
-			finalize(nodeBeginOff, childEndOff, (uint32_t) (childNextCP - m_strHandler.strBegin(nodeBegin->first)));
+			finalize(nodeBeginOff, childEndOff, (StaticString::SizeType) (childNextCP - m_strHandler.strBegin(nodeBegin->first)));
 			nodeBeginOff = childEndOff;
 		}
 	}
@@ -650,7 +651,7 @@ bool HashBasedFlatTrie<TValue>::valid(SizeType & offendingString) const {
 }
 
 template<typename TValue>
-void HashBasedFlatTrie<TValue>::finalize(uint32_t threadCount) {
+void HashBasedFlatTrie<TValue>::finalize(std::size_t threadCount) {
 	const StringHandler * strHandler = &m_strHandler;
 	#if defined(SSERIALIZE_EXPENSIVE_ASSERT_ENABLED)
 	std::cout << "Finalizing HashBasedFlatTrie with size=" << size() << std::endl;
@@ -764,7 +765,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest) {
 
 template<typename TValue>
 template<typename T_PH, typename T_STATIC_PAYLOAD>
-bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, uint32_t threadCount) {
+bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHandler, std::size_t threadCount) {
 	if (size() > std::numeric_limits<SizeType>::max()) {
 		throw sserialize::CreationException("HashBasedFlatTrie: unable to serialize. Too many nodes.");
 	}
@@ -843,7 +844,7 @@ bool HashBasedFlatTrie<TValue>::append(UByteArrayAdapter & dest, T_PH payloadHan
 			NodePtr * levelNodesEnd = levelNodesIt+levelNodes.size();
 			std::size_t blockSize = levelNodes.size()/threadCount;
 			
-			for(uint32_t i(0); i < threadCount; ++i) {
+			for(std::size_t i(0); i < threadCount; ++i) {
 				T_PH * pH = &payloadHandlers[i];
 				runningBlockTasks.syncedWithoutNotify([](int32_t & v) { v += 1; });
 				threadPool.sheduleTask(
