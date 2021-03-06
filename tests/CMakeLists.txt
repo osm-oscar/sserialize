@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(sserializetests)
 find_package(CPPUNIT)
+find_package(CGAL REQUIRED Core)
 
 IF (CPPUNIT_FOUND)
 
@@ -21,6 +22,14 @@ set(MY_LINK_LIBS
 	sserialize
 	${CPPUNIT_LIBRARY}
 )
+
+if (CGAL_FOUND)
+	set(MY_LINK_LIBS
+		CGAL::CGAL
+		CGAL::CGAL_Core
+		${MY_LINK_LIBS}
+	)
+endif()
 
 add_library(${PROJECT_NAME} STATIC ${TEST_LIB_SOURCES_CPP})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${MY_LINK_LIBS})
