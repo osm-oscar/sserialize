@@ -74,6 +74,8 @@ ADD_TEST_TARGET_SINGLE(util_MmappedMemory)
 ADD_TEST_TARGET_SINGLE(util_RLEStream)
 ADD_TEST_TARGET_SINGLE(algorithm_oom_sort)
 ADD_TEST_TARGET_SINGLE(util_UByteArrayAdapter)
+ADD_TEST_TARGET_SINGLE(util_strongtypedef)
+
 
 #static
 ADD_TEST_TARGET_SINGLE(static_deque)
