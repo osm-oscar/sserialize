@@ -339,6 +339,7 @@ set(UTILITY_SOURCES_CPP
 	src/utility/debuggerfunctions.cpp
 	src/utility/Bitpacking.cpp
 	src/utility/assert.cpp
+	src/utility/strongtypedefs.cpp
 	src/algorithm/utilmath.cpp
 )
 
@@ -598,6 +599,7 @@ include/sserialize/utility/VersionChecker.h
 include/sserialize/utility/constants.h
 include/sserialize/utility/printers.h
 include/sserialize/utility/type_traits.h
+include/sserialize/utility/strongtypedefs.h
 include/sserialize/vendor/utf8.h
 include/sserialize/vendor/utf8/checked.h
 include/sserialize/vendor/utf8/core.h
