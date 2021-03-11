@@ -38,15 +38,19 @@ class Add {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline Derived operator+(Derived const & o) const {
+	inline Derived & operator++() { ++Add::ut(); return static_cast<Derived&>(*this); }
+	inline Derived operator++(int) { return Derived(Add::ut()++); }
+	inline Derived & operator+=(Derived const & o) {
 		//We need to explicitly select the function in case there are functions with the same name
 		//Note that o is a Derived class and not our own
 		//We therefore should be able to use cut() on this, however they way it is now is more consistent and it looks the same everywhere
-		return Derived( Add::cut() + o. Add::cut() );
+		Add::ut() += o. Add::cut();
+		return static_cast<Derived&>(*this);
 	}
-	inline Derived & operator++() { ++Add::ut(); return static_cast<Derived>(*this); }
-	inline Derived operator++(int) { return Derived(Add::ut()++); }
-	inline Derived & operator+=(Derived const & o) { Add::ut() += o. Add::cut(); return static_cast<Derived>(*this); }
+	inline friend Derived operator+(Derived lhs, Derived const & rhs) {
+		lhs += rhs;
+		return lhs;
+	}
 };
 
 TMPL_HEADER
@@ -54,10 +58,13 @@ class Sub {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline Derived operator-(Derived const & o) const { return Derived( Sub::cut() - o. Sub::cut() ); }
-	inline Derived & operator--() { --Sub::ut(); return static_cast<Derived>(*this); }
+	inline Derived & operator--() { --Sub::ut(); return static_cast<Derived&>(*this); }
 	inline Derived operator--(int) { return Derived(Sub::ut()--); }
-	inline Derived & operator-=(Derived const & o) { Sub::ut() -= o. Sub::cut(); return static_cast<Derived>(*this); }
+	inline Derived & operator-=(Derived const & o) { Sub::ut() -= o. Sub::cut(); return static_cast<Derived&>(*this); }
+	inline friend Derived operator-(Derived lhs, Derived const & rhs) {
+		lhs -= rhs;
+		return lhs;
+	}
 };
 
 #define BIN_OPS(__NAME, __OPSYM) \
@@ -67,7 +74,7 @@ private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
 	inline Derived operator __OPSYM (Derived const & o) const { return Derived( __NAME::cut() __OPSYM o. __NAME::cut() ); } \
-	inline Derived & operator __OPSYM ## = (Derived const & o) { __NAME::ut() __OPSYM ##= o. __NAME::ut(); return static_cast<Derived>(*this); } \
+	inline Derived & operator __OPSYM ## = (Derived const & o) { __NAME::ut() __OPSYM ##= o. __NAME::ut(); return static_cast<Derived&>(*this); } \
 };
 
 BIN_OPS(Mult, *)
@@ -86,7 +93,7 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline Derived operator __OPSYM (Derived const & o) const { return Derived( __NAME::cut() __OPSYM o. __NAME::cut() ); } \
+	inline friend Derived operator __OPSYM (Derived const & lhs, Derived const & rhs) { return Derived(lhs. __NAME::cut() __OPSYM rhs. __NAME::cut() ); } \
 };
 BIN_OPS(And, &&)
 BIN_OPS(Or, ||)
@@ -98,7 +105,7 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline bool operator __OPSYM (Derived const & o) const { return __NAME::cut() __OPSYM o. __NAME::cut(); } \
+	inline friend bool operator __OPSYM (Derived const & lhs, Derived const & rhs) { return lhs. __NAME::cut() __OPSYM rhs. __NAME::cut(); } \
 };
 BIN_OPS(CompareEqual, ==)
 BIN_OPS(CompareNotEqual, !=)
@@ -129,9 +136,8 @@ class Arithmetic:
 	public Sub<TMPL_VARS>,
 	public Mult<TMPL_VARS>,
 	public Div<TMPL_VARS>,
-	public Mod<TMPL_VARS>
-// 	,
-// 	public Negate<TMPL_VARS>
+	public Mod<TMPL_VARS>,
+	public Negate<TMPL_VARS>
 {};
 
 TMPL_HEADER
