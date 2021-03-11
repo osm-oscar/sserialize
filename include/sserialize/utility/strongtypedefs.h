@@ -2,8 +2,6 @@
 #include <sserialize/storage/UByteArrayAdapter.h>
 
 //TODO: Add noexcept specifier, perfect forwarding if neccessary
-//TODO: Take a look at https://en.cppreference.com/w/cpp/language/operators to further improve operators
-//AND to make unary/binary minus work: hint: mark operators as friend
 
 namespace sserialize::st {
 	
@@ -15,8 +13,8 @@ struct underlying_type {
 template<typename T>
 struct underlying_type_accessor {
 	using type = typename underlying_type<T>::type;
-	static inline type const & get(T const & v) { return static_cast<type const &>(v); }
-	static inline type & get(T & v) { return static_cast<type &>(v); }
+	static inline type const & get(T const & v) noexcept(true) { return static_cast<type const &>(v); }
+	static inline type & get(T & v) noexcept(true) { return static_cast<type &>(v); }
 };
 
 //We have to cast this to Derived first, since these functions are called within another context
@@ -38,16 +36,16 @@ class Add {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline Derived & operator++() { ++Add::ut(); return static_cast<Derived&>(*this); }
-	inline Derived operator++(int) { return Derived(Add::ut()++); }
-	inline Derived & operator+=(Derived const & o) {
+	inline Derived & operator++() noexcept( noexcept(++underlying_type()) ) { ++Add::ut(); return static_cast<Derived&>(*this); }
+	inline Derived operator++(int) noexcept( noexcept(underlying_type()++) ) { return Derived(Add::ut()++); }
+	inline Derived & operator+=(Derived const & o) noexcept( noexcept(Add::ut() += o. Add::cut()) ) {
 		//We need to explicitly select the function in case there are functions with the same name
 		//Note that o is a Derived class and not our own
-		//We therefore should be able to use cut() on this, however they way it is now is more consistent and it looks the same everywhere
+		//We therefore should be able to use cut() on this, however the way it is now is more consistent and it looks the same everywhere
 		Add::ut() += o. Add::cut();
 		return static_cast<Derived&>(*this);
 	}
-	inline friend Derived operator+(Derived lhs, Derived const & rhs) {
+	inline friend Derived operator+(Derived lhs, Derived const & rhs) noexcept( noexcept( lhs += rhs ) ) {
 		lhs += rhs;
 		return lhs;
 	}
@@ -58,10 +56,10 @@ class Sub {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline Derived & operator--() { --Sub::ut(); return static_cast<Derived&>(*this); }
-	inline Derived operator--(int) { return Derived(Sub::ut()--); }
-	inline Derived & operator-=(Derived const & o) { Sub::ut() -= o. Sub::cut(); return static_cast<Derived&>(*this); }
-	inline friend Derived operator-(Derived lhs, Derived const & rhs) {
+	inline Derived & operator--() noexcept( noexcept(--underlying_type()) ) { --Sub::ut(); return static_cast<Derived&>(*this); }
+	inline Derived operator--(int) noexcept( noexcept(underlying_type()--) ) { return Derived(Sub::ut()--); }
+	inline Derived & operator-=(Derived const & o) noexcept( noexcept(Sub::ut() -= o. Sub::cut()) ) { Sub::ut() -= o. Sub::cut(); return static_cast<Derived&>(*this); }
+	inline friend Derived operator-(Derived lhs, Derived const & rhs) noexcept( noexcept( lhs -= rhs ) ) {
 		lhs -= rhs;
 		return lhs;
 	}
@@ -73,8 +71,14 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline Derived operator __OPSYM (Derived const & o) const { return Derived( __NAME::cut() __OPSYM o. __NAME::cut() ); } \
-	inline Derived & operator __OPSYM ## = (Derived const & o) { __NAME::ut() __OPSYM ##= o. __NAME::ut(); return static_cast<Derived&>(*this); } \
+	inline Derived & operator __OPSYM ## = (Derived const & o) noexcept( noexcept(__NAME::ut() __OPSYM ## = o. __NAME::cut()) ) { \
+		__NAME::ut() __OPSYM ##= o. __NAME::cut(); \
+		return static_cast<Derived&>(*this); \
+	} \
+	inline friend Derived operator __OPSYM (Derived lhs, Derived const & rhs) noexcept( noexcept( lhs __OPSYM ## = rhs ) ) { \
+		lhs __OPSYM ## = rhs; \
+		return lhs; \
+	} \
 };
 
 BIN_OPS(Mult, *)
@@ -93,7 +97,9 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline friend Derived operator __OPSYM (Derived const & lhs, Derived const & rhs) { return Derived(lhs. __NAME::cut() __OPSYM rhs. __NAME::cut() ); } \
+	inline friend Derived operator __OPSYM (Derived const & lhs, Derived const & rhs) noexcept( noexcept( lhs. __NAME::cut() __OPSYM rhs. __NAME::cut() ) ) { \
+		return Derived( lhs. __NAME::cut() __OPSYM rhs. __NAME::cut() ); \
+	} \
 };
 BIN_OPS(And, &&)
 BIN_OPS(Or, ||)
@@ -105,7 +111,9 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline friend bool operator __OPSYM (Derived const & lhs, Derived const & rhs) { return lhs. __NAME::cut() __OPSYM rhs. __NAME::cut(); } \
+	inline friend bool operator __OPSYM (Derived const & lhs, Derived const & rhs) noexcept( noexcept( lhs. __NAME::cut() __OPSYM rhs. __NAME::cut() ) ) { \
+		return lhs. __NAME::cut() __OPSYM rhs. __NAME::cut(); \
+	} \
 };
 BIN_OPS(CompareEqual, ==)
 BIN_OPS(CompareNotEqual, !=)
@@ -121,7 +129,9 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline Derived operator __OPSYM () const { return Derived( __OPSYM __NAME::cut() ); } \
+	inline Derived operator __OPSYM () const noexcept( noexcept( __OPSYM __NAME::cut() ) ){ \
+		return Derived( __OPSYM __NAME::cut() ); \
+	} \
 };
 
 UN_OPS(BitInvert, ~)
@@ -162,8 +172,8 @@ class Serialize {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline friend sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, Derived const & src) {
-		return dest << src.cut();
+	inline friend sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & lhs, Derived const & rhs) noexcept( noexcept( lhs << rhs.cut() ) ) {
+		return lhs << rhs.cut();
 	}
 };
 
@@ -172,8 +182,8 @@ class Deserialize {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline friend sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & src, Derived & dest) {
-		return dest >> dest.ut();
+	inline friend sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & lhs, Derived & rhs) noexcept( noexcept( lhs >> rhs.ut() ) ) {
+		return lhs >> rhs.ut();
 	}
 };
 
