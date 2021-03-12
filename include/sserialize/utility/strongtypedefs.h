@@ -168,6 +168,27 @@ class BooleanLike:
 {};
 
 TMPL_HEADER
+class CompareAll:
+	public CompareEqual<TMPL_VARS>,
+	public CompareNotEqual<TMPL_VARS>,
+	public CompareGreater<TMPL_VARS>,
+	public CompareGreaterEqual<TMPL_VARS>,
+	public CompareLess<TMPL_VARS>,
+	public CompareLessEqual<TMPL_VARS>
+{};
+
+TMPL_HEADER
+class Swap {
+private:
+	UNDERLYING_TYPE_HELPERS
+public:
+	inline friend void swap(Derived & lhs, Derived & rhs) noexcept {
+		using std::swap;
+		swap(lhs. Swap::ut(), rhs. Swap::ut() );
+	}
+};
+
+TMPL_HEADER
 class Serialize {
 private:
 	UNDERLYING_TYPE_HELPERS
