@@ -1,13 +1,24 @@
 #pragma once
 #include <sserialize/storage/UByteArrayAdapter.h>
+#include <utility>
 
-//TODO: Add noexcept specifier, perfect forwarding if neccessary
+//Strong typedef based on ideas seen at
+//https://github.com/rollbear/strong_type
+//https://github.com/foonathan/type_safe
 
 namespace sserialize::st {
-	
-template<typename T>
+
+template<typename Derived, typename T>
+class Tag {
+	using underlying_type = T;
+};
+
+template<typename Derived, typename T>
+T underlying_type_impl(Tag<Derived, T>*);
+
+template<typename Derived>
 struct underlying_type {
-	using type = typename T::underlying_type;
+	using type = decltype( underlying_type_impl(static_cast<Derived*>(nullptr)) );
 };
 
 template<typename T>
@@ -15,6 +26,59 @@ struct underlying_type_accessor {
 	using type = typename underlying_type<T>::type;
 	static inline type const & get(T const & v) noexcept(true) { return static_cast<type const &>(v); }
 	static inline type & get(T & v) noexcept(true) { return static_cast<type &>(v); }
+};
+
+template<
+	typename Derived,
+	typename underlying_type,
+	typename underlying_type_accessor,
+	class TModule
+>
+using Module = typename TModule::template type<Derived, underlying_type, underlying_type_accessor>;
+
+template<
+	typename Derived,
+	typename underlying_type,
+	typename underlying_type_accessor,
+	typename... Modules
+>
+class strong_type:
+	public Tag<Derived, underlying_type>,
+	public Module<Derived, underlying_type, underlying_type_accessor, Modules>...
+{};
+
+///Strong typedef with underlying_type_accessor = sserialize::st::underlying_type_accessor<Derived>
+template<
+	typename Derived,
+	typename underlying_type,
+	typename... Modules
+>
+using strong_type_ca = strong_type<Derived, underlying_type, sserialize::st::underlying_type_accessor<Derived>, Modules...>;
+
+///Strong typedef which also stores the type and allows an explicit cast to the underlying type
+template<
+	typename Derived,
+	typename underlying_type,
+	typename... Modules
+>
+class strong_type_store:
+	public strong_type_ca<Derived, underlying_type, Modules...>
+{
+public:
+	strong_type_store() :
+	m_v()
+	{}
+	explicit strong_type_store(underlying_type const & v) noexcept(std::is_nothrow_move_constructible<underlying_type>::value) :
+	m_v(v)
+	{}
+	explicit strong_type_store(underlying_type && v) :
+	m_v(std::move(v))
+	{}
+public:
+	explicit operator underlying_type&() { return m_v; }
+	explicit operator underlying_type const &() const { return m_v; }
+private:
+	underlying_type m_v;
 };
 
 //We have to cast this to Derived first, since these functions are called within another context
@@ -25,11 +89,35 @@ inline underlying_type const & cut() const { return underlying_type_accessor::ge
 #define TMPL_HEADER \
 template< \
 	typename Derived, \
-	typename underlying_type = typename sserialize::st::underlying_type<Derived>::type, \
+	typename underlying_type, \
 	typename underlying_type_accessor = sserialize::st::underlying_type_accessor<Derived> \
 >
 
 #define TMPL_VARS Derived, underlying_type, underlying_type_accessor
+
+namespace impl {
+
+TMPL_HEADER
+class Store {
+private:
+	UNDERLYING_TYPE_HELPERS
+public:
+	Store() :
+	m_v()
+	{}
+	explicit Store(underlying_type const & v) noexcept(std::is_nothrow_move_constructible<underlying_type>::value) :
+	m_v(v)
+	{}
+	explicit Store(underlying_type && v) :
+	m_v(std::move(v))
+	{}
+public:
+	explicit operator underlying_type&() { return m_v; }
+	explicit operator underlying_type const &() const { return m_v; }
+private:
+	underlying_type m_v;
+};
+
 
 TMPL_HEADER
 class Add {
@@ -208,6 +296,44 @@ public:
 	}
 };
 
+} //end namespace impl
+
+#define MODULE(__N) \
+struct __N { \
+	TMPL_HEADER \
+	using type = impl:: __N <TMPL_VARS>; \
+};
+
+MODULE(Store)
+MODULE(Add)
+MODULE(Sub)
+MODULE(Mult)
+MODULE(Div)
+MODULE(LShift)
+MODULE(RShift)
+MODULE(BitOr)
+MODULE(BitAnd)
+MODULE(BitXor)
+MODULE(And)
+MODULE(Or)
+MODULE(CompareEqual)
+MODULE(CompareNotEqual)
+MODULE(CompareLess)
+MODULE(CompareLessEqual)
+MODULE(CompareGreater)
+MODULE(CompareGreaterEqual)
+MODULE(BitInvert)
+MODULE(Negate)
+MODULE(Not)
+MODULE(Arithmetic)
+MODULE(BitBased)
+MODULE(BooleanLike)
+MODULE(CompareAll)
+MODULE(Swap)
+MODULE(Serialize)
+MODULE(Deserialize)
+
+#undef MODULE
 #undef UNDERLYING_TYPE_HELPERS
 #undef TMPL_HEADER
 

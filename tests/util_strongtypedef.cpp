@@ -6,27 +6,34 @@
 
 namespace ns1 {
 	class WrappedArithmeticWithCast;
-	class WrappedArithmeticAttorney;
+	class WrappedArithmeticWithAttorney;
 }
 
-template<>
-struct sserialize::st::underlying_type<ns1::WrappedArithmeticWithCast> {
-	using type = uint64_t;
-};
-
-template<>
-struct sserialize::st::underlying_type<ns1::WrappedArithmeticAttorney> {
-	using type = uint64_t;
-};
-
-template<>
-struct sserialize::st::underlying_type_accessor<ns1::WrappedArithmeticAttorney>;
-
 namespace ns1 {
+	
+class WrappedArithmeticWithStore:
+#define MY_BASE \
+	sserialize::st::strong_type_store< \
+		WrappedArithmeticWithStore, \
+		uint64_t, \
+		sserialize::st::Arithmetic, \
+		sserialize::st::CompareAll \
+		>
+public MY_BASE
+{
+	//have to import the ctors
+	using MyBase = MY_BASE;
+public:
+	using MyBase::MyBase;
+};
 
 class WrappedArithmeticWithCast:
-	public sserialize::st::Arithmetic<WrappedArithmeticWithCast>,
-	public sserialize::st::CompareEqual<WrappedArithmeticWithCast>
+	public sserialize::st::strong_type_ca<
+		WrappedArithmeticWithCast,
+		uint64_t,
+		sserialize::st::Arithmetic,
+		sserialize::st::CompareAll
+		>
 {
 public:
 	using underlying_type = uint64_t;
@@ -39,43 +46,76 @@ private:
 	underlying_type m_v;
 };
 
-class WrappedArithmeticAttorney:
-	public sserialize::st::Arithmetic<WrappedArithmeticAttorney>,
-	public sserialize::st::CompareEqual<WrappedArithmeticAttorney>
+class WrappedArithmeticAttorney {
+public:
+	using type = uint64_t;
+	static type const & get(WrappedArithmeticWithAttorney const & v) noexcept(true);
+	static type & get(WrappedArithmeticWithAttorney & v) noexcept(true);
+};
+
+class WrappedArithmeticWithAttorney:
+	public sserialize::st::strong_type<
+		WrappedArithmeticWithAttorney,
+		uint64_t,
+		WrappedArithmeticAttorney,
+		sserialize::st::Arithmetic,
+		sserialize::st::CompareAll
+		>
 {
 public:
 	using underlying_type = uint64_t;
 public:
-	WrappedArithmeticAttorney(underlying_type v) : m_v(v) {}
+	WrappedArithmeticWithAttorney(underlying_type v) : m_v(v) {}
 private:
-	friend class sserialize::st::underlying_type_accessor<ns1::WrappedArithmeticAttorney>;
+	friend class WrappedArithmeticAttorney;
 private:
 	underlying_type m_v;
 };
 
+uint64_t const &
+WrappedArithmeticAttorney::get(WrappedArithmeticWithAttorney const & v) noexcept(true) {
+	return v.m_v;
+}
+
+uint64_t &
+WrappedArithmeticAttorney::get(WrappedArithmeticWithAttorney & v) noexcept(true) {
+	return v.m_v;
+}
+
+
 struct Outside {
-	class WrappedArithmeticInnerAccessor;
-	class WrappedArithmeticInnerAttorney:
-		public sserialize::st::Arithmetic<WrappedArithmeticInnerAttorney, uint64_t, WrappedArithmeticInnerAccessor>,
-		public sserialize::st::CompareEqual<WrappedArithmeticInnerAttorney, uint64_t, WrappedArithmeticInnerAccessor>
+	class WrappedArithmeticInnerAttorney;
+	class WrappedArithmeticInnerWithAttorney:
+		public sserialize::st::strong_type<
+			WrappedArithmeticInnerWithAttorney,
+			uint64_t,
+			WrappedArithmeticInnerAttorney,
+			sserialize::st::Arithmetic,
+			sserialize::st::CompareAll
+			>
 	{
 	public:
 		using underlying_type = uint64_t;
 	public:
-		WrappedArithmeticInnerAttorney(underlying_type v) : m_v(v) {}
+		WrappedArithmeticInnerWithAttorney(underlying_type v) : m_v(v) {}
 	private:
-		friend class WrappedArithmeticInnerAccessor;
+		friend class WrappedArithmeticInnerAttorney;
 	private:
 		underlying_type m_v;
 	};
-	struct WrappedArithmeticInnerAccessor {
+	class WrappedArithmeticInnerAttorney {
+	public:
 		using type = uint64_t;
-		inline static type & get(WrappedArithmeticInnerAttorney & v) { return v.m_v; }
-		inline static type const & get(WrappedArithmeticInnerAttorney const & v) { return v.m_v; }
+		inline static type & get(WrappedArithmeticInnerWithAttorney & v) { return v.m_v; }
+		inline static type const & get(WrappedArithmeticInnerWithAttorney const & v) { return v.m_v; }
 	};
 	class WrappedArithmeticInnerWithCast:
-		public sserialize::st::Arithmetic<WrappedArithmeticInnerWithCast, uint64_t>,
-		public sserialize::st::CompareEqual<WrappedArithmeticInnerWithCast, uint64_t>
+		public sserialize::st::strong_type_ca<
+			WrappedArithmeticInnerWithCast,
+			uint64_t,
+			sserialize::st::Arithmetic,
+			sserialize::st::CompareAll
+			>
 	{
 	public:
 		using underlying_type = uint64_t;
@@ -85,29 +125,12 @@ struct Outside {
 		operator underlying_type&() { return m_v; }
 		operator underlying_type const &() const { return m_v; }
 	private:
-		friend class WrappedArithmeticInnerAccessor;
-	private:
 		underlying_type m_v;
 	};
 };
 
 }//end namespace ns1
 
-namespace sserialize::st {
-
-	
-template<>
-struct underlying_type_accessor<ns1::WrappedArithmeticAttorney> {
-	using type = typename sserialize::st::underlying_type<ns1::WrappedArithmeticAttorney>::type;
-	inline static type const & get(ns1::WrappedArithmeticAttorney const & v) {
-		return v.m_v;
-	}
-	static type & get(ns1::WrappedArithmeticAttorney & v) {
-		return v.m_v;
-	}
-};
-
-}//end namespace sserialize::st
 
 template<typename T>
 class StrongTypeDefTest: public sserialize::tests::TestBase {
@@ -143,9 +166,10 @@ int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
 	
 	CppUnit::TextUi::TestRunner runner;
+	runner.addTest(  StrongTypeDefTest<ns1::WrappedArithmeticWithStore>::suite() );
 	runner.addTest(  StrongTypeDefTest<ns1::WrappedArithmeticWithCast>::suite() );
-	runner.addTest(  StrongTypeDefTest<ns1::WrappedArithmeticAttorney>::suite() );
-	runner.addTest(  StrongTypeDefTest<ns1::Outside::WrappedArithmeticInnerAttorney>::suite() );
+	runner.addTest(  StrongTypeDefTest<ns1::WrappedArithmeticWithAttorney>::suite() );
+	runner.addTest(  StrongTypeDefTest<ns1::Outside::WrappedArithmeticInnerWithAttorney>::suite() );
 	runner.addTest(  StrongTypeDefTest<ns1::Outside::WrappedArithmeticInnerWithCast>::suite() );
 	bool ok = runner.run();
 	return ok ? 0 : 1;
