@@ -150,6 +150,9 @@ namespace __UByteArrayAdapter {
 		UByteArrayAdapter dataBase() const;
 	};
 	
+	struct ConsumeTag {};
+	struct NoConsumeTag {};
+	
 	template<typename TValue>
 	struct SerializationSupport {
 		static const bool value = false;
@@ -166,6 +169,12 @@ namespace __UByteArrayAdapter {
 	struct Deserializer {
 		TValue operator()(const UByteArrayAdapter & dest) const {
 			return TValue(dest);
+		}
+		TValue operator()(const UByteArrayAdapter & dest, NoConsumeTag c) const {
+			return TValue(dest, c);
+		}
+		TValue operator()(UByteArrayAdapter & dest, ConsumeTag c) const {
+			return TValue(dest, c);
 		}
 	};
 	
@@ -189,8 +198,8 @@ public:
 	typedef sserialize::SignedOffsetType NegativeOffsetType;
 	typedef sserialize::OffsetType SizeType;
 	
-	struct ConsumeTag {};
-	struct NoConsumeTag {};
+	using ConsumeTag = detail::__UByteArrayAdapter::ConsumeTag;
+	using NoConsumeTag = detail::__UByteArrayAdapter::NoConsumeTag;
 
 	static constexpr ConsumeTag Consume = ConsumeTag();
 	static constexpr NoConsumeTag NoConsume = NoConsumeTag();
@@ -655,6 +664,12 @@ template<> \
 struct Deserializer<__TYPE> { \
 	inline __TYPE operator()(const UByteArrayAdapter & dest) const { \
 		return dest.__FUNCNAME(0); \
+	} \
+	inline __TYPE operator()(const UByteArrayAdapter & dest, NoConsumeTag) const { \
+		return dest.__FUNCNAME(0); \
+	} \
+	inline __TYPE operator()(UByteArrayAdapter & dest, ConsumeTag) const { \
+		return dest.__FUNCNAME(); \
 	} \
 }; \
 
