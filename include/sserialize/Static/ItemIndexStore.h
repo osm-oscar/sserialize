@@ -102,6 +102,7 @@ public:
 	typedef uint32_t SizeType;
 	typedef SizeType IdType;
 	static constexpr IdType npos = std::numeric_limits<IdType>::max();
+	static constexpr IdType nid = std::numeric_limits<IdType>::max();
 private:
 	RCPtrWrapper<interfaces::ItemIndexStore> m_priv;
 protected:
