@@ -170,6 +170,10 @@ inline void UByteArrayAdapter::get(UByteArrayAdapter::OffsetType pos, Size & v) 
 } //end namespace sserialize
 
 namespace std {
+	
+inline std::string to_string(sserialize::Size const & v) {
+	return to_string(static_cast<sserialize::Size::underlying_type const&>(v));
+}
 
 template<>
 struct numeric_limits<sserialize::Size>  {
