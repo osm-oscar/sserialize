@@ -26,6 +26,7 @@ class ItemIndexPrivate;
 class ItemIndex final: public RCWrapper<ItemIndexPrivate>  {
 	typedef RCWrapper<ItemIndexPrivate> MyBaseClass;
 public:
+	using value_type = uint32_t;
 	enum Types {
 		T_NULL=0,
 		T_SIMPLE=0x1,
