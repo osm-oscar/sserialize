@@ -78,27 +78,22 @@ public:
 	inline Size operator __OP (__TYPE v) { return Size(m_v __OP v); }
 	
 #define INTEGRAL_CAST_OP(__TYPE) \
-	inline operator __TYPE() const { return narrow_check<__TYPE>(m_v); }
+	inline explicit operator __TYPE() const { return narrow_check<__TYPE>(m_v); }
 	
 #define FOR_EACH_OP(__TYPE) \
 	INTEGRAL_CAST_OP(__TYPE)
-/**
-// 	INTEGRAL_OPS(__TYPE, *) \
-// 	INTEGRAL_OPS(__TYPE, /) \
-// 	INTEGRAL_OPS(__TYPE, +) \
-// 	INTEGRAL_OPS(__TYPE, -) \
-**/
 	
-// 	FOR_EACH_OP(uint8_t)
-// 	FOR_EACH_OP(uint16_t)
-// 	FOR_EACH_OP(uint32_t)
-	FOR_EACH_OP(uint64_t)
-// 	FOR_EACH_OP(int8_t)
-// 	FOR_EACH_OP(int16_t)
-// 	FOR_EACH_OP(int32_t)
-// 	FOR_EACH_OP(int64_t)
+	FOR_EACH_OP(uint8_t)
+	FOR_EACH_OP(uint16_t)
+	FOR_EACH_OP(uint32_t)
+	FOR_EACH_OP(int8_t)
+	FOR_EACH_OP(int16_t)
+	FOR_EACH_OP(int32_t)
+	FOR_EACH_OP(int64_t)
 #undef INTEGRAL_OPS
 #undef FOR_EACH_OP
+	
+	inline operator uint64_t() const { return narrow_check<uint64_t>(m_v); }
 	
 	Size & operator++() {
 		++m_v;
