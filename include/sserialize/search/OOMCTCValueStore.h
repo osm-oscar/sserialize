@@ -169,9 +169,9 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   *     void operator()(BaseTraits::NodeIdentifier node, const sserialize::UByteArrayAdapter & nodePayload);
   *   };
   *   struct IndexFactoryOut {
-  *     using id_type = uint32_t;
+  *     using indexid_type = uint32_t;
   *     template<typename TInputIterator>
-  *     id_type operator()(TInputIterator begin, TInputIterator end);
+  *     indexid_type operator()(TInputIterator begin, TInputIterator end);
   *   };
   * };
   */
@@ -416,7 +416,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	
 	using itemid_type = typename ValueEntry::ItemIdType;
 	using cellid_type = typename ValueEntry::CellIdType;
-	using indexid_type = typename IndexFactoryOut::id_type;
+	using indexid_type = typename IndexFactoryOut::indexid_type;
 	
 	
 	typedef typename TreeValueEntries::const_iterator TVEConstIterator;
