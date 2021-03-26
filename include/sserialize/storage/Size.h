@@ -142,8 +142,32 @@ struct SerializationInfo<Size> {
 	}
 };
 
-SSERIALIZE_UBA_GET_PUT_TEMPLATE_SPECIALIZATIONS(sserialize::Size, getOffset, putOffset)
+template<>
+inline void UByteArrayAdapter::put(const Size & v) {
+	putOffset(static_cast<uint64_t>(v));
 }
+template<>
+inline void UByteArrayAdapter::put(UByteArrayAdapter::OffsetType pos, const Size & v) { \
+	putOffset(pos, static_cast<uint64_t>(v));
+}
+template<>
+inline Size UByteArrayAdapter::get() {
+	return getOffset();
+}
+template<>
+inline void UByteArrayAdapter::get(Size & v) {
+	v = getOffset();
+}
+template<>
+inline Size UByteArrayAdapter::get(UByteArrayAdapter::OffsetType pos) const { \
+	return getOffset(pos);
+}
+template<>
+inline void UByteArrayAdapter::get(UByteArrayAdapter::OffsetType pos, Size & v) const {
+	v = getOffset(pos);
+}
+
+} //end namespace sserialize
 
 namespace std {
 
