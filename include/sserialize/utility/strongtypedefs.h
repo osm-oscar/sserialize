@@ -9,9 +9,7 @@
 namespace sserialize::st {
 
 template<typename Derived, typename T>
-class Tag {
-	using underlying_type = T;
-};
+class Tag {};
 
 template<typename Derived, typename T>
 T underlying_type_impl(Tag<Derived, T>*);
@@ -276,25 +274,42 @@ public:
 	}
 };
 
-TMPL_HEADER
-class Serialize {
+
+template<
+	typename OStreamType,
+	typename Derived,
+	typename underlying_type,
+	typename underlying_type_accessor = sserialize::st::underlying_type_accessor<Derived>
+>
+class OStream {
 private:
 	UNDERLYING_TYPE_HELPERS
 public:
-	inline friend sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & lhs, Derived const & rhs) noexcept( noexcept( lhs << rhs.cut() ) ) {
-		return lhs << rhs.cut();
+	inline friend OStreamType & operator<<(OStreamType & lhs, Derived const & rhs) noexcept( noexcept( lhs << rhs.ut() ) ) {
+		return lhs << rhs.ut();
+	}
+};
+
+template<
+	typename IStreamType,
+	typename Derived,
+	typename underlying_type,
+	typename underlying_type_accessor = sserialize::st::underlying_type_accessor<Derived>
+>
+class IStream {
+private:
+	UNDERLYING_TYPE_HELPERS
+public:
+	inline friend IStreamType & operator<<(IStreamType & lhs, Derived & rhs) noexcept( noexcept( lhs >> rhs.ut() ) ) {
+		return lhs >> rhs.ut();
 	}
 };
 
 TMPL_HEADER
-class Deserialize {
-private:
-	UNDERLYING_TYPE_HELPERS
-public:
-	inline friend sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & lhs, Derived & rhs) noexcept( noexcept( lhs >> rhs.ut() ) ) {
-		return lhs >> rhs.ut();
-	}
-};
+using Serialize = OStream<sserialize::UByteArrayAdapter, TMPL_VARS>;
+
+TMPL_HEADER
+using Deserialize = IStream<sserialize::UByteArrayAdapter, TMPL_VARS>;
 
 } //end namespace impl
 
@@ -332,6 +347,18 @@ MODULE(CompareAll)
 MODULE(Swap)
 MODULE(Serialize)
 MODULE(Deserialize)
+
+template<typename StreamType>
+struct OStream {
+	TMPL_HEADER
+	using type = impl::OStream<StreamType, TMPL_VARS>;
+}; 
+
+template<typename StreamType>
+struct IStream {
+	TMPL_HEADER
+	using type = impl::IStream<StreamType, TMPL_VARS>;
+};
 
 #undef MODULE
 #undef UNDERLYING_TYPE_HELPERS
