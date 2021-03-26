@@ -60,34 +60,38 @@ template<typename TNodeIdentifier>
 class ValueEntry final {
 public:
 	typedef TNodeIdentifier NodeIdentifier;
+	using CellIdType = uint32_t;
+	using ItemIdType = uint32_t;
 public:
 	ValueEntry() : m_cellId(0), m_itemId(0) {}
 	~ValueEntry() {}
-	uint32_t cellId() const { return m_cellId; }
-	void cellId(uint32_t v) { m_cellId = v; }
+	CellIdType cellId() const { return m_cellId; }
+	void cellId(CellIdType v) { m_cellId = v; }
 	
 	void setFullMatch() { m_itemId = FULL_MATCH; }
 	bool fullMatch() const { return m_itemId == FULL_MATCH; }
 
-	void itemId(uint32_t v) { m_itemId = v; }
-	uint32_t itemId() const { return m_itemId; }
+	void itemId(ItemIdType v) { m_itemId = v; }
+	ItemIdType itemId() const { return m_itemId; }
 
 	const NodeIdentifier & nodeId() const { return m_nodeId; }
 	void nodeId(const NodeIdentifier & v) { m_nodeId = v; }
 private:
-	static constexpr const uint32_t FULL_MATCH = std::numeric_limits<uint32_t>::max();
-	static constexpr const uint32_t NULL_CELL = std::numeric_limits<uint32_t>::max();
+	static constexpr const CellIdType FULL_MATCH = std::numeric_limits<CellIdType>::max();
+	static constexpr const CellIdType NULL_CELL = std::numeric_limits<CellIdType>::max();
 private:
-	uint32_t m_cellId;
+	CellIdType m_cellId;
 	//stores either the item or FULL_MATCH meaning that this cell is fully matched 
-	uint32_t m_itemId;
+	ItemIdType m_itemId;
 	NodeIdentifier m_nodeId;
 };
 
 template<typename TNodeIdentifier>
 class ValueEntryItemIdIteratorMapper {
 public:
-	uint32_t operator()(const ValueEntry<TNodeIdentifier> & e) const { return e.itemId(); }
+	using ItemIdType = typename ValueEntry<TNodeIdentifier>::ItemIdType;
+public:
+	ItemIdType operator()(const ValueEntry<TNodeIdentifier> & e) const { return e.itemId(); }
 };
 
 // template<typename TNodeIdentifier, typename TValueEntryIterator>
@@ -133,18 +137,22 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   *     bool operator()(item_type item);
   *   }
   *   struct ItemId {
-  *     uint32_t operator()(item_type item);
+  *     using id_type = uint32_t;
+  *     using item_type = ITEM_TYPE;
+  *     id_type operator()(item_type item);
   *   }
   *   struct ItemCells {
+  *     using id_type = uint32_t;  
   *     template<typename TOutputIterator>
   *     void operator()(item_type item, TOutputIterator out);
   *   }
   *   struct ForeignObjects {
+  *       using cellid_type = uint32_t;
   *       template<typename TOutputIterator>
   *       void cells(item_type item, TOutputIterator out);
   *       ///has to return cell local ids if needed
   *       template<typename TOutputIterator>
-  *       void items(item_type item, uint32_t cellId, TOutputIterator out);
+  *       void items(item_type item, cellid_type cellId, TOutputIterator out);
   *     }
   *   }
   *   struct ItemSearchNodes {
@@ -161,8 +169,9 @@ struct is_trivially_copyable< detail::OOMCTCValuesCreator::ValueEntry<TNodeIdent
   *     void operator()(BaseTraits::NodeIdentifier node, const sserialize::UByteArrayAdapter & nodePayload);
   *   };
   *   struct IndexFactoryOut {
+  *     using id_type = uint32_t;
   *     template<typename TInputIterator>
-  *     uint32_t operator()(TInputIterator begin, TInputIterator end);
+  *     id_type operator()(TInputIterator begin, TInputIterator end);
   *   };
   * };
   */
@@ -175,7 +184,7 @@ public:
 public:
 	OOMCTCValuesCreator(const Traits & traits);
 	template<typename TItemIterator, typename TInsertionTraits, bool TWithProgressInfo = true>
-	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits, uint32_t threadCount = 0);
+	bool insert(TItemIterator begin, const TItemIterator & end, TInsertionTraits itraits, std::size_t threadCount = 0);
 	template<typename TOutputTraits, bool TWithProgressInfo = true>
 	void append(TOutputTraits otraits);
 private:
@@ -202,7 +211,7 @@ m_entries(sserialize::MM_SLOW_FILEBASED)
 template<typename TBaseTraits>
 template<typename TItemIterator, typename TInputTraits, bool TWithProgressInfo>
 bool
-OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits, uint32_t threadCount)
+OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterator & end, TInputTraits itraits, std::size_t threadCount)
 {
 	using ItemIterator = TItemIterator;
 	using InputTraits = TInputTraits;
@@ -212,6 +221,9 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	using ItemCellsExtractor = typename InputTraits::ItemCells;
 	using ForeignObjects = typename InputTraits::ForeignObjects;
 	using ItemSearchStructureNodesExtractor = typename InputTraits::ItemSearchStructureNodes;
+	
+	using itemid_type = typename ValueEntry::ItemIdType;
+	using cellid_type = typename ValueEntry::CellIdType;
 	
 	struct State {
 		TItemIterator it;
@@ -223,7 +235,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		std::mutex flushLock;
 		
 		detail::OOMCTCValuesCreator::ProgressInfo<ItemIterator, TWithProgressInfo> pinfo;
-		uint32_t counter;
+		std::size_t counter;
 		
 		State(TItemIterator begin, TItemIterator end, TreeValueEntries * entries) :
 		it(begin), end(end),
@@ -253,12 +265,12 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 		ForeignObjects foE;
 		ItemSearchStructureNodesExtractor nodesE;
 		
-		std::vector<uint32_t> itemCells;
-		std::vector<uint32_t> foreignCells;
-		std::vector<uint32_t> foreignItems;
+		std::vector<cellid_type> itemCells;
+		std::vector<cellid_type> foreignCells;
+		std::vector<itemid_type> foreignItems;
 		std::vector<NodeIdentifier> itemNodes;
 		
-		std::back_insert_iterator< std::vector<uint32_t> > itemCellsBI;
+		std::back_insert_iterator< std::vector<cellid_type> > itemCellsBI;
 		std::back_insert_iterator< std::vector<NodeIdentifier> > itemNodesBI;
 
 		void flush() {
@@ -309,7 +321,7 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 				nodesE(item, itemNodesBI);
 				for(const auto & node : itemNodes) {
 					e.nodeId(node);
-					for(uint32_t cellId : itemCells) {
+					for(cellid_type cellId : itemCells) {
 						e.cellId(cellId);
 						if (ItemIdExtractor::HasCellLocalIds && !e.fullMatch()) {
 							e.itemId(itemIdE(item, cellId));
@@ -320,10 +332,10 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 				}
 				if (foPred(item)) {
 					foE.cells(item, std::back_inserter(foreignCells));
-					for (uint32_t cellId : foreignCells) {
+					for (cellid_type cellId : foreignCells) {
 						foE.items(item, cellId, std::back_inserter(foreignItems));
 						e.cellId(cellId);
-						for(uint32_t itemId : foreignItems) { //these already are cell local if needed
+						for(itemid_type itemId : foreignItems) { //these already are cell local if needed
 							e.itemId(itemId);
 							for(const auto & node : itemNodes) {
 								e.nodeId(node);
@@ -378,10 +390,10 @@ OOMCTCValuesCreator<TBaseTraits>::insert(TItemIterator begin, const TItemIterato
 	state.pinfo.begin("OOMCTCValuesCreator::Inserting");
 	this->m_entries.syncOnFlush(false);
 	std::vector<std::thread> threads;
-	for(uint32_t i(0); i < threadCount; ++i) {
+	for(std::size_t i(0); i < threadCount; ++i) {
 		threads.emplace_back( Worker(&state, itraits) );
 	}
-	for(uint32_t i(0); i < threadCount; ++i) {
+	for(std::size_t i(0); i < threadCount; ++i) {
 		threads[i].join();
 	}
 	threads.clear();
@@ -402,11 +414,17 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	typedef typename OutputTraits::DataOut DataOut;
 	typedef std::vector<ValueEntry> BlockBuffer;
 	
+	using itemid_type = typename ValueEntry::ItemIdType;
+	using cellid_type = typename ValueEntry::CellIdType;
+	using indexid_type = typename IndexFactoryOut::id_type;
+	
+	
 	typedef typename TreeValueEntries::const_iterator TVEConstIterator;
 	
 	typedef detail::OOMCTCValuesCreator::ValueEntryItemIdIteratorMapper<NodeIdentifier> VEItemIdIteratorMapper;
-	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, uint32_t, typename BlockBuffer::const_iterator> BlockBufferItemIdIterator;
-	
+	typedef sserialize::TransformIterator<VEItemIdIteratorMapper, itemid_type, typename BlockBuffer::const_iterator> BlockBufferItemIdIterator;
+
+
 	struct BlockDescription {
 		BlockDescription() : begin(0), end(0) {}
 		BlockDescription(BlockDescription && other) :
@@ -424,8 +442,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	};
 	
 	struct Config {
-		uint32_t numThreads;
-		uint32_t queueFill;
+		std::size_t numThreads;
+		std::size_t queueFill;
 	} cfg;
 	
 	struct State {
@@ -448,9 +466,9 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	} state;
 	
 	struct SingleEntryState {
-		std::vector<uint32_t> fmCellIds;
-		std::vector<uint32_t> pmCellIds;
-		std::vector<uint32_t> pmCellIdxPtrs;
+		std::vector<cellid_type> fmCellIds;
+		std::vector<cellid_type> pmCellIds;
+		std::vector<indexid_type> pmCellIdxPtrs;
 		sserialize::UByteArrayAdapter sd;
 		SingleEntryState() : sd(sserialize::UByteArrayAdapter::createCache(0, sserialize::MM_PROGRAM_MEMORY)) {}
 		void clear() {
@@ -562,10 +580,10 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 			for(auto eIt(bd.data.begin()), eEnd(bd.data.end()); eIt != eEnd;) {
 				//find the end of this cell
 				auto cellBegin = eIt;
-				uint32_t cellId = eIt->cellId();
+				cellid_type cellId = eIt->cellId();
 				for(;eIt < eEnd && eIt->cellId() == cellId && !eIt->fullMatch(); ++eIt) {}
 				if (cellBegin != eIt) { //there are partial matches
-					uint32_t indexId = ifo(BlockBufferItemIdIterator(cellBegin), BlockBufferItemIdIterator(eIt));
+					indexid_type indexId = ifo(BlockBufferItemIdIterator(cellBegin), BlockBufferItemIdIterator(eIt));
 					ses.pmCellIds.push_back(cellId);
 					ses.pmCellIdxPtrs.push_back(indexId);
 				}
@@ -577,8 +595,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 				}
 			}
 			//serialize the data
-			uint32_t fmIdxPtr = ifo(ses.fmCellIds.begin(), ses.fmCellIds.end());
-			uint32_t pmIdxPtr = ifo(ses.pmCellIds.begin(), ses.pmCellIds.end());
+			indexid_type fmIdxPtr = ifo(ses.fmCellIds.begin(), ses.fmCellIds.end());
+			indexid_type pmIdxPtr = ifo(ses.pmCellIds.begin(), ses.pmCellIds.end());
 			sserialize::RLEStream::Creator rlc(ses.sd);
 			rlc.put(fmIdxPtr);
 			rlc.put(pmIdxPtr);
@@ -606,8 +624,8 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 	state.pinfo.end();
 	
 	cfg.numThreads = otraits.payloadConcurrency() == 0 ? std::thread::hardware_concurrency() : otraits.payloadConcurrency();
-	cfg.numThreads = std::max<uint32_t>(1, cfg.numThreads-1);
-	cfg.queueFill = std::max<uint32_t>(cfg.numThreads+2, 1.5*cfg.numThreads);
+	cfg.numThreads = std::max<std::size_t>(1, cfg.numThreads-1);
+	cfg.queueFill = std::max<std::size_t>(cfg.numThreads+2, 1.5*cfg.numThreads);
 	
 	state.eBegin = m_entries.begin();
 	state.eIt = m_entries.begin();
@@ -621,7 +639,7 @@ void OOMCTCValuesCreator<TBaseTraits>::append(TOutputTraits otraits)
 		threads.emplace_back(
 			Feeder(&cfg, &state, m_traits.nodeIdentifierEqualPredicate())
 		);
-		for(uint32_t i(0); i < cfg.numThreads; ++i) {
+		for(std::size_t i(0); i < cfg.numThreads; ++i) {
 			threads.emplace_back(
 				Worker(&state, otraits)
 			);
@@ -679,7 +697,7 @@ bool OOMCTCValuesCreator<TBaseTraits>::finalize(TOutputTraits & otraits) {
 		.maxMemoryUsage(otraits.maxMemoryUsage())
 		.maxThreadCount(otraits.sortConcurrency())
 		.mmt(otraits.mmt())
-		.queueDepth(std::max<uint32_t>(1024, 512*otraits.sortConcurrency()))
+		.queueDepth(std::max<std::size_t>(1024, 512*otraits.sortConcurrency()))
 		.maxWait(30)
 		.makeUnique(true)
 		.ioFetchLock(otraits.mmt() == sserialize::MM_SLOW_FILEBASED)
