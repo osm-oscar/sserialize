@@ -118,6 +118,14 @@ public:
 		v.m_v = src.getOffset();
 		return src;
 	}
+	friend inline std::ostream & operator<<(std::ostream & out, Size const & v) {
+		out << v.m_v;
+		return out;
+	}
+	friend inline std::istream & operator>>(std::istream & in, Size & v) {
+		in >> v.m_v;
+		return in;
+	}
 private:
 	underlying_type m_v{0};
 };
