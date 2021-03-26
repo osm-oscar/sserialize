@@ -32,10 +32,14 @@ namespace sserialize {
 namespace detail {
 namespace OOMSACTCCreator {
 
+typedef sserialize::Static::UnicodeTrie::FlatTrieBase MyStaticTrie;
+
 class CTCValueStoreNode final {
 public:
-	CTCValueStoreNode() : m_nodeId(std::numeric_limits<uint32_t>::max()), m_qt(sserialize::StringCompleter::QT_NONE) {}
-	CTCValueStoreNode(uint32_t nodeId, sserialize::StringCompleter::QuerryType qt) : m_nodeId(nodeId), m_qt(qt) {}
+	using trie_nodeid_type = MyStaticTrie::SizeType; 
+public:
+	CTCValueStoreNode() : m_nodeId(std::numeric_limits<trie_nodeid_type>::max()), m_qt(sserialize::StringCompleter::QT_NONE) {}
+	CTCValueStoreNode(trie_nodeid_type nodeId, sserialize::StringCompleter::QuerryType qt) : m_nodeId(nodeId), m_qt(qt) {}
 	CTCValueStoreNode(const CTCValueStoreNode & other) : m_nodeId(other.nodeId()), m_qt(other.qt()) {}
 	~CTCValueStoreNode() {}
 	CTCValueStoreNode & operator=(CTCValueStoreNode const&) = default;
@@ -44,10 +48,10 @@ public:
 		SSERIALIZE_CHEAP_ASSERT(qt() && other.qt());
 		return (m_nodeId == other.m_nodeId ? m_qt < other.m_qt : m_nodeId < other.m_nodeId);
 	}
-	inline uint32_t nodeId() const { return m_nodeId; }
+	inline trie_nodeid_type nodeId() const { return m_nodeId; }
 	inline uint8_t qt() const { return m_qt; }
 private:
-	uint32_t m_nodeId;
+	trie_nodeid_type m_nodeId;
 	uint8_t m_qt;
 };
 
@@ -76,24 +80,23 @@ namespace sserialize {
 namespace detail {
 namespace OOMSACTCCreator {
 
-typedef sserialize::Static::UnicodeTrie::FlatTrieBase MyStaticTrie;
-
 class MyStaticTrieInfo {
 public:
 	typedef MyStaticTrie MyTrieType;
+	using trie_nodeid_type = CTCValueStoreNode::trie_nodeid_type;
 private:
-	inline std::vector<uint32_t> calcParents(const MyTrieType & ft) {
+	inline std::vector<trie_nodeid_type> calcParents(const MyTrieType & ft) {
 		struct Calc {
-			std::vector<uint32_t> parents;
+			std::vector<trie_nodeid_type> parents;
 			void calc(const sserialize::Static::UnicodeTrie::FlatTrieBase::Node & node) {
-				uint32_t myNodeId = node.id();
+				trie_nodeid_type myNodeId = node.id();
 				for(auto x : node) {
 					parents.at(x.id()) = myNodeId;
 					calc(x);
 				}
 			}
 		} c;
-		c.parents.resize(ft.size(), 0xFFFFFFFF);
+		c.parents.resize(ft.size(), std::numeric_limits<trie_nodeid_type>::max());
 		c.calc(ft.root());
 		return c.parents;
 	}
@@ -101,15 +104,17 @@ public:
 	MyStaticTrieInfo(MyStaticTrie * t) : m_trie(t), m_parents(calcParents(*t)) {}
 	~MyStaticTrieInfo() {}
 	inline const MyTrieType * trie() const { return m_trie; }
-	inline const std::vector<uint32_t> & parents() const { return m_parents; }
+	inline const std::vector<trie_nodeid_type> & parents() const { return m_parents; }
 private:
 	MyTrieType * m_trie;
-	std::vector<uint32_t> m_parents;
+	std::vector<trie_nodeid_type> m_parents;
 };
 
 
 template<typename TOutPutIterator>
 class ExactStringDerefIterator {
+public:
+	using trie_nodeid_type = CTCValueStoreNode::trie_nodeid_type;
 public:
 	ExactStringDerefIterator() : m_t(0) {}
 	ExactStringDerefIterator (const MyStaticTrieInfo * t, TOutPutIterator out) : m_t(t), m_out(out) {}
@@ -119,7 +124,7 @@ public:
 		return *this;
 	}
 	ExactStringDerefIterator & operator=(const std::string & str) {
-		uint32_t p = m_t->trie()->find(str, false);
+		trie_nodeid_type p = m_t->trie()->find(str, false);
 		SSERIALIZE_CHEAP_ASSERT(p != MyStaticTrie::npos);
 		*m_out = p;
 		return *this;
@@ -132,6 +137,8 @@ private:
 template<typename TOutPutIterator>
 class SuffixStringDerefIterator {
 public:
+	using trie_nodeid_type = CTCValueStoreNode::trie_nodeid_type;
+public:
 	SuffixStringDerefIterator() : m_t(0) {}
 	SuffixStringDerefIterator (const MyStaticTrieInfo * t, TOutPutIterator out) : m_t(t), m_out(out) {}
 	SuffixStringDerefIterator & operator*() { return *this; }
@@ -140,7 +147,7 @@ public:
 		return *this;
 	}
 	SuffixStringDerefIterator & operator=(const std::string & str) {
-		uint32_t p = m_t->trie()->find(str, false);
+		trie_nodeid_type p = m_t->trie()->find(str, false);
 		SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(p, MyStaticTrie::npos);
 		*m_out = p;
 		if (!str.size()) {
@@ -150,7 +157,7 @@ public:
 		std::string::const_iterator it(str.cbegin()), end(str.cend());
 		for(utf8::next(it, end); it != end; utf8::next(it, end)) {
 			mstr.assign(it, end);
-			uint32_t p = m_t->trie()->find(mstr, false);
+			trie_nodeid_type p = m_t->trie()->find(mstr, false);
 			SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(p, MyStaticTrie::npos);
 			++m_out;
 			*m_out = p;
@@ -205,16 +212,18 @@ public:
 	///This class needs to be thread-safe in the backend (one instance per thread)
 	///Needs to have a correct move ctor
 	class ItemSearchStructureNodes {
+	public:
+		using trie_nodeid_type = CTCValueStoreNode::trie_nodeid_type;
 	private:
-		typedef std::insert_iterator< std::unordered_set<uint32_t> > MyInsertIterator;
+		typedef std::insert_iterator< std::unordered_set<trie_nodeid_type> > MyInsertIterator;
 		typedef ExactStringDerefIterator<MyInsertIterator> MyExactStringInsertIterator;
 		typedef SuffixStringDerefIterator<MyInsertIterator> MySuffixStringInsertIterator;
 	private:
 		const MyStaticTrieInfo * m_ti;
 		ExactStrings m_es;
 		SuffixStrings m_ss;
-		std::unordered_set<uint32_t> m_exactNodes;
-		std::unordered_set<uint32_t> m_suffixNodes;
+		std::unordered_set<trie_nodeid_type> m_exactNodes;
+		std::unordered_set<trie_nodeid_type> m_suffixNodes;
 		MyExactStringInsertIterator m_esi;
 		MySuffixStringInsertIterator m_ssi;
 		std::unordered_set<CTCValueStoreNode> m_allNodes;
@@ -245,17 +254,17 @@ public:
 			
 			//now create the parents
 			if (m_sq & sserialize::StringCompleter::SQ_PREFIX) {
-				for(uint32_t x : m_exactNodes) {
+				for(trie_nodeid_type x : m_exactNodes) {
 					m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
-					uint32_t nextNode = x;
-					while (nextNode != 0xFFFFFFFF) {
+					trie_nodeid_type nextNode = x;
+					while (nextNode != std::numeric_limits<trie_nodeid_type>::max()) {
 						m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_PREFIX);
 						nextNode = m_ti->parents().at(nextNode);
 					}
 				}
 			}
 			else {
-				for(uint32_t x : m_exactNodes) {
+				for(trie_nodeid_type x : m_exactNodes) {
 					m_allNodes.emplace(x, sserialize::StringCompleter::QT_EXACT);
 				}
 			}
@@ -263,27 +272,27 @@ public:
 				//also add stuff from the exact nodes, to their prefixed to the substring search
 				//we need to do this in case there are nodes that are not in the suffixNodes but only in the exactNodes
 				//This usually is not the case, so we should safe some operations by first checking if the node realy is not in the suffixNodes set
-				for(uint32_t x : m_exactNodes) {
+				for(trie_nodeid_type x : m_exactNodes) {
 					if (!m_suffixNodes.count(x)) {
-						uint32_t nextNode = x;
-						while (nextNode != 0xFFFFFFFF) {
+						trie_nodeid_type nextNode = x;
+						while (nextNode != std::numeric_limits<trie_nodeid_type>::max()) {
 							m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
 							nextNode = m_ti->parents().at(nextNode);
 						}
 					}
 				}
 				
-				for(uint32_t x : m_suffixNodes) {
+				for(trie_nodeid_type x : m_suffixNodes) {
 					m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
-					uint32_t nextNode = x;
-					while (nextNode != 0xFFFFFFFF) {
+					trie_nodeid_type nextNode = x;
+					while (nextNode != std::numeric_limits<trie_nodeid_type>::max()) {
 						m_allNodes.emplace(nextNode, sserialize::StringCompleter::QT_SUBSTRING);
 						nextNode = m_ti->parents().at(nextNode);
 					}
 				}
 			}
 			else {
-				for(uint32_t x : m_suffixNodes) {
+				for(trie_nodeid_type x : m_suffixNodes) {
 					m_allNodes.emplace(x, sserialize::StringCompleter::QT_SUFFIX);
 				}
 			}
@@ -314,25 +323,29 @@ class OutputTraits {
 public:
 	typedef BaseTraits::NodeIdentifier NodeIdentifier;
 	class IndexFactoryOut {
+	public:
+		using id_type = sserialize::Static::ItemIndexStore::IdType;
+	private:
 		sserialize::ItemIndexFactory * m_idxFactory;
 	public:
 		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
 		template<typename TIterator>
-		uint32_t operator()(TIterator begin, TIterator end) {
-			std::vector<uint32_t> tmp(begin, end);
+		id_type operator()(TIterator begin, TIterator end) {
+			std::vector<sserialize::ItemIndex::value_type> tmp(begin, end);
 			return m_idxFactory->addIndex(tmp);
 		}
 	};
 	
 	class FinalDataOut {
 	public:
+		using trie_nodeid_type = CTCValueStoreNode::trie_nodeid_type;
 		typedef sserialize::Static::ArrayCreator<sserialize::UByteArrayAdapter> PayloadCreator;
 	private:
 		PayloadCreator * m_payloadCreator;
-		uint32_t m_curNodeId;
+		trie_nodeid_type m_curNodeId;
 		uint32_t m_curTypes;
 		sserialize::UByteArrayAdapter m_curData;
-		std::vector<uint32_t> m_curOffsets;
+		std::vector<sserialize::UByteArrayAdapter::SizeType> m_curOffsets;
 	private:
 		void flush() {
 			if (m_curTypes != sserialize::StringCompleter::QT_NONE) {
@@ -345,14 +358,14 @@ public:
 				m_payloadCreator->beginRawPut();
 				
 				m_payloadCreator->rawPut().putUint8(m_curTypes);
-				for(uint32_t i(1), s((uint32_t) m_curOffsets.size()); i < s; ++i) {
-					m_payloadCreator->rawPut().putVlPackedUint32(m_curOffsets[i]-m_curOffsets[i-1]);
+				for(std::size_t i(1), s(m_curOffsets.size()); i < s; ++i) {
+					m_payloadCreator->rawPut().putVlPackedUint32( narrow_check<uint32_t>(m_curOffsets[i]-m_curOffsets[i-1]) );
 				}
 				m_payloadCreator->rawPut().put(m_curData);
 				
 				m_payloadCreator->endRawPut();
 				
-				m_curNodeId = 0xFFFFFFFF;
+				m_curNodeId = std::numeric_limits<trie_nodeid_type>::max();
 				m_curTypes = sserialize::StringCompleter::QT_NONE;
 				m_curData = sserialize::UByteArrayAdapter(m_curData, 0, 0);
 				m_curOffsets.clear();
@@ -405,7 +418,7 @@ public:
 		}
 	private:
 		std::mutex m_mtx;
-		std::vector< std::pair<NodeIdentifier, uint32_t> > m_ni2off;
+		std::vector< std::pair<NodeIdentifier, TemporaryPayloadStorage::SizeType> > m_ni2off;
 		TemporaryPayloadStorage m_tempStore;
 		FinalDataOut m_do;
 	};
@@ -440,10 +453,10 @@ private:
 	UnorderedDataOut m_dataOut;
 	uint64_t m_maxMemoryUsage;
 	sserialize::MmappedMemoryType m_mmt;
-	uint32_t m_sortConcurrency;
-	uint32_t m_payloadConcurrency;
+	std::size_t m_sortConcurrency;
+	std::size_t m_payloadConcurrency;
 public:
-	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt, uint32_t sortConcurrency = 0, uint32_t payloadConcurrency = 0) :
+	OutputTraits(ItemIndexFactory * idxFactory, PayloadCreator * payloadCreator, uint64_t maxMemoryUsage, MmappedMemoryType mmt, std::size_t sortConcurrency = 0, std::size_t payloadConcurrency = 0) :
 	m_idxFactory(idxFactory),
 	m_payloadCreator(payloadCreator),
 	m_dataOut(sserialize::RCPtrWrapper<UnorderedDataOutPrivate>( new UnorderedDataOutPrivate(m_payloadCreator) ) ),
@@ -463,8 +476,8 @@ public:
 	
 	inline uint64_t maxMemoryUsage() const { return m_maxMemoryUsage; }
 	inline sserialize::MmappedMemoryType mmt() const { return m_mmt; }
-	inline uint32_t sortConcurrency() const { return m_sortConcurrency; }
-	inline uint32_t payloadConcurrency() const { return m_payloadConcurrency; }
+	inline std::size_t sortConcurrency() const { return m_sortConcurrency; }
+	inline std::size_t payloadConcurrency() const { return m_payloadConcurrency; }
 public:
 	///Flushes the payload, invalidates data out
 	void flushPayload() {
@@ -484,7 +497,7 @@ struct State {
 	std::mutex flushLock;
 	//stats
 	detail::OOMCTCValuesCreator::ProgressInfo<TIterator, TWithProgressInfo> pinfo;
-	uint32_t counter;
+	std::size_t counter;
 	//config stuff
 	sserialize::StringCompleter::SupportedQuerries sq;
 	State(const TIterator & begin, const TIterator & end, TExactOutputIterator exactOut, TSuffixOutputIterator suffixOut, sserialize::StringCompleter::SupportedQuerries sq) :
@@ -510,7 +523,7 @@ struct Worker {
 	std::unordered_set<std::string> m_suffixStrings;
 	std::insert_iterator<std::unordered_set<std::string>> m_eit;
 	std::insert_iterator<std::unordered_set<std::string>> m_sit;
-	uint32_t m_bufferSize;
+	std::size_t m_bufferSize;
 	ExactStrings m_es;
 	SuffixStrings m_ss;
 	sserialize::StringCompleter::SupportedQuerries m_sq;
@@ -581,9 +594,9 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd,
 				 TRegionIterator regionsBegin, TRegionIterator regionsEnd, 
 				 TItemTraits itemTraits, TRegionTraits regionTraits,
 				 uint64_t maxMemoryUsage,
-				 uint32_t insertionConcurrency,
-				 uint32_t sortConcurrency,
-				 uint32_t payloadConcurrency,
+				 std::size_t insertionConcurrency,
+				 std::size_t sortConcurrency,
+				 std::size_t payloadConcurrency,
 				 MmappedMemoryType tmpFileType,
 				 sserialize::StringCompleter::SupportedQuerries sq,
 				 sserialize::ItemIndexFactory & idxFactory, 
@@ -619,7 +632,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd,
 	pinfo.begin(1, "Creating trie");
 	sserialize::UByteArrayAdapter::OffsetType flatTrieBaseBegin = dest.tellPutPtr();
 	{
-		typedef sserialize::HashBasedFlatTrie<uint32_t> MyTrieType;
+		typedef sserialize::HashBasedFlatTrie<detail::OOMSACTCCreator::MyStaticTrie::SizeType> MyTrieType;
 		MyTrieType myTrie;
 		
 		struct ExactStringsInserter {
@@ -646,7 +659,7 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd,
 				std::string::const_iterator strIt(strBegin), strEnd(str.cend());
 				for(utf8::next(strIt, strEnd); strIt != strEnd; utf8::next(strIt, strEnd)) {
 					using std::distance;
-					m_t->insert(sstr.addOffset((uint32_t) distance(strBegin, strIt)));
+					m_t->insert(sstr.addOffset(distance(strBegin, strIt)));
 				}
 				return *this;
 			}
@@ -666,20 +679,20 @@ void appendSACTC(TItemIterator itemsBegin, TItemIterator itemsEnd,
 
 		itemState.pinfo.begin("Inserting item strings");
 		std::vector<std::thread> threads;
-		for(uint32_t i(0); i < insertionConcurrency; ++i) {
+		for(std::size_t i(0); i < insertionConcurrency; ++i) {
 			threads.emplace_back(ItemWorker(&itemState, itemTraits));
 		}
-		for(uint32_t i(0); i < insertionConcurrency; ++i) {
+		for(std::size_t i(0); i < insertionConcurrency; ++i) {
 			threads[i].join();
 		}
 		threads.clear();
 		itemState.pinfo.end();
 		
 		regionState.pinfo.begin("Inserting region strings");
-		for(uint32_t i(0); i < insertionConcurrency; ++i) {
+		for(std::size_t i(0); i < insertionConcurrency; ++i) {
 			threads.emplace_back(RegionWorker(&regionState, regionTraits));
 		}
-		for(uint32_t i(0); i < insertionConcurrency; ++i) {
+		for(std::size_t i(0); i < insertionConcurrency; ++i) {
 			threads[i].join();
 		}
 		threads.clear();
