@@ -161,7 +161,7 @@ public:
 	}
 	
 	void testSpecialOffsets() {
-		uint64_t size = 1500000000;
+		uint64_t size = uint64_t(std::numeric_limits<uint32_t>::max()) + 1024;
 		uint64_t stride = 4;
 		sserialize::RangeGenerator<uint64_t> realValues(0, size*stride, stride);
 		UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
