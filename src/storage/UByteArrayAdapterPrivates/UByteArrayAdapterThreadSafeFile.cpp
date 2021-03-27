@@ -179,9 +179,9 @@ std::string UByteArrayAdapterPrivateThreadSafeFile::getString(UByteArrayAdapter:
 	uint32_t strLen = getVlPackedUint32(pos, &myLen);
 	if (myLen < 1)
 		return std::string();
-	char buf[strLen];
-	FileHandler::pread(m_fd, buf, strLen, pos+len);
-	return std::string(buf, strLen);
+	std::string result(strLen, '\0');
+	FileHandler::pread(m_fd, result.data(), strLen, pos+len);
+	return result;
 }
 
 /** If the supplied memory is not writable then you're on your own! **/
