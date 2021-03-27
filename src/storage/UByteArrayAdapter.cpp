@@ -995,10 +995,11 @@ int UByteArrayAdapter::putString(const OffsetType pos, const std::string & str) 
 	
 	range_check(pos, needSize);
 	
+	
 	int len = putVlPackedUint32(pos, (uint32_t) str.size());
-	for(size_t i = 0; i < str.size(); i++) {
-		putUint8(pos+len+i, str[i]);
-	}
+	
+	static_assert(sizeof(std::string::value_type) == sizeof(uint8_t));
+	putData(pos+len, reinterpret_cast<const uint8_t*>(str.data()), str.size());
 	return (int) needSize;
 }
 
