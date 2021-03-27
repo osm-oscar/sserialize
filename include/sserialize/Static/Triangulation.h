@@ -9,6 +9,7 @@
 #include <sserialize/spatial/DistanceCalculator.h>
 #include <sserialize/Static/detail/Triangulation.h>
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/utility/strongtypedefs.h>
 
 #ifdef SSERIALIZE_EXPENSIVE_ASSERT_ENABLED
 	#include <sserialize/algorithm/hashspecializations.h>
@@ -16,9 +17,101 @@
 
 #include <queue>
 
-namespace sserialize {
-namespace Static {
-namespace spatial {
+namespace sserialize::Static::spatial::detail::Triangulation {
+
+	class VertexId:
+		public sserialize::st::strong_type_ca<
+			VertexId,
+			sserialize::Size,
+			sserialize::st::Arithmetic,
+			sserialize::st::CompareAll,
+			sserialize::st::Serialize,
+			sserialize::st::Deserialize,
+			sserialize::st::OStream<std::ostream>
+		>
+	{
+	public:
+		using underlying_type = sserialize::Size;
+		static constexpr underlying_type npos = std::numeric_limits<underlying_type>::max();
+		using Self = VertexId;
+	public:
+		constexpr VertexId() {}
+		explicit constexpr VertexId(underlying_type v) : m_v(v) {}
+		constexpr VertexId(Self const &) = default;
+		Self & operator=(Self const &) = default;
+	public:
+		inline friend bool operator >(Self const & a, underlying_type const & b) { return a.m_v > b; }
+		inline friend bool operator >=(Self const & a, underlying_type const & b) { return a.m_v >= b; }
+		inline friend bool operator <(Self const & a, underlying_type const & b) { return a.m_v < b; }
+		inline friend bool operator <=(Self const & a, underlying_type const & b) { return a.m_v <= b; } 
+	public:
+		inline explicit operator underlying_type const & () const { return m_v; }
+		inline explicit operator underlying_type& () { return m_v; }
+	public:
+		inline underlying_type const & ut() const { return m_v; }
+	private:
+		underlying_type m_v{npos};
+	};
+	
+	class FaceId:
+		public sserialize::st::strong_type_ca<
+			FaceId,
+			sserialize::Size,
+			sserialize::st::Arithmetic,
+			sserialize::st::CompareAll,
+			sserialize::st::Serialize,
+			sserialize::st::Deserialize,
+			sserialize::st::OStream<std::ostream>
+		>
+	{
+	public:
+		using underlying_type = sserialize::Size;
+		static constexpr underlying_type npos = std::numeric_limits<underlying_type>::max();
+		using Self = FaceId;
+	public:
+		constexpr FaceId() {}
+		explicit constexpr FaceId(underlying_type v) : m_v(v) {}
+		constexpr FaceId(Self const &) = default;
+		Self & operator=(Self const &) = default;
+	public:
+		inline friend bool operator >(Self const & a, underlying_type const & b) { return a.m_v > b; }
+		inline friend bool operator >=(Self const & a, underlying_type const & b) { return a.m_v >= b; }
+		inline friend bool operator <(Self const & a, underlying_type const & b) { return a.m_v < b; }
+		inline friend bool operator <=(Self const & a, underlying_type const & b) { return a.m_v <= b; } 
+	public:
+		inline explicit operator underlying_type const & () const { return m_v; }
+		inline explicit operator underlying_type& () { return m_v; }
+	public:
+		inline underlying_type const & ut() const { return m_v; }
+	private:
+		underlying_type m_v{npos};
+	};
+	
+} //end namespace sserialize::Static::spatial::detail::Triangulation
+
+namespace std {
+	
+template<>
+struct hash<sserialize::Static::spatial::detail::Triangulation::VertexId> {
+	using type = sserialize::Static::spatial::detail::Triangulation::VertexId;
+	std::hash<type::underlying_type> m_h;
+	std::size_t operator()(type const & v) const {
+		return m_h(v.ut());
+	}
+};
+
+template<>
+struct hash<sserialize::Static::spatial::detail::Triangulation::FaceId> {
+	using type = sserialize::Static::spatial::detail::Triangulation::FaceId;
+	std::hash<type::underlying_type> m_h;
+	std::size_t operator()(type const & v) const {
+		return m_h(v.ut());
+	}
+};
+	
+}
+
+namespace sserialize::Static::spatial {
 
 /**
   * Layout (v3)
@@ -44,32 +137,24 @@ namespace spatial {
 
 ///Triangulation of the convex-hull of a set of points
 class Triangulation final {
+private:
+	typedef sserialize::MultiVarBitArray FaceInfos;
+	typedef sserialize::MultiVarBitArray VertexInfos;
 public:
 	typedef enum {F_CLEAN_GEOMETRY=0x1, F_DEGENERATE_FACES=0x2, F_BROKEN_GEOMETRY=0x4} FeatureFlags;
 	typedef enum {GCT_NONE=0, GCT_REMOVE_DEGENERATE_FACES, GCT_SNAP_VERTICES, GCT_SNAP_ROUND} GeometryCleanType;
 	typedef enum {TT_ZIG_ZAG=0, TT_STRAIGHT=1} TraversalType;
-	typedef sserialize::spatial::GeoPoint Point;
+	using Point = sserialize::spatial::GeoPoint;
+	using PointsContainer = sserialize::Static::Array<Point>;
+	
+	using SizeType = PointsContainer::SizeType;
+	
 	class Face;
 	class Vertex;
 	class FaceCirculator;
 	
-	class VertexId final {
-	public:
-		static constexpr uint32_t npos = 0xFFFFFFFF;
-		using Self = VertexId;
-	public:
-		VertexId() {}
-		VertexId(uint32_t v) : m_v(v) {}
-		VertexId(Self const &) = default;
-		Self & operator=(Self const &) = default;
-	public:
-		operator uint32_t() const { return m_v; }
-	public:
-		bool operator!=(Self const & other) const { return m_v != other.m_v; }
-		bool operator==(Self const & other) const { return m_v != other.m_v; }
-	private:
-		uint32_t m_v{npos};
-	};
+	using VertexId = detail::Triangulation::VertexId;
+	using FaceId = detail::Triangulation::FaceId;
 	
 	class Vertex final {
 	private:
@@ -82,18 +167,18 @@ public:
 		} VertexInfo;
 	private:
 		const Triangulation * m_p;
-		uint32_t m_pos;
+		VertexId m_pos;
 	private:
-		Vertex(const Triangulation * p, uint32_t pos);
-		uint32_t beginFaceId() const;
-		uint32_t endFaceId() const;
+		Vertex(const Triangulation * p, VertexId pos);
+		FaceId beginFaceId() const;
+		FaceId endFaceId() const;
 		Face beginFace() const;
 		Face endFace() const;
 	public:
 		Vertex();
 		~Vertex();
 		bool valid() const;
-		inline uint32_t id() const { return m_pos; }
+		inline VertexId id() const { return m_pos; }
 		Point point() const;
 		FaceCirculator faces() const;
 		FaceCirculator facesBegin() const;
@@ -103,26 +188,6 @@ public:
 		bool operator!=(const Vertex & other) const;
 		void dump(std::ostream & out) const;
 		void dump() const;
-	};
-	
-	class FaceId final {
-	public:
-		static constexpr uint32_t npos = 0xFFFFFFFF;
-		using Self = FaceId;
-	public:
-		FaceId() {}
-		FaceId(uint32_t v) : m_v(v) {}
-		FaceId(Self const &) = default;
-		Self & operator=(Self const &) = default;
-	public:
-		operator uint32_t() const { return m_v; }
-	public:
-		bool operator!=(Self const & other) const { return m_v != other.m_v; }
-		bool operator==(Self const & other) const { return m_v != other.m_v; }
-		bool operator==(uint32_t v) const { return m_v == v; }
-		bool operator!=(uint32_t v) const { return m_v != v; }
-	private:
-		uint32_t m_v{npos};
 	};
 
 	///A Face has up to 3 neighbors
@@ -141,9 +206,9 @@ public:
 		} FaceInfo;
 	private:
 		const Triangulation * m_p;
-		uint32_t m_pos;
+		FaceId m_pos;
 	private:
-		Face(const Triangulation * p, uint32_t pos);
+		Face(const Triangulation * p, FaceId pos);
 	public:
 		enum ContainmentType {
 			CT_OUTSIDE=0x0,
@@ -151,23 +216,24 @@ public:
 			CT_ON_EDGE_0=0x2, CT_ON_EDGE_1=CT_ON_EDGE_0+1, CT_ON_EDGE_2=CT_ON_EDGE_0+2,
 			CT_ON_VERTEX_0=0x8, CT_ON_VERTEX_1=CT_ON_VERTEX_0+1, CT_ON_VERTEX_2=CT_ON_VERTEX_0+2
 		};
+		using position_type = uint32_t;
 	public:
 		Face();
 		~Face();
-		inline uint32_t id() const { return m_pos; }
+		inline FaceId id() const { return m_pos; }
 		bool valid() const;
 		///a face is degenerate if any two vertices have the same coordinates
 		///This may happen since the static version uses fixed precision numbers
 		///The topology is still correct
 		bool isDegenerate() const;
-		bool isNeighbor(uint32_t pos) const;
-		uint32_t neighborId(uint32_t pos) const;
-		Face neighbor(uint32_t pos) const;
-		uint32_t vertexId(uint32_t pos) const;
-		uint32_t vertexId(const Point & p) const;
-		Vertex vertex(uint32_t pos) const;
+		bool isNeighbor(position_type pos) const;
+		FaceId neighborId(position_type pos) const;
+		Face neighbor(position_type pos) const;
+		VertexId vertexId(position_type pos) const;
+		VertexId vertexId(const Point & p) const;
+		Vertex vertex(position_type pos) const;
 		Vertex vertex(const Point & p) const;
-		Point point(uint32_t pos) const;
+		Point point(position_type pos) const;
 		bool isVertex(const Point & p) const;
 		bool isOnEdge(const Point & p) const;
 		///return the edge on which the point p lies
@@ -189,6 +255,8 @@ public:
 	};
 	
 	class FaceCirculator final {
+	public:
+		using position_type = uint32_t;
 	private:
 		Face m_f;
 		Vertex m_v;
@@ -207,12 +275,8 @@ public:
 		const Face & face() const;
 	};
 public:
-	static constexpr uint32_t NullFace = FaceId::npos;
-	static constexpr uint32_t NullVertex = VertexId::npos;
-private:
-	typedef sserialize::MultiVarBitArray FaceInfos;
-	typedef sserialize::MultiVarBitArray VertexInfos;
-	typedef sserialize::Static::Array<Point> PointsContainer;
+	static constexpr FaceId NullFace{FaceId::npos};
+	static constexpr VertexId NullVertex{VertexId::npos};
 private:
 	uint8_t m_features;
 	PointsContainer m_p;
@@ -227,25 +291,25 @@ public:
 	Triangulation(const sserialize::UByteArrayAdapter & d);
 	~Triangulation();
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	uint32_t vertexCount() const { return m_vi.size(); }
-	uint32_t faceCount() const { return m_fi.size(); }
-	Face face(uint32_t pos) const;
-	Vertex vertex(uint32_t pos) const;
+	SizeType vertexCount() const { return m_vi.size(); }
+	SizeType faceCount() const { return m_fi.size(); }
+	Face face(FaceId pos) const;
+	Vertex vertex(VertexId pos) const;
 	
 	///traverse the triangulation in a straight line starting from source to target
 	///@return faceid where the destination point is inside or NullFace
 	///@param visitor operator()(const Face & face)
 	template<typename TVisitor>
-	uint32_t traverse(const Point & target, const Point & source, TVisitor visitor, uint32_t sourceHint = NullFace, TraversalType tt = TT_ZIG_ZAG) const;
+	FaceId traverse(const Point & target, const Point & source, TVisitor visitor, FaceId sourceHint = NullFace, TraversalType tt = TT_ZIG_ZAG) const;
 	
 	///Locate the face the point lies in, need exact predicates, hint: id of start face
 	///Traversal types may return different faces iff target is equal to a vertex point
-	uint32_t locate(const Point & target, uint32_t hint = 0, TraversalType tt = TT_ZIG_ZAG) const;
+	FaceId locate(const Point & target, FaceId hint = NullFace, TraversalType tt = TT_ZIG_ZAG) const;
 	
 	///Explores the triangulation starting at startFace
 	///@param explorer operator()(const Face & face) -> bool, return false if the exploration should stop at this face (neighbors of this face are not explored)
 	template<typename T_EXPLORER>
-	void explore(uint32_t startFace, T_EXPLORER explorer) const;
+	void explore(FaceId startFace, T_EXPLORER explorer) const;
 	bool selfCheck() const;
 	void printStats(std::ostream & out) const;
 	//counter-clock-wise next vertex/neighbor as defined in cgal
@@ -254,29 +318,29 @@ public:
 	inline static int cw(const int i) { return (i+2)%3; }
 	
 	//counter-clock-wise next vertex/neighbor as defined in cgal
-	inline static uint32_t ccw(const uint32_t i) { return (i+1)%3; }
+	inline static Face::position_type ccw(const Face::position_type i) { return (i+1)%3; }
 	//clock-wise next vertex/neighbor as defined in cgal
-	inline static uint32_t cw(const uint32_t i) { return (i+2)%3; }
+	inline static Face::position_type cw(const Face::position_type i) { return (i+2)%3; }
 
 	///prepare triangulation for serialization (currently contracts faces that are not representable)
 	///@param minEdgeLength the minimal length an edge has to have in order to be processed
 	template<typename T_CTD, typename T_REMOVED_EDGES = detail::Triangulation::PrintRemovedEdges>
-	static uint32_t prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, double minEdgeLength);
+	static std::size_t prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, double minEdgeLength);
 	
 	template<typename T_CGAL_TRIANGULATION_DATA_STRUCTURE, typename T_VERTEX_TO_VERTEX_ID_MAP, typename T_FACE_TO_FACE_ID_MAP>
 	static sserialize::UByteArrayAdapter & append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_ID_MAP& faceToFaceId, T_VERTEX_TO_VERTEX_ID_MAP& vertexToVertexId, sserialize::UByteArrayAdapter& dest, GeometryCleanType gct);
 	
 protected:
 	template<typename TVisitor, bool T_BROKEN_GEOMETRY>
-	uint32_t traverse_zz_imp(const Point & target, uint32_t hint, TVisitor visitor) const;
+	FaceId traverse_zz_imp(const Point & target, FaceId hint, TVisitor visitor) const;
 	template<typename TVisitor>
-	uint32_t traverse_straight_imp(const Point & target, const Point & source, const Face & startFace, TVisitor visitor) const;
+	FaceId traverse_straight_imp(const Point & target, const Point & source, const Face & startFace, TVisitor visitor) const;
 
 	
 };
 
 template<typename TVisitor>
-uint32_t Triangulation::traverse(const Point& target, const Point& source, TVisitor visitor, uint32_t sourceHint, TraversalType tt) const {
+Triangulation::FaceId Triangulation::traverse(const Point& target, const Point& source, TVisitor visitor, FaceId sourceHint, TraversalType tt) const {
 
 	if (sourceHint >= faceCount() || !face(sourceHint).contains(source)) {
 		sourceHint = locate(source);
@@ -304,7 +368,7 @@ uint32_t Triangulation::traverse(const Point& target, const Point& source, TVisi
 }
 
 template<typename TVisitor, bool T_BROKEN_GEOMETRY>
-uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVisitor visitor) const {
+Triangulation::FaceId Triangulation::traverse_zz_imp(const Point & target, FaceId hint, TVisitor visitor) const {
 	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 	typedef typename K::FT FT;
 	typedef typename K::Point_2 Point_2;
@@ -317,7 +381,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 	K traits;
 	
 	if (hint >= faceCount()) {
-		hint = 0;
+		hint = FaceId(0);
 	}
 	//(p,q,r) ->  CGAL::Orientation
 	Orientation_2 ot(traits.orientation_2_object());
@@ -333,7 +397,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 	Point_2 q( mp2kp(target) ); //target
 
 	//TODO: there's currently no way to tell that the point is identical with a vertex
-	auto returnFaceFromVertex = [](const Vertex & v) -> uint32_t {
+	auto returnFaceFromVertex = [](const Vertex & v) -> FaceId {
 		return v.facesBegin().face().id();
 	};
 	
@@ -347,8 +411,8 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 	);
 	auto bfs = [this, &target, &q, &sqd, &mp2kp, &bfsMinDistFromStart](const Face & startFace) -> Vertex {
 		Point_2 startPoint = mp2kp(this->face(startFace.id()).centroid());
-		sserialize::ArraySet<uint32_t> visited;
-		std::vector<uint32_t> queue;
+		sserialize::ArraySet<FaceId> visited;
+		std::vector<FaceId> queue;
 
 		visited.insert(startFace.id());
 		queue.emplace_back(startFace.id());
@@ -372,7 +436,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 			//add neighborhood
 			for(uint32_t j(0); j < 3; ++j) {
 				if (f.isNeighbor(j)) {
-					uint32_t fnId = f.neighborId(j);
+					auto fnId = f.neighborId(j);
 					if (!visited.count(fnId)) {
 						visited.insert(fnId);
 						queue.push_back(fnId);
@@ -392,7 +456,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 	//BEGIN T_BROKEN_GEOMETRY
 	FT distToTgt = sqd(p, q);
 	std::size_t stepCount = 0;
-	detail::Triangulation::CircularArraySet<16> lastTriangs; //we set this to 16*4 Bytes = one cache line on most processors
+	detail::Triangulation::CircularArraySet<16, FaceId> lastTriangs; //we set this to 16*4 Bytes = one cache line on most processors
 	//END T_BROKEN_GEOMETRY
 	
 	//if T_BROKEN_GEOMETRY then we check every 1000? steps or so if we're closer.
@@ -438,7 +502,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 			p = cv;
 			
 			if (cv == q) {
-				uint32_t resultFaceId = returnFaceFromVertex(circleVertex);
+				auto resultFaceId = returnFaceFromVertex(circleVertex);
 				SSERIALIZE_NORMAL_ASSERT(face(resultFaceId).contains(target));
 				return resultFaceId;
 			}
@@ -597,7 +661,7 @@ uint32_t Triangulation::traverse_zz_imp(const Point & target, uint32_t hint, TVi
 }
 
 template<typename TVisitor>
-uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point & source, const Face & startFace, TVisitor visitor) const {
+Triangulation::FaceId Triangulation::traverse_straight_imp(const Point & target, const Point & source, const Face & startFace, TVisitor visitor) const {
 	if (!startFace.contains(source)) {
 		throw std::invalid_argument("sserialize::Triangulation::traverse_straight: startFace needs to contain source");
 	}
@@ -608,8 +672,8 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 	struct State {
 		//VERTEX means that the vertex with id vertexId is collinear to source->target
 		enum class Type {INVALID, VERTEX, FACE};
-		uint32_t vertexId;
-		uint32_t faceId;
+		VertexId vertexId;
+		FaceId faceId;
 		Type type;
 		State() : vertexId(Triangulation::NullVertex), faceId(Triangulation::NullFace), type(Type::INVALID) {}
 	};
@@ -728,13 +792,13 @@ uint32_t Triangulation::traverse_straight_imp(const Point & target, const Point 
 }
 
 template<typename T_EXPLORER>
-void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
-	std::unordered_set<uint32_t> visitedFaces;
-	std::unordered_set<uint32_t> pendingFaces;
+void Triangulation::explore(FaceId startFace, T_EXPLORER explorer) const {
+	std::unordered_set<FaceId> visitedFaces;
+	std::unordered_set<FaceId> pendingFaces;
 	pendingFaces.insert(startFace);
 	
 	while (pendingFaces.size()) {
-		uint32_t cfId;
+		FaceId cfId;
 		{
 			auto tmp(pendingFaces.begin());
 			cfId = *tmp;
@@ -744,7 +808,7 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 		if (explorer(cf)) {
 			for(uint32_t j(0); j < 3; ++j) {
 				if (cf.isNeighbor(j)) {
-					uint32_t nId = cf.neighborId(j);
+					auto nId = cf.neighborId(j);
 					if (!visitedFaces.count(nId)) {
 						pendingFaces.insert(nId);
 						//nId is going to be visited in the future
@@ -757,7 +821,7 @@ void Triangulation::explore(uint32_t startFace, T_EXPLORER explorer) const {
 }
 
 template<typename T_CTD, typename T_REMOVED_EDGES>
-uint32_t
+std::size_t
 Triangulation::prepare(T_CTD& ctd, T_REMOVED_EDGES re, GeometryCleanType gct, double minEdgeLength) {
 	if (gct == GCT_REMOVE_DEGENERATE_FACES) {
 		return detail::Triangulation::remove_degenerate_faces(ctd);
@@ -781,7 +845,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 	typedef typename TDS::Face_circulator Face_circulator;
 	typedef typename TDS::Point Point;
 	
-	if (src.number_of_vertices() > std::numeric_limits<uint32_t>::max() || src.number_of_faces() > std::numeric_limits<uint32_t>::max()) {
+	if (src.number_of_vertices() >= VertexId::npos || src.number_of_faces() >= FaceId::npos) {
 		throw sserialize::CreationException("sserialize::Static::spatial::Triangulation::append: source has too many vertices or faces");
 	}
 	
@@ -790,13 +854,13 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 	faceToFaceId.clear();
 	vertexToVertexId.clear();
 	
-	uint32_t faceId = 0;
-	uint32_t vertexId = 0;
+	FaceId faceId{0};
+	VertexId vertexId{0};
 	
-	uint32_t faceCount = 0;
-	uint32_t vertexCount = 0;
+	SizeType faceCount = 0;
+	sserialize::Size vertexCount = 0;
 	
-	uint32_t degenerateFaceCount = 0;
+	SizeType degenerateFaceCount = 0;
 	//the reduced precision of the serialization may produce degenerate triangultions
 	//or even triangulations that are incorrect (like self intersections due to rounding errors etc.)
 	//we would need to snap the vertices accordingly, unfortunately this not easy
@@ -807,7 +871,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 		faceToFaceId[fh] = faceId;
 		++faceId;
 	}
-	faceCount = faceId;
+	faceCount = faceId.ut();
 	
 	uint8_t features = 0;
 	if ((gct & (GCT_REMOVE_DEGENERATE_FACES | GCT_SNAP_VERTICES)) == 0) {
@@ -836,7 +900,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 			++vertexId;
 		}
 		va.flush();
-		vertexCount = vertexId;
+		vertexCount = vertexId.ut();
 	}
 	{//put the vertex info
 		std::vector<uint8_t> bitConfig(Triangulation::Vertex::VI__NUMBER_OF_ENTRIES);
@@ -845,11 +909,11 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 		sserialize::MultiVarBitArrayCreator va(bitConfig, dest);
 		for(Finite_vertices_iterator vt(src.finite_vertices_begin()), vtEnd(src.finite_vertices_end()); vt != vtEnd; ++vt) {
 			SSERIALIZE_NORMAL_ASSERT(vertexToVertexId.is_defined(vt));
-			uint32_t vertexId = vertexToVertexId[vt];
-			uint32_t beginFace, endFace;
+			VertexId vertexId = vertexToVertexId[vt];
+			FaceId beginFace, endFace;
 			Face_circulator fc(src.incident_faces(vt));
 			{
-				uint32_t numFinite(0), numInfinite(0);
+				SizeType numFinite(0), numInfinite(0);
 				Face_circulator fcIt(fc);
 				++fcIt;
 				for(;fcIt != fc; ++fcIt) {
@@ -902,8 +966,8 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 			beginFace = faceToFaceId[fcBegin];
 			endFace = faceToFaceId[fcEnd];
 			
-			va.set(vertexId, Triangulation::Vertex::VI_FACES_BEGIN, beginFace);
-			va.set(vertexId, Triangulation::Vertex::VI_FACES_END, endFace);
+			va.set(vertexId.ut(), Triangulation::Vertex::VI_FACES_BEGIN, beginFace.ut());
+			va.set(vertexId.ut(), Triangulation::Vertex::VI_FACES_END, endFace.ut());
 		}
 		va.flush();
 	}
@@ -919,7 +983,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 		bitConfig[Triangulation::Face::FI_IS_DEGENERATE] = 1;
 		sserialize::MultiVarBitArrayCreator fa(bitConfig, dest);
 	
-		faceId = 0;
+		faceId = FaceId(0);
 		for(Finite_faces_iterator fh(src.finite_faces_begin()), fhEnd(src.finite_faces_end()); fh != fhEnd; ++fh) {
 			SSERIALIZE_NORMAL_ASSERT(faceToFaceId.is_defined(fh) && faceToFaceId[fh] == faceId);
 			{//check degeneracy
@@ -934,7 +998,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 					if ( !(features & F_DEGENERATE_FACES) ) {
 						throw sserialize::CreationException("Triangulation has degenerate face after serialization");
 					}
-					fa.set(faceId, Triangulation::Face::FI_IS_DEGENERATE, 1);
+					fa.set(faceId.ut(), Triangulation::Face::FI_IS_DEGENERATE, 1);
 					++degenerateFaceCount;
 				}
 			}
@@ -942,20 +1006,20 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 			uint8_t validNeighbors = 0;
 			for(int j(0); j < 3; ++j) {
 				Face_handle nfh = fh->neighbor(j);
-				uint32_t nfhId = 0xFFFFFFFF;
+				auto nfhId = NullFace;
 				if (faceToFaceId.is_defined(nfh)) {
 					nfhId = faceToFaceId[nfh];
 					validNeighbors |= static_cast<uint8_t>(1) << j;
 				}
-				fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_BEGIN+(uint32_t)j, nfhId);
+				fa.set(faceId.ut(), Triangulation::Face::FI_NEIGHBOR_BEGIN+(uint32_t)j, nfhId.ut());
 			}
-			fa.set(faceId, Triangulation::Face::FI_NEIGHBOR_VALID, validNeighbors);
+			fa.set(faceId.ut(), Triangulation::Face::FI_NEIGHBOR_VALID, validNeighbors);
 			
 			for(int j(0); j < 3; ++j) {
 				Vertex_handle vh = fh->vertex(j);
 				SSERIALIZE_NORMAL_ASSERT(vertexToVertexId.is_defined(vh));
-				uint32_t vertexId = vertexToVertexId[vh];
-				fa.set(faceId, Triangulation::Face::FI_VERTEX_BEGIN+(uint32_t)j, vertexId);
+				auto vertexId = vertexToVertexId[vh];
+				fa.set(faceId.ut(), Triangulation::Face::FI_VERTEX_BEGIN+(uint32_t)j, vertexId.ut());
 			}
 			++faceId;
 		}
@@ -968,6 +1032,6 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 	return dest;
 }
 
-}}} //end namespace
+} //end namespace sserialize::Static::spatial
 
 #endif

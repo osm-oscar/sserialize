@@ -24,24 +24,24 @@ UByteArrayAdapter::OffsetType TriangulationRegionArrangement::getSizeInBytes() c
 	return 1+m_grid.getSizeInBytes()+m_baseCellIdToIndexPtr.getSizeInBytes()+m_refinedToBaseCellId.getSizeInBytes()+m_faceIdToRefinedCellId.getSizeInBytes();
 }
 
-uint32_t TriangulationRegionArrangement::baseCellId(uint32_t cellId) const {
+TriangulationRegionArrangement::cellid_type TriangulationRegionArrangement::baseCellId(cellid_type cellId) const {
 	return m_refinedToBaseCellId.at(cellId);
 }
 
-uint32_t TriangulationRegionArrangement::regionListPtr(uint32_t cellId) const {
+TriangulationRegionArrangement::indexid_type TriangulationRegionArrangement::regionListPtr(cellid_type cellId) const {
 	return m_baseCellIdToIndexPtr.at(baseCellId(cellId));
 }
 
-uint32_t TriangulationRegionArrangement::cellId(const TriangulationRegionArrangement::Point& p) const {
+TriangulationRegionArrangement::cellid_type TriangulationRegionArrangement::cellId(const TriangulationRegionArrangement::Point& p) const {
 	return cellId(p.lat(), p.lon());
 }
 
-uint32_t TriangulationRegionArrangement::cellId(double lat, double lon) const {
-	uint32_t faceId = m_grid.faceId(lat, lon);
+TriangulationRegionArrangement::cellid_type TriangulationRegionArrangement::cellId(double lat, double lon) const {
+	auto faceId = m_grid.faceId(lat, lon);
 	if (faceId == Triangulation::NullFace) {
 		return NullCellId;
 	}
-	return m_faceIdToRefinedCellId.at(faceId);
+	return m_faceIdToRefinedCellId.at(faceId.ut());
 }
 
 }}}//end namespace

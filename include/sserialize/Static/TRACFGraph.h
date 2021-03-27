@@ -20,20 +20,22 @@ class TRACFGraph final {
 public:
 	typedef T_TRA TRA;
 	typedef typename TRA::Triangulation::Face Face;
+	using FaceId = typename TRA::Triangulation::FaceId;
+	using cellid_type = typename TRA::cellid_type;
 public:
 	TRACFGraph();
 	TRACFGraph(const TRA * tra, const Face & rootFace);
 	TRACFGraph(const TRACFGraph &) = default;
 	~TRACFGraph() {}
 	TRACFGraph & operator=(const TRACFGraph &) = default;
-	uint32_t size() const;
-	uint32_t cellId() const;
+	std::size_t size() const;
+	cellid_type cellId() const;
 	double area() const;
 	template<typename T_CALLBACK>
 	void visitCB(T_CALLBACK cb) const {
 		uint32_t myCellId = cellId();
-		std::unordered_set<uint32_t> visitedFaces;
-		std::vector<uint32_t> queuedFaces;
+		std::unordered_set<FaceId> visitedFaces;
+		std::vector<FaceId> queuedFaces;
 		queuedFaces.push_back(m_rootFace.id());
 		visitedFaces.insert(queuedFaces.back());
 		while(queuedFaces.size()) {
@@ -41,7 +43,7 @@ public:
 			queuedFaces.pop_back();
 			cb(f);
 			for(int j(0); j < 3; ++j) {
-				uint32_t nId = f.neighborId(j);
+				auto nId = f.neighborId(j);
 				if (!visitedFaces.count(nId) && m_tra->cellIdFromFaceId(nId) == myCellId) {
 					visitedFaces.insert(nId);
 					queuedFaces.push_back(nId);
@@ -60,9 +62,10 @@ public:
 private:
 	const TRA * m_tra;
 	Face m_rootFace;
+	static constexpr int size_digits = std::numeric_limits<std::size_t>::digits-1;
 	mutable struct {
-		uint32_t value:31;
-		uint32_t cached:1;
+		std::size_t value:size_digits;
+		bool cached:1;
 	} m_size;
 };
 
@@ -85,13 +88,14 @@ m_rootFace(rootFace)
 }
 
 template<typename T_TRA>
-uint32_t TRACFGraph<T_TRA>::cellId() const {
+typename TRACFGraph<T_TRA>::cellid_type
+TRACFGraph<T_TRA>::cellId() const {
 	SSERIALIZE_CHEAP_ASSERT(m_tra);
 	return m_tra->cellIdFromFaceId(m_rootFace.id());
 }
 
 template<typename T_TRA>
-uint32_t TRACFGraph<T_TRA>::size() const {
+std::size_t TRACFGraph<T_TRA>::size() const {
 	if (!m_size.cached) {
 		uint32_t s = 0;
 		this->visitCB([&s](auto) {++s;});

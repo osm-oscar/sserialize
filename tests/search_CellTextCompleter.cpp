@@ -7,15 +7,21 @@
 
 //config stuff
 
-uint32_t targetCellCount = 100;
+using trie_nodeid_type = uint32_t;
+using itemid_type = uint32_t;
+using cellid_type = uint32_t;
+using indexid_type = uint32_t;
+using regionid_type = uint32_t;
+
+cellid_type targetCellCount = 100;
 uint32_t maxBranching = 16;
 uint32_t maxDepth = 8;
-uint32_t maxRegionCells = 4;
-uint32_t itemCount = 1000;
-uint32_t minStrs = 2;
-uint32_t maxStrs = 10;
-uint32_t minCells = 1;
-uint32_t maxCells = 10;
+cellid_type maxRegionCells = 4;
+indexid_type itemCount = 1000;
+trie_nodeid_type minStrs = 2;
+trie_nodeid_type maxStrs = 10;
+cellid_type minCells = 1;
+cellid_type maxCells = 10;
 // sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_EXACT;
 // sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_PREFIX;
 // sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::StringCompleter::SQ_SUFFIX;
@@ -23,11 +29,11 @@ sserialize::StringCompleter::SupportedQuerries supportedQuerries = sserialize::S
 
 
 struct Item {
-	uint32_t id;
+	itemid_type id;
 	bool isRegion;
 	std::vector<std::string> strs;
-	std::vector<uint32_t> cells;
-	Item() : id(std::numeric_limits<uint32_t>::max()), isRegion(0) {}
+	std::vector<cellid_type> cells;
+	Item() : id(std::numeric_limits<itemid_type>::max()), isRegion(0) {}
 	Item(Item && other) : id(other.id), isRegion(other.isRegion), strs(std::move(other.strs)), cells(std::move(other.cells)) {}
 	Item(const Item & other) : id(other.id), isRegion(other.isRegion), strs(other.strs), cells(other.cells) {}
 	
@@ -58,9 +64,9 @@ struct Item {
 };
 
 
-std::set<uint32_t> createCellIds(uint32_t count, uint32_t maxCellId) {
+std::set<cellid_type> createCellIds(cellid_type count, cellid_type maxCellId) {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(count, maxCellId);
-	std::set<uint32_t> res;
+	std::set<cellid_type> res;
 	while (res.size() < count) {
 		res.insert(rand() % (maxCellId+1));
 	}
@@ -70,11 +76,11 @@ std::set<uint32_t> createCellIds(uint32_t count, uint32_t maxCellId) {
 class RegionArrangement {
 private:
 	struct Region: sserialize::RefCountObject {
-		std::vector<uint32_t> cells;
+		std::vector<cellid_type> cells;
 		std::vector< sserialize::RCPtrWrapper<Region> > children;
 		std::vector< sserialize::RCPtrWrapper<Region> > parents;
-		uint32_t ghId;
-		uint32_t storeId;
+		regionid_type ghId;
+		itemid_type storeId;
 		template<typename TVisitor>
 		void visitRec(TVisitor & v) {
 			v(this);

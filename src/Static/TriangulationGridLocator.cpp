@@ -38,7 +38,8 @@ bool TriangulationGridLocator::contains(double lat, double lon) const {
 	return faceId(lat, lon) != NullFace;
 }
 
-uint32_t TriangulationGridLocator::faceHint(double lat, double lon) const {
+TriangulationGridLocator::FaceId
+TriangulationGridLocator::faceHint(double lat, double lon) const {
 	try {
 		return m_grid.at(lat, lon);
 	}
@@ -47,19 +48,22 @@ uint32_t TriangulationGridLocator::faceHint(double lat, double lon) const {
 	}
 }
 
-uint32_t TriangulationGridLocator::faceHint(const TriangulationGridLocator::Point& p) const {
+TriangulationGridLocator::FaceId
+TriangulationGridLocator::faceHint(const TriangulationGridLocator::Point& p) const {
 	return faceHint(p.lat(), p.lon());
 }
 
-uint32_t TriangulationGridLocator::faceId(double lat, double lon) const {
+TriangulationGridLocator::FaceId
+TriangulationGridLocator::faceId(double lat, double lon) const {
 	if (gridContains(lat, lon)) {//BUG: hint is sometimes wrong
-		uint32_t hint = faceHint(lat, lon);
+		auto hint = faceHint(lat, lon);
 		return m_trs.locate(Point(lat, lon), hint, Triangulation::TT_STRAIGHT);
 	}
 	return NullFace;
 }
 
-uint32_t TriangulationGridLocator::faceId(const TriangulationGridLocator::Point& p) const {
+TriangulationGridLocator::FaceId
+TriangulationGridLocator::faceId(const TriangulationGridLocator::Point& p) const {
 	return faceId(p.lat(), p.lon());
 }
 
@@ -68,7 +72,7 @@ TriangulationGridLocator::Face TriangulationGridLocator::face(const Triangulatio
 }
 
 TriangulationGridLocator::Face TriangulationGridLocator::face(double lat, double lon) const {
-	uint32_t fId = faceId(lat, lon);
+	auto fId = faceId(lat, lon);
 	if (fId == NullFace) {
 		return Face();
 	}

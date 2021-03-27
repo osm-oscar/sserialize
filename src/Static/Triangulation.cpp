@@ -9,15 +9,15 @@ namespace sserialize {
 namespace Static {
 namespace spatial {
 
-constexpr uint32_t Triangulation::NullFace;
-constexpr uint32_t Triangulation::NullVertex;
+constexpr Triangulation::FaceId Triangulation::NullFace;
+constexpr Triangulation::VertexId Triangulation::NullVertex;
 
 //inner classes
 Triangulation::Face::Face() :
 Face(0, Triangulation::NullFace)
 {}
 
-Triangulation::Face::Face(const Triangulation* p, uint32_t pos) :
+Triangulation::Face::Face(const Triangulation* p, FaceId pos) :
 m_p(p),
 m_pos(pos)
 {}
@@ -29,58 +29,58 @@ bool Triangulation::Face::valid() const {
 }
 
 bool Triangulation::Face::isDegenerate() const {
-	return m_p->faceInfo().at(m_pos, FI_IS_DEGENERATE);
+	return m_p->faceInfo().at(m_pos.ut(), FI_IS_DEGENERATE);
 }
 
-bool Triangulation::Face::isNeighbor(uint32_t pos) const {
-	return (m_p->faceInfo().at(m_pos, FI_NEIGHBOR_VALID) & (static_cast<uint8_t>(1) << pos));
+bool Triangulation::Face::isNeighbor(position_type pos) const {
+	return (m_p->faceInfo().at(m_pos.ut(), FI_NEIGHBOR_VALID) & (static_cast<uint8_t>(1) << pos));
 }
 
-uint32_t Triangulation::Face::neighborId(uint32_t pos) const {
+Triangulation::FaceId Triangulation::Face::neighborId(position_type pos) const {
 	if (!isNeighbor(pos)) {
 		return Triangulation::NullFace;
 	}
-	return m_p->faceInfo().at(m_pos, FI_NEIGHBOR_BEGIN+pos);
+	return FaceId(m_p->faceInfo().at(m_pos.ut(), FI_NEIGHBOR_BEGIN+pos));
 }
 
-Triangulation::Face Triangulation::Face::neighbor(uint32_t pos) const {
-	uint32_t nId = neighborId(pos);
+Triangulation::Face Triangulation::Face::neighbor(position_type pos) const {
+	auto nId = neighborId(pos);
 	if (nId != Triangulation::NullFace) {
 		return Face(m_p, nId);
 	}
 	return Face();
 }
 
-uint32_t Triangulation::Face::vertexId(uint32_t pos) const {
+Triangulation::VertexId Triangulation::Face::vertexId(position_type pos) const {
 	if (pos > 2) {
 		throw sserialize::OutOfBoundsException("sserialize::Static::spatial::Triangulation::Face::vertexId");
 	}
-	return m_p->faceInfo().at(m_pos, FI_VERTEX_BEGIN+pos);
+	return VertexId(m_p->faceInfo().at(m_pos.ut(), FI_VERTEX_BEGIN+pos));
 }
 
-uint32_t Triangulation::Face::vertexId(const Point & p) const {
-	for(uint32_t i(0); i < 3; ++i) {
+Triangulation::VertexId Triangulation::Face::vertexId(const Point & p) const {
+	for(position_type i(0); i < 3; ++i) {
 		if (p.equal(point(i), 0)) {
-			return i;
+			return vertexId(i);
 		}
 	}
 	throw sserialize::OutOfBoundsException("sserialize::Static::spatial::Triangulation::Face::vertexId");
 }
 
-Triangulation::Vertex Triangulation::Face::vertex(uint32_t pos) const {
-	return Vertex(m_p, vertexId(pos));
+Triangulation::Vertex Triangulation::Face::vertex(position_type pos) const {
+	return m_p->vertex(vertexId(pos));
 }
 
 Triangulation::Vertex Triangulation::Face::vertex(const Point & p) const {
-	return vertex( vertexId(p) );
+	return m_p->vertex( vertexId(p) );
 }
 
-Triangulation::Point Triangulation::Face::point(uint32_t pos) const {
-	return m_p->points().at(vertexId(pos));
+Triangulation::Point Triangulation::Face::point(position_type pos) const {
+	return vertex(pos).point();
 }
 
 bool Triangulation::Face::isVertex(const Point & p) const {
-	for(uint32_t i(0); i < 3; ++i) {
+	for(position_type i(0); i < 3; ++i) {
 		if (p.equal(point(i), 0)) {
 			return true;
 		}
@@ -180,8 +180,8 @@ Triangulation::Point Triangulation::Face::centroid() const {
 }
 
 int Triangulation::Face::index(const Triangulation::Vertex& v) const {
-	uint32_t vertexId = v.id();
-	for(uint32_t j(0); j < 3; ++j) {
+	VertexId vertexId = v.id();
+	for(position_type j(0); j < 3; ++j) {
 		if (this->vertexId(j) == vertexId) {
 			return j;
 		}
@@ -217,8 +217,8 @@ Triangulation::Face::area() const {
 void Triangulation::Face::dump(std::ostream& out) const {
 	out << "Triangulation::Face {\n";
 	out << "\tid=" << id() << "\n";
-	out << "\tneighbor_valid=" << m_p->faceInfo().at(m_pos, FI_NEIGHBOR_VALID) << "\n";
-	for(uint32_t j(0); j < 3; ++j) {
+	out << "\tneighbor_valid=" << m_p->faceInfo().at(m_pos.ut(), FI_NEIGHBOR_VALID) << "\n";
+	for(position_type j(0); j < 3; ++j) {
 		out << "\tneighbor[" << j << "]=";
 		if (isNeighbor(j)) {
 			out << neighborId(j);
@@ -228,10 +228,10 @@ void Triangulation::Face::dump(std::ostream& out) const {
 		}
 		out << "\n";
 	}
-	for(uint32_t j(0); j < 3; ++j) {
+	for(position_type j(0); j < 3; ++j) {
 		out << "\tvertex[" << j << "]=" << vertexId(j)  << "\n";
 	}
-	for(uint32_t j(0); j < 3; ++j) {
+	for(position_type j(0); j < 3; ++j) {
 		out << "\tpoint[" << j << "]=" << vertex(j).point()  << "\n";
 	}
 	out << "}";
@@ -248,7 +248,7 @@ Triangulation::Vertex::Vertex() :
 Vertex(0, Triangulation::NullVertex)
 {}
 
-Triangulation::Vertex::Vertex(const Triangulation* p, uint32_t pos) :
+Triangulation::Vertex::Vertex(const Triangulation* p, VertexId pos) :
 m_p(p),
 m_pos(pos)
 {}
@@ -260,15 +260,15 @@ bool Triangulation::Vertex::valid() const {
 }
 
 Triangulation::Point Triangulation::Vertex::point() const {
-	return m_p->points().at(m_pos);
+	return m_p->points().at(m_pos.ut());
 }
 
-uint32_t Triangulation::Vertex::beginFaceId() const {
-	return m_p->vertexInfos().at(m_pos, VI_FACES_BEGIN);
+Triangulation::FaceId Triangulation::Vertex::beginFaceId() const {
+	return FaceId(m_p->vertexInfos().at(m_pos.ut(), VI_FACES_BEGIN));
 }
 
-uint32_t Triangulation::Vertex::endFaceId() const {
-	return m_p->vertexInfos().at(m_pos, VI_FACES_END);
+Triangulation::FaceId Triangulation::Vertex::endFaceId() const {
+	return FaceId(m_p->vertexInfos().at(m_pos.ut(), VI_FACES_END));
 }
 
 Triangulation::Face Triangulation::Vertex::beginFace() const {
@@ -286,7 +286,7 @@ void Triangulation::Vertex::dump(std::ostream& out) const {
 	out << "\tbeginFaceId=" << beginFaceId() << "\n";
 	out << "\tendFaceId=" << endFaceId() << "\n";
 	FaceCirculator fIt(facesBegin()), fE(facesEnd());
-	for(uint32_t i(0);true; ++fIt, ++i) {
+	for(FaceCirculator::position_type i(0);true; ++fIt, ++i) {
 		out << "\tface[" << i << "]=" << fIt.face().id() << std::endl;
 		if (fIt == fE) {
 			break;
@@ -308,7 +308,7 @@ Triangulation::FaceCirculator Triangulation::Vertex::facesEnd() const {
 }
 
 Triangulation::FaceCirculator Triangulation::Vertex::faces() const {
-	return FaceCirculator(*this, m_p->face(m_p->vertexInfos().at(m_pos, VI_FACES_BEGIN)));
+	return FaceCirculator(*this, m_p->face(FaceId(m_p->vertexInfos().at(m_pos.ut(), VI_FACES_BEGIN))));
 }
 
 bool Triangulation::Vertex::operator!=(const Triangulation::Vertex& other) const {
@@ -348,7 +348,7 @@ Triangulation::FaceCirculator& Triangulation::FaceCirculator::operator++() {
 	if (m_f.id() != m_v.endFaceId()) {
 		int i = m_f.index(m_v);
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(i, 0);
-		m_f = m_f.neighbor((uint32_t) Triangulation::ccw(i));
+		m_f = m_f.neighbor(Triangulation::ccw(i));
 	}
 	else {
 		m_f = m_v.beginFace();
@@ -366,7 +366,7 @@ Triangulation::FaceCirculator& Triangulation::FaceCirculator::operator--() {
 	if (m_f.id() != m_v.beginFaceId()) {
 		int i = m_f.index(m_v);
 		SSERIALIZE_CHEAP_ASSERT_LARGER_OR_EQUAL(i, 0);
-		m_f = m_f.neighbor((uint32_t)Triangulation::cw(i));
+		m_f = m_f.neighbor((position_type)Triangulation::cw(i));
 	}
 	else {
 		m_f = m_v.endFace();
@@ -409,14 +409,14 @@ UByteArrayAdapter::OffsetType Triangulation::getSizeInBytes() const {
 	return SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_FIXED_HEADER_SIZE+m_vi.getSizeInBytes()+m_p.getSizeInBytes()+m_fi.getSizeInBytes();
 }
 
-Triangulation::Face Triangulation::face(uint32_t pos) const {
+Triangulation::Face Triangulation::face(FaceId pos) const {
 	if (pos >= faceCount()) {
 		throw sserialize::OutOfBoundsException("sserialize::Static::spatial::Triangulation::face");
 	}
 	return Face(this, pos); 
 }
 
-Triangulation::Vertex Triangulation::vertex(uint32_t pos) const {
+Triangulation::Vertex Triangulation::vertex(VertexId pos) const {
 	if (pos >= vertexCount()) {
 		throw sserialize::OutOfBoundsException("sserialize::Static::spatial::Triangulation::vertex");
 	}
@@ -425,15 +425,15 @@ Triangulation::Vertex Triangulation::vertex(uint32_t pos) const {
 
 bool Triangulation::selfCheck() const {
 	//check face-neigbor relations
-	for(uint32_t faceId(0), s(faceCount()); faceId < s; ++faceId) {
+	for(FaceId faceId(0), s(faceCount()); faceId < s; ++faceId) {
 		Face f(face(faceId));
-		for(uint32_t j(0); j < 3; ++j) {
+		for(Face::position_type j(0); j < 3; ++j) {
 			if (!f.isNeighbor(j)) {
 				continue;
 			}
 			Face fn(f.neighbor(j));
 			bool ok = false;
-			for(uint32_t k(0); k < 3; ++k) {
+			for(Face::position_type k(0); k < 3; ++k) {
 				if (fn.neighborId(k) == faceId) {
 					ok = true;
 				}
@@ -447,9 +447,9 @@ bool Triangulation::selfCheck() const {
 	//The three vertices of a face are indexed with 0, 1 and 2 in counterclockwise order.
 	//The neighbors of a face are also indexed with 0,1,2 in such a way that the neighbor indexed by i is opposite to the vertex with the same index.
 	//See Figure 36.2, the functions ccw(i) and cw(i) shown on this figure compute respectively i+1 and i−1 modulo 3
-	for(uint32_t faceId(0), s(faceCount()); faceId < s; ++faceId) {
+	for(FaceId faceId(0), s(faceCount()); faceId < s; ++faceId) {
 		Face f(face(faceId));
-		for(uint32_t j(0); j < 3; ++j) {
+		for(Face::position_type j(0); j < 3; ++j) {
 			Vertex vs(f.vertex(j)), ve(f.vertex(cw(j)));
 			if (f.isNeighbor(ccw(j))) {
 				Face fn(f.neighbor(ccw(j)));
@@ -470,7 +470,7 @@ bool Triangulation::selfCheck() const {
 			}
 		}
 	}
-	for(uint32_t faceId(0), s(faceCount()); faceId < s; ++faceId) {
+	for(FaceId faceId(0), s(faceCount()); faceId < s; ++faceId) {
 		Face f(face(faceId));
 		Vertex v0(f.vertex(0)), v1(f.vertex(1)), v2(f.vertex(2));
 		using sserialize::spatial::equal;
@@ -480,7 +480,7 @@ bool Triangulation::selfCheck() const {
 			return false;
 		}
 	}
-	for(uint32_t vertexId(0), s(vertexCount()); vertexId < s; ++vertexId) {
+	for(VertexId vertexId(0), s(vertexCount()); vertexId < s; ++vertexId) {
 		Vertex v(vertex(vertexId));
 		FaceCirculator fc(v.faces());
 		FaceCirculator fcIt(fc);
@@ -505,12 +505,12 @@ void Triangulation::printStats(std::ostream& out) const {
 	out << "}";
 }
 
-uint32_t Triangulation::locate(const Point& target, uint32_t hint, TraversalType tt) const {
+Triangulation::FaceId Triangulation::locate(const Point& target, FaceId hint, TraversalType tt) const {
 	if (!faceCount()) {
 		return NullFace;
 	}
 	if (hint >= faceCount()) {
-		hint = 0;
+		hint = FaceId(0);
 	}
 	return traverse(target, face(hint).centroid(), [](Face const &) {}, hint, tt);
 }

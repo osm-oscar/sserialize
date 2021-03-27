@@ -3,7 +3,7 @@
 #include <sserialize/Static/Triangulation.h>
 #include <sserialize/Static/RGeoGrid.h>
 
-#define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_GRID_LOCATOR_VERSION 1
+#define SSERIALIZE_STATIC_SPATIAL_TRIANGULATION_GRID_LOCATOR_VERSION 2
 
 namespace sserialize {
 namespace Static {
@@ -12,7 +12,7 @@ namespace spatial {
   * {
   *   Version          u8
   *   Triangulation    sserialize::Static::spatial::Triangulation
-  *   Grid             sserialize::Static::spatial::RGeoGrid<uint32_t>
+  *   Grid             sserialize::Static::spatial::RGeoGrid<sserialize::Static::spatial::Triangulation::FaceId>
   *
   * }
   *
@@ -22,14 +22,17 @@ namespace spatial {
 
 class TriangulationGridLocator final {
 public:
-	typedef sserialize::Static::spatial::Triangulation Triangulation;
-	typedef sserialize::Static::spatial::RGeoGrid<uint32_t> Grid;
-	typedef Triangulation::Face Face;
-	typedef Triangulation::Point Point;
-	static constexpr uint32_t NullFace = Triangulation::NullFace;
+	using Triangulation = sserialize::Static::spatial::Triangulation;
+	using Face = Triangulation::Face;
+	using Point = Triangulation::Point;
+	using FaceId = Triangulation::FaceId;
+	using VertexId = Triangulation::VertexId;
+	using SizeType = Triangulation::SizeType;
+	using Grid = sserialize::Static::spatial::RGeoGrid<sserialize::Static::spatial::Triangulation::FaceId>;
+	static constexpr FaceId NullFace = Triangulation::NullFace;
 private:
 	Triangulation m_trs;
-	sserialize::Static::spatial::RGeoGrid<uint32_t> m_grid;
+	Grid m_grid;
 public:
 	TriangulationGridLocator();
 	TriangulationGridLocator(const sserialize::UByteArrayAdapter & d);
@@ -37,14 +40,14 @@ public:
 	sserialize::UByteArrayAdapter::OffsetType getSizeInBytes() const;
 	inline const Grid & grid() const { return m_grid; }
 	inline const Triangulation & tds() const { return m_trs; }
-	uint32_t faceHint(double lat, double lon) const;
-	uint32_t faceHint(const Point & p) const;
+	FaceId faceHint(double lat, double lon) const;
+	FaceId faceHint(const Point & p) const;
 	bool gridContains(double lat, double lon) const;
 	bool gridContains(const Point & p) const;
 	bool contains(double lat, double lon) const;
 	bool contains(const Point & p) const;
-	uint32_t faceId(double lat, double lon) const;
-	uint32_t faceId(const Point & p) const;
+	FaceId faceId(double lat, double lon) const;
+	FaceId faceId(const Point & p) const;
 	Face face(double lat, double lon) const;
 	Face face(const Point & p) const;
 };

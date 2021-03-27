@@ -324,13 +324,13 @@ public:
 	typedef BaseTraits::NodeIdentifier NodeIdentifier;
 	class IndexFactoryOut {
 	public:
-		using id_type = sserialize::Static::ItemIndexStore::IdType;
+		using indexid_type = sserialize::Static::ItemIndexStore::IdType;
 	private:
 		sserialize::ItemIndexFactory * m_idxFactory;
 	public:
 		IndexFactoryOut(sserialize::ItemIndexFactory * idxFactory) : m_idxFactory(idxFactory) {}
 		template<typename TIterator>
-		id_type operator()(TIterator begin, TIterator end) {
+		indexid_type operator()(TIterator begin, TIterator end) {
 			std::vector<sserialize::ItemIndex::value_type> tmp(begin, end);
 			return m_idxFactory->addIndex(tmp);
 		}

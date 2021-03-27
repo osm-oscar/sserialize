@@ -45,8 +45,8 @@ private:
 	CGALTriangulation m_ctr;
 	sserialize::UByteArrayAdapter m_strData;
 	StaticTriangulation m_str;
-	CGAL::Unique_hash_map<CGALTriangulation::Face_handle, uint32_t> m_face2FaceId;
-	CGAL::Unique_hash_map<CGALTriangulation::Vertex_handle, uint32_t> m_vertex2VertexId;
+	CGAL::Unique_hash_map<CGALTriangulation::Face_handle, StaticTriangulation::FaceId> m_face2FaceId;
+	CGAL::Unique_hash_map<CGALTriangulation::Vertex_handle, StaticTriangulation::VertexId> m_vertex2VertexId;
 public:
 	TriangulationTest() : m_discDiameter(30.0) {}
 	virtual void setUp() {
@@ -75,8 +75,8 @@ public:
 		CPPUNIT_ASSERT(m_str.selfCheck());
 	}
 	void testSerialization() {
-		uint32_t numFiniteFaces = 0;
-		uint32_t numFiniteVertices = 0;
+		StaticTriangulation::SizeType numFiniteFaces = 0;
+		StaticTriangulation::SizeType numFiniteVertices = 0;
 		for(CGALTriangulation::Finite_faces_iterator fIt(m_ctr.finite_faces_begin()), fEnd(m_ctr.finite_faces_end()); fIt != fEnd; ++fIt) {
 			++numFiniteFaces;
 		}
@@ -90,13 +90,13 @@ public:
 		for(CGALTriangulation::Finite_faces_iterator fIt(m_ctr.finite_faces_begin()), fEnd(m_ctr.finite_faces_end()); fIt != fEnd; ++fIt) {
 			CGALTriangulation::Face_handle fh = fIt;
 			CPPUNIT_ASSERT(m_face2FaceId.is_defined(fIt));
-			uint32_t fId = m_face2FaceId[fIt];
+			auto fId = m_face2FaceId[fIt];
 			StaticTriangulation::Face sf = m_str.face(fId);
 			//check the faces
 			for(int j(0); j < 3; ++j) {
 				CGALTriangulation::Face_handle nfh = fh->neighbor(j);
 				CPPUNIT_ASSERT(m_face2FaceId.is_defined(nfh) || m_ctr.is_infinite(nfh));
-				uint32_t nfId = (m_face2FaceId.is_defined(nfh) ? m_face2FaceId[nfh] : StaticTriangulation::NullFace);
+				auto nfId = (m_face2FaceId.is_defined(nfh) ? m_face2FaceId[nfh] : StaticTriangulation::NullFace);
 				CPPUNIT_ASSERT_EQUAL(nfId, sf.neighborId(j));
 			}
 			//check the vertices
@@ -106,11 +106,11 @@ public:
 				CPPUNIT_ASSERT_EQUAL(m_vertex2VertexId[vh], sf.vertexId(j));
 			}
 		}
-		std::unordered_set<uint32_t> cgFaces, sfFaces;
+		std::unordered_set<StaticTriangulation::FaceId> cgFaces, sfFaces;
 		//check vertex circulators
 		for(CGALTriangulation::Finite_vertices_iterator vIt(m_ctr.finite_vertices_begin()), vEnd(m_ctr.finite_vertices_end()); vIt != vEnd; ++vIt) {
 			CPPUNIT_ASSERT(m_vertex2VertexId.is_defined(vIt));
-			uint32_t vId = m_vertex2VertexId[vIt];
+			auto vId = m_vertex2VertexId[vIt];
 			StaticTriangulation::Vertex sv(m_str.vertex(vId));
 			cgFaces.clear();
 			sfFaces.clear();
@@ -146,42 +146,42 @@ public:
 	}
 	
 	void testLocateInStartFace() {
-		for(uint32_t faceId(0), s(m_str.faceCount()); faceId < s; ++faceId) {
+		for(StaticTriangulation::FaceId faceId(0), s(m_str.faceCount()); faceId < s; ++faceId) {
 			StaticTriangulation::Point ct(m_str.face(faceId).centroid());
-			uint32_t zzfId = m_str.locate(ct, faceId, StaticTriangulation::TT_ZIG_ZAG);
+			auto zzfId = m_str.locate(ct, faceId, StaticTriangulation::TT_ZIG_ZAG);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("locate zigzag", faceId, zzfId);
 			if (T_GCT == StaticTriangulation::GCT_SNAP_VERTICES) {
-				uint32_t sfId = m_str.locate(ct, faceId, StaticTriangulation::TT_STRAIGHT);
+				auto sfId = m_str.locate(ct, faceId, StaticTriangulation::TT_STRAIGHT);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("locate straight", faceId, sfId);
 			}
 		}
 	}
 	
 	void testLocateVertexOfStartFace() {
-		for(uint32_t vertexId(0), s(m_str.vertexCount()); vertexId < s; ++vertexId) {
+		for(StaticTriangulation::VertexId vertexId(0), s(m_str.vertexCount()); vertexId < s; ++vertexId) {
 			StaticTriangulation::Vertex v(m_str.vertex(vertexId));
 			StaticTriangulation::Point vp(v.point());
-			uint32_t zzfId = m_str.locate(vp, v.facesBegin().face().id(), StaticTriangulation::TT_ZIG_ZAG);
+			auto zzfId = m_str.locate(vp, v.facesBegin().face().id(), StaticTriangulation::TT_ZIG_ZAG);
 			CPPUNIT_ASSERT_MESSAGE("locate zigzag", m_str.face(zzfId).index(v) != -1);
 			
 			if (T_GCT == StaticTriangulation::GCT_SNAP_VERTICES) {
-				uint32_t sfId = m_str.locate(vp, v.facesBegin().face().id(), StaticTriangulation::TT_ZIG_ZAG);
+				auto sfId = m_str.locate(vp, v.facesBegin().face().id(), StaticTriangulation::TT_ZIG_ZAG);
 				CPPUNIT_ASSERT_MESSAGE("locate straight", m_str.face(sfId).index(v) != -1);
 			}
 		}
 	}
 	
 	void testLocateFaceCentroidsFromNeighbors() {
-		for(uint32_t targetFaceId(0), s(m_str.faceCount()); targetFaceId < s; ++targetFaceId) {
+		for(StaticTriangulation::FaceId targetFaceId(0), s(m_str.faceCount()); targetFaceId < s; ++targetFaceId) {
 			StaticTriangulation::Face f(m_str.face(targetFaceId));
 			StaticTriangulation::Point ct(f.centroid());
 			for(int j(0); j < 3; ++j) {
 				if (f.isNeighbor(j)) {
-					uint32_t zzlId = m_str.locate(ct, f.neighborId(j), StaticTriangulation::TT_ZIG_ZAG);
+					auto zzlId = m_str.locate(ct, f.neighborId(j), StaticTriangulation::TT_ZIG_ZAG);
 					CPPUNIT_ASSERT_EQUAL_MESSAGE("locate zigzag", targetFaceId, zzlId);
 					
 					if (T_GCT == StaticTriangulation::GCT_SNAP_VERTICES) {
-						uint32_t slId = m_str.locate(ct, f.neighborId(j), StaticTriangulation::TT_ZIG_ZAG);
+						auto slId = m_str.locate(ct, f.neighborId(j), StaticTriangulation::TT_ZIG_ZAG);
 						CPPUNIT_ASSERT_EQUAL_MESSAGE("locate straight", targetFaceId, slId);
 					}
 				}
@@ -190,15 +190,15 @@ public:
 	}
 	
 	void testLocateFaceCentroids() {
-		for(uint32_t targetFaceId(0), s(m_str.faceCount()); targetFaceId < s; ++targetFaceId) {
+		for(StaticTriangulation::FaceId targetFaceId(0), s(m_str.faceCount()); targetFaceId < s; ++targetFaceId) {
 			StaticTriangulation::Face f(m_str.face(targetFaceId));
 			StaticTriangulation::Point ct(f.centroid());
-			for(uint32_t startFaceId(0); startFaceId < s; ++startFaceId) {
-				uint32_t zzlId = m_str.locate(ct, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
+			for(StaticTriangulation::FaceId startFaceId(0); startFaceId < s; ++startFaceId) {
+				auto zzlId = m_str.locate(ct, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("locate zigzag", targetFaceId, zzlId);
 				
 				if (T_GCT == StaticTriangulation::GCT_SNAP_VERTICES) {
-					uint32_t slId = m_str.locate(ct, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
+					auto slId = m_str.locate(ct, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
 					CPPUNIT_ASSERT_EQUAL_MESSAGE("locate straight", targetFaceId, slId);
 				}
 			}
@@ -206,15 +206,15 @@ public:
 	}
 	
 	void testLocateVertices() {
-		for(uint32_t vertexId(0), s(m_str.vertexCount()); vertexId < s; ++vertexId) {
+		for(StaticTriangulation::VertexId vertexId(0), s(m_str.vertexCount()); vertexId < s; ++vertexId) {
 			StaticTriangulation::Vertex v(m_str.vertex(vertexId));
 			StaticTriangulation::Point vp(v.point());
-			for(uint32_t startFaceId(0), faceCount(m_str.faceCount()); startFaceId < faceCount; ++startFaceId) {
-				uint32_t zzfId = m_str.locate(vp, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
+			for(StaticTriangulation::FaceId startFaceId(0), faceCount(m_str.faceCount()); startFaceId < faceCount; ++startFaceId) {
+				auto zzfId = m_str.locate(vp, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
 				CPPUNIT_ASSERT_MESSAGE("locate zigzag", m_str.face(zzfId).index(v) != -1);
 				
 				if (T_GCT == StaticTriangulation::GCT_SNAP_VERTICES) {
-					uint32_t sfId = m_str.locate(vp, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
+					auto sfId = m_str.locate(vp, startFaceId, StaticTriangulation::TT_ZIG_ZAG);
 					CPPUNIT_ASSERT_MESSAGE("locate straight", m_str.face(sfId).index(v) != -1);
 				}
 			}
@@ -233,7 +233,7 @@ public:
 			double x = CGAL::to_double(testPoints[i].x());
 			double y = CGAL::to_double(testPoints[i].x());
 			CGALTriangulation::Face_handle fh = m_ctr.locate(Point(x, y));
-			uint32_t fhId;
+			StaticTriangulation::FaceId fhId;
 			if (m_face2FaceId.is_defined(fh)) {
 				fhId = m_face2FaceId[fh];
 			}
@@ -241,11 +241,11 @@ public:
 				CPPUNIT_ASSERT(!m_ctr.number_of_faces() || m_ctr.is_infinite(fh));
 				fhId = StaticTriangulation::NullFace;
 			}
-			uint32_t zzfId = m_str.locate(sserialize::spatial::GeoPoint(x, y), m_str.NullFace, StaticTriangulation::TT_ZIG_ZAG);
+			auto zzfId = m_str.locate(sserialize::spatial::GeoPoint(x, y), m_str.NullFace, StaticTriangulation::TT_ZIG_ZAG);
 			CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("locate zigzag: faces at ", i), fhId, zzfId);
 			
 			if (T_GCT == StaticTriangulation::GCT_SNAP_VERTICES) {
-				uint32_t sfId = m_str.locate(sserialize::spatial::GeoPoint(x, y), m_str.NullFace, StaticTriangulation::TT_STRAIGHT);
+				auto sfId = m_str.locate(sserialize::spatial::GeoPoint(x, y), m_str.NullFace, StaticTriangulation::TT_STRAIGHT);
 				CPPUNIT_ASSERT_EQUAL_MESSAGE(sserialize::toString("locate straight: faces at ", i), fhId, sfId);
 			}
 		}

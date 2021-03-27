@@ -32,11 +32,12 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(const TriangulationGeoHier
 	return cellId(p.lat(), p.lon());
 }
 
-uint32_t TriangulationGeoHierarchyArrangement::cellIdFromFaceId(uint32_t faceId) const {
+TriangulationGeoHierarchyArrangement::cellid_type
+TriangulationGeoHierarchyArrangement::cellIdFromFaceId(FaceId faceId) const {
 	if (faceId == Triangulation::NullFace) {
 		return NullCellId;
 	}
-	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId);
+	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId.ut());
 	if (tmp != cellCount()) {
 		return tmp;
 	}
@@ -45,28 +46,29 @@ uint32_t TriangulationGeoHierarchyArrangement::cellIdFromFaceId(uint32_t faceId)
 	}
 }
 
-uint32_t TriangulationGeoHierarchyArrangement::faceIdFromCellId(uint32_t cellId) const {
+TriangulationGeoHierarchyArrangement::Triangulation::FaceId
+TriangulationGeoHierarchyArrangement::faceIdFromCellId(cellid_type cellId) const {
 	if (cellId >= cellCount()) {
 		return Triangulation::NullFace;
 	}
 	else {
-		return m_refinedCellIdToFaceId.at(cellId);
+		return FaceId(m_refinedCellIdToFaceId.at(cellId));
 	}
 }
 
-TriangulationGeoHierarchyArrangement::CFGraph TriangulationGeoHierarchyArrangement::cfGraph(uint32_t cellId) const {
+TriangulationGeoHierarchyArrangement::CFGraph TriangulationGeoHierarchyArrangement::cfGraph(cellid_type cellId) const {
 	if (cellId >= cellCount()) {
 		return TriangulationGeoHierarchyArrangement::CFGraph(this, Triangulation::Face());
 	}
-	return TriangulationGeoHierarchyArrangement::CFGraph(this, tds().face(m_refinedCellIdToFaceId.at(cellId)));
+	return TriangulationGeoHierarchyArrangement::CFGraph(this, tds().face(FaceId(m_refinedCellIdToFaceId.at(cellId))));
 }
 
 uint32_t TriangulationGeoHierarchyArrangement::cellId(double lat, double lon) const {
-	uint32_t faceId = m_grid.faceId(lat, lon);
+	auto faceId = m_grid.faceId(lat, lon);
 	if (faceId == Triangulation::NullFace) {
 		return NullCellId;
 	}
-	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId);
+	uint32_t tmp = m_faceIdToRefinedCellId.at(faceId.ut());
 	if (tmp >= cellCount()) {
 		return NullCellId;
 	}
@@ -74,13 +76,14 @@ uint32_t TriangulationGeoHierarchyArrangement::cellId(double lat, double lon) co
 }
 
 
-std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, double lon) const {
+std::set<TriangulationGeoHierarchyArrangement::cellid_type>
+TriangulationGeoHierarchyArrangement::cellIds(double lat, double lon) const {
 	auto face = m_grid.face(lat, lon);
 	if (!face.valid()) {
-		return std::set<uint32_t>();
+		return std::set<cellid_type>();
 	}
 	
-	std::set<uint32_t> result;
+	std::set<cellid_type> result;
 	auto where = face.where(Point(lat, lon));
 	SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(where, face.CT_OUTSIDE);
 	if (where != face.CT_INSIDE) {
@@ -91,7 +94,7 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, dou
 			while(true) {
 				auto cf = fit.face();
 				if (cf.valid()) {
-					uint32_t tmp = m_faceIdToRefinedCellId.at(cf.id());
+					cellid_type tmp = m_faceIdToRefinedCellId.at(cf.id().ut());
 					if (tmp < cellCount()) {
 						result.insert(tmp);
 					}
@@ -105,14 +108,14 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, dou
 			}
 		}
 		else { //on edge
-			uint32_t tmp = m_faceIdToRefinedCellId.at(face.id());
+			cellid_type tmp = m_faceIdToRefinedCellId.at(face.id().ut());
 			if (tmp < cellCount()) {
 				result.insert(tmp);
 			}
 			
 			auto nFace = face.neighbor(where-face.CT_ON_EDGE_0);
 			if (nFace.valid()) {
-				tmp = m_faceIdToRefinedCellId.at(nFace.id());
+				tmp = m_faceIdToRefinedCellId.at(nFace.id().ut());
 				if (tmp < cellCount()) {
 					result.insert(tmp);
 				}
@@ -120,7 +123,7 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(double lat, dou
 		}
 	}
 	else {
-		uint32_t tmp = m_faceIdToRefinedCellId.at(face.id());
+		cellid_type tmp = m_faceIdToRefinedCellId.at(face.id().ut());
 		if (tmp < cellCount()) {
 			result.insert(tmp);
 		}
@@ -135,7 +138,7 @@ std::set<uint32_t> TriangulationGeoHierarchyArrangement::cellIds(const Point & p
 sserialize::ItemIndex
 TriangulationGeoHierarchyArrangement::
 cellsBetween(const sserialize::spatial::GeoPoint& start, const sserialize::spatial::GeoPoint& end, double radius) const {
-	uint32_t startFace = m_grid.faceId(start);
+	auto startFace = m_grid.faceId(start);
 	if (startFace == Triangulation::NullFace) {
 		return sserialize::ItemIndex();
 	}
@@ -196,7 +199,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 
 	struct WorkContext {
 		const TriangulationGeoHierarchyArrangement * parent;
-		std::unordered_set<uint32_t> result;
+		std::unordered_set<cellid_type> result;
 		const sserialize::spatial::GeoPoint * beginPts;
 		const sserialize::spatial::GeoPoint * endPts;
 		WorkContext(const sserialize::spatial::GeoPoint * beginPts, const sserialize::spatial::GeoPoint * endPts) :
@@ -207,7 +210,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 
 	
 	if (radius <= 0.0) {
-		uint32_t sourceHint = Triangulation::NullFace;
+		auto sourceHint = Triangulation::NullFace;
 		for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
 			if (sourceHint == Triangulation::NullFace) {
 				sourceHint = m_grid.faceId(*prev);
@@ -225,7 +228,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 		}
 	}
 	else {
-		uint32_t startFace = Triangulation::NullFace;
+		auto startFace = Triangulation::NullFace;
 		for(const spatial::GeoPoint * it(begin); startFace == Triangulation::NullFace && it != end; ++it) {
 			startFace = m_grid.faceId(*it);
 		}
@@ -254,7 +257,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 					}
 				}
 				if (ok) {
-					uint32_t cellId = wct.parent->cellIdFromFaceId(f.id());
+					cellid_type cellId = wct.parent->cellIdFromFaceId(f.id());
 					if (cellId != NullCellId) {
 						wct.result.insert(cellId);
 					}
@@ -262,7 +265,7 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 				return ok;
 		});
 	}
-	std::vector<uint32_t> tmp(wct.result.begin(), wct.result.end());
+	std::vector<cellid_type> tmp(wct.result.begin(), wct.result.end());
 	std::sort(tmp.begin(), tmp.end());
 	return sserialize::ItemIndex(std::move(tmp));
 }
@@ -270,18 +273,18 @@ TriangulationGeoHierarchyArrangement::cellsAlongPath(double radius, const spatia
 sserialize::ItemIndex
 TriangulationGeoHierarchyArrangement::trianglesAlongPath(const TriangulationGeoHierarchyArrangement::Point* begin, const TriangulationGeoHierarchyArrangement::Point* end) const {
 // 	typedef CGAL::Exact_predicates_inexact_constructions_kernel MyGeomTraits;
-	std::vector<uint32_t> faceIds;
-	uint32_t sourceHint = Triangulation::NullFace;
+	std::vector<sserialize::ItemIndex::value_type> faceIds;
+	auto sourceHint = Triangulation::NullFace;
 	for(const spatial::GeoPoint * prev(begin), * it(begin+1); it < end; ++it, ++prev) {
 		if (sourceHint == Triangulation::NullFace) {
 		sourceHint = m_grid.faceId(*prev);
 		}
 		if (sourceHint != Triangulation::NullFace) {
-			faceIds.emplace_back(sourceHint);
+			faceIds.emplace_back(static_cast<sserialize::ItemIndex::value_type>(sourceHint.ut()));
 			sourceHint = tds().traverse(*it, *prev, [&faceIds](const Triangulation::Face & face) {
 				SSERIALIZE_CHEAP_ASSERT_NOT_EQUAL(face.id(), Triangulation::NullFace)
 				SSERIALIZE_CHEAP_ASSERT(face.valid())
-				faceIds.emplace_back(face.id());
+				faceIds.emplace_back(static_cast<sserialize::ItemIndex::value_type>(face.id().ut()));
 			}, sourceHint, sserialize::Static::spatial::Triangulation::TT_STRAIGHT);
 		}
 	}
@@ -293,7 +296,8 @@ TriangulationGeoHierarchyArrangement::trianglesAlongPath(const TriangulationGeoH
 		)
 	);
 	faceIds.shrink_to_fit();
-	return sserialize::ItemIndex(faceIds);
+	//BUG: potential overflow
+	return sserialize::ItemIndex(faceIds.begin(), faceIds.end());
 }
 
 sserialize::ItemIndex
@@ -341,7 +345,7 @@ TriangulationGeoHierarchyArrangement::statsSummary(std::ostream & out) const {
 		State * state;
 		sserialize::MinMaxMean<double> area;
 		void operator()() {
-			for(uint32_t i(0), s(state->that->cellCount()); i < s; ++i) {
+			for(cellid_type i(0), s(state->that->cellCount()); i < s; ++i) {
 				area.update(state->that->cfGraph(i).area());
 			}
 		}

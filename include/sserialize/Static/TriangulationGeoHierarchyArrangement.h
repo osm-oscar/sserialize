@@ -34,7 +34,10 @@ public:
 	typedef TriangulationGridLocator::Triangulation Triangulation;
 	typedef Triangulation::Point Point;
 	typedef TRACFGraph<TriangulationGeoHierarchyArrangement> CFGraph;
-	static constexpr uint32_t NullCellId = 0xFFFFFFFF;
+	using FaceId = Triangulation::FaceId;
+	using VertexId = Triangulation::VertexId;
+	using cellid_type = uint32_t;
+	static constexpr cellid_type NullCellId = std::numeric_limits<cellid_type>::max();
 private:
 	TriangulationGridLocator m_grid;
 	BoundedCompactUintArray m_faceIdToRefinedCellId;
@@ -47,14 +50,14 @@ public:
 	inline uint32_t cellCount() const { return m_refinedCellIdToFaceId.size(); }
 	inline const TriangulationGridLocator & grid() const { return m_grid; }
 	inline const Triangulation & tds() const { return m_grid.tds(); }
-	uint32_t cellId(double lat, double lon) const;
-	uint32_t cellId(const Point & p) const;
-	std::set<uint32_t> cellIds(double lat, double lon) const;
-	std::set<uint32_t> cellIds(const Point & p) const;
-	uint32_t cellIdFromFaceId(uint32_t faceId) const;
+	cellid_type cellId(double lat, double lon) const;
+	cellid_type cellId(const Point & p) const;
+	std::set<cellid_type> cellIds(double lat, double lon) const;
+	std::set<cellid_type> cellIds(const Point & p) const;
+	cellid_type cellIdFromFaceId(FaceId faceId) const;
 	///returns the id of a face that is part of the cell with id=cellId
-	uint32_t faceIdFromCellId(uint32_t cellId) const;
-	CFGraph cfGraph(uint32_t cellId) const;
+	Triangulation::FaceId faceIdFromCellId(cellid_type cellId) const;
+	CFGraph cfGraph(cellid_type cellId) const;
 	///start needs to be within the triangulation
 	sserialize::ItemIndex cellsBetween(const Point & start, const Point & end, double radius) const;
 	///at least one point needs to be within the triangulation, if radius==0.0 then a faster triangulation walk will be used

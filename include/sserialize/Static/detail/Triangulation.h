@@ -31,30 +31,32 @@ namespace Triangulation {
 
 //BEGIN stuff for robust traversal
 
-template<std::size_t T_SIZE>
+template<std::size_t T_SIZE, typename T_ID_TYPE = std::size_t>
 class CircularArraySet {
+public:
+	using id_type = T_ID_TYPE;
 public:
 	CircularArraySet() : m_pos(0) {
 		clear();
 	}
 	~CircularArraySet() {}
-	bool count(uint32_t id) const {
-		for(uint32_t x : m_d) {
+	bool count(id_type id) const {
+		for(id_type x : m_d) {
 			if (x == id) {
 				return true;
 			}
 		}
 		return false;
 	}
-	void push(uint32_t id) {
+	void push(id_type id) {
 		m_d[m_pos%T_SIZE] = id;
 		++m_pos;
 	}
 	void clear() {
-		m_d.fill(std::numeric_limits<uint32_t>::max());
+		m_d.fill(std::numeric_limits<id_type>::max());
 	}
 private:
-	std::array<uint32_t, T_SIZE> m_d;
+	std::array<id_type, T_SIZE> m_d;
 	std::size_t m_pos;
 };
 
@@ -495,7 +497,7 @@ public:
 	///You should therefore snap points before creating the triangulation
 	///@return number of changed points
 	template<typename T_REMOVED_EDGES>
-	uint32_t operator()(T_REMOVED_EDGES re) {
+	std::size_t operator()(T_REMOVED_EDGES re) {
 		//simple version: first get all points that change their coordinates and save these and their incident constraint edges
 		//then remove these vertices and readd the constraints that don't intersect other constraints
 		//avoiding the creation of new , do this until no new intersection points are created
@@ -562,14 +564,14 @@ public:
 				}
 				std::cout << "Readding " << ipts.size() << " snapped points" << std::endl;
 				ctd.insert(ipts.begin(), ipts.end());
-				numChangedPoints = (uint32_t) ipts.size();
+				numChangedPoints = ipts.size();
 	// 			SSERIALIZE_ASSERT(pts.count(IntPoint(2336098625, 3137055126).toU64()));
 			}
 		}
 		
-		uint32_t initialQueueSize = (uint32_t) ceQueue.size();
+		std::size_t initialQueueSize = ceQueue.size();
 		targetQueueRounds = initialQueueSize;
-		uint32_t queueRound = 0;
+		std::size_t queueRound = 0;
 		
 		//ceQueue makes sure that long edges come first
 		sserialize::ProgressInfo pinfo;
@@ -683,17 +685,17 @@ private:
 	sserialize::spatial::DistanceCalculator & dc;
 	double minEdgeLength;
 private:
-	uint32_t numChangedPoints = 0;
+	std::size_t numChangedPoints = 0;
 	CEContainer ceQueue;
 	ConstrainedEdge e;
 	Vertex_handle v1;
 	Vertex_handle v2;
 	bool intersected = false;
-	uint32_t targetQueueRounds = 0;
+	std::size_t targetQueueRounds = 0;
 };
 
 template<typename T_CTD, typename T_REMOVED_EDGES>
-uint32_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
+std::size_t snap_vertices(T_CTD & ctd, T_REMOVED_EDGES re, double minEdgeLength) {
 	SnapVertices<T_CTD> sv(ctd, minEdgeLength);
 	return sv( re );
 }
@@ -723,7 +725,7 @@ public:
 	RemoveDegenerateFaces(const RemoveDegenerateFaces &) = delete;
 public:
 	///This removes degenerate faces by contracting them
-	uint32_t operator()() {
+	std::size_t operator()() {
 		while (true) {
 			pts2Remove.clear();
 			edges2Insert.clear();
@@ -855,7 +857,7 @@ private:
 };
 
 template<typename T_CTD>
-uint32_t remove_degenerate_faces(T_CTD & ctd) {
+std::size_t remove_degenerate_faces(T_CTD & ctd) {
 	RemoveDegenerateFaces<T_CTD> rdf(ctd);
 	return rdf();
 }
