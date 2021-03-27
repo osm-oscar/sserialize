@@ -58,38 +58,38 @@ VL_PACK_64_TEST(0x00000000, 1);
 	int32_t isn;
 
 	shouldn = -0x7FEFEFEF; //32 bits
-	p_vs32(shouldn, array, array+10);
+	(void)p_vs32(shouldn, array, array+10);
 	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "5 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 5) std::cout << "5 byte: psize_vs32 wrong" << std::endl;
 
 	
 	shouldn = -0x07FFFFFF; //28 bits
-	p_vs32(shouldn, array, array+10);
+	(void)p_vs32(shouldn, array, array+10);
 	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "4 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 4) std::cout << "4 byte: psize_vs32 wrong" << std::endl;
 	
 	shouldn = -0x0007FFFF;
-	p_vs32(shouldn, array, array+10);
+	(void)p_vs32(shouldn, array, array+10);
 	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "3 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 3) std::cout << "3 byte: psize_vs32 wrong" << std::endl;
 	
 	shouldn = -0x000007FF;
-	p_vs32(shouldn, array, array+10);
+	(void)p_vs32(shouldn, array, array+10);
 	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "2 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 2) std::cout << "2 byte: psize_vs32 wrong" << std::endl;
 	
 	shouldn = -0x0000003F;
-	p_vs32(shouldn, array, array+10);
+	(void)p_vs32(shouldn, array, array+10);
 	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn) std::cout << "1 byte: vl_pack/unpack_int32_t wrong" << std::endl;
 	if (psize_vs32(shouldn) != 1) std::cout << "1 byte: psize_vs32 wrong" << std::endl;
 
 	shouldn = 0x0;
-	p_vs32(shouldn, array, array+10);
+	(void)p_vs32(shouldn, array, array+10);
 	isn = up_vs32(array, array+10, &len);
 	if (isn != shouldn || len != 1)
 		std::cout << "1 byte (0x0): vl_pack/unpack_int32_t wrong" << std::endl;
