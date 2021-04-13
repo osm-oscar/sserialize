@@ -438,7 +438,12 @@ Array<TValue>::at(SizeType pos) const {
 template<typename TValue>
 TValue
 Array<TValue>::operator[](SizeType pos) const {
-	return m_ds(dataAt(pos));
+	if constexpr (SerializationInfo<TValue>::is_fixed_length && sserialize::UByteArrayAdapter::SerializationSupport<TValue>::value) {
+		return m_data.get<TValue>(m_index.at(pos));
+	}
+	else {
+		return m_ds(dataAt(pos));
+	}
 }
 
 template<typename TValue>
