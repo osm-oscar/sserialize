@@ -432,7 +432,7 @@ Array<TValue>::at(SizeType pos) const {
 	if (UNLIKELY_BRANCH(pos >= size() || size() == 0)) {
 		throw sserialize::OutOfBoundsException("sserialize::Static:Array:at with size=" + std::to_string(size()) + " pos=" + std::to_string(pos));
 	}
-	return m_ds(dataAt(pos));
+	return (*this)[pos];
 }
 
 template<typename TValue>
