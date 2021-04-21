@@ -220,6 +220,9 @@ public:
 	void insert(const key_type & key);
 	mapped_type & at(const key_type & key);
 	const mapped_type & at(const key_type & key) const;
+	inline void emplace(key_type const & key, mapped_type const & value) {
+		(*this)[key] = value;
+	}
 	inline bool count(const key_type & key) const {
 		uint64_t pos = findBucket(key);
 		return (pos == findend ? false : bool(m_d[pos]));
