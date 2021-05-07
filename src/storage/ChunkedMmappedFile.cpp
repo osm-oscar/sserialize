@@ -103,13 +103,7 @@ bool ChunkedMmappedFile::resize(SizeType size) {
 //Private implementation
 
 
-ChunkedMmappedFilePrivate::ChunkedMmappedFilePrivate(uint8_t chunkSizeExponent) :
-m_size(0),
-m_fd(-1),
-m_writable(false),
-m_deleteOnClose(false),
-m_syncOnClose(false),
-m_maxOccupyCount(16)
+ChunkedMmappedFilePrivate::ChunkedMmappedFilePrivate(uint8_t chunkSizeExponent)
 {
 	uint8_t pageSizeExponent = msb((uint32_t) sysconf(_SC_PAGE_SIZE) );
 	m_chunkShift = (chunkSizeExponent > 31 ? 31 : (chunkSizeExponent < pageSizeExponent ? pageSizeExponent : chunkSizeExponent)  );
@@ -155,7 +149,7 @@ bool ChunkedMmappedFilePrivate::do_open() {
 	}
 	
 	//init the cache
-	m_cache = DirectRandomCache<uint8_t*>(narrow_check<uint32_t>( size()/chunkSize() + 1), 0);
+	m_cache = DirectRandomCache<uint8_t*>(narrow_check<uint32_t>( size()/chunkSize() + 1), nullptr);
 	
 	return true;
 }

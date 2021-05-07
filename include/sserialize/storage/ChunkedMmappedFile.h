@@ -80,17 +80,17 @@ public:
 	typedef SizeType ChunkSizeType;
 private:
 	std::string m_fileName;
-	SizeType m_size; //total size of the array
-	int m_fd;
-	bool m_writable;
-	bool m_deleteOnClose;
-	bool m_syncOnClose;
+	SizeType m_size{0}; //total size of the array
+	int m_fd{-1};
+	bool m_writable{false};
+	bool m_deleteOnClose{false};
+	bool m_syncOnClose{false};
 	
 	/** 1 << m_chunkShift = chunkSize */
 	uint8_t m_chunkShift;
 	uint32_t m_chunkMask;
 	
-	ChunkIndexType m_maxOccupyCount;
+	ChunkIndexType m_maxOccupyCount{16};
 	DirectRandomCache<uint8_t*> m_cache;
 private:
 	uint8_t * do_map(const sserialize::ChunkedMmappedFilePrivate::ChunkIndexType chunk);
