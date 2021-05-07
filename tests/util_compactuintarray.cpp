@@ -42,7 +42,11 @@ public:
 		}
 	}
 	
-	virtual void tearDown() {}
+	virtual void tearDown() {
+		for(auto & x : compSrcArrays) {
+			x = std::decay_t<decltype(x)>();
+		}
+	}
 
 	void createAutoBitsTest() {
 		for(uint32_t bits = 0; bits < 64; ++bits) {
