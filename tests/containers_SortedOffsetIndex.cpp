@@ -5,6 +5,7 @@
 #include <sserialize/containers/SortedOffsetIndex.h>
 #include <sserialize/iterator/RangeGenerator.h>
 #include <sserialize/storage/MmappedFile.h>
+#include <sserialize/stats/statfuncs.h>
 #include "datacreationfuncs.h"
 #include "TestBase.h"
 
@@ -55,6 +56,9 @@ std::string inFile;
 
 class SortedOffsetIndexTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( SortedOffsetIndexTest );
+CPPUNIT_TEST( testLinearRegression );
+CPPUNIT_TEST( testLinearRegressionLarge );
+CPPUNIT_TEST( testEmptyEquality );
 CPPUNIT_TEST( testRandomEquality );
 CPPUNIT_TEST( testLargeOffsets );
 CPPUNIT_TEST( testLargestOffsetsSpecial );
@@ -65,6 +69,39 @@ CPPUNIT_TEST_SUITE_END();
 public:
 	virtual void setUp() {}
 	virtual void tearDown() {}
+	
+	void testLinearRegression() {
+		uint64_t size = uint64_t(1024);
+		uint64_t stride = 4;
+		sserialize::RangeGenerator<uint64_t> realValues(0, size*stride, stride);
+		double slope;
+		double yintercept;
+		sserialize::statistics::linearRegression(realValues.begin(), realValues.end(), slope, yintercept);
+		CPPUNIT_ASSERT(std::abs<double>(yintercept-0.0) <= 0.1);
+		CPPUNIT_ASSERT(std::abs<double>(slope-4.0) <= 0.1);
+	}
+	
+	void testLinearRegressionLarge() {
+		uint64_t size = uint64_t(std::numeric_limits<uint32_t>::max()) + 1024;
+		uint64_t stride = 4;
+		sserialize::RangeGenerator<uint64_t> realValues(0, size*stride, stride);
+		double slope;
+		double yintercept;
+		sserialize::statistics::linearRegression<sserialize::RangeGenerator<uint64_t>::const_iterator, uint64_t, double, true>(realValues.begin(), realValues.end(), slope, yintercept);
+		CPPUNIT_ASSERT(std::abs<double>(yintercept-0.0) <= 0.1);
+		CPPUNIT_ASSERT(std::abs<double>(slope-4.0) <= 0.1);
+	}
+	
+	void testEmptyEquality() {
+		srand(0);
+			std::set<uint32_t> realValues;
+			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
+			Static::SortedOffsetIndexPrivate::create(realValues, dest);
+			Static::SortedOffsetIndex idx(dest);
+		
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
+	}
 	
 	void testRandomEquality() {
 		srand(0);
@@ -219,6 +256,11 @@ int main(int argc, char ** argv) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  SortedOffsetIndexTest::suite() );
+	
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
+	
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
