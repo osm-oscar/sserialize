@@ -11,6 +11,7 @@ namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateThreadSafeFile: public UByteArrayAdapterPrivate {
 protected:
+	std::string m_fn;
 	int m_fd;
 	UByteArrayAdapter::OffsetType m_size;
 	mutable uint8_t m_buffer;

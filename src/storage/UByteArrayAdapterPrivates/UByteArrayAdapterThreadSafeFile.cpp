@@ -45,12 +45,15 @@ m_buffer(0)
 	else {
 		throw sserialize::MissingDataException("UByteArrayAdapterPrivateSeekedFile: could not get file size");
 	}
+	m_fn = filePath;
 }
 
 UByteArrayAdapterPrivateThreadSafeFile::~UByteArrayAdapterPrivateThreadSafeFile() {
-	::close(m_fd);
-	if (m_deleteOnClose) {
-		//unlink, ignore for now
+	if (m_fd > 0) {
+		::close(m_fd);
+		if (m_deleteOnClose && m_fn.size()) {
+			::unlink(m_fn.c_str());
+		}
 	}
 }
 
