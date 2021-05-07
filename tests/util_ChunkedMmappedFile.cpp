@@ -8,7 +8,7 @@
 
 using namespace sserialize;
 
-template<uint32_t FileSize, uint8_t chunkExponent, uint32_t TestNumber>
+template<std::size_t FileSize, uint8_t chunkExponent, uint32_t TestNumber>
 class ChunkedMmappedFileTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( ChunkedMmappedFileTest );
 CPPUNIT_TEST( testStats );
@@ -38,10 +38,13 @@ public:
 		m_file.setDeleteOnClose(m_deleteOnClose);
 		m_file.setSyncOnClose(true);
 		m_file.setCacheCount(4);
+		CPPUNIT_ASSERT(MmappedFile::createFile(m_fileName, 0));
+		CPPUNIT_ASSERT(m_file.open());
+		m_file.resize(FileSize);
+		CPPUNIT_ASSERT_EQUAL(MmappedFile::fileSize(m_fileName), FileSize);
 		SizeType len = FileSize;
 		m_file.write(&(m_realValues[0]), 0, len);
-		
-		CPPUNIT_ASSERT_MESSAGE("opening", m_file.open());
+		CPPUNIT_ASSERT_EQUAL(SizeType(FileSize), len);
 	}
 
 	virtual void tearDown() {
@@ -50,23 +53,28 @@ public:
 	}
 
 	void  testStats() {
-		CPPUNIT_ASSERT_EQUAL_MESSAGE("Size", m_realValues.size(), m_file.size());
+		CPPUNIT_ASSERT_EQUAL_MESSAGE("Size", FileSize, m_file.size());
 	}
 	
 	void testSequentialRead() {
+		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), FileSize);
 		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), m_file.size());
 		
 		for(std::size_t i = 0; i < m_realValues.size(); ++i) {
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("value", m_realValues[i], m_file[i]);
+			if (m_realValues[i] != m_file[i]) {
+				auto value = m_file[i];
+			}
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("i=" + std::to_string(i), m_realValues[i], m_file[i]);
 		}
 	}
 	
 	void testRandomRead() {
+		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), FileSize);
 		CPPUNIT_ASSERT_EQUAL(m_realValues.size(), m_file.size());
 		
 		for(std::size_t i = 0; i < m_realValues.size(); ++i) {
 			std::size_t pos = std::min<std::size_t>( (double) std::rand()/RAND_MAX * m_realValues.size(), m_realValues.size()-1);
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("value", m_realValues[pos], m_file[pos]);
+			CPPUNIT_ASSERT_EQUAL_MESSAGE("i=" + std::to_string(i) + "pos=" + std::to_string(pos), m_realValues[pos], m_file[pos]);
 		}
 	}
 	
@@ -75,8 +83,9 @@ public:
 			SizeType len = (double) std::rand()/RAND_MAX * (1 << 20);
 			uint8_t buf[len];
 			m_file.read(offset, buf, len);
-			for(size_t i = 0; i< len; ++i) {
-				CPPUNIT_ASSERT_EQUAL(static_cast<uint32_t>( m_realValues[offset+i] ), static_cast<uint32_t>(buf[i]) );
+			for(size_t i = 0; i < len; ++i) {
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("offset=" + std::to_string(offset) +
+				 ", len=" + std::to_string(len) + ", i=" + std::to_string(i), static_cast<uint32_t>( m_realValues[offset+i] ), static_cast<uint32_t>(buf[i]) );
 			}
 			offset += len;
 		}
@@ -90,10 +99,12 @@ int main(int argc, char ** argv) {
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( ChunkedMmappedFileTest<18213765, 22, 0>::suite() ); //aboutt 17.3 MebiBytes, 4 megbyte chunk size
 	runner.addTest( ChunkedMmappedFileTest<1048576, 24, 2>::suite() ); //1 MebiByte, 16 mb chunk size
-	runner.addTest( ChunkedMmappedFileTest<16777216, 21, 1>::suite() ); //16 MebiBytes, 2 mb chunk sizte
+	runner.addTest( ChunkedMmappedFileTest<16777216, 21, 1>::suite() ); //16 MebiBytes, 2 mb chunk size
 	runner.addTest( ChunkedMmappedFileTest<2048576, 20, 3>::suite() ); //~2 MebiByte, 1 mb chunk size
 	runner.addTest( ChunkedMmappedFileTest<548576, 14, 3>::suite() ); //~0.5 MebiByte, 16 kb chunk size
-
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
