@@ -30,12 +30,14 @@ namespace Static {
  */
 
 class SortedOffsetIndexPrivate: public sserialize::RefCountObject {
+public:
+	using SizeType = sserialize::SizeType;
 private:
 	static constexpr uint8_t IdBits = 6;
-	static constexpr sserialize::SizeType MaxSize = sserialize::createMask64(64-IdBits);
+	static constexpr SizeType MaxSize = sserialize::createMask64(64-IdBits);
 private:
 	CompactUintArray m_idStore;
-	sserialize::SizeType m_size;
+	SizeType m_size;
 	uint64_t m_slopenom;
 	int64_t m_yintercept; 
 	int64_t m_idOffset;//negative id-offset
@@ -100,8 +102,8 @@ public:
 	SortedOffsetIndexPrivate(const UByteArrayAdapter & data);
 	virtual ~SortedOffsetIndexPrivate();
 	virtual UByteArrayAdapter::OffsetType getSizeInBytes() const;
-	sserialize::SizeType size() const;
-	UByteArrayAdapter::OffsetType at(sserialize::SizeType pos) const;
+	SizeType size() const;
+	UByteArrayAdapter::OffsetType at(SizeType pos) const;
 	
 	///Append a SortedOffsetIndexPrivate at dest
 	template<typename TSortedContainer>
