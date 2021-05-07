@@ -101,31 +101,50 @@ detail::NarrowCheckAssigner<I> narrow_check_assign(I & lhs) {
 }
 
 template<typename I, typename J>
-auto checked_add(I const & first, J const & second) {
+inline auto checked_add(I const & first, J const & second) {
 	decltype(first+second) result;
-	if (__builtin_add_overflow(first, second, result)) {
+	if (__builtin_add_overflow(first, second, &result)) {
 		throw sserialize::TypeOverflowException("Add overflows");
 	}
 	return result;
 }
 
 template<typename I, typename J>
-auto checked_mult(I const & first, J const & second) {
+inline auto checked_mult(I const & first, J const & second) {
 	decltype(first*second) result;
-	if (__builtin_mul_overflow(first, second, result)) {
+	if (__builtin_mul_overflow(first, second, &result)) {
 		throw sserialize::TypeOverflowException("Multi overflows");
 	}
 	return result;
 }
 
 template<typename I, typename J>
-auto checked_sub(I const & first, J const & second) {
+inline auto checked_sub(I const & first, J const & second) {
 	decltype(first-second) result;
-	if (__builtin_sub_overflow(first, second, result)) {
+	if (__builtin_sub_overflow(first, second, &result)) {
 		throw sserialize::TypeOverflowException("Sub overflows");
 	}
 	return result;
 }
+
+namespace checked {
+	
+template<typename I, typename J>
+inline auto add(I const & first, J const & second) {
+	return checked_add(first, second);
+}
+
+template<typename I, typename J>
+inline auto mult(I const & first, J const & second) {
+	return checked_mult(first, second);
+}
+
+template<typename I, typename J>
+inline auto sub(I const & first, J const & second) {
+	return checked_sub(first, second);
+}
+
+} //end namespace checked
 
 }//end namespace sserialize
 
