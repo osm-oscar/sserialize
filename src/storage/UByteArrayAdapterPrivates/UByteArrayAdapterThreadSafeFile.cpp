@@ -68,11 +68,19 @@ bool UByteArrayAdapterPrivateThreadSafeFile::isContiguous() const {
 //support opertions
 
 bool UByteArrayAdapterPrivateThreadSafeFile::shrinkStorage(UByteArrayAdapter::OffsetType size) {
-	return ::ftruncate64(m_fd, size) == 0;
+	if (::ftruncate64(m_fd, size) == 0) {
+		m_size = size;
+		return true;
+	}
+	return false;
 }
 
 bool UByteArrayAdapterPrivateThreadSafeFile::growStorage(UByteArrayAdapter::OffsetType size) {
-	return ::ftruncate64(m_fd, size) == 0;
+	if (::ftruncate64(m_fd, size) == 0) {
+		m_size = size;
+		return true;
+	}
+	return false;
 }
 
 //manipulators
