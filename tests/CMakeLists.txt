@@ -35,11 +35,18 @@ add_library(${PROJECT_NAME} STATIC ${TEST_LIB_SOURCES_CPP})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${MY_LINK_LIBS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${MY_INCLUDE_DIRS})
 
+enable_testing()
+
 MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
 	target_link_libraries("${PROJECT_NAME}_${_name}" ${PROJECT_NAME})
 	set(SSERIALIZETESTS_ALL_TARGETS ${SSERIALIZETESTS_ALL_TARGETS} "${PROJECT_NAME}_${_name}")
+	add_test(${PROJECT_NAME}_${_name} ${PROJECT_NAME}_${_name} ${ARGN})
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
+
+set(LOREM_IPSUM_TEXT
+	${CMAKE_CURRENT_SOURCE_DIR}/testdata/lorem-ipsum.txt
+)
 
 #containers
 ADD_TEST_TARGET_SINGLE(containers_ItemIndexFactory_Store)
@@ -51,9 +58,9 @@ ADD_TEST_TARGET_SINGLE(containers_DynamicBitSet)
 ADD_TEST_TARGET_SINGLE(containers_SortedOffsetIndex)
 ADD_TEST_TARGET_SINGLE(containers_setoptreesimple)
 ADD_TEST_TARGET_SINGLE(containers_multibititerators)
-ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest)
+ADD_TEST_TARGET_SINGLE(KeyValueObjectStoreTest ${LOREM_IPSUM_TEXT})
 ADD_TEST_TARGET_SINGLE(templated_WindowedArray)
-ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie)
+ADD_TEST_TARGET_SINGLE(containers_HashBasedFlatTrie ${LOREM_IPSUM_TEXT})
 ADD_TEST_TARGET_SINGLE(containers_VariantStore)
 ADD_TEST_TARGET_SINGLE(containers_CFLArray)
 ADD_TEST_TARGET_SINGLE(containers_OOMArray)
@@ -91,7 +98,7 @@ ADD_TEST_TARGET_SINGLE(static_GeoStringsItemDB_GeoCompleter)
 ADD_TEST_TARGET_SINGLE(static_GridRTree)
 ADD_TEST_TARGET_SINGLE(templated_huffmancode)
 ADD_TEST_TARGET_SINGLE(static_DynamicVector)
-ADD_TEST_TARGET_SINGLE(DynamicKeyValueObjectStoreTest)
+ADD_TEST_TARGET_SINGLE(DynamicKeyValueObjectStoreTest ${LOREM_IPSUM_TEXT})
 ADD_TEST_TARGET_SINGLE(static_densegeopointvector)
 ADD_TEST_TARGET_SINGLE(static_GeoShapes)
 
@@ -122,12 +129,13 @@ ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
 
 #stuff with cgal deps
 IF(CGAL_FOUND)
-
-ADD_TEST_TARGET_SINGLE(sort_oom_sactc_data)
-ADD_TEST_TARGET_SINGLE(search_CellTextCompleter)
-ADD_TEST_TARGET_SINGLE(static_Triangulation)
-
-ENDIF(CGAL_FOUND)
+	message(STATUS "Enabling tests that need CGAL")
+	ADD_TEST_TARGET_SINGLE(sort_oom_sactc_data)
+	ADD_TEST_TARGET_SINGLE(search_CellTextCompleter)
+	ADD_TEST_TARGET_SINGLE(static_Triangulation)
+ELSE()
+	message(STATUS "Did not enable tests that require CGAL")
+ENDIF()
 
 add_custom_target(${PROJECT_NAME}_all DEPENDS ${SSERIALIZETESTS_ALL_TARGETS})
 
