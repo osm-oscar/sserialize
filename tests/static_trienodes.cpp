@@ -35,7 +35,7 @@ struct NodeConfig {
 	uint32_t suffixPrefixIndexPtr;
 
 	//raw node data
-	std::deque<uint8_t> rawNodeData;
+	std::vector<uint8_t> rawNodeData;
 	uint32_t nodeSize;
 	uint32_t nodeOffSet;
 
@@ -113,11 +113,11 @@ private:
 			std::sort(config.childChars.begin(), config.childChars.end());
 		}
 		
-		config.exactIndexPtr = rand() + rand();
-		config.prefixIndexPtr = rand() + rand();
-		config.suffixIndexPtr = rand() + rand();
-		config.suffixPrefixIndexPtr = rand() + rand();
-		config.nodeOffSet = rand() & 0xFFF;
+		config.exactIndexPtr = uint32_t(rand()) + uint32_t(rand());
+		config.prefixIndexPtr = uint32_t(rand()) + uint32_t(rand());
+		config.suffixIndexPtr = uint32_t(rand()) + uint32_t(rand());
+		config.suffixPrefixIndexPtr = uint32_t(rand()) + uint32_t(rand());
+		config.nodeOffSet = uint32_t(rand()) & 0xFFF;
 		std::deque<uint8_t> nodeData(config.nodeOffSet, 0xFE);
 		
 
@@ -133,7 +133,7 @@ private:
 		narrow_check_assign(config.nodeSize) = nodeData.size()-config.nodeOffSet;
 		prependToDeque(std::deque<uint8_t>(config.nodeOffSet, 0xFE), nodeData);
 
-		config.rawNodeData.swap(nodeData);
+		config.rawNodeData.assign(nodeData.begin(), nodeData.end());
 	}
 public:
 	virtual void setUp() override {
@@ -279,7 +279,9 @@ int main(int argc, char ** argv) {
 	
 	charWidth = 2;
 	ADD_TEST(CompactStaticTrieCreationNode, CompactTrieNodePrivate);
-// 	runner.eventManager().popProtector();
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
