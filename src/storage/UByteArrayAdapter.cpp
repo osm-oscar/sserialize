@@ -254,31 +254,31 @@ UByteArrayAdapter(new UByteArrayAdapterPrivateCompressedMmappedFile(file), 0, fi
 UByteArrayAdapter::UByteArrayAdapter(std::deque<uint8_t> * /*data*/, OffsetType /*offSet*/, OffsetType /*len*/) :
 UByteArrayAdapter()
 {
-	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque<uint8_t> * /*data*/) :
 UByteArrayAdapter()
 {
-	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
 }
 
 UByteArrayAdapter::UByteArrayAdapter(std::deque<uint8_t> * /*data*/, bool /*deleteOnClose*/) :
 UByteArrayAdapter()
 {
-	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
 }
 
 UByteArrayAdapter::UByteArrayAdapter(const ChunkedMmappedFile & /*file*/) :
 UByteArrayAdapter()
 {
-	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
 }
 
 UByteArrayAdapter::UByteArrayAdapter(const CompressedMmappedFile & /*file*/) :
 UByteArrayAdapter()
 {
-	sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
+	throw sserialize::UnsupportedFeatureException("sserialize was compiled with contiguous access only");
 }
 #endif
 
