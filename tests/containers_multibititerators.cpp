@@ -64,7 +64,7 @@ public:
 		data = backInserter.data();
 		MultiBitIterator it(data);
 		
-		for(uint32_t j = 0; j < testData.size(); ++j) {
+		for(std::size_t j = 0; j < testData.size(); ++j) {
 			std::string str = printToString("pos ", j);
 			uint64_t rv = testData[j].first;
 			uint64_t v = it.get64(testData[j].second);
@@ -86,7 +86,7 @@ public:
 			data = backInserter.data();
 			MultiBitIterator it(data);
 			
-			for(uint32_t j = 0; j < testData.size(); ++j) {
+			for(std::size_t j = 0; j < testData.size(); ++j) {
 				std::string str = printToString("run ", i, " pos ", j);
 				uint64_t rv = testData[j].first;
 				uint64_t v = it.get64(testData[j].second);
@@ -98,19 +98,19 @@ public:
 	
 	void testRunofSameBits() {
 		UByteArrayAdapter data(0, MM_PROGRAM_MEMORY);
-		for(uint32_t bits(0); bits < 64; ++bits) {
-			uint32_t mask = createMask(bits);
-			for(uint32_t i(0); i < 1024; ++i) {
+		for(std::size_t bits(1); bits < 64; ++bits) {
+			uint64_t mask = createMask64(bits);
+			for(std::size_t i(2); i < 1024; ++i) {
 				data.resetPtrs();
 				MultiBitBackInserter backInserter(data);
-				for(uint32_t j(0); j < i; ++j) {
+				for(uint64_t j(0); j < i; ++j) {
 					backInserter.push_back(j & mask, bits);
 				}
 				backInserter.flush();
 				MultiBitIterator mbit(data);
-				for(uint32_t j(0); j < i; ++j) {
-					uint32_t v = mbit.get64();
-					CPPUNIT_ASSERT_EQUAL(j & mask, v);
+				for(uint64_t j(0); j < i; ++j) {
+					uint64_t v = mbit.get<uint64_t>(bits);
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("bits=" + std::to_string(bits) + ", i=" + std::to_string(i) + ", j=" + std::to_string(j), j & mask, v);
 					mbit += bits;
 				}
 			}
