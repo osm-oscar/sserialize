@@ -1,3 +1,4 @@
+
 #include <sserialize/storage/ChunkedMmappedFile.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/log.h>
@@ -234,9 +235,14 @@ void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType o
 		len = 0;
 		return;
 	}
-	if (offset+len > m_size)
+	if (offset+len > m_size) {
 		len =  m_size - offset;
-		
+	}
+	if (!len) {
+		len = 0;
+		return;
+	}
+	uint8_t * dest_end = dest+len;
 	SizeType chunkSize = this->chunkSize();
 	
 	ChunkIndexType beginChunk = chunk(offset);
@@ -249,7 +255,7 @@ void ChunkedMmappedFilePrivate::read(const ChunkedMmappedFilePrivate::SizeType o
 		dest += chunkSize;
 	}
 	if (beginChunk < endChunk) { //copy things from the last chunk
-		::memmove(dest, chunkData(endChunk), sizeof(uint8_t)*inChunkOffSet(offset+len));
+		::memmove(dest, chunkData(endChunk), sizeof(uint8_t)*(dest_end-dest));
 	}
 }
 
@@ -261,20 +267,27 @@ void ChunkedMmappedFilePrivate::write(const uint8_t* src, const SizeType destOff
 	if (destOffset +len > m_size) {
 		len =  m_size - destOffset;
 	}
+	if (!len) {
+		len = 0;
+		return;
+	}
 
 	SizeType chunkSize = this->chunkSize();
 	
 	ChunkIndexType beginChunk = chunk(destOffset);
-	ChunkIndexType endChunk = chunk(destOffset +len-1);
-
+	ChunkIndexType endChunk = chunk(destOffset+len-1);
+	
+	uint8_t const * src_end = src+len;
+	
 	::memmove(chunkData(beginChunk)+inChunkOffSet(destOffset), src, sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(destOffset)));
 	src += sizeof(uint8_t)*std::min<SizeType>(len, chunkSize-inChunkOffSet(destOffset));
 	for(ChunkIndexType i = beginChunk+1; i < endChunk; ++i) {//copy all chunks from within
 		::memmove(chunkData(i), src, sizeof(uint8_t)*chunkSize);
 		src += chunkSize;
 	}
-	if (beginChunk < endChunk) { //copy things from the last chunk
-		::memmove(chunkData(endChunk), src, sizeof(uint8_t)*inChunkOffSet(destOffset +len));
+	if (beginChunk < endChunk) {
+		SSERIALIZE_CHEAP_ASSERT_SMALLER_OR_EQUAL(std::size_t(src_end-src), sizeOfChunk(endChunk));
+		::memmove(chunkData(endChunk), src, sizeof(uint8_t)*(src_end-src));
 	}
 }
 
