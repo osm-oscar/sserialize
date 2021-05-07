@@ -1352,7 +1352,7 @@ void UByteArrayAdapter::range_check(OffsetType pos, OffsetType length) const {
 #define UBA_PUT_STREAMING_FUNC(__NAME, __TYPE, __LENGTH) \
 void UByteArrayAdapter::__NAME(const __TYPE value) { \
 	if (!resizeForPush(m_putPtr, __LENGTH)) { \
-		throw IOException(); \
+		throw IOException("Resizing by " #__LENGTH " bytes failed"); \
 	} \
 	__NAME(m_putPtr, value); \
 	m_putPtr += __LENGTH; \
@@ -1403,7 +1403,7 @@ int UByteArrayAdapter::putVlPackedPad4Uint32(const uint32_t value) {
 
 int UByteArrayAdapter::putVlPackedPad4Int32(const int32_t value) {
 	if (!resizeForPush(m_putPtr, 4)) {
-		throw IOException();
+		throw IOException("Resizing by 4 bytes failed");
 	}
 
 	int len = putVlPackedInt32(m_putPtr, value);
@@ -1417,7 +1417,7 @@ void UByteArrayAdapter::putString(const std::string& str) {
 	SSERIALIZE_CHEAP_ASSERT_SMALLER(str.size(), (std::size_t) std::numeric_limits<uint32_t>::max());
 	UByteArrayAdapter::OffsetType needSize = psize_vu32((uint32_t) str.size()) + str.size();
 	if (!resizeForPush(m_putPtr, needSize)) {
-		throw IOException();
+		throw IOException("Resizing by " + std::to_string(needSize) + " failed");
 	}
 	int pushedBytes = putString(m_putPtr, str);
 	if (pushedBytes >= 0) {
@@ -1428,7 +1428,7 @@ void UByteArrayAdapter::putString(const std::string& str) {
 void UByteArrayAdapter::putData(const uint8_t * data, UByteArrayAdapter::OffsetType len) {
 	UByteArrayAdapter::OffsetType needSize = len;
 	if (!resizeForPush(m_putPtr, needSize)) {
-		throw IOException();
+		throw IOException("Resizing by " + std::to_string(needSize) + " failed");
 	}
 	putData(m_putPtr, data, len);
 	m_putPtr += needSize;
@@ -1437,7 +1437,7 @@ void UByteArrayAdapter::putData(const uint8_t * data, UByteArrayAdapter::OffsetT
 void UByteArrayAdapter::putData(const std::deque< uint8_t >& data) {
 	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize)) {
-		throw IOException();
+		throw IOException("Resizing by " + std::to_string(needSize) + " failed");
 	}
 	putData(m_putPtr, data);
 	m_putPtr += needSize;
@@ -1446,7 +1446,7 @@ void UByteArrayAdapter::putData(const std::deque< uint8_t >& data) {
 void UByteArrayAdapter::putData(const std::vector< uint8_t >& data) {
 	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize)) {
-		throw IOException();
+		throw IOException("Resizing by " + std::to_string(needSize) + " failed");
 	}
 	putData(m_putPtr, data);
 	m_putPtr += needSize;
@@ -1455,7 +1455,7 @@ void UByteArrayAdapter::putData(const std::vector< uint8_t >& data) {
 void UByteArrayAdapter::putData(const UByteArrayAdapter & data) {
 	UByteArrayAdapter::OffsetType needSize = data.size();
 	if (!resizeForPush(m_putPtr, needSize)) {
-		throw IOException();
+		throw IOException("Resizing by " + std::to_string(needSize) + " failed");
 	}
 	putData(m_putPtr, data);
 	m_putPtr += needSize;
