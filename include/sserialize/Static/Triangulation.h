@@ -1024,7 +1024,7 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 			++faceId;
 		}
 		fa.flush();
-		SSERIALIZE_NORMAL_ASSERT(faceId == faceCount);
+		SSERIALIZE_NORMAL_ASSERT_EQUAL(faceId.ut(),faceCount);
 	}
 	if (degenerateFaceCount) {
 		std::cout << "Triangulation has " << degenerateFaceCount << " degenerate faces!" << std::endl;
