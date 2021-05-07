@@ -41,7 +41,7 @@ std::map<uint32_t, std::string> createNumberStringMap(uint32_t maxStrLen, uint32
 
 template<typename TKey, typename TValue>
 bool testMap(std::map<TKey, TValue> & realValues) {
-	UByteArrayAdapter adap(new std::deque<uint8_t>(), true);
+	UByteArrayAdapter adap(new std::vector<uint8_t>(), true);
 	adap << realValues;
 
 	sserialize::Static::Map<TKey, TValue> smap;

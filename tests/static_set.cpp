@@ -11,7 +11,7 @@ using namespace sserialize;
 
 template<typename TValue>
 bool testSet(std::set<TValue> & realValues) {
-	UByteArrayAdapter adap(new std::deque<uint8_t>(), true);
+	UByteArrayAdapter adap(new std::vector<uint8_t>(), true);
 	adap << realValues;
 
 	sserialize::Static::Set<TValue> sset;
@@ -50,7 +50,7 @@ void fillSet(std::set<uint16_t> & set) {
 
 bool testInt32() {
 	srand(0);
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adapter(&data);
 	std::set<int32_t> set;
 	fillSet(set);
@@ -69,7 +69,7 @@ bool testInt32() {
 
 bool testUint16() {
 	srand(0);
-	std::deque<uint8_t> data;
+	std::vector<uint8_t> data;
 	UByteArrayAdapter adapter(&data);
 	std::set<uint16_t> set;
 	fillSet(set);
