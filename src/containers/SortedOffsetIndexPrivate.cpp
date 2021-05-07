@@ -64,7 +64,7 @@ void SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 			return;
 		}
 	}
-	else {
+	else if (m_size) {
 		m_slopenom = 0;
 		m_idOffset = 0;
 		m_yintercept = data.getVlPackedUint64(0, &curLen);
@@ -109,8 +109,9 @@ sserialize::SizeType SortedOffsetIndexPrivate::size() const {
 }
 
 UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::at(sserialize::SizeType pos) const {
-	if (pos >= m_size)
-		pos = m_size-1; //if size==1 => pos = 0
+	if (pos >= m_size) {
+		throw OutOfBoundsException(pos, m_size);
+	}
 	if (m_size > 1) {
 		uint64_t positive = getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos) + m_idStore.at64(pos);
 		int64_t negative = m_yintercept-m_idOffset;
