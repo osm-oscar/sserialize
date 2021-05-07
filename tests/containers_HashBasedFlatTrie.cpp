@@ -440,10 +440,11 @@ TestHashBasedFlatTrieBase::testStaticSearch() {
 int main(int argc, char ** argv) {
 	sserialize::tests::TestBase::init(argc, argv);
 	if (sserialize::tests::TestBase::printHelp()) {
-		std::cout << "prog [--large] [--large-size <size in M>] [--large-mmt <mmt> ] [-f <file with strings>]" << std::endl;
+		std::cout << argv[0] << "[--only-selected] [--large] [--large-size <size in M>] [--large-mmt <mmt> ] [-f <file with strings>]" << std::endl;
 		return 0;
 	}
 	bool test_large = false;
+	bool only_selected = false;
 	std::string filename;
 	for(int i(0); i < argc; ++i) {
 		std::string token(argv[i]);
@@ -464,6 +465,9 @@ int main(int argc, char ** argv) {
 			filename.assign(argv[i+1]);
 			++i;
 		}
+		else if (token == "--only-selected") {
+			only_selected = true;
+		}
 	}
 	
 	srand( 0 );
@@ -471,11 +475,11 @@ int main(int argc, char ** argv) {
 	if (test_large) {
 		runner.addTest( TestHashBasedFlatTrieLarge::suite() );
 	}
-	else if (filename.size()) {
+	if (filename.size()) {
 		inFileName = filename.c_str();
 		runner.addTest( TestHashBasedFlatTrieFile::suite() );
 	}
-	else {
+	if (!only_selected) {
 		runner.addTest(  TestHashBasedFlatTrieSimple::suite() );
 	}
 	if (sserialize::tests::TestBase::popProtector()) {
