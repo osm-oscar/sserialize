@@ -334,6 +334,7 @@ bool ChunkedMmappedFilePrivate::resize(const ChunkedMmappedFilePrivate::SizeType
 	else {
 		m_size = size;
 	}
+	m_cache = DirectRandomCache<uint8_t*>(narrow_check<uint32_t>( m_size/chunkSize() + 1), nullptr);
 	return allOk;
 }
 
