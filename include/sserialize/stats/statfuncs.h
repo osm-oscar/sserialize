@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <ostream>
 #include <sserialize/algorithm/utilfuncs.h>
+#include <sserialize/utility/checks.h>
 
 namespace sserialize {
 namespace statistics {
@@ -37,8 +38,8 @@ TValue median(const TIterator & begin, const TIterator & end, TValue def);
 template<typename TIterator, typename TValue>
 TValue entropy(TIterator begin, const TIterator & end, TValue initial, TValue totalCount);
 
-template<typename TIterator>
-void linearRegression(TIterator begin, const TIterator & end, double & slope, double & yintercept);
+template<typename TIterator, typename TIntegerType = uint64_t, typename TFloatType = double, bool large = false>
+void linearRegression(TIterator begin, TIterator end, double & slope, double & yintercept);
 
 
 }}//end namespace
@@ -148,30 +149,50 @@ TValue entropy(TIterator begin, const TIterator & end, TValue initial, TValue to
 }
 
 
-template<typename TIterator>
-void linearRegression(TIterator begin, const TIterator & end, double & slope, double & yintercept) {
+template<typename TIterator, typename TIntegerType, typename TFloatType, bool large>
+void linearRegression(TIterator begin, TIterator end, double & slope, double & yintercept) {
+	using int_type = TIntegerType;
+	using float_type = TFloatType;
 	if (begin == end) {
 		slope = 1;
 		yintercept = 0;
 		return;
 	}
 
-	uint64_t size = 0;
-	uint64_t cysum = 0.0;
-	for(TIterator it(begin); it != end; ++it, ++size) {
-		cysum += *it;
+	int_type size = 0;
+	float_type meanY;
+	
+	if constexpr (large) {
+		using std::distance;
+		size = distance(begin, end);
+		int_type remainder = 0;
+		int_type int_part = 0;
+		for(TIterator it(begin); it != end; ++it) {
+			using namespace checked;
+			remainder = add(remainder, *it);
+			int_part = add(int_part, remainder/size);
+			remainder = remainder%size;
+		}
+		meanY = float_type(int_part) + float_type(remainder)/size;
 	}
-	double meanY = (double)(cysum/size) + static_cast<double>(cysum%size)/static_cast<double>(size);
-	double meanX = (double)(size-1)/2.0;
-	double count = 0.0;
+	else {
+		//This will traverse begin-end only once and use less ops
+		int_type cysum = 0;
+		for(TIterator it(begin); it != end; ++it, ++size) {
+			cysum = checked_add(cysum, *it);
+		}
+		meanY = (float_type)(cysum/size) + static_cast<float_type>(cysum%size)/static_cast<float_type>(size);
+	}
+	float_type meanX = (float_type)(size-1)/2.0;
+	float_type count = 0.0;
 	slope = 0.0;
 	for(TIterator it(begin); it != end; ++it, count += 1.0) {
 		slope += (count - meanX)*(*it-meanY);
 	}
-	slope /= (double)(size-1); //(n)
+	slope /= (float_type)(size-1); //(n)
 	slope *= 12;
-	slope /= (double)(size+1); //(n+2)
-	slope /= (double)size; //(n+1)
+	slope /= (float_type)(size+1); //(n+2)
+	slope /= (float_type)size; //(n+1)
 	yintercept = meanY - slope*meanX;
 }
 
