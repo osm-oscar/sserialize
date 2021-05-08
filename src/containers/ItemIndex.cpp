@@ -89,20 +89,17 @@ ItemIndex(index, type)
 
 ItemIndex::ItemIndex(const std::deque<uint32_t> & index) : MyBaseClass(new sserialize::ItemIndexPrivateStlDeque( index ) ) {}
 ItemIndex::ItemIndex(const std::vector< uint32_t >& index) : MyBaseClass(new sserialize::ItemIndexPrivateStlVector(index)) {}
-ItemIndex::ItemIndex(std::vector<uint32_t> && index) {
-	sserialize::ItemIndexPrivateStlVector * myPriv = new sserialize::ItemIndexPrivateStlVector(std::move(index));
-	MyBaseClass::setPrivate(myPriv);
-}
+ItemIndex::ItemIndex(std::vector<uint32_t> && index) :
+MyBaseClass(new sserialize::ItemIndexPrivateStlVector(std::move(index)))
+{}
 
-ItemIndex::ItemIndex(const sserialize::BoundedCompactUintArray & index) {
-	sserialize::ItemIndexPrivate * myPriv = new sserialize::ItemIndexPrivateBoundedCompactUintArray(std::move(index));
-	MyBaseClass::setPrivate(myPriv);
-}
+ItemIndex::ItemIndex(const sserialize::BoundedCompactUintArray & index) :
+MyBaseClass(new sserialize::ItemIndexPrivateBoundedCompactUintArray(std::move(index)))
+{}
 
-ItemIndex::ItemIndex(RangeGenerator<uint32_t> const & index) {
-	sserialize::ItemIndexPrivate * myPriv = new sserialize::ItemIndexPrivateRangeGenerator(index);
-	MyBaseClass::setPrivate(myPriv);
-}
+ItemIndex::ItemIndex(RangeGenerator<uint32_t> const & index) :
+MyBaseClass(new sserialize::ItemIndexPrivateRangeGenerator(index))
+{}
 
 ItemIndex::~ItemIndex() {}
 
