@@ -31,6 +31,14 @@ set(MY_COMPILE_DEFINITIONS
 	"-DCGAL_HAS_THREADS"
 )
 
+option(SSERIALIZE_WAIT_ON_FAILED_ASSERTION
+	"Don't abort on assertion failure but simple wait in a loop to ease debugging"
+	FALSE
+)
+if(SSERIALIZE_WAIT_ON_FAILED_ASSERTION)
+	set(MY_COMPILE_DEFINITIONS "-DSSERIALIZE_WAIT_ON_FAILED_ASSERTION" ${MY_COMPILE_DEFINITIONS})
+endif()
+
 option(
 	SSERIALIZE_CONTIGUOUS_UBA_ONLY_ENABLED
 	"Disable non-contiguous UByteArrayAdapter backends"

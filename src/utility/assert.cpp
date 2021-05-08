@@ -5,10 +5,14 @@ namespace sserialize {
 namespace {
 
 NO_OPTIMIZE void assertion_failed_wait() {
+#ifdef SSERIALIZE_WAIT_ON_FAILED_ASSERTION
 	bool wait = true;
 	while (wait) {
 		::sleep(1);
 	}
+#else
+	std::abort();
+#endif
 }
 
 } //end namespace
