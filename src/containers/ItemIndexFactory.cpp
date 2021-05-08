@@ -620,7 +620,7 @@ UByteArrayAdapter::OffsetType ItemIndexFactory::compressWithLZO(sserialize::Stat
 		newOffsets.push_back(dest.tellPutPtr()-destDataBeginOffset);
 		UByteArrayAdapter::MemoryView idxData( store.rawDataAt(i).asMemView() );
 		uncompressedSizes.push_back(narrow_check<uint32_t>(idxData.size()));
-		outBuf.resize(2*idxData.size());
+		outBuf.resize(2*idxData.size()+512); //lzo doesn't do any kind of bounds checking on the buffer size?
 		lzo_uint outBufLen = outBuf.size();
 		int r = ::lzo1x_1_compress(idxData.get(), idxData.size(), outBuf.data(), &outBufLen, wrkmem);
 		if (r != LZO_E_OK) {

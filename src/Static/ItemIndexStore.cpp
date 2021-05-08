@@ -96,7 +96,7 @@ UByteArrayAdapter ItemIndexStore::LZODecompressor::decompress(uint32_t id, const
 		uint8_t * dest = new uint8_t[chunkLength];
 
 		lzo_uint destLen = chunkLength;
-		int ok = ::lzo1x_decompress(srcD.get(), src.size(), dest, &destLen, 0);
+		int ok = ::lzo1x_decompress_safe(srcD.get(), src.size(), dest, &destLen, 0);
 		if (ok != LZO_E_OK) {
 			return UByteArrayAdapter();
 		}
