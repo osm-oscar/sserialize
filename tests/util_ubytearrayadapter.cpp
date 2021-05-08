@@ -556,9 +556,10 @@ std::deque<uint32_t> createNumber(int testCount) {
 }
 
 bool fillAndTestComparissonOperators() {
-	std::deque<uint8_t> ad( createNumbers8(0xFFF));
+	auto tmp = createNumbers8(0xFFF);
+	std::vector<uint8_t> ad(tmp.begin(), tmp.end());
 	UByteArrayAdapter adap(&ad);
-	if (!adap.equalContent(ad)) {
+	if (!adap.equalContent(tmp)) {
 		return false;
 	}
 	else {
@@ -775,7 +776,8 @@ bool test(int testCount) {
 		allOk = false;
 	}
 	delete[] arrayData;
-	
+
+#ifndef WITH_SSERIALIZE_CONTIGUOUS_UBA_ONLY
 	UByteArrayAdapter dequeAdap(new std::deque<uint8_t>(), true);
 	dequeAdap.growStorage(4*testCount);
 	std::cout << "Testing UByteArrayAdapterPrivateDeque" << std::endl;
@@ -786,6 +788,7 @@ bool test(int testCount) {
 		std::cout << "UByteArrayAdapterPrivateDeque FAILED tests!" << std::endl;
 		allOk = false;
 	}
+#endif
 
 	UByteArrayAdapter mmappedFileAdap = UByteArrayAdapter::createCache(0, sserialize::MM_FILEBASED);
 	if (!mmappedFileAdap.growStorage(4*testCount)) {
@@ -799,7 +802,7 @@ bool test(int testCount) {
 		std::cout << "UByteArrayAdapterPrivateMmappedFile FAILED tests!" << std::endl;
 		allOk = false;
 	}
-	
+#ifndef WITH_SSERIALIZE_CONTIGUOUS_UBA_ONLY
 	sserialize::MmappedFile::createFile("ubatestseekedfile.tmp", 10);
 	UByteArrayAdapter seekedFileAdap = UByteArrayAdapter::open("ubatestseekedfile.tmp", true, 5, 0);
 	if (!seekedFileAdap.growStorage(4*testCount)) {
@@ -814,7 +817,7 @@ bool test(int testCount) {
 		allOk = false;
 	}
 	sserialize::MmappedFile::unlinkFile("ubatestseekedfile.tmp");
-	
+#endif
 	return allOk;
 }
 
