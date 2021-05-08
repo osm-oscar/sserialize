@@ -145,7 +145,7 @@ ItemIndex ItemIndexIterator::toItemIndex() const {
 	
 	CompactUintArray carr( ItemIndexPrivateSimple::initStorage(tempStorage, 4) );
 	
-	ItemIndexIteratorPrivate * tempPriv = priv()->copy();
+	RCPtrWrapper<ItemIndexIteratorPrivate> tempPriv( priv()->copy() );
 	
 	uint32_t pos = 0;
 	while (tempPriv->valid()) {
