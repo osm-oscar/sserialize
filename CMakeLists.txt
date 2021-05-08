@@ -345,6 +345,9 @@ IF(NOT CMAKE_CROSSCOMPILING)
 	)
 ENDIF(NOT CMAKE_CROSSCOMPILING)
 
+#asan complains about unaligned load/stores
+set(MY_COMPILE_DEFINITIONS "-DLZO_CFG_NO_UNALIGNED" ${MY_COMPILE_DEFINITIONS})
+
 set(EXTERNAL_SOURCES_CPP
 	vendor/libs/minilzo/minilzo.c
 	vendor/libs/geographiclib/legacy/C/geodesic.c
