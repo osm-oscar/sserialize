@@ -124,7 +124,6 @@ add_test_target_single(containers_setoptree)
 ADD_TEST_TARGET_SINGLE(iterator_UnaryCodeIterator)
 
 #staging
-ADD_TEST_TARGET_SINGLE(staging_GenericTrie)
 
 #stuff with cgal deps
 IF(CGAL_FOUND)
