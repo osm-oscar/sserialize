@@ -4,6 +4,7 @@
 #include <sserialize/Static/GeoPolygon.h>
 #include <sserialize/Static/GeoMultiPolygon.h>
 #include <sserialize/utility/log.h>
+#include <memory>
 #include "datacreationfuncs.h"
 #include "helpers.h"
 #include "TestBase.h"
@@ -113,10 +114,10 @@ public:
 	
 	void testWay() {
 		std::vector<sserialize::spatial::GeoPoint> pts = createPoints(gwLen, maxDiff);
-		sserialize::spatial::GeoShape * gw = new sserialize::spatial::GeoWay(pts);
+		auto gw = std::make_unique<sserialize::spatial::GeoWay>(pts);
 		std::vector<uint8_t> rd;
 		sserialize::UByteArrayAdapter d(&rd, false);
-		sserialize::spatial::GeoShape::appendWithTypeInfo(gw, d);
+		sserialize::spatial::GeoShape::appendWithTypeInfo(gw.get(), d);
 		d.resetPtrs();
 		sserialize::Static::spatial::GeoShape gs(d);
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("type", gs.type(), sserialize::spatial::GeoShapeType::GS_WAY);
@@ -158,7 +159,7 @@ public:
 		sserialize::SamplePolygonTestData testData;
 		sserialize::createHandSamplePolygons(testData);
 		for(uint32_t i = 0, s = (uint32_t) testData.polys.size(); i < s; ++i) {
-			sserialize::spatial::GeoMultiPolygon * gmpo = new sserialize::spatial::GeoMultiPolygon();
+			auto gmpo = std::make_unique<sserialize::spatial::GeoMultiPolygon>();
 			for(uint32_t j = 0; j < i; ++j) {
 				gmpo->outerPolygons().push_back(testData.polys[i].first);
 			}
@@ -168,7 +169,7 @@ public:
 			gmpo->recalculateBoundary();
 			std::vector<uint8_t> ds;
 			sserialize::UByteArrayAdapter d(&ds, false);
-			sserialize::spatial::GeoShape::appendWithTypeInfo(gmpo, d);
+			sserialize::spatial::GeoShape::appendWithTypeInfo(gmpo.get(), d);
 			d.resetPtrs();
 
 			sserialize::Static::spatial::GeoShape sgs(d);
