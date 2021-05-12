@@ -57,7 +57,7 @@ uint32_t SimpleNode::find(uint32_t unicode_point) const {
 		std::lower_bound(m_children.cbegin(), m_children.cend(), std::pair<uint32_t, uint32_t>(unicode_point, 0)
 		)
 	);
-	if (it->first == unicode_point) {
+	if (it != m_children.cend() && it->first == unicode_point) {
 		return (uint32_t) (it-m_children.cbegin());
 	}
 	else {
