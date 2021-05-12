@@ -118,7 +118,6 @@ add_test_target_single(spatial_GeoPolygon)
 #misc
 ADD_TEST_TARGET_SINGLE(unicodetest)
 ADD_TEST_TARGET_SINGLE(util_memusage)
-add_test_target_single(containers_itemindex_file)
 add_test_target_single(containers_setoptree)
 
 #iterators
