@@ -777,7 +777,7 @@ bool test(int testCount) {
 	}
 	delete[] arrayData;
 
-#ifndef WITH_SSERIALIZE_CONTIGUOUS_UBA_ONLY
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	UByteArrayAdapter dequeAdap(new std::deque<uint8_t>(), true);
 	dequeAdap.growStorage(4*testCount);
 	std::cout << "Testing UByteArrayAdapterPrivateDeque" << std::endl;
@@ -802,7 +802,7 @@ bool test(int testCount) {
 		std::cout << "UByteArrayAdapterPrivateMmappedFile FAILED tests!" << std::endl;
 		allOk = false;
 	}
-#ifndef WITH_SSERIALIZE_CONTIGUOUS_UBA_ONLY
+#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	sserialize::MmappedFile::createFile("ubatestseekedfile.tmp", 10);
 	UByteArrayAdapter seekedFileAdap = UByteArrayAdapter::open("ubatestseekedfile.tmp", true, 5, 0);
 	if (!seekedFileAdap.growStorage(4*testCount)) {

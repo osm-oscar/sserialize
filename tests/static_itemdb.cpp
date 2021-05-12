@@ -139,8 +139,8 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		UByteArrayAdapter dbAdap(new std::deque<uint8_t>, true);
-		UByteArrayAdapter stableAdap(new std::deque<uint8_t>, true);
+		UByteArrayAdapter dbAdap(new std::vector<uint8_t>, true);
+		UByteArrayAdapter stableAdap(new std::vector<uint8_t>, true);
 		dbAdap << dataBase;
 		Static::StringTable::create(stableAdap, dataBase.strIdToStr());
 
