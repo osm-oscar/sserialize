@@ -113,8 +113,8 @@ public:
 		}
 	}
 private:
-	RCObj * m_priv;
-	bool m_enabled;
+	RCObj * m_priv{nullptr};
+	bool m_enabled{true};
 };
 
 template<typename RCObj>
@@ -151,7 +151,7 @@ public:
 	RCObj * priv() const { return m_priv; }
 	RCObj * priv() { return m_priv; }
 private:
-	RCObj * m_priv;
+	RCObj * m_priv{nullptr};
 };
 
 } //end namespace detail
