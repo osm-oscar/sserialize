@@ -35,7 +35,7 @@ namespace sserialize::Static::spatial::detail::Triangulation {
 		static constexpr underlying_type npos = std::numeric_limits<underlying_type>::max();
 		using Self = VertexId;
 	public:
-		constexpr VertexId() {}
+		constexpr VertexId() : m_v(npos) {}
 		explicit constexpr VertexId(underlying_type v) : m_v(v) {}
 		constexpr VertexId(Self const &) = default;
 		Self & operator=(Self const &) = default;
@@ -69,7 +69,7 @@ namespace sserialize::Static::spatial::detail::Triangulation {
 		static constexpr underlying_type npos = std::numeric_limits<underlying_type>::max();
 		using Self = FaceId;
 	public:
-		constexpr FaceId() {}
+		constexpr FaceId() : m_v(npos) {}
 		explicit constexpr FaceId(underlying_type v) : m_v(v) {}
 		constexpr FaceId(Self const &) = default;
 		Self & operator=(Self const &) = default;
