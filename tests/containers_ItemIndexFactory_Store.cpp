@@ -19,7 +19,7 @@ CPPUNIT_TEST( testIdxSize );
 CPPUNIT_TEST( testIdxFromId );
 CPPUNIT_TEST( testInitFromStatic );
 CPPUNIT_TEST( testSerializedEquality );
-// CPPUNIT_TEST( testCompressionHuffman );
+CPPUNIT_TEST( testCompressionHuffman );
 CPPUNIT_TEST( testCompressionLZO );
 CPPUNIT_TEST( testCompressionVarUint );
 CPPUNIT_TEST_SUITE_END();
@@ -208,6 +208,10 @@ int main(int argc, char ** argv) {
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
+	
+	
+	runner.addTest(  ItemIndexFactoryTest<64, 512, ItemIndex::T_RLE_DE>::suite() );
+	runner.addTest(  ItemIndexFactoryTest<64, 512, ItemIndex::T_WAH>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<64, 512, ItemIndex::T_SIMPLE>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_REGLINE>::suite() );
 	runner.addTest(  ItemIndexFactoryTest<2048, 512, ItemIndex::T_DE>::suite() );
