@@ -1010,8 +1010,8 @@ Triangulation::append(T_CGAL_TRIANGULATION_DATA_STRUCTURE& src, T_FACE_TO_FACE_I
 				if (faceToFaceId.is_defined(nfh)) {
 					nfhId = faceToFaceId[nfh];
 					validNeighbors |= static_cast<uint8_t>(1) << j;
+					fa.set(faceId.ut(), Triangulation::Face::FI_NEIGHBOR_BEGIN+(uint32_t)j, nfhId.ut());
 				}
-				fa.set(faceId.ut(), Triangulation::Face::FI_NEIGHBOR_BEGIN+(uint32_t)j, nfhId.ut());
 			}
 			fa.set(faceId.ut(), Triangulation::Face::FI_NEIGHBOR_VALID, validNeighbors);
 			
