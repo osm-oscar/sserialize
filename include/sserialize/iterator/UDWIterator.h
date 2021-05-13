@@ -65,7 +65,7 @@ class UDWIterator: protected DelegateWrapper<UDWIteratorPrivate> {
 public:
 	///creates a direct UDW Iterator
 	UDWIterator(const UByteArrayAdapter & data) : MyBaseClass(new UDWIteratorPrivateDirect(data)) {}
-	UDWIterator(UDWIteratorPrivate *  priv) : MyBaseClass(priv->copy()){}
+	UDWIterator(UDWIteratorPrivate * priv, bool takeOwnership) : MyBaseClass(takeOwnership ? priv : priv->copy()){}
 	UDWIterator(const UDWIterator & other) : MyBaseClass(other.getPrivate()->copy()) {}
 	UDWIterator() : MyBaseClass(new UDWIteratorPrivateEmpty() ) {}
 	virtual ~UDWIterator() {}

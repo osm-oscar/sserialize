@@ -102,7 +102,7 @@ public:
 			
 			RCPtrWrapper<Static::HuffmanDecoder> decoder(new Static::HuffmanDecoder(decodeTableAdap) );
 			MultiBitIterator bitIt(dataAdap);
-			UDWIterator udwIt(  new UDWIteratorPrivateHD(bitIt, decoder)  );
+			UDWIterator udwIt(  new UDWIteratorPrivateHD(bitIt, decoder), true  );
 			
 			for(uint32_t i = 0; i < testData.size(); ++i) {
 				uint32_t real = testData[i];

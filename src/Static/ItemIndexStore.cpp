@@ -255,15 +255,15 @@ ItemIndex ItemIndexStore::at(uint32_t pos) const {
 	}
 	if (m_compression & sserialize::Static::ItemIndexStore::IC_HUFFMAN) {
 		if (type == ItemIndex::T_WAH) {
-			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
+			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd), true));
 		}
 		else if (type == ItemIndex::T_RLE_DE) {
-			return ItemIndex::createInstance<ItemIndexPrivateRleDE>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd)));
+			return ItemIndex::createInstance<ItemIndexPrivateRleDE>(UDWIterator(new UDWIteratorPrivateHD(MultiBitIterator(idxData), m_hd), true));
 		}
 	}
 	else if (m_compression & sserialize::Static::ItemIndexStore::IC_VARUINT32) {
 		if (type == ItemIndex::T_WAH) {
-			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(idxData)));
+			return ItemIndex::createInstance<ItemIndexPrivateWAH>(UDWIterator( new UDWIteratorPrivateVarDirect(idxData), true));
 		}
 	}
 	else { //no further compression
