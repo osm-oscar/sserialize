@@ -8,7 +8,7 @@
 
 using namespace sserialize;
 
-template<uint32_t FileSize, uint8_t chunkExponent, uint32_t TestNumber>
+template<std::size_t FileSize, uint8_t chunkExponent, uint32_t TestNumber>
 class CompressedMmappedFileTest: public sserialize::tests::TestBase {
 CPPUNIT_TEST_SUITE( CompressedMmappedFileTest );
 CPPUNIT_TEST( testStats );
