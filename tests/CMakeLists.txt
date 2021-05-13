@@ -44,6 +44,13 @@ MACRO(ADD_TEST_TARGET_SINGLE _name)
 	add_test(${PROJECT_NAME}_${_name} ${PROJECT_NAME}_${_name} ${ARGN})
 ENDMACRO(ADD_TEST_TARGET_SINGLE)
 
+MACRO(ADD_TEST_TARGET_MANUAL _name)
+	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
+	target_link_libraries("${PROJECT_NAME}_${_name}" ${PROJECT_NAME})
+	set(SSERIALIZETESTS_ALL_TARGETS ${SSERIALIZETESTS_ALL_TARGETS} "${PROJECT_NAME}_${_name}")
+	add_test(${PROJECT_NAME}_${_name} ${PROJECT_NAME}_${_name} ${ARGN})
+ENDMACRO(ADD_TEST_TARGET_MANUAL)
+
 set(LOREM_IPSUM_TEXT
 	${CMAKE_CURRENT_SOURCE_DIR}/testdata/lorem-ipsum.txt
 )
@@ -132,7 +139,7 @@ ADD_TEST_TARGET_SINGLE(iterator_UnaryCodeIterator)
 #stuff with cgal deps
 IF(CGAL_FOUND)
 	message(STATUS "Enabling tests that need CGAL")
-	ADD_TEST_TARGET_SINGLE(sort_oom_sactc_data)
+	ADD_TEST_TARGET_MANUAL(sort_oom_sactc_data)
 	ADD_TEST_TARGET_SINGLE(search_CellTextCompleter)
 	ADD_TEST_TARGET_SINGLE(static_Triangulation)
 ELSE()
