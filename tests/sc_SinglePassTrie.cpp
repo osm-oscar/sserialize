@@ -1,5 +1,10 @@
 #include <sserialize/containers/GeneralizedTrie/SinglePassTrie.h>
-#if defined(SSERIALIZE_UBA_NON_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
+#if defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS) || defined(SSERIALIZE_UBA_ONLY_CONTIGUOUS_SOFT_FAIL)
+int main() {
+	std::cerr << "Sserialize was compiled with contiguous UBA only" << std::endl;
+	return 1;
+}
+#else
 #include <sserialize/Static/GeneralizedTrie.h>
 #include "test_stringcompleter.h"
 #include "TestItemData.h"
@@ -165,10 +170,6 @@ int main(int argc, char ** argv) {
 	runner.eventManager().popProtector();
 	bool ok = runner.run();
 	return ok ? 0 : 1;
-}
-#else
-int main() {
-	std::cerr << "Sserialize was compiled with contiguous UBA only" << std::endl;
 }
 #endif
 
