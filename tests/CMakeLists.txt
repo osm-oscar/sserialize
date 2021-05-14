@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(sserializetests)
 find_package(CPPUNIT)
-find_package(CGAL REQUIRED Core)
+find_package(CGAL COMPONENTS Core)
 
 IF (CPPUNIT_FOUND)
 
