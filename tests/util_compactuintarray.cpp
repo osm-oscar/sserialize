@@ -87,19 +87,27 @@ public:
 	}
 	
 	void veryLargeTest() {
-		for(uint32_t bits = 16; bits < 64; ++bits) {
+		for(uint32_t bits = 1; bits <= 64; ++bits) {
 			UByteArrayAdapter d(new std::vector<uint8_t>(), true);
-			uint32_t count = (uint32_t) (0x1FFFFFFFF/bits);
+			auto count = narrow_check<CompactUintArray::value_type>(uint64_t(std::numeric_limits<uint32_t>::max())+1024);
 			uint64_t mask = createMask64(bits);
 			CompactUintArray carr(d, bits);
 			carr.reserve(count);
 			sserialize::RangeGenerator<uint64_t> rg(0, count);
-			for(uint64_t x : rg) {
-				CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64((uint32_t) x, x & mask));
+			{
+				auto rit = rg.rbegin();
+				auto rend = rg.rend();
+				for(std::size_t i(0); i < 10*1000 && rit != rend; ++i, ++rit) {
+					auto x = *rit;
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("setting", x & mask, carr.set64(x, x & mask));
+				}
 			}
-			for(uint64_t x : rg) {
-				if ((x & mask) != carr.at64((uint32_t) x)) {
-					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64((uint32_t) x));
+			{
+				auto rit = rg.rbegin();
+				auto rend = rg.rend();
+				for(std::size_t i(0); i < 10*1000 && rit != rend; ++i, ++rit) {
+					auto x = *rit;
+					CPPUNIT_ASSERT_EQUAL_MESSAGE("getting", x & mask, carr.at64(x));
 				}
 			}
 		}
