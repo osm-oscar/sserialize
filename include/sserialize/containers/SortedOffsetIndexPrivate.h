@@ -66,13 +66,14 @@ private:
 #else
 		idOffset = (uint64_t)std::abs(minNegative);
 #endif
-		return (uint8_t) CompactUintArray::minStorageBits64(range);
+		return (uint8_t) CompactUintArray::minStorageBits(range);
 	}
 
 	template<class TSortedContainer>
 	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint64_t & slopenom, int64_t & yintercept, uint8_t & bpn, uint64_t & idOffset) {
+		using iterator_type = std::decay_t<decltype(ids.begin())>;
 		double sloped, yinterceptd;
-		sserialize::statistics::linearRegression(ids.begin(), ids.end(), sloped, yinterceptd);
+		sserialize::statistics::linearRegression<iterator_type, uint64_t, double, true>(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
 			yintercept = narrow_check<int64_t>(yinterceptd);
@@ -124,8 +125,8 @@ public:
 				std::cerr << "Failed to create regressionline params" << std::endl;
 			}
 			
-			if (bitsForIds >= CompactUintArray::minStorageBits64(*src.rbegin())) {
-				bitsForIds = (uint8_t)CompactUintArray::minStorageBits64(*src.rbegin());
+			if (bitsForIds >= CompactUintArray::minStorageBits(*src.rbegin())) {
+				bitsForIds = (uint8_t)CompactUintArray::minStorageBits(*src.rbegin());
 				slopenom = 0;
 				yintercept = 0;
 				idOffset = 0;

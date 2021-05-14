@@ -7,7 +7,7 @@
 
 namespace sserialize {
 
-void CompactUintArrayPrivate::calcBegin(const uint32_t pos, sserialize::UByteArrayAdapter::OffsetType& posStart, uint8_t & initShift, uint32_t bpn) const {
+void CompactUintArrayPrivate::calcBegin(const SizeType pos, sserialize::UByteArrayAdapter::OffsetType& posStart, uint8_t & initShift, Bits bpn) const {
 	posStart = sserialize::multiplyDiv64(pos, bpn, 8);
 	initShift = (pos == 0 ? 0 : narrow_check<uint8_t>(sserialize::multiplyMod64(pos, bpn, 8)));
 }
@@ -21,58 +21,48 @@ m_data(adap)
 
 CompactUintArrayPrivate::~CompactUintArrayPrivate() {}
 
-uint32_t CompactUintArrayPrivate::bpn() const {
+CompactUintArrayPrivate::Bits CompactUintArrayPrivate::bpn() const {
 	return 0;
-}
-
-
-uint64_t CompactUintArrayPrivate::at64(uint32_t pos) const {
-	return at(pos);
-}
-
-
-uint64_t CompactUintArrayPrivate::set64(const uint32_t pos, uint64_t value) {
-	return set(pos, narrow_check<uint32_t>(value));
 }
 
 CompactUintArrayPrivateEmpty::CompactUintArrayPrivateEmpty(): CompactUintArrayPrivate() {}
 
 CompactUintArrayPrivateEmpty::~CompactUintArrayPrivateEmpty() {}
 
-uint32_t CompactUintArrayPrivateEmpty::bpn() const {
+CompactUintArrayPrivate::Bits CompactUintArrayPrivateEmpty::bpn() const {
 	return 0;
 }
 
-uint32_t CompactUintArrayPrivateEmpty::at(uint32_t /*pos*/) const {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateEmpty::at(SizeType /*pos*/) const {
 	return 0;
 }
 
 
-uint32_t CompactUintArrayPrivateEmpty::set(const uint32_t /*pos*/, uint32_t value) {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateEmpty::set(const SizeType /*pos*/, value_type value) {
 	return ~value;
 }
 
 
-CompactUintArrayPrivateVarBits::CompactUintArrayPrivateVarBits(const sserialize::UByteArrayAdapter& adap, uint32_t bpn) :
+CompactUintArrayPrivateVarBits::CompactUintArrayPrivateVarBits(const sserialize::UByteArrayAdapter& adap, Bits bpn) :
 CompactUintArrayPrivate(adap),
 m_bpn(bpn)
 {
-	if (m_bpn == 0)
-		m_bpn = 1;
-	else if (m_bpn > 32)
-		m_bpn = 32;
-	if (m_bpn == 32)
-		m_mask = 0xFFFFFFFF;
-	else m_mask = (static_cast<uint32_t>(1) << m_bpn) - 1;
+	if (m_bpn == 0) {
+		throw sserialize::TypeOverflowException("bpn=" + std::to_string(bpn) + "<1");
+	}
+	else if (m_bpn > 32) {
+		throw sserialize::TypeOverflowException("bpn=" + std::to_string(bpn) + ">32");
+	}
+	m_mask = createMask(m_bpn);
 }
 
 CompactUintArrayPrivateVarBits::~CompactUintArrayPrivateVarBits() {}
 
-uint32_t CompactUintArrayPrivateVarBits::bpn() const {
+CompactUintArrayPrivateVarBits::Bits CompactUintArrayPrivateVarBits::bpn() const {
 	return m_bpn;
 }
 
-uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
+CompactUintArrayPrivateVarBits::value_type CompactUintArrayPrivateVarBits::at(const SizeType pos) const {
 	UByteArrayAdapter::OffsetType posStart;
 	uint8_t initShift;
 	calcBegin(pos, posStart, initShift, m_bpn);
@@ -91,7 +81,7 @@ uint32_t CompactUintArrayPrivateVarBits::at(const uint32_t pos) const {
 
 //Idee: zunächst müssen alle betroffenen bits genullt werden.
 //anschließend den neuen wert mit einem ODER setzen
-uint32_t CompactUintArrayPrivateVarBits::set(const uint32_t pos, uint32_t value) {
+CompactUintArrayPrivateVarBits::value_type CompactUintArrayPrivateVarBits::set(const SizeType pos, value_type value) {
 	value = value & m_mask;
 	
 	UByteArrayAdapter::OffsetType startPos;
@@ -151,15 +141,7 @@ uint32_t CompactUintArrayPrivateVarBits64::bpn() const {
 	return m_bpn;
 }
 
-uint32_t CompactUintArrayPrivateVarBits64::at(const uint32_t pos) const {
-	return (uint32_t)CompactUintArrayPrivateVarBits64::at64(pos);
-}
-
-uint32_t CompactUintArrayPrivateVarBits64::set(const uint32_t pos, uint32_t value) {
-	return (uint32_t)CompactUintArrayPrivateVarBits64::set64(pos, value);
-}
-
-uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
+uint64_t CompactUintArrayPrivateVarBits64::at(SizeType pos) const {
 	UByteArrayAdapter::OffsetType posStart;
 	uint8_t initShift;
 	calcBegin(pos, posStart, initShift, m_bpn);
@@ -175,7 +157,7 @@ uint64_t CompactUintArrayPrivateVarBits64::at64(uint32_t pos) const {
 	return (res & m_mask);
 }
 
-uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t value) {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateVarBits64::set(const SizeType pos, value_type value) {
 	value = value & m_mask;
 	
 	UByteArrayAdapter::OffsetType startPos;
@@ -216,7 +198,6 @@ uint64_t CompactUintArrayPrivateVarBits64::set64(const uint32_t pos, uint64_t va
 	return value;
 }
 
-
 CompactUintArrayPrivateU8::CompactUintArrayPrivateU8(const UByteArrayAdapter& adap): CompactUintArrayPrivate(adap)
 {}
 
@@ -227,11 +208,11 @@ uint32_t CompactUintArrayPrivateU8::bpn() const{
 }
 
 
-uint32_t CompactUintArrayPrivateU8::at(uint32_t pos) const {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU8::at(SizeType pos) const {
     return m_data.getUint8(pos);
 }
 
-uint32_t CompactUintArrayPrivateU8::set(const uint32_t pos, uint32_t value) {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU8::set(const SizeType pos, value_type value) {
 	m_data.putUint8(pos, (uint8_t)value);
 	return value;
 }
@@ -245,11 +226,11 @@ uint32_t CompactUintArrayPrivateU16::bpn() const {
 	return 16;
 }
 
-uint32_t CompactUintArrayPrivateU16::at(uint32_t pos) const {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU16::at(SizeType pos) const {
     return m_data.getUint16( SerializationInfo<uint16_t>::length*pos);
 }
 
-uint32_t CompactUintArrayPrivateU16::set(const uint32_t pos, uint32_t value) {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU16::set(const SizeType pos, value_type value) {
 	m_data.putUint16(SerializationInfo<uint16_t>::length*pos, uint16_t(value));
 	return uint16_t(value);
 }
@@ -264,12 +245,12 @@ uint32_t CompactUintArrayPrivateU24::bpn() const {
 }
 
 
-uint32_t CompactUintArrayPrivateU24::at(uint32_t pos) const
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU24::at(SizeType pos) const
 {
     return m_data.getUint24(static_cast<UByteArrayAdapter::OffsetType>(3)*pos);
 }
 
-uint32_t CompactUintArrayPrivateU24::set(const uint32_t pos, uint32_t value) {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU24::set(const SizeType pos, value_type value) {
 	m_data.putUint24(static_cast<UByteArrayAdapter::OffsetType>(3)*pos, value);
 	return value;
 }
@@ -284,11 +265,11 @@ uint32_t CompactUintArrayPrivateU32::bpn() const {
 }
 
 
-uint32_t CompactUintArrayPrivateU32::at(uint32_t pos) const {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU32::at(SizeType pos) const {
     return m_data.getUint32(SerializationInfo<uint32_t>::length*pos);
 }
 
-uint32_t CompactUintArrayPrivateU32::set(const uint32_t pos, uint32_t value) {
+CompactUintArrayPrivate::value_type CompactUintArrayPrivateU32::set(const SizeType pos, value_type value) {
     m_data.putUint32(SerializationInfo<uint32_t>::length*pos, value);
 	return value;
 }
@@ -343,7 +324,7 @@ RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 	setPrivate(array, bitsPerNumber);
 }
 
-CompactUintArray::CompactUintArray(const sserialize::UByteArrayAdapter& array, uint32_t bitsPerNumber, uint32_t max_size) :
+CompactUintArray::CompactUintArray(const sserialize::UByteArrayAdapter& array, Bits bitsPerNumber, SizeType max_size) :
 RCWrapper< sserialize::CompactUintArrayPrivate >(0)
 {
 	setPrivate(array, bitsPerNumber);
@@ -376,21 +357,23 @@ CompactUintArray& CompactUintArray::operator=(const CompactUintArray & other) {
 	return *this;
 }
 
-uint8_t CompactUintArray::bpn() const{
-	return (uint8_t) priv()->bpn();
+CompactUintArray::Bits CompactUintArray::bpn() const{
+	return priv()->bpn();
 }
 
-uint32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
+CompactUintArray::SizeType CompactUintArray::findSorted(value_type key, SizeType len) const {
 	if (len == 0) {
 		return npos;
 	}
-	int32_t left = 0;
-	int32_t right = len-1;
-	int32_t mid = (right-left)/2+left;
-	uint32_t tk = priv()->at((uint32_t)mid);
+	using signed_size = std::make_signed_t<SizeType>;
+	
+	signed_size left = 0;
+	signed_size right = len-1;
+	signed_size mid = (right-left)/2+left;
+	value_type tk = priv()->at(mid);
 	while( left < right ) {
 		if (tk == key) {
-			return (uint32_t)mid;
+			return mid;
 		}
 		if (tk < key) { // key should be to the right
 			left = mid+1;
@@ -399,46 +382,40 @@ uint32_t CompactUintArray::findSorted(uint32_t key, int32_t len) const {
 			right = mid-1;
 		}
 		mid = (right-left)/2+left;
-		tk = priv()->at((uint32_t)mid);
+		tk = priv()->at(mid);
 	}
-	return (tk == key ? (uint32_t)mid : npos);
+	return (tk == key ? mid : npos);
 }
 
 
-uint32_t CompactUintArray::at(sserialize::CompactUintArray::SizeType pos) const {
+CompactUintArray::value_type CompactUintArray::at(SizeType pos) const {
 	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
 		throw sserialize::OutOfBoundsException("CompactUintArray::at: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
 	}
 	return priv()->at(pos);
 }
 
-uint64_t CompactUintArray::at64(sserialize::CompactUintArray::SizeType pos) const {
-	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
-		throw sserialize::OutOfBoundsException("CompactUintArray::at64: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
-	}
-	return priv()->at64(pos);
+CompactUintArray::value_type CompactUintArray::at64(SizeType pos) const {
+	return at(pos);
 }
 
-uint32_t CompactUintArray::set(const uint32_t pos, const uint32_t value) {
+CompactUintArray::value_type CompactUintArray::set(const SizeType pos, const value_type value) {
 	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
 		throw sserialize::OutOfBoundsException("CompactUintArray::set: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
 	}
 	return priv()->set(pos, value);
 }
 
-uint64_t CompactUintArray::set64(const uint32_t pos, const uint64_t value) {
-	if (UNLIKELY_BRANCH(pos >= m_maxCount)) {
-		throw sserialize::OutOfBoundsException("CompactUintArray::set64: maxCount=" + std::to_string(m_maxCount) + ", pos=" + std::to_string(pos));
-	}
-	return priv()->set64(pos, value);
+CompactUintArray::value_type CompactUintArray::set64(const SizeType pos, const value_type value) {
+	return set(pos, value);
 }
 
-bool CompactUintArray::reserve(uint32_t newMaxCount) {
+bool CompactUintArray::reserve(SizeType newMaxCount) {
 	if (maxCount() >= newMaxCount) {
 		return true;
 	}
 	
-	uint32_t mybpn = bpn();
+	Bits mybpn = bpn();
 	UByteArrayAdapter::OffsetType neededByteCount = minStorageBytes(mybpn, newMaxCount);
 	UByteArrayAdapter::OffsetType haveByteCount = priv()->data().size();
 	if (priv()->data().growStorage(neededByteCount-haveByteCount)) {
@@ -457,12 +434,12 @@ const UByteArrayAdapter & CompactUintArray::data() const {
 	return priv()->data();
 }
 
-std::ostream & CompactUintArray::dump(std::ostream& out, uint32_t len) {
+std::ostream & CompactUintArray::dump(std::ostream& out, SizeType len) {
 	if (maxCount() < len)
 		len = maxCount();
 
 	out << "(";
-	for(uint32_t i(0); i < len; i++) {
+	for(SizeType i(0); i < len; i++) {
 		out << at(i) << ", ";
 	}
 	out << ")" << std::endl;
@@ -490,27 +467,11 @@ bool CompactUintArray::operator==(const CompactUintArray & other) const {
 	return priv() == other.priv() || data() == other.data();
 }
 
-uint32_t CompactUintArray::minStorageBits(const uint32_t number) {
-	return std::max<uint32_t>(1, msb(number)+1);
+CompactUintArray::Bits CompactUintArray::minStorageBits(value_type number) {
+	return std::max<Bits>(1, msb(number)+1);
 }
-
-uint32_t CompactUintArray::minStorageBits64(const uint64_t number) {
-	return std::max<uint32_t>(1, msb(number)+1);
-}
-
-
-uint32_t CompactUintArray::minStorageBitsFullBytes(const uint32_t number) {
-	if (number <= 0xFF)
-		return 8;
-	else if (number <= 0xFFFF)
-		return 16;
-	else if (number <= 0xFFFFFF)
-		return 24;
-	else return 32;
-}
-
-uint32_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
-	uint32_t res = 0; 
+CompactUintArray::Bits CompactUintArray::minStorageBitsFullBytes(value_type number) {
+	Bits res = 0; 
 	do {
 		number >>= 8;
 		res += 8;
@@ -518,8 +479,8 @@ uint32_t CompactUintArray::minStorageBitsFullBytes64(uint64_t number) {
 	return res;
 }
 
-UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(uint32_t bpn, UByteArrayAdapter::OffsetType count) {
-	uint64_t bits = static_cast<uint64_t>(count)*bpn;
+UByteArrayAdapter::OffsetType CompactUintArray::minStorageBytes(Bits bpn, SizeType count) {
+	SizeType bits = count*bpn;
 	return bits/8 + UByteArrayAdapter::OffsetType((bits%8)>0);
 }
 
@@ -536,7 +497,7 @@ CompactUintArray(0)
 	m_size = sserialize::narrow_check<SizeType>(sizeBits >> 6);
 	setMaxCount(m_size);
 	
-	uint8_t bits = (uint8_t)((sizeBits & 0x3F) + 1);
+	Bits bits = (sizeBits & 0x3F) + 1;
 
 	UByteArrayAdapter::OffsetType dSize = minStorageBytes(bits, m_size);
 	if (m_size) {
@@ -572,16 +533,16 @@ BoundedCompactUintArray & BoundedCompactUintArray::operator=(const BoundedCompac
 }
 
 UByteArrayAdapter::OffsetType  BoundedCompactUintArray::getSizeInBytes() const {
-	uint8_t bits = bpn();
+	Bits bits = bpn();
 	uint64_t sb = (static_cast<uint64_t>(m_size) << 6) | (bits-1);
 	return psize_vu64(sb) + minStorageBytes(bits, m_size);
 }
 
 std::ostream & operator<<(std::ostream & out, const BoundedCompactUintArray & src) {
-	out << "BoundedCompactUintArray[size=" << src.size() << ", bpn=" << (uint32_t)src.bpn() << "]{";
+	out << "BoundedCompactUintArray[size=" << src.size() << ", bpn=" << src.bpn() << "]{";
 	if (src.size()) {
 		out << src.at(0);
-		for(uint32_t i(1), s(src.size()); i < s; ++i) {
+		for(SizeType i(1), s(src.size()); i < s; ++i) {
 			out << "," << src.at(i);
 		}
 	}
