@@ -48,7 +48,6 @@ MACRO(ADD_TEST_TARGET_MANUAL _name)
 	add_executable("${PROJECT_NAME}_${_name}" "${_name}.cpp")
 	target_link_libraries("${PROJECT_NAME}_${_name}" ${PROJECT_NAME})
 	set(SSERIALIZETESTS_ALL_TARGETS ${SSERIALIZETESTS_ALL_TARGETS} "${PROJECT_NAME}_${_name}")
-	add_test(${PROJECT_NAME}_${_name} ${PROJECT_NAME}_${_name} ${ARGN})
 ENDMACRO(ADD_TEST_TARGET_MANUAL)
 
 set(LOREM_IPSUM_TEXT
