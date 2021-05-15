@@ -116,7 +116,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 		
-			uint32_t count = 0;
+			std::size_t count = 0;
 			for(std::set<uint32_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count;
@@ -130,7 +130,7 @@ public:
 		srand(0);
 		uint32_t setCount = 8;
 
-		for(size_t i = 0; i < setCount; i++) {
+		for(std::size_t i = 0; i < setCount; i++) {
 			std::set<uint64_t> realValues( largeOffsets(2*1000*1000, std::numeric_limits<uint32_t>::max()/128) );
 			UByteArrayAdapter dest(new std::vector<uint8_t>(), true);
 			CPPUNIT_ASSERT_MESSAGE("creation", Static::SortedOffsetIndexPrivate::create(realValues, dest));
@@ -139,7 +139,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 		
-			uint32_t count = 0;
+			std::size_t count = 0;
 			for(std::set<uint64_t>::iterator it = realValues.begin(); it != realValues.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count;
@@ -171,7 +171,7 @@ public:
 				std::stringstream ss;
 				ss << "id at " << count;
 				CPPUNIT_ASSERT(count <= std::numeric_limits<uint32_t>::max());
-				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at((uint32_t) count));
+				CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
 			}
 		}
 	}
@@ -187,7 +187,7 @@ public:
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 				CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 			
-				uint32_t count = 0;
+				std::size_t count = 0;
 				for(auto it = realValues.begin(), end = realValues.end(); it != end; ++it, ++count) {
 					std::stringstream ss;
 					ss << "id at " << count;
@@ -208,7 +208,7 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 	
-		uint32_t count = 0;
+		std::size_t count = 0;
 		for(auto it = realValues.begin(), end = realValues.end(); it != end; ++it, ++count) {
 			std::stringstream ss;
 			ss << "id at " << count;
@@ -235,7 +235,7 @@ public:
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", sserialize::Static::SortedOffsetIndex::SizeType(values.size()), idx.size());
 			CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)d.size(), idx.getSizeInBytes());
 		
-			uint32_t count = 0;
+			std::size_t count = 0;
 			for(std::vector<uint64_t>::iterator it = values.begin(); it != values.end(); ++it, ++count) {
 				std::stringstream ss;
 				ss << "id at " << count;
