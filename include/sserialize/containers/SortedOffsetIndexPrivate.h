@@ -4,6 +4,7 @@
 #include <sserialize/stats/statfuncs.h>
 #include <sserialize/algorithm/utilfuncs.h>
 #include <sserialize/utility/assert.h>
+#include <sserialize/utility/checks.h>
 #include <cmath>
 #include <iostream>
 
@@ -72,16 +73,17 @@ private:
 	template<class TSortedContainer>
 	static bool getLinearRegressionParamsInteger(const TSortedContainer & ids, uint64_t & slopenom, int64_t & yintercept, uint8_t & bpn, uint64_t & idOffset) {
 		using iterator_type = std::decay_t<decltype(ids.begin())>;
+		#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+		using namespace sserialize::checked;
+		#else
+		using namespace sserialize::unchecked;
+		#endif
 		double sloped, yinterceptd;
 		sserialize::statistics::linearRegression<iterator_type, uint64_t, double, true>(ids.begin(), ids.end(), sloped, yinterceptd);
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
 			yintercept = narrow_check<int64_t>(yinterceptd);
-			double slopenomd = floor(sloped) * (ids.size()-1);
-			slopenom = narrow_check<uint64_t>(slopenomd);
-			if (slopenomd >= floor((double)std::numeric_limits<uint64_t>::max()) || yinterceptd >= floor((double)std::numeric_limits<uint64_t>::max())) {
-				return false;
-			}
+			slopenom = mult(narrow<uint64_t>(floor(sloped)), (ids.size()-1));
 		}
 		else {
 			slopenom = 0;
@@ -96,7 +98,12 @@ private:
 	void init(UByteArrayAdapter data);
 	
 	static inline uint64_t getRegLineSlopeCorrectionValue(const uint64_t slopenom, const uint64_t size, const uint64_t pos) {
-		return (slopenom/(size-1))*pos + ((slopenom % (size-1))*pos)/(size-1);
+		#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+		using namespace sserialize::checked;
+		#else
+		using namespace sserialize::unchecked;
+		#endif
+		return add(mult(slopenom/(size-1), pos), mult(slopenom % (size-1), pos)/(size-1));
 	}
 public:
 	SortedOffsetIndexPrivate();

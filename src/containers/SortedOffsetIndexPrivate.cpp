@@ -113,9 +113,19 @@ UByteArrayAdapter::OffsetType SortedOffsetIndexPrivate::at(sserialize::SizeType 
 		throw OutOfBoundsException(pos, m_size);
 	}
 	if (m_size > 1) {
-		uint64_t positive = getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos) + m_idStore.at64(pos);
-		int64_t negative = m_yintercept-m_idOffset;
-		return (negative > 0 ? positive + uint64_t(negative) : positive - uint64_t(-negative));
+		#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+		using namespace sserialize::checked;
+		#else
+		using namespace sserialize::unchecked;
+		#endif
+		uint64_t positive = add(getRegLineSlopeCorrectionValue(m_slopenom, m_size, pos), m_idStore.at64(pos));
+		int64_t negative = sub(m_yintercept, m_idOffset);
+		if (negative > 0) {
+			return add(positive, uint64_t(negative));
+		}
+		else {
+			return sub(positive, uint64_t(-negative));
+		}
 	}
 	else {
 		return m_yintercept;
