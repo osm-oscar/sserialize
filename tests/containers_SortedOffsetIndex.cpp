@@ -208,11 +208,10 @@ public:
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("size", SizeType(realValues.size()), idx.size());
 		CPPUNIT_ASSERT_EQUAL_MESSAGE("sizeInBytes", (OffsetType)dest.size(), idx.getSizeInBytes());
 	
-		std::size_t count = 0;
-		for(auto it = realValues.begin(), end = realValues.end(); it != end; ++it, ++count) {
+		for(std::size_t i(realValues.size()); i > 0; --i) {
 			std::stringstream ss;
-			ss << "id at " << count;
-			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *it, idx.at(count));
+			ss << "id at " << i-1;
+			CPPUNIT_ASSERT_EQUAL_MESSAGE(ss.str(), *(realValues.begin()+(i-1)), idx.at(i-1));
 		}
 	}
 	
