@@ -168,7 +168,11 @@ void linearRegression(TIterator begin, TIterator end, double & slope, double & y
 		int_type remainder = 0;
 		int_type int_part = 0;
 		for(TIterator it(begin); it != end; ++it) {
-			using namespace checked;
+			#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+			using namespace sserialize::checked;
+			#else
+			using namespace sserialize::unchecked;
+			#endif
 			remainder = add(remainder, *it);
 			int_part = add(int_part, remainder/size);
 			remainder = remainder%size;
