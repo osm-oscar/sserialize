@@ -70,6 +70,12 @@ narrow_check(J value) {
 	return NarrowCheck<I, J>::cast(value);
 }
 
+template<typename I, typename J>
+auto
+narrow(J value) {
+	return narrow_check<I>(value);
+}
+
 ///assign lhs to rhs. Use it like narrow_check_assign(lhs, rhs);
 template<typename I, typename J>
 void narrow_check_assign(I & lhs, const J & rhs) {
@@ -145,6 +151,26 @@ inline auto sub(I const & first, J const & second) {
 }
 
 } //end namespace checked
+
+namespace unchecked {
+
+template<typename I, typename J>
+inline auto add(I const & first, J const & second) {
+	return first+second;
+}
+
+template<typename I, typename J>
+inline auto mult(I const & first, J const & second) {
+	return first*second;
+}
+
+template<typename I, typename J>
+inline auto sub(I const & first, J const & second) {
+	return first-second;
+}
+
+} //end namespace unchecked
+
 
 }//end namespace sserialize
 
