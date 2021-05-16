@@ -83,7 +83,7 @@ private:
 	#ifndef __ANDROID__
 		if (std::isfinite(sloped) && std::isfinite(yinterceptd)) {
 			yintercept = narrow_check<int64_t>(yinterceptd);
-			slopenom = mult(narrow<uint64_t>(floor(sloped)), (ids.size()-1));
+			slopenom = uint64_t((long double)(sloped)*(ids.size()-1));
 		}
 		else {
 			slopenom = 0;
