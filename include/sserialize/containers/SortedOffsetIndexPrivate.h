@@ -150,7 +150,7 @@ public:
 			//push the remaining elements
 			int64_t offSetCorrectedId;
 			int64_t curOffSetCorrection = yintercept;
-			uint32_t count = 0;
+			uint64_t count = 0;
 			uint64_t idStorageNeed = CompactUintArray::minStorageBytes(bitsForIds, src.size());
 			destination.growStorage(idStorageNeed);
 			CompactUintArray carr(destination+destination.tellPutPtr(), bitsForIds);
