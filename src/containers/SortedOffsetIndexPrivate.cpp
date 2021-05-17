@@ -77,6 +77,23 @@ void SortedOffsetIndexPrivate::init(UByteArrayAdapter data) {
 	}
 }
 
+INLINE_WITH_LTO uint64_t SortedOffsetIndexPrivate::getRegLineSlopeCorrectionValue(const uint64_t slopenom, const uint64_t size, const uint64_t pos) {
+	#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
+	using namespace sserialize::checked;
+	#else
+	using namespace sserialize::unchecked;
+	#endif
+	uint64_t int_part = mult(slopenom/(size-1), pos);
+	uint64_t frac_part;
+	if (__builtin_mul_overflow(slopenom % (size-1), pos, &frac_part)) {
+		frac_part = narrow<uint64_t>((__uint128_t(slopenom % (size-1))*__uint128_t(pos))/(size-1));
+	}
+	else {
+		frac_part /= (size-1);
+	}
+	return add(int_part, frac_part);
+}
+
 SortedOffsetIndexPrivate::SortedOffsetIndexPrivate(const UByteArrayAdapter & data) :
 	m_size(0),
 	m_slopenom(0),

@@ -97,14 +97,7 @@ private:
 private:
 	void init(UByteArrayAdapter data);
 	
-	static inline uint64_t getRegLineSlopeCorrectionValue(const uint64_t slopenom, const uint64_t size, const uint64_t pos) {
-		#ifdef SSERIALIZE_CHEAP_ASSERT_ENABLED
-		using namespace sserialize::checked;
-		#else
-		using namespace sserialize::unchecked;
-		#endif
-		return add(mult(slopenom/(size-1), pos), mult(slopenom % (size-1), pos)/(size-1));
-	}
+	static uint64_t getRegLineSlopeCorrectionValue(const uint64_t slopenom, const uint64_t size, const uint64_t pos);
 public:
 	SortedOffsetIndexPrivate();
 	SortedOffsetIndexPrivate(const UByteArrayAdapter & data);
