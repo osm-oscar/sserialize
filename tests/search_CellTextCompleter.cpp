@@ -586,9 +586,6 @@ public:
 								OOM_SA_CTC_Traits(), OOM_SA_CTC_Traits(),
 								0xFFFFFFFF, 0, 2, 0, sserialize::MM_SLOW_FILEBASED, supportedQuerries,
 								idxFactory, dest);
-
-		sserialize::Static::UnicodeTrie::FlatTrie<sserialize::UByteArrayAdapter> trie(dest+3);
-								
 		idxFactory.flush();
 		sserialize::Static::ItemIndexStore idxStore(idxFactory.getFlushedData());
 		m_ctc = sserialize::Static::CellTextCompleter(dest, idxStore, ra().gh);
