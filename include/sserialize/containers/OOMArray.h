@@ -519,12 +519,12 @@ m_readBufferSize(m_backBufferSize/16)
 			throw sserialize::IOException("OOMArray could not create backend file: " + std::string(::strerror(errno)));
 		}
 			
-		if (::ftruncate(m_fd, sizeof(TValue)) < 0) {
-			std::string errmsg(::strerror(errno));
-			::close(m_fd);
-			::shm_unlink(m_fn.c_str());
-			throw sserialize::IOException("OOMArray could not create backend file: " + errmsg);
-		}
+		// if (::ftruncate(m_fd, sizeof(TValue)) < 0) {
+		// 	std::string errmsg(::strerror(errno));
+		// 	::close(m_fd);
+		// 	::shm_unlink(m_fn.c_str());
+		// 	throw sserialize::IOException("OOMArray could not create backend file: " + errmsg);
+		// }
 		break;
 	}
 	
