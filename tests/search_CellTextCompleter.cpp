@@ -598,10 +598,10 @@ int main(int argc, char ** argv) {
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
-	runner.eventManager().popProtector();
-// 	OOMCTCTest test;
-// 	runner.addTest( CTCBaseTest::suite() );
 	runner.addTest(  OOMCTCTest::suite() );
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
