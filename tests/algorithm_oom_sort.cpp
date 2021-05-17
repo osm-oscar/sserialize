@@ -179,7 +179,9 @@ int main(int argc, char ** argv) {
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest(  OomAlgorithm::suite() );
-	runner.eventManager().popProtector();
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
