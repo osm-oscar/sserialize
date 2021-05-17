@@ -171,18 +171,18 @@ private:
 	}
 	SizeType replaceWithoutFlush(SizeType position, TValue const * srcBegin, TValue const *srcEnd);
 private:
-	int m_fd;
+	int m_fd{-1};
 	std::string m_fn;
-	bool m_delete;
-	bool m_syncOnFlush;
-	sserialize::MmappedMemoryType m_mmt;
-	sserialize::SizeType m_backBufferBegin; //number of entries before back buffer
+	bool m_delete{false};
+	bool m_syncOnFlush{false};
+	sserialize::MmappedMemoryType m_mmt{sserialize::MmappedMemoryType::MM_FILEBASED};
+	sserialize::SizeType m_backBufferBegin{0}; //number of entries before back buffer
 	//maximum number of entries in back buffer
-	sserialize::SizeType m_backBufferSize;
+	sserialize::SizeType m_backBufferSize{1024};
 	//write buffer for push_back operations
 	std::vector<value_type> m_backBuffer;
 	//number of entries in read buffer
-	sserialize::SizeType m_readBufferSize;
+	sserialize::SizeType m_readBufferSize{1024};
 };
 
 namespace detail {
