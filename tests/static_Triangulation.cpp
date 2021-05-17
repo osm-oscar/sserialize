@@ -196,8 +196,7 @@ public:
 	
 	void testLocateFaceCentroids() {
 		if (m_str.faceCount()*m_str.faceCount() > RANDOM_TEST_THRESHOLD) {
-			auto dv = std::uniform_int_distribution<uint64_t>(0, m_str.vertexCount());
-			auto df = std::uniform_int_distribution<uint64_t>(0, m_str.faceCount());
+			auto df = std::uniform_int_distribution<uint64_t>(0, m_str.faceCount()-1);
 			auto g = std::default_random_engine();
 			for(std::size_t i(0); i < RANDOM_TEST_THRESHOLD; ++i) {
 				StaticTriangulation::FaceId targetFaceId(df(g));
@@ -233,8 +232,8 @@ public:
 	
 	void testLocateVertices() {
 		if (m_str.vertexCount()*m_str.faceCount() > RANDOM_TEST_THRESHOLD) {
-			auto dv = std::uniform_int_distribution<uint64_t>(0, m_str.vertexCount());
-			auto df = std::uniform_int_distribution<uint64_t>(0, m_str.faceCount());
+			auto dv = std::uniform_int_distribution<uint64_t>(0, m_str.vertexCount()-1);
+			auto df = std::uniform_int_distribution<uint64_t>(0, m_str.faceCount()-1);
 			auto g = std::default_random_engine();
 			for(std::size_t i(0); i < RANDOM_TEST_THRESHOLD; ++i) {
 				StaticTriangulation::VertexId vertexId(dv(g));
@@ -306,7 +305,9 @@ int main(int argc, char ** argv) {
 	runner.addTest(  TriangulationTest<10, 10, StaticTriangulation::GCT_SNAP_VERTICES>::suite() );
 	runner.addTest(  TriangulationTest<1000, 1000, StaticTriangulation::GCT_SNAP_VERTICES>::suite() );
 	runner.addTest(  TriangulationTest<10000, 1000, StaticTriangulation::GCT_SNAP_VERTICES>::suite() );
-	runner.eventManager().popProtector();
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }
