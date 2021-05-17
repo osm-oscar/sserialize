@@ -283,6 +283,7 @@ public:
 			gh.append(sghD, idxFactory, false);
 			
 			idxFactory.flush();
+			ghIdxStore = sserialize::Static::ItemIndexStore( idxFactory.getFlushedData() );
 			
 			this->gh = sserialize::Static::spatial::GeoHierarchy(sghD);
 			
@@ -340,7 +341,7 @@ public:
 			pmi = sserialize::ItemIndex( std::move(pmiTmp) );
 		}
 		
-		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), ci, sserialize::Static::ItemIndexStore(), sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);
+		cqr = sserialize::CellQueryResult(fmi, pmi, pmil.begin(), ci, ghIdxStore, sserialize::CellQueryResult::FF_CELL_GLOBAL_ITEM_IDS);
 	}
 };
 
