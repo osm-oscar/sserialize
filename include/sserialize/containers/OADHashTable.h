@@ -251,8 +251,11 @@ public:
 template<typename TKey, typename TValue, typename THash1, typename THash2, typename TValueStorageType, typename TTableStorageType, typename TKeyEq>
 uint64_t
 OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType, TKeyEq>::findBucket(const key_type & key) const {
-	uint64_t h1 = (m_hash1(key)) & ~uint64_t(0x1);
 	uint64_t s = m_d.size();
+	if (UNLIKELY_BRANCH(!s)) {
+		return findend;
+	}
+	uint64_t h1 = (m_hash1(key)) & ~uint64_t(0x1);
 	uint64_t cpos = h1%s;
 	SizeType cp = m_d[cpos];
 	if (!cp || m_keyEq(value(cp).first, key) ) {
