@@ -217,6 +217,8 @@ public:
 		AT_UNLOCK = 0x10,
 		//load the next bytes into memory
 		AT_LOAD=0x20,
+		//Will randomly readthe next bytes
+		AT_RANDOM_READ=0x40
 	} AdviseType;
 	
 	typedef detail::__UByteArrayAdapter::MemoryView MemoryView;

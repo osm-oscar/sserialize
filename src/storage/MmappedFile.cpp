@@ -210,58 +210,49 @@ void MmappedFilePrivate::setSyncOnClose(bool syncOnClose) {
 	m_syncOnClose = syncOnClose;
 }
 
-
-void MmappedFilePrivate::cache(OffsetType begin, SizeType size) {
-	if (begin > m_exposedSize) {
-		return;
-	}
-	if (begin+size > m_exposedSize || begin+size < begin) {
-		size = m_exposedSize - begin;
-	}
-	::madvise(m_data+begin, size, MADV_SEQUENTIAL);
-	::madvise(m_data+begin, size, MADV_WILLNEED);
-	long int pageSize =  std::max<long int>(512, sysconf(_SC_PAGE_SIZE) );
-	volatile uint8_t v = 0;
-	for(const uint8_t * d(m_data+begin), * s(m_data+begin+size); d < s; d += pageSize) {
-		v = v + *d;
-	}
-	::madvise(m_data+begin, size, MADV_NORMAL);
-}
-
-void MmappedFilePrivate::drop(OffsetType begin, SizeType size) {
-	if (begin > m_exposedSize) {
-		return;
-	}
-	if (begin+size > m_exposedSize || begin+size < begin) {
-		size = m_exposedSize - begin;
-	}
-	if (::madvise(m_data+begin, size, MADV_DONTNEED) < 0) {
-		throw std::runtime_error("sserialize::MmappedFile::drop: " + std::string( ::strerror(errno) ) );
-	}
-}
-
-void MmappedFilePrivate::lock(OffsetType begin, SizeType size) {
+void MmappedFilePrivate::advise(UByteArrayAdapter::AdviseType at, SizeType begin, SizeType size) {
 	if (begin > m_exposedSize || begin+size < begin) {
 		return;
 	}
 	if (begin+size > m_exposedSize ) {
 		size = m_exposedSize - begin;
 	}
-	if (::mlock(m_data+begin, size) < 0) {
-		throw std::runtime_error("sserialize::MmappedFile::lock: " + std::string( ::strerror(errno) ) );
+	switch(at) {
+	case UByteArrayAdapter::AT_READ:
+	case UByteArrayAdapter::AT_LOAD: {
+		::madvise(m_data+begin, size, MADV_SEQUENTIAL);
+		::madvise(m_data+begin, size, MADV_WILLNEED);
+		long int pageSize =  std::max<long int>(512, sysconf(_SC_PAGE_SIZE) );
+		volatile uint8_t v = 0;
+		for(const uint8_t * d(m_data+begin), * s(m_data+begin+size); d < s; d += pageSize) {
+			v = v + *d;
+		}
+		::madvise(m_data+begin, size, MADV_NORMAL);
+		break;
 	}
-}
-
-void MmappedFilePrivate::unlock(OffsetType begin, SizeType size) {
-	if (begin > m_exposedSize || begin+size < begin) {
-		return;
+	case UByteArrayAdapter::AT_DROP: {
+		if (::madvise(m_data+begin, size, MADV_DONTNEED) < 0) {
+			throw std::runtime_error("sserialize::MmappedFile::advise: " + std::string( ::strerror(errno) ) );
+		}
+		break;
 	}
-	if (begin+size > m_exposedSize ) {
-		size = m_exposedSize - begin;
-	}
-	if (::munlock(m_data+begin, size) < 0) {
-		throw std::runtime_error("sserialize::MmappedFile::unlock: " + std::string( ::strerror(errno) ) );
-	}
+	case UByteArrayAdapter::AT_LOCK:
+		if (::mlock(m_data+begin, size) < 0) {
+			throw std::runtime_error("sserialize::MmappedFile::advise: " + std::string( ::strerror(errno) ) );
+		}
+		break;
+	case UByteArrayAdapter::AT_UNLOCK:
+		if (::munlock(m_data+begin, size) < 0) {
+			throw std::runtime_error("sserialize::MmappedFile::advise: " + std::string( ::strerror(errno) ) );
+		}
+		break;
+	case UByteArrayAdapter::AT_RANDOM_READ:
+		if (::madvise(m_data+begin, size, MADV_RANDOM) < 0) {
+			throw std::runtime_error("sserialize::MmappedFile::advise: " + std::string( ::strerror(errno) ) );
+		}
+	default:
+		break;
+	};
 }
 
 MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & fileNameBase, sserialize::UByteArrayAdapter::OffsetType size) {
@@ -305,20 +296,8 @@ MmappedFilePrivate * MmappedFilePrivate::createTempFile(const std::string & file
 	return mf;
 }
 
-void MmappedFile::cache(SizeType begin, SizeType size) {
-	priv()->cache(begin, size);
-}
-
-void MmappedFile::drop(SizeType begin, SizeType size) {
-	priv()->drop(begin, size);
-}
-
-void MmappedFile::lock(SizeType begin, SizeType size) {
-	priv()->lock(begin, size);
-}
-
-void MmappedFile::unlock(SizeType begin, SizeType size) {
-	priv()->unlock(begin, size);
+void MmappedFile::advise(UByteArrayAdapter::AdviseType value, SizeType begin, SizeType size) {
+	priv()->advise(value, begin, size);
 }
 
 bool createFilePrivate(const std::string & fileName, OffsetType size) {
