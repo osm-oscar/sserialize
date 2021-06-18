@@ -53,7 +53,7 @@ m_bufferOffset(0),
 m_buffer(0)
 {}
 
-UByteArrayAdapterPrivateFile::UByteArrayAdapterPrivateFile(const std::string& filePath, bool writable) :
+UByteArrayAdapterPrivateFile::UByteArrayAdapterPrivateFile(const std::string& filePath, bool writable, bool direct) :
 UByteArrayAdapterPrivate(),
 m_fd(-1),
 m_bufferSize(BUFFER_SIZE),
@@ -62,6 +62,9 @@ m_bufferOffset(0),
 m_buffer(new uint8_t[m_bufferSize])
 {
 	int mode = (writable ? O_RDWR : O_RDONLY);
+	if (direct) {
+		mode |= O_DIRECT;
+	}
 	m_fd = ::open64(filePath.c_str(), mode);
 	if (m_fd < 0) {
 		throw sserialize::MissingDataException("UByteArrayAdapterPrivateFile: could not open file");

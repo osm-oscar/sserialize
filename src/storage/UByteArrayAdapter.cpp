@@ -1159,6 +1159,7 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 UByteArrayAdapter UByteArrayAdapter::open(
 	const std::string& fileName,
 	bool writable,
+	bool direct_io,
 	UByteArrayAdapter::OffsetType maxFullMapSize,
 	#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	uint8_t chunkSizeExponent
@@ -1167,13 +1168,18 @@ UByteArrayAdapter UByteArrayAdapter::open(
 	#endif
 	)
 {
-	if (MmappedFile::fileSize(fileName) > maxFullMapSize) {
+	if (MmappedFile::fileSize(fileName) > maxFullMapSize || direct_io) {
 		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-		throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
+		if (direct_io) {
+			throw sserialize::UnsupportedFeatureException("Requesting direct I/O but sserialize was compiled with contiguous UByteArrayAdapter only.");
+		}
+		else {
+			throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
+		}
 		#else
-		if (chunkSizeExponent == 0) {
+		if (chunkSizeExponent == 0 || direct_io) {
 			return UByteArrayAdapter( MyPrivatePtr(
-				new UByteArrayAdapterPrivateThreadSafeFile(fileName, writable)
+				new UByteArrayAdapterPrivateThreadSafeFile(fileName, writable, direct_io)
 			));
 		}
 		else {

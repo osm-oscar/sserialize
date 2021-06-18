@@ -10,14 +10,9 @@ inline
 namespace UByteArrayAdapterNonContiguous {
 
 class UByteArrayAdapterPrivateThreadSafeFile: public UByteArrayAdapterPrivate {
-protected:
-	std::string m_fn;
-	int m_fd;
-	UByteArrayAdapter::OffsetType m_size;
-	mutable uint8_t m_buffer;
 public:
 	UByteArrayAdapterPrivateThreadSafeFile();
-	UByteArrayAdapterPrivateThreadSafeFile(const std::string & filePath, bool writeable = false);
+	UByteArrayAdapterPrivateThreadSafeFile(const std::string & filePath, bool writeable = false, bool direct = false);
 	virtual ~UByteArrayAdapterPrivateThreadSafeFile();
 	virtual UByteArrayAdapter::OffsetType size() const;
 	virtual bool isContiguous() const;
@@ -83,6 +78,11 @@ public:
 	virtual int putVlPackedPad4Int32(UByteArrayAdapter::OffsetType pos, int32_t value, UByteArrayAdapter::OffsetType maxLen);
 	
 	virtual void put(UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len);
+protected:
+	std::string m_fn;
+	int m_fd;
+	UByteArrayAdapter::OffsetType m_size;
+	mutable uint8_t m_buffer;
 };
 
 }//end namespace UByteArrayAdapterNonContiguous

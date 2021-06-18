@@ -27,13 +27,16 @@ m_size(0),
 m_buffer(0)
 {}
 
-UByteArrayAdapterPrivateThreadSafeFile::UByteArrayAdapterPrivateThreadSafeFile(const std::string& filePath, bool writable) :
+UByteArrayAdapterPrivateThreadSafeFile::UByteArrayAdapterPrivateThreadSafeFile(const std::string& filePath, bool writable, bool direct) :
 UByteArrayAdapterPrivate(),
 m_fd(-1),
 m_size(0),
 m_buffer(0)
 {
 	int mode = (writable ? O_RDWR : O_RDONLY);
+	if (direct) {
+		mode |= O_DIRECT;
+	}
 	m_fd = ::open64(filePath.c_str(), mode);
 	if (m_fd < 0) {
 		throw sserialize::MissingDataException("UByteArrayAdapterPrivateSeekedFile: could not open file");

@@ -24,7 +24,7 @@ protected:
 	void updateBufferAfterWrite(sserialize::UByteArrayAdapter::OffsetType pos, const uint8_t * src, UByteArrayAdapter::OffsetType len);
 public:
 	UByteArrayAdapterPrivateFile();
-	UByteArrayAdapterPrivateFile(const std::string & filePath, bool writeable = false);
+	UByteArrayAdapterPrivateFile(const std::string & filePath, bool writeable = false, bool direct = false);
 	virtual ~UByteArrayAdapterPrivateFile();
 	virtual UByteArrayAdapter::OffsetType size() const;
 	virtual bool isContiguous() const;

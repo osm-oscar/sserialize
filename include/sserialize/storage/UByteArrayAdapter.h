@@ -233,7 +233,7 @@ public: //static functions
 	static UByteArrayAdapter createCache(OffsetType size = 0, sserialize::MmappedMemoryType mmt = MM_PROGRAM_MEMORY);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
 	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
-	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, UByteArrayAdapter::OffsetType maxFullMapSize = SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
+	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, bool direct_io = false, UByteArrayAdapter::OffsetType maxFullMapSize = SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
 	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
 	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
 	static std::string getTempFilePrefix();
