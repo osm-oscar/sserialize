@@ -299,8 +299,10 @@ public:
 	virtual ~Array() {}
 	
 	iterator begin() { return iterator(0, this); }
+	const_iterator begin() const { return const_iterator(0, this); }
 	const_iterator cbegin() const { return const_iterator(0, this); }
 	iterator end() { return iterator(size(), this); }
+	const_iterator end() const { return const_iterator(size(), this); }
 	const_iterator cend() const { return const_iterator(size(), this); }
 	
 	/** This does not copy the ref count, it leaves it intact */
