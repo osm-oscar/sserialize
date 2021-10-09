@@ -68,8 +68,9 @@
 	}
 	
 	action errorHandler {
-		std::cout << "Error occured at " << (p-qStr.c_str()) << " with token " << *p << std::endl;
-		
+#ifndef NDEBUG
+		std::cout << "Error occured at " << (p-qStr.c_str()) << " of " << qStr << " with token " << int(*p) << std::endl;
+#endif
 		curToken.clear();
 		matchType = sserialize::StringCompleter::QT_NONE;
 		subtract = false;

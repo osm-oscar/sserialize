@@ -52,8 +52,8 @@ private:
 	std::vector<QueryStringDescription> m_diffStrings;
 	std::map< QueryStringDescription, ItemIndex> m_completions;
 	std::map<std::string, RCPtrWrapper<SetOpTree::SelectableOpFilter> > m_ef;
-	uint32_t m_maxResultSetSize;
-	uint32_t m_minStrLen;
+	uint32_t m_maxResultSetSize{std::numeric_limits<uint32_t>::max()};
+	uint32_t m_minStrLen{0};
 private:
 	SetOpTreePrivateSimple & operator=(const SetOpTreePrivateSimple & other);
 protected:
