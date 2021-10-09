@@ -357,7 +357,7 @@ protected:
 public:
 
 	void testCompletion(sserialize::StringCompleter::QuerryType qt, RegionArrangement::ItemTypes it) {
-		if ((qt & supportedQuerries) == sserialize::StringCompleter::QT_NONE) {
+		if ((int(qt) & int(supportedQuerries) )== sserialize::StringCompleter::QT_NONE) {
 			return;
 		}
 		std::unordered_set<std::string> baseTestStrings; 
