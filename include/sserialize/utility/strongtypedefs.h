@@ -124,7 +124,7 @@ private:
 public:
 	inline Derived & operator++() noexcept( noexcept(++underlying_type()) ) { ++Add::ut(); return static_cast<Derived&>(*this); }
 	inline Derived operator++(int) noexcept( noexcept(underlying_type()++) ) { return Derived(Add::ut()++); }
-	inline Derived & operator+=(Derived const & o) noexcept( noexcept(Add::ut() += o. Add::cut()) ) {
+	inline Derived & operator+=(Derived const & o) noexcept( noexcept(std::declval<Derived>(). Add::ut() += o. Add::cut()) ) {
 		//We need to explicitly select the function in case there are functions with the same name
 		//Note that o is a Derived class and not our own
 		//We therefore should be able to use cut() on this, however the way it is now is more consistent and it looks the same everywhere
@@ -144,7 +144,7 @@ private:
 public:
 	inline Derived & operator--() noexcept( noexcept(--underlying_type()) ) { --Sub::ut(); return static_cast<Derived&>(*this); }
 	inline Derived operator--(int) noexcept( noexcept(underlying_type()--) ) { return Derived(Sub::ut()--); }
-	inline Derived & operator-=(Derived const & o) noexcept( noexcept(Sub::ut() -= o. Sub::cut()) ) { Sub::ut() -= o. Sub::cut(); return static_cast<Derived&>(*this); }
+	inline Derived & operator-=(Derived const & o) noexcept( noexcept(std::declval<Derived>(). Sub::ut() -= o. Sub::cut()) ) { Sub::ut() -= o. Sub::cut(); return static_cast<Derived&>(*this); }
 	inline friend Derived operator-(Derived lhs, Derived const & rhs) noexcept( noexcept( lhs -= rhs ) ) {
 		lhs -= rhs;
 		return lhs;
@@ -157,7 +157,7 @@ class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
 public: \
-	inline Derived & operator __OPSYM ## = (Derived const & o) noexcept( noexcept(__NAME::ut() __OPSYM ## = o. __NAME::cut()) ) { \
+	inline Derived & operator __OPSYM ## = (Derived const & o) noexcept( noexcept(std::declval<Derived>(). __NAME::ut() __OPSYM ## = o. __NAME::cut()) ) { \
 		__NAME::ut() __OPSYM ##= o. __NAME::cut(); \
 		return static_cast<Derived&>(*this); \
 	} \
