@@ -42,8 +42,10 @@ public:
 		
 
 		
-		m_compressedData = UByteArrayAdapter::createCache(m_realValues.size(), sserialize::MM_FILEBASED);
+		m_compressedData = UByteArrayAdapter::createFile(m_realValues.size(), m_fileName);
+		m_compressedData.setDeleteOnClose(true);
 		CompressedMmappedFile::create(UByteArrayAdapter(&m_realValues, false), m_compressedData, chunkExponent, 1.0);
+		m_compressedData.sync();
 		
 		m_file = CompressedMmappedFile(m_fileName);
 		m_file.setCacheCount(4);
@@ -97,13 +99,17 @@ int main(int argc, char ** argv) {
 	
 	srand( 0 );
 	CppUnit::TextUi::TestRunner runner;
+	runner.addTest( CompressedMmappedFileTest<548576, 16, 4>::suite() ); //~0.5 MebiByte, 64 kb chunk size
 	runner.addTest( CompressedMmappedFileTest<182137657, 20, 0>::suite() ); //about 173 MebiBytes, 1 megbyte chunk size
-	runner.addTest( CompressedMmappedFileTest<18213765, 22, 0>::suite() ); //about 17.3 MebiBytes, 4 megbyte chunk size
+	runner.addTest( CompressedMmappedFileTest<18213765, 22, 5>::suite() ); //about 17.3 MebiBytes, 4 megbyte chunk size
 	runner.addTest( CompressedMmappedFileTest<1048576, 24, 2>::suite() ); //1 MebiByte, 16 mb chunk size
 	runner.addTest( CompressedMmappedFileTest<16777216, 21, 1>::suite() ); //16 MebiBytes, 2 mb chunk sizte
 	runner.addTest( CompressedMmappedFileTest<2048576, 20, 3>::suite() ); //~2 MebiByte, 1 mb chunk size
-	runner.addTest( CompressedMmappedFileTest<548576, 16, 4>::suite() ); //~0.5 MebiByte, 64 kb chunk size
 
+	if (sserialize::tests::TestBase::popProtector()) {
+		runner.eventManager().popProtector();
+	}
+	
 	bool ok = runner.run();
 	return ok ? 0 : 1;
 }

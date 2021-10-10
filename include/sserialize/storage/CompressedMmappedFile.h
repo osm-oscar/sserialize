@@ -16,9 +16,9 @@
   * It supports random access on the stored data
   * 
   *-------------------------------------------------------------------------------------
-  *CompressedData|ChunkOffsets        |  ChunkType  |CHUNKEXP|DECSIZE |COMPSIZE|VERSION
+  *VERSION|CHUNKEXP|DECSIZE |COMPSIZE|CompressedData|ChunkOffsets        |  ChunkType  |
   *-------------------------------------------------------------------------------------
-  *       *      |  SortedOffsetIndex |DynamicBitSet|    1   |   5    |   5    |   1
+  *   1   |    1   |   5    |   5    |       *      |  SortedOffsetIndex |DynamicBitSet|
   *
   * ChunkOffsets: Offset from the beginning of CompressedData to chunk i
   * ChunkType: Bit set which selects if the data is in compressed form or not
@@ -71,7 +71,7 @@ public:
 	  * @param compressionRatio: The minimum compression ratio to achieve to store a compressed chunk
 	  *
 	  */
-	static bool create(const UByteArrayAdapter & src, UByteArrayAdapter & dest, uint8_t chunkSizeExponent, double compressionRatio);
+	static UByteArrayAdapter::SizeType create(const UByteArrayAdapter & src, UByteArrayAdapter & dest, uint8_t chunkSizeExponent, double compressionRatio);
 	
 };
 
@@ -84,13 +84,20 @@ public:
 	typedef uint32_t ChunkIndexType;
 	typedef SizeType ChunkSizeType;
 private:
+	struct MmapChunkParams {
+		std::size_t mmap_begin;
+		std::size_t mmap_size;
+		
+		std::size_t chunk_size;
+		std::size_t chunk_begin_in_mmap;
+	};
+private:
 	std::string m_fileName;
 	SizeType m_size; //Total size of the decompressed file
 	int m_fd;
 	std::size_t m_pageSize;
 	std::size_t m_compressedSize;
 	
-	uint8_t * m_chunkIndexData;
 	Static::SortedOffsetIndex m_chunkIndex;
 	DynamicBitSet m_chunkTypeBitSet;
 	
@@ -105,7 +112,7 @@ private:
 	std::vector<uint8_t*> m_chunkStorage;
 private:
 	
-	void mmapChunkParameters(ChunkIndexType chunk, size_t & mapOverHead, off_t & beginOffset, size_t & mapLen);
+	MmapChunkParams mmapChunkParameters(ChunkIndexType chunk);
 	
 	///@return ptr to the beginning of the chunk
 	uint8_t * mmapChunk(ChunkIndexType chunk);

@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#define COMPRESSED_MMAPPED_FILE_VERSION 1
+#define COMPRESSED_MMAPPED_FILE_VERSION 2
 #define COMPRESSED_MMAPPED_FILE_HEADER_SIZE 12
 
 namespace sserialize {
@@ -96,18 +96,22 @@ void CompressedMmappedFile::setCacheCount(uint32_t count){
     lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
 
 
-bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdapter & dest, uint8_t chunkSizeExponent, double compressionRatio) {
+UByteArrayAdapter::SizeType
+CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdapter & dest, uint8_t chunkSizeExponent, double compressionRatio) {
 	if (chunkSizeExponent < 16)
-		return false;
+		throw sserialize::CreationException("Chunk size exponent is too small");
+	dest.reserveFromPutPtr(COMPRESSED_MMAPPED_FILE_HEADER_SIZE);
+	UByteArrayAdapter header = dest;
+	dest.incPutPtr(COMPRESSED_MMAPPED_FILE_HEADER_SIZE);
 	sserialize::UByteArrayAdapter::OffsetType beginning = dest.tellPutPtr();
 	std::vector<SizeType> destOffsets;
 	DynamicBitSet chunkTypeBitSet(UByteArrayAdapter(new std::vector<uint8_t>(), true));
 	SizeType chunkSize = (static_cast<SizeType>(1) << chunkSizeExponent);
 
-	chunkTypeBitSet.data().growStorage(src.size()/chunkSize + ((src.size() % chunkSize) ? 1 : 0));
+	chunkTypeBitSet.data().growStorage(src.size()/chunkSize + ((src.size() % chunkSize) ? 1 : 0)+COMPRESSED_MMAPPED_FILE_HEADER_SIZE);
 
-	uint8_t * inBuf = new uint8_t[chunkSize];
-	uint8_t * outBuf = new uint8_t[chunkSize*2];
+	std::vector<uint8_t> inBuf(chunkSize, 0);
+	std::vector<uint8_t> outBuf(chunkSize*2+4096, 0);
 
 	HEAP_ALLOC_MINI_LZO(wrkmem, LZO1X_1_MEM_COMPRESS);
 	
@@ -119,28 +123,24 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 		destOffsets.push_back(dest.tellPutPtr()-beginning);
 		
 		lzo_uint inBufLen = 0;
-		lzo_uint outBufLen = chunkSize*2;
+		lzo_uint outBufLen = outBuf.size();
 		for(; inBufLen < chunkSize && inBufLen+i < src.size(); ++inBufLen) {
 			inBuf[inBufLen] = src.at(inBufLen+i);
 		}
-		int r = ::lzo1x_1_compress(inBuf,inBufLen,outBuf,&outBufLen,wrkmem);
-		if (r != LZO_E_OK) {
-			delete[] inBuf;
-			delete[] outBuf;
-			return false;
+		int r = ::lzo1x_1_compress(inBuf.data(), inBufLen, outBuf.data(), &outBufLen, wrkmem);
+		if (r != LZO_E_OK) {;
+			throw sserialize::CreationException("Failed to compress chunk " + std::to_string(i));
 		}
 		
 		double cmpRatio = (double)inBufLen / outBufLen;
 		if (cmpRatio >= compressionRatio) {
-			dest.putData(outBuf, outBufLen);
+			dest.putData(outBuf.data(), outBufLen);
 			chunkTypeBitSet.set(chunkNum);
 		}
 		else {
-			dest.putData(inBuf, inBufLen);
+			dest.putData(inBuf.data(), inBufLen);
 		}
 	}
-	delete[] inBuf;
-	delete[] outBuf;
 	
 	progressInfo.end("CompressedMmappedFile::create completed");
 
@@ -149,15 +149,12 @@ bool CompressedMmappedFile::create(const UByteArrayAdapter & src, UByteArrayAdap
 	Static::SortedOffsetIndexPrivate::create(destOffsets, dest);
 	dest.putData(chunkTypeBitSet.data());
 
-	std::vector<uint8_t> header(COMPRESSED_MMAPPED_FILE_HEADER_SIZE, 0);
-	header[0] = chunkSizeExponent;
-	p_u40(src.size(), &header[1]);
-	p_u40(dataSize, &header[6]);
-	header[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] = COMPRESSED_MMAPPED_FILE_VERSION;
+	header.putUint8(COMPRESSED_MMAPPED_FILE_VERSION);
+	header.putUint8(chunkSizeExponent);
+	header.putOffset(src.size());
+	header.putOffset(dataSize);
 	
-	dest.putData(header);
-	
-	return true;
+	return dest.tellPutPtr()-beginning+COMPRESSED_MMAPPED_FILE_VERSION;
 }
 
 CompressedMmappedFilePrivate::CompressedMmappedFilePrivate() :
@@ -213,59 +210,39 @@ bool CompressedMmappedFilePrivate::do_open() {
 	if (fileSize <= COMPRESSED_MMAPPED_FILE_HEADER_SIZE) {
 		return false;
 	}
+	UByteArrayAdapter data = UByteArrayAdapter::open(m_fileName, false);
+	UByteArrayAdapter header{data.getMemView(0, COMPRESSED_MMAPPED_FILE_HEADER_SIZE)};
 	
-	uint8_t headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE];
-	::lseek64(m_fd, fileSize-COMPRESSED_MMAPPED_FILE_HEADER_SIZE, SEEK_SET);
-	SSERIALIZE_EQUAL_LENGTH_CHECK(COMPRESSED_MMAPPED_FILE_HEADER_SIZE, ::read(m_fd, headerData, COMPRESSED_MMAPPED_FILE_HEADER_SIZE), "sserialize::CompressedMmappedFile::open");
-	::lseek64(m_fd, 0, SEEK_SET);
-	
-	if (headerData[COMPRESSED_MMAPPED_FILE_HEADER_SIZE-1] != COMPRESSED_MMAPPED_FILE_VERSION) {
-		sserialize::err("CompressedMmappedFile::open", "Wrong version for file " + m_fileName);
+	uint8_t version = header.getUint8();
+	if (version != COMPRESSED_MMAPPED_FILE_VERSION) {
+		sserialize::err("CompressedMmappedFile::open", "Version missmatch: " + std::to_string(version) + " != " + std::to_string(COMPRESSED_MMAPPED_FILE_VERSION) );
 		::close(m_fd);
 		m_fd = -1;
 		return false;
 	}
-	
-	m_chunkShift = headerData[0];
+	m_chunkShift = header.getUint8();
 	m_chunkMask = createMask(m_chunkShift);
-	m_size = up_u40(&headerData[1]);
-	m_compressedSize = up_u40(&headerData[6]);
-	
+	m_size = header.getOffset();
+	m_compressedSize = header.getOffset();
+
 	if ( (std::size_t) (m_compressedSize / chunkSize()) + 1 > (std::size_t) std::numeric_limits<ChunkIndexType>::max() ) {
 		throw sserialize::OutOfBoundsException("CompressedMmappedFile: too many chunks");
 	}
 	
-	//prepare the data for the index
-	size_t mapOverHead = (m_compressedSize % m_pageSize);
-	off_t beginOffset = m_compressedSize - mapOverHead; //offset in pageSizes
-	size_t mapLen = fileSize - COMPRESSED_MMAPPED_FILE_HEADER_SIZE - beginOffset;
-	m_chunkIndexData = (uint8_t*) ::mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
-	if (m_chunkIndexData == MAP_FAILED) {
-		sserialize::err("CompressedMmappedFile", "Maping the chunk index data failed");
-		::perror("CompressedMmappedFile map index data");
-		::close(m_fd);
-		m_fd = -1;
-		return false;
-	}
-	
-	UByteArrayAdapter chunkIndexAdap(m_chunkIndexData+mapOverHead, 0, mapLen-mapOverHead);
 	try {
-		m_chunkIndex = Static::SortedOffsetIndex(chunkIndexAdap);
+		m_chunkIndex = Static::SortedOffsetIndex(data+COMPRESSED_MMAPPED_FILE_HEADER_SIZE+m_compressedSize);
 	}
 	catch (sserialize::Exception & e) {
 		sserialize::err("CompressedMmappedFile::open", e.what());
-		::munmap(m_chunkIndexData, mapLen);
 		::close(m_fd);
 		m_fd = -1;
 		return false;
 	}
-	m_chunkTypeBitSet = DynamicBitSet(chunkIndexAdap+m_chunkIndex.getSizeInBytes());
+	m_chunkTypeBitSet = DynamicBitSet(data+COMPRESSED_MMAPPED_FILE_HEADER_SIZE+m_compressedSize+m_chunkIndex.getSizeInBytes());
 	
 	//prepare the cache
 	if (!MmappedFile::createCacheFile(chunkSize()*m_maxOccupyCount, m_decTileFile)) {
 		sserialize::err("CompressedMmappedFile", "Creating the decompression storage failed");
-		m_chunkIndex = Static::SortedOffsetIndex();
-		::munmap(m_chunkIndexData, mapLen);
 		::close(m_fd);
 		m_fd = -1;
 		return false;
@@ -294,21 +271,6 @@ bool CompressedMmappedFilePrivate::do_close() {
 	m_chunkIndex = Static::SortedOffsetIndex();
 	m_chunkStorage.clear();
 	
-	//unmap the chunk index
-	
-	OffsetType fileSize;
-	struct ::stat64 stFileInfo;
-	if (::fstat64(m_fd,&stFileInfo) == 0) {
-		fileSize = stFileInfo.st_size;
-	}
-	else
-		return false;
-
-	size_t beginOffset = m_compressedSize / m_pageSize; //offset in pageSizes
-	size_t mapLen = fileSize - (m_pageSize*beginOffset+6);
-	::munmap(m_chunkIndexData, mapLen);
-	m_chunkIndexData = 0;
-	
 	//and close the file
 	m_size = 0;
 	::close(m_fd);
@@ -316,7 +278,9 @@ bool CompressedMmappedFilePrivate::do_close() {
 	return true;
 }
 
-void CompressedMmappedFilePrivate::mmapChunkParameters(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, size_t& mapOverHead, off_t& beginOffset, size_t& mapLen) {
+CompressedMmappedFilePrivate::MmapChunkParams
+CompressedMmappedFilePrivate::mmapChunkParameters(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk) {
+	MmapChunkParams params;
 	SizeType offset = m_chunkIndex.at(chunk);
 	ChunkSizeType chunkLen;
 	if (chunk+1 < m_chunkIndex.size()) {
@@ -325,59 +289,54 @@ void CompressedMmappedFilePrivate::mmapChunkParameters(sserialize::CompressedMma
 	else {
 		chunkLen = m_compressedSize - offset;
 	}
-	mapOverHead = offset % m_pageSize;
-	beginOffset = offset - mapOverHead; //offset in pageSizes
-	mapLen = mapOverHead + chunkLen;
+	//Take care of the header
+	SizeType offset_in_file = offset+COMPRESSED_MMAPPED_FILE_HEADER_SIZE;
+	
+	params.chunk_begin_in_mmap = offset_in_file % m_pageSize;
+	params.mmap_begin = offset_in_file - params.chunk_begin_in_mmap;
+	params.mmap_size = params.chunk_begin_in_mmap + chunkLen;
+	params.mmap_size = (params.mmap_size/m_pageSize)*m_pageSize + size_t(params.mmap_size%m_pageSize!=0)*m_pageSize;
+	params.chunk_size = chunkLen;
+	return params;
 }
 
-
 uint8_t* CompressedMmappedFilePrivate::mmapChunk(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk) {
-	size_t mapOverHead;
-	off_t beginOffset;
-	size_t mapLen;
 	
-	mmapChunkParameters(chunk, mapOverHead, beginOffset, mapLen);
+	MmapChunkParams params = mmapChunkParameters(chunk);
 	
-	uint8_t * data = (uint8_t*) mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
+	uint8_t * data = (uint8_t*) mmap(0, params.mmap_size, PROT_READ, MAP_SHARED, m_fd, params.mmap_begin);
 	if (data == MAP_FAILED) {
 		sserialize::err("CompressedMmappedFile", "Maping a chunk failed");
 		return 0;
 	}
-	return data+mapOverHead;
+	return data+params.chunk_begin_in_mmap;
 }
 
 void CompressedMmappedFilePrivate::ummapChunk(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, uint8_t* data) {
-	size_t mapOverHead;
-	off_t beginOffset;
-	size_t mapLen;
+	auto params = mmapChunkParameters(chunk);
 	
-	mmapChunkParameters(chunk, mapOverHead, beginOffset, mapLen);
-	
-	::munmap(data-mapOverHead, mapLen);
+	::munmap(data-params.chunk_begin_in_mmap, params.mmap_size);
 }
 
 
 
 bool CompressedMmappedFilePrivate::do_unpack(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, uint8_t* dest) {
-	size_t mapOverHead;
-	off_t beginOffset;
-	size_t mapLen;
+	auto params = mmapChunkParameters(chunk);
 	
-	mmapChunkParameters(chunk, mapOverHead, beginOffset, mapLen);
-	
-	uint8_t * data = (uint8_t*) mmap(0, mapLen, PROT_READ, MAP_SHARED, m_fd, beginOffset);
+	uint8_t * data = (uint8_t*) mmap(nullptr, params.mmap_size, PROT_READ, MAP_SHARED, m_fd, params.mmap_begin);
 	if (data == MAP_FAILED) {
-		sserialize::err("CompressedMmappedFile", "Maping a chunk failed");
-		::perror("CompressedMmappedFile::do_unpack::mmap");
-		return false;
+		throw sserialize::IOException("CompressedMmappedFile mmapping chunk failed with " + std::string(strerrorname_np(errno)));
 	}
 	
 	lzo_uint destLen = chunkSize();
-	int ok = ::lzo1x_decompress(data+mapOverHead, mapLen-mapOverHead, dest, &destLen, 0);
+	int err = ::lzo1x_decompress_safe(data+params.chunk_begin_in_mmap, params.chunk_size, dest, &destLen, 0);
+	if (err != LZO_E_OK) {
+		throw sserialize::IOException("lzo1x_decompress_safe failed with error " + std::to_string(err));
+	}
 	
-	::munmap(data, mapLen);
+	::munmap(data, params.mmap_size);
 	
-	return (ok == LZO_E_OK);
+	return true;
 }
 
 bool CompressedMmappedFilePrivate::populate(sserialize::CompressedMmappedFilePrivate::ChunkIndexType chunk, uint8_t*& dest) {
