@@ -53,27 +53,30 @@ public:
 	}
 
 	void testSortOOMArray() {
-		for(uint32_t i(0); i < 4; ++i) {
-			uint32_t scaleFactor = (16 << i);
-			std::vector<uint32_t> realData(1025*1023*519/scaleFactor);
-			std::generate(realData.begin(), realData.end(), []() { return rand(); });
-			sserialize::OOMArray<uint32_t> data(sserialize::MM_PROGRAM_MEMORY);
-			data.replace(data.end(), realData.begin(), realData.end());
-			
-			CPPUNIT_ASSERT_EQUAL_MESSAGE("size", realData.size(), data.size());
-			CPPUNIT_ASSERT_MESSAGE("realData != data", sserialize::equal(realData.begin(), realData.end(), data.begin(), data.end(), [](uint32_t a, uint32_t b) {return a == b;}));
-			
-			sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
-			sortTraits
-				.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
-				.mmt(sserialize::MM_PROGRAM_MEMORY);
-			
-			sserialize::oom_sort(data.begin(), data.end(), sortTraits);
-			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
-			CPPUNIT_ASSERT(realData.size() == data.size());
-			
-			sserialize::mt_sort(realData.begin(), realData.end(), sortTraits.compare());
-			CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corruption in run ", i), std::equal(realData.begin(), realData.end(), data.begin()));
+		std::array<std::size_t, 2> data_sizes = { 1025*1023*519, 1025};
+		for(auto data_size : data_sizes) {
+			for(uint32_t i(0); i < 4; ++i) {
+				uint32_t scaleFactor = (16 << i);
+				std::vector<uint32_t> realData(data_size/scaleFactor);
+				std::generate(realData.begin(), realData.end(), []() { return rand(); });
+				sserialize::OOMArray<uint32_t> data(sserialize::MM_PROGRAM_MEMORY);
+				data.replace(data.end(), realData.begin(), realData.end());
+				
+				CPPUNIT_ASSERT_EQUAL_MESSAGE("size", realData.size(), data.size());
+				CPPUNIT_ASSERT_MESSAGE("realData != data", sserialize::equal(realData.begin(), realData.end(), data.begin(), data.end(), [](uint32_t a, uint32_t b) {return a == b;}));
+				
+				sserialize::detail::oom::SortTraits<false, std::less<uint32_t>, std::equal_to<uint32_t>> sortTraits;
+				sortTraits
+					.maxMemoryUsage((static_cast<uint64_t>(1) << 22)/scaleFactor)
+					.mmt(sserialize::MM_PROGRAM_MEMORY);
+				
+				sserialize::oom_sort(data.begin(), data.end(), sortTraits);
+				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Not sorted in run ", i), std::is_sorted(data.begin(), data.end()));
+				CPPUNIT_ASSERT(realData.size() == data.size());
+				
+				sserialize::mt_sort(realData.begin(), realData.end(), sortTraits.compare());
+				CPPUNIT_ASSERT_MESSAGE(sserialize::toString("Data corruption in run ", i), std::equal(realData.begin(), realData.end(), data.begin()));
+			}
 		}
 	}
 
