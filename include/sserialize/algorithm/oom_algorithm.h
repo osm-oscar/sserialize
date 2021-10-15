@@ -767,8 +767,8 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					Config * m_cfg;
 					State * m_state;
 					sserialize::OOMArray<value_type> * m_dest;
-					std::size_t m_bufferSize;
-					uint64_t m_offset;
+					std::size_t m_bufferSize{0};
+					uint64_t m_offset{0};
 					std::vector<value_type> m_data; //This is only touched by the single producer thread
 					std::vector<std::thread> m_workers;
 					std::queue<Entry> m_entries;
