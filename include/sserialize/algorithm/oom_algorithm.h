@@ -680,6 +680,7 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 						//resize dest to correct size
 						m_dest->resize(size());
 					}
+					/// Size of all flushed data
 					uint64_t size() const {
 						return m_offset+m_data.size();
 					}
