@@ -683,7 +683,12 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 					uint64_t size() const {
 						return m_offset+m_data.size();
 					}
+					/// Size of current buffer
+					std::size_t buffer_size() const {
+						return m_data.size();
+					}
 					value_type const & back() const {
+						SSERIALIZE_CHEAP_ASSERT(m_data.size());
 						return m_data.back();
 					}
 					void emplace_back(value_type && value) {
@@ -816,12 +821,11 @@ TInputOutputIterator oom_sort(TInputOutputIterator begin, TInputOutputIterator e
 				}
 				
 				FlushQueue flushQueue(&cfg, &state, &tmp);
-
 				while(pq.size()) {
 					uint32_t pqMin = pq.top();
 					pq.pop();
-					value_type & v = queueValues[pqMin];
-					if (!traits.makeUnique() || !flushQueue.size() || !traits.equal()(flushQueue.back(), v)) {
+					value_type & v = queueValues.at(pqMin);
+					if (!traits.makeUnique() || !flushQueue.buffer_size() || !traits.equal()(flushQueue.back(), v)) {
 						flushQueue.emplace_back(std::move(v));
 					}
 					//get our next element
