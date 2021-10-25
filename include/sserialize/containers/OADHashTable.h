@@ -278,7 +278,7 @@ OADHashTable<TKey, TValue, THash1, THash2, TValueStorageType, TTableStorageType,
 	count = count | 0x1;
 #ifndef NDEBUG
 	if (!size() || count/size() > 10) {
-		sserialize::info("sserialize::OADHashTable::rehash", sserialize::toString("load_factor=", (double)size()/count, "; count=", count));
+		sserialize::debug("sserialize::OADHashTable::rehash", sserialize::toString("load_factor=", (double)size()/count, "; count=", count));
 	}
 #endif
 	m_d.clear();
