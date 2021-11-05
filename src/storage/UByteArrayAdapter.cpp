@@ -10,6 +10,7 @@
 
 namespace sserialize {
 
+
 std::string UByteArrayAdapter::m_tempFilePrefix = SSERIALIZE_TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_fastTempFilePrefix = SSERIALIZE_TEMP_FILE_PREFIX;
 std::string UByteArrayAdapter::m_logFilePrefix = SSERIALIZE_TEMP_FILE_PREFIX;
@@ -51,6 +52,39 @@ sserialize::UByteArrayAdapter MemoryView::dataBase() const {
 }
 
 }}//end namespace detail::__UByteArrayAdapter
+
+
+UByteArrayAdapter::OpenFlags::OpenFlags() :
+m_v(static_cast<underlying_type>(Values::None))
+{}
+
+UByteArrayAdapter::OpenFlags::~OpenFlags()
+{}
+
+UByteArrayAdapter::OpenFlags
+UByteArrayAdapter::OpenFlags::None() {
+	return OpenFlags(Values::None);
+}
+
+UByteArrayAdapter::OpenFlags
+UByteArrayAdapter::OpenFlags::DirectIo() {
+	return OpenFlags(Values::DirectIo);
+}
+
+UByteArrayAdapter::OpenFlags
+UByteArrayAdapter::OpenFlags::Compressed() {
+	return OpenFlags(Values::Compressed);
+}
+
+UByteArrayAdapter::OpenFlags
+UByteArrayAdapter::OpenFlags::Writable() {
+	return OpenFlags(Values::Writable);
+}
+
+UByteArrayAdapter::OpenFlags
+UByteArrayAdapter::OpenFlags::Chunked() {
+	return OpenFlags(Values::Chunked);
+}
 
 //CTORS
 
@@ -1158,9 +1192,7 @@ UByteArrayAdapter UByteArrayAdapter::createFile(UByteArrayAdapter::OffsetType si
 
 UByteArrayAdapter UByteArrayAdapter::open(
 	const std::string& fileName,
-	bool writable,
-	bool direct_io,
-	UByteArrayAdapter::OffsetType maxFullMapSize,
+	OpenFlags flags,
 	#ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	uint8_t chunkSizeExponent
 	#else
@@ -1168,44 +1200,7 @@ UByteArrayAdapter UByteArrayAdapter::open(
 	#endif
 	)
 {
-	if (MmappedFile::fileSize(fileName) > maxFullMapSize || direct_io) {
-		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-		if (direct_io) {
-			throw sserialize::UnsupportedFeatureException("Requesting direct I/O but sserialize was compiled with contiguous UByteArrayAdapter only.");
-		}
-		else {
-			throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
-		}
-		#else
-		if (chunkSizeExponent == 0 || direct_io) {
-			return UByteArrayAdapter( MyPrivatePtr(
-				new UByteArrayAdapterPrivateThreadSafeFile(fileName, writable, direct_io)
-			));
-		}
-		else {
-			ChunkedMmappedFile file(fileName, chunkSizeExponent, writable);
-			if (file.open()) {
-				return UByteArrayAdapter(file);
-			}
-			else {
-				throw sserialize::IOException("Could not open file " + fileName);
-			}
-		}
-		#endif
-	}
-	else {
-		MmappedFile file(fileName, writable);
-		if (file.open()) {
-			return UByteArrayAdapter(file);
-		}
-		else {
-			throw sserialize::IOException("Could not open file " + fileName);
-		}
-	}
-}
-
-UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool compressed, UByteArrayAdapter::OffsetType maxFullMapSize, uint8_t chunkSizeExponent) {
-	if (compressed) {
+	if (flags | OpenFlags::Compressed()) {
 		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 		throw sserialize::UnsupportedFeatureException("File is compressed and sserialize was compiled with contiguous UByteArrayAdapter only.");
 		#else
@@ -1218,11 +1213,41 @@ UByteArrayAdapter UByteArrayAdapter::openRo(const std::string & fileName, bool c
 		}
 		#endif
 	}
+	else if (MmappedFile::fileSize(fileName) > SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP || (flags & (OpenFlags::DirectIo() | OpenFlags::Chunked()))) {
+		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
+		if ((flags | OpenFlags::Values::DirectIo)) {
+			throw sserialize::UnsupportedFeatureException("Requesting direct I/O but sserialize was compiled with contiguous UByteArrayAdapter only.");
+		}
+		else {
+			throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
+		}
+		#else
+		if (chunkSizeExponent == 0 || (flags | OpenFlags::DirectIo())) {
+			return UByteArrayAdapter( MyPrivatePtr(
+				new UByteArrayAdapterPrivateThreadSafeFile(fileName, (flags & OpenFlags::Writable()), (flags & OpenFlags::DirectIo()))
+			));
+		}
+		else {
+			ChunkedMmappedFile file(fileName, chunkSizeExponent, (flags & OpenFlags::Writable()));
+			if (file.open()) {
+				return UByteArrayAdapter(file);
+			}
+			else {
+				throw sserialize::IOException("Could not open file " + fileName);
+			}
+		}
+		#endif
+	}
 	else {
-		return open(fileName, false, maxFullMapSize, chunkSizeExponent);
+		MmappedFile file(fileName, (flags & OpenFlags::Writable()));
+		if (file.open()) {
+			return UByteArrayAdapter(file);
+		}
+		else {
+			throw sserialize::IOException("Could not open file " + fileName);
+		}
 	}
 }
-
 
 std::string UByteArrayAdapter::getTempFilePrefix() {
 	return m_tempFilePrefix;

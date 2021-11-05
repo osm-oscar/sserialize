@@ -222,6 +222,45 @@ public:
 		AT_RANDOM_READ=0x40
 	} AdviseType;
 	
+	class OpenFlags: public sserialize::st::strong_type_ca<
+		OpenFlags,
+		int,
+		sserialize::st::BitOr,
+		sserialize::st::BitAnd,
+		sserialize::st::CompareEqual,
+		sserialize::st::CompareNotEqual
+		>
+	{
+	public:
+		using underlying_type = int;
+	public:
+		OpenFlags();
+		~OpenFlags();
+		inline operator bool() const { return m_v; }
+		
+		explicit inline operator underlying_type&() { return m_v; }
+		explicit inline operator underlying_type const &() const { return m_v; }
+	public: //values
+		static OpenFlags None();
+		static OpenFlags DirectIo();
+		static OpenFlags Compressed();
+		static OpenFlags Writable();
+		static OpenFlags Chunked();
+	private:
+		enum class Values: underlying_type {
+			None=0x0,
+			DirectIo=0x1,
+			Compressed=0x2,
+			Writable=0x4,
+			Chunked=0x8
+		};
+	private:
+		OpenFlags(Values v) : m_v(static_cast<underlying_type>(v)) {}
+	private:
+		int m_v;
+	};
+	
+	
 	typedef detail::__UByteArrayAdapter::MemoryView MemoryView;
 	
 	template<typename TValue>
@@ -236,9 +275,7 @@ public: //static functions
 	static UByteArrayAdapter createCache(OffsetType size = 0, sserialize::MmappedMemoryType mmt = MM_PROGRAM_MEMORY);
 	static UByteArrayAdapter createFile(OffsetType size, std::string fileName);
 	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
-	static UByteArrayAdapter open(const std::string & fileName, bool writable = true, bool direct_io = false, UByteArrayAdapter::OffsetType maxFullMapSize = SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
-	///if chunkSizeExponent == 0 => use ThreadSafeFile instead of ChunkedMmappedFile
-	static UByteArrayAdapter openRo(const std::string & fileName, bool compressed, OffsetType maxFullMapSize = SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP, uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
+	static UByteArrayAdapter open(const std::string & fileName, OpenFlags flags = OpenFlags::None(), uint8_t chunkSizeExponent = SSERIALIZE_CHUNKED_MMAP_EXPONENT);
 	static std::string getTempFilePrefix();
 	static std::string getFastTempFilePrefix();
 	static std::string getLogFilePrefix();

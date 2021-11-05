@@ -210,7 +210,7 @@ bool CompressedMmappedFilePrivate::do_open() {
 	if (fileSize <= COMPRESSED_MMAPPED_FILE_HEADER_SIZE) {
 		return false;
 	}
-	UByteArrayAdapter data = UByteArrayAdapter::open(m_fileName, false);
+	UByteArrayAdapter data = UByteArrayAdapter::open(m_fileName, UByteArrayAdapter::OpenFlags::None());
 	UByteArrayAdapter header{data.getMemView(0, COMPRESSED_MMAPPED_FILE_HEADER_SIZE)};
 	
 	uint8_t version = header.getUint8();

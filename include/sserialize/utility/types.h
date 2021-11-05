@@ -46,10 +46,10 @@ static_assert(sizeof(float) == sizeof(uint32_t), "sizeof(uint32_t) MUST EQUAL si
 
 
 #ifdef __LP64__
-	#define SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP 0xFFFFFFFFFF
+	#define SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP (std::numeric_limits<uint64_t>::max()/4)
 	#define SSERIALIZE_CHUNKED_MMAP_EXPONENT 23
 #else
-	#define SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP 0x3FFFFFFF
+	#define SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP (std::numeric_limits<uint32_t>::max()/4)
 	#define SSERIALIZE_CHUNKED_MMAP_EXPONENT 23
 #endif
 

@@ -804,7 +804,7 @@ bool test(int testCount) {
 	}
 #ifndef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 	sserialize::MmappedFile::createFile("ubatestseekedfile.tmp", 10);
-	UByteArrayAdapter seekedFileAdap = UByteArrayAdapter::open("ubatestseekedfile.tmp", true, 5, 0);
+	UByteArrayAdapter seekedFileAdap = UByteArrayAdapter::open("ubatestseekedfile.tmp", UByteArrayAdapter::OpenFlags::Writable());
 	if (!seekedFileAdap.growStorage(4*testCount)) {
 		std::cout << "Failed to grow storage" << std::endl;
 	}
