@@ -1,5 +1,4 @@
 #pragma once
-#include <sserialize/storage/UByteArrayAdapter.h>
 #include <utility>
 
 //Strong typedef based on ideas seen at
@@ -84,7 +83,7 @@ private:
 inline underlying_type & ut() { return underlying_type_accessor::get(static_cast<Derived &>(*this)); } \
 inline underlying_type const & cut() const { return underlying_type_accessor::get(static_cast<Derived const &>(*this)); }
 
-#define TMPL_HEADER \
+#define SSERIALIZE_STRONGTYPE_TMPL_HEADER \
 template< \
 	typename Derived, \
 	typename underlying_type, \
@@ -95,7 +94,7 @@ template< \
 
 namespace impl {
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class Store {
 private:
 	UNDERLYING_TYPE_HELPERS
@@ -117,7 +116,7 @@ private:
 };
 
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class Add {
 private:
 	UNDERLYING_TYPE_HELPERS
@@ -137,7 +136,7 @@ public:
 	}
 };
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class Sub {
 private:
 	UNDERLYING_TYPE_HELPERS
@@ -152,7 +151,7 @@ public:
 };
 
 #define BIN_OPS(__NAME, __OPSYM) \
-TMPL_HEADER \
+SSERIALIZE_STRONGTYPE_TMPL_HEADER \
 class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
@@ -178,7 +177,7 @@ BIN_OPS(BitXor, ^)
 #undef BIN_OPS
 
 #define BIN_OPS(__NAME, __OPSYM) \
-TMPL_HEADER \
+SSERIALIZE_STRONGTYPE_TMPL_HEADER \
 class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
@@ -192,7 +191,7 @@ BIN_OPS(Or, ||)
 #undef BIN_OPS
 
 #define BIN_OPS(__NAME, __OPSYM) \
-TMPL_HEADER \
+SSERIALIZE_STRONGTYPE_TMPL_HEADER \
 class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
@@ -210,7 +209,7 @@ BIN_OPS(CompareGreaterEqual, >=)
 #undef BIN_OPS
 
 #define UN_OPS(__NAME, __OPSYM) \
-TMPL_HEADER \
+SSERIALIZE_STRONGTYPE_TMPL_HEADER \
 class __NAME { \
 private: \
 	UNDERLYING_TYPE_HELPERS \
@@ -226,7 +225,7 @@ UN_OPS(Not, !)
 
 #undef UN_OPS
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class Arithmetic:
 	public Add<TMPL_VARS>,
 	public Sub<TMPL_VARS>,
@@ -236,7 +235,7 @@ class Arithmetic:
 	public Negate<TMPL_VARS>
 {};
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class BitBased:
 	public LShift<TMPL_VARS>,
 	public RShift<TMPL_VARS>,
@@ -246,14 +245,14 @@ class BitBased:
 	public BitInvert<TMPL_VARS>
 {};
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class BooleanLike:
 	public And<TMPL_VARS>,
 	public Or<TMPL_VARS>,
 	public Not<TMPL_VARS>
 {};
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class CompareAll:
 	public CompareEqual<TMPL_VARS>,
 	public CompareNotEqual<TMPL_VARS>,
@@ -263,7 +262,7 @@ class CompareAll:
 	public CompareLessEqual<TMPL_VARS>
 {};
 
-TMPL_HEADER
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
 class Swap {
 private:
 	UNDERLYING_TYPE_HELPERS
@@ -305,63 +304,53 @@ public:
 	}
 };
 
-TMPL_HEADER
-using Serialize = OStream<sserialize::UByteArrayAdapter, TMPL_VARS>;
-
-TMPL_HEADER
-using Deserialize = IStream<sserialize::UByteArrayAdapter, TMPL_VARS>;
-
 } //end namespace impl
 
-#define MODULE(__N) \
+#define SSERIALIZE_STRONGTYPE_MODULE(__N) \
 struct __N { \
-	TMPL_HEADER \
+	SSERIALIZE_STRONGTYPE_TMPL_HEADER \
 	using type = impl:: __N <TMPL_VARS>; \
 };
 
-MODULE(Store)
-MODULE(Add)
-MODULE(Sub)
-MODULE(Mult)
-MODULE(Div)
-MODULE(LShift)
-MODULE(RShift)
-MODULE(BitOr)
-MODULE(BitAnd)
-MODULE(BitXor)
-MODULE(And)
-MODULE(Or)
-MODULE(CompareEqual)
-MODULE(CompareNotEqual)
-MODULE(CompareLess)
-MODULE(CompareLessEqual)
-MODULE(CompareGreater)
-MODULE(CompareGreaterEqual)
-MODULE(BitInvert)
-MODULE(Negate)
-MODULE(Not)
-MODULE(Arithmetic)
-MODULE(BitBased)
-MODULE(BooleanLike)
-MODULE(CompareAll)
-MODULE(Swap)
-MODULE(Serialize)
-MODULE(Deserialize)
+SSERIALIZE_STRONGTYPE_MODULE(Store)
+SSERIALIZE_STRONGTYPE_MODULE(Add)
+SSERIALIZE_STRONGTYPE_MODULE(Sub)
+SSERIALIZE_STRONGTYPE_MODULE(Mult)
+SSERIALIZE_STRONGTYPE_MODULE(Div)
+SSERIALIZE_STRONGTYPE_MODULE(LShift)
+SSERIALIZE_STRONGTYPE_MODULE(RShift)
+SSERIALIZE_STRONGTYPE_MODULE(BitOr)
+SSERIALIZE_STRONGTYPE_MODULE(BitAnd)
+SSERIALIZE_STRONGTYPE_MODULE(BitXor)
+SSERIALIZE_STRONGTYPE_MODULE(And)
+SSERIALIZE_STRONGTYPE_MODULE(Or)
+SSERIALIZE_STRONGTYPE_MODULE(CompareEqual)
+SSERIALIZE_STRONGTYPE_MODULE(CompareNotEqual)
+SSERIALIZE_STRONGTYPE_MODULE(CompareLess)
+SSERIALIZE_STRONGTYPE_MODULE(CompareLessEqual)
+SSERIALIZE_STRONGTYPE_MODULE(CompareGreater)
+SSERIALIZE_STRONGTYPE_MODULE(CompareGreaterEqual)
+SSERIALIZE_STRONGTYPE_MODULE(BitInvert)
+SSERIALIZE_STRONGTYPE_MODULE(Negate)
+SSERIALIZE_STRONGTYPE_MODULE(Not)
+SSERIALIZE_STRONGTYPE_MODULE(Arithmetic)
+SSERIALIZE_STRONGTYPE_MODULE(BitBased)
+SSERIALIZE_STRONGTYPE_MODULE(BooleanLike)
+SSERIALIZE_STRONGTYPE_MODULE(CompareAll)
+SSERIALIZE_STRONGTYPE_MODULE(Swap)
 
 template<typename StreamType>
 struct OStream {
-	TMPL_HEADER
+	SSERIALIZE_STRONGTYPE_TMPL_HEADER
 	using type = impl::OStream<StreamType, TMPL_VARS>;
 }; 
 
 template<typename StreamType>
 struct IStream {
-	TMPL_HEADER
+	SSERIALIZE_STRONGTYPE_TMPL_HEADER
 	using type = impl::IStream<StreamType, TMPL_VARS>;
 };
 
-#undef MODULE
 #undef UNDERLYING_TYPE_HELPERS
-#undef TMPL_HEADER
 
 }//end namespace sserialize::st

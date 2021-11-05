@@ -32,6 +32,7 @@
 #include <sserialize/utility/refcounting.h>
 #include <sserialize/storage/MmappedMemory.h>
 #include <sserialize/storage/SerializationInfo.h>
+#include <sserialize/utility/strongtypedefs.h>
 #include <stdint.h>
 #include <iterator>
 #include <deque>
@@ -700,5 +701,22 @@ struct SerializationInfo<std::string> {
 
 }//end namespace
 
+
+namespace sserialize::st {
+namespace impl {
+
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
+using Serialize = OStream<sserialize::UByteArrayAdapter, TMPL_VARS>;
+
+SSERIALIZE_STRONGTYPE_TMPL_HEADER
+using Deserialize = IStream<sserialize::UByteArrayAdapter, TMPL_VARS>;
+
+} //end namespace impl
+
+
+SSERIALIZE_STRONGTYPE_MODULE(Serialize)
+SSERIALIZE_STRONGTYPE_MODULE(Deserialize)
+
+}
 
 #endif

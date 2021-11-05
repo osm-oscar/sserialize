@@ -1,5 +1,6 @@
 #include "TestBase.h"
 #include <sserialize/utility/strongtypedefs.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
 
 
 //This is mostly a compile-time test
