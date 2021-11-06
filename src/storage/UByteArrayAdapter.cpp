@@ -1200,7 +1200,7 @@ UByteArrayAdapter UByteArrayAdapter::open(
 	#endif
 	)
 {
-	if (flags | OpenFlags::Compressed()) {
+	if (flags & OpenFlags::Compressed()) {
 		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
 		throw sserialize::UnsupportedFeatureException("File is compressed and sserialize was compiled with contiguous UByteArrayAdapter only.");
 		#else
@@ -1215,14 +1215,14 @@ UByteArrayAdapter UByteArrayAdapter::open(
 	}
 	else if (MmappedFile::fileSize(fileName) > SSERIALIZE_MAX_SIZE_FOR_FULL_MMAP || (flags & (OpenFlags::DirectIo() | OpenFlags::Chunked()))) {
 		#ifdef SSERIALIZE_UBA_ONLY_CONTIGUOUS
-		if ((flags | OpenFlags::Values::DirectIo)) {
+		if ((flags | OpenFlags::DirectIo())) {
 			throw sserialize::UnsupportedFeatureException("Requesting direct I/O but sserialize was compiled with contiguous UByteArrayAdapter only.");
 		}
 		else {
 			throw sserialize::UnsupportedFeatureException("File is too large and sserialize was compiled with contiguous UByteArrayAdapter only.");
 		}
 		#else
-		if (chunkSizeExponent == 0 || (flags | OpenFlags::DirectIo())) {
+		if (chunkSizeExponent == 0 || (flags & OpenFlags::DirectIo())) {
 			return UByteArrayAdapter( MyPrivatePtr(
 				new UByteArrayAdapterPrivateThreadSafeFile(fileName, (flags & OpenFlags::Writable()), (flags & OpenFlags::DirectIo()))
 			));
