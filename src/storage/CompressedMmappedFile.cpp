@@ -325,7 +325,10 @@ bool CompressedMmappedFilePrivate::do_unpack(sserialize::CompressedMmappedFilePr
 	
 	uint8_t * data = (uint8_t*) mmap(nullptr, params.mmap_size, PROT_READ, MAP_SHARED, m_fd, params.mmap_begin);
 	if (data == MAP_FAILED) {
-		throw sserialize::IOException("CompressedMmappedFile mmapping chunk failed with " + std::string(strerrorname_np(errno)));
+		std::string buffer;
+		buffer.resize(128);
+		std::string errname(::strerror_r(errno, buffer.data(), buffer.size()));
+		throw sserialize::IOException("CompressedMmappedFile mmapping chunk failed with " + errname);
 	}
 	
 	lzo_uint destLen = chunkSize();
