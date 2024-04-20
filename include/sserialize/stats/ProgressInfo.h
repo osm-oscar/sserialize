@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <time.h>
 #include <sys/time.h>
+#include <cstdint>
 
 
 namespace sserialize {

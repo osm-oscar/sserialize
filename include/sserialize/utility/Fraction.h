@@ -16,6 +16,8 @@
 	#include <CGAL/CORE/Expr.h>
 #endif
 
+#include <cstdint>
+
 
 namespace sserialize {
 

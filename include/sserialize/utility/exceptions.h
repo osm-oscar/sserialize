@@ -2,6 +2,7 @@
 #define SSERIALIZE_EXCPETIONS_H
 #include <exception>
 #include <string>
+#include <cstdint>
 
 namespace sserialize {
 
